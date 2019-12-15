@@ -28,9 +28,8 @@ from uvm.comps import UVMEnv
 from uvm.macros import uvm_component_utils
 
 from regmodel import block_B
-#reg_agent
-# uvm_reg_predictor
-# reg2rw_adapter
+from common import reg_agent, reg2rw_adapter
+from uvm.reg.uvm_reg_predictor import UVMRegPredictor
 
 
 class dut_rw():
@@ -67,7 +66,7 @@ class tb_env(UVMEnv):
         self.regmodel.lock_model()
         
         self.bus = reg_agent.type_id.create("bus", self)
-        self.predict = uvm_reg_predictor.type_id.create("predict", self)
+        self.predict = UVMRegPredictor.type_id.create("predict", self)
         
         self.regmodel.set_hdl_path_root("dut");
         #  endfunction: build_phase

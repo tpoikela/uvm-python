@@ -264,6 +264,7 @@ class UVMPrinter():
             row_info.size = "..."
         else:
             row_info.size = "{}".format(size)
+
         if value == "":
             row_info.val = '""'
         else:
@@ -356,7 +357,7 @@ class UVMPrinter():
     # print_string
     # ------------
 
-    def print_string (self, name, value, scope_separator="."):
+    def print_string(self, name, value, scope_separator="."):
 
         row_info = UVMPrinterRowInfo()
         if name != "":

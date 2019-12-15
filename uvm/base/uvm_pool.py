@@ -9,6 +9,7 @@ class UVMPool(UVMObject):
     type_name = "uvm_pool"
     m_global_pool = None
 
+
     def __init__(self, name=""):
         UVMObject.__init__(self, name)
         self.pool = collections.OrderedDict()
@@ -51,10 +52,16 @@ class UVMPool(UVMObject):
 
     # Implements aa[x]
     def __getitem__(self, key):
-        return self.pool[key]
+        if key in self.pool:
+            return self.pool[key]
+        else:
+            raise IndexError('No key found')
 
     def keys(self):
         return self.pool.keys()
+
+    def key_list(self):
+        return list(self.pool.keys())
 
     def delete(self, key=None):
         if key is None:
@@ -116,8 +123,17 @@ class UVMPool(UVMObject):
 
     def do_print(self, printer):
         while self.has_next():
-            item = self.next()
-            printer.print_generic(item)
+            key = self.next()
+            item = self.pool[key]
+            print("tttt key is " + str(key))
+            # print_generic(self, name, type_name, size, value, scope_separator="."):
+            if hasattr(item, 'convert2string'):
+                printer.print_string(item.get_name(), item.convert2string())
+            else:
+                name = ""
+                if hasattr(key, 'get_name'):
+                    name = key.get_name()
+                printer.print_generic(name, '', 0, str(item))
 
 #//------------------------------------------------------------------------------
 #//
@@ -272,6 +288,8 @@ class TestUVMPool(unittest.TestCase):
         pool.add('xxx', 1234)
         self.assertEqual('xxx' in pool, True)
         self.assertEqual(len(pool), 1)
+        empty = UVMPool()
+        self.assertEqual('xxx' in empty, False)
 
     def test_while_has_next(self):
         pool = UVMPool()
@@ -280,6 +298,17 @@ class TestUVMPool(unittest.TestCase):
         pool.add(8, 16)
         while (pool.has_next()):
             val = pool.next()
+
+    def test_for_loop(self):
+        pool = UVMPool()
+        pool.add("z", 0)
+        pool.add("a", 4)
+        pool.add("b", 8)
+        pool.add("c", 16)
+        for key in pool:
+            val = pool[key]
+            self.assertEqual(val in [0, 4, 8, 16], True)
+            self.assertEqual(key in ["z", "a", "b", "c"], True)
 
 class TestUVMEventPool(unittest.TestCase):
 

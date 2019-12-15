@@ -19,14 +19,16 @@
 #    CONDITIONS OF ANY KIND, either express or implied.  See
 #    the License for the specific language governing
 #    permissions and limitations under the License.
-#    TODO add modifications
+#
+#    Original SV code has been adapter to Python.
 # -------------------------------------------------------------
 
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
 from .uvm_reg_model import *
 from .uvm_reg_map import UVMRegMap
-from ..macros import uvm_error
+from .uvm_reg import UVMReg
+from ..macros import uvm_error, uvm_warning
 
 #------------------------------------------------------------------------
 # Class: uvm_reg_block
@@ -80,6 +82,7 @@ class UVMRegBlock(UVMObject):
     #   // Multiple functional coverage models may be specified by adding their
     #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
     #   //
+    #   function new(string name="", int has_coverage=UVM_NO_COVERAGE)
     def __init__(self, name="", has_coverage=UVM_NO_COVERAGE):
         UVMObject.__init__(self, name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths")
@@ -89,9 +92,9 @@ class UVMRegBlock(UVMObject):
         self.locked = False
         self.maps = UVMPool()  # bit[UVMRegMap]
         self.regs = UVMPool()  #int unsigned[uvm_reg]
+        self.blks = UVMPool()
+        self.mems = UVMPool()
 
-    #   extern function new(string name="", int has_coverage=UVM_NO_COVERAGE)
-    #
     #
     #   // Function: configure
     #   //
@@ -139,7 +142,7 @@ class UVMRegBlock(UVMObject):
     def create_map(self, name, base_addr, n_bytes, endian,
             byte_addressing=True):
         #   UVMRegMap  map
-        if (self.locked):
+        if self.locked is True:
             uvm_error("RegModel", "Cannot add map to locked model")
             return None
 
@@ -174,8 +177,8 @@ class UVMRegBlock(UVMObject):
     #   // block. The address map must be a map of this address block.
     #   //
     #   extern function void set_default_map (UVMRegMap map)
-    #
-    #
+
+
     #   // Variable: default_map
     #   //
     #   // Default address map
@@ -188,12 +191,16 @@ class UVMRegBlock(UVMObject):
     #   // unnamed address map because it has only one physical interface.
     #   //
     #   UVMRegMap default_map
+
     #
     #   extern function UVMRegMap get_default_map ()
     #
+
     #   extern virtual function void set_parent(uvm_reg_block parent)
+
     #
     #   /*local*/ extern function void add_block (uvm_reg_block blk)
+
     #   /*local*/ extern function void add_map   (UVMRegMap map)
 
     # add_reg
@@ -212,9 +219,9 @@ class UVMRegBlock(UVMObject):
         UVMRegBlock.id += 1
 
     #   /*local*/ extern function void add_vreg  (uvm_vreg vreg)
+
     #   /*local*/ extern function void add_mem   (uvm_mem  mem)
-    #
-    #
+
     #   // Function: lock_model
     #   //
     #   // Lock a model and build the address map.
@@ -236,16 +243,13 @@ class UVMRegBlock(UVMObject):
             return
         self.locked = 1
 
-        for rg_ in self.regs:
-            rg = rg_
-            rg.Xlock_modelX()
+        for rr in self.regs.key_list():
+            rr.Xlock_modelX()
 
-        for mem_ in self.mems:
-            mem = mem_
+        for mem in self.mems.key_list():
             mem.Xlock_modelX()
 
-        for blk_ in self.blks:
-            blk = blk_ # uvm_reg_block
+        for blk in self.blks.key_list():
             blk.lock_model()
 
         # TODO finish this
@@ -499,8 +503,27 @@ class UVMRegBlock(UVMObject):
     #   // If no registers are found, returns ~null~.
     #   //
     #   extern virtual function uvm_reg get_reg_by_name (string name)
-    #
-    #
+    def get_reg_by_name(self, name):
+
+        for rg in self.regs.key_list():
+            if rg.get_name() == name:
+                return rg
+
+        for blk_ in self.blks.key_list():
+            # blk = blk_  # uvm_reg_block
+            subregs = []  # uvm_reg[$]
+            blk_.get_registers(subregs, UVM_HIER)
+
+            for j in range(len(subregs)):
+                if subregs[j].get_name() == name:
+                    return subregs[j]
+
+        uvm_warning("RegModel", "Unable to locate register '" + name +
+                        "' in block '" + self.get_full_name() + "'")
+        return None
+        #endfunction: get_reg_by_name
+
+
     #   // Function: get_field_by_name
     #   //
     #   // Finds a field with the specified simple name.
@@ -1348,31 +1371,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: get_block_by_name
 #
 #
-# get_reg_by_name
-#
-#function uvm_reg uvm_reg_block::get_reg_by_name(string name)
-#
-#   foreach (regs[rg_]) begin
-#     uvm_reg rg = rg_
-#     if (rg.get_name() == name)
-#       return rg
-#   end
-#
-#   foreach (blks[blk_]) begin
-#      uvm_reg_block blk = blk_
-#      uvm_reg subregs[$]
-#      blk_.get_registers(subregs, UVM_HIER)
-#
-#      foreach (subregs[j])
-#         if (subregs[j].get_name() == name)
-#            return subregs[j]
-#   end
-#
-#   `uvm_warning("RegModel", {"Unable to locate register '",name,
-#                "' in block '",get_full_name(),"'"})
-#   return null
-#
-#endfunction: get_reg_by_name
 #
 #
 # get_vreg_by_name
@@ -2247,3 +2245,26 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
+
+import unittest
+
+
+class TestUVMRegBlock(unittest.TestCase):
+
+    def test_add_reg(self):
+        rb = UVMRegBlock("rb_blk")
+        rb.create_map("", 0, 1, UVM_BIG_ENDIAN)
+        reg1 = UVMReg("xx", 32, rb.get_full_name())
+        reg1.configure(rb, None, "acp")
+        # reg1.build()
+        rb.default_map.add_reg(reg1, 0x0000,  "RW")
+        print("len is now " + str(len(rb.regs)))
+        rr = rb.get_reg_by_name('xx')
+        self.assertEqual(rr.get_name(), 'xx')
+
+        r_none = rb.get_reg_by_name('y_reg')
+        self.assertEqual(r_none, None)
+
+
+if __name__ == '__main__':
+    unittest.main()

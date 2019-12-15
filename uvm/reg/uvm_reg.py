@@ -210,6 +210,10 @@ class UVMReg(UVMObject):
         self.m_maps.add(reg_map, 1)
 
     #   /*local*/ extern function void   Xlock_modelX
+    def Xlock_modelX(self):
+        if self.m_locked is True:
+            return
+        self.m_locked = True
 
     #   //---------------------
     #   // Group: Introspection
@@ -1366,13 +1370,6 @@ class UVMReg(UVMObject):
 #
 #
 #
-#// Xlock_modelX
-#
-#function void uvm_reg::Xlock_modelX()
-#   if (self.m_locked)
-#     return
-#   self.m_locked = 1
-#endfunction
 #
 #
 #//----------------------
