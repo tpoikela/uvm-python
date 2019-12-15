@@ -150,7 +150,7 @@ UVM_DEFAULT_PATH = 3
 #
 # UVM_NO_CHECK   - Read only
 # UVM_CHECK      - Read and check
-#   
+#
 #   typedef enum {
 UVM_NO_CHECK = 0
 UVM_CHECK = 1
@@ -165,7 +165,7 @@ UVM_CHECK = 1
 # UVM_BIG_ENDIAN     - Most-significant bytes first in consecutive addresses
 # UVM_LITTLE_FIFO    - Least-significant bytes first at the same address
 # UVM_BIG_FIFO       - Most-significant bytes first at the same address
-#   
+#
 #   typedef enum {
 UVM_NO_ENDIAN = 0
 UVM_LITTLE_ENDIAN = 1
@@ -313,22 +313,22 @@ class uvm_hdl_path_concat:
 
     def __init__(self):
         self.slices = []
-    
+
     # Variable: slices
     # Array of individual slices,
     # stored in most-to-least significant order
     #uvm_hdl_path_slice slices[];
-    
+
     # Function: set
     # Initialize the concatenation using an array literal
     def set(self, t):
         self.slices = t;
-    
+
     # Function: add_slice
     # Append the specified ~slice~ literal to the path concatenation
     def add_slice(self, slice):
         self.slices.append(slice)
-    
+
     # Function: add_path
     # Append the specified ~path~ to the path concatenation,
     # for the specified number of bits at the specified ~offset~.
@@ -344,7 +344,7 @@ class uvm_hdl_path_concat:
 #
 def uvm_hdl_concat2string(concat):
     image = "{"
-    
+
     if (len(concat.slices) == 1 and
         concat.slices[0].offset == -1 and
         concat.slices[0].size == -1):

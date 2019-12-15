@@ -20,56 +20,66 @@
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
 #//
-#
-#
-#`include "reg_agent.sv"
-#
-#class dut_rw;
-#   static task rw(reg_rw rw);
-#      casez (rw.addr)
-#       'h0000: // acp (MSB)
-#          if (rw.read) rw.data = dut.acp[15:8];
-#       'h0001: // acp (LSB)
-#          if (rw.read) rw.data = dut.acp[7:0];
-#          else dut.acp++;
-#      endcase
-#      #1;
-#      // $write("%s\n", rw.convert2string());
-#   endtask
+
+import cocotb
+from cocotb.triggers import Timer
+
+from uvm.comps import UVMEnv
+from uvm.macros import uvm_component_utils
+
+from regmodel import block_B
+#reg_agent
+# uvm_reg_predictor
+# reg2rw_adapter
+
+
+class dut_rw():
+
+    @classmethod
+    @cocotb.coroutine
+    def rw(rw, dut):
+        if (rw.addr == 0x0000):
+            #'h0000: // acp (MSB)
+            if (rw.read):
+                rw.data = dut.acp[15:8]
+        elif (rw.addr == 0x0001):  # 'h0001: // acp (LSB)
+            if (rw.read):
+                rw.data = dut.acp[7:0]
+            else:
+                dut.acp += 1
+        #1;
+        yield Timer(1, "NS")
+        # $write("%s\n", rw.convert2string());
 #endclass
-#
-#
+
 #class tb_env extends uvm_env;
-#
-#   `uvm_component_utils(tb_env)
-#
-#   block_B   regmodel;
-#   reg_agent#(dut_rw) bus;
-#   uvm_reg_predictor#(reg_rw) predict;
-#
-#   function new(string name = "tb_env", uvm_component parent=null);
-#      super.new(name, parent);
-#   endfunction: new
-#
-#   virtual function void build_phase(uvm_phase phase);
-#      regmodel = block_B::type_id::create("regmodel");
-#      regmodel.build();
-#      regmodel.lock_model();
-#
-#      bus = reg_agent#(dut_rw)::type_id::create("bus", this);
-#      predict = uvm_reg_predictor#(reg_rw)::type_id::create("predict", this);
-#
-#      regmodel.set_hdl_path_root("dut");
-#  endfunction: build_phase
-#
-#   virtual function void connect_phase(uvm_phase phase);
-#      reg2rw_adapter reg2rw  = new("reg2rw");
-#      regmodel.default_map.set_sequencer(bus.sqr, reg2rw);
-#
-#      predict.map = regmodel.default_map;
-#      predict.adapter = reg2rw;
-#      bus.mon.ap.connect(predict.bus_in);
-#      regmodel.default_map.set_auto_predict(0);
-#   endfunction
-#
-#endclass
+class tb_env(UVMEnv):
+    #
+    def __init__(self, name="tb_env", parent=None):
+        UVMEnv.__init__(self, name, parent)
+        #   block_B   regmodel;
+        #   reg_agent#(dut_rw) bus;
+        #   uvm_reg_predictor#(reg_rw) predict;
+
+    def build_phase(self, phase):
+        self.regmodel = block_B.type_id.create("regmodel")
+        self.regmodel.build()
+        self.regmodel.lock_model()
+        
+        self.bus = reg_agent.type_id.create("bus", self)
+        self.predict = uvm_reg_predictor.type_id.create("predict", self)
+        
+        self.regmodel.set_hdl_path_root("dut");
+        #  endfunction: build_phase
+
+    def connect_phase(self, phase):
+        reg2rw  = reg2rw_adapter("reg2rw")
+        self.regmodel.default_map.set_sequencer(self.bus.sqr, reg2rw)
+        
+        self.predict.map = self.regmodel.default_map
+        self.predict.adapter = reg2rw
+        self.bus.mon.ap.connect(self.predict.bus_in)
+        self.regmodel.default_map.set_auto_predict(0)
+
+    #endclass
+uvm_component_utils(tb_env)

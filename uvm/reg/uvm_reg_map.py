@@ -24,7 +24,7 @@
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import *
-from uvm_reg_model import *
+from .uvm_reg_model import *
 
 
 class UVMRegMapInfo:
@@ -2146,8 +2146,8 @@ import unittest
 class TestUVMRegMap(unittest.TestCase):
 
     def test_map_base(self):
-        from uvm_reg import *
-        from uvm_reg_block import *
+        from uvm_reg import UVMRegMap
+        from uvm_reg_block import UVMRegBlock
         reg_map = UVMRegMap()
         reg_blk = UVMRegBlock('my_blk')
         reg_map.configure(reg_blk, base_addr=0, n_bytes=32, endian=0,

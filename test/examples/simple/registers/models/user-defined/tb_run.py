@@ -26,81 +26,70 @@
 import cocotb
 from cocotb.triggers import Timer
 
+from uvm.base import uvm_top, UVMCoreService, run_test
+from uvm.comps import UVMTest
+from uvm.macros import uvm_fatal, uvm_info
+
+from tb_env import tb_env
+
 #`include "uvm_pkg.sv"
-#
-#`include "dut.sv"
-#
-#program tb;
-#
-#import uvm_pkg::*;
 #
 #`include "regmodel.sv"
 #`include "tb_env.sv"
-#
-#
-#class tb_test extends uvm_test;
-#
-#   function new(string name = "tb_test", uvm_component parent = null);
-#      super.new(name, parent);
-#   endfunction
-#
-#   virtual task run_phase(uvm_phase phase);
-#      tb_env env;
-#      uvm_status_e   status;
-#      uvm_reg_data_t data;
-#
-#      phase.raise_objection(this);
-#
-#      if (!$cast(env, uvm_top.find("env")) || env == null) begin
-#         `uvm_fatal("test", "Cannot find tb_env");
-#      end
-#
-#      env.regmodel.reset();
-#
-#      begin
-#         uvm_reg_sequence seq;
-#
-#         seq = uvm_reg_hw_reset_seq::type_id::create("seq");
-#         seq.model = env.regmodel;
-#         seq.start(null);
-#         seq.wait_for_sequence_state(UVM_FINISHED);
-#      end
-#
-#      `uvm_info("Test", "Performing 257 writes...", UVM_LOW)
-#
-#      repeat (257) begin
-#         env.regmodel.user_acp.write(status, $random());
-#      end
-#      env.regmodel.user_acp.mirror(status, UVM_CHECK);
-#
-#      `uvm_info("Test", "Resetting DUT...", UVM_LOW)
-#      dut.reset();
-#      env.regmodel.reset();
-#      env.regmodel.user_acp.mirror(status, UVM_CHECK);
-#
-#      phase.drop_objection(this);
-#   endtask
-#endclass
-#
-#
-#initial begin automatic uvm_coreservice_t cs_ = uvm_coreservice_t::get();
-#
-#   tb_env env;
-#   tb_test test;
-#   uvm_report_server svr;
-#
-#   env = new("env");
-#   test = new("test");
-#
-#   svr = cs_.get_report_server();
-#   svr.set_max_quit_count(10);
-#
-#   run_test();
-#end
-#
-#endprogram
 
+#class tb_test extends uvm_test;
+class tb_test(UVMTest):
+    #
+    def __init__(self, name="tb_test", parent=None):
+        UVMTest.__init__(self, name, parent)
+        self.dut = None
+
+    #   virtual task run_phase(uvm_phase phase);
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        #tb_env env;
+        #uvm_status_e   status;
+        #uvm_reg_data_t data;
+
+        phase.raise_objection(self)
+        env = uvm_top.find("env")
+
+        if (env is None):
+            uvm_fatal("test", "Cannot find tb_env");
+
+        env.regmodel.reset()
+
+        #uvm_reg_sequence seq;
+        #seq = uvm_reg_hw_reset_seq::type_id::create("seq");
+        seq = uvm_reg_hw_reset_seq.type_id.create("seq")
+        seq.model = env.regmodel
+        yield seq.start(None)
+        yield seq.wait_for_sequence_state(UVM_FINISHED)
+
+        uvm_info("Test", "Performing 257 writes...", UVM_LOW)
+        
+        for i in range(257):
+           env.regmodel.user_acp.write(status, sv.random())
+        env.regmodel.user_acp.mirror(status, UVM_CHECK)
+        
+        uvm_info("Test", "Resetting DUT...", UVM_LOW)
+        self.dut.reset()
+        env.regmodel.reset()
+        env.regmodel.user_acp.mirror(status, UVM_CHECK)
+        phase.drop_objection(self)
+    #endclass
+    
 
 @cocotb.test()
 def module_top(dut):
+    
+    cs_ = UVMCoreService.get()
+    env = tb_env("env")
+    test = tb_test("test")
+    test.dut = dut
+    
+    svr = cs_.get_report_server()
+    svr.set_max_quit_count(10)
+    
+    yield run_test()
     yield Timer(1)

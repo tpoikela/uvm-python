@@ -45,7 +45,7 @@ NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import uvm_object_utils
-from uvm_reg_model import *
+from .uvm_reg_model import *
 
 class UVMRegField(UVMObject):
     m_max_size = 0
@@ -844,9 +844,8 @@ class UVMRegField(UVMObject):
     #   // or <uvm_reg_field::mirror> and the compare policy for the
     #   // field is <UVself.m_check>.
     #   //
-    #function void uvm_reg_field::set_compare(uvm_check_e check=UVself.m_check);
-    #  self.m_check = check;
-    #endfunction
+    def set_compare(self, check=UVM_CHECK):
+        self.m_check = check
 
     #
     #
@@ -854,11 +853,9 @@ class UVMRegField(UVMObject):
     #   //
     #   // Returns the compare policy for this field.
     #   //
-    #function uvm_check_e uvm_reg_field::get_compare();
-    #  return self.m_check;
-    #endfunction
+    def get_compare(self):
+        return self.m_check
 
-    #   
     #   // Function: is_indv_accessible
     #   //
     #   // Check if this field can be written individually, i.e. without

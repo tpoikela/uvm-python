@@ -25,10 +25,8 @@ module dut();
 
 reg [15:0] acp;
 
-function reset;
-    begin
-        acp = 0;
-    end
+function reset();
+    acp = 0;
 endfunction
 
 

@@ -184,7 +184,7 @@ class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(st
     #  // and returned.
     #
     def get(self, key):
-        if not key in self.pool:
+        if not(key in self.pool):
             self.pool[key] = self.Constructor(key)
         return self.pool[key]
     #  endfunction
