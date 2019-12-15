@@ -1305,6 +1305,13 @@ class UVMComponent(UVMReportObject):
     #//   on this event will resume in the next delta cycle.
 
     #extern function void accept_tr (uvm_transaction tr, time accept_time = 0);
+    def accept_tr (self, tr, accept_time=0):
+        e = None
+        tr.accept_tr(accept_time)
+        self.do_accept_tr(tr)
+        e = self.event_pool.get("accept_tr")
+        if e is not None:
+          e.trigger()
 
 
     #// Function: do_accept_tr
@@ -1314,7 +1321,8 @@ class UVMComponent(UVMReportObject):
     #// ensure correct operation.
     #
     #extern virtual protected function void do_accept_tr (uvm_transaction tr);
-
+    def do_accept_tr(self, tr):
+        return
 
     #// Function: begin_tr
     #//
@@ -2553,18 +2561,6 @@ class UVMComponent(UVMReportObject):
 #//
 #//------------------------------------------------------------------------------
 #
-#// accept_tr
-#// ---------
-#
-#function void uvm_component::accept_tr (uvm_transaction tr,
-#                                        time accept_time=0);
-#  uvm_event#(uvm_object) e;
-#  tr.accept_tr(accept_time);
-#  do_accept_tr(tr);
-#  e = self.event_pool.get("accept_tr");
-#  if(e!=null)
-#    e.trigger();
-#endfunction
 #
 #
 #// begin_child_tr
@@ -2725,12 +2721,6 @@ class UVMComponent(UVMReportObject):
 #   return handle;
 #endfunction
 #
-#// do_accept_tr
-#// ------------
-#
-#function void uvm_component::do_accept_tr (uvm_transaction tr);
-#  return;
-#endfunction
 #
 #
 #// do_begin_tr

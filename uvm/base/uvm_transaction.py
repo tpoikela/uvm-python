@@ -212,6 +212,18 @@ class UVMTransaction(UVMObject):
     #  //   action in derived classes.
     #
     #  extern function void accept_tr (time accept_time = 0)
+    def accept_tr(self, accept_time=0):
+        e = None
+        if accept_time != 0:
+            self.accept_time = accept_time
+        else:
+            self.accept_time = sv.realtime()
+
+        self.do_accept_tr()
+        e = self.events.get("accept")
+        if e is not None:
+            e.trigger()
+
     #
     #
     #  // Function: do_accept_tr
@@ -221,6 +233,9 @@ class UVMTransaction(UVMObject):
     #  // ensure correct operation.
     #
     #  extern virtual protected function void do_accept_tr ()
+    def do_accept_tr(self):
+        return
+
     #
     #
     #  // Function: begin_tr
@@ -565,12 +580,6 @@ class UVMTransaction(UVMObject):
 #endfunction
 #
 #
-# do_accept_tr
-# -------------
-#
-#function void uvm_transaction::do_accept_tr()
-#  return
-#endfunction
 #
 #
 # do_begin_tr
@@ -660,23 +669,6 @@ class UVMTransaction(UVMObject):
 #
 #
 #
-# accept_tr
-# ---------
-#
-#function void uvm_transaction::accept_tr (time accept_time = 0)
-#  uvm_event#(uvm_object) e
-#
-#  if(accept_time != 0)
-#    self.accept_time = accept_time
-#  else
-#    self.accept_time = $realtime
-#
-#  do_accept_tr()
-#  e = self.events.get("accept")
-#
-#  if(e!=null)
-#    e.trigger()
-#endfunction
 #
 # begin_tr
 # -----------

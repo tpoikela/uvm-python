@@ -42,12 +42,15 @@ class producer(UVMComponent):
         self.num_packets = 10
         nn = []
         self.T = T
+        self.add_objection = True
         self.proto = self.T("my_packet")
         if UVMConfigDb.get(self, "", "num_packets", nn):
             self.num_packets = nn[0]
 
     @cocotb.coroutine
     def run_phase(self, phase):
+        if self.add_objection:
+            phase.raise_objection(self)
         num = ""
         uvm_info("producer", "Starting with packet " + str(self.num_packets), UVM_MEDIUM)
 
@@ -68,10 +71,12 @@ class producer(UVMComponent):
             if self.uvm_report_enabled(UVM_HIGH,UVM_INFO,""):
                 p.print()
 
-            self.out.put(p)
+            yield self.out.put(p)
             yield Timer(10, "NS")
 
         uvm_info("producer", "Exiting.", UVM_MEDIUM)
+        if self.add_objection:
+            phase.drop_objection(self)
 
 
 uvm_component_utils(producer)

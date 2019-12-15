@@ -47,3 +47,6 @@ def hello_world(dut):
     mytop = top("top", parent=None)
     #    uvm_default_table_printer.knobs.type_width=20;
     yield run_test()
+
+    if mytop.error:
+        raise Exception("mytop had errors")

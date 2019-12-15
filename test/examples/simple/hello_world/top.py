@@ -40,21 +40,28 @@ class top(UVMComponent):
         UVMPhase.m_phase_trace = True
         self.p1 = producer("producer1", self)
         self.p2 = producer("producer2", self)
-        self.f  = UVMTLMFIFO("fifo", self)
+        self.f = UVMTLMFIFO("fifo", self)
         self.c = consumer("consumer", self)
 
         # Create connections between components
         self.p1.out.connect(self.c.input)
         self.p2.out.connect(self.f.blocking_put_export)
         self.c.out.connect(self.f.get_export)
+        self.error = False
 
     def end_of_elaboration_phase(self, phase):
         uvm_top.print_topology()
 
     @cocotb.coroutine
     def run_phase(self, phase):
+        print("top run_Phase started XYZ")
         phase.raise_objection(self)
         yield Timer(1000, "NS")
         phase.drop_objection(self)
+
+    def check_phase(self, phase):
+        if self.c.count == 0:
+            self.error = True
+            self.uvm_report_error("COUNT_ERR", "Count was 0")
 
 uvm_component_utils(top)

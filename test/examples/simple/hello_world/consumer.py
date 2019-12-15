@@ -52,7 +52,7 @@ class consumer(UVMComponent):
     @cocotb.coroutine
     def put(self, p):
         print("consumer put() called with count " + str(self.count))
-        self.lock.get()
+        yield self.lock.get()
         self.count += 1
         self.accept_tr(p)
         yield Timer(10, "NS")

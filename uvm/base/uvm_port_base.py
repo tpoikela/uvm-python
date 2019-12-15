@@ -417,7 +417,6 @@ class UVMPortBase():
                     provider.get_full_name()), UVM_NONE)
            return
 
-        print("WWWZZZ checking relationship to " + provider.get_name())
         self.m_check_relationship(provider)
 
         self.m_provided_by[provider.get_full_name()] = provider
@@ -633,7 +632,6 @@ class UVMPortBase():
     # end_of_elaboration phase. Users should not need to call it directly.
 
     def resolve_bindings(self):
-        print("YYY UVMPortBase Resolve_bindings is called now")
         if self.m_resolved:  # don't repeat ourselves
             return
 

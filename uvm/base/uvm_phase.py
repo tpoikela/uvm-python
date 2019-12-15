@@ -460,9 +460,9 @@ class UVMPhase(UVMObject):
         if phase == self.m_imp or phase == self:
             return phase
 
-        found = self.m_find_predecessor(phase,stay_in_scope,self)
+        found = self.m_find_predecessor(phase, stay_in_scope, self)
         if found is None:
-            found = self.m_find_successor(phase,stay_in_scope,self)
+            found = self.m_find_successor(phase, stay_in_scope, self)
         return found
 
     # Function: is
@@ -1211,7 +1211,6 @@ class UVMPhase(UVMObject):
                     done = False
 
         # remove ourselves from the list
-        print("ZZZ len is " + str(len(pred_of_succ)))
         if self.get_name() != 'final':
             del pred_of_succ[self]
     #endfunction
