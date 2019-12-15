@@ -26,7 +26,7 @@ before_script:
   - source venv/bin/activate
   - pip install cocotb
   - apt-get update -qq
-  - apt-get install -y -qq flex gperf
+  - apt-get install -y -qq flex bison gperf
   - bash install_iverilog.sh
 
 test:
