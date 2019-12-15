@@ -973,9 +973,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if (set_priority < 0):
             set_priority = self.get_priority()
 
-        print("seq_base before wait_for_grant")
         yield sequencer.wait_for_grant(self, set_priority)
-        print("seq_base AFTER wait_for_grant")
 
         # TODO recording
         #if (sequencer.is_auto_item_recording_enabled()) begin
@@ -1174,18 +1172,14 @@ class UVMSequenceBase(UVMSequenceItem):
         i = 0
 
         if self.response_queue.size() == 0:
-            print("XXX entering resp queue wait " + self.get_name())
             while True:
-                print("XXX wait event now " + self.get_name())
                 yield self.m_resp_queue_event.wait()
                 self.m_resp_queue_event.clear()
-                print("XXX got event now " + self.get_name())
                 if self.response_queue.size() != 0:
                     break
                 else:
                     yield Timer(0)
 
-        print("XXX checking trans ID now " + self.get_name())
         if transaction_id == -1:
             response.append(self.response_queue.pop_front())
             yield Timer(0)

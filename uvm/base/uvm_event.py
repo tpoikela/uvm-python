@@ -47,7 +47,7 @@ class UVMEventBase(UVMObject):
     #protected bit        on;
     #protected time       self.trigger_time=0;
     #protected uvm_event_callback  self.callbacks[$];
-    
+
     # Function: new
     # Creates a new event object.
     def __init__(self, name=""):
@@ -59,7 +59,7 @@ class UVMEventBase(UVMObject):
         self.trigger_time = 0
         self.callbacks = UVMQueue() # uvm_event_callback
         self.m_waiters = 0
-    # endfunction  
+    # endfunction
 
     def set(self):
         if self.m_waiters > 0:
@@ -68,13 +68,9 @@ class UVMEventBase(UVMObject):
     @cocotb.coroutine
     def wait(self):
         self.m_waiters += 1
-        print("UVMEvent here YYY")
         if self.m_waiters == 0:
-            print("UVMEvent here YYY1.5 cleared()")
             self.m_event.clear()
-        print("UVMEvent here YYY2")
         yield self.m_event.wait()
-        print("UVMEvent here YYY3")
         self.m_waiters -= 1
         if self.m_waiters == 0:
             self.m_event.clear()
@@ -105,8 +101,7 @@ class UVMEventBase(UVMObject):
     #        self.num_waiters++;
     #        @on;
     #    endtask
-    #
-    #
+
     #    // Task: wait_off
     #    //
     #    // If the event has already triggered and is "on", this task waits for the
@@ -126,11 +121,10 @@ class UVMEventBase(UVMObject):
     #        self.num_waiters++;
     #        @self.on;
     #    endtask
-    #
-    #
+
     #    // Task: wait_trigger
     #    //
-    #    // Waits for the event to be triggered. 
+    #    // Waits for the event to be triggered.
     #    //
     #    // If one process calls wait_trigger in the same delta as another process
     #    // calls <uvm_event#(T)::trigger>, a race condition occurs. If the call to wait occurs
@@ -144,8 +138,7 @@ class UVMEventBase(UVMObject):
         yield self.m_event.wait()
         self.m_event.clear()
     # endtask
-#
-#
+
 #    // Task: wait_ptrigger
 #    //
 #    // Waits for a persistent trigger of the event. Unlike <wait_trigger>, this
@@ -177,7 +170,7 @@ class UVMEventBase(UVMObject):
 #
 #    // Function: is_on
 #    //
-#    // Indicates whether the event has been triggered since it was last reset. 
+#    // Indicates whether the event has been triggered since it was last reset.
 #    //
 #    // A return of 1 indicates that the event has triggered.
 #
@@ -222,7 +215,7 @@ class UVMEventBase(UVMObject):
 #
 #    // Function: cancel
 #    //
-#    // Decrements the number of waiters on the event. 
+#    // Decrements the number of waiters on the event.
 #    //
 #    // This is used if a process that is waiting on an event is disabled or
 #    // activated by some other means.
@@ -269,7 +262,7 @@ class UVMEventBase(UVMObject):
 #        self.on = e.on;
 #        self.trigger_time = e.self.trigger_time;
 #        self.callbacks.delete();
-#        self.callbacks = e.self.callbacks;   
+#        self.callbacks = e.self.callbacks;
 #
 #    endfunction
 #
@@ -279,8 +272,8 @@ class UVMEventBase(UVMObject):
 #
 # CLASS: uvm_event#(T)
 #
-# The uvm_event class is an extension of the abstract uvm_event_base class.  
-# 
+# The uvm_event class is an extension of the abstract uvm_event_base class.
+#
 # The optional parameter ~T~ allows the user to define a data type which
 # can be passed during an event trigger.
 #------------------------------------------------------------------------------
@@ -294,7 +287,7 @@ class UVMEvent(UVMEventBase): #(type T=uvm_object) extends uvm_event_base;
     def __init__(self, name=""):
         UVMEventBase.__init__(self, name)
         self.trigger_data = None
-    #endfunction  
+    #endfunction
 
     # Task: wait_trigger_data
     #
@@ -383,7 +376,7 @@ class UVMEvent(UVMEventBase): #(type T=uvm_object) extends uvm_event_base;
     #
     #    // Function: delete_callback
     #    //
-    #    // Unregisters the given callback, ~cb~, from this event. 
+    #    // Unregisters the given callback, ~cb~, from this event.
     #
     #    virtual function void delete_callback (uvm_event_callback#(T) cb);
     #        for (int i=0;i<self.callbacks.size();i++) begin
@@ -407,11 +400,11 @@ class UVMEvent(UVMEventBase): #(type T=uvm_object) extends uvm_event_base;
     #        self.trigger_data = e.trigger_data;
     #    endfunction // do_copy
 
-    #   virtual function uvm_object create(string name=""); 
+    #   virtual function uvm_object create(string name="");
     #        uvm_event#(T) v;
     #        v=new(name);
     #        return v;
     #    endfunction
 
-    #endclass
+    # endclass
 
