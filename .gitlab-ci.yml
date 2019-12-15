@@ -24,6 +24,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install cocotb
+  - apt-get install iverilog
 
 test:
   script:
