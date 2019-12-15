@@ -12,5 +12,5 @@ test-basic_examples:
 test-sequence:
 	make -C sequence/basic_read_write_sequence
 
-test-hello_word:
+test-hello_world:
 	make -C hello_world/
