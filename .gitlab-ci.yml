@@ -18,6 +18,7 @@ cache:
     - .cache/pip
     - venv/
     - iverilog/
+    - iverilog/*.o
 
 before_script:
   - python -V  # Print out python version for debugging
