@@ -23,10 +23,12 @@
 
 module dut();
 
-bit [15:0] acp;
+reg [15:0] acp;
 
-function void reset();
-   acp = 0;
+function reset;
+    begin
+        acp = 0;
+    end
 endfunction
 
 

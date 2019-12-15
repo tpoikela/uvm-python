@@ -40,20 +40,21 @@ PWD=$(shell pwd)
 
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
-UVM_PYTHON := $(WPWD)/../../../../..
+UVM_PYTHON := $(WPWD)/../../../../../..
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
-UVM_PYTHON := $(WPWD)/../../../../..
+UVM_PYTHON := $(WPWD)/../../../../../..
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
 ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(WPWD)/../../common_stub.v
+    #VERILOG_SOURCES ?= $(WPWD)/../../common_stub.v
+    VERILOG_SOURCES ?= $(WPWD)/dut.sv
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
@@ -63,8 +64,8 @@ ifneq ($(VLOG),)
 endif
 
 SIM_ARGS = ""
-TOPLEVEL := common_stub
-MODULE   ?= top
+TOPLEVEL := dut
+MODULE   ?= tb_run
 
 include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

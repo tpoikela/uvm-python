@@ -22,6 +22,10 @@
 #// -------------------------------------------------------------
 #//
 #
+
+import cocotb
+from cocotb.triggers import Timer
+
 #`include "uvm_pkg.sv"
 #
 #`include "dut.sv"
@@ -95,3 +99,8 @@
 #end
 #
 #endprogram
+
+
+@cocotb.test()
+def module_top(dut):
+    yield Timer(1)
