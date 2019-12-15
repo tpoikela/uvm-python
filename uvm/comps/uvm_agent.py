@@ -1,8 +1,9 @@
 #
 #------------------------------------------------------------------------------
 #   Copyright 2007-2011 Mentor Graphics Corporation
-#   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#   Copyright 2007-2011 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
+#   Copyright 2019 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -23,6 +24,7 @@
 from ..base.uvm_object_globals import UVM_ACTIVE
 from ..base.uvm_component import UVMComponent
 from ..base.uvm_resource import UVMResourcePool
+from ..base.uvm_queue import UVMQueue
 
 #------------------------------------------------------------------------------
 #
@@ -32,7 +34,7 @@ from ..base.uvm_resource import UVMResourcePool
 # defined agents. Deriving from uvm_agent will allow you to distinguish agents
 # from other component types also using its inheritance. Such agents will
 # automatically inherit features that may be added to uvm_agent in the future.
-# 
+#
 # While an agent's build function, inherited from <uvm_component>, can be
 # implemented to define any agent topology, an agent typically contains three
 # subcomponents: a driver, sequencer, and monitor. If the agent is active,
@@ -41,7 +43,7 @@ from ..base.uvm_resource import UVMResourcePool
 #------------------------------------------------------------------------------
 
 class UVMAgent(UVMComponent):
-  
+
     # Function: new
     #
     # Creates and initializes an instance of this class using the normal
@@ -53,18 +55,18 @@ class UVMAgent(UVMComponent):
     # be set by doing:
     #
     #| uvm_config_int::set(this, "<relative_path_to_agent>,
-    #|   "is_active", UVM_ACTIVE);
-  
+    #|   "is_active", UVM_ACTIVE)
+
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
-        self.is_active = UVM_ACTIVE;
-  
+        self.is_active = UVM_ACTIVE
+
     def build_phase(self, phase):
         active = 0
-        rp = None # uvm_resource_pool 
-        rq = UVMQueue() # uvm_resource_types::rsrc_q_t
-        
-        UVMComponent.build_phase(self, phase);
+        rp = None  # uvm_resource_pool
+        rq = UVMQueue()  # uvm_resource_types::rsrc_q_t
+
+        UVMComponent.build_phase(self, phase)
         # is_active is treated as if it were declared via `uvm_field_enum,
         # which means it matches against uvm_active_passive_enum, int,
         # int unsigned, uvm_integral_t, uvm_bitstream_t, and string.
@@ -72,18 +74,18 @@ class UVMAgent(UVMComponent):
         rq = rp.lookup_name(self.get_full_name(), "is_active", None, 0)
         UVMResourcePool.sort_by_precedence(rq)
         for i in range(0, rq.size()):
-           rsrc = rq.get(i) # uvm_resource_base 
+           rsrc = rq.get(i)  # uvm_resource_base
            rap = rsrc
-           is_active = rap.read(this);
-  
+           is_active = rap.read(self)
+
     type_name = "uvm_agent"
-  
+
     def get_type_name(self):
         return UVMAgent.type_name
-  
+
     # Function: get_is_active
     #
-    # Returns UVM_ACTIVE is the agent is acting as an active agent and 
+    # Returns UVM_ACTIVE is the agent is acting as an active agent and
     # UVM_PASSIVE if it is acting as a passive agent. The default implementation
     # is to just return the is_active flag, but the component developer may
     # override this behavior if a more complex algorithm is needed to determine

@@ -94,6 +94,7 @@ class UVMRegBlock(UVMObject):
         self.regs = UVMPool()  #int unsigned[uvm_reg]
         self.blks = UVMPool()
         self.mems = UVMPool()
+        self.root_hdl_paths = UVMPool()
 
     #
     #   // Function: configure
@@ -1007,7 +1008,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern function string get_default_hdl_path ()
     #
-    #
+
     #   // Function: set_hdl_path_root
     #   //
     #   // Specify a root HDL path
@@ -1020,8 +1021,12 @@ class UVMRegBlock(UVMObject):
     #   // same design abstraction specified using <add_hdl_path>.
     #   //
     #   extern function void set_hdl_path_root (string path, string kind = "RTL")
-    #
-    #
+    # set_hdl_path_root
+    def set_hdl_path_root(self, path, kind="RTL"):
+        if (kind == ""):
+            kind = self.get_default_hdl_path()
+        self.root_hdl_paths[kind] = path
+
     #   // Function: is_hdl_path_root
     #   //
     #   // Check if this block has an absolute path
@@ -2080,14 +2085,6 @@ class UVMRegBlock(UVMObject):
 #endfunction
 #
 #
-# set_hdl_path_root
-#
-#function void uvm_reg_block::set_hdl_path_root (string path, string kind = "RTL")
-#  if (kind == "")
-#    kind = get_default_hdl_path()
-#
-#  root_hdl_paths[kind] = path
-#endfunction
 #
 #
 # is_hdl_path_root

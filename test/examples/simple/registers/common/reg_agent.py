@@ -128,7 +128,7 @@ class reg_agent(UVMAgent):
 
     def build_phase(self, phase):
        print("Started building...\n")
-       UVMAgent.build_phase(phase)
+       UVMAgent.build_phase(self, phase)
        print("Ended building...\n")
 
     def connect_phase(self, phase):
