@@ -1,5 +1,5 @@
 
-test: test-trivial test-basic_examples test-sequence
+test: test-trivial test-basic_examples test-sequence test-hello_world
 
 test-trivial:
 	make -C trivial
@@ -11,3 +11,6 @@ test-basic_examples:
 
 test-sequence:
 	make -C sequence/basic_read_write_sequence
+
+test-hello_word:
+	make -C hello_world/
