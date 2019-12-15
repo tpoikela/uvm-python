@@ -28,6 +28,7 @@ before_script:
   - pip install cocotb
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
+  - ls iverilog/
   - bash install_iverilog.sh
 
 test:
