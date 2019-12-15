@@ -17,6 +17,7 @@ cache:
   paths:
     - .cache/pip
     - venv/
+    - iverilog
 
 before_script:
   - python -V  # Print out python version for debugging
@@ -24,6 +25,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install cocotb
+  - apt-get install flex gperf
   - bash install_iverilog.sh
 
 test:
