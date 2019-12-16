@@ -118,7 +118,7 @@ class UVMRegMap(UVMObject):
         #
         self.m_parent_map = None # uvm_reg_map
         self.m_parent_maps = {} # uvm_reg_addr_t[uvm_reg_map] // value=offset of this map at parent level
-        self.m_submaps = {} # uvm_reg_addr_t[uvm_reg_map] value=offset of submap at this level
+        self.m_submaps = {}  # uvm_reg_addr_t[uvm_reg_map] value=offset of submap at this level
         self.m_submap_rights = {} # string[uvm_reg_map] # value=rights of submap at this level
 
         self.m_regs_info = {} # uvm_reg_map_info[uvm_reg]
@@ -533,6 +533,7 @@ class UVMRegMap(UVMObject):
     #   extern virtual function uvm_reg_adapter get_adapter (uvm_hier_e hier=UVM_HIER)
     #
     #
+
     #   // Function: get_submaps
     #   //
     #   // Get the address sub-maps
@@ -543,8 +544,16 @@ class UVMRegMap(UVMObject):
     #   //
     #   extern virtual function void  get_submaps (ref uvm_reg_map maps[$],
     #                                              input uvm_hier_e hier=UVM_HIER)
-    #
-    #
+    def get_submaps(self, maps, hier=UVM_HIER):
+        for submap in self.m_submaps:
+            maps.append(submap)
+
+        if (hier == UVM_HIER):
+            for sm in self.m_submaps:
+                submap = sm
+                submap.get_submaps(maps)
+        #endfunction
+
     #   // Function: get_registers
     #   //
     #   // Get the registers
@@ -555,7 +564,16 @@ class UVMRegMap(UVMObject):
     #   //
     #   extern virtual function void  get_registers (ref uvm_reg regs[$],
     #                                                input uvm_hier_e hier=UVM_HIER)
-    #
+    def get_registers(self, regs, hier=UVM_HIER):
+        for rg in self.m_regs_info:
+            regs.append(rg)
+        
+        if (hier == UVM_HIER):
+            for sm in self.m_submaps:
+                submap = sm
+                submap.get_registers(regs)
+        #endfunction
+
     #
     #   // Function: get_fields
     #   //
@@ -1125,36 +1143,7 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-# get_submaps
 #
-#function void uvm_reg_map::get_submaps(ref uvm_reg_map maps[$], input uvm_hier_e hier=UVM_HIER)
-#
-#   foreach (self.m_submaps[submap])
-#     maps.push_back(submap)
-#
-#
-#   if (hier == UVM_HIER)
-#     foreach (self.m_submaps[submap_]) begin
-#       uvm_reg_map submap=submap_
-#       submap.get_submaps(maps)
-#     end
-#endfunction
-#
-#
-# get_registers
-#
-#function void uvm_reg_map::get_registers(ref uvm_reg regs[$], input uvm_hier_e hier=UVM_HIER)
-#
-#  foreach (self.m_regs_info[rg])
-#    regs.push_back(rg)
-#
-#  if (hier == UVM_HIER)
-#    foreach (self.m_submaps[submap_]) begin
-#      uvm_reg_map submap=submap_
-#      submap.get_registers(regs)
-#    end
-#
-#endfunction
 #
 #
 # get_fields

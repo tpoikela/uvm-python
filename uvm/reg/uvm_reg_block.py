@@ -383,6 +383,7 @@ class UVMRegBlock(UVMObject):
     #                                            input uvm_hier_e hier=UVM_HIER)
     #
     #
+
     #   // Function: get_maps
     #   //
     #   // Get the address maps
@@ -390,6 +391,10 @@ class UVMRegBlock(UVMObject):
     #   // Get the address maps instantiated in this block.
     #   //
     #   extern virtual function void get_maps (ref UVMRegMap maps[$])
+    def get_maps(self, maps):
+        for key in self.maps.key_list():
+            maps.append(key)
+
     #
     #
     #   // Function: get_registers
@@ -1334,15 +1339,6 @@ class UVMRegBlock(UVMObject):
 #   return blks[0]
 #endfunction
 #
-#
-# get_maps
-#
-#function void uvm_reg_block::get_maps(ref UVMRegMap maps[$])
-#
-#   foreach (self.maps[map])
-#     maps.push_back(map)
-#
-#endfunction
 #
 #
 # get_parent

@@ -1,7 +1,7 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2011 Cypress Semiconductor
 #//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2011 Cadence Design Systems, Inc. 
+#//   Copyright 2011 Cadence Design Systems, Inc.
 #//   Copyright 2019 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
@@ -117,28 +117,28 @@ from .uvm_queue import UVMQueue
 #|  uvm_resource_types::rsrc_q_t queue
 #
 #----------------------------------------------------------------------
-#class uvm_resource_types;
+#class uvm_resource_types
 #
 #  // types uses for setting overrides
-#  typedef bit[1:0] override_t;
+#  typedef bit[1:0] override_t
 #  typedef enum override_t { TYPE_OVERRIDE = 2'b01,
-#                            NAME_OVERRIDE = 2'b10 } override_e;
+#                            NAME_OVERRIDE = 2'b10 } override_e
 #
 #   // general purpose queue of resourcex
-#  typedef uvm_queue#(uvm_resource_base) rsrc_q_t;
+#  typedef uvm_queue#(uvm_resource_base) rsrc_q_t
 #
 #  // enum for setting resource search priority
-#  typedef enum { PRI_HIGH, PRI_LOW } priority_e;
+#  typedef enum { PRI_HIGH, PRI_LOW } priority_e
 #
 #  // access record for resources.  A set of these is stored for each
 #  // resource by accessing object.  It's updated for each read/write.
 #  typedef struct
 #  {
-#    time read_time;
-#    time write_time;
-#    int unsigned read_count;
-#    int unsigned write_count;
-#  } access_t;
+#    time read_time
+#    time write_time
+#    int unsigned read_count
+#    int unsigned write_count
+#  } access_t
 #
 #endclass
 
@@ -291,14 +291,14 @@ class UVMResourceBase(UVMObject):
     #// Task: wait_modified
     #//
     #// This task blocks until the resource has been modified -- that is, a
-    #// <uvm_resource#(T)::write> operation has been performed.  When a 
-    #// <uvm_resource#(T)::write> is performed the modified bit is set which 
-    #// releases the block.  Wait_modified() then clears the modified bit so 
+    #// <uvm_resource#(T)::write> operation has been performed.  When a
+    #// <uvm_resource#(T)::write> is performed the modified bit is set which
+    #// releases the block.  Wait_modified() then clears the modified bit so
     #// it can be called repeatedly.
 
-    #task wait_modified();
-    #  wait (modified == 1);
-    #  modified = 0;
+    #task wait_modified()
+    #  wait (modified == 1)
+    #  modified = 0
     #endtask
 
     #//-----------------------
@@ -310,9 +310,9 @@ class UVMResourceBase(UVMObject):
     #// name is a multi-element string that identifies a scope.  Each
     #// element refers to a scope context and the elements are separated by
     #// dots (.).
-    #// 
+    #//
     #//|    top.env.agent.monitor
-    #// 
+    #//
     #// Consider the example above of a scope name.  It consists of four
     #// elements: "top", "env", "agent", and "monitor".  The elements are
     #// strung together with a dot separating each element.  ~top.env.agent~
@@ -323,17 +323,17 @@ class UVMResourceBase(UVMObject):
     #// expression is a special string that contains placeholders which can
     #// be substituted in various ways to generate or recognize a
     #// particular set of strings.  Here are a few simple examples:
-    #// 
+    #//
     #//|     top\..*	                all of the scopes whose top-level component
     #//|                            is top
-    #//|    top\.env\..*\.monitor	all of the scopes in env that end in monitor;
+    #//|    top\.env\..*\.monitor	all of the scopes in env that end in monitor
     #//|                            i.e. all the monitors two levels down from env
     #//|    .*\.monitor	            all of the scopes that end in monitor; i.e.
     #//|                            all the monitors (assuming a naming convention
     #//|                            was used where all monitors are named "monitor")
     #//|    top\.u[1-5]\.*	        all of the scopes rooted and named u1, u2, u3,
     #//                             u4, or u5, and any of their subscopes.
-    #// 
+    #//
     #// The examples above use POSIX regular expression notation.  This is
     #// a very general and expressive notation.  It is not always the case
     #// that so much expressiveness is required.  Sometimes an expression
@@ -345,36 +345,36 @@ class UVMResourceBase(UVMObject):
     #// allowed and dots are not a metacharacter in globs as they are in
     #// regular expressions.  The following table shows glob
     #// metacharacters.
-    #// 
+    #//
     #//|      char	meaning	                regular expression
     #//|                                    equivalent
     #//|      *	    0 or more characters	.*
     #//|      +	    1 or more characters	.+
     #//|      ?	    exactly one character	.
-    #// 
+    #//
     #// Of the examples above, the first three can easily be translated
     #// into globs.  The last one cannot.  It relies on notation that is
     #// not available in glob syntax.
-    #// 
+    #//
     #//|    regular expression	    glob equivalent
     #//|    ---------------------      ------------------
     #//|    top\..*	            top.*
     #//|    top\.env\..*\.monitor	    top.env.*.monitor
     #//|    .*\.monitor	            *.monitor
-    #// 
+    #//
     #// The resource facility supports both regular expression and glob
-    #// syntax.  Regular expressions are identified as such when they 
+    #// syntax.  Regular expressions are identified as such when they
     #// surrounded by '/' characters. For example, ~/^top\.*/~ is
     #// interpreted as the regular expression ~^top\.*~, where the
     #// surrounding '/' characters have been removed. All other expressions
-    #// are treated as glob expressions. They are converted from glob 
-    #// notation to regular expression notation internally.  Regular expression 
-    #// compilation and matching as well as glob-to-regular expression 
+    #// are treated as glob expressions. They are converted from glob
+    #// notation to regular expression notation internally.  Regular expression
+    #// compilation and matching as well as glob-to-regular expression
     #// conversion are handled by two DPI functions:
-    #// 
-    #//|    function int uvm_re_match(string re, string str);
-    #//|    function string uvm_glob_to_re(string glob);
-    #// 
+    #//
+    #//|    function int uvm_re_match(string re, string str)
+    #//|    function string uvm_glob_to_re(string glob)
+    #//
     #// uvm_re_match both compiles and matches the regular expression.
     #// All of the matching is done using regular expressions, so globs are
     #// converted to regular expressions and then processed.
@@ -422,7 +422,7 @@ class UVMResourceBase(UVMObject):
     #// Change the search priority of the resource based on the value of
     #// the priority enum argument.
     #//
-    #pure virtual function void set_priority (uvm_resource_types::priority_e pri);
+    #pure virtual function void set_priority (uvm_resource_types::priority_e pri)
 
     #//-------------------------
     #// Group: Utility Functions
@@ -435,16 +435,16 @@ class UVMResourceBase(UVMObject):
     #// specializations are expected to override this function to produce a
     #// proper string representation of the resource value.
 
-    #function string convert2string();
-    #  return "?";
+    #function string convert2string()
+    #  return "?"
     #endfunction
 
     #// Function: do_print
     #//
     #// Implementation of do_print which is called by print().
 
-    #function void do_print (uvm_printer printer);
-    #  printer.print_string("",$sformatf("%s [%s] : %s", get_name(), get_scope(), convert2string()));
+    #function void do_print (uvm_printer printer)
+    #  printer.print_string("",$sformatf("%s [%s] : %s", get_name(), get_scope(), convert2string()))
     #endfunction
 
 
@@ -530,6 +530,34 @@ class UVMResourceBase(UVMObject):
                 # TODO access_record.write_time = $realtime
                 self.access[str] = access_record
 
+
+    #// Function: print_accessors
+    #//
+    #// Dump the access records for this resource
+    #//
+    #virtual function void print_accessors()
+
+    #  string str
+    #  uvm_component comp
+    #  uvm_resource_types::access_t access_record
+    #  string qs[$]
+    #
+    #  if(access.num() == 0)
+    #    return
+
+    #  foreach (access[i]) begin
+    #    str = i
+    #    access_record = access[str]
+    #    qs.push_back($sformatf("%s reads: %0d @ %0t  writes: %0d @ %0t\n",str,
+    #             access_record.read_count,
+    #             access_record.read_time,
+    #             access_record.write_count,
+    #             access_record.write_time))
+    #  end
+    #  `uvm_info("UVM/RESOURCE/ACCESSOR",`UVM_STRING_QUEUE_STREAMING_PACK(qs),UVM_NONE)
+
+    #endfunction
+
     #// Function: init_access_record
     #//
     #// Initialize a new access record
@@ -541,6 +569,12 @@ class UVMResourceBase(UVMObject):
         access_record.read_count = 0
         access_record.write_count = 0
 
+#//----------------------------------------------------------------------
+#// Class: uvm_resource #(T)
+#//
+#// Parameterized resource.  Provides essential access methods to read
+#// from and write to the resource database.
+#//----------------------------------------------------------------------
 
 class UVMResource(UVMResourceBase):
 
@@ -558,6 +592,19 @@ class UVMResource(UVMResourceBase):
             return self.m_r2s.convert2string(self.val)
         return sv.sformatf("(%s) %s", uvm_typename(self.val), self.val)
 
+    #//----------------------
+    #// Group: Type Interface
+    #//----------------------
+    #//
+    #// Resources can be identified by type using a static type handle.
+    #// The parent class provides the virtual function interface
+    #// <get_type_handle>.  Here we implement it by returning the static type
+    #// handle.
+
+    #// Function: get_type
+    #//
+    #// Static function that returns the static type handle.  The return
+    #// type is this_type, which is the type of the parameterized class.
 
     @classmethod
     def get_type(cls):
@@ -566,14 +613,43 @@ class UVMResource(UVMResourceBase):
         else:
             return UVMResource.my_type
 
+    #// Function: get_type_handle
+    #//
+    #// Returns the static type handle of this resource in a polymorphic
+    #// fashion.  The return type of get_type_handle() is
+    #// uvm_resource_base.  This function is not static and therefore can
+    #// only be used by instances of a parameterized resource.
     def get_type_handle(self):
         return UVMResource.get_type()
 
+    #//-------------------------
+    #// Group: Set/Get Interface
+    #//-------------------------
+    #//
+    #// uvm_resource#(T) provides an interface for setting and getting a
+    #// resources.  Specifically, a resource can insert itself into the
+    #// resource pool.  It doesn't make sense for a resource to get itself,
+    #// since you can't call a function on a handle you don't have.
+    #// However, a static get interface is provided as a convenience.  This
+    #// obviates the need for the user to get a handle to the global
+    #// resource pool as this is done for him here.
+
+    #// Function: set
+    #//
+    #// Simply put this resource into the global resource pool
     def set(self):
         """ Simply put this resource into the global resource pool"""
         pool = UVMResourcePool.get()
         pool.set(self)
 
+    #// Function: set_override
+    #//
+    #// Put a resource into the global resource pool as an override.  This
+    #// means it gets put at the head of the list and is searched before
+    #// other existing resources that occupy the same position in the name
+    #// map or the type map.  The default is to override both the name and
+    #// type maps.  However, using the ~override~ argument you can specify
+    #// that either the name map or type map is overridden.
     def set_override(self, override=NAME_OVERRIDE):
         rp = UVMResourcePool.get()
         rp.set(self, override)
@@ -596,6 +672,55 @@ class UVMResource(UVMResourceBase):
         if rsrc_base is None:
             return None
         return rsrc
+
+    #// Function: get_by_type
+    #//
+    #// looks up a resource by ~type_handle~ in the type map. The first resource
+    #// with the specified ~type_handle~ that is visible in the specified ~scope~ is
+    #// returned, if one exists. If there is no resource matching the specifications,
+    #// ~null~ is returned.
+
+    #static function this_type get_by_type(string scope = "",
+    #                                      uvm_resource_base type_handle)
+
+    #  uvm_resource_pool rp = uvm_resource_pool::get()
+    #  uvm_resource_base rsrc_base
+    #  this_type rsrc
+    #  string msg
+
+    #  if(type_handle == null)
+    #    return null
+
+    #  rsrc_base = rp.get_by_type(scope, type_handle)
+    #  if(rsrc_base == null)
+    #    return null
+
+    #  if(!$cast(rsrc, rsrc_base)) begin
+    #    $sformat(msg, "Resource with specified type handle in scope %s was not located", scope)
+    #    `uvm_warning("RSRCNF", msg)
+    #    return null
+    #  end
+
+    #  return rsrc
+
+    #endfunction
+
+    #//----------------------------
+    #// Group: Read/Write Interface
+    #//----------------------------
+    #//
+    #// <read> and <write> provide a type-safe interface for getting and
+    #// setting the object in the resource container.  The interface is
+    #// type safe because the value argument for <write> and the return
+    #// value of <read> are T, the type supplied in the class parameter.
+    #// If either of these functions is used in an incorrect type context
+    #// the compiler will complain.
+
+    #// Function: read
+    #//
+    #// Return the object stored in the resource container.  If an ~accessor~
+    #// object is supplied then also update the accessor record for this
+    #// resource.
 
     def read(self, accessor=None):
         """ Return the object stored in the resource container """
@@ -630,6 +755,24 @@ class UVMResource(UVMResourceBase):
         # set the value and set the dirty bit
         self.val = t
         self.modified = True
+
+    #//----------------
+    #// Group: Priority
+    #//----------------
+    #//
+    #// Functions for manipulating the search priority of resources.  These
+    #// implementations of the interface defined in the base class delegate
+    #// to the resource pool.
+
+    #// Function: set priority
+    #//
+    #// Change the search priority of the resource based on the value of
+    #// the priority enum argument, ~pri~.
+
+    #function void set_priority (uvm_resource_types::priority_e pri)
+    #  uvm_resource_pool rp = uvm_resource_pool::get()
+    #  rp.set_priority(this, pri)
+    #endfunction
 
     #// Function: get_highest_precedence
     #//
@@ -752,12 +895,20 @@ class UVMResourcePool:
         self.ttab = {}
         self.get_record = []  # History of gets
 
+    #// Function: get
+    #//
+    #// Returns the singleton handle to the resource pool
     @classmethod
     def get(cls):
         if UVMResourcePool.rp is None:
             UVMResourcePool.rp = UVMResourcePool()
         return UVMResourcePool.rp
 
+    #// Function: spell_check
+    #//
+    #// Invokes the spell checker for a string s.  The universe of
+    #// correctly spelled strings -- i.e. the dictionary -- is the name
+    #// map.
     def spell_check(self, s):
         return UVMSpellChkr.check(self.rtab, s)
 
@@ -826,6 +977,82 @@ class UVMResourcePool:
         self.ttab[type_handle] = rq
 
 
+    #// Function: set_override
+    #//
+    #// The resource provided as an argument will be entered into the pool
+    #// and will override both by name and type.
+
+    #function void set_override(uvm_resource_base rsrc)
+    #  set(rsrc, (uvm_resource_types::NAME_OVERRIDE |
+    #             uvm_resource_types::TYPE_OVERRIDE))
+    #endfunction
+
+
+    #// Function: set_name_override
+    #//
+    #// The resource provided as an argument will entered into the pool
+    #// using normal precedence in the type map and will override the name.
+
+    #function void set_name_override(uvm_resource_base rsrc)
+    #  set(rsrc, uvm_resource_types::NAME_OVERRIDE)
+    #endfunction
+
+
+    #// Function: set_type_override
+    #//
+    #// The resource provided as an argument will be entered into the pool
+    #// using normal precedence in the name map and will override the type.
+
+    #function void set_type_override(uvm_resource_base rsrc)
+    #  set(rsrc, uvm_resource_types::TYPE_OVERRIDE)
+    #endfunction
+
+
+    #// function - push_get_record
+    #//
+    #// Insert a new record into the get history list.
+    #function void push_get_record(string name, string scope,
+    #                                uvm_resource_base rsrc)
+    def push_get_record(self, name, scope, rsrc):
+        impt = None  # get_t impt
+
+        #  // if auditing is turned off then there is no reason
+        #  // to save a get record
+        if not UVMResourceOptions.is_auditing():
+            return
+
+        impt = get_t()
+
+        impt.name  = name
+        impt.scope = scope
+        impt.rsrc  = rsrc
+        impt.t     = sv.realtime()
+
+        self.get_record.append(impt)
+        #endfunction
+
+    #// function - dump_get_records
+    #//
+    #// Format and print the get history list.
+    #function void dump_get_records()
+
+        #  get_t record
+        #  bit success
+        #  string qs[$]
+
+        #  qs.push_back("--- resource get records ---\n")
+        #  foreach (get_record[i]) begin
+        #    record = get_record[i]
+        #    success = (record.rsrc != null)
+        #    qs.push_back($sformatf("get: name=%s  scope=%s  %s @ %0t\n",
+        #             record.name, record.scope,
+        #             ((success)?"success":"fail"),
+        #             record.t))
+        #  end
+        #  `uvm_info("UVM/RESOURCE/GETRECORD",`UVM_STRING_QUEUE_STREAMING_PACK(qs),UVM_NONE)
+        #endfunction
+
+
     #--------------
     # Group: Lookup
     #--------------
@@ -854,7 +1081,6 @@ class UVMResourcePool:
     # invoked on ~name~.  If ~type_handle~ is ~None~ then a type check is
     # not made and resources are returned that match only ~name~ and
     # ~scope~.
-
     def lookup_name(self, scope, name, type_handle=None, rpterr=True):
         rq = list()
         q = list()
@@ -969,7 +1195,7 @@ class UVMResourcePool:
         rsrc = None  # uvm_resource_base rsrc
         q = self.lookup_name(scope, name, type_handle, rpterr)
         #
-        if(len(q) == 0):
+        if len(q) == 0:
             self.push_get_record(name, scope, None)
             return None
 
@@ -998,7 +1224,7 @@ class UVMResourcePool:
     #  end
     #
     #  rq = ttab[type_handle]
-    #  for(int i = 0; i < rq.size(); ++i) begin 
+    #  for(int i = 0; i < rq.size(); ++i) begin
     #    r = rq.get(i)
     #    if(r.match_scope(scope))
     #      q.push_back(r)
@@ -1007,7 +1233,7 @@ class UVMResourcePool:
     #  return q
     #
     #endfunction
-    #
+
     #// Function: get_by_type
     #//
     #// Lookup a resource by ~type_handle~ and ~scope~.  Insert a record into
@@ -1029,7 +1255,7 @@ class UVMResourcePool:
     #  rsrc = q.get(0)
     #  push_get_record("<type>", scope, rsrc)
     #  return rsrc
-    #  
+    #
     #endfunction
 
 
@@ -1050,7 +1276,6 @@ class UVMResourcePool:
     #//
     #// Looks for all the resources whose name matches the regular
     #// expression argument and whose scope matches the current scope.
-    #
     #function uvm_resource_types::rsrc_q_t lookup_regex(string re, scope)
     #
     #  uvm_resource_types::rsrc_q_t rq
@@ -1106,7 +1331,168 @@ class UVMResourcePool:
                     break
         return q
 
+    #//--------------------
+    #// Group: Set Priority
+    #//--------------------
+    #//
+    #// Functions for altering the search priority of resources.  Resources
+    #// are stored in queues in the type and name maps.  When retrieving
+    #// resources, either by type or by name, the resource queue is search
+    #// from front to back.  The first one that matches the search criteria
+    #// is the one that is returned.  The ~set_priority~ functions let you
+    #// change the order in which resources are searched.  For any
+    #// particular resource, you can set its priority to UVM_HIGH, in which
+    #// case the resource is moved to the front of the queue, or to UVM_LOW in
+    #// which case the resource is moved to the back of the queue.
+
+    #// function- set_priority_queue
+    #//
+    #// This function handles the mechanics of moving a resource to either
+    #// the front or back of the queue.
+
+    #local function void set_priority_queue(uvm_resource_base rsrc,
+    #                                       ref uvm_resource_types::rsrc_q_t q,
+    #                                       uvm_resource_types::priority_e pri)
+
+    #  uvm_resource_base r
+    #  int unsigned i
+
+    #  string msg
+    #  string name = rsrc.get_name()
+
+    #  for(i = 0; i < q.size(); i++) begin
+    #    r = q.get(i)
+    #    if(r == rsrc) break
+    #  end
+
+    #  if(r != rsrc) begin
+    #    $sformat(msg, "Handle for resource named %s is not in the name name; cannot change its priority", name)
+    #    uvm_report_error("NORSRC", msg)
+    #    return
+    #  end
+
+    #  q.delete(i)
+
+    #  case(pri)
+    #    uvm_resource_types::PRI_HIGH: q.push_front(rsrc)
+    #    uvm_resource_types::PRI_LOW:  q.push_back(rsrc)
+    #  endcase
+
+    #endfunction
+
+
+    #// Function: set_priority_type
+    #//
+    #// Change the priority of the ~rsrc~ based on the value of ~pri~, the
+    #// priority enum argument.  This function changes the priority only in
+    #// the type map, leaving the name map untouched.
+
+    #function void set_priority_type(uvm_resource_base rsrc,
+    #                                uvm_resource_types::priority_e pri)
+
+    #  uvm_resource_base type_handle
+    #  string msg
+    #  uvm_resource_types::rsrc_q_t q
+
+    #  if(rsrc == null) begin
+    #    uvm_report_warning("NULLRASRC", "attempting to change the serach priority of a null resource")
+    #    return
+    #  end
+
+    #  type_handle = rsrc.get_type_handle()
+    #  if(!ttab.exists(type_handle)) begin
+    #    $sformat(msg, "Type handle for resrouce named %s not found in type map; cannot change its search priority", rsrc.get_name())
+    #    uvm_report_error("RNFTYPE", msg)
+    #    return
+    #  end
+
+    #  q = ttab[type_handle]
+    #  set_priority_queue(rsrc, q, pri)
+    #endfunction
+
+
+    #// Function: set_priority_name
+    #//
+    #// Change the priority of the ~rsrc~ based on the value of ~pri~, the
+    #// priority enum argument.  This function changes the priority only in
+    #// the name map, leaving the type map untouched.
+
+    #function void set_priority_name(uvm_resource_base rsrc,
+    #                                uvm_resource_types::priority_e pri)
+
+    #  string name
+    #  string msg
+    #  uvm_resource_types::rsrc_q_t q
+
+    #  if(rsrc == null) begin
+    #    uvm_report_warning("NULLRASRC", "attempting to change the serach priority of a null resource")
+    #    return
+    #  end
+
+    #  name = rsrc.get_name()
+    #  if(!rtab.exists(name)) begin
+    #    $sformat(msg, "Resrouce named %s not found in name map; cannot change its search priority", name)
+    #    uvm_report_error("RNFNAME", msg)
+    #    return
+    #  end
+
+    #  q = rtab[name]
+    #  set_priority_queue(rsrc, q, pri)
+
+    #endfunction
+
+
+    #// Function: set_priority
+    #//
+    #// Change the search priority of the ~rsrc~ based on the value of ~pri~,
+    #// the priority enum argument.  This function changes the priority in
+    #// both the name and type maps.
+
+    #function void set_priority (uvm_resource_base rsrc,
+    #                            uvm_resource_types::priority_e pri)
+    #  set_priority_type(rsrc, pri)
+    #  set_priority_name(rsrc, pri)
+    #endfunction
+
+    #//--------------------------------------------------------------------
+    #// Group: Debug
+    #//--------------------------------------------------------------------
+
+    #// Function: find_unused_resources
+    #//
+    #// Locate all the resources that have at least one write and no reads
+
+    #function uvm_resource_types::rsrc_q_t find_unused_resources()
+
+    #  uvm_resource_types::rsrc_q_t rq
+    #  uvm_resource_types::rsrc_q_t q = new
+    #  int unsigned i
+    #  uvm_resource_base r
+    #  uvm_resource_types::access_t a
+    #  int reads
+    #  int writes
+
+    #  foreach (rtab[name]) begin
+    #    rq = rtab[name]
+    #    for(int i=0; i<rq.size(); ++i) begin
+    #      r = rq.get(i)
+    #      reads = 0
+    #      writes = 0
+    #      foreach(r.access[str]) begin
+    #        a = r.access[str]
+    #        reads += a.read_count
+    #        writes += a.write_count
+    #      end
+    #      if(writes > 0 && reads == 0)
+    #        q.push_back(r)
+    #    end
+    #  end
+    #  return q
+    #endfunction
+
+
     #// Function: print_resources
+
     #//
     #// Print the resources that are in a single queue, ~rq~.  This is a utility
     #// function that can be used to print any collection of resources
@@ -1117,14 +1503,13 @@ class UVMResourcePool:
     def print_resources(self, rq, audit=False):
         i = 0
         r = None  # uvm_resource_base r
-        pass
         UVMResourcePool.printer = UVMLinePrinter()
         printer = UVMResourcePool.printer
-        printer.knobs.separator=""
-        printer.knobs.full_name=0
-        printer.knobs.identifier=0
-        printer.knobs.type_name=0
-        printer.knobs.reference=0
+        printer.knobs.separator = ""
+        printer.knobs.full_name = 0
+        printer.knobs.identifier = 0
+        printer.knobs.type_name = 0
+        printer.knobs.reference = 0
 
         if rq is None or len(rq) == 0:
             uvm_info("UVM/RESOURCE/PRINT","<none>",UVM_NONE)
@@ -1135,6 +1520,30 @@ class UVMResourcePool:
             r.print(printer)
             if audit is True:
                 r.print_accessors()
+
+
+    #// Function: dump
+    #//
+    #// dump the entire resource pool.  The resource pool is traversed and
+    #// each resource is printed.  The utility function print_resources()
+    #// is used to initiate the printing. If the ~audit~ bit is set then
+    #// the audit trail is dumped for each resource.
+
+    #function void dump(bit audit = 0)
+
+    #  uvm_resource_types::rsrc_q_t rq
+    #  string name
+
+    #  `uvm_info("UVM/RESOURCE/DUMP","\n=== resource pool ===",UVM_NONE)
+
+    #  foreach (rtab[name]) begin
+    #    rq = rtab[name]
+    #    print_resources(rq, audit)
+    #  end
+
+    #  `uvm_info("UVM/RESOURCE/DUMP","=== end of resource pool ===",UVM_NONE)
+
+    #endfunction
 
 
 import unittest
