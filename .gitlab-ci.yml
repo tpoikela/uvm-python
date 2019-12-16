@@ -35,9 +35,8 @@ test:
   script:
     - make test || exit 1
     - find -name results.xml -exec cat {} \; > results.log
-    - RET_VAL=`grep -c xxxyyyzzz results.log`
-    #- RET_VAL=`grep -c failure results.log`
-    - exit $RET_VAL
+    - bash check_errors.sh
+    # - RET_VAL=`grep failure results.log`
     # - python setup.py test
     # - pip install tox flake8  # you can also use tox
     # - tox -e py36,flake8
