@@ -131,7 +131,7 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
                           sv.sformatf("Verifying reset value of register %s in map \"%s\"...",
                           regs[i].get_full_name(), maps[d].get_full_name()), UVM_LOW)
                 
-                regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
+                yield regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
                 
                 if status != UVM_IS_OK:
                     uvm_error(self.get_type_name(),
@@ -141,7 +141,7 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
             blks = []  # uvm_reg_block blks[$]
             blk.get_blocks(blks)
             for i in range(len(blks)):
-                 self.do_block(blks[i])
+                self.do_block(blks[i])
 
         #   endtask:do_block
 

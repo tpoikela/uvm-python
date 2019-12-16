@@ -568,7 +568,7 @@ class UVMRegMap(UVMObject):
         for rg in self.m_regs_info:
             regs.append(rg)
         
-        if (hier == UVM_HIER):
+        if hier == UVM_HIER:
             for sm in self.m_submaps:
                 submap = sm
                 submap.get_registers(regs)

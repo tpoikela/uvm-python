@@ -141,7 +141,7 @@ class UVMReg(UVMObject):
     def set_offset(self, reg_map, offset, unmapped=0):
         orig_map = reg_map
         if self.m_maps.num() > 1 and reg_map is None:
-            uvm_report_error("RegModel", ("set_offset requires a non-null reg_map when register '"
+            uvm_report_error("RegModel", ("set_offset requires a non-None reg_map when register '"
                        + self.get_full_name() + "' belongs to more than one reg_map."))
             return
         reg_map = self.get_local_map(reg_map,"set_offset()")
@@ -250,7 +250,7 @@ class UVMReg(UVMObject):
     #   //
     #   // Get the parent register file
     #   //
-    #   // Returns ~null~ if this register is instantiated in a block.
+    #   // Returns ~None~ if this register is instantiated in a block.
     #   //
     #   extern virtual function uvm_reg_file get_regfile ()
 
@@ -294,7 +294,7 @@ class UVMReg(UVMObject):
 
     #// get_default_map
     def get_default_map(self, caller=""):
-        # if reg is not associated with any map, return ~null~
+        # if reg is not associated with any map, return ~None~
         if self.m_maps.num() == 0:
             cname = self.__get_cname(caller)
             uvm_report_warning("RegModel", ("Register '" + self.get_full_name()
@@ -386,7 +386,7 @@ class UVMReg(UVMObject):
     #   //
     #   // Finds a field with the specified name in this register
     #   // and returns its abstraction class.
-    #   // If no fields are found, returns ~null~.
+    #   // If no fields are found, returns ~None~.
     #   //
     #   extern virtual function uvm_reg_field get_field_by_name(string name)
 
@@ -513,14 +513,14 @@ class UVMReg(UVMObject):
     #   // and thus use the mirrored as a scoreboard for the register values
     #   // in the DUT, use the <uvm_reg::predict()> method. 
     #   //
-    def set(self, value, fname = "", lineno = 0):
+    def set(self, value, fname="", lineno=0):
         # Split the value into the individual fields
         self.m_fname = fname
         self.m_lineno = lineno
      
         for field in self.m_fields:
-           field.set((value >> field.get_lsb_pos()) &
-                            ((1 << field.get_n_bits()) - 1))
+            field.set((value >> field.get_lsb_pos()) &
+                    ((1 << field.get_n_bits()) - 1))
 
     #   // Function: get
     #   //
@@ -542,7 +542,7 @@ class UVMReg(UVMObject):
     #   // for these fields,
     #   // the returned value is the actual content.
     #   //
-    def get(self, fname = "", lineno = 0):
+    def get(self, fname="", lineno=0):
         # Concatenate the value of the individual fields
         # to form the register value
         self.m_fname = fname
@@ -550,7 +550,7 @@ class UVMReg(UVMObject):
         get = 0
         
         for field in self.m_fields:
-           get |= field.get() << field.get_lsb_pos()
+            get |= field.get() << field.get_lsb_pos()
         return get
 
     #
@@ -570,6 +570,7 @@ class UVMReg(UVMObject):
     #   extern virtual function uvm_reg_data_t  get_mirrored_value(string  fname = "",
     #                                               int     lineno = 0)
     #
+
     #
     #   // Function: needs_update
     #   //
@@ -579,7 +580,7 @@ class UVMReg(UVMObject):
     #   // Use the <uvm_reg::update()> to actually update the DUT register.
     #   //
     #   extern virtual function bit needs_update(); 
-    #
+
 
     #   // Function: reset
     #   //
@@ -596,9 +597,9 @@ class UVMReg(UVMObject):
     #   // was completed
     #   //
     #   extern virtual function void reset(string kind = "HARD")
-    def reset(self, kind = "HARD"):
+    def reset(self, kind="HARD"):
         for i in range(len(self.m_fields)):
-           self.m_fields[i].reset(kind)
+            self.m_fields[i].reset(kind)
         # Put back a key in the semaphore if it is checked out
         # in case a thread was killed during an operation
         self.m_atomic.try_get(1)
@@ -664,10 +665,10 @@ class UVMReg(UVMObject):
     #   extern virtual task write(output uvm_status_e      status,
     #                             input  uvm_reg_data_t    value,
     #                             input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                             input  uvm_reg_map       map = null,
-    #                             input  uvm_sequence_base parent = null,
+    #                             input  uvm_reg_map       map = None,
+    #                             input  uvm_sequence_base parent = None,
     #                             input  int               prior = -1,
-    #                             input  uvm_object        extension = null,
+    #                             input  uvm_object        extension = None,
     #                             input  string            fname = "",
     #                             input  int               lineno = 0)
 
@@ -693,14 +694,15 @@ class UVMReg(UVMObject):
     #   extern virtual task read(output uvm_status_e      status,
     #                            output uvm_reg_data_t    value,
     #                            input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                            input  uvm_reg_map       map = null,
-    #                            input  uvm_sequence_base parent = null,
+    #                            input  uvm_reg_map       map = None,
+    #                            input  uvm_sequence_base parent = None,
     #                            input  int               prior = -1,
-    #                            input  uvm_object        extension = null,
+    #                            input  uvm_object        extension = None,
     #                            input  string            fname = "",
     #                            input  int               lineno = 0)
     #
     #
+
     #   // Task: poke
     #   //
     #   // Deposit the specified value in this register
@@ -716,12 +718,13 @@ class UVMReg(UVMObject):
     #   extern virtual task poke(output uvm_status_e      status,
     #                            input  uvm_reg_data_t    value,
     #                            input  string            kind = "",
-    #                            input  uvm_sequence_base parent = null,
-    #                            input  uvm_object        extension = null,
+    #                            input  uvm_sequence_base parent = None,
+    #                            input  uvm_object        extension = None,
     #                            input  string            fname = "",
     #                            input  int               lineno = 0)
     #
     #
+
     #   // Task: peek
     #   //
     #   // Read the current value from this register
@@ -738,8 +741,8 @@ class UVMReg(UVMObject):
     #   extern virtual task peek(output uvm_status_e      status,
     #                            output uvm_reg_data_t    value,
     #                            input  string            kind = "",
-    #                            input  uvm_sequence_base parent = null,
-    #                            input  uvm_object        extension = null,
+    #                            input  uvm_sequence_base parent = None,
+    #                            input  uvm_object        extension = None,
     #                            input  string            fname = "",
     #                            input  int               lineno = 0)
 
@@ -761,10 +764,10 @@ class UVMReg(UVMObject):
     #   //
     #   extern virtual task update(output uvm_status_e      status,
     #                              input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                              input  uvm_reg_map       map = null,
-    #                              input  uvm_sequence_base parent = null,
+    #                              input  uvm_reg_map       map = None,
+    #                              input  uvm_sequence_base parent = None,
     #                              input  int               prior = -1,
-    #                              input  uvm_object        extension = null,
+    #                              input  uvm_object        extension = None,
     #                              input  string            fname = "",
     #                              input  int               lineno = 0)
     #
@@ -791,19 +794,55 @@ class UVMReg(UVMObject):
     #   // access is used (front-door access), an address ~map~ must be specified.
     #   // If the register contains
     #   // write-only fields, their content is mirrored and optionally
-    #   // checked only if a UVself.m_backdoor
+    #   // checked only if a UVM_BACKDOOR
     #   // access path is used to read the register. 
     #   //
     #   extern virtual task mirror(output uvm_status_e      status,
     #                              input uvm_check_e        check  = UVM_NO_CHECK,
     #                              input uvm_path_e         path = UVM_DEFAULT_PATH,
-    #                              input uvm_reg_map        map = null,
-    #                              input uvm_sequence_base  parent = null,
+    #                              input uvm_reg_map        map = None,
+    #                              input uvm_sequence_base  parent = None,
     #                              input int                prior = -1,
-    #                              input  uvm_object        extension = null,
+    #                              input  uvm_object        extension = None,
     #                              input string             fname = "",
     #                              input int                lineno = 0)
-    #
+    @cocotb.coroutine
+    def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, _map=None,
+            parent=None, prior=-1, extension=None, fname="", lineno=0):
+        v = 0  # uvm_reg_data_t  v
+        exp = 0  # uvm_reg_data_t  exp
+        bkdr = self.get_backdoor()
+
+        self.XatomicX(1)
+        self.m_fname = fname
+        self.m_lineno = lineno
+
+        if (path == UVM_DEFAULT_PATH):
+            path = self.m_parent.get_default_path()
+
+        if (path == UVM_BACKDOOR and (bkdr is not None or self.has_hdl_path())):
+            _map = UVMRegMap.backdoor()
+        else:
+            _map = self.get_local_map(_map, "read()")
+
+        if _map is None:
+            return
+
+        # Remember what we think the value is before it gets updated
+        if (check == UVM_CHECK):
+            exp = self.get_mirrored_value()
+
+        yield self.XreadX(status, v, path, _map, parent, prior, extension, fname, lineno)
+
+        if (status == UVM_NOT_OK):
+            self.XatomicX(0)
+            return
+
+        if (check == UVM_CHECK):
+            self.do_check(exp, v, _map)
+
+        self.XatomicX(0)
+        #endtask: mirror
 
     #   // Function: predict
     #   //
@@ -817,9 +856,9 @@ class UVMReg(UVMObject):
     #   // Returns TRUE if the prediction was successful for each field in the
     #   // register.
     #   //
-    def predict (self, value, be = -1, kind = UVM_PREDICT_DIRECT, path = UVM_FRONTDOOR,
-            reg_map = None, fname = "", lineno = 0):
-        rw = UVMRegItem ()
+    def predict(self, value, be=-1, kind=UVM_PREDICT_DIRECT, path=UVM_FRONTDOOR,
+            reg_map=None, fname="", lineno=0):
+        rw = UVMRegItem()
         rw.value[0] = value
         rw.path = path
         rw.map = reg_map
@@ -847,13 +886,55 @@ class UVMReg(UVMObject):
     #                                 output uvm_reg_data_t    value,
     #                                 input  uvm_path_e        path,
     #                                 input  uvm_reg_map       map,
-    #                                 input  uvm_sequence_base parent = null,
+    #                                 input  uvm_sequence_base parent = None,
     #                                 input  int               prior = -1,
-    #                                 input  uvm_object        extension = null,
+    #                                 input  uvm_object        extension = None,
     #                                 input  string            fname = "",
     #                                 input  int               lineno = 0)
-    #   
+    @cocotb.coroutine
+    def XreadX(self, status, value, path, _map,
+            parent=None, prior=-1,extension=None,fname="", lineno=0):
+
+        # create an abstract transaction for this operation
+        rw = UVMRegItem.type_id.create("read_item", None, self.get_full_name())
+        rw.element      = self
+        rw.element_kind = UVM_REG
+        rw.kind         = UVM_READ
+        rw.value[0]     = 0
+        rw.path         = path
+        rw.map          = _map
+        rw.parent       = parent
+        rw.prior        = prior
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+
+        yield self.do_read(rw)
+        status.append(rw.status)
+        value.append(rw.value[0])
+        #endtask: XreadX
+
     #   /*local*/ extern task XatomicX(bit on)
+    def XatomicX(self, on):
+        pass  # TODO
+        #   process m_reg_process
+        #   m_reg_process=process::self()
+        #
+        #   if (on) begin
+        #     if (m_reg_process == self.m_process)
+        #       return
+        #     self.m_atomic.get(1)
+        #     self.m_process = m_reg_process; 
+        #   end
+        #   else begin
+        #      // Maybe a key was put back in by a spurious call to reset()
+        #      void'(self.m_atomic.try_get(1))
+        #      self.m_atomic.put(1)
+        #      self.m_process = None
+        #   end
+        #endtask: XatomicX
+        #
+
     #
     #   /*local*/ extern virtual function bit Xcheck_accessX
     #                                (input uvm_reg_item rw,
@@ -869,8 +950,200 @@ class UVMReg(UVMObject):
     #
     #   extern virtual task do_write(uvm_reg_item rw)
     #
+
     #   extern virtual task do_read(uvm_reg_item rw)
-    #
+    @cocotb.coroutine
+    def do_read(self, rw):
+        map_info = None  # uvm_reg_map_info map_info
+        value = 0  # uvm_reg_data_t   value
+        exp = 0  # uvm_reg_data_t   exp
+
+        self.m_fname   = rw.fname
+        self.m_lineno  = rw.lineno
+
+        if not(self.Xcheck_accessX(rw,map_info,"read()")):
+            return
+
+        self.m_read_in_progress = 1
+        rw.status = UVM_IS_OK
+
+        #   // PRE-READ CBS - FIELDS
+        for i in range(len(self.m_fields)):
+            cbs = uvm_reg_field_cb_iter(self.m_fields[i])
+            f = self.m_fields[i]  # uvm_reg_field 
+            rw.element = f
+            rw.element_kind = UVM_FIELD
+            self.m_fields[i].pre_read(rw)
+            cb = cbs.first()
+            while cb is not None:
+                cb.pre_read(rw)
+                cb = cbs.next()
+            #for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
+            #   cb.pre_read(rw)
+
+        rw.element = self
+        rw.element_kind = UVM_REG
+
+        cbs = UVMRegCbIter(self)
+        # PRE-READ CBS - REG
+        # TODO yield?
+        self.pre_read(rw)
+        cb = cbs.first()
+        while cb is not None:
+            cb.pre_read(rw)
+            cb = cbs.next()
+        
+        if (rw.status != UVM_IS_OK):
+            self.m_read_in_progress = 0
+            return
+
+        # EXECUTE READ...
+        if rw.path == UVM_BACKDOOR:
+
+            #  ...VIA USER BACKDOOR
+            bkdr = self.get_backdoor()
+            _map = UVMRegMap.backdoor()
+            if (_map.get_check_on_read()):
+                exp = self.get()
+            
+            if (bkdr is not None):
+                bkdr.read(rw)
+            else:
+                self.backdoor_read(rw)
+            value = rw.value[0]
+         
+            # Need to clear RC fields, set RS fields and mask WO fields
+            if (rw.status != UVM_NOT_OK):
+                wo_mask = 0  # uvm_reg_data_t 
+         
+                for i in range(len(self.m_fields)):
+                    acc = self.m_fields[i].get_access(UVMRegMap.backdoor())
+                    nbits = self.m_fields[i].get_n_bits()
+                    lsb_pos = self.m_fields[i].get_lsb_pos()
+                    if (acc == "RC" or
+                        acc == "WRC" or
+                        acc == "WSRC" or
+                        acc == "W1SRC" or
+                        acc == "W0SRC"):
+                       value &= ~(((1<<nbits)-1) << lsb_pos)
+                    elif (acc == "RS" or
+                             acc == "WRS" or
+                             acc == "WCRS" or
+                             acc == "W1CRS" or
+                             acc == "W0CRS"):
+                       value |= ((1<<nbits)-1) << lsb_pos
+                    elif (acc == "WO" or
+                             acc == "WOC" or
+                             acc == "WOS" or
+                             acc == "WO1"):
+                       wo_mask |= ((1<<nbits)-1) << lsb_pos
+         
+                if (value != rw.value[0]):
+                    #uvm_reg_data_t saved
+                    saved = rw.value[0]
+                    rw.value[0] = value
+                    if (bkdr is not None):
+                        bkdr.write(rw)
+                    else:
+                        self.backdoor_write(rw)
+                    rw.value[0] = saved
+         
+                rw.value[0] &= ~wo_mask
+         
+                if (_map.get_check_on_read() and
+                        rw.status != UVM_NOT_OK):
+                   self.do_check(exp, rw.value[0], _map)
+              
+                self.do_predict(rw, UVM_PREDICT_READ)
+        elif rw.path == FRONTDOOR:
+            pass
+        #      UVM_FRONTDOOR: begin
+        #
+        #         uvm_reg_map system_map = rw.local_map.get_root_map()
+        #
+        #         self.m_is_busy = 1
+        #
+        #         if (rw.local_map.get_check_on_read()) exp = get()
+        #   
+        #         // ...VIA USER FRONTDOOR
+        #         if (map_info.frontdoor != None) begin
+        #            uvm_reg_frontdoor fd = map_info.frontdoor
+        #            fd.rw_info = rw
+        #            if (fd.sequencer is None)
+        #              fd.sequencer = system_map.get_sequencer()
+        #            fd.start(fd.sequencer, rw.parent)
+        #         end
+        #
+        #         // ...VIA BUILT-IN FRONTDOOR
+        #         else begin
+        #            rw.local_map.do_read(rw)
+        #         end
+        #
+        #         self.m_is_busy = 0
+        #
+        #         if (system_map.get_auto_predict()) begin
+        #            uvm_status_e status
+        #            if (rw.local_map.get_check_on_read() &&
+        #                rw.status != UVM_NOT_OK) begin
+        #               void'(do_check(exp, rw.value[0], system_map))
+        #            end
+        #
+        #            if (rw.status != UVM_NOT_OK) begin
+        #               sample(rw.value[0], -1, 1, rw.map)
+        #               self.m_parent.XsampleX(map_info.offset, 1, rw.map)
+        #            end
+        #
+        #            status = rw.status; // do_predict will override rw.status, so we save it here
+        #            do_predict(rw, UVM_PREDICT_READ)
+        #            rw.status = status
+        #         end
+        #      end
+        #      
+        #   endcase
+        #
+        #   value = rw.value[0]; // preserve 
+        #
+        #   // POST-READ CBS - REG
+        #   for (uvm_reg_cbs cb = cbs.first(); cb != None; cb = cbs.next())
+        #      cb.post_read(rw)
+        #   post_read(rw)
+        #
+        #   // POST-READ CBS - FIELDS
+        #   foreach (self.m_fields[i]) begin
+        #      uvm_reg_field_cb_iter cbs = new(self.m_fields[i])
+        #      uvm_reg_field f = self.m_fields[i]
+        #
+        #      rw.element = f
+        #      rw.element_kind = UVM_FIELD
+        #      rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1)
+        #
+        #      for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
+        #         cb.post_read(rw)
+        #      f.post_read(rw)
+        #   end
+        #
+        #   rw.value[0] = value; // restore
+        #   rw.element = this
+        #   rw.element_kind = UVM_REG
+        #
+        #   // REPORT
+        #   if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) begin
+        #     string path_s,value_s
+        #     if (rw.path == UVM_FRONTDOOR)
+        #       path_s = (map_info.frontdoor != None) ? "user frontdoor" :
+        #                                               {"map ",rw.map.get_full_name()}
+        #     else
+        #       path_s = (get_backdoor() != None) ? "user backdoor" : "DPI backdoor"
+        #
+        #     value_s = $sformatf("=%0h",rw.value[0])
+        #
+        #      uvm_report_info("RegModel", {"Read  register via ",path_s,": ",
+        #                                   get_full_name(),value_s}, UVM_HIGH)
+        #   end
+        #
+        #   self.m_read_in_progress = 1'b0
+        #
+        #endtask: do_read
 
     def do_predict(self, rw, kind = UVM_PREDICT_DIRECT, be = -1):
         reg_value = rw.value[0]
@@ -913,7 +1186,7 @@ class UVMReg(UVMObject):
     #   // must be specified.
     #   //
     #   extern function void set_frontdoor(uvm_reg_frontdoor ftdr,
-    #                                      uvm_reg_map       map = null,
+    #                                      uvm_reg_map       map = None,
     #                                      string            fname = "",
     #                                      int               lineno = 0)
 
@@ -921,14 +1194,14 @@ class UVMReg(UVMObject):
     #   //
     #   // Returns the user-defined frontdoor for this register
     #   //
-    #   // If ~null~, no user-defined frontdoor has been defined.
+    #   // If ~None~, no user-defined frontdoor has been defined.
     #   // A user-defined frontdoor is defined
     #   // by using the <uvm_reg::set_frontdoor()> method. 
     #   //
     #   // If the register is mapped in multiple address maps, an address ~map~
     #   // must be specified.
     #   //
-    #   extern function uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = null)
+    #   extern function uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = None)
 
     #   //----------------
     #   // Group: Backdoor
@@ -960,7 +1233,7 @@ class UVMReg(UVMObject):
     #   //
     #   // Returns the user-defined backdoor for this register
     #   //
-    #   // If ~null~, no user-defined backdoor has been defined.
+    #   // If ~None~, no user-defined backdoor has been defined.
     #   // A user-defined backdoor is defined
     #   // by using the <uvm_reg::set_backdoor()> method. 
     #   //
@@ -1166,7 +1439,7 @@ class UVMReg(UVMObject):
     #   //
     #   extern static function void include_coverage(string scope,
     #                                                uvm_reg_cvr_t models,
-    #                                                uvm_object accessor = null)
+    #                                                uvm_object accessor = None)
     #
     #   // Function: build_coverage
     #   //
@@ -1332,8 +1605,9 @@ class UVMReg(UVMObject):
     #   // field callbacks
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
-    #
-    #
+
+
+
     #   // Task: pre_read
     #   //
     #   // Called before register read.
@@ -1350,8 +1624,9 @@ class UVMReg(UVMObject):
     #   // field callbacks
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
-    #
-    #
+
+
+
     #   // Task: post_read
     #   //
     #   // Called after register read.
@@ -1397,17 +1672,17 @@ class UVMReg(UVMObject):
 #// set_frontdoor
 #
 #function void uvm_reg::set_frontdoor(uvm_reg_frontdoor ftdr,
-#                                     uvm_reg_map       map = null,
+#                                     uvm_reg_map       map = None,
 #                                     string            fname = "",
 #                                     int               lineno = 0)
 #   uvm_reg_map_info map_info
 #   ftdr.fname = self.m_fname
 #   ftdr.lineno = self.m_lineno
 #   map = get_local_map(map, "set_frontdoor()")
-#   if (map == null)
+#   if (map is None)
 #     return
 #   map_info = map.get_reg_map_info(this)
-#   if (map_info == null)
+#   if (map_info is None)
 #      map.add_reg(this, -1, "RW", 1, ftdr)
 #   else begin
 #      map_info.frontdoor = ftdr
@@ -1417,11 +1692,11 @@ class UVMReg(UVMObject):
 #
 #// get_frontdoor
 #
-#function uvm_reg_frontdoor uvm_reg::get_frontdoor(uvm_reg_map map = null)
+#function uvm_reg_frontdoor uvm_reg::get_frontdoor(uvm_reg_map map = None)
 #   uvm_reg_map_info map_info
 #   map = get_local_map(map, "get_frontdoor()")
-#   if (map == null)
-#     return null
+#   if (map is None)
+#     return None
 #   map_info = map.get_reg_map_info(this)
 #   return map_info.frontdoor
 #endfunction: get_frontdoor
@@ -1434,7 +1709,7 @@ class UVMReg(UVMObject):
 #                                    int              lineno = 0)
 #   bkdr.fname = fname
 #   bkdr.lineno = lineno
-#   if (self.m_backdoor != null &&
+#   if (self.m_backdoor != None &&
 #       self.m_backdoor.has_update_threads()) begin
 #      `uvm_warning("RegModel", "Previous register backdoor still has update threads running. Backdoors with active mirroring should only be set before simulation starts.")
 #   end
@@ -1446,12 +1721,12 @@ class UVMReg(UVMObject):
 #
 #function uvm_reg_backdoor uvm_reg::get_backdoor(bit inherited = 1)
 #
-#   if (self.m_backdoor == null && inherited) begin
+#   if (self.m_backdoor is None && inherited) begin
 #     uvm_reg_block blk = get_parent()
 #     uvm_reg_backdoor bkdr
-#     while (blk != null) begin
+#     while (blk != None) begin
 #       bkdr = blk.get_backdoor()
-#       if (bkdr != null) begin
+#       if (bkdr != None) begin
 #         self.m_backdoor = bkdr
 #         break
 #       end
@@ -1472,7 +1747,7 @@ class UVMReg(UVMObject):
 #  end
 #
 #  if (kind == "") begin
-#     if (self.m_regfile_parent != null)
+#     if (self.m_regfile_parent != None)
 #        kind = self.m_regfile_parent.get_default_hdl_path()
 #     else
 #        kind = self.m_parent.get_default_hdl_path()
@@ -1491,7 +1766,7 @@ class UVMReg(UVMObject):
 #
 #function bit  uvm_reg::has_hdl_path(string kind = "")
 #  if (kind == "") begin
-#     if (self.m_regfile_parent != null)
+#     if (self.m_regfile_parent != None)
 #        kind = self.m_regfile_parent.get_default_hdl_path()
 #     else
 #        kind = self.m_parent.get_default_hdl_path()
@@ -1522,7 +1797,7 @@ class UVMReg(UVMObject):
 #  uvm_queue #(uvm_hdl_path_concat) hdl_paths
 #
 #  if (kind == "") begin
-#     if (self.m_regfile_parent != null)
+#     if (self.m_regfile_parent != None)
 #        kind = self.m_regfile_parent.get_default_hdl_path()
 #     else
 #        kind = self.m_parent.get_default_hdl_path()
@@ -1550,7 +1825,7 @@ class UVMReg(UVMObject):
 #                                         input string separator = ".")
 #
 #   if (kind == "") begin
-#      if (self.m_regfile_parent != null)
+#      if (self.m_regfile_parent != None)
 #         kind = self.m_regfile_parent.get_default_hdl_path()
 #      else
 #         kind = self.m_parent.get_default_hdl_path()
@@ -1566,7 +1841,7 @@ class UVMReg(UVMObject):
 #      uvm_queue #(uvm_hdl_path_concat) hdl_paths = self.m_hdl_paths_pool.get(kind)
 #      string parent_paths[$]
 #
-#      if (self.m_regfile_parent != null)
+#      if (self.m_regfile_parent != None)
 #         self.m_regfile_parent.get_full_hdl_path(parent_paths, kind, separator)
 #      else
 #         self.m_parent.get_full_hdl_path(parent_paths, kind, separator)
@@ -1604,10 +1879,10 @@ class UVMReg(UVMObject):
 #
 #function string uvm_reg::get_full_name()
 #
-#   if (self.m_regfile_parent != null)
+#   if (self.m_regfile_parent != None)
 #      return {self.m_regfile_parent.get_full_name(), ".", get_name()}
 #
-#   if (self.m_parent != null)
+#   if (self.m_parent != None)
 #      return {self.m_parent.get_full_name(), ".", get_name()}
 #   
 #   return get_name()
@@ -1638,7 +1913,7 @@ class UVMReg(UVMObject):
 #     uvm_reg_map local_map = l
 #     uvm_reg_map parent_map = local_map.get_parent_map()
 #
-#     while (parent_map != null) begin
+#     while (parent_map != None) begin
 #       if (parent_map == map)
 #         return 1
 #       parent_map = parent_map.get_parent_map()
@@ -1677,7 +1952,7 @@ class UVMReg(UVMObject):
 #         return self.m_fields[i]
 #   `uvm_warning("RegModel", {"Unable to locate field '",name,
 #                            "' in register '",get_name(),"'"})
-#   return null
+#   return None
 #endfunction
 #
 #
@@ -1728,7 +2003,7 @@ class UVMReg(UVMObject):
 #
 #function void uvm_reg::include_coverage(string scope,
 #                                        uvm_reg_cvr_t models,
-#                                        uvm_object accessor = null)
+#                                        uvm_object accessor = None)
 #   uvm_reg_cvr_rsrc_db::set({"uvm_reg::", scope},
 #                            "include_coverage",
 #                            models, accessor)
@@ -1865,10 +2140,10 @@ class UVMReg(UVMObject):
 #
 #task uvm_reg::update(output uvm_status_e      status,
 #                     input  uvm_path_e        path = UVM_DEFAULT_PATH,
-#                     input  uvm_reg_map       map = null,
-#                     input  uvm_sequence_base parent = null,
+#                     input  uvm_reg_map       map = None,
+#                     input  uvm_sequence_base parent = None,
 #                     input  int               prior = -1,
-#                     input  uvm_object        extension = null,
+#                     input  uvm_object        extension = None,
 #                     input  string            fname = "",
 #                     input  int               lineno = 0)
 #   uvm_reg_data_t upd
@@ -1893,10 +2168,10 @@ class UVMReg(UVMObject):
 #task uvm_reg::write(output uvm_status_e      status,
 #                    input  uvm_reg_data_t    value,
 #                    input  uvm_path_e        path = UVM_DEFAULT_PATH,
-#                    input  uvm_reg_map       map = null,
-#                    input  uvm_sequence_base parent = null,
+#                    input  uvm_reg_map       map = None,
+#                    input  uvm_sequence_base parent = None,
 #                    input  int               prior = -1,
-#                    input  uvm_object        extension = null,
+#                    input  uvm_object        extension = None,
 #                    input  string            fname = "",
 #                    input  int               lineno = 0)
 #
@@ -1964,7 +2239,7 @@ class UVMReg(UVMObject):
 #         msk = ((1<<f.get_n_bits())-1) << lsb
 #         rw.value[0] = (value & msk) >> lsb
 #         f.pre_write(rw)
-#         for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next()) begin
+#         for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next()) begin
 #            rw.element = f
 #            rw.element_kind = UVM_FIELD
 #            cb.pre_write(rw)
@@ -1979,7 +2254,7 @@ class UVMReg(UVMObject):
 #
 #   // PRE-WRITE CBS - REG
 #   pre_write(rw)
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
+#   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
 #      cb.pre_write(rw)
 #
 #   if (rw.status != UVM_IS_OK) begin
@@ -1994,7 +2269,7 @@ class UVMReg(UVMObject):
 #   case (rw.path)
 #      
 #      // ...VIA USER BACKDOOR
-#      UVself.m_backdoor: begin
+#      UVM_BACKDOOR: begin
 #         uvm_reg_data_t final_val
 #         uvm_reg_backdoor bkdr = get_backdoor()
 #
@@ -2002,7 +2277,7 @@ class UVMReg(UVMObject):
 #
 #         // Mimick the final value after a physical read
 #         rw.kind = UVM_READ
-#         if (bkdr != null)
+#         if (bkdr != None)
 #           bkdr.read(rw)
 #         else
 #           backdoor_read(rw)
@@ -2026,7 +2301,7 @@ class UVMReg(UVMObject):
 #         rw.kind = UVM_WRITE
 #         rw.value[0] = final_val
 #
-#         if (bkdr != null)
+#         if (bkdr != None)
 #           bkdr.write(rw)
 #         else
 #           backdoor_write(rw)
@@ -2041,10 +2316,10 @@ class UVMReg(UVMObject):
 #         self.m_is_busy = 1
 #
 #         // ...VIA USER FRONTDOOR
-#         if (map_info.frontdoor != null) begin
+#         if (map_info.frontdoor != None) begin
 #            uvm_reg_frontdoor fd = map_info.frontdoor
 #            fd.rw_info = rw
-#            if (fd.sequencer == null)
+#            if (fd.sequencer is None)
 #              fd.sequencer = system_map.get_sequencer()
 #            fd.start(fd.sequencer, rw.parent)
 #         end
@@ -2076,7 +2351,7 @@ class UVMReg(UVMObject):
 #   value = rw.value[0]
 #
 #   // POST-WRITE CBS - REG
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
+#   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
 #      cb.post_write(rw)
 #   post_write(rw)
 #
@@ -2089,7 +2364,7 @@ class UVMReg(UVMObject):
 #      rw.element_kind = UVM_FIELD
 #      rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1)
 #      
-#      for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
+#      for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
 #         cb.post_write(rw)
 #      f.post_write(rw)
 #   end
@@ -2102,10 +2377,10 @@ class UVMReg(UVMObject):
 #   if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) begin
 #     string path_s,value_s
 #     if (rw.path == UVM_FRONTDOOR)
-#       path_s = (map_info.frontdoor != null) ? "user frontdoor" :
+#       path_s = (map_info.frontdoor != None) ? "user frontdoor" :
 #                                               {"map ",rw.map.get_full_name()}
 #     else
-#       path_s = (get_backdoor() != null) ? "user backdoor" : "DPI backdoor"
+#       path_s = (get_backdoor() != None) ? "user backdoor" : "DPI backdoor"
 #
 #     value_s = $sformatf("=0x%0h",rw.value[0])
 #
@@ -2124,10 +2399,10 @@ class UVMReg(UVMObject):
 #task uvm_reg::read(output uvm_status_e      status,
 #                   output uvm_reg_data_t    value,
 #                   input  uvm_path_e        path = UVM_DEFAULT_PATH,
-#                   input  uvm_reg_map       map = null,
-#                   input  uvm_sequence_base parent = null,
+#                   input  uvm_reg_map       map = None,
+#                   input  uvm_sequence_base parent = None,
 #                   input  int               prior = -1,
-#                   input  uvm_object        extension = null,
+#                   input  uvm_object        extension = None,
 #                   input  string            fname = "",
 #                   input  int               lineno = 0)
 #   XatomicX(1)
@@ -2135,245 +2410,6 @@ class UVMReg(UVMObject):
 #   XatomicX(0)
 #endtask: read
 #
-#
-#// XreadX
-#
-#task uvm_reg::XreadX(output uvm_status_e      status,
-#                     output uvm_reg_data_t    value,
-#                     input  uvm_path_e        path,
-#                     input  uvm_reg_map       map,
-#                     input  uvm_sequence_base parent = null,
-#                     input  int               prior = -1,
-#                     input  uvm_object        extension = null,
-#                     input  string            fname = "",
-#                     input  int               lineno = 0)
-#   
-#   // create an abstract transaction for this operation
-#   uvm_reg_item rw
-#   rw = uvm_reg_item::type_id::create("read_item",,get_full_name())
-#   rw.element      = this
-#   rw.element_kind = UVM_REG
-#   rw.kind         = UVM_READ
-#   rw.value[0]     = 0
-#   rw.path         = path
-#   rw.map          = map
-#   rw.parent       = parent
-#   rw.prior        = prior
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   do_read(rw)
-#
-#   status = rw.status
-#   value = rw.value[0]
-#
-#endtask: XreadX
-#
-#
-#// do_read
-#
-#task uvm_reg::do_read(uvm_reg_item rw)
-#
-#   uvm_reg_cb_iter  cbs = new(this)
-#   uvm_reg_map_info map_info
-#   uvm_reg_data_t   value
-#   uvm_reg_data_t   exp
-#
-#   self.m_fname   = rw.fname
-#   self.m_lineno  = rw.lineno
-#   
-#   if (!Xcheck_accessX(rw,map_info,"read()"))
-#     return
-#
-#   self.m_read_in_progress = 1'b1
-#
-#   rw.status = UVM_IS_OK
-#
-#   // PRE-READ CBS - FIELDS
-#   foreach (self.m_fields[i]) begin
-#      uvm_reg_field_cb_iter cbs = new(self.m_fields[i])
-#      uvm_reg_field f = self.m_fields[i]
-#      rw.element = f
-#      rw.element_kind = UVM_FIELD
-#      self.m_fields[i].pre_read(rw)
-#      for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
-#         cb.pre_read(rw)
-#   end
-#
-#   rw.element = this
-#   rw.element_kind = UVM_REG
-#
-#   // PRE-READ CBS - REG
-#   pre_read(rw)
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
-#      cb.pre_read(rw)
-#
-#   if (rw.status != UVM_IS_OK) begin
-#     self.m_read_in_progress = 1'b0
-#
-#     return
-#   end
-#         
-#   // EXECUTE READ...
-#   case (rw.path)
-#      
-#      // ...VIA USER BACKDOOR
-#      UVself.m_backdoor: begin
-#         uvm_reg_backdoor bkdr = get_backdoor()
-#
-#         uvm_reg_map map = uvm_reg_map::backdoor()
-#         if (map.get_check_on_read()) exp = get()
-#   
-#         if (bkdr != null)
-#           bkdr.read(rw)
-#         else
-#           backdoor_read(rw)
-#
-#         value = rw.value[0]
-#
-#         // Need to clear RC fields, set RS fields and mask WO fields
-#         if (rw.status != UVM_NOT_OK) begin
-#
-#            uvm_reg_data_t wo_mask
-#
-#            foreach (self.m_fields[i]) begin
-#               string acc = self.m_fields[i].get_access(uvm_reg_map::backdoor())
-#               if (acc == "RC" ||
-#                   acc == "WRC" ||
-#                   acc == "WSRC" ||
-#                   acc == "W1SRC" ||
-#                   acc == "W0SRC") begin
-#                  value &= ~(((1<<self.m_fields[i].get_n_bits())-1)
-#                                          << self.m_fields[i].get_lsb_pos())
-#               end
-#               else if (acc == "RS" ||
-#                        acc == "WRS" ||
-#                        acc == "WCRS" ||
-#                        acc == "W1CRS" ||
-#                        acc == "W0CRS") begin
-#                  value |= (((1<<self.m_fields[i].get_n_bits())-1)
-#                                          << self.m_fields[i].get_lsb_pos())
-#               end
-#               else if (acc == "WO" ||
-#                        acc == "WOC" ||
-#                        acc == "WOS" ||
-#                        acc == "WO1") begin
-#                  wo_mask |= ((1<<self.m_fields[i].get_n_bits())-1)
-#                                          << self.m_fields[i].get_lsb_pos()
-#               end
-#            end
-#
-#            if (value != rw.value[0]) begin
-#              uvm_reg_data_t saved
-#              saved = rw.value[0]
-#              rw.value[0] = value
-#              if (bkdr != null)
-#                 bkdr.write(rw)
-#              else
-#                 backdoor_write(rw)
-#              rw.value[0] = saved
-#            end
-#
-#            rw.value[0] &= ~wo_mask
-#
-#            if (map.get_check_on_read() &&
-#               rw.status != UVM_NOT_OK) begin
-#               void'(do_check(exp, rw.value[0], map))
-#            end
-#       
-#            do_predict(rw, UVM_PREDICT_READ)
-#         end
-#      end
-#
-#
-#      UVM_FRONTDOOR: begin
-#
-#         uvm_reg_map system_map = rw.local_map.get_root_map()
-#
-#         self.m_is_busy = 1
-#
-#         if (rw.local_map.get_check_on_read()) exp = get()
-#   
-#         // ...VIA USER FRONTDOOR
-#         if (map_info.frontdoor != null) begin
-#            uvm_reg_frontdoor fd = map_info.frontdoor
-#            fd.rw_info = rw
-#            if (fd.sequencer == null)
-#              fd.sequencer = system_map.get_sequencer()
-#            fd.start(fd.sequencer, rw.parent)
-#         end
-#
-#         // ...VIA BUILT-IN FRONTDOOR
-#         else begin
-#            rw.local_map.do_read(rw)
-#         end
-#
-#         self.m_is_busy = 0
-#
-#         if (system_map.get_auto_predict()) begin
-#            uvm_status_e status
-#            if (rw.local_map.get_check_on_read() &&
-#                rw.status != UVM_NOT_OK) begin
-#               void'(do_check(exp, rw.value[0], system_map))
-#            end
-#
-#            if (rw.status != UVM_NOT_OK) begin
-#               sample(rw.value[0], -1, 1, rw.map)
-#               self.m_parent.XsampleX(map_info.offset, 1, rw.map)
-#            end
-#
-#            status = rw.status; // do_predict will override rw.status, so we save it here
-#            do_predict(rw, UVM_PREDICT_READ)
-#            rw.status = status
-#         end
-#      end
-#      
-#   endcase
-#
-#   value = rw.value[0]; // preserve 
-#
-#   // POST-READ CBS - REG
-#   for (uvm_reg_cbs cb = cbs.first(); cb != null; cb = cbs.next())
-#      cb.post_read(rw)
-#   post_read(rw)
-#
-#   // POST-READ CBS - FIELDS
-#   foreach (self.m_fields[i]) begin
-#      uvm_reg_field_cb_iter cbs = new(self.m_fields[i])
-#      uvm_reg_field f = self.m_fields[i]
-#
-#      rw.element = f
-#      rw.element_kind = UVM_FIELD
-#      rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1)
-#
-#      for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
-#         cb.post_read(rw)
-#      f.post_read(rw)
-#   end
-#
-#   rw.value[0] = value; // restore
-#   rw.element = this
-#   rw.element_kind = UVM_REG
-#
-#   // REPORT
-#   if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) begin
-#     string path_s,value_s
-#     if (rw.path == UVM_FRONTDOOR)
-#       path_s = (map_info.frontdoor != null) ? "user frontdoor" :
-#                                               {"map ",rw.map.get_full_name()}
-#     else
-#       path_s = (get_backdoor() != null) ? "user backdoor" : "DPI backdoor"
-#
-#     value_s = $sformatf("=%0h",rw.value[0])
-#
-#      uvm_report_info("RegModel", {"Read  register via ",path_s,": ",
-#                                   get_full_name(),value_s}, UVM_HIGH)
-#   end
-#
-#   self.m_read_in_progress = 1'b0
-#
-#endtask: do_read
 #
 #
 #// Xcheck_accessX
@@ -2386,8 +2422,8 @@ class UVMReg(UVMObject):
 #   if (rw.path == UVM_DEFAULT_PATH)
 #     rw.path = self.m_parent.get_default_path()
 #
-#   if (rw.path == UVself.m_backdoor) begin
-#      if (get_backdoor() == null && !has_hdl_path()) begin
+#   if (rw.path == UVM_BACKDOOR) begin
+#      if (get_backdoor() is None && !has_hdl_path()) begin
 #         `uvm_warning("RegModel",
 #            {"No backdoor access available for register '",get_full_name(),
 #            "' . Using frontdoor instead."})
@@ -2398,11 +2434,11 @@ class UVMReg(UVMObject):
 #   end
 #
 #
-#   if (rw.path != UVself.m_backdoor) begin
+#   if (rw.path != UVM_BACKDOOR) begin
 #
 #     rw.local_map = get_local_map(rw.map,caller)
 #
-#     if (rw.local_map == null) begin
+#     if (rw.local_map is None) begin
 #        `uvm_error(get_type_name(), 
 #           {"No transactor available to physically access register on map '",
 #            rw.map.get_full_name(),"'"})
@@ -2412,16 +2448,16 @@ class UVMReg(UVMObject):
 #
 #     map_info = rw.local_map.get_reg_map_info(this)
 #
-#     if (map_info.frontdoor == null && map_info.unmapped) begin
+#     if (map_info.frontdoor is None && map_info.unmapped) begin
 #          `uvm_error("RegModel", {"Register '",get_full_name(),
 #             "' unmapped in map '",
-#             (rw.map==null)? rw.local_map.get_full_name():rw.map.get_full_name(),
+#             (rw.map==None)? rw.local_map.get_full_name():rw.map.get_full_name(),
 #             "' and does not have a user-defined frontdoor"})
 #          rw.status = UVM_NOT_OK
 #          return 0
 #     end
 #
-#     if (rw.map == null)
+#     if (rw.map is None)
 #       rw.map = rw.local_map
 #   end
 #   return 1
@@ -2530,8 +2566,8 @@ class UVMReg(UVMObject):
 #task uvm_reg::poke(output uvm_status_e      status,
 #                   input  uvm_reg_data_t    value,
 #                   input  string            kind = "",
-#                   input  uvm_sequence_base parent = null,
-#                   input  uvm_object        extension = null,
+#                   input  uvm_sequence_base parent = None,
+#                   input  uvm_object        extension = None,
 #                   input  string            fname = "",
 #                   input  int               lineno = 0)
 #
@@ -2542,7 +2578,7 @@ class UVMReg(UVMObject):
 #   self.m_lineno = lineno
 #
 #
-#   if (bkdr == null && !has_hdl_path(kind)) begin
+#   if (bkdr is None && !has_hdl_path(kind)) begin
 #      `uvm_error("RegModel",
 #        {"No backdoor access available to poke register '",get_full_name(),"'"})
 #      status = UVM_NOT_OK
@@ -2555,7 +2591,7 @@ class UVMReg(UVMObject):
 #   // create an abstract transaction for this operation
 #   rw = uvm_reg_item::type_id::create("reg_poke_item",,get_full_name())
 #   rw.element      = this
-#   rw.path         = UVself.m_backdoor
+#   rw.path         = UVM_BACKDOOR
 #   rw.element_kind = UVM_REG
 #   rw.kind         = UVM_WRITE
 #   rw.bd_kind      = kind
@@ -2565,7 +2601,7 @@ class UVMReg(UVMObject):
 #   rw.fname        = fname
 #   rw.lineno       = lineno
 #
-#   if (bkdr != null)
+#   if (bkdr != None)
 #     bkdr.write(rw)
 #   else
 #     backdoor_write(rw)
@@ -2587,8 +2623,8 @@ class UVMReg(UVMObject):
 #task uvm_reg::peek(output uvm_status_e      status,
 #                   output uvm_reg_data_t    value,
 #                   input  string            kind = "",
-#                   input  uvm_sequence_base parent = null,
-#                   input  uvm_object        extension = null,
+#                   input  uvm_sequence_base parent = None,
+#                   input  uvm_object        extension = None,
 #                   input  string            fname = "",
 #                   input  int               lineno = 0)
 #
@@ -2598,7 +2634,7 @@ class UVMReg(UVMObject):
 #   self.m_fname = fname
 #   self.m_lineno = lineno
 #
-#   if (bkdr == null && !has_hdl_path(kind)) begin
+#   if (bkdr is None && !has_hdl_path(kind)) begin
 #      `uvm_error("RegModel",
 #        $sformatf("No backdoor access available to peek register \"%s\"",
 #                  get_full_name()))
@@ -2612,7 +2648,7 @@ class UVMReg(UVMObject):
 #   // create an abstract transaction for this operation
 #   rw = uvm_reg_item::type_id::create("mem_peek_item",,get_full_name())
 #   rw.element      = this
-#   rw.path         = UVself.m_backdoor
+#   rw.path         = UVM_BACKDOOR
 #   rw.element_kind = UVM_REG
 #   rw.kind         = UVM_READ
 #   rw.bd_kind      = kind
@@ -2621,7 +2657,7 @@ class UVMReg(UVMObject):
 #   rw.fname        = fname
 #   rw.lineno       = lineno
 #
-#   if (bkdr != null)
+#   if (bkdr != None)
 #     bkdr.read(rw)
 #   else
 #     backdoor_read(rw)
@@ -2687,75 +2723,6 @@ class UVMReg(UVMObject):
 #endfunction
 #       
 #
-#// mirror
-#
-#task uvm_reg::mirror(output uvm_status_e       status,
-#                     input  uvm_check_e        check = UVM_NO_CHECK,
-#                     input  uvm_path_e         path = UVM_DEFAULT_PATH,
-#                     input  uvm_reg_map        map = null,
-#                     input  uvm_sequence_base  parent = null,
-#                     input  int                prior = -1,
-#                     input  uvm_object         extension = null,
-#                     input  string             fname = "",
-#                     input  int                lineno = 0)
-#   uvm_reg_data_t  v
-#   uvm_reg_data_t  exp
-#   uvm_reg_backdoor bkdr = get_backdoor()
-#
-#   XatomicX(1)
-#   self.m_fname = fname
-#   self.m_lineno = lineno
-#
-#
-#   if (path == UVM_DEFAULT_PATH)
-#     path = self.m_parent.get_default_path()
-#
-#   if (path == UVself.m_backdoor && (bkdr != null || has_hdl_path()))
-#     map = uvm_reg_map::backdoor()
-#   else
-#     map = get_local_map(map, "read()")
-#
-#   if (map == null)
-#     return
-#   
-#   // Remember what we think the value is before it gets updated
-#   if (check == UVM_CHECK)
-#     exp = get_mirrored_value()
-#
-#   XreadX(status, v, path, map, parent, prior, extension, fname, lineno)
-#
-#   if (status == UVM_NOT_OK) begin
-#      XatomicX(0)
-#      return
-#   end
-#
-#   if (check == UVM_CHECK) void'(do_check(exp, v, map))
-#
-#   XatomicX(0)
-#endtask: mirror
-#
-#
-#// XatomicX
-#
-#task uvm_reg::XatomicX(bit on)
-#   process m_reg_process
-#   m_reg_process=process::self()
-#
-#   if (on) begin
-#     if (m_reg_process == self.m_process)
-#       return
-#     self.m_atomic.get(1)
-#     self.m_process = m_reg_process; 
-#   end
-#   else begin
-#      // Maybe a key was put back in by a spurious call to reset()
-#      void'(self.m_atomic.try_get(1))
-#      self.m_atomic.put(1)
-#      self.m_process = null
-#   end
-#endtask: XatomicX
-#
-#
 #//-------------
 #// STANDARD OPS
 #//-------------
@@ -2779,10 +2746,10 @@ class UVMReg(UVMObject):
 #   foreach (self.m_maps[map]) begin
 #     uvm_reg_map parent_map = map
 #     int unsigned offset
-#     while (parent_map != null) begin
+#     while (parent_map != None) begin
 #       uvm_reg_map this_map = parent_map
 #       parent_map = this_map.get_parent_map()
-#       offset = parent_map == null ? this_map.get_base_addr(UVM_NO_HIER) :
+#       offset = parent_map is None ? this_map.get_base_addr(UVM_NO_HIER) :
 #                                     parent_map.get_submap_offset(this_map)
 #       prefix = {prefix, "  "}
 #       begin
@@ -2831,7 +2798,7 @@ class UVMReg(UVMObject):
 #
 #function uvm_object uvm_reg::clone()
 #  `uvm_fatal("RegModel","RegModel registers cannot be cloned")
-#  return null
+#  return None
 #endfunction
 #
 #// do_copy
