@@ -70,8 +70,9 @@ class UVMQueue(UVMObject):
     def __getitem__(self, i):
         if i < self.size():
             return self.queue[i]
-        raise Exception("UVMQueue get index {} ouf of bounds (size: {})".format(
-            i, self.size()))
+        else:
+            raise IndexError("UVMQueue get index {} ouf of bounds (size: {})".format(
+                i, self.size()))
 
     # Function: insert
     #
@@ -235,6 +236,10 @@ class TestUVMQueue(unittest.TestCase):
         idx = q_obj.find_first_index(find_func1)
         self.assertEqual(idx, 1)
 
+    def test_for_loop(self):
+        q = UVMQueue('loop_queue')
+        for i in q:
+            self.assertEqual(True, False)
 
 
 if __name__ == '__main__':

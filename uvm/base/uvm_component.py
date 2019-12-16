@@ -2826,7 +2826,7 @@ class UVMComponent(UVMReportObject):
 #  // we call 'get' for specific fields of specific types rather than
 #  // the search-and-cast approach here.
 #  rq = rp.lookup_scope(get_full_name());
-#  rp.sort_by_precedence(rq);
+#  rq = UVMResourcePool.sort_by_precedence(rq);
 #
 #  // rq is in precedence order now, so we have to go through in reverse
 #  // order to do the settings.

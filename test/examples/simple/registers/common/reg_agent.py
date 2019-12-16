@@ -58,6 +58,7 @@ class reg_rw(UVMSequenceItem):
                 tt,self.addr,self.data,self.byte_en)
     #endclass: reg_rw
 
+
 class reg_sequencer(UVMSequencer):  #(reg_rw)
 
     def __init__(self, name, parent=None):

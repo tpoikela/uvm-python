@@ -885,6 +885,7 @@ class UVMPhase(UVMObject):
     def raise_objection(self, obj, description="", count=1):
         if self.phase_done is not None:
             uvm_debug(self, 'raise_objection', 'obj: {}'.format(obj.get_name()))
+            print(self.get_name() + ' raise_objection' + ' obj: {}'.format(obj.get_name()))
             self.phase_done.raise_objection(obj,description,count)
         else:
             self.m_report_null_objection(obj, description, count, "raise")
@@ -1777,7 +1778,7 @@ class UVMPhase(UVMObject):
         #  READY_TO_END:
         # --------------
         while do_ready_to_end:
-            yield uvm_wait_for_nba_region() # Let all siblings see no objections before traverse might raise another
+            yield uvm_wait_for_nba_region()  # Let all siblings see no objections before traverse might raise another
             UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",self,UVM_MEDIUM)
             self.m_ready_to_end_count += 1
             if (UVMPhase.m_phase_trace):

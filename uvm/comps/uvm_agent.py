@@ -72,11 +72,11 @@ class UVMAgent(UVMComponent):
         # int unsigned, uvm_integral_t, uvm_bitstream_t, and string.
         rp = UVMResourcePool.get()
         rq = rp.lookup_name(self.get_full_name(), "is_active", None, 0)
-        UVMResourcePool.sort_by_precedence(rq)
-        for i in range(0, rq.size()):
-           rsrc = rq.get(i)  # uvm_resource_base
+        rq = UVMResourcePool.sort_by_precedence(rq)
+        for i in range(len(rq)):
+           rsrc = rq[i]  # uvm_resource_base
            rap = rsrc
-           is_active = rap.read(self)
+           self.is_active = rap.read(self)
 
     type_name = "uvm_agent"
 

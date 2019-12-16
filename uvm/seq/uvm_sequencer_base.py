@@ -1419,7 +1419,7 @@ class UVMSequencerBase(UVMComponent):
 #  // Has a default sequence been specified?
 #  rq = rp.lookup_name({get_full_name(), ".", phase.get_name(), "_phase"},
 #                      "default_sequence", null, 0)
-#  uvm_resource_pool::sort_by_precedence(rq)
+#  rq = UVMResourcePool.sort_by_precedence(rq)
 #
 #  // Look for the first one if the appropriate type
 #  for (int i = 0; seq == null && i < rq.size(); i++) begin

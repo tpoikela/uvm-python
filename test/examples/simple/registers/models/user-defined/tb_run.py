@@ -29,6 +29,7 @@ from cocotb.triggers import Timer
 from uvm.base import uvm_top, UVMCoreService, run_test
 from uvm.comps import UVMTest
 from uvm.macros import uvm_fatal, uvm_info
+from uvm.reg.sequences import uvm_reg_hw_reset_seq
 
 from tb_env import tb_env
 
@@ -52,7 +53,7 @@ class tb_test(UVMTest):
         #uvm_reg_data_t data;
 
         phase.raise_objection(self)
-        env = uvm_top.find("env")
+        env = uvm_top.get_child("env")
 
         if (env is None):
             uvm_fatal("test", "Cannot find tb_env");
@@ -64,6 +65,7 @@ class tb_test(UVMTest):
         seq = uvm_reg_hw_reset_seq.type_id.create("seq")
         seq.model = env.regmodel
         yield seq.start(None)
+        print("seq.start was called. Wait for seq state")
         yield seq.wait_for_sequence_state(UVM_FINISHED)
 
         uvm_info("Test", "Performing 257 writes...", UVM_LOW)

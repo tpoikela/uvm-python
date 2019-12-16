@@ -58,6 +58,7 @@ from .sv import sv
 from ..uvm_macros import uvm_typename
 from ..macros.uvm_message_defines import uvm_info
 from .uvm_object_globals import UVM_LOW
+from .uvm_resource import UVMResource
 
 
 class UVMResourceDb:
@@ -86,9 +87,9 @@ class UVMResourceDb:
     #  static function rsrc_t get_by_name(string scope,
     #                                     string name,
     #                                     bit rpterr=1);
-    #
-    #    return rsrc_t::get_by_name(scope, name, rpterr);
-    #  endfunction
+    @classmethod
+    def get_by_name(cls, scope, name, rpterr=True):
+        return UVMResource.get_by_name(scope, name, rpterr)
 
     #  // function: set_default
     #  //

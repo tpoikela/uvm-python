@@ -1,3 +1,24 @@
+#//----------------------------------------------------------------------
+#//   Copyright 2011 Cypress Semiconductor
+#//   Copyright 2010 Mentor Graphics Corporation
+#//   Copyright 2011 Cadence Design Systems, Inc. 
+#//   Copyright 2019 Tuomas Poikela (tpoikela)
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//----------------------------------------------------------------------
 
 from .uvm_object import UVMObject
 from .sv import sv, uvm_re_match, uvm_glob_to_re
@@ -10,6 +31,81 @@ from .uvm_pool import UVMPool
 from .uvm_printer import UVMLinePrinter
 from .uvm_queue import UVMQueue
 
+#//----------------------------------------------------------------------
+#// Title: Resources
+#//
+#// Topic: Intro
+#//
+#// A resource is a parameterized container that holds arbitrary data.
+#// Resources can be used to configure components, supply data to
+#// sequences, or enable sharing of information across disparate parts of
+#// a testbench.  They are stored using scoping information so their
+#// visibility can be constrained to certain parts of the testbench.
+#// Resource containers can hold any type of data, constrained only by
+#// the data types available in SystemVerilog.  Resources can contain
+#// scalar objects, class handles, queues, lists, or even virtual
+#// interfaces.
+#//
+#// Resources are stored in a resource database so that each resource can
+#// be retrieved by name or by type. The database has both a name table
+#// and a type table and each resource is entered into both. The database
+#// is globally accessible.
+#//
+#// Each resource has a set of scopes over which it is visible.  The set
+#// of scopes is represented as a regular expression.  When a resource is
+#// looked up the scope of the entity doing the looking up is supplied to
+#// the lookup function.  This is called the ~current scope~.  If the
+#// current scope is in the set of scopes over which a resource is
+#// visible then the resource can be retuned in the lookup.
+#//
+#// Resources can be looked up by name or by type. To support type lookup
+#// each resource has a static type handle that uniquely identifies the
+#// type of each specialized resource container.
+#//
+#// Multiple resources that have the same name are stored in a queue.
+#// Each resource is pushed into a queue with the first one at the front
+#// of the queue and each subsequent one behind it.  The same happens for
+#// multiple resources that have the same type.  The resource queues are
+#// searched front to back, so those placed earlier in the queue have
+#// precedence over those placed later.
+#//
+#// The precedence of resources with the same name or same type can be
+#// altered.  One way is to set the ~precedence~ member of the resource
+#// container to any arbitrary value.  The search algorithm will return
+#// the resource with the highest precedence.  In the case where there
+#// are multiple resources that match the search criteria and have the
+#// same (highest) precedence, the earliest one located in the queue will
+#// be one returned.  Another way to change the precedence is to use the
+#// set_priority function to move a resource to either the front or back
+#// of the queue.
+#//
+#// The classes defined here form the low level layer of the resource
+#// database.  The classes include the resource container and the database
+#// that holds the containers.  The following set of classes are defined
+#// here:
+#//
+#// <uvm_resource_types>: A class without methods or members, only
+#// typedefs and enums. These types and enums are used throughout the
+#// resources facility.  Putting the types in a class keeps them confined
+#// to a specific name space.
+#//
+#// <uvm_resource_options>: policy class for setting options, such
+#// as auditing, which effect resources.
+#//
+#// <uvm_resource_base>: the base (untyped) resource class living in the
+#// resource database.  This class includes the interface for setting a
+#// resource as read-only, notification, scope management, altering
+#// search priority, and managing auditing.
+#//
+#// <uvm_resource#(T)>: parameterized resource container.  This class
+#// includes the interfaces for reading and writing each resource.
+#// Because the class is parameterized, all the access functions are type
+#// safe.
+#//
+#// <uvm_resource_pool>: the resource database. This is a singleton
+#// class object.
+#//----------------------------------------------------------------------
+
 #----------------------------------------------------------------------
 # Class: uvm_resource_types
 #
@@ -18,9 +114,34 @@ from .uvm_queue import UVMQueue
 # lieu of package-scope types.  When needed, other classes can use
 # these types by prefixing their usage with uvm_resource_types::.  E.g.
 #
-#|  uvm_resource_types::rsrc_q_t queue;
+#|  uvm_resource_types::rsrc_q_t queue
 #
 #----------------------------------------------------------------------
+#class uvm_resource_types;
+#
+#  // types uses for setting overrides
+#  typedef bit[1:0] override_t;
+#  typedef enum override_t { TYPE_OVERRIDE = 2'b01,
+#                            NAME_OVERRIDE = 2'b10 } override_e;
+#
+#   // general purpose queue of resourcex
+#  typedef uvm_queue#(uvm_resource_base) rsrc_q_t;
+#
+#  // enum for setting resource search priority
+#  typedef enum { PRI_HIGH, PRI_LOW } priority_e;
+#
+#  // access record for resources.  A set of these is stored for each
+#  // resource by accessing object.  It's updated for each read/write.
+#  typedef struct
+#  {
+#    time read_time;
+#    time write_time;
+#    int unsigned read_count;
+#    int unsigned write_count;
+#  } access_t;
+#
+#endclass
+
 TYPE_OVERRIDE = 1
 NAME_OVERRIDE = 2
 
@@ -96,15 +217,26 @@ class get_t:
 
 class UVMResourceBase(UVMObject):
 
+    #// variable: default_precedence
+    #//
+    #// The default precedence for an resource that has been created.
+    #// When two resources have the same precedence, the first resource
+    #// found has precedence.
+    #//
     default_precedence = 1000
 
+    #// Function: new
+    #//
+    #// constructor for uvm_resource_base.  The constructor takes two
+    #// arguments, the name of the resource and a regular expression which
+    #// represents the set of scopes over which this resource is visible.
     def __init__(self, name="", s="*"):
         UVMObject.__init__(self, name)
         #self.scope = ""
         self.set_scope(s)
         self.modified = False
         self.read_only = False
-        self.access = {}  # uvm_resource_types::access_t access[string];
+        self.access = {}  # uvm_resource_types::access_t access[string]
         # variable: precedence
         #
         # This variable is used to associate a precedence that a resource
@@ -113,25 +245,13 @@ class UVMResourceBase(UVMObject):
         # and may be set to a higher or lower precedence as desired.
         self.precedence = UVMResourceBase.default_precedence
 
-
+    #// Function: get_type_handle
+    #//
+    #// Pure virtual function that returns the type handle of the resource
+    #// container.
     def get_type_handle(self):
         raise Exception('get_type_handle: pure virtual method')
 
-    def set_scope(self, s):
-        scope = uvm_glob_to_re(s)
-        self.scope = scope
-
-    def get_scope(self):
-        return self.scope
-
-    #// Function: match_scope
-    #//
-    #// Using the regular expression facility, determine if this resource
-    #// is visible in a scope.  Return one if it is, zero otherwise.
-    #//
-    def match_scope(self, s):
-        err = uvm_re_match(self.scope, s)
-        return (err == 0)
 
     #//---------------------------
     #// Group: Read-only Interface
@@ -164,6 +284,170 @@ class UVMResourceBase(UVMObject):
     def is_read_only(self):
         return self.read_only
 
+    #//--------------------
+    #// Group: Notification
+    #//--------------------
+
+    #// Task: wait_modified
+    #//
+    #// This task blocks until the resource has been modified -- that is, a
+    #// <uvm_resource#(T)::write> operation has been performed.  When a 
+    #// <uvm_resource#(T)::write> is performed the modified bit is set which 
+    #// releases the block.  Wait_modified() then clears the modified bit so 
+    #// it can be called repeatedly.
+
+    #task wait_modified();
+    #  wait (modified == 1);
+    #  modified = 0;
+    #endtask
+
+    #//-----------------------
+    #// Group: Scope Interface
+    #//-----------------------
+    #//
+    #// Each resource has a name, a value and a set of scopes over which it
+    #// is visible. A scope is a hierarchical entity or a context.  A scope
+    #// name is a multi-element string that identifies a scope.  Each
+    #// element refers to a scope context and the elements are separated by
+    #// dots (.).
+    #// 
+    #//|    top.env.agent.monitor
+    #// 
+    #// Consider the example above of a scope name.  It consists of four
+    #// elements: "top", "env", "agent", and "monitor".  The elements are
+    #// strung together with a dot separating each element.  ~top.env.agent~
+    #// is the parent of ~top.env.agent.monitor~, ~top.env~ is the parent of
+    #// ~top.env.agent~, and so on.  A set of scopes can be represented by a
+    #// set of scope name strings.  A very straightforward way to represent
+    #// a set of strings is to use regular expressions.  A regular
+    #// expression is a special string that contains placeholders which can
+    #// be substituted in various ways to generate or recognize a
+    #// particular set of strings.  Here are a few simple examples:
+    #// 
+    #//|     top\..*	                all of the scopes whose top-level component
+    #//|                            is top
+    #//|    top\.env\..*\.monitor	all of the scopes in env that end in monitor;
+    #//|                            i.e. all the monitors two levels down from env
+    #//|    .*\.monitor	            all of the scopes that end in monitor; i.e.
+    #//|                            all the monitors (assuming a naming convention
+    #//|                            was used where all monitors are named "monitor")
+    #//|    top\.u[1-5]\.*	        all of the scopes rooted and named u1, u2, u3,
+    #//                             u4, or u5, and any of their subscopes.
+    #// 
+    #// The examples above use POSIX regular expression notation.  This is
+    #// a very general and expressive notation.  It is not always the case
+    #// that so much expressiveness is required.  Sometimes an expression
+    #// syntax that is easy to read and easy to write is useful, even if
+    #// the syntax is not as expressive as the full power of POSIX regular
+    #// expressions.  A popular substitute for regular expressions is
+    #// globs.  A glob is a simplified regular expression. It only has
+    #// three metacharacters -- *, +, and ?.  Character ranges are not
+    #// allowed and dots are not a metacharacter in globs as they are in
+    #// regular expressions.  The following table shows glob
+    #// metacharacters.
+    #// 
+    #//|      char	meaning	                regular expression
+    #//|                                    equivalent
+    #//|      *	    0 or more characters	.*
+    #//|      +	    1 or more characters	.+
+    #//|      ?	    exactly one character	.
+    #// 
+    #// Of the examples above, the first three can easily be translated
+    #// into globs.  The last one cannot.  It relies on notation that is
+    #// not available in glob syntax.
+    #// 
+    #//|    regular expression	    glob equivalent
+    #//|    ---------------------      ------------------
+    #//|    top\..*	            top.*
+    #//|    top\.env\..*\.monitor	    top.env.*.monitor
+    #//|    .*\.monitor	            *.monitor
+    #// 
+    #// The resource facility supports both regular expression and glob
+    #// syntax.  Regular expressions are identified as such when they 
+    #// surrounded by '/' characters. For example, ~/^top\.*/~ is
+    #// interpreted as the regular expression ~^top\.*~, where the
+    #// surrounding '/' characters have been removed. All other expressions
+    #// are treated as glob expressions. They are converted from glob 
+    #// notation to regular expression notation internally.  Regular expression 
+    #// compilation and matching as well as glob-to-regular expression 
+    #// conversion are handled by two DPI functions:
+    #// 
+    #//|    function int uvm_re_match(string re, string str);
+    #//|    function string uvm_glob_to_re(string glob);
+    #// 
+    #// uvm_re_match both compiles and matches the regular expression.
+    #// All of the matching is done using regular expressions, so globs are
+    #// converted to regular expressions and then processed.
+
+
+    #// Function: set_scope
+    #//
+    #// Set the value of the regular expression that identifies the set of
+    #// scopes over which this resource is visible.  If the supplied
+    #// argument is a glob it will be converted to a regular expression
+    #// before it is stored.
+    #//
+    def set_scope(self, s):
+        scope = uvm_glob_to_re(s)
+        self.scope = scope
+
+    #// Function: get_scope
+    #//
+    #// Retrieve the regular expression string that identifies the set of
+    #// scopes over which this resource is visible.
+    #//
+    def get_scope(self):
+        return self.scope
+
+    #// Function: match_scope
+    #//
+    #// Using the regular expression facility, determine if this resource
+    #// is visible in a scope.  Return one if it is, zero otherwise.
+    #//
+    def match_scope(self, s):
+        err = uvm_re_match(self.scope, s)
+        return (err == 0)
+
+    #//----------------
+    #// Group: Priority
+    #//----------------
+    #//
+    #// Functions for manipulating the search priority of resources.  The
+    #// function definitions here are pure virtual and are implemented in
+    #// derived classes.  The definitons serve as a priority management
+    #// interface.
+
+    #// Function: set priority
+    #//
+    #// Change the search priority of the resource based on the value of
+    #// the priority enum argument.
+    #//
+    #pure virtual function void set_priority (uvm_resource_types::priority_e pri);
+
+    #//-------------------------
+    #// Group: Utility Functions
+    #//-------------------------
+
+    #// function convert2string
+    #//
+    #// Create a string representation of the resource value.  By default
+    #// we don't know how to do this so we just return a "?".  Resource
+    #// specializations are expected to override this function to produce a
+    #// proper string representation of the resource value.
+
+    #function string convert2string();
+    #  return "?";
+    #endfunction
+
+    #// Function: do_print
+    #//
+    #// Implementation of do_print which is called by print().
+
+    #function void do_print (uvm_printer printer);
+    #  printer.print_string("",$sformatf("%s [%s] : %s", get_name(), get_scope(), convert2string()));
+    #endfunction
+
+
     #//-------------------
     #// Group: Audit Trail
     #//-------------------
@@ -173,8 +457,8 @@ class UVMResourceBase(UVMObject):
     #// <uvm_resource#(T)::write> methods each take an accessor argument.  This is a
     #// handle to the object that performed that resource access.
     #//
-    #//|    function T read(uvm_object accessor = null);
-    #//|    function void write(T t, uvm_object accessor = null);
+    #//|    function T read(uvm_object accessor = None)
+    #//|    function void write(T t, uvm_object accessor = None)
     #//
     #// The accessor can by anything as long as it is derived from
     #// uvm_object.  The accessor object can be a component or a sequence
@@ -182,11 +466,11 @@ class UVMResourceBase(UVMObject):
     #// Typically the ~this~ handle is used as the
     #// accessor.  For example:
     #//
-    #//|    uvm_resource#(int) rint;
-    #//|    int i;
+    #//|    uvm_resource#(int) rint
+    #//|    int i
     #//|    ...
-    #//|    rint.write(7, this);
-    #//|    i = rint.read(this);
+    #//|    rint.write(7, this)
+    #//|    i = rint.read(this)
     #//
     #// The accessor's ~get_full_name()~ is stored as part of the audit trail.
     #// This way you can find out what object performed each resource access.
@@ -195,10 +479,10 @@ class UVMResourceBase(UVMObject):
     #//
     #// Auditing is controlled through the <uvm_resource_options> class.
     #// function: record_read_access
-    #function void record_read_access(uvm_object accessor = null);
+    #function void record_read_access(uvm_object accessor = None)
     def record_read_access(self, accessor=None):
         str = ""
-        access_record = None  # uvm_resource_types::access_t access_record;
+        access_record = None  # uvm_resource_types::access_t access_record
         #  // If an accessor object is supplied then get the accessor record.
         #  // Otherwise create a new access record.  In either case populate
         #  // the access record with information about this access.  Check
@@ -223,7 +507,7 @@ class UVMResourceBase(UVMObject):
 
         # Update the accessor record
         access_record.read_count += 1
-        # TODO access_record.read_time = $realtime;
+        # TODO access_record.read_time = $realtime
         self.access[str] = access_record
 
     #// function: record_write_access
@@ -243,7 +527,7 @@ class UVMResourceBase(UVMObject):
                     access_record = Access_t()
                     self.init_access_record(access_record)
                 access_record.write_count += 1
-                # TODO access_record.write_time = $realtime;
+                # TODO access_record.write_time = $realtime
                 self.access[str] = access_record
 
     #// Function: init_access_record
@@ -251,7 +535,7 @@ class UVMResourceBase(UVMObject):
     #// Initialize a new access record
     #//
     def init_access_record(self, access_record):
-        # inout uvm_resource_types::access_t access_record);
+        # inout uvm_resource_types::access_t access_record)
         access_record.read_time = 0
         access_record.write_time = 0
         access_record.read_count = 0
@@ -304,10 +588,11 @@ class UVMResource(UVMResourceBase):
     # message is issued, including suggested spelling alternatives, based
     # on resource names that exist in the database, gathered by the spell
     # checker.
-    def get_by_name(self, scope, name, rpterr=True):
+    @classmethod
+    def get_by_name(cls, scope, name, rpterr=True):
         rp = UVMResourcePool.get()
         rsrc = None
-        rsrc_base = rp.get_by_name(scope, name, self.get_type(), rpterr)
+        rsrc_base = rp.get_by_name(scope, name, cls.get_type(), rpterr)
         if rsrc_base is None:
             return None
         return rsrc
@@ -351,7 +636,7 @@ class UVMResource(UVMResourceBase):
     #// In a queue of resources, locate the first one with the highest
     #// precedence whose type is T.  This function is static so that it can
     #// be called from anywhere.
-    #static function this_type get_highest_precedence(ref uvm_resource_types::rsrc_q_t q);
+    #static function this_type get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
     @classmethod
     def get_highest_precedence(cls, q, T=None):
         rsrc = None
@@ -502,7 +787,7 @@ class UVMResourcePool:
         rq = list()
         name = ""
         type_handle = None
-        # If resource handle is ~null~ then there is nothing to do.
+        # If resource handle is ~None~ then there is nothing to do.
         if rsrc is None:
             return
         # insert into the name map.  Resources with empty names are
@@ -566,7 +851,7 @@ class UVMResourcePool:
     # match the ~name~, ~scope~, and ~type_handle~.  If no resources
     # match the queue is returned empty. If ~rpterr~ is set then a
     # warning is issued if no matches are found, and the spell checker is
-    # invoked on ~name~.  If ~type_handle~ is ~null~ then a type check is
+    # invoked on ~name~.  If ~type_handle~ is ~None~ then a type check is
     # not made and resources are returned that match only ~name~ and
     # ~scope~.
 
@@ -577,11 +862,11 @@ class UVMResourcePool:
         r = None
 
         # ensure rand stability during lookup
-        # process p = process::self();
-        # string s;
-        # if(p!=null) s=p.get_randstate();
-        # q=new();
-        # if(p!=null) p.set_randstate(s);
+        # process p = process::self()
+        # string s
+        # if(p!=None) s=p.get_randstate()
+        # q=new()
+        # if(p!=None) p.set_randstate(s)
 
         # resources with empty names are anonymous and do not exist in the name map
         if name == "":
@@ -611,30 +896,30 @@ class UVMResourcePool:
     #// with the highest precedence value, the first one that has that
     #// precedence will be the one that is returned.
     #
-    #function uvm_resource_base get_highest_precedence(ref uvm_resource_types::rsrc_q_t q);
+    #function uvm_resource_base get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
     #
-    #  uvm_resource_base rsrc;
-    #  uvm_resource_base r;
-    #  int unsigned i;
-    #  int unsigned prec;
+    #  uvm_resource_base rsrc
+    #  uvm_resource_base r
+    #  int unsigned i
+    #  int unsigned prec
     #
     #  if(q.size() == 0)
-    #    return null;
+    #    return None
     #
     #  // get the first resources in the queue
-    #  rsrc = q.get(0);
-    #  prec = rsrc.precedence;
+    #  rsrc = q.get(0)
+    #  prec = rsrc.precedence
     #
     #  // start searching from the second resource
     #  for(int i = 1; i < q.size(); ++i) begin
-    #    r = q.get(i);
+    #    r = q.get(i)
     #    if(r.precedence > prec) begin
-    #      rsrc = r;
-    #      prec = r.precedence;
+    #      rsrc = r
+    #      prec = r.precedence
     #    end
     #  end
     #
-    #  return rsrc;
+    #  return rsrc
     #
     #endfunction
 
@@ -645,25 +930,26 @@ class UVMResourcePool:
     #// resource will be first in the list and the lowest precedence will
     #// be last. Resources that have the same precedence and the same name
     #// will be ordered by most recently set first.
-    #
-    #static function void sort_by_precedence(ref uvm_resource_types::rsrc_q_t q);
-    #  uvm_resource_types::rsrc_q_t all[int];
-    #  uvm_resource_base r;
-    #  for(int i=0; i<q.size(); ++i) begin
-    #    r = q.get(i);
-    #    if(!all.exists(r.precedence))
-    #       all[r.precedence] = new;
-    #    all[r.precedence].push_front(r); //since we will push_front in the final
-    #  end
-    #  q.delete();
-    #  foreach(all[i]) begin
-    #    for(int j=0; j<all[i].size(); ++j) begin
-    #      r = all[i].get(j);
-    #      q.push_front(r);
-    #    end
-    #  end
-    #endfunction
-    #
+    #static function queue sort_by_precedence(ref uvm_resource_types::rsrc_q_t q)
+    @classmethod
+    def sort_by_precedence(cls, q):
+        #  uvm_resource_types::rsrc_q_t all[int]
+        _all = {}
+        r = None  # uvm_resource_base
+
+        for i in range(len(q)):
+            r = q[i]
+            if r.precedence not in _all:
+                _all[r.precedence] = UVMQueue()
+            _all[r.precedence].push_front(r)  # since we will push_front in the final
+        qq = []
+        for key in _all:
+            for j in range(len(_all[key])):
+                r = _all[key].get(j)
+                #qq.push_front(r)
+                qq.insert(0, r)
+        return qq
+        #endfunction
 
     #// Function: get_by_name
     #//
@@ -677,24 +963,21 @@ class UVMResourcePool:
     #function uvm_resource_base get_by_name(string scope = "",
     #                                       string name,
     #                                       uvm_resource_base type_handle,
-    #                                       bit rpterr = 1);
-    #
-    #  uvm_resource_types::rsrc_q_t q;
-    #  uvm_resource_base rsrc;
-    #
-    #  q = lookup_name(scope, name, type_handle, rpterr);
-    #
-    #  if(q.size() == 0) begin
-    #    push_get_record(name, scope, null);
-    #    return null;
-    #  end
-    #
-    #  rsrc = get_highest_precedence(q);
-    #  push_get_record(name, scope, rsrc);
-    #  return rsrc;
-    #  
-    #endfunction
-    #
+    #                                       bit rpterr = 1)
+    def get_by_name(self, scope, name, type_handle, rpterr=True):
+        q = []  # uvm_resource_types::rsrc_q_t q
+        rsrc = None  # uvm_resource_base rsrc
+        q = self.lookup_name(scope, name, type_handle, rpterr)
+        #
+        if(len(q) == 0):
+            self.push_get_record(name, scope, None)
+            return None
+
+        rsrc = self.get_highest_precedence(q)
+        self.push_get_record(name, scope, rsrc)
+        return rsrc
+        #endfunction
+
     #
     #// Function: lookup_type
     #//
@@ -703,25 +986,25 @@ class UVMResourcePool:
     #// queue is empty.
     #
     #function uvm_resource_types::rsrc_q_t lookup_type(string scope = "",
-    #                                                  uvm_resource_base type_handle);
+    #                                                  uvm_resource_base type_handle)
     #
-    #  uvm_resource_types::rsrc_q_t q = new();
-    #  uvm_resource_types::rsrc_q_t rq;
-    #  uvm_resource_base r;
-    #  int unsigned i;
+    #  uvm_resource_types::rsrc_q_t q = new()
+    #  uvm_resource_types::rsrc_q_t rq
+    #  uvm_resource_base r
+    #  int unsigned i
     #
-    #  if(type_handle == null || !ttab.exists(type_handle)) begin
-    #    return q;
+    #  if(type_handle == None || !ttab.exists(type_handle)) begin
+    #    return q
     #  end
     #
-    #  rq = ttab[type_handle];
+    #  rq = ttab[type_handle]
     #  for(int i = 0; i < rq.size(); ++i) begin 
-    #    r = rq.get(i);
+    #    r = rq.get(i)
     #    if(r.match_scope(scope))
-    #      q.push_back(r);
+    #      q.push_back(r)
     #  end
     #
-    #  return q;
+    #  return q
     #
     #endfunction
     #
@@ -731,21 +1014,21 @@ class UVMResourcePool:
     #// the get history list whether or not the get succeeded.
     #
     #function uvm_resource_base get_by_type(string scope = "",
-    #                                       uvm_resource_base type_handle);
+    #                                       uvm_resource_base type_handle)
     #
-    #  uvm_resource_types::rsrc_q_t q;
-    #  uvm_resource_base rsrc;
+    #  uvm_resource_types::rsrc_q_t q
+    #  uvm_resource_base rsrc
     #
-    #  q = lookup_type(scope, type_handle);
+    #  q = lookup_type(scope, type_handle)
     #
     #  if(q.size() == 0) begin
-    #    push_get_record("<type>", scope, null);
-    #    return null;
+    #    push_get_record("<type>", scope, None)
+    #    return None
     #  end
     #
-    #  rsrc = q.get(0);
-    #  push_get_record("<type>", scope, rsrc);
-    #  return rsrc;
+    #  rsrc = q.get(0)
+    #  push_get_record("<type>", scope, rsrc)
+    #  return rsrc
     #  
     #endfunction
 
@@ -759,7 +1042,7 @@ class UVMResourcePool:
     #// ~name~ and ~scope~ are explicit values.
     #function uvm_resource_types::rsrc_q_t lookup_regex_names(string scope,
     #                                                         string name,
-    #                                                         uvm_resource_base type_handle = null);
+    #                                                         uvm_resource_base type_handle = None)
     def lookup_regex_names(self, scope, name, type_handle=None):
         return self.lookup_name(scope, name, type_handle, 0)
 
@@ -768,28 +1051,28 @@ class UVMResourcePool:
     #// Looks for all the resources whose name matches the regular
     #// expression argument and whose scope matches the current scope.
     #
-    #function uvm_resource_types::rsrc_q_t lookup_regex(string re, scope);
+    #function uvm_resource_types::rsrc_q_t lookup_regex(string re, scope)
     #
-    #  uvm_resource_types::rsrc_q_t rq;
-    #  uvm_resource_types::rsrc_q_t result_q;
-    #  int unsigned i;
-    #  uvm_resource_base r;
+    #  uvm_resource_types::rsrc_q_t rq
+    #  uvm_resource_types::rsrc_q_t result_q
+    #  int unsigned i
+    #  uvm_resource_base r
     #
-    #  re = uvm_glob_to_re(re);
-    #  result_q = new();
+    #  re = uvm_glob_to_re(re)
+    #  result_q = new()
     #
     #  foreach (rtab[name]) begin
     #    if(uvm_re_match(re, name))
-    #      continue;
-    #    rq = rtab[name];
+    #      continue
+    #    rq = rtab[name]
     #    for(i = 0; i < rq.size(); i++) begin
-    #      r = rq.get(i);
+    #      r = rq.get(i)
     #      if(r.match_scope(scope))
-    #        result_q.push_back(r);
+    #        result_q.push_back(r)
     #    end
     #  end
     #
-    #  return result_q;
+    #  return result_q
     #endfunction
 
     #// Function: lookup_scope
@@ -799,12 +1082,12 @@ class UVMResourcePool:
     #// that are visible to a particular scope.  This operation could be
     #// quite expensive, as it has to traverse all of the resources in the
     #// database.
-    #function uvm_resource_types::rsrc_q_t lookup_scope(string scope);
+    #function uvm_resource_types::rsrc_q_t lookup_scope(string scope)
     def lookup_scope(self, scope):
-        rq = None  # uvm_resource_types::rsrc_q_t rq;
-        r = None  # uvm_resource_base r;
+        rq = None  # uvm_resource_types::rsrc_q_t rq
+        r = None  # uvm_resource_base r
         i = 0
-        q = UVMQueue()  # uvm_resource_types::rsrc_q_t q = new();
+        q = UVMQueue()  # uvm_resource_types::rsrc_q_t q = new()
         # iterate in reverse order for the special case of autoconfig
         # of arrays. The array name with no [] needs to be higher priority.
         # This has no effect an manual accesses.
@@ -830,10 +1113,10 @@ class UVMResourcePool:
     #// stored in a queue.  The ~audit~ flag determines whether or not the
     #// audit trail is printed for each resource along with the name,
     #// value, and scope regular expression.
-    #function void print_resources(uvm_resource_types::rsrc_q_t rq, bit audit = 0);
+    #function void print_resources(uvm_resource_types::rsrc_q_t rq, bit audit = 0)
     def print_resources(self, rq, audit=False):
         i = 0
-        r = None  # uvm_resource_base r;
+        r = None  # uvm_resource_base r
         pass
         UVMResourcePool.printer = UVMLinePrinter()
         printer = UVMResourcePool.printer
@@ -845,13 +1128,13 @@ class UVMResourcePool:
 
         if rq is None or len(rq) == 0:
             uvm_info("UVM/RESOURCE/PRINT","<none>",UVM_NONE)
-            return;
+            return
 
         for i in range(len(rq)):
             r = rq[i]
             r.print(printer)
             if audit is True:
-                r.print_accessors();
+                r.print_accessors()
 
 
 import unittest

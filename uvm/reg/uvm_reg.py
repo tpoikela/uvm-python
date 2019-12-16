@@ -21,6 +21,7 @@
 #   permissions and limitations under the License.
 #-------------------------------------------------------------
 
+from ..base.sv import semaphore
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
 from ..base.uvm_queue import UVMQueue
@@ -74,7 +75,7 @@ class UVMReg(UVMObject):
         self.m_n_bits      = n_bits
         self.m_has_cover   = has_coverage
         self.m_cover_on    = False
-        #   self.m_atomic  = new(1); # semaphore
+        self.m_atomic  = semaphore(1)  # semaphore
         #   self.m_process = None
         self.m_n_used_bits = 0
         self.m_locked      = False
@@ -579,7 +580,7 @@ class UVMReg(UVMObject):
     #   //
     #   extern virtual function bit needs_update(); 
     #
-    #
+
     #   // Function: reset
     #   //
     #   // Reset the desired/mirrored value for this register.
@@ -595,6 +596,18 @@ class UVMReg(UVMObject):
     #   // was completed
     #   //
     #   extern virtual function void reset(string kind = "HARD")
+    def reset(self, kind = "HARD"):
+        for i in range(len(self.m_fields)):
+           self.m_fields[i].reset(kind)
+        # Put back a key in the semaphore if it is checked out
+        # in case a thread was killed during an operation
+        self.m_atomic.try_get(1)
+        self.m_atomic.put(1)
+        self.m_process = None
+        self.Xset_busyX(0)
+        #endfunction: reset
+    #
+
     #
     #
     #   // Function: get_reset
@@ -630,6 +643,7 @@ class UVMReg(UVMObject):
     #                                 string         kind = "HARD")
     #
     #
+
     #   // Task: write
     #   //
     #   // Write the specified value in this register
@@ -656,6 +670,7 @@ class UVMReg(UVMObject):
     #                             input  uvm_object        extension = null,
     #                             input  string            fname = "",
     #                             input  int               lineno = 0)
+
     #
     #
     #   // Task: read
@@ -824,6 +839,9 @@ class UVMReg(UVMObject):
         return self.m_is_busy
 
     #   /*local*/ extern function void Xset_busyX(bit busy)
+    def Xset_busyX(self, busy):
+        self.m_is_busy = busy
+
     #
     #   /*local*/ extern task XreadX (output uvm_status_e      status,
     #                                 output uvm_reg_data_t    value,
@@ -1790,19 +1808,6 @@ class UVMReg(UVMObject):
 #endfunction: get_mirrored_value
 #
 #
-#// reset
-#
-#function void uvm_reg::reset(string kind = "HARD")
-#   foreach (self.m_fields[i])
-#      self.m_fields[i].reset(kind)
-#   // Put back a key in the semaphore if it is checked out
-#   // in case a thread was killed during an operation
-#   void'(self.m_atomic.try_get(1))
-#   self.m_atomic.put(1)
-#   self.m_process = null
-#   Xset_busyX(0)
-#endfunction: reset
-#
 #
 #// get_reset
 #
@@ -2424,12 +2429,6 @@ class UVMReg(UVMObject):
 #
 #
 #
-#// Xset_busyX
-#
-#function void uvm_reg::Xset_busyX(bit busy)
-#   self.m_is_busy = busy
-#endfunction
-#    
 #
 #// Xis_loacked_by_fieldX
 #

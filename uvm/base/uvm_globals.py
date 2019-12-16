@@ -27,7 +27,7 @@ from cocotb.utils import get_sim_time, simulator
 from .uvm_object_globals import *
 from .sv import uvm_glob_to_re, uvm_re_match
 
-UVM_POUND_ZERO_COUNT = 1
+UVM_POUND_ZERO_COUNT = 10
 UVM_NO_WAIT_FOR_NBA = True
 
 

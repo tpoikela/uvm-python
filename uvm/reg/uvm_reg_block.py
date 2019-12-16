@@ -730,7 +730,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function uvm_path_e get_default_path()
     #
-    #
+
     #   // Function: reset
     #   //
     #   // Reset the mirror for this block.
@@ -742,6 +742,17 @@ class UVMRegBlock(UVMObject):
     #   // only the values mirrored in their corresponding mirror.
     #   //
     #   extern virtual function void reset(string kind = "HARD")
+    def reset(self, kind="HARD"):
+        #
+        for rg_ in self.regs.key_list():
+            rg = rg_
+            rg.reset(kind)
+
+        for blk_ in self.blks.key_list():
+            blk = blk_  # uvm_reg_block 
+            blk.reset(kind)
+        #endfunction
+
     #
     #
     #   // Function: needs_update
@@ -1597,20 +1608,6 @@ class UVMRegBlock(UVMObject):
 #----------------
 #
 #
-# reset
-#
-#function void uvm_reg_block::reset(string kind = "HARD")
-#
-#   foreach (regs[rg_]) begin
-#     uvm_reg rg = rg_
-#     rg.reset(kind)
-#   end
-#
-#   foreach (blks[blk_]) begin
-#     uvm_reg_block blk = blk_
-#     blk.reset(kind)
-#   end
-#endfunction
 #
 #
 # needs_update

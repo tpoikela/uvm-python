@@ -143,6 +143,16 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Returns the current request item if one is in the FIFO.
     #  //
     #  extern task                  peek          (output REQ t);
+    @cocotb.coroutine
+    def peek(self, t):
+        if (self.sequence_item_requested == 0):
+            self.m_select_sequence();
+       
+        # Set flag indicating that the item has been requested to ensure that item_done or get
+        # is called between requests
+        self.sequence_item_requested = 1;
+        yield  self.m_req_fifo.peek(t)
+
     #
     #  /// Documented here for clarity, implemented in uvm_sequencer_base
     #
@@ -300,20 +310,6 @@ uvm_component_utils(UVMSequencer)
 #
 #
 #
-#// peek
-#// ----
-#
-#task uvm_sequencer::peek(output REQ t);
-#
-#  if (sequence_item_requested == 0) begin
-#    m_select_sequence();
-#  end
-#
-#  // Set flag indicating that the item has been requested to ensure that item_done or get
-#  // is called between requests
-#  sequence_item_requested = 1;
-#  m_req_fifo.peek(t);
-#endtask
 #
 #
 #// item_done_trigger

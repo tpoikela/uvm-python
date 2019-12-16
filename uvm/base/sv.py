@@ -119,25 +119,40 @@ class sv_obj():
         for key in self._sv_attr_rand:
             setattr(self, key, urandom())
 
+
 class semaphore():
 
     def __init__(self, count=1):
+        self.max_count = count
         self.count = count
         self.lock = Lock("sem_lock")
+        self.locked = False
 
     @cocotb.coroutine
     def get(self, count=1):
-        if self.count > 0:
-            self.count -= 1
+        if self.count > count:
+            self.count -= count
             yield Timer(0, "NS")
+        elif count > self.max_count:
+            raise Exception("Tried to get {} > max count {}".format(count,
+                self.max_count))
         else:
             yield self.lock.acquire()
-            self.count -= 1
+            self.locked = True
+            self.count -= count
 
     def put(self, count=1):
-        self.count += 1
-        if self.count == 1:
-            self.lock.release()
+        if self.count < self.max_count:
+            self.count += count
+            if self.locked is True:
+                self.locked = False
+                self.lock.release()
+
+    def try_get(self, count=1):
+        if self.count >= count:
+            self.count -= count
+            return True
+        return False
 
 
 import unittest

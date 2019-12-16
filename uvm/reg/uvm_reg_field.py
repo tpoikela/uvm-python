@@ -87,6 +87,8 @@ class UVMRegField(UVMObject):
         self.m_cover_on = 0
         self.m_individually_accessible = False
         self.m_check = 0 # uvm_check_e
+        if UVMRegField.m_predefined is False:
+            UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
 
     # Function: configure
     #
@@ -138,7 +140,7 @@ class UVMRegField(UVMObject):
      
         self.m_parent.add_field(self)
      
-        if not self.m_access in UVMRegField.m_policy_names:
+        if not (self.m_access in UVMRegField.m_policy_names):
             uvm_report_error("RegModel", ("Access policy '" + access
              + "' for field '" + self.get_full_name() + "' is not defined.  Setting to RW"))
             self.m_access = "RW";
@@ -288,10 +290,11 @@ class UVMRegField(UVMObject):
         if not UVMRegField.m_predefined:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
      
-        name = name.upper();
+        name = name.upper()
         if name in UVMRegField.m_policy_names:
             return 0
      
+        print("UVMRegField set policy name " + name + " to 1")
         UVMRegField.m_policy_names[name] = 1
         return True
 
@@ -300,7 +303,7 @@ class UVMRegField(UVMObject):
     @classmethod
     def m_predefine_policies(cls):
         if UVMRegField.m_predefined is True:
-            return 1
+            return True
         UVMRegField.m_predefined = True
         UVMRegField.define_access("RO")
         UVMRegField.define_access("RW")
@@ -327,7 +330,7 @@ class UVMRegField(UVMObject):
         UVMRegField.define_access("WOS")
         UVMRegField.define_access("W1")
         UVMRegField.define_access("WO1")
-        return 1
+        return True
 
     #   // Function: get_access
     #   //
@@ -348,7 +351,7 @@ class UVMRegField(UVMObject):
 
     def get_access(self, reg_map = None):
         field_access = self.m_access;
-        from uvm_reg_map import UVMRegMap
+        from .uvm_reg_map import UVMRegMap
         if reg_map == UVMRegMap.backdoor():
             return field_access
 
@@ -1795,13 +1798,13 @@ class TestUVMRegField(unittest.TestCase):
         return field
 
     def test_configure(self):
-        from uvm_reg import UVMReg
+        from .uvm_reg import UVMReg
         reg = UVMReg('my_reg', 16, False)
         field = self.create_field('f1', reg)
         self.assertEqual(field.get_reset(), 0xABCD)
 
     def test_string_conv(self):
-        from uvm_reg import UVMReg
+        from .uvm_reg import UVMReg
         reg = UVMReg('r0_test', 16, False)
         field = self.create_field('f1', reg)
         ss = field.convert2string()
