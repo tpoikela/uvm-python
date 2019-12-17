@@ -381,6 +381,7 @@ class UVMRegBlock(UVMObject):
     #                                                   input uvm_object    accessor = null)
     #
     #
+
     #   // Function: get_blocks
     #   //
     #   // Get the sub-blocks
@@ -390,6 +391,14 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_blocks (ref uvm_reg_block  blks[$],
     #                                            input uvm_hier_e hier=UVM_HIER)
+    def get_blocks(self, blks, hier=UVM_HIER):
+        for blk_ in self.blks.key_list():
+            blk = blk_
+            blks.append(blk)
+            if (hier == UVM_HIER):
+                blk.get_blocks(blks)
+        #endfunction: get_blocks
+
     #
     #
 
@@ -1281,19 +1290,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: get_memories
 #
 #
-# get_blocks
-#
-#function void uvm_reg_block::get_blocks(ref uvm_reg_block blks[$],
-#                                        input uvm_hier_e hier=UVM_HIER)
-#
-#   foreach (self.blks[blk_]):
-#     uvm_reg_block blk = blk_
-#     blks.push_back(blk)
-#     if (hier == UVM_HIER)
-#       blk.get_blocks(blks)
-#   end
-#
-#endfunction: get_blocks
 #
 #
 # get_root_blocks

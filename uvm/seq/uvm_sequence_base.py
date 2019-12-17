@@ -189,6 +189,8 @@ class UVMSequenceBase(UVMSequenceItem):
         #self.m_resp_queue_event = UVMEvent("resp_queue_event")
         self.m_resp_queue_event = Event("resp_queue_event")
         self.m_resp_queue_event.clear()
+        self.m_events = {}
+        self.m_events[UVM_FINISHED] = Event("UVM_FINISHED")
 
     #  // Function: is_item
     #  //
@@ -217,10 +219,15 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // is already in one of the state, this method returns immediately.
     #  //
     #  //| wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED)
-    #
     #  task wait_for_sequence_state(int unsigned state_mask)
-    #    wait (m_sequence_state & state_mask)
-    #  endtask
+    @cocotb.coroutine
+    def wait_for_sequence_state(self, state_mask):
+        state = self.m_sequence_state & state_mask
+        if state in self.m_events:
+            yield self.m_events[state].wait()
+        else:
+            raise Exception("Cannot wait for state " + str(state)
+                    + " - not implemented")
 
     #  // Function: get_tr_handle
     #  //
@@ -401,6 +408,7 @@ class UVMSequenceBase(UVMSequenceItem):
             self.m_safe_drop_starting_phase("automatic phase objection")
 
         self.m_sequence_state = UVM_FINISHED
+        self.m_events[UVM_FINISHED].set()
         #0
         yield Timer(0)
         #join

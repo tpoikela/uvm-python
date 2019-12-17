@@ -26,7 +26,7 @@
 import cocotb
 from cocotb.triggers import Timer
 
-from uvm.base import uvm_top, UVMCoreService, run_test
+from uvm.base import uvm_top, UVMCoreService, run_test, UVM_FINISHED, UVM_LOW
 from uvm.comps import UVMTest
 from uvm.macros import uvm_fatal, uvm_info
 from uvm.reg.sequences import uvm_reg_hw_reset_seq

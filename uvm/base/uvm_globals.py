@@ -41,6 +41,16 @@ def uvm_sim_time(units='NS'):
 def uvm_empty_delay():
     yield Timer(0, "NS")
 
+
+def uvm_check_output_args(arr):
+    for item in arr:
+        if not isinstance(item, list):
+            raise Exception('All output args must be given as empty arrays. Got: '
+                    + str(item))
+        elif len(item) != 0:
+            raise Exception('All output args must be given as empty arrays. Got: '
+                    + str(item), + ' len: ' + len(item))
+
 #----------------------------------------------------------------------------
 #
 # Group: Miscellaneous

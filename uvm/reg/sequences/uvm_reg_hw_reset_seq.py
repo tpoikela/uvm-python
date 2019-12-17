@@ -28,7 +28,7 @@ from .. import uvm_reg_sequence
 from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base import UVM_LOW, UVM_HIGH
-from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR
+from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 
 #//
 #// class: uvm_reg_hw_reset_seq
@@ -79,10 +79,10 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
             uvm_error("uvm_reg_hw_reset_seq", "Not block or system specified to run sequence on")
             return
         uvm_info("STARTING_SEQ", "\n\nStarting " + self.get_name() + " sequence...\n",UVM_LOW)
-    
+
         self.reset_blk(self.model)
         self.model.reset()
-    
+
         yield self.do_block(self.model)
     #   endtask: body
 
@@ -100,7 +100,7 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
 
         if no_rr1 is not None or no_rr2 is not None:
             return
-        
+
         blk.get_maps(maps)
         # Iterate over all maps defined for the RegModel block
         #
@@ -110,35 +110,37 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
             maps[d].get_submaps(sub_maps)
             if len(sub_maps) != 0:
                 continue
-            
+
             # Iterate over all registers in the map, checking accesses
             # Note: if map were in inner loop, could test simulataneous
             # access to same reg via different bus interfaces
-            
+
             regs = []
             maps[d].get_registers(regs)
-            
+
             for i in range(len(regs)):
                 #uvm_status_e status
                 status = 0
-                
+
                 # Registers with certain attributes are not to be tested
                 dont_test1 = UVMResourceDb.get_by_name("REG::" + regs[i].get_full_name(), "NO_REG_HW_RESET_TEST", 0)
                 dont_test2 = UVMResourceDb.get_by_name("REG::" + regs[i].get_full_name(), "NO_REG_TESTS", 0)
                 if (dont_test1 is not None or dont_test2 is not None):
                     continue
-                
+
                 uvm_info(self.get_type_name(),
-                          sv.sformatf("Verifying reset value of register %s in map \"%s\"...",
-                          regs[i].get_full_name(), maps[d].get_full_name()), UVM_LOW)
-                
+                        sv.sformatf("Verifying reset value of register %s in map \"%s\"...",
+                            regs[i].get_full_name(), maps[d].get_full_name()), UVM_LOW)
+
+                status = []
                 yield regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
-                
+                status = status[0]
+
                 if status != UVM_IS_OK:
                     uvm_error(self.get_type_name(),
                           sv.sformatf("Status was %s when reading reset value of register \"%s\" through map \"%s\".",
                           status.name(), regs[i].get_full_name(), maps[d].get_full_name()))
-        
+
             blks = []  # uvm_reg_block blks[$]
             blk.get_blocks(blks)
             for i in range(len(blks)):
