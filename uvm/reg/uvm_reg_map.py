@@ -25,6 +25,7 @@ from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import *
 from .uvm_reg_model import *
+from .uvm_reg_item import UVMRegBusOp
 
 
 class UVMRegMapInfo:
@@ -265,7 +266,7 @@ class UVMRegMap(UVMObject):
     #   extern virtual function void set_sequencer (uvm_sequencer_base sequencer,
     #                                               uvm_reg_adapter    adapter=null)
     def set_sequencer(self, sequencer, adapter=None):
-        
+
         if (sequencer is None):
             uvm_error("REG_NULL_SQR", "Null reference specified for bus sequencer")
             return
@@ -275,7 +276,7 @@ class UVMRegMap(UVMObject):
                 self.get_full_name() +
                 "'. Accesses via this map will send abstract 'uvm_reg_item' items to sequencer '"
                 + sequencer.get_full_name() + "'"), UVM_MEDIUM)
-        
+
         self.m_sequencer = sequencer
         self.m_adapter = adapter
         #endfunction
@@ -496,6 +497,11 @@ class UVMRegMap(UVMObject):
     #   // bus width.
     #   //
     #   extern virtual function int unsigned get_n_bytes (uvm_hier_e hier=UVM_HIER)
+    def get_n_bytes(self, hier=UVM_HIER):
+        if (hier == UVM_NO_HIER):
+            return self.m_n_bytes
+        return self.m_system_n_bytes
+
     #
     #
     #   // Function: get_addr_unit_bytes
@@ -513,8 +519,8 @@ class UVMRegMap(UVMObject):
     #   // set to ~UVM_HIER~, gets the system-level endianness.
     #   //
     #   extern virtual function uvm_endianness_e get_endian (uvm_hier_e hier=UVM_HIER)
-    #
-    #
+
+
     #   // Function: get_sequencer
     #   //
     #   // Gets the sequencer for the bus associated with this map. If ~hier~ is
@@ -522,8 +528,11 @@ class UVMRegMap(UVMObject):
     #   // See <set_sequencer>.
     #   //
     #   extern virtual function uvm_sequencer_base get_sequencer (uvm_hier_e hier=UVM_HIER)
-    #
-    #
+    def get_sequencer(self, hier=UVM_HIER):
+        if (hier == UVM_NO_HIER or self.m_parent_map is None):
+            return self.m_sequencer
+        return self.m_parent_map.get_sequencer(hier)
+
     #   // Function: get_adapter
     #   //
     #   // Gets the bus adapter for the bus associated with this map. If ~hier~ is
@@ -531,8 +540,11 @@ class UVMRegMap(UVMObject):
     #   // See <set_sequencer>.
     #   //
     #   extern virtual function uvm_reg_adapter get_adapter (uvm_hier_e hier=UVM_HIER)
-    #
-    #
+    def get_adapter(self, hier=UVM_HIER):
+        if (hier == UVM_NO_HIER or self.m_parent_map is None):
+            return self.m_adapter
+        return self.m_parent_map.get_adapter(hier)
+        #endfunction
 
     #   // Function: get_submaps
     #   //
@@ -567,7 +579,7 @@ class UVMRegMap(UVMObject):
     def get_registers(self, regs, hier=UVM_HIER):
         for rg in self.m_regs_info:
             regs.append(rg)
-        
+
         if hier == UVM_HIER:
             for sm in self.m_submaps:
                 submap = sm
@@ -733,7 +745,9 @@ class UVMRegMap(UVMObject):
     #   //
     #   // Gets the auto-predict mode setting for this map.
     #   //
-    #   function bit  get_auto_predict(); return self.m_auto_predict; endfunction
+    def get_auto_predict(self):
+        return self.m_auto_predict
+
     #
     #
     #   // Function: set_check_on_read
@@ -758,17 +772,20 @@ class UVMRegMap(UVMObject):
     #   //
     #   function void set_check_on_read(bit on=1)
     #      self.m_check_on_read = on
-    #      foreach (self.m_submaps[submap]) begin
+    #      foreach (self.m_submaps[submap]):
     #         submap.set_check_on_read(on)
     #      end
     #   endfunction
     #
     #
+
     #   // Function: get_check_on_read
     #   //
     #   // Gets the check-on-read mode setting for this map.
     #   //
-    #   function bit  get_check_on_read(); return self.m_check_on_read; endfunction
+    def get_check_on_read(self):
+        return self.m_check_on_read
+
     #
     #
     #
@@ -781,6 +798,7 @@ class UVMRegMap(UVMObject):
     #                                     uvm_reg_adapter adapter)
     #
     #
+
     #   // Task: do_bus_read
     #   //
     #   // Perform a bus read operation.
@@ -788,6 +806,152 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_bus_read (uvm_reg_item rw,
     #                                    uvm_sequencer_base sequencer,
     #                                    uvm_reg_adapter adapter)
+    @cocotb.coroutine
+    def do_bus_read (self, rw, sequencer, adapter):
+        addrs = []  # uvm_reg_addr_t[$]
+        system_map = self.get_root_map()
+        bus_width  = self.get_n_bytes()
+        byte_en    = -1
+        map_info = None
+        size = 0
+        n_bits = 0
+        skip = 0
+        lsb = 0
+        curr_byte = 0
+        n_access_extra = 0
+        n_access = 0
+        n_bits_init = 0
+        accesses = []  # uvm_reg_bus_op[$]
+
+        [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits, lsb, skip)
+        addrs = map_info.addr
+        size = n_bits
+
+        # if a memory, adjust addresses based on offset
+        if (rw.element_kind == UVM_MEM):
+            for i in range(len(addrs)):
+                addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
+
+        for val_idx in range(len(rw.value)):
+            rw.value[val_idx] = 0
+
+            # /* calculate byte_enables */
+            if (rw.element_kind == UVM_FIELD):
+                temp_be = 0
+                ii = 0
+                n_access_extra = lsb % (bus_width*8)
+                n_access = n_access_extra + n_bits
+                temp_be = n_access_extra
+                while (temp_be >= 8):
+                    byte_en[ii] = 0
+                    ii += 1
+                    temp_be -= 8
+
+                temp_be += n_bits
+                while(temp_be > 0):
+                    byte_en[ii] = 1
+                    ii += 1
+                    temp_be -= 8
+                byte_en &= (1<<ii)-1
+                for i in range(skip):
+                    addrs.pop_front()
+                while (addrs.size() > (n_bits/(bus_width*8) + 1)):
+                    addrs.pop_back()
+            #end
+            curr_byte = 0
+            n_bits = n_bits_init
+
+            accesses = []
+            for i in range(len(addrs)):
+                rw_access = UVMRegBusOp()
+
+                uvm_info(get_type_name(),
+                   sv.sformatf("Reading address 'h%0h via map \"%s\"...",
+                             addrs[i], self.get_full_name()), UVM_FULL)
+
+                if (rw.element_kind == UVM_FIELD):
+                    #for (int z=0;z<bus_width;z++)
+                    for z in range(bus_width):
+                        rw_access.byte_en[z] = byte_en[curr_byte+z]
+
+                rw_access.kind = rw.kind
+                rw_access.addr = addrs[i]
+                rw_access.data = curr_byte
+                rw_access.byte_en = byte_en
+                rw_access.n_bits = n_bits
+                if (n_bits > bus_width*8):
+                    rw_access.n_bits = bus_width*8
+
+                accesses.append(rw_access)
+
+                curr_byte += bus_width
+                n_bits -= bus_width * 8
+
+            # if set utilize the order policy
+            if(self.policy is not None):
+                self.policy.order(accesses)
+
+            # perform accesses
+            for i in range(len(accesses)):
+            #foreach(accesses[i]):
+                rw_access = accesses[i]  # uvm_reg_bus_op
+                bus_req = None  # uvm_sequence_item
+                data = 0  #uvm_reg_data_logic_t
+                curr_byte_ = 0
+
+                curr_byte_=rw_access.data
+                rw_access.data=0
+                adapter.m_set_item(rw)
+                bus_req = adapter.reg2bus(rw_access)
+                adapter.m_set_item(None)
+                if bus_req is None:
+                    uvm_fatal("RegMem","adapter [" + adapter.get_name() + "] didnt return a bus transaction")
+
+                bus_req.set_sequencer(sequencer)
+                rw.parent.start_item(bus_req,rw.prior)
+
+                if (rw.parent is not None and i == 0):
+                    rw.parent.mid_do(rw)
+
+                yield rw.parent.finish_item(bus_req)
+                yield bus_req.end_event.wait_on()
+
+                if (adapter.provides_responses):
+                    bus_rsp = None  # uvm_sequence_item
+                    op = 0  # uvm_access_e
+                    # TODO: need to test for right trans type, if not put back in q
+                    yield rw.parent.get_base_response(bus_rsp)
+                    adapter.bus2reg(bus_rsp,rw_access)
+                else:
+                    adapter.bus2reg(bus_req,rw_access)
+
+                data = rw_access.data & ((1<<bus_width*8)-1)  # mask the upper bits
+
+                rw.status = rw_access.status
+
+                # TODO
+                #if (rw.status == UVM_IS_OK && (^data) === 1'bx):
+
+                uvm_info(self.get_type_name(),
+                   sv.sformatf("Read 0x%0h at 0x%0h via map %s: %s...", data,
+                             addrs[i], self.get_full_name(), rw.status.name()), UVM_FULL)
+
+                if (rw.status == UVM_NOT_OK):
+                    break
+
+                rw.value[val_idx] |= data << curr_byte_*8
+
+                if (rw.parent is not None and i == addrs.size()-1):
+                    rw.parent.post_do(rw)
+
+            #foreach (addrs[i])
+            for i in range(len(addrs)):
+                addrs[i] = addrs[i] + map_info.mem_range.stride
+
+            if (rw.element_kind == UVM_FIELD):
+                rw.value[val_idx] = (rw.value[val_idx] >> (n_access_extra)) & ((1<<size)-1)
+        #endtask: do_bus_read
+
     #
     #
     #   // Task: do_write
@@ -797,18 +961,83 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_write(uvm_reg_item rw)
     #
     #
+
     #   // Task: do_read
     #   //
     #   // Perform a read operation.
     #   //
     #   extern virtual task do_read(uvm_reg_item rw)
+    @cocotb.coroutine
+    def do_read(self, rw):
+        tmp_parent_seq = None  # uvm_sequence_base
+        system_map = self.get_root_map()
+        adapter = system_map.get_adapter()
+        sequencer = system_map.get_sequencer()
+
+        if (adapter is not None and adapter.parent_sequence is not None):
+            o = None  # uvm_object
+            seq = None  # uvm_sequence_base
+            o = adapter.parent_sequence.clone()
+            # assert($cast(seq,o)) TODO check this
+            seq = o
+            seq.set_parent_sequence(rw.parent)
+            rw.parent = seq
+            tmp_parent_seq = seq
+
+        if (rw.parent is None):
+            rw.parent = UVMSequenceBase("default_parent_seq")
+            tmp_parent_seq = rw.parent
+
+        if (adapter is None):
+            rw.set_sequencer(sequencer)
+            yield rw.parent.start_item(rw,rw.prior)
+            yield rw.parent.finish_item(rw)
+            yield rw.end_event.wait_on()
+        else:
+            yield self.do_bus_read(rw, sequencer, adapter)
+
+        if (tmp_parent_seq is not None):
+            sequencer.m_sequence_exiting(tmp_parent_seq)
+
+        #endtask
+
     #
     #   extern function void Xget_bus_infoX (uvm_reg_item rw,
     #                                        output uvm_reg_map_info map_info,
     #                                        output int size,
     #                                        output int lsb,
     #                                        output int addr_skip)
-    #
+    def Xget_bus_infoX(self, rw, map_info, size, lsb, addr_skip):
+        if (rw.element_kind == UVM_MEM):
+            mem = None  # uvm_mem 
+            if(rw.element is None):  # || !$cast(mem,rw.element)):
+                uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_MEM, " +
+                    "but 'element' does not point to a memory: " + rw.get_name())
+            mem = rw.element
+            map_info = self.get_mem_map_info(mem)
+            size = mem.get_n_bits()
+        elif (rw.element_kind == UVM_REG):
+            rg = None  # uvm_reg 
+            if(rw.element is None):  # || !$cast(rg,rw.element))
+                uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_REG, " +
+                    "but 'element' does not point to a register: " + rw.get_name())
+            rg = rw.element
+            map_info = self.get_reg_map_info(rg)
+            size = rg.get_n_bits()
+        elif (rw.element_kind == UVM_FIELD):
+            field = None  # uvm_reg_field 
+            if(rw.element is None):  # || !$cast(field,rw.element))
+                uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_FIELD, " +
+                    "but 'element' does not point to a field: " + rw.get_name())
+            field = rw.element
+            map_info = self. get_reg_map_info(field.get_parent())
+            size = field.get_n_bits()
+            lsb = field.get_lsb_pos()
+            addr_skip = lsb/(self.get_n_bytes()*8)
+        return [map_info, size, lsb, addr_skip]
+        #endfunction
+
+
     #   extern virtual function string      convert2string()
     #   extern virtual function uvm_object  clone()
     #   extern virtual function void        do_print (uvm_printer printer)
@@ -850,13 +1079,13 @@ uvm_object_utils(UVMRegMap)
 #                                   string rights = "RW",
 #                                   bit unmapped=0,
 #                                   uvm_reg_frontdoor frontdoor=null)
-#   if (self.m_mems_info.exists(mem)) begin
+#   if (self.m_mems_info.exists(mem)):
 #      `uvm_error("RegModel", {"Memory '",mem.get_name(),
 #                 "' has already been added to map '",get_name(),"'"})
 #      return
 #   end
 #
-#   if (mem.get_parent() != get_parent()) begin
+#   if (mem.get_parent() != get_parent()):
 #      `uvm_error("RegModel",
 #         {"Memory '",mem.get_full_name(),"' may not be added to address map '",
 #          get_full_name(),"' : they are not in the same block"})
@@ -883,7 +1112,7 @@ uvm_object_utils(UVMRegMap)
 #                                            uvm_reg_addr_t offset,
 #                                            bit unmapped)
 #
-#   if (!self.m_mems_info.exists(mem)) begin
+#   if (!self.m_mems_info.exists(mem)):
 #      `uvm_error("RegModel",
 #         {"Cannot modify offset of memory '",mem.get_full_name(),
 #         "' in address map '",get_full_name(),
@@ -898,18 +1127,18 @@ uvm_object_utils(UVMRegMap)
 #      uvm_reg_addr_t   addrs[]
 #
 #      // if block is not locked, Xinit_address_mapX will resolve map when block is locked
-#      if (blk.is_locked()) begin
+#      if (blk.is_locked()):
 #
 #         // remove any existing cached addresses
-#         if (!info.unmapped) begin
-#           foreach (top_map.self.m_mems_by_offset[range]) begin
+#         if (!info.unmapped):
+#           foreach (top_map.self.m_mems_by_offset[range]):
 #              if (top_map.self.m_mems_by_offset[range] == mem)
 #                 top_map.self.m_mems_by_offset.delete(range)
 #           end
 #         end
 #
 #         // if we are remapping...
-#         if (!unmapped) begin
+#         if (!unmapped):
 #            uvm_reg_addr_t addrs[],addrs_max[]
 #            uvm_reg_addr_t min, max, min2, max2
 #            int unsigned stride
@@ -927,8 +1156,8 @@ uvm_object_utils(UVMRegMap)
 #            stride = (max2 - max)/(mem.get_size()-1)
 #
 #            // make sure new offset does not conflict with others
-#            foreach (top_map.self.m_regs_by_offset[reg_addr]) begin
-#               if (reg_addr >= min && reg_addr <= max) begin
+#            foreach (top_map.self.m_regs_by_offset[reg_addr]):
+#               if (reg_addr >= min && reg_addr <= max):
 #                  string a,b
 #                  a = $sformatf("[%0h:%0h]",min,max)
 #                  b = $sformatf("%0h",reg_addr)
@@ -939,10 +1168,10 @@ uvm_object_utils(UVMRegMap)
 #               end
 #            end
 #
-#            foreach (top_map.self.m_mems_by_offset[range]) begin
+#            foreach (top_map.self.m_mems_by_offset[range]):
 #               if (min <= range.max && max >= range.max ||
 #                   min <= range.min && max >= range.min ||
-#                   min >= range.min && max <= range.max) begin
+#                   min >= range.min && max <= range.max):
 #                 string a,b
 #                 a = $sformatf("[%0h:%0h]",min,max)
 #                 b = $sformatf("[%0h:%0h]",range.min,range.max)
@@ -963,7 +1192,7 @@ uvm_object_utils(UVMRegMap)
 #         end
 #      end
 #
-#      if (unmapped) begin
+#      if (unmapped):
 #        info.offset   = -1
 #        info.unmapped = 1
 #      end
@@ -982,7 +1211,7 @@ uvm_object_utils(UVMRegMap)
 #                                       uvm_reg_addr_t offset)
 #   uvm_reg_map parent_map
 #
-#   if (child_map == null) begin
+#   if (child_map is None):
 #      `uvm_error("RegModel", {"Attempting to add NULL map to map '",get_full_name(),"'"})
 #      return
 #   end
@@ -990,7 +1219,7 @@ uvm_object_utils(UVMRegMap)
 #   parent_map = child_map.get_parent_map()
 #
 #   // Cannot have more than one parent (currently)
-#   if (parent_map != null) begin
+#   if (parent_map is not None):
 #      `uvm_error("RegModel", {"Map '", child_map.get_full_name(),
 #                 "' is already a child of map '",
 #                 parent_map.get_full_name(),
@@ -1002,15 +1231,15 @@ uvm_object_utils(UVMRegMap)
 #
 #   begin : parent_block_check
 #     uvm_reg_block child_blk = child_map.get_parent()
-#     if (child_blk == null) begin
+#     if (child_blk is None):
 #        `uvm_error("RegModel", {"Cannot add submap '",child_map.get_full_name(),
 #                   "' because it does not have a parent block"})
 #        return
 #     end
-#     while((child_blk!=null) && (child_blk.get_parent() != get_parent()))
+#     while((child_blk is not None) && (child_blk.get_parent() != get_parent()))
 #	     	child_blk = child_blk.get_parent()
 #
-#     if (child_blk==null) begin
+#     if (child_blk==null):
 #        `uvm_error("RegModel",
 #          {"Submap '",child_map.get_full_name(),"' may not be added to this ",
 #          "address map, '", get_full_name(),"', as the submap's parent block, '",
@@ -1021,7 +1250,7 @@ uvm_object_utils(UVMRegMap)
 #   end
 #
 #   begin : n_bytes_match_check
-#      if (self.m_n_bytes > child_map.get_n_bytes(UVM_NO_HIER)) begin
+#      if (self.m_n_bytes > child_map.get_n_bytes(UVM_NO_HIER)):
 #         `uvm_warning("RegModel",
 #             $sformatf("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
 #                       child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
@@ -1043,7 +1272,7 @@ uvm_object_utils(UVMRegMap)
 #
 #   get_registers(regs)
 #
-#   foreach (regs[i]) begin
+#   foreach (regs[i]):
 #      regs[i].reset(kind)
 #   end
 #endfunction
@@ -1053,13 +1282,13 @@ uvm_object_utils(UVMRegMap)
 #
 #function void uvm_reg_map::add_parent_map(uvm_reg_map parent_map, uvm_reg_addr_t offset)
 #
-#   if (parent_map == null) begin
+#   if (parent_map is None):
 #      `uvm_error("RegModel",
 #          {"Attempting to add NULL parent map to map '",get_full_name(),"'"})
 #      return
 #   end
 #
-#   if (self.m_parent_map != null) begin
+#   if (self.m_parent_map is not None):
 #      `uvm_error("RegModel",
 #          $sformatf("Map \"%s\" already a submap of map \"%s\" at offset 'h%h",
 #                    get_full_name(), self.m_parent_map.get_full_name(),
@@ -1093,20 +1322,12 @@ uvm_object_utils(UVMRegMap)
 #
 #function uvm_reg_addr_t  uvm_reg_map::get_base_addr(uvm_hier_e hier=UVM_HIER)
 #  uvm_reg_map child = this
-#  if (hier == UVM_NO_HIER || self.m_parent_map == null)
+#  if (hier == UVM_NO_HIER || self.m_parent_map is None)
 #    return self.m_base_addr
 #  get_base_addr = self.m_parent_map.get_submap_offset(this)
 #  get_base_addr += self.m_parent_map.get_base_addr(UVM_HIER)
 #endfunction
 #
-#
-# get_n_bytes
-#
-#function int unsigned uvm_reg_map::get_n_bytes(uvm_hier_e hier=UVM_HIER)
-#  if (hier == UVM_NO_HIER)
-#    return self.m_n_bytes
-#  return self.m_system_n_bytes
-#endfunction
 #
 #
 # get_addr_unit_bytes
@@ -1119,28 +1340,14 @@ uvm_object_utils(UVMRegMap)
 # get_endian
 #
 #function uvm_endianness_e uvm_reg_map::get_endian(uvm_hier_e hier=UVM_HIER)
-#  if (hier == UVM_NO_HIER || self.m_parent_map == null)
+#  if (hier == UVM_NO_HIER || self.m_parent_map is None)
 #    return self.m_endian
 #  return self.m_parent_map.get_endian(hier)
 #endfunction
 #
 #
-# get_sequencer
-#
-#function uvm_sequencer_base uvm_reg_map::get_sequencer(uvm_hier_e hier=UVM_HIER)
-#  if (hier == UVM_NO_HIER || self.m_parent_map == null)
-#    return self.m_sequencer
-#  return self.m_parent_map.get_sequencer(hier)
-#endfunction
 #
 #
-# get_adapter
-#
-#function uvm_reg_adapter uvm_reg_map::get_adapter(uvm_hier_e hier=UVM_HIER)
-#  if (hier == UVM_NO_HIER || self.m_parent_map == null)
-#    return self.m_adapter
-#  return self.m_parent_map.get_adapter(hier)
-#endfunction
 #
 #
 #
@@ -1150,13 +1357,13 @@ uvm_object_utils(UVMRegMap)
 #
 #function void uvm_reg_map::get_fields(ref uvm_reg_field fields[$], input uvm_hier_e hier=UVM_HIER)
 #
-#   foreach (self.m_regs_info[rg_]) begin
+#   foreach (self.m_regs_info[rg_]):
 #     uvm_reg rg = rg_
 #     rg.get_fields(fields)
 #   end
 #
 #   if (hier == UVM_HIER)
-#     foreach (this.self.m_submaps[submap_]) begin
+#     foreach (this.self.m_submaps[submap_]):
 #       uvm_reg_map submap=submap_
 #       submap.get_fields(fields)
 #     end
@@ -1172,7 +1379,7 @@ uvm_object_utils(UVMRegMap)
 #     mems.push_back(mem)
 #
 #   if (hier == UVM_HIER)
-#     foreach (self.m_submaps[submap_]) begin
+#     foreach (self.m_submaps[submap_]):
 #       uvm_reg_map submap=submap_
 #       submap.get_memories(mems)
 #     end
@@ -1213,7 +1420,7 @@ uvm_object_utils(UVMRegMap)
 #
 #   get_full_name = get_name()
 #
-#   if (self.m_parent == null)
+#   if (self.m_parent is None)
 #     return get_full_name
 #
 #   return {self.m_parent.get_full_name(), ".", get_full_name}
@@ -1224,7 +1431,7 @@ uvm_object_utils(UVMRegMap)
 # get_mem_map_info
 #
 #function uvm_reg_map_info uvm_reg_map::get_mem_map_info(uvm_mem mem, bit error=1)
-#  if (!self.m_mems_info.exists(mem)) begin
+#  if (!self.m_mems_info.exists(mem)):
 #    if (error)
 #      `uvm_error("REG_NO_MAP",{"Memory '",mem.get_name(),"' not in map '",get_name(),"'"})
 #    return null
@@ -1241,12 +1448,12 @@ uvm_object_utils(UVMRegMap)
 # set_base_addr
 #
 #function void uvm_reg_map::set_base_addr(uvm_reg_addr_t offset)
-#   if (self.m_parent_map != null) begin
+#   if (self.m_parent_map is not None):
 #      self.m_parent_map.set_submap_offset(this, offset)
 #   end
 #   else begin
 #      self.m_base_addr = offset
-#      if (self.m_parent.is_locked()) begin
+#      if (self.m_parent.is_locked()):
 #         uvm_reg_map top_map = get_root_map()
 #         top_map.Xinit_address_mapX()
 #      end
@@ -1262,21 +1469,21 @@ uvm_object_utils(UVMRegMap)
 #  int unsigned addr
 #
 #  // get max offset from registers
-#  foreach (self.m_regs_info[rg_]) begin
+#  foreach (self.m_regs_info[rg_]):
 #    uvm_reg rg = rg_
 #    addr = self.m_regs_info[rg].offset + ((rg.get_n_bytes()-1)/self.m_n_bytes)
 #    if (addr > max_addr) max_addr = addr
 #  end
 #
 #  // get max offset from memories
-#  foreach (self.m_mems_info[mem_]) begin
+#  foreach (self.m_mems_info[mem_]):
 #    uvm_mem mem = mem_
 #    addr = self.m_mems_info[mem].offset + (mem.get_size() * (((mem.get_n_bytes()-1)/self.m_n_bytes)+1)) -1
 #    if (addr > max_addr) max_addr = addr
 #  end
 #
 #  // get max offset from submaps
-#  foreach (self.m_submaps[submap_]) begin
+#  foreach (self.m_submaps[submap_]):
 #    uvm_reg_map submap=submap_
 #    addr = self.m_submaps[submap] + submap.get_size()
 #    if (addr > max_addr) max_addr = addr
@@ -1294,17 +1501,17 @@ uvm_object_utils(UVMRegMap)
 #   bit error
 #   uvm_reg_map root_map = get_root_map()
 #
-#   if (root_map.get_adapter() == null) begin
+#   if (root_map.get_adapter() is None):
 #      `uvm_error("RegModel", {"Map '",root_map.get_full_name(),
 #                 "' does not have an adapter registered"})
 #      error++
 #   end
-#   if (root_map.get_sequencer() == null) begin
+#   if (root_map.get_sequencer() is None):
 #      `uvm_error("RegModel", {"Map '",root_map.get_full_name(),
 #                 "' does not have a sequencer registered"})
 #      error++
 #   end
-#   if (error) begin
+#   if (error):
 #      `uvm_fatal("RegModel", {"Must register an adapter and sequencer ",
 #                 "for each top-level map in RegModel model"})
 #      return
@@ -1327,14 +1534,14 @@ uvm_object_utils(UVMRegMap)
 #
 #   addr = new [0]
 #
-#   if (n_bytes <= 0) begin
+#   if (n_bytes <= 0):
 #      `uvm_fatal("RegModel", $sformatf("Cannot access %0d bytes. Must be greater than 0",
 #                                     n_bytes))
 #      return 0
 #   end
 #
 #   // First, identify the addresses within the block/system
-#   if (n_bytes <= bus_width) begin
+#   if (n_bytes <= bus_width):
 #      local_addr = new [1]
 #      local_addr[0] = base_addr + (mem_offset * multiplier)
 #   end else begin
@@ -1347,23 +1554,23 @@ uvm_object_utils(UVMRegMap)
 #
 #      case (get_endian(UVM_NO_HIER))
 #         UVM_LITTLE_ENDIAN: begin
-#            foreach (local_addr[i]) begin
+#            foreach (local_addr[i]):
 #               local_addr[i] = base_addr + (i * multiplier)
 #            end
 #         end
 #         UVM_BIG_ENDIAN: begin
-#            foreach (local_addr[i]) begin
+#            foreach (local_addr[i]):
 #               n--
 #               local_addr[i] = base_addr + (n * multiplier)
 #            end
 #         end
 #         UVM_LITTLE_FIFO: begin
-#            foreach (local_addr[i]) begin
+#            foreach (local_addr[i]):
 #               local_addr[i] = base_addr
 #            end
 #         end
 #         UVM_BIG_FIFO: begin
-#            foreach (local_addr[i]) begin
+#            foreach (local_addr[i]):
 #               local_addr[i] = base_addr
 #            end
 #         end
@@ -1379,10 +1586,10 @@ uvm_object_utils(UVMRegMap)
 #  up_map = get_parent_map()
 #
 #   // Then translate these addresses in the parent's space
-#   if (up_map == null) begin
+#   if (up_map is None):
 #      // This is the top-most system/block!
 #      addr = new [local_addr.size()] (local_addr)
-#      foreach (addr[i]) begin
+#      foreach (addr[i]):
 #         addr[i] += self.m_base_addr
 #      end
 #   end else begin
@@ -1397,7 +1604,7 @@ uvm_object_utils(UVMRegMap)
 #        k = ((bus_width-1) / up_map.get_n_bytes(UVM_NO_HIER)) + 1
 #
 #      base_addr = up_map.get_submap_offset(this)
-#      foreach (local_addr[i]) begin
+#      foreach (local_addr[i]):
 #         int n = addr.size()
 #
 #         w = up_map.get_physical_addresses(base_addr + local_addr[i] * k,
@@ -1406,7 +1613,7 @@ uvm_object_utils(UVMRegMap)
 #                                           sys_addr)
 #
 #         addr = new [n + sys_addr.size()] (addr)
-#         foreach (sys_addr[j]) begin
+#         foreach (sys_addr[j]):
 #            addr[n+j] = sys_addr[j]
 #         end
 #      end
@@ -1428,12 +1635,12 @@ uvm_object_utils(UVMRegMap)
 # set_submap_offset
 #
 #function void uvm_reg_map::set_submap_offset(uvm_reg_map submap, uvm_reg_addr_t offset)
-#  if (submap == null) begin
+#  if (submap is None):
 #    `uvm_error("REG/NULL","set_submap_offset: submap handle is null")
 #    return
 #  end
 #  self.m_submaps[submap] = offset
-#  if (self.m_parent.is_locked()) begin
+#  if (self.m_parent.is_locked()):
 #    uvm_reg_map root_map = get_root_map()
 #    root_map.Xinit_address_mapX()
 #  end
@@ -1443,11 +1650,11 @@ uvm_object_utils(UVMRegMap)
 # get_submap_offset
 #
 #function uvm_reg_addr_t uvm_reg_map::get_submap_offset(uvm_reg_map submap)
-#  if (submap == null) begin
+#  if (submap is None):
 #    `uvm_error("REG/NULL","set_submap_offset: submap handle is null")
 #    return -1
 #  end
-#  if (!self.m_submaps.exists(submap)) begin
+#  if (!self.m_submaps.exists(submap)):
 #    `uvm_error("RegModel",{"Map '",submap.get_full_name(),
 #                      "' is not a submap of '",get_full_name(),"'"})
 #    return -1
@@ -1460,7 +1667,7 @@ uvm_object_utils(UVMRegMap)
 #
 #function uvm_reg uvm_reg_map::get_reg_by_offset(uvm_reg_addr_t offset,
 #                                                bit            read = 1)
-#   if (!self.m_parent.is_locked()) begin
+#   if (!self.m_parent.is_locked()):
 #      `uvm_error("RegModel", $sformatf("Cannot get register by offset: Block %s is not locked.", self.m_parent.get_full_name()))
 #      return null
 #   end
@@ -1478,13 +1685,13 @@ uvm_object_utils(UVMRegMap)
 # get_mem_by_offset
 #
 #function uvm_mem uvm_reg_map::get_mem_by_offset(uvm_reg_addr_t offset)
-#   if (!self.m_parent.is_locked()) begin
+#   if (!self.m_parent.is_locked()):
 #      `uvm_error("RegModel", $sformatf("Cannot memory register by offset: Block %s is not locked.", self.m_parent.get_full_name()))
 #      return null
 #   end
 #
-#   foreach (self.m_mems_by_offset[range]) begin
-#      if (range.min <= offset && offset <= range.max) begin
+#   foreach (self.m_mems_by_offset[range]):
+#      if (range.min <= offset && offset <= range.max):
 #         return self.m_mems_by_offset[range]
 #      end
 #   end
@@ -1501,43 +1708,43 @@ uvm_object_utils(UVMRegMap)
 #
 #   uvm_reg_map top_map = get_root_map()
 #
-#   if (this == top_map) begin
+#   if (this == top_map):
 #     top_map.self.m_regs_by_offset.delete()
 #     top_map.self.m_regs_by_offset_wo.delete()
 #     top_map.self.m_mems_by_offset.delete()
 #   end
 #
-#   foreach (self.m_submaps[l]) begin
+#   foreach (self.m_submaps[l]):
 #     uvm_reg_map map=l
 #     map.Xinit_address_mapX()
 #   end
 #
-#   foreach (self.m_regs_info[rg_]) begin
+#   foreach (self.m_regs_info[rg_]):
 #     uvm_reg rg = rg_
 #     self.m_regs_info[rg].is_initialized=1
-#     if (!self.m_regs_info[rg].unmapped) begin
+#     if (!self.m_regs_info[rg].unmapped):
 #        string rg_acc = rg.Xget_fields_accessX(this)
 #       uvm_reg_addr_t addrs[]
 #
 #       bus_width = get_physical_addresses(self.m_regs_info[rg].offset,0,rg.get_n_bytes(),addrs)
 #
-#       foreach (addrs[i]) begin
+#       foreach (addrs[i]):
 #         uvm_reg_addr_t addr = addrs[i]
 #
-#         if (top_map.self.m_regs_by_offset.exists(addr)) begin
+#         if (top_map.self.m_regs_by_offset.exists(addr)):
 #
 #            uvm_reg rg2 = top_map.self.m_regs_by_offset[addr]
 #            string rg2_acc = rg2.Xget_fields_accessX(this)
 #
 #            // If the register at the same address is RO or WO
 #            // and this register is WO or RO, this is OK
-#            if (rg_acc == "RO" && rg2_acc == "WO") begin
+#            if (rg_acc == "RO" && rg2_acc == "WO"):
 #               top_map.self.m_regs_by_offset[addr]    = rg
 #               uvm_reg_read_only_cbs::add(rg)
 #               top_map.self.m_regs_by_offset_wo[addr] = rg2
 #               uvm_reg_write_only_cbs::add(rg2)
 #            end
-#            else if (rg_acc == "WO" && rg2_acc == "RO") begin
+#            else if (rg_acc == "WO" && rg2_acc == "RO"):
 #               top_map.self.m_regs_by_offset_wo[addr] = rg
 #               uvm_reg_write_only_cbs::add(rg)
 #               uvm_reg_read_only_cbs::add(rg2)
@@ -1553,8 +1760,8 @@ uvm_object_utils(UVMRegMap)
 #         else
 #            top_map.self.m_regs_by_offset[addr] = rg
 #
-#         foreach (top_map.self.m_mems_by_offset[range]) begin
-#           if (addr >= range.min && addr <= range.max) begin
+#         foreach (top_map.self.m_mems_by_offset[range]):
+#           if (addr >= range.min && addr <= range.max):
 #             string a,b
 #             a = $sformatf("%0h",addr)
 #             b = $sformatf("[%0h:%0h]",range.min,range.max)
@@ -1569,9 +1776,9 @@ uvm_object_utils(UVMRegMap)
 #     end
 #   end
 #
-#   foreach (self.m_mems_info[mem_]) begin
+#   foreach (self.m_mems_info[mem_]):
 #     uvm_mem mem = mem_
-#     if (!self.m_mems_info[mem].unmapped) begin
+#     if (!self.m_mems_info[mem].unmapped):
 #
 #       uvm_reg_addr_t addrs[],addrs_max[]
 #       uvm_reg_addr_t min, max, min2, max2
@@ -1587,8 +1794,8 @@ uvm_object_utils(UVMRegMap)
 #       // address interval between consecutive mem offsets
 #       stride = (max2 - min2)/(mem.get_size()-1)
 #
-#       foreach (top_map.self.m_regs_by_offset[reg_addr]) begin
-#         if (reg_addr >= min && reg_addr <= max) begin
+#       foreach (top_map.self.m_regs_by_offset[reg_addr]):
+#         if (reg_addr >= min && reg_addr <= max):
 #           string a
 #           a = $sformatf("%0h",reg_addr)
 #           `uvm_warning("RegModel", {"In map '",get_full_name(),"' memory '",
@@ -1597,10 +1804,10 @@ uvm_object_utils(UVMRegMap)
 #         end
 #       end
 #
-#       foreach (top_map.self.m_mems_by_offset[range]) begin
+#       foreach (top_map.self.m_mems_by_offset[range]):
 #         if (min <= range.max && max >= range.max ||
 #             min <= range.min && max >= range.min ||
-#             min >= range.min && max <= range.max) begin
+#             min >= range.min && max <= range.max):
 #           string a
 #           a = $sformatf("[%0h:%0h]",min,max)
 #           `uvm_warning("RegModel", {"In map '",get_full_name(),"' memory '",
@@ -1628,39 +1835,6 @@ uvm_object_utils(UVMRegMap)
 #-----------
 # Bus Access
 #-----------
-#function void uvm_reg_map::Xget_bus_infoX(uvm_reg_item rw,
-#                                          output uvm_reg_map_info map_info,
-#                                          output int size,
-#                                          output int lsb,
-#                                          output int addr_skip)
-#
-#  if (rw.element_kind == UVM_MEM) begin
-#    uvm_mem mem
-#    if(rw.element == null || !$cast(mem,rw.element))
-#      `uvm_fatal("REG/CAST", {"uvm_reg_item 'element_kind' is UVM_MEM, ",
-#                 "but 'element' does not point to a memory: ",rw.get_name()})
-#    map_info = get_mem_map_info(mem)
-#    size = mem.get_n_bits()
-#  end
-#  else if (rw.element_kind == UVM_REG) begin
-#    uvm_reg rg
-#    if(rw.element == null || !$cast(rg,rw.element))
-#      `uvm_fatal("REG/CAST", {"uvm_reg_item 'element_kind' is UVM_REG, ",
-#                 "but 'element' does not point to a register: ",rw.get_name()})
-#    map_info = get_reg_map_info(rg)
-#    size = rg.get_n_bits()
-#  end
-#  else if (rw.element_kind == UVM_FIELD) begin
-#    uvm_reg_field field
-#    if(rw.element == null || !$cast(field,rw.element))
-#      `uvm_fatal("REG/CAST", {"uvm_reg_item 'element_kind' is UVM_FIELD, ",
-#                 "but 'element' does not point to a field: ",rw.get_name()})
-#    map_info = get_reg_map_info(field.get_parent())
-#    size = field.get_n_bits()
-#    lsb = field.get_lsb_pos()
-#    addr_skip = lsb/(get_n_bytes()*8)
-#  end
-#endfunction
 
 # do_write(uvm_reg_item rw)
 #
@@ -1671,7 +1845,7 @@ uvm_object_utils(UVMRegMap)
 #  uvm_reg_adapter adapter = system_map.get_adapter()
 #  uvm_sequencer_base sequencer = system_map.get_sequencer()
 #
-#  if (adapter != null && adapter.parent_sequence != null) begin
+#  if (adapter is not None && adapter.parent_sequence is not None):
 #    uvm_object o
 #    uvm_sequence_base seq
 #    o = adapter.parent_sequence.clone()
@@ -1681,12 +1855,12 @@ uvm_object_utils(UVMRegMap)
 #    tmp_parent_seq = seq
 #  end
 #
-#  if (rw.parent == null) begin
+#  if (rw.parent is None):
 #     rw.parent = new("default_parent_seq")
 #     tmp_parent_seq = rw.parent
 #  end
 #
-#  if (adapter == null) begin
+#  if (adapter is None):
 #    rw.set_sequencer(sequencer)
 #    rw.parent.start_item(rw,rw.prior)
 #    rw.parent.finish_item(rw)
@@ -1696,49 +1870,11 @@ uvm_object_utils(UVMRegMap)
 #    do_bus_write(rw, sequencer, adapter)
 #  end
 #
-#  if (tmp_parent_seq != null)
+#  if (tmp_parent_seq is not None)
 #    sequencer.m_sequence_exiting(tmp_parent_seq)
 #
 #endtask
 
-# do_read(uvm_reg_item rw)
-#
-#task uvm_reg_map::do_read(uvm_reg_item rw)
-#
-#  uvm_sequence_base tmp_parent_seq
-#  uvm_reg_map system_map = get_root_map()
-#  uvm_reg_adapter adapter = system_map.get_adapter()
-#  uvm_sequencer_base sequencer = system_map.get_sequencer()
-#
-#  if (adapter != null && adapter.parent_sequence != null) begin
-#    uvm_object o
-#    uvm_sequence_base seq
-#    o = adapter.parent_sequence.clone()
-#    assert($cast(seq,o))
-#    seq.set_parent_sequence(rw.parent)
-#    rw.parent = seq
-#    tmp_parent_seq = seq
-#  end
-#
-#  if (rw.parent == null) begin
-#    rw.parent = new("default_parent_seq")
-#    tmp_parent_seq = rw.parent
-#  end
-#
-#  if (adapter == null) begin
-#    rw.set_sequencer(sequencer)
-#    rw.parent.start_item(rw,rw.prior)
-#    rw.parent.finish_item(rw)
-#    rw.end_event.wait_on()
-#  end
-#  else begin
-#    do_bus_read(rw, sequencer, adapter)
-#  end
-#
-#  if (tmp_parent_seq != null)
-#    sequencer.m_sequence_exiting(tmp_parent_seq)
-#
-#endtask
 
 # do_bus_write
 #
@@ -1759,7 +1895,7 @@ uvm_object_utils(UVMRegMap)
 #  int               n_bits_init
 #  uvm_reg_bus_op    accesses[$]
 #
-#  Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
+#  [map_info, size, lsb, addr_skip] = Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
 #  addrs=map_info.addr
 #
 #  // if a memory, adjust addresses based on offset
@@ -1772,19 +1908,19 @@ uvm_object_utils(UVMRegMap)
 #     uvm_reg_data_t value = rw.value[val_idx]
 #
 #    /* calculate byte_enables */
-#    if (rw.element_kind == UVM_FIELD) begin
+#    if (rw.element_kind == UVM_FIELD):
 #      int temp_be
 #      int idx
 #      n_access_extra = lsb%(bus_width*8)
 #      n_access = n_access_extra + n_bits_init
 #      temp_be = n_access_extra
 #      value = value << n_access_extra
-#      while(temp_be >= 8) begin
+#      while(temp_be >= 8):
 #         byte_en[idx++] = 0
 #         temp_be -= 8
 #      end
 #      temp_be += n_bits_init
-#      while(temp_be > 0) begin
+#      while(temp_be > 0):
 #         byte_en[idx++] = 1
 #         temp_be -= 8
 #      end
@@ -1808,7 +1944,7 @@ uvm_object_utils(UVMRegMap)
 #         $sformatf("Writing 'h%0h at 'h%0h via map \"%s\"...",
 #              data, addrs[i], rw.map.get_full_name()), UVM_FULL)
 #
-#      if (rw.element_kind == UVM_FIELD) begin
+#      if (rw.element_kind == UVM_FIELD):
 #        for (int z=0;z<bus_width;z++)
 #          rw_access.byte_en[z] = byte_en[curr_byte+z]
 #      end
@@ -1827,11 +1963,11 @@ uvm_object_utils(UVMRegMap)
 #    end: foreach_addr
 #
 #    // if set utilizy the order policy
-#    if(policy!=null)
+#    if(policy is not None)
 #        policy.order(accesses)
 #
 #    // perform accesses
-#    foreach(accesses[i]) begin
+#    foreach(accesses[i]):
 #      uvm_reg_bus_op rw_access=accesses[i]
 #      uvm_sequence_item bus_req
 #
@@ -1839,19 +1975,19 @@ uvm_object_utils(UVMRegMap)
 #      bus_req = adapter.reg2bus(rw_access)
 #      adapter.m_set_item(null)
 #
-#      if (bus_req == null)
+#      if (bus_req is None)
 #        `uvm_fatal("RegMem",{"adapter [",adapter.get_name(),"] didnt return a bus transaction"})
 #
 #      bus_req.set_sequencer(sequencer)
 #      rw.parent.start_item(bus_req,rw.prior)
 #
-#      if (rw.parent != null && i == 0)
+#      if (rw.parent is not None && i == 0)
 #        rw.parent.mid_do(rw)
 #
 #      rw.parent.finish_item(bus_req)
 #      bus_req.end_event.wait_on()
 #
-#      if (adapter.provides_responses) begin
+#      if (adapter.provides_responses):
 #        uvm_sequence_item bus_rsp
 #        uvm_access_e op
 #        // TODO: need to test for right trans type, if not put back in q
@@ -1862,7 +1998,7 @@ uvm_object_utils(UVMRegMap)
 #        adapter.bus2reg(bus_req,rw_access)
 #      end
 #
-#      if (rw.parent != null && i == addrs.size()-1)
+#      if (rw.parent is not None && i == addrs.size()-1)
 #        rw.parent.post_do(rw)
 #
 #      rw.status = rw_access.status
@@ -1883,153 +2019,6 @@ uvm_object_utils(UVMRegMap)
 #
 #endtask: do_bus_write
 
-# do_bus_read
-#
-#task uvm_reg_map::do_bus_read (uvm_reg_item rw,
-#                               uvm_sequencer_base sequencer,
-#                               uvm_reg_adapter adapter)
-#
-#  uvm_reg_addr_t addrs[$]
-#  uvm_reg_map        system_map = get_root_map()
-#  int unsigned       bus_width  = get_n_bytes()
-#  uvm_reg_byte_en_t  byte_en    = -1
-#  uvm_reg_map_info   map_info
-#  int                size, n_bits
-#  int                skip
-#  int                lsb
-#  int unsigned       curr_byte
-#  int n_access_extra, n_access
-#  uvm_reg_bus_op accesses[$]
-#
-#  Xget_bus_infoX(rw, map_info, n_bits, lsb, skip)
-#  addrs=map_info.addr
-#  size = n_bits
-#
-#  // if a memory, adjust addresses based on offset
-#  if (rw.element_kind == UVM_MEM)
-#    foreach (addrs[i])
-#      addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
-#
-#  foreach (rw.value[val_idx]) begin: foreach_value
-#
-#    /* calculate byte_enables */
-#    if (rw.element_kind == UVM_FIELD) begin
-#      int temp_be
-#      int idx
-#      n_access_extra = lsb%(bus_width*8)
-#      n_access = n_access_extra + n_bits
-#      temp_be = n_access_extra
-#      while(temp_be >= 8) begin
-#         byte_en[idx++] = 0
-#         temp_be -= 8
-#      end
-#      temp_be += n_bits
-#      while(temp_be > 0) begin
-#         byte_en[idx++] = 1
-#         temp_be -= 8
-#      end
-#      byte_en &= (1<<idx)-1
-#      for (int i=0; i<skip; i++)
-#        void'(addrs.pop_front())
-#      while (addrs.size() > (n_bits/(bus_width*8) + 1))
-#        void'(addrs.pop_back())
-#    end
-#    curr_byte=0
-#    rw.value[val_idx] = 0
-#
-#    accesses.delete()
-#    foreach (addrs[i]) begin
-#      uvm_reg_bus_op rw_access
-#
-#      `uvm_info(get_type_name(),
-#         $sformatf("Reading address 'h%0h via map \"%s\"...",
-#                   addrs[i], get_full_name()), UVM_FULL)
-#
-#      if (rw.element_kind == UVM_FIELD)
-#        for (int z=0;z<bus_width;z++)
-#          rw_access.byte_en[z] = byte_en[curr_byte+z]
-#
-#      rw_access.kind = rw.kind
-#      rw_access.addr = addrs[i]
-#      rw_access.data = curr_byte
-#      rw_access.byte_en = byte_en
-#      rw_access.n_bits = (n_bits > bus_width*8) ? bus_width*8 : n_bits
-#
-#       accesses.push_back(rw_access)
-#
-#      curr_byte += bus_width
-#      n_bits -= bus_width * 8
-#    end
-#
-#    // if set utilize the order policy
-#    if(policy!=null)
-#        policy.order(accesses)
-#
-#    // perform accesses
-#    foreach(accesses[i]) begin
-#      uvm_reg_bus_op rw_access=accesses[i]
-#      uvm_sequence_item bus_req
-#      uvm_reg_data_logic_t data
-#      int unsigned curr_byte_
-#
-#      curr_byte_=rw_access.data
-#      rw_access.data='0
-#      adapter.m_set_item(rw)
-#      bus_req = adapter.reg2bus(rw_access)
-#      adapter.m_set_item(null)
-#      if (bus_req == null)
-#        `uvm_fatal("RegMem",{"adapter [",adapter.get_name(),"] didnt return a bus transaction"})
-#
-#      bus_req.set_sequencer(sequencer)
-#      rw.parent.start_item(bus_req,rw.prior)
-#
-#      if (rw.parent != null && i == 0) begin
-#        rw.parent.mid_do(rw)
-#      end
-#
-#      rw.parent.finish_item(bus_req)
-#      bus_req.end_event.wait_on()
-#
-#      if (adapter.provides_responses) begin
-#        uvm_sequence_item bus_rsp
-#        uvm_access_e op
-#        // TODO: need to test for right trans type, if not put back in q
-#        rw.parent.get_base_response(bus_rsp)
-#        adapter.bus2reg(bus_rsp,rw_access)
-#      end
-#      else begin
-#        adapter.bus2reg(bus_req,rw_access)
-#      end
-#
-#      data = rw_access.data & ((1<<bus_width*8)-1); // mask the upper bits
-#
-#      rw.status = rw_access.status
-#
-#      if (rw.status == UVM_IS_OK && (^data) === 1'bx)
-#        rw.status = UVM_HAS_X
-#
-#      `uvm_info(get_type_name(),
-#         $sformatf("Read 'h%0h at 'h%0h via map \"%s\": %s...", data,
-#                   addrs[i], get_full_name(), rw.status.name()), UVM_FULL)
-#
-#      if (rw.status == UVM_NOT_OK)
-#         break
-#
-#      rw.value[val_idx] |= data << curr_byte_*8
-#
-#      if (rw.parent != null && i == addrs.size()-1)
-#        rw.parent.post_do(rw)
-#    end
-#
-#
-#    foreach (addrs[i])
-#      addrs[i] = addrs[i] + map_info.mem_range.stride
-#
-#    if (rw.element_kind == UVM_FIELD)
-#       rw.value[val_idx] = (rw.value[val_idx] >> (n_access_extra)) & ((1<<size)-1)
-#  end
-#
-#endtask: do_bus_read
 #
 #
 #
@@ -2056,7 +2045,7 @@ uvm_object_utils(UVMRegMap)
 #            get_n_bytes(UVM_NO_HIER), endian.name())
 #
 #   printer.print_generic("endian","",-2,endian.name())
-#   if(sqr!=null)
+#   if(sqr is not None)
 #    printer.print_generic("effective sequencer",sqr.get_type_name(),-2,sqr.get_full_name())
 #
 #   get_registers(regs,UVM_NO_HIER)
@@ -2091,17 +2080,17 @@ uvm_object_utils(UVMRegMap)
 #   $sformat(convert2string, "%s -- %0d bytes (%s)", convert2string,
 #            get_n_bytes(UVM_NO_HIER), endian.name())
 #   get_registers(regs)
-#   foreach (regs[j]) begin
+#   foreach (regs[j]):
 #      $sformat(convert2string, "%s\n%s", convert2string,
 #               regs[j].convert2string());//{prefix, "   "}, this))
 #   end
 #   get_memories(mems)
-#   foreach (mems[j]) begin
+#   foreach (mems[j]):
 #      $sformat(convert2string, "%s\n%s", convert2string,
 #               mems[j].convert2string());//{prefix, "   "}, this))
 #   end
 #   get_virtual_registers(vregs)
-#   foreach (vregs[j]) begin
+#   foreach (vregs[j]):
 #      $sformat(convert2string, "%s\n%s", convert2string,
 #               vregs[j].convert2string());//{prefix, "   "}, this))
 #   end

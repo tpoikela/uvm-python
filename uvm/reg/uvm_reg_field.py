@@ -24,6 +24,15 @@
 #-------------------------------------------------------------
 #typedef class uvm_reg_cbs;
 
+
+
+import cocotb
+
+from ..base.uvm_object import UVMObject
+from ..base.uvm_globals import *
+from ..macros.uvm_object_defines import uvm_object_utils
+from .uvm_reg_model import *
+
 NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
    "W1C", "W1S", "W1T", "W0C", "W0S", "W0T",
    "W1SRC", "W1CRS", "W0SRC", "W0CRS", "WSRC", "WCRS",
@@ -41,15 +50,9 @@ NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
 # have different access policies depending on the address map
 # use the access the register (thus the field).
 #-----------------------------------------------------------------
-
-from ..base.uvm_object import UVMObject
-from ..base.uvm_globals import *
-from ..macros.uvm_object_defines import uvm_object_utils
-from .uvm_reg_model import *
-
 class UVMRegField(UVMObject):
     m_max_size = 0
-    m_policy_names = {} # string -> bit
+    m_policy_names = {}  # string -> bit
     m_predefined = False
 
     #constraint uvm_reg_field_valid {
@@ -125,7 +128,7 @@ class UVMRegField(UVMObject):
         self.m_access    = access.upper()
         self.m_lsb       = lsb_pos
         self.m_cover_on  = UVM_NO_COVERAGE
-        self.m_written   = 0
+        self.m_written   = False
         if volatile:
             self.m_check = UVM_NO_CHECK
         else:
@@ -609,7 +612,7 @@ class UVMRegField(UVMObject):
         self.m_desired  = self.m_mirrored
         self.value      = self.m_mirrored
         if kind == "HARD":
-            self.m_written  = 0
+            self.m_written  = False
 
     #
     #   // Function: get_reset
@@ -1084,33 +1087,36 @@ class UVMRegField(UVMObject):
         self.m_lineno = rw.lineno
         #   case (kind)
         if kind == UVM_PREDICT_WRITE:
-            #uvm_reg_field_cb_iter cbs = new(this);
+            #UVMRegFieldCbIter cbs = new(this);
             cbs = UVMRegFieldCbIter(self)
             if rw.path == UVM_FRONTDOOR or rw.path == UVM_PREDICT:
                 field_val = self.XpredictX(self.m_mirrored, field_val, rw.map)
-            self.m_written = 1;
+            self.m_written = True
     
-            # TODO callbacks
-            #for (uvm_reg_cbs cb = cbs.first(); cb != null; cb = cbs.next())
-            #   cb.post_predict(this, self.m_mirrored, field_val, 
-            #                   UVM_PREDICT_WRITE, rw.path, rw.map);
+            cb = cbs.first()
+            while cb is not None:
+                cb.post_predict(self, self.m_mirrored, field_val, 
+                        UVM_PREDICT_WRITE, rw.path, rw.map);
+                cb = cbs.next()
             field_val &= (1 << self.m_size)-1
 
         elif kind == UVM_PREDICT_READ:
-            #uvm_reg_field_cb_iter cbs = new(this);
             cbs = UVMRegFieldCbIter(self)
             if rw.path == UVM_FRONTDOOR or rw.path == UVM_PREDICT:
-               acc = self.get_access(rw.map)
-               if acc in ["RC", "WRC", "WSRC", "W1SRC", "W0SRC"]:
-                   field_val = 0  # (clear)
-               elif acc in ["RS", "WRS", "WCRS", "W1CRS", "W0CRS"]:
-                   field_val = (1 << self.m_size)-1 # all 1's (set)
-               elif acc in ["WO", "WOC", "WOS", "WO1", "NOACCESS"]:
-                   return
+                acc = self.get_access(rw.map)
+                if acc in ["RC", "WRC", "WSRC", "W1SRC", "W0SRC"]:
+                    field_val = 0  # (clear)
+                elif acc in ["RS", "WRS", "WCRS", "W1CRS", "W0CRS"]:
+                    field_val = (1 << self.m_size)-1  # all 1's (set)
+                elif acc in ["WO", "WOC", "WOS", "WO1", "NOACCESS"]:
+                    return
             # TODO callbacks
-            #for (uvm_reg_cbs cb = cbs.first(); cb != null; cb = cbs.next())
-            #   cb.post_predict(this, self.m_mirrored, field_val,
-            #                   UVM_PREDICT_READ, rw.path, rw.map);
+
+            cb = cbs.first()
+            while cb is not None:
+                cb.post_predict(self, self.m_mirrored, field_val,
+                        UVM_PREDICT_READ, rw.path, rw.map)
+                cb = cbs.next()
             field_val &= (1 << self.m_size)-1
 
         elif UVM_PREDICT_DIRECT:
@@ -1169,6 +1175,9 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write (uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def post_write(self, rw):
+        yield uvm_empty_delay()
 
     #   // Task: pre_read
     #   //
@@ -1185,7 +1194,9 @@ class UVMRegField(UVMObject):
     #   // The registered callback methods are invoked after the invocation
     #   // of this method.
     #   //
-    #   virtual task pre_read (uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def pre_read(self, rw):
+        yield uvm_empty_delay()
 
     #   // Task: post_read
     #   //
@@ -1201,7 +1212,10 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_read  (uvm_reg_item rw); endtask
-    #
+    @cocotb.coroutine
+    def post_read(self, rw):
+        yield uvm_empty_delay()
+
     #   extern virtual function void do_print (uvm_printer printer);
 
     #// convert2string
@@ -1459,7 +1473,7 @@ uvm_object_utils(UVMRegField)
 #   else begin
 #
 #     uvm_reg_map system_map = rw.local_map.get_root_map();
-#     uvm_reg_field_cb_iter cbs = new(this);
+#     UVMRegFieldCbIter cbs = new(this);
 #
 #     self.m_parent.Xset_busyX(1);
 #
@@ -1566,7 +1580,7 @@ uvm_object_utils(UVMRegField)
 #   else begin
 #
 #     uvm_reg_map system_map = rw.local_map.get_root_map();
-#     uvm_reg_field_cb_iter cbs = new(this);
+#     UVMRegFieldCbIter cbs = new(this);
 #
 #     self.m_parent.Xset_busyX(1);
 #

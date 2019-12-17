@@ -28,6 +28,7 @@ from .. import uvm_reg_sequence
 from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base import UVM_LOW, UVM_HIGH
+from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR
 
 #//
 #// class: uvm_reg_hw_reset_seq

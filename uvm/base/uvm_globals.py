@@ -36,6 +36,11 @@ def uvm_sim_time(units='NS'):
         return get_sim_time(units=units)
     return 0
 
+
+@cocotb.coroutine
+def uvm_empty_delay():
+    yield Timer(0, "NS")
+
 #----------------------------------------------------------------------------
 #
 # Group: Miscellaneous

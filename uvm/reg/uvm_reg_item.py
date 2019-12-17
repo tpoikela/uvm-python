@@ -236,62 +236,70 @@ uvm_object_utils(UVMRegItem)
 #// a single cycle, ~data~ will be the same as <uvm_reg_item::value>.
 #//------------------------------------------------------------------------------
 #
-#typedef struct {
-#
-#  // Variable: kind
-#  //
-#  // Kind of access: READ or WRITE.
-#  //
-#  uvm_access_e kind;
-#
-#
-#  // Variable: addr
-#  //
-#  // The bus address.
-#  //
-#  uvm_reg_addr_t addr;
-#
-#
-#  // Variable: data
-#  //
-#  // The data to write. If the bus width is smaller than the register or
-#  // memory width, ~data~ represents only the portion of ~value~ that is
-#  // being transferred this bus cycle.
-#  //
-#  uvm_reg_data_t data;
-#
-#   
-#  // Variable: n_bits
-#  //
-#  // The number of bits of <uvm_reg_item::value> being transferred by
-#  // this transaction.
-#
-#  int n_bits;
-#
-#  /*
-#  constraint valid_n_bits {
-#     n_bits > 0;
-#     n_bits <= `UVM_REG_DATA_WIDTH;
-#  }
-#  */
-#
-#
-#  // Variable: byte_en
-#  //
-#  // Enables for the byte lanes on the bus. Meaningful only when the
-#  // bus supports byte enables and the operation originates from a field
-#  // write/read.
-#  //
-#  uvm_reg_byte_en_t byte_en;
-#
-#
-#  // Variable: status
-#  //
-#  // The result of the transaction: UVM_IS_OK, UVM_HAS_X, UVM_NOT_OK.
-#  // See <uvm_status_e>.
-#  //
-#  uvm_status_e status;
-#
-#} uvm_reg_bus_op;
-#
-#
+class UVMRegBusOp():
+    #typedef struct {
+    #
+    #  // Variable: kind
+    #  //
+    #  // Kind of access: READ or WRITE.
+    #  //
+    #  uvm_access_e kind;
+    #
+    #
+    #  // Variable: addr
+    #  //
+    #  // The bus address.
+    #  //
+    #  uvm_reg_addr_t addr;
+    #
+    #
+    #  // Variable: data
+    #  //
+    #  // The data to write. If the bus width is smaller than the register or
+    #  // memory width, ~data~ represents only the portion of ~value~ that is
+    #  // being transferred this bus cycle.
+    #  //
+    #  uvm_reg_data_t data;
+    #
+    #   
+    #  // Variable: n_bits
+    #  //
+    #  // The number of bits of <uvm_reg_item::value> being transferred by
+    #  // this transaction.
+    #
+    #  int n_bits;
+    #
+    #  /*
+    #  constraint valid_n_bits {
+    #     n_bits > 0;
+    #     n_bits <= `UVM_REG_DATA_WIDTH;
+    #  }
+    #  */
+    #
+    #
+    #  // Variable: byte_en
+    #  //
+    #  // Enables for the byte lanes on the bus. Meaningful only when the
+    #  // bus supports byte enables and the operation originates from a field
+    #  // write/read.
+    #  //
+    #  uvm_reg_byte_en_t byte_en;
+    #
+    #
+    #  // Variable: status
+    #  //
+    #  // The result of the transaction: UVM_IS_OK, UVM_HAS_X, UVM_NOT_OK.
+    #  // See <uvm_status_e>.
+    #  //
+    #  uvm_status_e status;
+    #
+    #} uvm_reg_bus_op;
+    def __init__(self):
+        self.kind = READ
+        self.addr = 0
+        self.data = 0
+        self.n_bits = 0
+        self.byte_en = 0x0
+        self.status = UVM_NOT_OK
+
+

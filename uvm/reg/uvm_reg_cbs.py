@@ -22,7 +22,8 @@
 #// -------------------------------------------------------------
 #//
 
-from ..base.uvm_callback import UVMCallback
+from ..base.uvm_callback import UVMCallback, UVMCallbackIter, UVMCallbacks
+from ..macros import uvm_object_utils
 
 #typedef class uvm_reg
 #typedef class uvm_mem
@@ -45,13 +46,10 @@ from ..base.uvm_callback import UVMCallback
 #//------------------------------------------------------------------------------
 #virtual class uvm_reg_cbs extends uvm_callback
 class UVMRegCbs(UVMCallback):
-    pass
-    #
-    #   function new(string name = "uvm_reg_cbs")
-    #      super.new(name)
-    #   endfunction
-    #
-    #
+
+    def __init__(self, name="uvm_reg_cbs"):
+        UVMCallback.__init__(self, name)
+
     #   // Task: pre_write
     #   //
     #   // Called before a write operation.
@@ -94,8 +92,7 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task pre_write(uvm_reg_item rw); endtask
-    #
-    #
+
     #   // Task: post_write
     #   //
     #   // Called after a write operation.
@@ -133,8 +130,7 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
-    #
-    #
+
     #   // Task: pre_read
     #   //
     #   // Callback called before a read operation.
@@ -177,8 +173,7 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
-    #
-    #
+
     #   // Task: post_read
     #   //
     #   // Callback called after a read operation.
@@ -234,7 +229,7 @@ class UVMRegCbs(UVMCallback):
     #                                      input uvm_reg_map    map)
     #   endfunction
     #
-    #
+
     #   // Function: encode
     #   //
     #   // Data encoder
@@ -248,8 +243,8 @@ class UVMRegCbs(UVMCallback):
     #   //
     #   virtual function void encode(ref uvm_reg_data_t data[])
     #   endfunction
-    #
-    #
+
+
     #   // Function: decode
     #   //
     #   // Data decode
@@ -271,113 +266,116 @@ class UVMRegCbs(UVMCallback):
     #
     #
     #endclass
-    #
-    #
-    #//------------------
-    #// Section: Typedefs
-    #//------------------
-    #
-    #
-    #// Type: uvm_reg_cb
-    #//
-    #// Convenience callback type declaration for registers
-    #//
-    #// Use this declaration to register the register callbacks rather than
-    #// the more verbose parameterized class
-    #//
-    #typedef uvm_callbacks#(uvm_reg, uvm_reg_cbs) uvm_reg_cb
-    #
-    #
-    #// Type: uvm_reg_cb_iter
-    #//
-    #// Convenience callback iterator type declaration for registers
-    #//
-    #// Use this declaration to iterate over registered register callbacks
-    #// rather than the more verbose parameterized class
-    #//
-    #typedef uvm_callback_iter#(uvm_reg, uvm_reg_cbs) uvm_reg_cb_iter
-    #
-    #
-    #// Type: uvm_reg_bd_cb
-    #//
-    #// Convenience callback type declaration for backdoor
-    #//
-    #// Use this declaration to register register backdoor callbacks rather than
-    #// the more verbose parameterized class
-    #//
-    #typedef uvm_callbacks#(uvm_reg_backdoor, uvm_reg_cbs) uvm_reg_bd_cb
-    #
-    #
-    #// Type: uvm_reg_bd_cb_iter
-    #// Convenience callback iterator type declaration for backdoor
-    #//
-    #// Use this declaration to iterate over registered register backdoor callbacks
-    #// rather than the more verbose parameterized class
-    #//
-    #
-    #typedef uvm_callback_iter#(uvm_reg_backdoor, uvm_reg_cbs) uvm_reg_bd_cb_iter
-    #
-    #
-    #// Type: uvm_mem_cb
-    #//
-    #// Convenience callback type declaration for memories
-    #//
-    #// Use this declaration to register memory callbacks rather than
-    #// the more verbose parameterized class
-    #//
-    #typedef uvm_callbacks#(uvm_mem, uvm_reg_cbs) uvm_mem_cb
-    #
-    #
-    #// Type: uvm_mem_cb_iter
-    #//
-    #// Convenience callback iterator type declaration for memories
-    #//
-    #// Use this declaration to iterate over registered memory callbacks
-    #// rather than the more verbose parameterized class
-    #//
-    #typedef uvm_callback_iter#(uvm_mem, uvm_reg_cbs) uvm_mem_cb_iter
-    #
-    #
-    #// Type: uvm_reg_field_cb
-    #//
-    #// Convenience callback type declaration for fields
-    #//
-    #// Use this declaration to register field callbacks rather than
-    #// the more verbose parameterized class
-    #//
-    #typedef uvm_callbacks#(uvm_reg_field, uvm_reg_cbs) uvm_reg_field_cb
-    #
-    #
-    #// Type: uvm_reg_field_cb_iter
-    #//
-    #// Convenience callback iterator type declaration for fields
-    #//
-    #// Use this declaration to iterate over registered field callbacks
-    #// rather than the more verbose parameterized class
-    #//
-    #typedef uvm_callback_iter#(uvm_reg_field, uvm_reg_cbs) uvm_reg_field_cb_iter
-    #
-    #
-    #//-----------------------------
-    #// Group: Predefined Extensions
-    #//-----------------------------
-    #
-    #//------------------------------------------------------------------------------
-    #// Class: uvm_reg_read_only_cbs
-    #//
-    #// Pre-defined register callback method for read-only registers
-    #// that will issue an error if a write() operation is attempted.
-    #//
-    #//------------------------------------------------------------------------------
-    #
+
+#
+#//------------------
+#// Section: Typedefs
+#//------------------
+#
+#
+#// Type: uvm_reg_cb
+#//
+#// Convenience callback type declaration for registers
+#//
+#// Use this declaration to register the register callbacks rather than
+#// the more verbose parameterized class
+#//
+#typedef uvm_callbacks#(uvm_reg, uvm_reg_cbs) uvm_reg_cb
+UVMRegCb = UVMCallbacks
+
+#// Type: uvm_reg_cb_iter
+#//
+#// Convenience callback iterator type declaration for registers
+#//
+#// Use this declaration to iterate over registered register callbacks
+#// rather than the more verbose parameterized class
+#//
+#typedef uvm_callback_iter#(uvm_reg, uvm_reg_cbs) uvm_reg_cb_iter
+UVMRegCbIter = UVMCallbackIter
+
+#
+#
+#// Type: uvm_reg_bd_cb
+#//
+#// Convenience callback type declaration for backdoor
+#//
+#// Use this declaration to register register backdoor callbacks rather than
+#// the more verbose parameterized class
+#//
+#typedef uvm_callbacks#(uvm_reg_backdoor, uvm_reg_cbs) uvm_reg_bd_cb
+
+#
+#// Type: uvm_reg_bd_cb_iter
+#// Convenience callback iterator type declaration for backdoor
+#//
+#// Use this declaration to iterate over registered register backdoor callbacks
+#// rather than the more verbose parameterized class
+#//
+#
+#typedef uvm_callback_iter#(uvm_reg_backdoor, uvm_reg_cbs) uvm_reg_bd_cb_iter
+
+#
+#// Type: uvm_mem_cb
+#//
+#// Convenience callback type declaration for memories
+#//
+#// Use this declaration to register memory callbacks rather than
+#// the more verbose parameterized class
+#//
+#typedef uvm_callbacks#(uvm_mem, uvm_reg_cbs) uvm_mem_cb
+
+#
+#// Type: uvm_mem_cb_iter
+#//
+#// Convenience callback iterator type declaration for memories
+#//
+#// Use this declaration to iterate over registered memory callbacks
+#// rather than the more verbose parameterized class
+#//
+#typedef uvm_callback_iter#(uvm_mem, uvm_reg_cbs) uvm_mem_cb_iter
+    
+#
+#// Type: uvm_reg_field_cb
+#//
+#// Convenience callback type declaration for fields
+#//
+#// Use this declaration to register field callbacks rather than
+#// the more verbose parameterized class
+#//
+#typedef uvm_callbacks#(uvm_reg_field, uvm_reg_cbs) uvm_reg_field_cb
+UVMRegFieldCb = UVMCallbacks
+
+#
+#// Type: uvm_reg_field_cb_iter
+#//
+#// Convenience callback iterator type declaration for fields
+#//
+#// Use this declaration to iterate over registered field callbacks
+#// rather than the more verbose parameterized class
+#//
+#typedef uvm_callback_iter#(uvm_reg_field, uvm_reg_cbs) uvm_reg_field_cb_iter
+UVMRegFieldCbIter = UVMCallbackIter
+
+
+#//-----------------------------
+#// Group: Predefined Extensions
+#//-----------------------------
+#
+#//------------------------------------------------------------------------------
+#// Class: uvm_reg_read_only_cbs
+#//
+#// Pre-defined register callback method for read-only registers
+#// that will issue an error if a write() operation is attempted.
+#//
+#//------------------------------------------------------------------------------
+#
 
 #class uvm_reg_read_only_cbs extends uvm_reg_cbs
-    #
-    #   function new(string name = "uvm_reg_read_only_cbs")
-    #      super.new(name)
-    #   endfunction
-    #
-    #   `uvm_object_utils(uvm_reg_read_only_cbs)
+class UVMRegReadOnlyCbs(UVMRegCbs):
+
+    def __init__(self, name="uvm_reg_read_only_cbs"):
+        UVMRegCbs.__init__(self, name)
+
     #
     #
     #   // Function: pre_write
@@ -447,6 +445,7 @@ class UVMRegCbs(UVMCallback):
     #      end
     #   endfunction
     #endclass
+uvm_object_utils(UVMRegReadOnlyCbs)
 
 #//------------------------------------------------------------------------------
 #// Class: uvm_reg_write_only_cbs
