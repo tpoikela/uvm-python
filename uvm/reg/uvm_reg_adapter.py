@@ -99,6 +99,8 @@ class UVMRegAdapter(UVMObject):
     #                                     ref uvm_reg_bus_op rw)
     #
     #
+    def bus2reg(self, bus_item, rw):
+        raise Exception("Pure virtual function")
 
     #  // function: get_item
     #  //

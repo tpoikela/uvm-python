@@ -1160,6 +1160,9 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_write  (uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def pre_write(self, rw):
+        yield uvm_empty_delay()
 
     #   // Task: post_write
     #   //

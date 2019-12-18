@@ -282,6 +282,8 @@ class UVMReportServer(UVMObject):
     # the file(s) specified by file if it is not 0.
     def f_display(self, file, str):
         if file == 0:
+            #import logging
+            #logging.info("%s", str)
             print("%s", str)
         else:
             file.write(str)

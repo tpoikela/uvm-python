@@ -35,12 +35,7 @@ from uvm.reg.uvm_reg_model import *
 
 from tb_env import tb_env
 
-#`include "uvm_pkg.sv"
-#
-#`include "regmodel.sv"
-#`include "tb_env.sv"
 
-#class tb_test extends uvm_test;
 class tb_test(UVMTest):
     #
     def __init__(self, name="tb_test", parent=None):
@@ -72,6 +67,7 @@ class tb_test(UVMTest):
 
         for i in range(nwrites):
             status = []
+            uvm_info("WRITE", sv.sformatf("Write[%0d] now", i), UVM_LOW)
             yield env.regmodel.user_acp.write(status, sv.random())
         status = []
         env.regmodel.user_acp.mirror(status, UVM_CHECK)

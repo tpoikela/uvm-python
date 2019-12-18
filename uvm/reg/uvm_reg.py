@@ -994,6 +994,7 @@ class UVMReg(UVMObject):
     #                                 output uvm_reg_map_info map_info,
     #                                 input string caller)
     def Xcheck_accessX(self, rw, map_info, caller):
+        uvm_check_output_args([map_info])
         if (rw.path == UVM_DEFAULT_PATH):
             rw.path = self.m_parent.get_default_path()
 
@@ -1014,7 +1015,7 @@ class UVMReg(UVMObject):
                    "No transactor available to physically access register on map '" +
                     rw.map.get_full_name() + "'")
                 rw.status = UVM_NOT_OK
-                return 0
+                return False
 
             _map_info = rw.local_map.get_reg_map_info(self)
             map_info.append(_map_info)
@@ -1027,11 +1028,11 @@ class UVMReg(UVMObject):
                    + "' unmapped in map '" + name
                    + "' and does not have a user-defined frontdoor")
                 rw.status = UVM_NOT_OK
-                return 0
+                return False
 
             if (rw.map is None):
                 rw.map = rw.local_map
-        return 1
+        return True
         #endfunction
 
 
@@ -1070,7 +1071,7 @@ class UVMReg(UVMObject):
                 mask = ((1 << self.m_fields[i].get_n_bits())-1)
                 val = actual   >> self.m_fields[i].get_lsb_pos() & mask
                 exp = expected >> self.m_fields[i].get_lsb_pos() & mask
-        
+
                 if (val != exp):
                     uvm_info("RegModel",
                             sv.sformatf("Field %s (%s[%0d:%0d]) mismatch read=%0d'h%0h mirrored=%0d'h%0h ",
@@ -1089,190 +1090,169 @@ class UVMReg(UVMObject):
     def do_write(self, rw):
         yield uvm_empty_delay()
         # TODO finish this
-        #   uvm_reg_cb_iter  cbs = new(this)
-        #   uvm_reg_map_info map_info
-        #   uvm_reg_data_t   value;
+        cbs = UVMRegCbIter(self)  # uvm_reg_cb_iter  cbs = new(this)
+        map_info = []  # uvm_reg_map_info
+        value = 0  # uvm_reg_data_t   value;
+
+        self.m_fname  = rw.fname
+        self.m_lineno = rw.lineno
         #
-        #   self.m_fname  = rw.fname
-        #   self.m_lineno = rw.lineno
-        #
-        #   if (!Xcheck_accessX(rw,map_info,"write()"))
-        #     return
-        #
-        #   XatomicX(1)
-        #
-        #   self.m_write_in_progress = 1'b1
-        #
-        #   rw.value[0] &= ((1 << self.m_n_bits)-1)
-        #   value = rw.value[0]
-        #
-        #   rw.status = UVM_IS_OK
-        #
-        #   // PRE-WRITE CBS - FIELDS
-        #   begin : pre_write_callbacks
-        #      uvm_reg_data_t  msk
-        #      int lsb
-        #
-        #      foreach (self.m_fields[i]):
-        #         UVMRegFieldCbIter cbs = new(self.m_fields[i])
-        #         uvm_reg_field f = self.m_fields[i]
-        #         lsb = f.get_lsb_pos()
-        #         msk = ((1<<f.get_n_bits())-1) << lsb
-        #         rw.value[0] = (value & msk) >> lsb
-        #         f.pre_write(rw)
-        #         for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next()):
-        #            rw.element = f
-        #            rw.element_kind = UVM_FIELD
-        #            cb.pre_write(rw)
-        #         end
-        #
-        #         value = (value & ~msk) | (rw.value[0] << lsb)
-        #      end
-        #   end
-        #   rw.element = this
-        #   rw.element_kind = UVM_REG
-        #   rw.value[0] = value
-        #
-        #   // PRE-WRITE CBS - REG
-        #   pre_write(rw)
-        #   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-        #      cb.pre_write(rw)
-        #
-        #   if (rw.status != UVM_IS_OK):
-        #     self.m_write_in_progress = 1'b0
-        #
-        #     XatomicX(0)
-        #
-        #     return
-        #   end
-        #
-        #   // EXECUTE WRITE...
-        #   case (rw.path)
-        #
-        #      // ...VIA USER BACKDOOR
-        #      UVM_BACKDOOR: begin
-        #         uvm_reg_data_t final_val
-        #         uvm_reg_backdoor bkdr = get_backdoor()
-        #
-        #         value = rw.value[0]
-        #
-        #         // Mimick the final value after a physical read
-        #         rw.kind = UVM_READ
-        #         if (bkdr is not None)
-        #           bkdr.read(rw)
-        #         else
-        #           backdoor_read(rw)
-        #
-        #         if (rw.status == UVM_NOT_OK):
-        #           self.m_write_in_progress = 1'b0
-        #           return
-        #         end
-        #
-        #         begin
-        #            foreach (self.m_fields[i]):
-        #               uvm_reg_data_t field_val
-        #               int lsb = self.m_fields[i].get_lsb_pos()
-        #               int sz  = self.m_fields[i].get_n_bits()
-        #               field_val = self.m_fields[i].XpredictX((rw.value[0] >> lsb) & ((1<<sz)-1),
-        #                                                 (value >> lsb) & ((1<<sz)-1),
-        #                                                 rw.local_map)
-        #               final_val |= field_val << lsb
-        #            end
-        #         end
-        #         rw.kind = UVM_WRITE
-        #         rw.value[0] = final_val
-        #
-        #         if (bkdr is not None)
-        #           bkdr.write(rw)
-        #         else
-        #           backdoor_write(rw)
-        #
-        #         do_predict(rw, UVM_PREDICT_WRITE)
-        #      end
-        #
-        #      UVM_FRONTDOOR: begin
-        #
-        #         uvm_reg_map system_map = rw.local_map.get_root_map()
-        #
-        #         self.m_is_busy = 1
-        #
-        #         // ...VIA USER FRONTDOOR
-        #         if (map_info.frontdoor is not None):
-        #            uvm_reg_frontdoor fd = map_info.frontdoor
-        #            fd.rw_info = rw
-        #            if (fd.sequencer is None)
-        #              fd.sequencer = system_map.get_sequencer()
-        #            fd.start(fd.sequencer, rw.parent)
-        #         end
-        #
-        #         // ...VIA BUILT-IN FRONTDOOR
-        #         else begin : built_in_frontdoor
-        #
-        #            rw.local_map.do_write(rw)
-        #
-        #         end
-        #
-        #         self.m_is_busy = 0
-        #
-        #         if (system_map.get_auto_predict()):
-        #            uvm_status_e status
-        #            if (rw.status != UVM_NOT_OK):
-        #               sample(value, -1, 0, rw.map)
-        #               self.m_parent.XsampleX(map_info.offset, 0, rw.map)
-        #            end
-        #
-        #            status = rw.status; // do_predict will override rw.status, so we save it here
-        #            do_predict(rw, UVM_PREDICT_WRITE)
-        #            rw.status = status
-        #         end
-        #      end
-        #
-        #   endcase
-        #
-        #   value = rw.value[0]
-        #
-        #   // POST-WRITE CBS - REG
-        #   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-        #      cb.post_write(rw)
-        #   post_write(rw)
-        #
-        #   // POST-WRITE CBS - FIELDS
-        #   foreach (self.m_fields[i]):
-        #      UVMRegFieldCbIter cbs = new(self.m_fields[i])
-        #      uvm_reg_field f = self.m_fields[i]
-        #
-        #      rw.element = f
-        #      rw.element_kind = UVM_FIELD
-        #      rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1)
-        #
-        #      for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-        #         cb.post_write(rw)
-        #      f.post_write(rw)
-        #   end
-        #
-        #   rw.value[0] = value
-        #   rw.element = this
-        #   rw.element_kind = UVM_REG
-        #
-        #   // REPORT
-        #   if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
-        #     string path_s,value_s
-        #     if (rw.path == UVM_FRONTDOOR)
-        #       path_s = (map_info.frontdoor is not None) ? "user frontdoor" :
-        #                                               {"map ",rw.map.get_full_name()}
-        #     else
-        #       path_s = (get_backdoor() is not None) ? "user backdoor" : "DPI backdoor"
-        #
-        #     value_s = $sformatf("=0x%0h",rw.value[0])
-        #
-        #      uvm_report_info("RegModel", {"Wrote register via ",path_s,": ",
-        #                                   get_full_name(),value_s}, UVM_HIGH)
-        #   end
-        #
-        #   self.m_write_in_progress = 1'b0
-        #
-        #   XatomicX(0)
-        #
+        if self.Xcheck_accessX(rw,map_info,"write()") is False:
+            yield uvm_empty_delay()
+            return
+        map_info = map_info[0]
+
+        self.XatomicX(1)
+
+        self.m_write_in_progress = True
+
+        rw.value[0] &= ((1 << self.m_n_bits)-1)
+        value = rw.value[0]
+        rw.status = UVM_IS_OK
+
+        # PRE-WRITE CBS - FIELDS
+        # pre_write_callbacks
+        msk = 0
+        lsb = 0
+
+        for i in range(len(self.m_fields)):
+            cbs = UVMRegFieldCbIter(self.m_fields[i])
+            f = self.m_fields[i]  # uvm_reg_field
+            lsb = f.get_lsb_pos()
+            msk = ((1<<f.get_n_bits())-1) << lsb
+            rw.value[0] = (value & msk) >> lsb
+            yield f.pre_write(rw)  # TODO yield?
+            cb = cbs.first()
+            while cb is not None:
+                rw.element = f
+                rw.element_kind = UVM_FIELD
+                yield cb.pre_write(rw)
+                cb = cbs.next()
+            value = (value & ~msk) | (rw.value[0] << lsb)
+
+        rw.element = self
+        rw.element_kind = UVM_REG
+        rw.value[0] = value
+
+        # PRE-WRITE CBS - REG
+        yield self.pre_write(rw)
+        cb = cbs.first()
+        while cb is not None:
+            yield cb.pre_write(rw)
+            cb = cbs.next()
+
+        if (rw.status != UVM_IS_OK):
+            self.m_write_in_progress = False
+            self.XatomicX(0)
+            return
+
+        if rw.path == UVM_BACKDOOR:
+            final_val = 0
+            bkdr = self.get_backdoor()  # uvm_reg_backdoor
+            value = rw.value[0]
+
+            # Mimick the final value after a physical read
+            rw.kind = UVM_READ
+            if (bkdr is not None):
+                bkdr.read(rw)
+            else:
+                self.backdoor_read(rw)
+
+            if (rw.status == UVM_NOT_OK):
+                self.m_write_in_progress = False
+                return
+
+            for i in range(len(self.m_fields)):
+                field_val = 0
+                lsb = self.m_fields[i].get_lsb_pos()
+                sz  = self.m_fields[i].get_n_bits()
+                field_val = self.m_fields[i].XpredictX((rw.value[0] >> lsb) & ((1<<sz)-1),
+                                                  (value >> lsb) & ((1<<sz)-1),
+                                                  rw.local_map)
+                final_val |= field_val << lsb
+            rw.kind = UVM_WRITE
+            rw.value[0] = final_val
+
+            if (bkdr is not None):
+                bkdr.write(rw)
+            else:
+                self.backdoor_write(rw)
+
+            self.do_predict(rw, UVM_PREDICT_WRITE)
+        elif rw.path == UVM_FRONTDOOR:
+            system_map = rw.local_map.get_root_map()  # uvm_reg_map
+            self.m_is_busy = True
+
+            # ...VIA USER FRONTDOOR
+            if (map_info.frontdoor is not None):
+                fd = map_info.frontdoor  # uvm_reg_frontdoor
+                fd.rw_info = rw
+                if (fd.sequencer is None):
+                    fd.sequencer = system_map.get_sequencer()
+                yield fd.start(fd.sequencer, rw.parent)
+
+            # ...VIA BUILT-IN FRONTDOOR
+            else:  # built_in_frontdoor
+                rw.local_map.do_write(rw)
+
+            self.m_is_busy = False
+
+            if system_map.get_auto_predict():
+                status = 0
+                if (rw.status != UVM_NOT_OK):
+                    self.sample(value, -1, 0, rw.map)
+                    self.m_parent.XsampleX(map_info.offset, 0, rw.map)
+
+                status = rw.status  # do_predict will override rw.status, so we save it here
+                self.do_predict(rw, UVM_PREDICT_WRITE)
+                rw.status = status
+
+        value = rw.value[0]
+
+        # POST-WRITE CBS - REG
+        cb = cbs.first()
+        while cb is not None:
+            cb.post_write(rw)
+            cb = cbs.next()
+        self. post_write(rw)
+
+        # POST-WRITE CBS - FIELDS
+        for i in range(len(self.m_fields)):
+            cbs = UVMRegFieldCbIter(self.m_fields[i])
+            f = self.m_fields[i]  # uvm_reg_field
+            rw.element = f
+            rw.element_kind = UVM_FIELD
+            rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1)
+
+            cb = cbs.first()
+            while cb is not None:
+                cb.post_write(rw)
+                cb = cbs.next()
+            f.post_write(rw)
+
+        rw.value[0] = value
+        rw.element = self
+        rw.element_kind = UVM_REG
+
+        # REPORT
+        if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
+            path_s = ""
+            value_s = ""
+            if (rw.path == UVM_FRONTDOOR):
+                path_s = "map " + rw.map.get_full_name()
+                if (map_info.frontdoor is not None):
+                    path_s = "user frontdoor"
+            else:
+                path_s = "DPI backdoor"
+                if (self.get_backdoor() is not None):
+                    path_s = "user backdoor"
+
+            value_s = sv.sformatf("=0x%0h",rw.value[0])
+            uvm_report_info("RegModel", "Wrote register via " + path_s + ": "
+                    + self.get_full_name() + value_s, UVM_HIGH)
+
+        self.m_write_in_progress = False
+        self.XatomicX(0)
         #endtask: do_write
 
 
@@ -2229,18 +2209,18 @@ class UVMReg(UVMObject):
 #
 #function bit uvm_reg::is_in_map(uvm_reg_map map)
 #   if (self.m_maps.exists(map))
-#     return 1
+#     return True
 #   foreach (self.m_maps[l]):
 #     uvm_reg_map local_map = l
 #     uvm_reg_map parent_map = local_map.get_parent_map()
 #
 #     while (parent_map is not None):
 #       if (parent_map == map)
-#         return 1
+#         return True
 #       parent_map = parent_map.get_parent_map()
 #     end
 #   end
-#   return 0
+#   return False
 #endfunction
 #
 #
@@ -2356,7 +2336,7 @@ class UVMReg(UVMObject):
 #
 #function bit uvm_reg::get_coverage(uvm_reg_cvr_t is_on)
 #   if (has_coverage(is_on) == 0)
-#      return 0
+#      return False
 #   return ((self.m_cover_on & is_on) == is_on)
 #endfunction: get_coverage
 #
@@ -2394,7 +2374,7 @@ class UVMReg(UVMObject):
 #   foreach (self.m_fields[i]):
 #      has_reset |= self.m_fields[i].has_reset(kind, delete)
 #      if (!delete && has_reset)
-#        return 1
+#        return True
 #   end
 #endfunction: has_reset
 #
@@ -2419,7 +2399,7 @@ class UVMReg(UVMObject):
 #   needs_update = 0
 #   foreach (self.m_fields[i]):
 #      if (self.m_fields[i].needs_update()):
-#         return 1
+#         return True
 #      end
 #   end
 #endfunction: needs_update
@@ -2777,7 +2757,7 @@ class UVMReg(UVMObject):
 #function bit uvm_reg::do_compare (uvm_object  rhs,
 #                                        uvm_comparer comparer)
 #  `uvm_warning("RegModel","RegModel registers cannot be compared")
-#  return 0
+#  return False
 #endfunction
 #
 #

@@ -82,6 +82,7 @@ class user_acp_reg(UVMReg):
         rg = None
 
         #assert($cast(rg,rw.element));
+        rg = rw.element
 
         # Predict the value that will be in the register
         m_data = rg.get() + 1
@@ -90,7 +91,7 @@ class user_acp_reg(UVMReg):
         # with the incremented value to emulate the front-door
         if (rw.path == UVM_BACKDOOR):
             rw.value[0] = m_data
-        yield Timer(0, "NS")
+        yield Timer(5, "NS")
         #   endtask: pre_write
     #
     #endclass : user_acp_reg

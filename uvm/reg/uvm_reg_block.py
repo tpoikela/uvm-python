@@ -95,6 +95,7 @@ class UVMRegBlock(UVMObject):
         self.backdoor = None
         self.default_hdl_path = "RTL"
         self.parent = None
+        self.default_path = UVM_DEFAULT_PATH
 
     #
     #   // Function: configure
@@ -745,6 +746,7 @@ class UVMRegBlock(UVMObject):
     #   // Group: Access
     #   //--------------
     #
+
     #   // Function: get_default_path
     #   //
     #   // Default access path
@@ -752,7 +754,14 @@ class UVMRegBlock(UVMObject):
     #   // Returns the default access path for this block.
     #   //
     #   extern virtual function uvm_path_e get_default_path()
-    #
+    def get_default_path(self):
+        if (self.default_path != UVM_DEFAULT_PATH):
+            return self.default_path
+        if (self.parent is not None):
+            return self.parent.get_default_path()
+        return UVM_FRONTDOOR
+        #endfunction
+
 
     #   // Function: reset
     #   //
@@ -1875,20 +1884,6 @@ class UVMRegBlock(UVMObject):
 #  return default_map
 #endfunction
 #
-#
-# get_default_path
-#
-#function uvm_path_e uvm_reg_block::get_default_path()
-#
-#   if (self.default_path != UVM_DEFAULT_PATH)
-#      return self.default_path
-#
-#   if (self.parent is not None)
-#      return self.parent.get_default_path()
-#
-#   return UVM_FRONTDOOR
-#
-#endfunction
 #
 #
 # Xinit_address_mapsX

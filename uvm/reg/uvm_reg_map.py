@@ -21,6 +21,7 @@
 #    TODO add modifications
 # -------------------------------------------------------------
 
+from ..base.sv import sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import *
@@ -796,8 +797,141 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_bus_write (uvm_reg_item rw,
     #                                     uvm_sequencer_base sequencer,
     #                                     uvm_reg_adapter adapter)
-    #
-    #
+    @cocotb.coroutine
+    def do_bus_write (self, rw, sequencer, adapter):
+        addrs = []
+        system_map = self.get_root_map()
+        bus_width = self.get_n_bytes()
+        byte_en = -1
+        map_info = None
+        n_bits = 0
+        lsb = 0
+        skip = 0
+        curr_byte = 0
+        n_access_extra
+        n_access = 0
+        n_bits_init = 0
+        accesses = []
+
+        [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
+        addrs=map_info.addr
+
+        # if a memory, adjust addresses based on offset
+        if (rw.element_kind == UVM_MEM):
+            for i in range(len(addrs)):
+                addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
+
+        for val_idx in range(len(rw.value)):
+            value = rw.value[val_idx]
+
+            # /* calculate byte_enables */
+            if (rw.element_kind == UVM_FIELD):
+                temp_be = 0
+                idx = 0
+                n_access_extra = lsb%(bus_width*8)
+                n_access = n_access_extra + n_bits_init
+                temp_be = n_access_extra
+                value = value << n_access_extra
+                while(temp_be >= 8):
+                    byte_en[idx] = 0
+                    idx += 1
+                    temp_be -= 8
+
+                temp_be += n_bits_init
+                while(temp_be > 0):
+                    byte_en[idx] = 1
+                    idx += 1
+                    temp_be -= 8
+                byte_en &= (1 << idx)-1
+                for i in range(skip):
+                    addrs.pop_front()
+                while (addrs.size() > (n_bits_init/(bus_width*8) + 1)):
+                    addrs.pop_back()
+            curr_byte = 0
+            n_bits = n_bits_init
+
+            accesses = []
+            for i in range(len(addrs)):
+                rw_access = UVMRegBusOp()
+                data = (value >> (curr_byte*8)) & ((1 << (bus_width * 8))-1)
+
+                uvm_info(self.get_type_name(),
+                   sv.sformatf("Writing 0x%0h at 0x%0h via map %s...",
+                        data, addrs[i], rw.map.get_full_name()), UVM_FULL)
+
+                if (rw.element_kind == UVM_FIELD):
+                    for z in range(bus_width):
+                        rw_access.byte_en[z] = byte_en[curr_byte+z]
+
+                rw_access.kind    = rw.kind
+                rw_access.addr    = addrs[i]
+                rw_access.data    = data
+                #rw_access.n_bits  = (n_bits > bus_width*8) ? bus_width*8 : n_bits
+                rw_access.n_bits = n_bits
+                if (n_bits > bus_width*8):
+                    rw_access.n_bits = bus_width*8
+                rw_access.byte_en = byte_en
+
+                accesses.append(rw_access)
+                curr_byte += bus_width
+                n_bits -= bus_width * 8
+
+            #end: foreach_addr
+
+            # if set utilizy the order policy
+            if (policy is not None):
+                policy.order(accesses)
+
+            # perform accesses
+            # foreach(accesses[i]):
+            for i in range(len(accesses)):
+                rw_access=accesses[i]  # uvm_reg_bus_op
+                bus_req = None  # uvm_sequence_item
+                adapter.m_set_item(rw)
+                bus_req = adapter.reg2bus(rw_access)
+                adapter.m_set_item(None)
+
+                if (bus_req is None):
+                    uvm_fatal("RegMem", "adapter [" + adapter.get_name() + "] didnt return a bus transaction")
+
+                bus_req.set_sequencer(sequencer)
+                yield rw.parent.start_item(bus_req,rw.prior)
+
+                if (rw.parent is not None and i == 0):
+                    rw.parent.mid_do(rw)
+
+                yield rw.parent.finish_item(bus_req)
+                yield bus_req.end_event.wait_on()
+
+                if (adapter.provides_responses):
+                    bus_rsp = None  # uvm_sequence_item
+                    op = None  # uvm_access_e
+                    # TODO: need to test for right trans type, if not put back in q
+                    yield rw.parent.get_base_response(bus_rsp)
+                    adapter.bus2reg(bus_rsp,rw_access)
+                else:
+                    adapter.bus2reg(bus_req,rw_access)
+
+                if (rw.parent is not None and i == addrs.size()-1):
+                    rw.parent.post_do(rw)
+
+                rw.status = rw_access.status
+
+                uvm_info(get_type_name(),
+                   sv.sformatf("Wrote 0x%0h at 0x%0h via map %s: %s...",
+                      rw_access.data, addrs[i], rw.map.get_full_name(), rw.status.name()), UVM_FULL)
+
+                if (rw.status == UVM_NOT_OK):
+                    break
+
+            for i in range(len(addrs)):
+                addrs[i] = addrs[i] + map_info.mem_range.stride
+
+        #end: foreach_value
+        #
+        #endtask: do_bus_write
+
+
 
     #   // Task: do_bus_read
     #   //
@@ -807,7 +941,7 @@ class UVMRegMap(UVMObject):
     #                                    uvm_sequencer_base sequencer,
     #                                    uvm_reg_adapter adapter)
     @cocotb.coroutine
-    def do_bus_read (self, rw, sequencer, adapter):
+    def do_bus_read(self, rw, sequencer, adapter):
         addrs = []  # uvm_reg_addr_t[$]
         system_map = self.get_root_map()
         bus_width  = self.get_n_bytes()
@@ -959,8 +1093,42 @@ class UVMRegMap(UVMObject):
     #   // Perform a write operation.
     #   //
     #   extern virtual task do_write(uvm_reg_item rw)
-    #
-    #
+    @cocotb.coroutine
+    def do_write(self, rw):
+        tmp_parent_seq = None  # uvm_sequence_base
+        system_map = self.get_root_map()
+        adapter = system_map.get_adapter()
+        sequencer = system_map.get_sequencer()
+
+        if (adapter is not None and adapter.parent_sequence is not None):
+            o = None
+            seq = None
+            o = adapter.parent_sequence.clone()
+            #assert($cast(seq,o))
+            seq = o
+            seq.set_parent_sequence(rw.parent)
+            rw.parent = seq
+            tmp_parent_seq = seq
+
+        if (rw.parent is None):
+             #rw.parent = new("default_parent_seq")
+             rw.parent = UVMSequenceBase("default_parent_seq")
+             tmp_parent_seq = rw.parent
+
+        if (adapter is None):
+            rw.set_sequencer(sequencer)
+            yield rw.parent.start_item(rw,rw.prior)
+            yield rw.parent.finish_item(rw)
+            yield rw.end_event.wait_on()
+        else:
+            self.do_bus_write(rw, sequencer, adapter)
+
+        #
+        #  if (tmp_parent_seq is not None)
+        #    sequencer.m_sequence_exiting(tmp_parent_seq)
+        #
+        #endtask
+
 
     #   // Task: do_read
     #   //
@@ -1009,7 +1177,7 @@ class UVMRegMap(UVMObject):
     #                                        output int addr_skip)
     def Xget_bus_infoX(self, rw, map_info, size, lsb, addr_skip):
         if (rw.element_kind == UVM_MEM):
-            mem = None  # uvm_mem 
+            mem = None  # uvm_mem
             if(rw.element is None):  # || !$cast(mem,rw.element)):
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_MEM, " +
                     "but 'element' does not point to a memory: " + rw.get_name())
@@ -1017,7 +1185,7 @@ class UVMRegMap(UVMObject):
             map_info = self.get_mem_map_info(mem)
             size = mem.get_n_bits()
         elif (rw.element_kind == UVM_REG):
-            rg = None  # uvm_reg 
+            rg = None  # uvm_reg
             if(rw.element is None):  # || !$cast(rg,rw.element))
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_REG, " +
                     "but 'element' does not point to a register: " + rw.get_name())
@@ -1025,7 +1193,7 @@ class UVMRegMap(UVMObject):
             map_info = self.get_reg_map_info(rg)
             size = rg.get_n_bits()
         elif (rw.element_kind == UVM_FIELD):
-            field = None  # uvm_reg_field 
+            field = None  # uvm_reg_field
             if(rw.element is None):  # || !$cast(field,rw.element))
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_FIELD, " +
                     "but 'element' does not point to a field: " + rw.get_name())
@@ -1836,188 +2004,8 @@ uvm_object_utils(UVMRegMap)
 # Bus Access
 #-----------
 
-# do_write(uvm_reg_item rw)
-#
-#task uvm_reg_map::do_write(uvm_reg_item rw)
-#
-#  uvm_sequence_base tmp_parent_seq
-#  uvm_reg_map system_map = get_root_map()
-#  uvm_reg_adapter adapter = system_map.get_adapter()
-#  uvm_sequencer_base sequencer = system_map.get_sequencer()
-#
-#  if (adapter is not None && adapter.parent_sequence is not None):
-#    uvm_object o
-#    uvm_sequence_base seq
-#    o = adapter.parent_sequence.clone()
-#    assert($cast(seq,o))
-#    seq.set_parent_sequence(rw.parent)
-#    rw.parent = seq
-#    tmp_parent_seq = seq
-#  end
-#
-#  if (rw.parent is None):
-#     rw.parent = new("default_parent_seq")
-#     tmp_parent_seq = rw.parent
-#  end
-#
-#  if (adapter is None):
-#    rw.set_sequencer(sequencer)
-#    rw.parent.start_item(rw,rw.prior)
-#    rw.parent.finish_item(rw)
-#    rw.end_event.wait_on()
-#  end
-#  else begin
-#    do_bus_write(rw, sequencer, adapter)
-#  end
-#
-#  if (tmp_parent_seq is not None)
-#    sequencer.m_sequence_exiting(tmp_parent_seq)
-#
-#endtask
 
 
-# do_bus_write
-#
-#task uvm_reg_map::do_bus_write (uvm_reg_item rw,
-#                                uvm_sequencer_base sequencer,
-#                                uvm_reg_adapter adapter)
-#
-#  uvm_reg_addr_t     addrs[$]
-#  uvm_reg_map        system_map = get_root_map()
-#  int unsigned       bus_width  = get_n_bytes()
-#  uvm_reg_byte_en_t  byte_en    = -1
-#  uvm_reg_map_info   map_info
-#  int                n_bits
-#  int                lsb
-#  int                skip
-#  int unsigned       curr_byte
-#  int                n_access_extra, n_access
-#  int               n_bits_init
-#  uvm_reg_bus_op    accesses[$]
-#
-#  [map_info, size, lsb, addr_skip] = Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
-#  addrs=map_info.addr
-#
-#  // if a memory, adjust addresses based on offset
-#  if (rw.element_kind == UVM_MEM)
-#    foreach (addrs[i])
-#      addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
-#
-#  foreach (rw.value[val_idx]) begin: foreach_value
-#
-#     uvm_reg_data_t value = rw.value[val_idx]
-#
-#    /* calculate byte_enables */
-#    if (rw.element_kind == UVM_FIELD):
-#      int temp_be
-#      int idx
-#      n_access_extra = lsb%(bus_width*8)
-#      n_access = n_access_extra + n_bits_init
-#      temp_be = n_access_extra
-#      value = value << n_access_extra
-#      while(temp_be >= 8):
-#         byte_en[idx++] = 0
-#         temp_be -= 8
-#      end
-#      temp_be += n_bits_init
-#      while(temp_be > 0):
-#         byte_en[idx++] = 1
-#         temp_be -= 8
-#      end
-#      byte_en &= (1<<idx)-1
-#      for (int i=0; i<skip; i++)
-#        void'(addrs.pop_front())
-#      while (addrs.size() > (n_bits_init/(bus_width*8) + 1))
-#        void'(addrs.pop_back())
-#    end
-#    curr_byte=0
-#    n_bits= n_bits_init
-#
-#    accesses.delete()
-#    foreach(addrs[i]) begin: foreach_addr
-#      uvm_reg_bus_op rw_access
-#      uvm_reg_data_t data
-#
-#      data = (value >> (curr_byte*8)) & ((1'b1 << (bus_width * 8))-1)
-#
-#      `uvm_info(get_type_name(),
-#         $sformatf("Writing 'h%0h at 'h%0h via map \"%s\"...",
-#              data, addrs[i], rw.map.get_full_name()), UVM_FULL)
-#
-#      if (rw.element_kind == UVM_FIELD):
-#        for (int z=0;z<bus_width;z++)
-#          rw_access.byte_en[z] = byte_en[curr_byte+z]
-#      end
-#
-#      rw_access.kind    = rw.kind
-#      rw_access.addr    = addrs[i]
-#      rw_access.data    = data
-#      rw_access.n_bits  = (n_bits > bus_width*8) ? bus_width*8 : n_bits
-#      rw_access.byte_en = byte_en
-#
-#      accesses.push_back(rw_access)
-#
-#      curr_byte += bus_width
-#      n_bits -= bus_width * 8
-#
-#    end: foreach_addr
-#
-#    // if set utilizy the order policy
-#    if(policy is not None)
-#        policy.order(accesses)
-#
-#    // perform accesses
-#    foreach(accesses[i]):
-#      uvm_reg_bus_op rw_access=accesses[i]
-#      uvm_sequence_item bus_req
-#
-#      adapter.m_set_item(rw)
-#      bus_req = adapter.reg2bus(rw_access)
-#      adapter.m_set_item(null)
-#
-#      if (bus_req is None)
-#        `uvm_fatal("RegMem",{"adapter [",adapter.get_name(),"] didnt return a bus transaction"})
-#
-#      bus_req.set_sequencer(sequencer)
-#      rw.parent.start_item(bus_req,rw.prior)
-#
-#      if (rw.parent is not None && i == 0)
-#        rw.parent.mid_do(rw)
-#
-#      rw.parent.finish_item(bus_req)
-#      bus_req.end_event.wait_on()
-#
-#      if (adapter.provides_responses):
-#        uvm_sequence_item bus_rsp
-#        uvm_access_e op
-#        // TODO: need to test for right trans type, if not put back in q
-#        rw.parent.get_base_response(bus_rsp)
-#        adapter.bus2reg(bus_rsp,rw_access)
-#      end
-#      else begin
-#        adapter.bus2reg(bus_req,rw_access)
-#      end
-#
-#      if (rw.parent is not None && i == addrs.size()-1)
-#        rw.parent.post_do(rw)
-#
-#      rw.status = rw_access.status
-#
-#      `uvm_info(get_type_name(),
-#         $sformatf("Wrote 'h%0h at 'h%0h via map \"%s\": %s...",
-#            rw_access.data, addrs[i], rw.map.get_full_name(), rw.status.name()), UVM_FULL)
-#
-#      if (rw.status == UVM_NOT_OK)
-#         break
-#
-#    end
-#
-#    foreach (addrs[i])
-#      addrs[i] = addrs[i] + map_info.mem_range.stride
-#
-#  end: foreach_value
-#
-#endtask: do_bus_write
 
 #
 #
