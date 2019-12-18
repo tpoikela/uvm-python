@@ -20,16 +20,24 @@
 // -------------------------------------------------------------
 // 
 
+`timescale 1ns/1ns
 
-module dut();
+module dut(
+    input clk,
+    input reset,
+    input[15:0] data_in,
+    input we,
+    output[15:0] data_out
+);
 
 reg [15:0] acp;
+assign data_out = acp;
 
-function reset();
-    acp = 0;
-endfunction
-
-
-initial reset();
+always_ff@(posedge clk or negedge reset)
+    if (!reset)
+        acp <= 0;
+    else begin
+        if (we) acp <= data_in;
+    end
 
 endmodule

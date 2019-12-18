@@ -90,9 +90,17 @@ class sv:
             msg = msg.replace(s, "{}")
         return msg.format(*args)
 
+    @classmethod
+    def random(cls):
+        return random.randint(0, SV_MAX_INT_VALUE)
+
+
 random.seed(0)
 
 SV_MAX_INT_VALUE = (1 << 31) - 1
+
+
+
 
 def urandom():
     return random.randint(0, SV_MAX_INT_VALUE)

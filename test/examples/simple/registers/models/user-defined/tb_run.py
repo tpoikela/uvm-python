@@ -26,10 +26,12 @@
 import cocotb
 from cocotb.triggers import Timer
 
-from uvm.base import uvm_top, UVMCoreService, run_test, UVM_FINISHED, UVM_LOW
+from uvm.base import (uvm_top, UVMCoreService, run_test, UVM_FINISHED, UVM_LOW,
+        sv)
 from uvm.comps import UVMTest
 from uvm.macros import uvm_fatal, uvm_info
 from uvm.reg.sequences import uvm_reg_hw_reset_seq
+from uvm.reg.uvm_reg_model import *
 
 from tb_env import tb_env
 
@@ -48,15 +50,12 @@ class tb_test(UVMTest):
     #   virtual task run_phase(uvm_phase phase);
     @cocotb.coroutine
     def run_phase(self, phase):
-        #tb_env env;
-        #uvm_status_e   status;
-        #uvm_reg_data_t data;
 
         phase.raise_objection(self)
         env = uvm_top.get_child("env")
 
         if (env is None):
-            uvm_fatal("test", "Cannot find tb_env");
+            uvm_fatal("test", "Cannot find tb_env")
 
         env.regmodel.reset()
 
@@ -68,30 +67,35 @@ class tb_test(UVMTest):
         print("seq.start was called. Wait for seq state")
         yield seq.wait_for_sequence_state(UVM_FINISHED)
 
-        uvm_info("Test", "Performing 257 writes...", UVM_LOW)
-        
-        for i in range(257):
-           env.regmodel.user_acp.write(status, sv.random())
+        nwrites = 16
+        uvm_info("Test", "Performing " + str(nwrites) + " writes...", UVM_LOW)
+
+        for i in range(nwrites):
+            status = []
+            yield env.regmodel.user_acp.write(status, sv.random())
+        status = []
         env.regmodel.user_acp.mirror(status, UVM_CHECK)
-        
+
         uvm_info("Test", "Resetting DUT...", UVM_LOW)
-        self.dut.reset()
+        self.dut.reset <= 0
+        yield Timer(5, "NS")
+        self.dut.reset <= 1
         env.regmodel.reset()
         env.regmodel.user_acp.mirror(status, UVM_CHECK)
         phase.drop_objection(self)
     #endclass
-    
+
 
 @cocotb.test()
 def module_top(dut):
-    
+
     cs_ = UVMCoreService.get()
     env = tb_env("env")
     test = tb_test("test")
     test.dut = dut
-    
+
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
-    
+
     yield run_test()
     yield Timer(1)

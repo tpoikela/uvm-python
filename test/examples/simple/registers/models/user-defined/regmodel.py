@@ -75,21 +75,23 @@ class user_acp_reg(UVMReg):
         #      end
         #   endfunction: build
 
-    #
-    #virtual task pre_write(uvm_reg_item rw);
-    #      uvm_reg_data_t m_data;
-    #      UVMReg rg;
-    #
-    #      assert($cast(rg,rw.element));
-    #
-    #      // Predict the value that will be in the register
-    #      m_data = rg.get() + 1;
-    #
-    #      // If a backdoor write is used, replace the value written
-    #      // with the incremented value to emulate the front-door
-    #      if (rw.path == UVM_BACKDOOR)
-    #         rw.value[0] = m_data;
-    #   endtask: pre_write
+
+    @cocotb.coroutine
+    def pre_write(self, rw):
+        m_data = 0
+        rg = None
+
+        #assert($cast(rg,rw.element));
+
+        # Predict the value that will be in the register
+        m_data = rg.get() + 1
+
+        # If a backdoor write is used, replace the value written
+        # with the incremented value to emulate the front-door
+        if (rw.path == UVM_BACKDOOR):
+            rw.value[0] = m_data
+        yield Timer(0, "NS")
+        #   endtask: pre_write
     #
     #endclass : user_acp_reg
 uvm_object_utils(user_acp_reg)
