@@ -34,9 +34,9 @@ class UVMRegMapInfo:
         self.offset = 0
         self.rights = ""
         self.unmapped = False
-        self.addr = [] # uvm_reg_addr_t[]
-        self.frontdoor = None # uvm_reg_frontdoor
-        self.mem_range = None # uvm_reg_map_addr_range
+        self.addr = []  # uvm_reg_addr_t[]
+        self.frontdoor = None  # uvm_reg_frontdoor
+        self.mem_range = None  # uvm_reg_map_addr_range
 
         # if set marks the uvm_reg_map_info as initialized,
         # prevents using an uninitialized map (for instance if the model
@@ -45,7 +45,7 @@ class UVMRegMapInfo:
 
 # Class: uvm_reg_transaction_order_policy
 class UVMRegTransactionOrderPolicy(UVMObject):
-    def __init__(self, name = 'policy'):
+    def __init__(self, name='policy'):
         UVMObject.__init__(self, name)
     #
     #    // Function: order
@@ -100,37 +100,37 @@ class UVMRegMap(UVMObject):
     #   //
     #   // Create a new instance
     #   //
-    def __init__(self, name = "uvm_reg_map"):
+    def __init__(self, name="uvm_reg_map"):
         n = "default_map"
         if name != "":
-             n = name
-        UVMObject.__init__(self, name)
+            n = name
+        UVMObject.__init__(self, n)
         self.m_auto_predict = 0
         self.m_check_on_read = 0
         # info that is valid only if top-level map
-        self.m_base_addr = 0 # uvm_reg_addr_t
-        self.m_n_bytes = 0 # int
-        self.m_endian = 0 # uvm_endianness_e
+        self.m_base_addr = 0  # uvm_reg_addr_t
+        self.m_n_bytes = 0  # int
+        self.m_endian = 0  # uvm_endianness_e
         self.m_byte_addressing = False
-        self.m_sequence_wrapper = None # uvm_object_wrapper
-        self.m_adapter = None # uvm_reg_adapter
-        self.m_sequencer = None # uvm_sequencer_base
-        self.m_parent = None #   uvm_reg_block
+        self.m_sequence_wrapper = None  # uvm_object_wrapper
+        self.m_adapter = None  # uvm_reg_adapter
+        self.m_sequencer = None  # uvm_sequencer_base
+        self.m_parent = None  # uvm_reg_block
         self.m_system_n_bytes = 0
         #
-        self.m_parent_map = None # uvm_reg_map
-        self.m_parent_maps = {} # uvm_reg_addr_t[uvm_reg_map] // value=offset of this map at parent level
+        self.m_parent_map = None  # uvm_reg_map
+        self.m_parent_maps = {}  # uvm_reg_addr_t[uvm_reg_map] // value=offset of this map at parent level
         self.m_submaps = {}  # uvm_reg_addr_t[uvm_reg_map] value=offset of submap at this level
-        self.m_submap_rights = {} # string[uvm_reg_map] # value=rights of submap at this level
+        self.m_submap_rights = {}  # string[uvm_reg_map] # value=rights of submap at this level
 
-        self.m_regs_info = {} # uvm_reg_map_info[uvm_reg]
-        self.m_mems_info = {} # uvm_reg_map_info[uvm_mem]
-        self.m_regs_by_offset = {} # uvm_reg[uvm_reg_addr_t]
+        self.m_regs_info = {}  # uvm_reg_map_info[uvm_reg]
+        self.m_mems_info = {}  # uvm_reg_map_info[uvm_mem]
+        self.m_regs_by_offset = {}  # uvm_reg[uvm_reg_addr_t]
         # Use only in addition to above if a RO and a WO
         # register share the same address.
-        self.m_regs_by_offset_wo = {} # uvm_reg[uvm_reg_addr_t]
-        self.m_mems_by_offset = {} # uvm_mem[uvm_reg_map_addr_range]
-        self.policy = None #   local uvm_reg_transaction_order_policy
+        self.m_regs_by_offset_wo = {}  # uvm_reg[uvm_reg_addr_t]
+        self.m_mems_by_offset = {}  # uvm_mem[uvm_reg_map_addr_range]
+        self.policy = None  #local uvm_reg_transaction_order_policy
 
     #   // Function: configure
     #   //
@@ -647,7 +647,7 @@ class UVMRegMap(UVMObject):
             return None
         result = self.m_regs_info[rg]
         if not result.is_initialized:
-            uvm_report_warning("RegModel", ("map '" + self.get_name() +
+            uvm_report_fatal("RegModel", ("map '" + self.get_name() +
                 "' does not seem to be initialized correctly, "
                 + "check that the top register model is locked()"))
         return result

@@ -70,7 +70,7 @@ class tb_test(UVMTest):
             uvm_info("WRITE", sv.sformatf("Write[%0d] now", i), UVM_LOW)
             yield env.regmodel.user_acp.write(status, sv.random())
         status = []
-        env.regmodel.user_acp.mirror(status, UVM_CHECK)
+        yield env.regmodel.user_acp.mirror(status, UVM_CHECK)
 
         uvm_info("Test", "Resetting DUT...", UVM_LOW)
         self.dut.reset <= 0

@@ -27,8 +27,10 @@ from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
 from .uvm_reg_model import *
 from .uvm_reg_map import UVMRegMap
+from .uvm_mem import UVMMem
+from .uvm_reg_field import UVMRegField
 from .uvm_reg import UVMReg
-from ..macros import uvm_error, uvm_warning
+from ..macros import (uvm_error, uvm_warning, uvm_fatal, UVM_REG_DATA_WIDTH)
 
 #------------------------------------------------------------------------
 # Class: uvm_reg_block
@@ -42,6 +44,10 @@ from ..macros import uvm_error, uvm_warning
 # interface on the block.
 #
 #------------------------------------------------------------------------
+
+ERR_MSG1 = "There are %0d root register models named %s. The names of the root register models have to be unique"
+
+ERR_MSG3 = "Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d"
 
 class UVMRegBlock(UVMObject):
     m_roots = {}  # static bit[uvm_reg_block]
@@ -113,7 +119,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern function void configure(uvm_reg_block parent=null,
     #                                  string hdl_path="")
-    #
+
 
     #   // Function: create_map
     #   //
@@ -255,43 +261,33 @@ class UVMRegBlock(UVMObject):
             blk.lock_model()
 
         # TODO finish this
-        #   if (self.parent is None):
-        #      int max_size = uvm_reg::get_max_size()
-        #
-        #      if (uvm_reg_field::get_max_size() > max_size)
-        #         max_size = uvm_reg_field::get_max_size()
-        #
-        #      if (uvm_mem::get_max_size() > max_size)
-        #         max_size = uvm_mem::get_max_size()
-        #
-        #      if (max_size > `UVM_REG_DATA_WIDTH):
-        #         `uvm_fatal("RegModel", $sformatf("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d", max_size, `UVM_REG_DATA_WIDTH))
-        #      end
-        #
-        #      Xinit_address_mapsX()
-        #
-        #      // Check that root register models have unique names
-        #
-        #      // Has this name has been checked before?
-        #      if (m_roots[this] != 1):
-        #         int n
-        #
-        #         foreach (m_roots[_blk]):
-        #            uvm_reg_block blk = _blk
-        #
-        #            if (blk.get_name() == get_name()):
-        #               m_roots[blk] = 1
-        #               n++
-        #            end
-        #         end
-        #
-        #         if (n > 1):
-        #            `uvm_error("UVM/REG/DUPLROOT",
-        #                       $sformatf("There are %0d root register models named \"%s\". The names of the root register models have to be unique",
-        #                                 n, get_name()))
-        #         end
-        #      end
-        #   end
+        if (self.parent is None):
+            max_size = UVMReg.get_max_size()
+            if (UVMRegField.get_max_size() > max_size):
+                max_size = UVMRegField.get_max_size()
+
+            if (UVMMem.get_max_size() > max_size):
+                max_size = UVMMem.get_max_size()
+
+            if (max_size > UVM_REG_DATA_WIDTH):
+                uvm_fatal("RegModel", sv.sformatf(ERR_MSG3, max_size, UVM_REG_DATA_WIDTH))
+
+            self.Xinit_address_mapsX()
+
+            # Check that root register models have unique names
+
+            # Has this name has been checked before?
+            if (UVMRegBlock.m_roots[self] != 1):
+                n = 0
+                #foreach (UVMRegBlock.m_roots[_blk]):
+                for _blk in UVMRegBlock.m_roots:
+                    blk = _blk  # uvm_reg_block
+                    if (blk.get_name() == self.get_name()):
+                        UVMRegBlock.m_roots[blk] = 1
+                        n += 1
+
+                if (n > 1):
+                    uvm_error("UVM/REG/DUPLROOT", sv.sformatf(ERR_MSG1, n, self.get_name()))
         #
         #endfunction: lock_model
 
@@ -1152,7 +1148,7 @@ class UVMRegBlock(UVMObject):
 #   end
 #   blks[blk] = UVMRegBlock.id
 #   UVMRegBlock.id += 1
-#   if (m_roots.exists(blk)) m_roots.delete(blk)
+#   if (UVMRegBlock.m_roots.exists(blk)) UVMRegBlock.m_roots.delete(blk)
 #endfunction
 #
 #
@@ -1305,7 +1301,7 @@ class UVMRegBlock(UVMObject):
 #
 #function void uvm_reg_block::get_root_blocks(ref uvm_reg_block blks[$])
 #
-#   foreach (m_roots[blk]):
+#   foreach (UVMRegBlock.m_roots[blk]):
 #      blks.push_back(blk)
 #   end
 #

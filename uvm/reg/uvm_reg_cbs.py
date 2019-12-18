@@ -25,10 +25,6 @@
 from ..base.uvm_callback import UVMCallback, UVMCallbackIter, UVMCallbacks
 from ..macros import uvm_object_utils
 
-#typedef class uvm_reg
-#typedef class uvm_mem
-#typedef class uvm_reg_backdoor
-
 #//------------------------------------------------------------------------------
 #// Title: Register Callbacks
 #//
@@ -36,7 +32,6 @@ from ..macros import uvm_object_utils
 #// extensions. It also includes pre-defined callback extensions for use on
 #// read-only and write-only registers.
 #//------------------------------------------------------------------------------
-
 
 #//------------------------------------------------------------------------------
 #// Class: uvm_reg_cbs

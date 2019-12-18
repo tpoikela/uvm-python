@@ -34,21 +34,19 @@ from uvm.reg import *
 #//
 #// It increments by 1 after every write
 #//
+
 class user_acp_incr_on_write_cbs(UVMRegCbs):
-    pass
-    #   virtual function void post_predict(input UVMRegField  fld,
-    #                                      input uvm_reg_data_t previous,
-    #                                      inout uvm_reg_data_t value,
-    #                                      input uvm_predict_e  kind,
-    #                                      input uvm_path_e     path,
-    #                                      input uvm_reg_map    map);
-    #      if (kind != UVM_PREDICT_WRITE) return;
-    #      if (path != UVM_FRONTDOOR) return;
-    #
-    #      value = previous + 1;
-    #   endfunction
-    #
-    #endclass
+
+    def __init__(self, name="write_cbs"):
+        UVMRegCbs.__init__(self, name)
+        self.num_called = 0
+
+
+    def post_predict(self, fld, previous, value, kind, path, _map):
+        if (kind != UVM_PREDICT_WRITE): return
+        if (path != UVM_FRONTDOOR): return
+        value.push(previous + 1)
+        self.num_called += 1
 
 
 class user_acp_reg(UVMReg):
@@ -69,10 +67,8 @@ class user_acp_reg(UVMReg):
         #      uvm_resource_db#(bit)::set({"REG::",get_full_name()},
         #                                 "NO_REG_ACCESS_TEST", 1);
         #
-        #      begin
-        #         user_acp_incr_on_write_cbs cb = new;
-        #         uvm_reg_field_cb::add(value, cb);
-        #      end
+        self.cb = user_acp_incr_on_write_cbs()
+        UVMRegFieldCb.add(self.value, self.cb)
         #   endfunction: build
 
 
@@ -95,6 +91,7 @@ class user_acp_reg(UVMReg):
         #   endtask: pre_write
     #
     #endclass : user_acp_reg
+
 uvm_object_utils(user_acp_reg)
 
 
@@ -111,5 +108,8 @@ class block_B(UVMRegBlock):
         self.user_acp.build()
     
         self.default_map.add_reg(self.user_acp, 0x0000,  "RW")
+        self.default_map
+        self.lock_model()
+
     #endclass : block_B
 uvm_object_utils(block_B)

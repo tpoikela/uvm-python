@@ -28,6 +28,7 @@ from .uvm_object import UVMObject
 from .uvm_report_object import UVMReportObject
 from .uvm_pool import UVMPool
 from .uvm_queue import UVMQueue
+from .uvm_misc import UVM_APPEND
 
 #------------------------------------------------------------------------------
 # Title: Callbacks Classes
@@ -53,7 +54,7 @@ class UVMTypeIDBase:
     typeid_map = {}
 
     # uvm_callbacks_base -> UVMTypeIDBase
-    type_map = {} 
+    type_map = {}
 
 #------------------------------------------------------------------------------
 #
@@ -75,7 +76,7 @@ class UVMTypeID(UVMTypeIDBase):
 #
 # Base class singleton that holds generic queues for all instance
 # specific objects. This is an internal class. This class contains a
-# global pool that has all of the instance specific callback queues in it. 
+# global pool that has all of the instance specific callback queues in it.
 # All of the typewide callback queues live in the derivative class
 # uvm_typed_callbacks#(T). This is not a user visible class.
 #
@@ -97,8 +98,8 @@ class UVMCallbacksBase(UVMObject):
         UVMObject.__init__(self, name)
         #Type checking interface
         self.m_this_type = []     #one to many T->T/CB
-        self.m_super_type = None       #one to one relation 
-        self.m_derived_types = [] #one to many relation, UVMTypeIDBase 
+        self.m_super_type = None       #one to one relation
+        self.m_derived_types = [] #one to many relation, UVMTypeIDBase
 
     @classmethod
     def m_initialize(cls):
@@ -109,13 +110,13 @@ class UVMCallbacksBase(UVMObject):
 
     def m_am_i_a(self, obj):
         return 0
-    
+
     def m_is_for_me(self, cb):
         return 0
-    
+
     def m_is_registered(self, obj, cb):
         return 0
-    
+
     def m_get_tw_cb_q(self, obj):
         return None
 
@@ -124,29 +125,29 @@ class UVMCallbacksBase(UVMObject):
 
     def m_delete_tw_cbs(self, cb):
         return 0
-    
+
         #Check registration. To test registration, start at this class and
         #work down the class hierarchy. If any class returns true then
         #the pair is legal.
     def check_registration(self, obj, cb):
         st = None
         dt = None
-        
+
         if self.m_is_registered(obj,cb):
             return True
-        
+
         # Need to look at all possible T/CB pairs of this type
         for item in self.m_this_type:
             if (UVMCallbacksBase.m_b_inst != item and
                     item.m_is_registered(obj,cb)):
                 return True
-        
+
         if obj is None:
             for item in self.m_derived_types:
                 dt = UVMTypeIDBase.typeid_map[item];
                 if dt is not None and dt.check_registration(None,cb):
                     return True
-        
+
         return False
 
     # Function: get_first
@@ -156,7 +157,7 @@ class UVMCallbacksBase(UVMObject):
     # it will be updated with a value that can be supplied to <get_next> to get the next
     # callback object.
     #
-    # If the queue is empty then ~null~ is returned. 
+    # If the queue is empty then ~null~ is returned.
     #
     # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
     # iterator interface.
@@ -183,7 +184,7 @@ class UVMCallbacksBase(UVMObject):
 # callbacks. It also contains some of the public interface methods,
 # but those methods are accessed via the uvm_callbacks#() class
 # so they are documented in that class even though the implementation
-# is in this class. 
+# is in this class.
 #
 # The <add>, <delete>, and <display> methods are implemented in this class.
 
@@ -374,7 +375,7 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
     #        while(m_t_inst.m_pool.next(bobj));
     #      end
     #      if(me != null || m_t_inst.m_tw_cb_q.size()) begin
-    #        qs.push_back($sformatf("Registered callbacks for all instances of %s\n", tname)); 
+    #        qs.push_back($sformatf("Registered callbacks for all instances of %s\n", tname));
     #        qs.push_back("---------------------------------------------------------------\n");
     #      end
     #      if(me != null) begin
@@ -391,7 +392,7 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
     #              inst_q.push_back(bobj.get_full_name());
     #              if(cb.is_enabled()) mode_q.push_back("ON");
     #              else mode_q.push_back("OFF");
-    #  
+    #
     #              str = cb.get_name();
     #              max_cb_name = max_cb_name > str.len() ? max_cb_name : str.len();
     #              str = bobj.get_full_name();
@@ -406,7 +407,7 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
     #    end
     #    else begin
     #      if(m_t_inst.m_pool.exists(bobj) || m_t_inst.m_tw_cb_q.size()) begin
-    #       qs.push_back($sformatf("Registered callbacks for instance %s of %s\n", obj.get_full_name(), tname)); 
+    #       qs.push_back($sformatf("Registered callbacks for instance %s of %s\n", obj.get_full_name(), tname));
     #       qs.push_back("---------------------------------------------------------------\n");
     #      end
     #      if(m_t_inst.m_pool.exists(bobj)) begin
@@ -457,7 +458,7 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
 # customize certain behaviors of the component in a manner that is controlled
 # by the component developer. The integrity of the component's overall behavior
 # is intact, while still allowing certain customizable actions by the user.
-# 
+#
 # To enable compile-time type-safety, the class is parameterized on both the
 # user-defined callback interface implementation as well as the object type
 # associated with the callback. The object type-callback type pair are
@@ -485,12 +486,12 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     m_inst = None
     # typeinfo
     m_typeid = None # UVMTypeIDBase
-    m_cb_typeid = None # UVMTypeIDBase 
+    m_cb_typeid = None # UVMTypeIDBase
 
     m_typename = ''
     m_cb_typename = ''
     reporter = UVMReportObject("cb_tracer")
-    m_base_inst = None # uvm_callbacks#(T,uvm_callback) 
+    m_base_inst = None # uvm_callbacks#(T,uvm_callback)
 
     def __init__(self, name = 'uvm_callbacks'):
         UVMTypedCallbacks.__init__(self, name)
@@ -504,29 +505,29 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
 
         if UVMCallbacks.m_inst is None:
             cb_base_type = UVMTypeIDBase()
-            
+
             #void'(super_typ.:m_initialize())
-            
+
             cb_base_type = UVMTypeID.get()
             UVMCallbacks.m_cb_typeid  = UVMTypeID.get()
             UVMCallbacks.m_typeid     = UVMTypeID.get()
-            
+
             UVMCallbacks.m_inst = UVMCallbacks()
-            
+
             if cb_base_type == UVMCallbacks.m_cb_typeid:
                 #cast(m_base_inst, m_inst)
                 UVMCallbacks.m_base_inst = UVMCallbacks.m_inst
                 # The base inst in the super class gets set to this base inst
                 UVMCallbacks.m_t_inst = UVMCallbacks.m_base_inst
-                UVMTypeIDBase.typeid_map[UVMCallbacks.m_typeid] = UVMCallbacks.m_inst; 
+                UVMTypeIDBase.typeid_map[UVMCallbacks.m_typeid] = UVMCallbacks.m_inst;
                 UVMTypeIDBase.type_map[UVMCallbacks.m_b_inst] = UVMCallbacks.m_typeid;
             else:
                 UVMCallbacks.m_base_inst = UVMCallbacks.get();
                 UVMCallbacks.m_base_inst.m_this_type.push_back(UVMCallbacks.m_inst)
-            
+
             if UVMCallbacks.m_inst is None:
                 uvm_report_fatal("CB/INTERNAL","get(): m_inst is null")
-        
+
         return UVMCallbacks.m_inst;
     #
     #
@@ -545,7 +546,7 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #    m_cb_typename = cbname;
     #    m_cb_typeid.typename = cbname;
     #
-    #    inst.m_registered = 1; 
+    #    inst.m_registered = 1;
     #
     #    return 1;
     #  endfunction
@@ -563,131 +564,135 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #  endfunction
 
     # Group: Add/delete interface
-    
+
     # Function: add
     #
     # Registers the given callback object, ~cb~, with the given
-    # ~obj~ handle. The ~obj~ handle can be ~null~, which allows 
+    # ~obj~ handle. The ~obj~ handle can be ~null~, which allows
     # registration of callbacks without an object context. If
     # ~ordering~ is UVM_APPEND (default), the callback will be executed
     # after previously added callbacks, else  the callback
     # will be executed ahead of previously added callbacks. The ~cb~
     # is the callback handle; it must be non-~null~, and if the callback
     # has already been added to the object instance then a warning is
-    # issued. Note that the CB parameter is optional. For example, the 
+    # issued. Note that the CB parameter is optional. For example, the
     # following are equivalent:
     #
     #| uvm_callbacks#(my_comp)::add(comp_a, cb);
     #| uvm_callbacks#(my_comp, my_callback)::add(comp_a,cb);
-
     #  static function void add(T obj, uvm_callback cb, uvm_apprepend ordering=UVM_APPEND);
-    #    uvm_queue#(uvm_callback) q;
-    #    string nm,tnm; 
-    #
-    #    void'(get());
-    #
-    #    if (cb==null) begin
-    #       if (obj==null)
-    #         nm = "(*)";
-    #       else
-    #         nm = obj.get_full_name();
-    #
-    #       if (m_base_inst.m_typename!="")
-    #         tnm = m_base_inst.m_typename;
-    #       else if (obj != null)
-    #         tnm = obj.get_type_name();
-    #       else
-    #         tnm = "uvm_object";
-    #
-    #       uvm_report_error("CBUNREG",
-    #                       {"Null callback object cannot be registered with object ",
-    #                        nm, " (", tnm, ")"}, UVM_NONE);
-    #       return;
-    #    end
-    #
-    #    if (!m_base_inst.check_registration(obj,cb)) begin
-    #
-    #       if (obj==null)
-    #         nm = "(*)";
-    #       else
-    #         nm = obj.get_full_name();
-    #
-    #       if (m_base_inst.m_typename!="")
-    #         tnm = m_base_inst.m_typename;
-    #       else if(obj != null)
-    #         tnm = obj.get_type_name();
-    #       else
-    #         tnm = "uvm_object";
-    #
-    #       uvm_report_warning("CBUNREG",
-    #                          {"Callback ", cb.get_name(), " cannot be registered with object ",
-    #                          nm, " because callback type ", cb.get_type_name(),
-    #                          " is not registered with object type ", tnm }, UVM_NONE);
-    #    end
-    #
-    #    if(obj == null) begin
-    #
-    #      if (m_cb_find(m_t_inst.m_tw_cb_q,cb) != -1) begin
-    #
-    #        if (m_base_inst.m_typename!="")
-    #          tnm = m_base_inst.m_typename;
-    #        else tnm = "uvm_object";
-    #
-    #        uvm_report_warning("CBPREG",
-    #                           {"Callback object ", cb.get_name(),
-    #                           " is already registered with type ", tnm }, UVM_NONE);
-    #      end
-    #      else begin
-    #        `uvm_cb_trace_noobj(cb,$sformatf("Add (%s) typewide callback %0s for type %s",
-    #                            ordering.name(), cb.get_name(), m_base_inst.m_typename))
-    #        m_t_inst.m_add_tw_cbs(cb,ordering);
-    #      end
-    #    end
-    #
-    #    else begin
-    #
-    #      `uvm_cb_trace_noobj(cb,$sformatf("Add (%s) callback %0s to object %0s ",
-    #                          ordering.name(), cb.get_name(), obj.get_full_name()))
-    #
-    #      q = m_base_inst.m_pool.get(obj);
-    #
-    #      if (q==null) begin
-    #        q=new;
-    #        m_base_inst.m_pool.add(obj,q);
-    #      end
-    #
-    #      if(q.size() == 0) begin
-    #        # Need to make sure that registered report catchers are added. This
-    #        # way users don't need to set up uvm_report_object as a super type.
-    #        uvm_report_object o; 
-    #
-    #        if($cast(o,obj)) begin
-    #          uvm_queue#(uvm_callback) qr;
-    #	  void'(uvm_callbacks#(uvm_report_object, uvm_callback)::get());
-    #          qr = uvm_callbacks#(uvm_report_object,uvm_callback)::m_t_inst.m_tw_cb_q;
-    #          for(int i=0; i<qr.size(); ++i)
-    #              q.push_back(qr.get(i)); 
-    #        end
-    #
-    #        for(int i=0; i<m_t_inst.m_tw_cb_q.size(); ++i)
-    #          q.push_back(m_t_inst.m_tw_cb_q.get(i)); 
-    #      end
-    #
-    #      #check if already exists in the queue
-    #      if(m_cb_find(q,cb) != -1) begin
-    #        uvm_report_warning("CBPREG", { "Callback object ", cb.get_name(), " is already registered",
-    #                           " with object ", obj.get_full_name() }, UVM_NONE);
-    #      end
-    #      else begin
-    #        void'(m_cb_find_name(q, cb.get_name(), {"object instance ", obj.get_full_name()}));
-    #        if(ordering == UVM_APPEND)
-    #          q.push_back(cb);
-    #        else
-    #          q.push_front(cb);
-    #      end
-    #    end
-    #  endfunction
-    #
+
+    @classmethod
+    def add(cls, obj, cb, ordering=UVM_APPEND):
+        pass
+        #    uvm_queue#(uvm_callback) q;
+        #    string nm,tnm;
+        #
+        #    void'(get());
+        #
+        #    if (cb==null) begin
+        #       if (obj==null)
+        #         nm = "(*)";
+        #       else
+        #         nm = obj.get_full_name();
+        #
+        #       if (m_base_inst.m_typename!="")
+        #         tnm = m_base_inst.m_typename;
+        #       else if (obj != null)
+        #         tnm = obj.get_type_name();
+        #       else
+        #         tnm = "uvm_object";
+        #
+        #       uvm_report_error("CBUNREG",
+        #                       {"Null callback object cannot be registered with object ",
+        #                        nm, " (", tnm, ")"}, UVM_NONE);
+        #       return;
+        #    end
+        #
+        #    if (!m_base_inst.check_registration(obj,cb)) begin
+        #
+        #       if (obj==null)
+        #         nm = "(*)";
+        #       else
+        #         nm = obj.get_full_name();
+        #
+        #       if (m_base_inst.m_typename!="")
+        #         tnm = m_base_inst.m_typename;
+        #       else if(obj != null)
+        #         tnm = obj.get_type_name();
+        #       else
+        #         tnm = "uvm_object";
+        #
+        #       uvm_report_warning("CBUNREG",
+        #                          {"Callback ", cb.get_name(), " cannot be registered with object ",
+        #                          nm, " because callback type ", cb.get_type_name(),
+        #                          " is not registered with object type ", tnm }, UVM_NONE);
+        #    end
+        #
+        #    if(obj == null) begin
+        #
+        #      if (m_cb_find(m_t_inst.m_tw_cb_q,cb) != -1) begin
+        #
+        #        if (m_base_inst.m_typename!="")
+        #          tnm = m_base_inst.m_typename;
+        #        else tnm = "uvm_object";
+        #
+        #        uvm_report_warning("CBPREG",
+        #                           {"Callback object ", cb.get_name(),
+        #                           " is already registered with type ", tnm }, UVM_NONE);
+        #      end
+        #      else begin
+        #        `uvm_cb_trace_noobj(cb,$sformatf("Add (%s) typewide callback %0s for type %s",
+        #                            ordering.name(), cb.get_name(), m_base_inst.m_typename))
+        #        m_t_inst.m_add_tw_cbs(cb,ordering);
+        #      end
+        #    end
+        #
+        #    else begin
+        #
+        #      `uvm_cb_trace_noobj(cb,$sformatf("Add (%s) callback %0s to object %0s ",
+        #                          ordering.name(), cb.get_name(), obj.get_full_name()))
+        #
+        #      q = m_base_inst.m_pool.get(obj);
+        #
+        #      if (q==null) begin
+        #        q=new;
+        #        m_base_inst.m_pool.add(obj,q);
+        #      end
+        #
+        #      if(q.size() == 0) begin
+        #        # Need to make sure that registered report catchers are added. This
+        #        # way users don't need to set up uvm_report_object as a super type.
+        #        uvm_report_object o;
+        #
+        #        if($cast(o,obj)) begin
+        #          uvm_queue#(uvm_callback) qr;
+        #	  void'(uvm_callbacks#(uvm_report_object, uvm_callback)::get());
+        #          qr = uvm_callbacks#(uvm_report_object,uvm_callback)::m_t_inst.m_tw_cb_q;
+        #          for(int i=0; i<qr.size(); ++i)
+        #              q.push_back(qr.get(i));
+        #        end
+        #
+        #        for(int i=0; i<m_t_inst.m_tw_cb_q.size(); ++i)
+        #          q.push_back(m_t_inst.m_tw_cb_q.get(i));
+        #      end
+        #
+        #      #check if already exists in the queue
+        #      if(m_cb_find(q,cb) != -1) begin
+        #        uvm_report_warning("CBPREG", { "Callback object ", cb.get_name(), " is already registered",
+        #                           " with object ", obj.get_full_name() }, UVM_NONE);
+        #      end
+        #      else begin
+        #        void'(m_cb_find_name(q, cb.get_name(), {"object instance ", obj.get_full_name()}));
+        #        if(ordering == UVM_APPEND)
+        #          q.push_back(cb);
+        #        else
+        #          q.push_front(cb);
+        #      end
+        #    end
+        #  endfunction
+
+
     #  # Function: add_by_name
     #  #
     #  # Registers the given callback object, ~cb~, with one or more uvm_components.
@@ -721,8 +726,8 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #        name, ", callback ", cb.get_name(), " will not be registered." }, UVM_NONE);
     #    end
     #    foreach(cq[i]) begin
-    #      if($cast(t,cq[i])) begin 
-    #        add(t,cb,ordering); 
+    #      if($cast(t,cq[i])) begin
+    #        add(t,cb,ordering);
     #      end
     #    end
     #  endfunction
@@ -732,10 +737,10 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #  #
     #  # Deletes the given callback object, ~cb~, from the queue associated with
     #  #  the given ~obj~ handle. The ~obj~ handle can be ~null~, which allows
-    #  # de-registration of callbacks without an object context. 
+    #  # de-registration of callbacks without an object context.
     #  # The ~cb~ is the callback handle; it must be non-~null~, and if the callback
     #  # has already been removed from the object instance then a warning is
-    #  # issued. Note that the CB parameter is optional. For example, the 
+    #  # issued. Note that the CB parameter is optional. For example, the
     #  # following are equivalent:
     #  #
     #  #| uvm_callbacks#(my_comp)::delete(comp_a, cb);
@@ -774,10 +779,10 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #
     #  # Function: delete_by_name
     #  #
-    #  # Removes the given callback object, ~cb~, associated with one or more 
-    #  # uvm_component callback queues. As with <delete> the CB parameter is 
-    #  # optional. ~root~ specifies the location in the component hierarchy to start 
-    #  # the search for ~name~. See <uvm_root::find_all> for more details on searching 
+    #  # Removes the given callback object, ~cb~, associated with one or more
+    #  # uvm_component callback queues. As with <delete> the CB parameter is
+    #  # optional. ~root~ specifies the location in the component hierarchy to start
+    #  # the search for ~name~. See <uvm_root::find_all> for more details on searching
     #  # by name.
     #
     #  static function void delete_by_name(string name, uvm_callback cb,
@@ -798,8 +803,8 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #        name, ", callback ", cb.get_name(), " will not be unregistered." }, UVM_NONE);
     #    end
     #    foreach(cq[i]) begin
-    #      if($cast(t,cq[i])) begin 
-    #        delete(t,cb); 
+    #      if($cast(t,cq[i])) begin
+    #        delete(t,cb);
     #      end
     #    end
     #  endfunction
@@ -834,7 +839,7 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #  # it will be updated with a value that can be supplied to <get_next> to get the next
     #  # callback object.
     #  #
-    #  # If the queue is empty then ~null~ is returned. 
+    #  # If the queue is empty then ~null~ is returned.
     #  #
     #  # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
     #  # iterator interface.
@@ -878,7 +883,7 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #  #
     #  # Returns the next enabled callback of type CB which resides in the queue for ~obj~,
     #  # using ~itr~ as the starting point. If ~obj~ is ~null~ then the typewide queue for T
-    #  # is searched. ~itr~ is the iterator; it will be updated with a value that can be 
+    #  # is searched. ~itr~ is the iterator; it will be updated with a value that can be
     #  # supplied to <get_next> to get the next callback object.
     #  #
     #  # If no more callbacks exist in the queue, then ~null~ is returned. <get_next> will
@@ -904,7 +909,7 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
     #  #
     #  # Returns the previous enabled callback of type CB which resides in the queue for ~obj~,
     #  # using ~itr~ as the starting point. If ~obj~ is ~null~ then the typewide queue for T
-    #  # is searched. ~itr~ is the iterator; it will be updated with a value that can be 
+    #  # is searched. ~itr~ is the iterator; it will be updated with a value that can be
     #  # supplied to <get_prev> to get the previous callback object.
     #  #
     #  # If no more callbacks exist in the queue, then ~null~ is returned. <get_prev> will
@@ -950,7 +955,7 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
 # Class- uvm_derived_callbacks #(T,ST,CB)
 #
 #------------------------------------------------------------------------------
-# This type is not really expected to be used directly by the user, instead they are 
+# This type is not really expected to be used directly by the user, instead they are
 # expected to use the macro `uvm_set_super_type. The sole purpose of this type is to
 # allow for setting up of the derived_type/super_type mapping.
 #------------------------------------------------------------------------------
@@ -961,7 +966,7 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
 #  typedef uvm_derived_callbacks#(T,ST,CB) this_type;
 #  typedef uvm_callbacks#(T)            this_user_type;
 #  typedef uvm_callbacks#(ST)           this_super_type;
-# 
+#
 #  # Singleton instance is used for type checking
 #  static this_type m_d_inst;
 #  static this_user_type m_user_inst;
@@ -991,9 +996,9 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
 #
 #    if(u_inst.m_super_type != null) begin
 #      if(u_inst.m_super_type == m_s_typeid) return 1;
-#      uvm_report_warning("CBTPREG", { "Type ", tname, " is already registered to super type ", 
+#      uvm_report_warning("CBTPREG", { "Type ", tname, " is already registered to super type ",
 #        this_super_type::m_t_inst.m_typename, ". Ignoring attempt to register to super type ",
-#        sname}, UVM_NONE); 
+#        sname}, UVM_NONE);
 #      return 1;
 #    end
 #    if(this_super_type::m_t_inst.m_typename == "")
@@ -1025,27 +1030,27 @@ class UVMCallbacks(UVMTypedCallbacks): #(type T=uvm_object, type CB=uvm_callback
 # callbacks and executing the callback methods.
 #------------------------------------------------------------------------------
 class UVMCallbackIter: #(type T = uvm_object, type CB = uvm_callback);
- 
+
     # Function: new
     #
     # Creates a new callback iterator object. It is required that the object
     # context be provided.
- 
+
     def __init__(self, obj):
         self.m_i = 0
         self.m_cb = None # UVMCallback
         self.m_obj = obj;
- 
+
     # Function: first
     #
     # Returns the first valid (enabled) callback of the callback type (or
     # a derivative) that is in the queue of the context object. If the
     # queue is empty then ~null~ is returned.
- 
+
     def first(self):
         self.m_cb = UVMCallbacks.get_first(self.m_i, self.m_obj)
         return self.m_cb
- 
+
     # Function: last
     #
     # Returns the last valid (enabled) callback of the callback type (or
@@ -1054,7 +1059,7 @@ class UVMCallbackIter: #(type T = uvm_object, type CB = uvm_callback);
     def last(self):
         self.m_cb = UVMCallbacks.get_last(self.m_i, self.m_obj)
         return self.m_cb;
- 
+
     # Function: next
     #
     # Returns the next valid (enabled) callback of the callback type (or
@@ -1063,7 +1068,7 @@ class UVMCallbackIter: #(type T = uvm_object, type CB = uvm_callback);
     def next(self):
         self.m_cb = UVMCallbacks.get_next(self.m_i, self.m_obj)
         return self.m_cb;
- 
+
     # Function: prev
     #
     # Returns the previous valid (enabled) callback of the callback type (or
@@ -1072,14 +1077,14 @@ class UVMCallbackIter: #(type T = uvm_object, type CB = uvm_callback);
     def prev(self):
         self.m_cb = UVMCallbacks.get_prev(self.m_i, self.m_obj)
         return self.m_cb;
- 
+
     # Function: get_cb
     #
     # Returns the last callback accessed via a first() or next()
-    # call. 
+    # call.
     def get_cb(self):
         return self.m_cb
- 
+
     #function void trace(uvm_object obj = null);
     #   if (m_cb != null && T::cbs::get_debug_flags() & UVM_CALLBACK_TRACE) begin
     #      uvm_report_object reporter = null;
@@ -1101,7 +1106,7 @@ class UVMCallbackIter: #(type T = uvm_object, type CB = uvm_callback);
 # Typically, the component developer defines an application-specific callback
 # class that extends from this class. In it, he defines one or more virtual
 # methods, called a ~callback interface~, that represent the hooks available
-# for user override. 
+# for user override.
 #
 # Methods intended for optional override should not be declared ~pure.~ Usually,
 # all the callback methods are defined with empty implementations so users have
@@ -1115,50 +1120,50 @@ from .uvm_object import UVMObject
 from .uvm_report_object import UVMReportObject
 
 class UVMCallback(UVMObject):
-    
+
     reporter = UVMReportObject("cb_tracer")
-    
+
     # Function: new
     #
     # Creates a new uvm_callback object, giving it an optional ~name~.
     def __init__(self, name="uvm_callback"):
         UVMObject.__init__(self, name)
         self.m_enabled = True
-    
+
     # Function: callback_mode
     #
     # Enable/disable callbacks (modeled like rand_mode and constraint_mode).
     def callback_mode(self, on=-1):
         if on == 0 or on == 1:
-            pass #TODO
+            pass  # TODO
             #`uvm_cb_trace_noobj(this,$sformatf("Setting callback mode for %s to %s",
             #      get_name(), ((on==1) ? "ENABLED":"DISABLED")))
         else:
             pass
             #`uvm_cb_trace_noobj(this,$sformatf("Callback mode for %s is %s",
             #    get_name(), ((m_enabled==1) ? "ENABLED":"DISABLED")))
-        callback_mode = self.m_enabled;
-        if on==0:
-            self.m_enabled=0
-        if on==1:
-            self.m_enabled=1
+        callback_mode = self.m_enabled
+        if on == 0:
+            self.m_enabled = 0
+        if on == 1:
+            self.m_enabled = 1
         return callback_mode
-    
+
     # Function: is_enabled
     #
     # Returns 1 if the callback is enabled, 0 otherwise.
     def is_enabled(self):
         return self.callback_mode()
-    
+
 
     type_name = "uvm_callback"
-    
+
     # Function: get_type_name
     #
     # Returns the type name of this callback object.
-    
+
     def get_type_name(self):
-       return UVMCallback.type_name
+        return UVMCallback.type_name
 
 import unittest
 

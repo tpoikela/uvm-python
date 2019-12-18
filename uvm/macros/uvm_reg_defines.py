@@ -40,7 +40,7 @@
 #// Default value is 64. Used to define the <uvm_reg_data_t> type.
 #//
 #`ifndef UVM_REG_DATA_WIDTH
-# `define UVM_REG_DATA_WIDTH 64
+UVM_REG_DATA_WIDTH = 64
 #`endif
 #
 #
