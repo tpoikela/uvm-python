@@ -1098,7 +1098,14 @@ class UVMRegBlock(UVMObject):
     #   extern virtual function string convert2string ()
     #   extern virtual function uvm_object clone()
     #
+
     #   extern local function void Xinit_address_mapsX()
+    def Xinit_address_mapsX(self):
+        for map_ in self.maps.key_list():
+            map_.Xinit_address_mapX()
+        # map.Xverify_map_configX()
+    #endfunction
+
     #
     #endclass: uvm_reg_block
 
@@ -1882,15 +1889,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# Xinit_address_mapsX
-#
-#function void uvm_reg_block::Xinit_address_mapsX()
-#   foreach (maps[map_]):
-#      UVMRegMap map = map_
-#      map.Xinit_address_mapX()
-#   end
-#      //map.Xverify_map_configX()
-#endfunction
 #
 #
 #----------------
