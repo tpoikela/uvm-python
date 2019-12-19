@@ -24,8 +24,9 @@ from .uvm_sequencer_base import UVMSequencerBase
 from ..base.uvm_queue import UVMQueue
 from ..tlm1.uvm_tlm_fifos import UVMTLMFIFO
 from ..macros.uvm_message_defines import uvm_fatal
+from ..base.uvm_globals import *
 
-ERR_MSG2 =  "Concurrent calls to get_next_item() not supported. Consider using a semaphore to ensure that concurrent processes take turns in the driver"
+ERR_MSG2 = "Concurrent calls to get_next_item() not supported. Consider using a semaphore to ensure that concurrent processes take turns in the driver"
 
 INFO_MSG1 = "Dropping response for sequence %0d, sequence not found.  Probable cause: sequence exited or has been killed"
 

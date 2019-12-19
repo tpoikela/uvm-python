@@ -105,18 +105,18 @@ class UVMRegMap(UVMObject):
                     addr = addrs[i]
 
                     if addr in top_map.m_regs_by_offset:
-                        rg2 = top_map.self.m_regs_by_offset[addr]
+                        rg2 = top_map.m_regs_by_offset[addr]
                         rg2_acc = rg2.Xget_fields_accessX(self)
 
                         # If the register at the same address is RO or WO
                         # and this register is WO or RO, this is OK
                         if (rg_acc == "RO" and rg2_acc == "WO"):
-                            top_map.self.m_regs_by_offset[addr]    = rg
+                            top_map.m_regs_by_offset[addr]    = rg
                             UVMRegReadOnlyCbs.add(rg)
-                            top_map.self.m_regs_by_offset_wo[addr] = rg2
+                            top_map.m_regs_by_offset_wo[addr] = rg2
                             UVMRegWriteOnlyCbs.add(rg2)
                         elif (rg_acc == "WO" and rg2_acc == "RO"):
-                            top_map.self.m_regs_by_offset_wo[addr] = rg
+                            top_map.m_regs_by_offset_wo[addr] = rg
                             UVMRegWriteOnlyCbs.add(rg)
                             UVMRegReadOnlyCbs.add(rg2)
                         else:
@@ -124,13 +124,13 @@ class UVMRegMap(UVMObject):
                             a = sv.sformatf("%0h",addr)
                             uvm_warning("RegModel", ("In map '" + self.get_full_name(),"' register '"
                                     + rg.get_full_name() + "' maps to same address as register '"
-                                    + top_map.self.m_regs_by_offset[addr].get_full_name()
+                                    + top_map.m_regs_by_offset[addr].get_full_name()
                                     + "': 'h" + a))
                     else:
-                        top_map.self.m_regs_by_offset[addr] = rg
+                        top_map.m_regs_by_offset[addr] = rg
 
-                    #foreach (top_map.self.m_mems_by_offset[range]):
-                    for rr in top_map.self.m_mems_by_offset:
+                    #foreach (top_map.m_mems_by_offset[range]):
+                    for rr in top_map.m_mems_by_offset:
                         if (addr >= rr.min and addr <= rr.max):
                             a = sv.sformatf("%0h",addr)
                             b = sv.sformatf("[%0h:%0h]", rr.min, rr.max)
@@ -138,61 +138,63 @@ class UVMRegMap(UVMObject):
                                     self.get_full_name() + "' register '" +
                                 rg.get_full_name() + "' with address " + a +
                                 "maps to same address as memory '" +
-                                top_map.self.m_mems_by_offset[rr].get_full_name()
+                                top_map.m_mems_by_offset[rr].get_full_name()
                                 + "': " + b))
                 self.m_regs_info[rg].addr = addrs
 
         # TODO complete this
-        #   foreach (self.m_mems_info[mem_]):
-        #     uvm_mem mem = mem_
-        #     if (!self.m_mems_info[mem].unmapped):
-        #
-        #       uvm_reg_addr_t addrs[],addrs_max[]
-        #       uvm_reg_addr_t min, max, min2, max2
-        #       int unsigned stride
-        #       mem_offset = self.m_mems_info[mem].offset
-        #       bus_width = self.get_physical_addresses(mem_offset,0,mem.get_n_bytes(),addrs)
-        #       min = (addrs[0] < addrs[addrs.size()-1]) ? addrs[0] : addrs[addrs.size()-1]
-        #       min2 = addrs[0]
-        #
-        #       mem_offset = self.m_mems_info[mem].offset
-        #       void'(get_physical_addresses(mem_offset,(mem.get_size()-1),mem.get_n_bytes(),addrs_max))
-        #       max = (addrs_max[0] > addrs_max[addrs_max.size()-1]) ? addrs_max[0] : addrs_max[addrs_max.size()-1]
-        #       max2 = addrs_max[0]
-        #       // address interval between consecutive mem offsets
-        #       stride = (max2 - min2)/(mem.get_size()-1)
-        #
-        #       foreach (top_map.self.m_regs_by_offset[reg_addr]):
-        #         if (reg_addr >= min && reg_addr <= max):
-        #           string a
-        #           a = $sformatf("%0h",reg_addr)
-        #           `uvm_warning("RegModel", {"In map '",get_full_name(),"' memory '",
-        #               mem.get_full_name(), "' maps to same address as register '",
-        #               top_map.self.m_regs_by_offset[reg_addr].get_full_name(),"': 'h",a})
-        #         end
-        #       end
-        #
-        #       foreach (top_map.self.m_mems_by_offset[range]):
-        #         if (min <= range.max && max >= range.max ||
-        #             min <= range.min && max >= range.min ||
-        #             min >= range.min && max <= range.max):
-        #           string a
-        #           a = $sformatf("[%0h:%0h]",min,max)
-        #           `uvm_warning("RegModel", {"In map '",get_full_name(),"' memory '",
-        #               mem.get_full_name(), "' overlaps with address range of memory '",
-        #               top_map.self.m_mems_by_offset[range].get_full_name(),"': 'h",a})
-        #           end
-        #       end
-        #
-        #       begin
-        #         uvm_reg_map_addr_range range = '{ min, max, stride }
-        #         top_map.self.m_mems_by_offset[ range ] = mem
-        #         self.m_mems_info[mem].addr  = addrs
-        #         self.m_mems_info[mem].mem_range = range
-        #       end
-        #     end
-        #   end
-        #
+        for mem_ in self.m_mems_info:
+            mem = mem_
+            if not self.m_mems_info[mem].unmapped:
+                addrs = []
+                addrs_max = []
+                min1 = 0
+                max2 = 0
+                min2 = 0
+                max2 = 0  # uvm_reg_addr_t
+                stride = 0
+                mem_offset = self.m_mems_info[mem].offset
+                bus_width = self.get_physical_addresses(mem_offset,0,mem.get_n_bytes(),addrs)
+                if (addrs[0] < addrs[addrs.size()-1]):
+                    min1 = addrs[0]
+                else:
+                    min1 = addrs[addrs.size()-1]
+                min2 = addrs[0]
+
+                mem_offset = self.m_mems_info[mem].offset
+                self.get_physical_addresses(mem_offset,(mem.get_size()-1),mem.get_n_bytes(),addrs_max)
+                if (addrs_max[0] > addrs_max[addrs_max.size()-1]):
+                    max1 = addrs_max[0]
+                else:
+                    max1 = addrs_max[addrs_max.size()-1]
+                max2 = addrs_max[0]
+                # address interval between consecutive mem offsets
+                stride = (max2 - min2)/(mem.get_size()-1)
+
+                for reg_addr in top_map.m_regs_by_offset:
+                    if (reg_addr >= min1 and reg_addr <= max1):
+                        a = ""
+                        a = sv.sformatf("%0h",reg_addr)
+                        reg_name = top_map.m_regs_by_offset[reg_addr].get_full_name()
+                        uvm_warning("RegModel", ("In map '" + self.get_full_name()
+                            + "' memory '" + mem.get_full_name() + "' maps to same address as register '"
+                            + reg_name + "': 'h" + a))
+
+                for rr in top_map.m_mems_by_offset:
+                    if (min1 <= rr.max and max1 >= rr.max or
+                            min1 <= rr.min and max1 >= rr.min or
+                            min1 >= rr.min and max1 <= rr.max):
+                        a = sv.sformatf("[%0h:%0h]",min,max)
+                        uvm_warning("RegModel", ("In map '" + self.get_full_name()
+                            + "' memory '" + mem.get_full_name() + "' overlaps with address range of memory '"
+                            + top_map.m_mems_by_offset[rr].get_full_name()
+                            + "': 'h" + a))
+
+                addr_range = [min1, max1, stride]
+                top_map.m_mems_by_offset[addr_range] = mem
+                self.m_mems_info[mem].addr  = addrs
+                self.m_mems_info[mem].mem_range = addr_range
+
         # If the block has no registers or memories,
         # bus_width won't be set
         if (bus_width == 0):
@@ -476,18 +478,18 @@ class UVMRegMap(UVMObject):
             # remove any existing cached addresses
             if info.unmapped is False:
                 for addr in info.addr:
-                    if not addr in top_map.self.m_regs_by_offset_wo:
-                        del top_map.self.m_regs_by_offset[addr]
+                    if not addr in top_map.m_regs_by_offset_wo:
+                        del top_map.m_regs_by_offset[addr]
                     else:
-                        if top_map.self.m_regs_by_offset[addr] == rg:
-                            top_map.self.m_regs_by_offset[addr] = top_map.self.m_regs_by_offset_wo[addr]
+                        if top_map.m_regs_by_offset[addr] == rg:
+                            top_map.m_regs_by_offset[addr] = top_map.m_regs_by_offset_wo[addr]
                             #TODO UVMRegReadOnlyCbs.remove(rg)
-                            #TODO UVMRegWriteOnlyCbs.remove(top_map.self.m_regs_by_offset[info.addr[i]])
+                            #TODO UVMRegWriteOnlyCbs.remove(top_map.m_regs_by_offset[info.addr[i]])
                         else:
                             pass
                             #TODO UVMRegWriteOnlyCbs.remove(rg)
-                            #TODO UVMRegReadOnlyCbs.remove(top_map.self.m_regs_by_offset[info.addr[i]])
-                        del top_map.self.m_regs_by_offset_wo[addr]
+                            #TODO UVMRegReadOnlyCbs.remove(top_map.m_regs_by_offset[info.addr[i]])
+                        del top_map.m_regs_by_offset_wo[addr]
 
             # if we are remapping...
             if not unmapped:
@@ -499,19 +501,19 @@ class UVMRegMap(UVMObject):
                 for adr in addrs:
                     addr = adr
 
-                    if addr in top_map.self.m_regs_by_offset:
-                        rg2 = top_map.self.m_regs_by_offset[addr]
+                    if addr in top_map.m_regs_by_offset:
+                        rg2 = top_map.m_regs_by_offset[addr]
                         rg2_acc = rg2.Xget_fields_accessX(self)
 
                         # If the register at the same address is RO or WO
                         # and this register is WO or RO, this is OK
                         if (rg_acc == "RO" and rg2_acc == "WO"):
-                           top_map.self.m_regs_by_offset[addr]    = rg
+                           top_map.m_regs_by_offset[addr]    = rg
                            # TODO UVMRegReadOnlyCbs.add(rg)
-                           top_map.self.m_regs_by_offset_wo[addr] = rg2
+                           top_map.m_regs_by_offset_wo[addr] = rg2
                            # TODO UVMRegWriteOnlyCbs.add(rg2)
                         elif (rg_acc == "WO" and rg2_acc == "RO"):
-                           top_map.self.m_regs_by_offset_wo[addr] = rg
+                           top_map.m_regs_by_offset_wo[addr] = rg
                            # TODO UVMRegWriteOnlyCbs.add(rg)
                            # TODO UVMRegReadOnlyCbs.add(rg2)
                         else:
@@ -519,18 +521,18 @@ class UVMRegMap(UVMObject):
                             uvm_report_warning("RegModel", ("In map '" + self.get_full_name()
                                 + "' register '"+ rg.get_full_name()
                                 + "' maps to same address as register '"
-                                + top_map.self.m_regs_by_offset[addr].get_full_name()
+                                + top_map.m_regs_by_offset[addr].get_full_name()
                                 + "': 'h" + a))
                     else:
-                        top_map.self.m_regs_by_offset[addr] = rg
+                        top_map.m_regs_by_offset[addr] = rg
 
-                    for range in top_map.self.m_mems_by_offset.keys():
+                    for range in top_map.m_mems_by_offset.keys():
                         if adr >= range.min and adr <= range.max:
                             a = "{}".format(adr)
                             uvm_report_warning("RegModel", ("In map '" + self.get_full_name()
                                 + "' register '" +
                                 rg.get_full_name() + "' overlaps with address range of memory '"
-                                + top_map.self.m_mems_by_offset[range].get_full_name()
+                                + top_map.m_mems_by_offset[range].get_full_name()
                                 + "': 'h" +a))
 
                 info.addr = addrs # cache it
@@ -599,6 +601,9 @@ class UVMRegMap(UVMObject):
     #   // returns ~null~ if this is a top-level address map.
     #   //
     #   extern virtual function uvm_reg_map           get_parent_map()
+    def get_parent_map(self):
+        return self.m_parent_map
+
     #
     #
     #   // Function: get_base_addr
@@ -643,6 +648,10 @@ class UVMRegMap(UVMObject):
     #   // set to ~UVM_HIER~, gets the system-level endianness.
     #   //
     #   extern virtual function uvm_endianness_e get_endian (uvm_hier_e hier=UVM_HIER)
+    def get_endian(self, hier=UVM_HIER):
+        if (hier == UVM_NO_HIER or self.m_parent_map is None):
+            return self.m_endian
+        return self.m_parent_map.get_endian(hier)
 
 
     #   // Function: get_sequencer
@@ -777,7 +786,7 @@ class UVMRegMap(UVMObject):
 
     #   extern virtual function uvm_reg_map_info get_mem_map_info(uvm_mem mem, bit error=1)
     #   extern virtual function int unsigned get_size()
-    #
+
     #
     #   // Function: get_physical_addresses
     #   //
@@ -800,6 +809,88 @@ class UVMRegMap(UVMObject):
     #                                                      uvm_reg_addr_t        mem_offset,
     #                                                      int unsigned          n_bytes,
     #                                                      ref uvm_reg_addr_t    addr[])
+    def get_physical_addresses(self, base_addr, mem_offset, n_bytes, addr):
+        bus_width = self.get_n_bytes(UVM_NO_HIER)
+        up_map = None  # uvm_reg_map
+        local_addr = []
+        multiplier = 1
+        if self.m_byte_addressing:
+            multiplier = bus_width
+        #addr = new [0]
+
+        if (n_bytes <= 0):
+           uvm_fatal("RegModel", sv.sformatf(
+               "Cannot access %0d bytes. Must be greater than 0", n_bytes))
+           return 0
+
+        # First, identify the addresses within the block/system
+        if (n_bytes <= bus_width):
+            local_addr.append(base_addr + (mem_offset * multiplier))
+        else:
+            n = 0
+            n = int(((n_bytes-1) / bus_width) + 1)
+            local_addr = [0] * n
+            base_addr = base_addr + mem_offset * (n * multiplier)
+            get_end = self.get_endian(UVM_NO_HIER)
+
+            if get_end == UVM_LITTLE_ENDIAN:
+                for i in range(len(local_addr)):
+                    local_addr[i] = base_addr + (i * multiplier)
+            elif get_end == UVM_BIG_ENDIAN:
+                for i in range(len(local_addr)):
+                    n -= 1
+                    local_addr[i] = base_addr + (n * multiplier)
+            elif get_end == UVM_LITTLE_FIFO:
+                for i in range(len(local_addr)):
+                    local_addr[i] = base_addr
+            elif get_end == UVM_BIG_FIFO:
+                for i in range(len(local_addr)):
+                    local_addr[i] = base_addr
+            else:
+                uvm_error("RegModel",
+                        ("Map has no specified endianness. ",
+                        sv.sformatf("Cannot access %0d bytes register via its %0d byte %s interface",
+                        n_bytes, bus_width, self.get_full_name())))
+
+        up_map = self.get_parent_map()
+
+        # Then translate these addresses in the parent's space
+        if (up_map is None):
+            # This is the top-most system/block!
+            addr.clear()
+            addr.extend(local_addr)
+            for i in range(len(addr)):
+                addr[i] += self.m_base_addr
+        else:
+            sys_addr = []
+            base_addr = 0
+            w = 0
+            k = 0
+
+            # Scale the consecutive local address in the system's granularity
+            if (bus_width < up_map.get_n_bytes(UVM_NO_HIER)):
+                k = 1
+            else:
+                k = ((bus_width-1) / up_map.get_n_bytes(UVM_NO_HIER)) + 1
+
+            base_addr = up_map.get_submap_offset(self)
+            for i in range(len(local_addr)):
+                n = addr.size()
+                w = up_map.get_physical_addresses(base_addr + local_addr[i] * k,
+                        0, bus_width, sys_addr)
+
+                #addr = new [n + sys_addr.size()] (addr)
+                for j in range(len(sys_addr)):
+                    addr.append(sys_addr[j])
+            # The width of each access is the minimum of this block or the system's width
+            if (w < bus_width):
+                bus_width = w
+
+        return bus_width
+        #
+        #endfunction: get_physical_addresses
+
+
     #
     #
     #   // Function: get_reg_by_offset
@@ -1122,7 +1213,7 @@ class UVMRegMap(UVMObject):
             for i in range(len(addrs)):
                 rw_access = UVMRegBusOp()
 
-                uvm_info(get_type_name(),
+                uvm_info(self.get_type_name(),
                    sv.sformatf("Reading address 'h%0h via map \"%s\"...",
                              addrs[i], self.get_full_name()), UVM_FULL)
 
@@ -1422,9 +1513,9 @@ uvm_object_utils(UVMRegMap)
 #
 #         // remove any existing cached addresses
 #         if (!info.unmapped):
-#           foreach (top_map.self.m_mems_by_offset[range]):
-#              if (top_map.self.m_mems_by_offset[range] == mem)
-#                 top_map.self.m_mems_by_offset.delete(range)
+#           foreach (top_map.m_mems_by_offset[range]):
+#              if (top_map.m_mems_by_offset[range] == mem)
+#                 top_map.m_mems_by_offset.delete(range)
 #           end
 #         end
 #
@@ -1447,7 +1538,7 @@ uvm_object_utils(UVMRegMap)
 #            stride = (max2 - max)/(mem.get_size()-1)
 #
 #            // make sure new offset does not conflict with others
-#            foreach (top_map.self.m_regs_by_offset[reg_addr]):
+#            foreach (top_map.m_regs_by_offset[reg_addr]):
 #               if (reg_addr >= min && reg_addr <= max):
 #                  string a,b
 #                  a = $sformatf("[%0h:%0h]",min,max)
@@ -1455,11 +1546,11 @@ uvm_object_utils(UVMRegMap)
 #                  `uvm_warning("RegModel", {"In map '",get_full_name(),"' memory '",
 #                      mem.get_full_name(), "' with range ",a,
 #                      " overlaps with address of existing register '",
-#                      top_map.self.m_regs_by_offset[reg_addr].get_full_name(),"': 'h",b})
+#                      top_map.m_regs_by_offset[reg_addr].get_full_name(),"': 'h",b})
 #               end
 #            end
 #
-#            foreach (top_map.self.m_mems_by_offset[range]):
+#            foreach (top_map.m_mems_by_offset[range]):
 #               if (min <= range.max && max >= range.max ||
 #                   min <= range.min && max >= range.min ||
 #                   min >= range.min && max <= range.max):
@@ -1469,13 +1560,13 @@ uvm_object_utils(UVMRegMap)
 #                 `uvm_warning("RegModel", {"In map '",get_full_name(),"' memory '",
 #                     mem.get_full_name(), "' with range ",a,
 #                     " overlaps existing memory with range '",
-#                     top_map.self.m_mems_by_offset[range].get_full_name(),"': ",b})
+#                     top_map.m_mems_by_offset[range].get_full_name(),"': ",b})
 #                 end
 #            end
 #
 #            begin
 #              uvm_reg_map_addr_range range = '{ min, max, stride }
-#              top_map.self.m_mems_by_offset[range] = mem
+#              top_map.m_mems_by_offset[range] = mem
 #              info.addr  = addrs
 #              info.mem_range = range
 #            end
@@ -1601,14 +1692,6 @@ uvm_object_utils(UVMRegMap)
 # get methods
 #------------
 #
-# get_parent_map
-#
-#function uvm_reg_map uvm_reg_map::get_parent_map()
-#  return self.m_parent_map
-#endfunction
-#
-#
-#
 # get_base_addr
 #
 #function uvm_reg_addr_t  uvm_reg_map::get_base_addr(uvm_hier_e hier=UVM_HIER)
@@ -1628,13 +1711,6 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-# get_endian
-#
-#function uvm_endianness_e uvm_reg_map::get_endian(uvm_hier_e hier=UVM_HIER)
-#  if (hier == UVM_NO_HIER || self.m_parent_map is None)
-#    return self.m_endian
-#  return self.m_parent_map.get_endian(hier)
-#endfunction
 #
 #
 #
@@ -1812,110 +1888,6 @@ uvm_object_utils(UVMRegMap)
 #
 #
 #
-# get_physical_addresses
-#
-#function int uvm_reg_map::get_physical_addresses(uvm_reg_addr_t     base_addr,
-#                                                 uvm_reg_addr_t     mem_offset,
-#                                                 int unsigned       n_bytes,
-#                                                 ref uvm_reg_addr_t addr[])
-#   int bus_width = get_n_bytes(UVM_NO_HIER)
-#   uvm_reg_map  up_map
-#   uvm_reg_addr_t  local_addr[]
-#   int multiplier = self.m_byte_addressing ? bus_width : 1
-#
-#   addr = new [0]
-#
-#   if (n_bytes <= 0):
-#      `uvm_fatal("RegModel", $sformatf("Cannot access %0d bytes. Must be greater than 0",
-#                                     n_bytes))
-#      return 0
-#   end
-#
-#   // First, identify the addresses within the block/system
-#   if (n_bytes <= bus_width):
-#      local_addr = new [1]
-#      local_addr[0] = base_addr + (mem_offset * multiplier)
-#   end else begin
-#      int n
-#
-#      n = ((n_bytes-1) / bus_width) + 1
-#      local_addr = new [n]
-#
-#      base_addr = base_addr + mem_offset * (n * multiplier)
-#
-#      case (get_endian(UVM_NO_HIER))
-#         UVM_LITTLE_ENDIAN: begin
-#            foreach (local_addr[i]):
-#               local_addr[i] = base_addr + (i * multiplier)
-#            end
-#         end
-#         UVM_BIG_ENDIAN: begin
-#            foreach (local_addr[i]):
-#               n--
-#               local_addr[i] = base_addr + (n * multiplier)
-#            end
-#         end
-#         UVM_LITTLE_FIFO: begin
-#            foreach (local_addr[i]):
-#               local_addr[i] = base_addr
-#            end
-#         end
-#         UVM_BIG_FIFO: begin
-#            foreach (local_addr[i]):
-#               local_addr[i] = base_addr
-#            end
-#         end
-#         default: begin
-#            `uvm_error("RegModel",
-#               {"Map has no specified endianness. ",
-#                $sformatf("Cannot access %0d bytes register via its %0d byte \"%s\" interface",
-#               n_bytes, bus_width, get_full_name())})
-#         end
-#      endcase
-#   end
-#
-#  up_map = get_parent_map()
-#
-#   // Then translate these addresses in the parent's space
-#   if (up_map is None):
-#      // This is the top-most system/block!
-#      addr = new [local_addr.size()] (local_addr)
-#      foreach (addr[i]):
-#         addr[i] += self.m_base_addr
-#      end
-#   end else begin
-#      uvm_reg_addr_t  sys_addr[]
-#      uvm_reg_addr_t  base_addr
-#      int w, k
-#
-#      // Scale the consecutive local address in the system's granularity
-#      if (bus_width < up_map.get_n_bytes(UVM_NO_HIER))
-#        k = 1
-#      else
-#        k = ((bus_width-1) / up_map.get_n_bytes(UVM_NO_HIER)) + 1
-#
-#      base_addr = up_map.get_submap_offset(this)
-#      foreach (local_addr[i]):
-#         int n = addr.size()
-#
-#         w = up_map.get_physical_addresses(base_addr + local_addr[i] * k,
-#                                           0,
-#                                           bus_width,
-#                                           sys_addr)
-#
-#         addr = new [n + sys_addr.size()] (addr)
-#         foreach (sys_addr[j]):
-#            addr[n+j] = sys_addr[j]
-#         end
-#      end
-#      // The width of each access is the minimum of this block or the system's width
-#      if (w < bus_width)
-#         bus_width = w
-#   end
-#
-#   return bus_width
-#
-#endfunction: get_physical_addresses
 #
 #
 #--------------
@@ -2018,7 +1990,7 @@ uvm_object_utils(UVMRegMap)
 #   uvm_sequencer_base sqr=get_sequencer()
 #
 #   super.do_print(printer)
-#  printer.print_generic(get_name(), get_type_name(), -1, convert2string())
+#  printer.print_generic(get_name(), self.get_type_name(), -1, convert2string())
 #
 #   endian = get_endian(UVM_NO_HIER)
 #   $sformat(convert2string, "%s -- %0d bytes (%s)", convert2string,

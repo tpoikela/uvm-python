@@ -22,6 +22,7 @@
 
 from ..seq.uvm_sequence_item import *
 from ..macros.uvm_object_defines import *
+from .uvm_reg_model import UVM_READ, UVM_NOT_OK
 
 #//------------------------------------------------------------------------------
 #// Title: Generic Register Operation Descriptors
@@ -295,7 +296,7 @@ class UVMRegBusOp():
     #
     #} uvm_reg_bus_op;
     def __init__(self):
-        self.kind = READ
+        self.kind = UVM_READ
         self.addr = 0
         self.data = 0
         self.n_bits = 0

@@ -85,7 +85,9 @@ class UVMRegAdapter(UVMObject):
     #  // return it.
     #
     #  pure virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw)
-    #
+    def reg2bus(self, rw):
+        raise Exception("Pure virtual function")
+
 
     #  // Function: bus2reg
     #  //
@@ -118,8 +120,9 @@ class UVMRegAdapter(UVMObject):
 
 
     #  virtual function void m_set_item(uvm_reg_item item)
-    #    m_item = item
-    #  endfunction
+    def m_set_item(self, item):
+        self.m_item = item
+
     #endclass
 
 #//------------------------------------------------------------------------------

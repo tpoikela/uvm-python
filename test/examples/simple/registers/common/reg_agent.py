@@ -21,6 +21,7 @@ import cocotb
 
 from uvm.base import *
 from uvm.reg import UVMRegAdapter
+from uvm.reg.uvm_reg_model import *
 from uvm.macros import *
 from uvm.comps import *
 from uvm.seq import *
@@ -57,6 +58,7 @@ class reg_rw(UVMSequenceItem):
         return sv.sformatf("%s addr=%0h data=%0h be=%b",
                 tt,self.addr,self.data,self.byte_en)
     #endclass: reg_rw
+uvm_object_utils(reg_rw)
 
 
 class reg_sequencer(UVMSequencer):  #(reg_rw)
@@ -143,28 +145,27 @@ class reg2rw_adapter(UVMRegAdapter):
         UVMRegAdapter.__init__(self, name)
         self.supports_byte_enable = True
 
-    #   virtual function UVMSequenceItem reg2bus(const ref uvm_reg_bus_op rw)
-    #      reg_rw bus = reg_rw::type_id::create("rw")
-    #      bus.read    = (rw.kind == UVM_READ)
-    #      bus.addr    = rw.addr
-    #      bus.data    = rw.data
-    #      bus.byte_en = rw.byte_en
-    #      return bus
-    #   endfunction
-    #
-    #   virtual function void bus2reg(UVMSequenceItem bus_item,
-    #                                 ref uvm_reg_bus_op rw)
-    #      reg_rw bus
-    #      if (!$cast(bus,bus_item)) begin
-    #         `uvm_fatal("NOT_REG_TYPE","Provided bus_item is not of the correct type")
-    #         return
-    #      end
-    #      rw.kind    = bus.read ? UVM_READ : UVM_WRITE
-    #      rw.addr    = bus.addr
-    #      rw.data    = bus.data
-    #      rw.byte_en = bus.byte_en
-    #      rw.status  = UVM_IS_OK
-    #   endfunction
-    #
+    def reg2bus(self, rw):
+        bus = reg_rw.type_id.create("rw")
+        bus.read    = (rw.kind == UVM_READ)
+        bus.addr    = rw.addr
+        bus.data    = rw.data
+        bus.byte_en = rw.byte_en
+        return bus
+
+    def bus2reg(self, bus_item, rw):
+        bus = bus_item
+        #if (!$cast(bus,bus_item)) begin
+        #    uvm_fatal("NOT_REG_TYPE","Provided bus_item is not of the correct type")
+        #    return
+        rw.kind    = UVM_WRITE
+        if (bus.read):
+            rw.kind = UVM_READ
+        rw.addr    = bus.addr
+        rw.data    = bus.data
+        rw.byte_en = bus.byte_en
+        rw.status  = UVM_IS_OK
+        return rw
+
     #endclass
 uvm_object_utils(reg2rw_adapter)

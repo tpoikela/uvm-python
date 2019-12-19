@@ -399,6 +399,30 @@ class UVMReg(UVMObject):
     #   extern virtual function uvm_reg_field get_field_by_name(string name)
 
     #   /*local*/ extern function string Xget_fields_accessX(uvm_reg_map map)
+    #// Returns "WO" if all of the fields in the registers are write-only
+    #// Returns "RO" if all of the fields in the registers are read-only
+    #// Returns "RW" otherwise.
+    def Xget_fields_accessX(self, _map):
+        is_R = False
+        is_W = False
+
+        for i in range(len(self.m_fields)):
+            access = self.m_fields[i].get_access(_map)
+            if access in ["RO", "RC", "RS"]:
+                is_R = True
+            elif access in ["WO", "WOC", "WOS", "WO1"]:
+                is_W = True
+            else:
+                return "RW"
+            if (is_R and is_W):
+                return "RW"
+
+        if is_R is False and is_W is True:  #2'b01:
+            return "WO"
+        elif is_R is True and is_W is False:  # 2'b10:
+            return "RO"
+        return "RW"
+        #endfunction
 
     #   // Function: get_offset
     #   //
@@ -2239,42 +2263,6 @@ class UVMReg(UVMObject):
 #endfunction
 #
 #
-#// Xget_field_accessX
-#//
-#// Returns "WO" if all of the fields in the registers are write-only
-#// Returns "RO" if all of the fields in the registers are read-only
-#// Returns "RW" otherwise.
-#
-#function string uvm_reg::Xget_fields_accessX(uvm_reg_map map)
-#   bit is_R
-#   bit is_W
-#
-#   foreach(self.m_fields[i]):
-#      case (self.m_fields[i].get_access(map))
-#       "RO",
-#         "RC",
-#         "RS":
-#            is_R = 1
-#
-#       "WO",
-#          "WOC",
-#          "WOS",
-#          "WO1":
-#             is_W = 1
-#
-#       default:
-#          return "RW"
-#      endcase
-#
-#      if (is_R && is_W) return "RW"
-#   end
-#
-#   case ({is_R, is_W})
-#    2'b01: return "WO"
-#    2'b10: return "RO"
-#   endcase
-#   return "RW"
-#endfunction
 #
 #
 #//---------
