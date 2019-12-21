@@ -25,9 +25,10 @@
 
 import cocotb
 from cocotb.triggers import Timer
+from cocotb.clock import Clock
 
 from uvm.base import (uvm_top, UVMCoreService, run_test, UVM_FINISHED, UVM_LOW,
-        sv)
+        sv, UVMDebug)
 from uvm.comps import UVMTest
 from uvm.macros import uvm_fatal, uvm_info
 from uvm.reg.sequences import uvm_reg_hw_reset_seq
@@ -35,6 +36,7 @@ from uvm.reg.uvm_reg_model import *
 
 from tb_env import tb_env
 
+#UVMDebug.DEBUG = True
 
 class tb_test(UVMTest):
     #
@@ -42,17 +44,25 @@ class tb_test(UVMTest):
         UVMTest.__init__(self, name, parent)
         self.dut = None
 
+    def build_phase(self, phase):
+        UVMTest.build_phase(self, phase)
+        self.env = tb_env.type_id.create("env", self)
+
+
     #   virtual task run_phase(uvm_phase phase);
     @cocotb.coroutine
     def run_phase(self, phase):
 
         phase.raise_objection(self)
-        env = uvm_top.get_child("env")
+        env = self.get_child("env")
 
-        if (env is None):
+        if env is None:
             uvm_fatal("test", "Cannot find tb_env")
 
         env.regmodel.reset()
+
+        self.c = Clock(self.dut.clk, 10, 'ns')
+        clk_fork = cocotb.fork(self.c.start())
 
         #uvm_reg_sequence seq;
         #seq = uvm_reg_hw_reset_seq::type_id::create("seq");
@@ -79,6 +89,7 @@ class tb_test(UVMTest):
         self.dut.reset <= 1
         env.regmodel.reset()
         env.regmodel.user_acp.mirror(status, UVM_CHECK)
+        clk_fork.kill()
         phase.drop_objection(self)
     #endclass
 
@@ -87,7 +98,6 @@ class tb_test(UVMTest):
 def module_top(dut):
 
     cs_ = UVMCoreService.get()
-    env = tb_env("env")
     test = tb_test("test")
     test.dut = dut
 

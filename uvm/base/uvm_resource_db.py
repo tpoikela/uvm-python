@@ -35,8 +35,8 @@
 #// specified, all resource DB accesses (read and write) are displayed.
 #//----------------------------------------------------------------------
 
-#typedef class uvm_resource_db_options;
-#typedef class uvm_cmdline_processor;
+#typedef class UVMResourceDbOptions
+#typedef class uvm_cmdline_processor
 
 #//----------------------------------------------------------------------
 #// class: uvm_resource_db
@@ -44,7 +44,7 @@
 #// All of the functions in uvm_resource_db#(T) are static, so they
 #// must be called using the :: operator.  For example:
 #//
-#//|  uvm_resource_db#(int)::set("A", "*", 17, this);
+#//|  uvm_resource_db#(int)::set("A", "*", 17, this)
 #//
 #// The parameter value "int" identifies the resource type as
 #// uvm_resource#(int).  Thus, the type of the object in the resource
@@ -52,7 +52,7 @@
 #// resource operations.
 #//
 #//----------------------------------------------------------------------
-#class uvm_resource_db #(type T=uvm_object);
+#class uvm_resource_db #(type T=uvm_object)
 
 from .sv import sv
 from ..uvm_macros import uvm_typename
@@ -60,10 +60,11 @@ from ..macros.uvm_message_defines import uvm_info
 from .uvm_object_globals import UVM_LOW
 from .uvm_resource import UVMResource
 
+rsrc_t = UVMResource
 
 class UVMResourceDb:
 
-    #  typedef uvm_resource #(T) rsrc_t;
+    #  typedef uvm_resource #(T) rsrc_t
     #
     def __init__(self):
         pass
@@ -73,8 +74,8 @@ class UVMResourceDb:
     #  // Get a resource by type.  The type is specified in the db
     #  // class parameter so the only argument to this function is the
     #  // ~scope~.
-    #  static function rsrc_t get_by_type(string scope);
-    #    return rsrc_t::get_by_type(scope, rsrc_t::get_type());
+    #  static function rsrc_t get_by_type(string scope)
+    #    return rsrc_t::get_by_type(scope, rsrc_t::get_type())
     #  endfunction
 
     #  // function: get_by_name
@@ -86,7 +87,7 @@ class UVMResourceDb:
     #
     #  static function rsrc_t get_by_name(string scope,
     #                                     string name,
-    #                                     bit rpterr=1);
+    #                                     bit rpterr=1)
     @classmethod
     def get_by_name(cls, scope, name, rpterr=True):
         return UVMResource.get_by_name(scope, name, rpterr)
@@ -97,13 +98,13 @@ class UVMResourceDb:
     #  // written to so it will have its default value. The resource is
     #  // created using ~name~ and ~scope~ as the lookup parameters.
     #
-    #  static function rsrc_t set_default(string scope, string name);
+    #  static function rsrc_t set_default(string scope, string name)
     #
-    #    rsrc_t r;
+    #    rsrc_t r
     #
-    #    r = new(name, scope);
-    #    r.set();
-    #    return r;
+    #    r = new(name, scope)
+    #    r.set()
+    #    return r
     #  endfunction
     #
 
@@ -118,7 +119,7 @@ class UVMResourceDb:
     #          input string scope,
     #          input string name,
     #          input uvm_object accessor,
-    #          input rsrc_t rsrc);
+    #          input rsrc_t rsrc)
     @classmethod
     def m_show_msg(cls, id, rtype, action, scope, name, accessor, rsrc):
         foo = None
@@ -146,15 +147,16 @@ class UVMResourceDb:
     #  // database using ~name~ and ~scope~ as the lookup parameters. The
     #  // ~accessor~ is used for auditing.
     #  static function void set(input string scope, input string name,
-    #                           T val, input uvm_object accessor = null);
-    #
-    #    rsrc_t rsrc = new(name, scope);
-    #    rsrc.write(val, accessor);
-    #    rsrc.set();
-    #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/SET", "Resource","set", scope, name, accessor, rsrc);
-    #  endfunction
+    #                           T val, input uvm_object accessor = null)
+    @classmethod
+    def set(cls, scope, name, val, accessor=None):
+        rsrc = rsrc_t(name, scope)
+        rsrc.write(val, accessor)
+        rsrc.set()
+
+        if UVMResourceDbOptions.is_tracing():
+            cls.m_show_msg("RSRCDB/SET", "Resource","set", scope, name, accessor, rsrc)
+        #  endfunction
 
     #  // function: set_anonymous
     #  //
@@ -163,14 +165,14 @@ class UVMResourceDb:
     #  // entered into the name map. But is does have a ~scope~ for lookup
     #  // purposes. The ~accessor~ is used for auditing.
     #  static function void set_anonymous(input string scope,
-    #                                     T val, input uvm_object accessor = null);
+    #                                     T val, input uvm_object accessor = null)
     #
-    #    rsrc_t rsrc = new("", scope);
-    #    rsrc.write(val, accessor);
-    #    rsrc.set();
+    #    rsrc_t rsrc = new("", scope)
+    #    rsrc.write(val, accessor)
+    #    rsrc.set()
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/SETANON","Resource", "set", scope, "", accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/SETANON","Resource", "set", scope, "", accessor, rsrc)
     #  endfunction
 
     #  // function set_override
@@ -181,13 +183,13 @@ class UVMResourceDb:
     #  // resource with the specified name and type.
     #
     #  static function void set_override(input string scope, input string name,
-    #                                    T val, uvm_object accessor = null);
-    #    rsrc_t rsrc = new(name, scope);
-    #    rsrc.write(val, accessor);
-    #    rsrc.set_override();
+    #                                    T val, uvm_object accessor = null)
+    #    rsrc_t rsrc = new(name, scope)
+    #    rsrc.write(val, accessor)
+    #    rsrc.set_override()
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/SETOVRD", "Resource","set", scope, name, accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/SETOVRD", "Resource","set", scope, name, accessor, rsrc)
     #  endfunction
 
 
@@ -201,13 +203,13 @@ class UVMResourceDb:
     #  // queue) in the name map.
     #
     #  static function void set_override_type(input string scope, input string name,
-    #                                         T val, uvm_object accessor = null);
-    #    rsrc_t rsrc = new(name, scope);
-    #    rsrc.write(val, accessor);
-    #    rsrc.set_override(uvm_resource_types::TYPE_OVERRIDE);
+    #                                         T val, uvm_object accessor = null)
+    #    rsrc_t rsrc = new(name, scope)
+    #    rsrc.write(val, accessor)
+    #    rsrc.set_override(uvm_resource_types::TYPE_OVERRIDE)
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/SETOVRDTYP","Resource", "set", scope, name, accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/SETOVRDTYP","Resource", "set", scope, name, accessor, rsrc)
     #  endfunction
 
     #  // function set_override_name
@@ -219,13 +221,13 @@ class UVMResourceDb:
     #  // queue) in the type map.
     #
     #  static function void set_override_name(input string scope, input string name,
-    #                                  T val, uvm_object accessor = null);
-    #    rsrc_t rsrc = new(name, scope);
-    #    rsrc.write(val, accessor);
-    #    rsrc.set_override(uvm_resource_types::NAME_OVERRIDE);
+    #                                  T val, uvm_object accessor = null)
+    #    rsrc_t rsrc = new(name, scope)
+    #    rsrc.write(val, accessor)
+    #    rsrc.set_override(uvm_resource_types::NAME_OVERRIDE)
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/SETOVRDNAM","Resource", "set", scope, name, accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/SETOVRDNAM","Resource", "set", scope, name, accessor, rsrc)
     #  endfunction
 
     #  // function: read_by_name
@@ -236,19 +238,19 @@ class UVMResourceDb:
     #  // is used for auditing.
     #  static function bit read_by_name(input string scope,
     #                                   input string name,
-    #                                   inout T val, input uvm_object accessor = null);
+    #                                   inout T val, input uvm_object accessor = null)
     #
-    #    rsrc_t rsrc = get_by_name(scope, name);
+    #    rsrc_t rsrc = get_by_name(scope, name)
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/RDBYNAM","Resource", "read", scope, name, accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/RDBYNAM","Resource", "read", scope, name, accessor, rsrc)
     #
     #    if(rsrc == null)
-    #      return 0;
+    #      return 0
     #
-    #    val = rsrc.read(accessor);
+    #    val = rsrc.read(accessor)
     #
-    #    return 1;
+    #    return 1
     #
     #  endfunction
 
@@ -260,19 +262,19 @@ class UVMResourceDb:
     #  // The ~accessor~ is used for auditing.
     #  static function bit read_by_type(input string scope,
     #                                   inout T val,
-    #                                   input uvm_object accessor = null);
+    #                                   input uvm_object accessor = null)
     #
-    #    rsrc_t rsrc = get_by_type(scope);
+    #    rsrc_t rsrc = get_by_type(scope)
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/RDBYTYP", "Resource","read", scope, "", accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/RDBYTYP", "Resource","read", scope, "", accessor, rsrc)
     #
     #    if(rsrc == null)
-    #      return 0;
+    #      return 0
     #
-    #    val = rsrc.read(accessor);
+    #    val = rsrc.read(accessor)
     #
-    #    return 1;
+    #    return 1
     #
     #  endfunction
 
@@ -289,19 +291,19 @@ class UVMResourceDb:
     #  // will be written to that matching resource and thus may impact
     #  // other scopes which also match the resource.
     #  static function bit write_by_name(input string scope, input string name,
-    #                                    input T val, input uvm_object accessor = null);
+    #                                    input T val, input uvm_object accessor = null)
     #
-    #    rsrc_t rsrc = get_by_name(scope, name);
+    #    rsrc_t rsrc = get_by_name(scope, name)
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/WR","Resource", "written", scope, name, accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/WR","Resource", "written", scope, name, accessor, rsrc)
     #
     #    if(rsrc == null)
-    #      return 0;
+    #      return 0
     #
-    #    rsrc.write(val, accessor);
+    #    rsrc.write(val, accessor)
     #
-    #    return 1;
+    #    return 1
     #
     #  endfunction
 
@@ -318,19 +320,19 @@ class UVMResourceDb:
     #  // will be written to that matching resource and thus may impact
     #  // other scopes which also match the resource.
     #  static function bit write_by_type(input string scope,
-    #                                    input T val, input uvm_object accessor = null);
+    #                                    input T val, input uvm_object accessor = null)
     #
-    #    rsrc_t rsrc = get_by_type(scope);
+    #    rsrc_t rsrc = get_by_type(scope)
     #
-    #    if(uvm_resource_db_options::is_tracing())
-    #      m_show_msg("RSRCDB/WRTYP", "Resource","written", scope, "", accessor, rsrc);
+    #    if(UVMResourceDbOptions::is_tracing())
+    #      m_show_msg("RSRCDB/WRTYP", "Resource","written", scope, "", accessor, rsrc)
     #
     #    if(rsrc == null)
-    #      return 0;
+    #      return 0
     #
-    #    rsrc.write(val, accessor);
+    #    rsrc.write(val, accessor)
     #
-    #    return 1;
+    #    return 1
     #  endfunction
 
     #  // function: dump
@@ -340,15 +342,15 @@ class UVMResourceDb:
     #  // it will dump the same thing -- the entire database -- no matter the
     #  // value of the parameter.
     #
-    #  static function void dump();
-    #    uvm_resource_pool rp = uvm_resource_pool::get();
-    #    rp.dump();
+    #  static function void dump()
+    #    uvm_resource_pool rp = uvm_resource_pool::get()
+    #    rp.dump()
     #  endfunction
     #
     #endclass
 
     #//----------------------------------------------------------------------
-    #// Class: uvm_resource_db_options
+    #// Class: UVMResourceDbOptions
     #//
     #// Provides a namespace for managing options for the
     #// resources DB facility.  The only thing allowed in this class is static
@@ -364,11 +366,13 @@ class UVMResourceDb:
     #//    The default for tracing is off.
     #//
     #//----------------------------------------------------------------------
-    #class uvm_resource_db_options;
-    #
-    #  static local bit ready;
-    #  static local bit tracing;
-    #
+
+
+class UVMResourceDbOptions:
+
+    ready = False
+    tracing = False
+
     #  // Function: turn_on_tracing
     #  //
     #  // Turn tracing on for the resource database. This causes all
@@ -376,42 +380,44 @@ class UVMResourceDb:
     #  // the accesses. Tracing is off by default.
     #  //
     #  // This method is implicitly called by the ~+UVM_RESOURCE_DB_TRACE~.
-    #
-    #  static function void turn_on_tracing();
-    #     if (!ready) init();
-    #    tracing = 1;
+    #  static function void turn_on_tracing()
+    #     if (!ready) init()
+    #    tracing = 1
     #  endfunction
-    #
+
+
     #  // Function: turn_off_tracing
     #  //
     #  // Turn tracing off for the resource database.
     #
-    #  static function void turn_off_tracing();
-    #     if (!ready) init();
-    #    tracing = 0;
+    #  static function void turn_off_tracing()
+    #     if (!ready) init()
+    #    tracing = 0
     #  endfunction
-    #
+
+
     #  // Function: is_tracing
     #  //
     #  // Returns 1 if the tracing facility is on and 0 if it is off.
-    #
-    #  static function bit is_tracing();
-    #    if (!ready) init();
-    #    return tracing;
+    #  static function bit is_tracing()
+    @classmethod
+    def is_tracing(cls):
+        if cls.ready is False:
+            cls.init()
+        return cls.tracing
     #  endfunction
-    #
-    #
-    #  static local function void init();
-    #     uvm_cmdline_processor clp;
-    #     string trace_args[$];
-    #
-    #     clp = uvm_cmdline_processor::get_inst();
-    #
-    #     if (clp.get_arg_matches("+UVM_RESOURCE_DB_TRACE", trace_args)) begin
-    #        tracing = 1;
-    #     end
-    #
-    #     ready = 1;
+
+
+    #  static local function void init()
+    @classmethod
+    def init(cls):
+        trace_args = []
+        from .uvm_cmdline_processor import UVMCmdlineProcessor
+        clp = UVMCmdlineProcessor.get_inst()
+
+        if clp.get_arg_matches("+UVM_RESOURCE_DB_TRACE", trace_args):
+            cls.tracing = True
+        cls.ready = True
     #  endfunction
-    #
+
     #endclass

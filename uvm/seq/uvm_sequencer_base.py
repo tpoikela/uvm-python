@@ -758,7 +758,9 @@ class UVMSequencerBase(UVMComponent):
             print("Before self.m_event_value_changed.clear()")
             self.m_event_value_changed.clear()
             print("Before self.m_event_value_changed.wait()")
-            yield self.m_event_value_changed.wait()
+            evt = self.m_event_value_changed.wait()
+            print('evt is ' + str(evt))
+            yield evt
             print("After self.m_event_value_changed.wait()")
             if lock_arb_size != self.m_lock_arb_size:
                 break

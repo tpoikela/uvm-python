@@ -1243,14 +1243,13 @@ class UVMRegMap(UVMObject):
 
             # perform accesses
             for i in range(len(accesses)):
-            #foreach(accesses[i]):
                 rw_access = accesses[i]  # uvm_reg_bus_op
                 bus_req = None  # uvm_sequence_item
-                data = 0  #uvm_reg_data_logic_t
+                data = 0  # uvm_reg_data_logic_t
                 curr_byte_ = 0
 
-                curr_byte_=rw_access.data
-                rw_access.data=0
+                curr_byte_ = rw_access.data
+                rw_access.data = 0
                 adapter.m_set_item(rw)
                 bus_req = adapter.reg2bus(rw_access)
                 adapter.m_set_item(None)
@@ -1278,8 +1277,7 @@ class UVMRegMap(UVMObject):
                 else:
                     adapter.bus2reg(bus_req,rw_access)
 
-                data = rw_access.data & ((1<<bus_width*8)-1)  # mask the upper bits
-
+                data = rw_access.data & ((1 << bus_width*8)-1)  # mask the upper bits
                 rw.status = rw_access.status
 
                 # TODO
@@ -1287,7 +1285,7 @@ class UVMRegMap(UVMObject):
 
                 uvm_info(self.get_type_name(),
                    sv.sformatf("Read 0x%0h at 0x%0h via map %s: %s...", data,
-                             addrs[i], self.get_full_name(), rw.status.name()), UVM_FULL)
+                       addrs[i], self.get_full_name(), rw.status.name()), UVM_FULL)
 
                 if (rw.status == UVM_NOT_OK):
                     break

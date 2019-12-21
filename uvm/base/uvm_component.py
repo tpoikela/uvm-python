@@ -319,7 +319,7 @@ class UVMComponent(UVMReportObject):
     # This method should never be called directly.
 
     def start_of_simulation_phase(self, phase):
-        self.start_of_simulation();
+        self.start_of_simulation()
         return
 
     # For backward compatibility the base <start_of_simulation_phase> method calls <start_of_simulation>.
@@ -352,6 +352,7 @@ class UVMComponent(UVMReportObject):
     # extern virtual task run();
     @cocotb.coroutine
     def run(self):
+        uvm_debug(self, 'run', self.get_name() + ' yield Timer(0) in self.run()')
         yield Timer(0)
 
     #// Task: pre_reset_phase

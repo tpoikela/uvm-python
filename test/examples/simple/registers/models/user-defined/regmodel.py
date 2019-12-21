@@ -23,6 +23,7 @@
 
 from uvm.macros import uvm_object_utils
 from uvm.reg import *
+from uvm.base import *
 
 #//
 #// This example demonstrates how to include a user-defined register
@@ -43,8 +44,10 @@ class user_acp_incr_on_write_cbs(UVMRegCbs):
 
 
     def post_predict(self, fld, previous, value, kind, path, _map):
-        if (kind != UVM_PREDICT_WRITE): return
-        if (path != UVM_FRONTDOOR): return
+        if (kind != UVM_PREDICT_WRITE):
+            return
+        if (path != UVM_FRONTDOOR):
+            return
         value.push(previous + 1)
         self.num_called += 1
 
@@ -54,19 +57,18 @@ class user_acp_reg(UVMReg):
     #   local UVMRegField value;
     #
     #
-    def __init__(self, name = "user_acp_reg"):
+    def __init__(self, name="user_acp_reg"):
         UVMReg.__init__(self, name,16,UVM_NO_COVERAGE)
 
     def build(self):
         self.value = UVMRegField.type_id.create("value", None, self.get_full_name())
         self.value.configure(self, 16, 0, "RW", 0, 0x0000, 1, 0, 0);
         self.value.set_compare(UVM_NO_CHECK);
-        #
-        #      uvm_resource_db#(bit)::set({"REG::",get_full_name()},
-        #                                 "NO_REG_BIT_BASH_TEST", 1);
-        #      uvm_resource_db#(bit)::set({"REG::",get_full_name()},
-        #                                 "NO_REG_ACCESS_TEST", 1);
-        #
+
+        UVMResourceDb.set("REG::" + self.get_full_name(),
+                "NO_REG_BIT_BASH_TEST", 1)
+        UVMResourceDb.set("REG::" + self.get_full_name(),
+                "NO_REG_ACCESS_TEST", 1);
         self.cb = user_acp_incr_on_write_cbs()
         UVMRegFieldCb.add(self.value, self.cb)
         #   endfunction: build
@@ -107,8 +109,7 @@ class block_B(UVMRegBlock):
         self.user_acp.configure(self, None, "acp")
         self.user_acp.build()
     
-        self.default_map.add_reg(self.user_acp, 0x0000,  "RW")
-        self.default_map
+        self.default_map.add_reg(self.user_acp, 0x0000, "RW")
         self.lock_model()
 
     #endclass : block_B

@@ -82,9 +82,13 @@ class UVMTaskPhase(UVMPhase):
     def traverse(self, comp, phase, state):
         phase.m_num_procs_not_yet_returned = 0
         yield self.m_traverse(comp, phase, state)
+        uvm_debug(self, 'traverse', 'Finished self.m_traverse for comp ' +
+                comp.get_name())
 
     @cocotb.coroutine
     def m_traverse(self, comp, phase, state):
+        uvm_debug(self, "m_traverse", "START OF m_traverse, comp: " +
+                comp.get_name())
         name = ""
         phase_domain = phase.get_domain()
         comp_domain = comp.get_domain()
@@ -135,7 +139,8 @@ class UVMTaskPhase(UVMPhase):
                 comp.m_current_phase = None
             else:
                 uvm_report_fatal("PH_BADEXEC","task phase traverse internal error")
-        uvm_debug(self, "m_traverse", "KKK SSS ZZZ")
+        uvm_debug(self, "m_traverse", "END OF m_traverse, comp: " +
+                comp.get_name())
 
     #  // Function: execute
     #  //
