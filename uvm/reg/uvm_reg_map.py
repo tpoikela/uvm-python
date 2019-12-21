@@ -21,6 +21,8 @@
 #    TODO add modifications
 # -------------------------------------------------------------
 
+import cocotb
+
 from ..base.sv import sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
@@ -1012,7 +1014,7 @@ class UVMRegMap(UVMObject):
     #                                     uvm_sequencer_base sequencer,
     #                                     uvm_reg_adapter adapter)
     @cocotb.coroutine
-    def do_bus_write (self, rw, sequencer, adapter):
+    def do_bus_write(self, rw, sequencer, adapter):
         addrs = []
         system_map = self.get_root_map()
         bus_width = self.get_n_bytes()
@@ -1256,7 +1258,10 @@ class UVMRegMap(UVMObject):
                     uvm_fatal("RegMem","adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
-                yield rw.parent.start_item(bus_req,rw.prior)
+                print("WWW before start_item WWW")
+                print(rw.parent)
+                yield rw.parent.start_item(bus_req, rw.prior)
+                print("WWW after start_item WWW")
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
@@ -1363,11 +1368,13 @@ class UVMRegMap(UVMObject):
             # assert($cast(seq,o)) TODO check this
             seq = o
             seq.set_parent_sequence(rw.parent)
+            print("WWW set rw.parent to " + str(seq))
             rw.parent = seq
             tmp_parent_seq = seq
 
         if (rw.parent is None):
             rw.parent = UVMSequenceBase("default_parent_seq")
+            print("WWW rw.parent is None| set rw.parent to " + str(rw.parent))
             tmp_parent_seq = rw.parent
 
         if (adapter is None):
@@ -1376,6 +1383,8 @@ class UVMRegMap(UVMObject):
             yield rw.parent.finish_item(rw)
             yield rw.end_event.wait_on()
         else:
+            print("WWW yield self.do_bus_read(rw, sequencer, adapter)" +
+                str(adapter))
             yield self.do_bus_read(rw, sequencer, adapter)
 
         if (tmp_parent_seq is not None):

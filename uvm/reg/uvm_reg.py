@@ -21,6 +21,8 @@
 #   permissions and limitations under the License.
 #-------------------------------------------------------------
 
+import cocotb
+
 from ..base.sv import semaphore, sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
@@ -1405,11 +1407,12 @@ class UVMReg(UVMObject):
                 yield fd.start(fd.sequencer, rw.parent)
             # ...VIA BUILT-IN FRONTDOOR
             else:
+                print("WWW Caling rw.local_map.do_read(rw)")
                 yield rw.local_map.do_read(rw)
 
             self.m_is_busy = 0
 
-            if (system_map.get_auto_predict()):
+            if system_map.get_auto_predict():
                 status = 0
                 if (rw.local_map.get_check_on_read() and
                         rw.status != UVM_NOT_OK):

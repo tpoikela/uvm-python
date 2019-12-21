@@ -58,6 +58,7 @@ class tb_test(UVMTest):
         #seq = uvm_reg_hw_reset_seq::type_id::create("seq");
         seq = uvm_reg_hw_reset_seq.type_id.create("seq")
         seq.model = env.regmodel
+        print("Before seq.start. Wait for seq state")
         yield seq.start(None)
         print("seq.start was called. Wait for seq state")
         yield seq.wait_for_sequence_state(UVM_FINISHED)

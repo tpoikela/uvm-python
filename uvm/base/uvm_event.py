@@ -42,6 +42,8 @@ from .uvm_debug import *
 
 class UVMEventBase(UVMObject):
     #const static string type_name = "uvm_event_base";
+    type_name = "uvm_event_base"
+
     #protected event      self.m_event;
     #protected int        self.num_waiters;
     #protected bit        on;
@@ -55,7 +57,7 @@ class UVMEventBase(UVMObject):
         self.m_event = Event()
         self.num_waiters = 0
         self.on = False
-        self.on_event = Event()
+        self.on_event = Event("on_event_" + name)
         self.trigger_time = 0
         self.callbacks = UVMQueue() # uvm_event_callback
         self.m_waiters = 0
@@ -63,17 +65,24 @@ class UVMEventBase(UVMObject):
 
     def set(self):
         if self.m_waiters > 0:
-            self.m_event.set()
+            self.on_event.set()
 
     @cocotb.coroutine
     def wait(self):
-        self.m_waiters += 1
+        print("WWW There are " + str(self.m_waiters) + " waiters")
         if self.m_waiters == 0:
-            self.m_event.clear()
-        yield self.m_event.wait()
+            self.on_event.clear()
+        else:
+            print("WWW There are " + str(self.m_waiters) + " so cannot clear()")
+
+        self.m_waiters += 1
+        print("WW before self.m_event.wait()")
+        print("self.m_event: " + str(self.m_event))
+        yield self.on_event.wait()
+        print("WW after self.m_event.wait()")
         self.m_waiters -= 1
         if self.m_waiters == 0:
-            self.m_event.clear()
+            self.on_event.clear()
         # else-branch needed with Timer(0)
 
     #    //---------//

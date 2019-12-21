@@ -119,7 +119,7 @@ class uvm_reg_sequence(UVMSequence):
     #  //
     #  // Create a new instance, giving it the optional ~name~.
     #  //
-    def __init__ (self, name="uvm_reg_sequence_inst"):
+    def __init__(self, name="uvm_reg_sequence_inst"):
         UVMSequence.__init__(self, name)
         self.reg_seqr = None
         self.adapter = None
@@ -156,7 +156,7 @@ class uvm_reg_sequence(UVMSequence):
         while True:
             reg_item = []  # uvm_reg_item reg_item;
             yield self.reg_seqr.peek(reg_item)
-            self.do_reg_item(reg_item[0])
+            yield self.do_reg_item(reg_item[0])
             yield self.reg_seqr.get(reg_item)
             #0;
             yield Timer(0)
@@ -171,6 +171,7 @@ class uvm_reg_sequence(UVMSequence):
     #  // this sequencer.
     #  //
     #  virtual task do_reg_item(uvm_reg_item rw);
+    @cocotb.coroutine
     def do_reg_item(self, rw):
         rws = rw.convert2string()
         if self.m_sequencer is None:
@@ -185,9 +186,9 @@ class uvm_reg_sequence(UVMSequence):
             rw.parent = self
 
         if (rw.kind == UVM_WRITE):
-            yield rw.local_map.do_bus_write(rw, self.m_sequencer, adapter)
+            yield rw.local_map.do_bus_write(rw, self.m_sequencer, self.adapter)
         else:
-            yield rw.local_map.do_bus_read(rw, self.m_sequencer, adapter)
+            yield rw.local_map.do_bus_read(rw, self.m_sequencer, self.adapter)
 
         if (self.parent_select == LOCAL):
             rw.parent = self.upstream_parent

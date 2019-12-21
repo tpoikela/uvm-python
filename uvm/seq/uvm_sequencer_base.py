@@ -119,7 +119,8 @@ class UVMSequencerBase(UVMComponent):
         self.m_lock_arb_size = 0  # used for waiting processes
         self.m_arb_size = 0  # used for waiting processes
 
-        self.m_event_value_changed = UVMEvent("event_value_changed")
+        # self.m_event_value_changed = UVMEvent("event_value_changed")
+        self.m_event_value_changed = Event("event_value_changed")
 
         self.reg_sequences = UVMPool()  # uvm_sequence_base   reg_sequences[int]
         self.arb_completed = UVMPool()
@@ -306,6 +307,7 @@ class UVMSequencerBase(UVMComponent):
         self.arb_sequence_q.push_back(req_s)
         self.m_update_lists()
 
+        print("WWW yield self.m_wait_for_arbitration_completed(req_s.request_id)")
         # Wait until this entry is granted
         # Continue to point to the element, since location in queue will change
         yield self.m_wait_for_arbitration_completed(req_s.request_id)
@@ -340,14 +342,16 @@ class UVMSequencerBase(UVMComponent):
 
         if (transaction_id == -1):
             #wait (m_wait_for_item_sequence_id == sequence_id)
-            while (True):
+            while True:
+                self.m_event_value_changed.clear()
                 yield self.m_event_value_changed.wait()
                 if self.m_wait_for_item_sequence_id == sequence_id:
                     break
         else:
             # wait ((m_wait_for_item_sequence_id == sequence_id &&
             #        m_wait_for_item_transaction_id == transaction_id))
-            while (True):
+            while True:
+                self.m_event_value_changed.clear()
                 yield self.m_event_value_changed.wait()
                 if ((self.m_wait_for_item_sequence_id == sequence_id and
                     self.m_wait_for_item_transaction_id == transaction_id)):
@@ -743,13 +747,19 @@ class UVMSequencerBase(UVMComponent):
         lock_arb_size = 0
 
         # Search the list of arb_wait_q, see if this item is done
-        while (True):
+        print("WWW m_wait_for_arbitration_completed entering while-True")
+        while True:
             lock_arb_size  = self.m_lock_arb_size
 
             if self.arb_completed.exists(request_id):
+                print("WWW self.arb_completed.exists(request_id)")
                 self.arb_completed.delete(request_id)
                 return
+            print("Before self.m_event_value_changed.clear()")
+            self.m_event_value_changed.clear()
+            print("Before self.m_event_value_changed.wait()")
             yield self.m_event_value_changed.wait()
+            print("After self.m_event_value_changed.wait()")
             if lock_arb_size != self.m_lock_arb_size:
                 break
         #endtask
@@ -876,8 +886,8 @@ class UVMSequencerBase(UVMComponent):
     @cocotb.coroutine
     def m_wait_arb_not_equal(self):
         while (True):
+            self.m_event_value_changed.clear()
             yield self.m_event_value_changed.wait()
-            #self.m_event_value_changed.clear()
             if self.m_arb_size != self.m_lock_arb_size:
                 break
 
@@ -954,8 +964,8 @@ class UVMSequencerBase(UVMComponent):
         yield Timer(0)
         # TODO
         while (True):
-            yield self.m_event_value_changed.wait()
             self.m_event_value_changed.clear()
+            yield self.m_event_value_changed.wait()
             if self.m_is_relevant_completed > 0:
                 break
 

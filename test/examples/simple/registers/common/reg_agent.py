@@ -99,11 +99,16 @@ class reg_driver(UVMComponent):
     def run_phase(self, phase):
         mon = self.m_parent.get_child("mon")
         while True:
-           rw = None  # reg_rw 
-           yield self.seqr_port.peek(rw)  # aka 'get_next_rw'
-           self.T.rw(rw)
-           mon.ap.write(rw)
-           yield self.seqr_port.get(rw)  # aka 'item_done'
+            print("XYZ reg_driver while True loop")
+            rw = None  # reg_rw
+            yield self.seqr_port.peek(rw)  # aka 'get_next_rw'
+            print("XYZ reg_driver after peek")
+            self.T.rw(rw)
+            print("XYZ reg_driver after rw")
+            mon.ap.write(rw)
+            print("XYZ reg_driver mon.ap.write")
+            yield self.seqr_port.get(rw)  # aka 'item_done'
+            print("XYZ reg_driver after get")
     #   endtask
     #
     #endclass

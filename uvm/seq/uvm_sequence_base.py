@@ -981,7 +981,10 @@ class UVMSequenceBase(UVMSequenceItem):
         if (set_priority < 0):
             set_priority = self.get_priority()
 
+        print("WWW  yield sequencer.wait_for_grant(self, set_priority)")
+        print(str(sequencer))
         yield sequencer.wait_for_grant(self, set_priority)
+        print("WWW  AFTER yield sequencer.wait_for_grant(self, set_priority)")
 
         # TODO recording
         #if (sequencer.is_auto_item_recording_enabled()) begin

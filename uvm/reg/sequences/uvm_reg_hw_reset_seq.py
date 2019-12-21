@@ -28,6 +28,7 @@ from .. import uvm_reg_sequence
 from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base import UVM_LOW, UVM_HIGH
+from ...base.uvm_globals import uvm_empty_delay
 from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 
 #//
@@ -78,9 +79,10 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
         if self.model is None:
             uvm_error("uvm_reg_hw_reset_seq", "Not block or system specified to run sequence on")
             return
-        uvm_info("STARTING_SEQ", "\n\nStarting " + self.get_name() + " sequence...\n",UVM_LOW)
+        uvm_info("STARTING_SEQ", "|uvm_reg_hw_reset_seq| Starting " + self.get_name() +
+                " sequence...",UVM_LOW)
 
-        self.reset_blk(self.model)
+        yield self.reset_blk(self.model)
         self.model.reset()
 
         yield self.do_block(self.model)
@@ -133,6 +135,7 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
                             regs[i].get_full_name(), maps[d].get_full_name()), UVM_LOW)
 
                 status = []
+                print("WWW calling mirror here")
                 yield regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
                 status = status[0]
 
@@ -144,7 +147,7 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
             blks = []  # uvm_reg_block blks[$]
             blk.get_blocks(blks)
             for i in range(len(blks)):
-                self.do_block(blks[i])
+                yield self.do_block(blks[i])
 
         #   endtask:do_block
 
@@ -160,9 +163,9 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
     #   // in an extension to reset the DUT.
     #   //
     #   virtual task reset_blk(uvm_reg_block blk)
-    # @cocotb.coroutine
+    @cocotb.coroutine
     def reset_blk(self, blk):
-        pass
+        yield uvm_empty_delay()
 
     #endclass: uvm_reg_hw_reset_seq
 uvm_object_utils(uvm_reg_hw_reset_seq)
