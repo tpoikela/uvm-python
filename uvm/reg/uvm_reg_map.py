@@ -1256,7 +1256,7 @@ class UVMRegMap(UVMObject):
                     uvm_fatal("RegMem","adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
-                rw.parent.start_item(bus_req,rw.prior)
+                yield rw.parent.start_item(bus_req,rw.prior)
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)

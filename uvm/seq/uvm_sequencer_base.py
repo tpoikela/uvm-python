@@ -275,7 +275,7 @@ class UVMSequencerBase(UVMComponent):
         my_seq_id = 0
 
         if sequence_ptr is None:
-            uvm_report_fatal("uvm_sequencer",
+            self.uvm_report_fatal("uvm_sequencer",
                 "wait_for_grant passed null sequence_ptr", UVM_NONE)
 
         my_seq_id = self.m_register_sequence(sequence_ptr)
