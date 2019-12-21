@@ -61,12 +61,11 @@ class tb_test(UVMTest):
 
         env.regmodel.reset()
 
-        self.c = Clock(self.dut.clk, 10, 'ns')
-        clk_fork = cocotb.fork(self.c.start())
+        #self.c = Clock(self.dut.clk, 10, 'ns')
+        #clk_fork = cocotb.fork(self.c.start())
 
         #uvm_reg_sequence seq;
-        #seq = uvm_reg_hw_reset_seq::type_id::create("seq");
-        seq = uvm_reg_hw_reset_seq.type_id.create("seq")
+        seq = uvm_reg_hw_reset_seq.type_id.create("reg_hw_rst_seq")
         seq.model = env.regmodel
         print("Before seq.start. Wait for seq state")
         yield seq.start(None)

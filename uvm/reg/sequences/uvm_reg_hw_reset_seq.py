@@ -135,7 +135,8 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
                             regs[i].get_full_name(), maps[d].get_full_name()), UVM_LOW)
 
                 status = []
-                print("WWW calling mirror here")
+                print("WWW do_block calling mirror here for reg " +
+                    regs[i].get_name())
                 yield regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
                 status = status[0]
 

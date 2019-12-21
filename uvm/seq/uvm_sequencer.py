@@ -34,16 +34,16 @@ from ..macros import uvm_component_utils
 #//
 #//------------------------------------------------------------------------------
 #class uvm_sequencer #(type REQ=uvm_sequence_item, RSP=REQ)
-#                                   extends uvm_sequencer_param_base #(REQ, RSP);
+#                                   extends uvm_sequencer_param_base #(REQ, RSP)
 
 class UVMSequencer(UVMSequencerParamBase):
-    #  typedef uvm_sequencer #( REQ , RSP) this_type;
+    #  typedef uvm_sequencer #( REQ , RSP) this_type
     #  // Function: new
     #  //
     #  // Standard component constructor that creates an instance of this class
     #  // using the given ~name~ and ~parent~, if any.
     #  //
-    #  extern function new (string name, uvm_component parent=null);
+    #  extern function new (string name, uvm_component parent=null)
     def __init__(self, name, parent=None):
         UVMSequencerParamBase.__init__(self, name, parent)
         #  // Variable: seq_item_export
@@ -60,25 +60,25 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // that are currently queued.  This essentially resets the sequencer to an
     #  // idle state.
     #  //
-    #  extern virtual function void stop_sequences();
+    #  extern virtual function void stop_sequences()
 
-    #  extern virtual function string get_type_name();
+    #  extern virtual function string get_type_name()
 
     #  // Group: Sequencer Interface
     #  // This is an interface for communicating with sequencers.
     #  //
     #  // The interface is defined as:
     #  //| Requests:
-    #  //|  virtual task          get_next_item      (output REQ request);
-    #  //|  virtual task          try_next_item      (output REQ request);
-    #  //|  virtual task          get                (output REQ request);
-    #  //|  virtual task          peek               (output REQ request);
+    #  //|  virtual task          get_next_item      (output REQ request)
+    #  //|  virtual task          try_next_item      (output REQ request)
+    #  //|  virtual task          get                (output REQ request)
+    #  //|  virtual task          peek               (output REQ request)
     #  //| Responses:
-    #  //|  virtual function void item_done          (input RSP response=null);
-    #  //|  virtual task          put                (input RSP response);
+    #  //|  virtual function void item_done          (input RSP response=null)
+    #  //|  virtual task          put                (input RSP response)
     #  //| Sync Control:
-    #  //|  virtual task          wait_for_sequences ();
-    #  //|  virtual function bit  has_do_available   ();
+    #  //|  virtual task          wait_for_sequences ()
+    #  //|  virtual function bit  has_do_available   ()
     #  //
     #  // See <uvm_sqr_if_base #(REQ,RSP)> for information about this interface.
 
@@ -86,17 +86,17 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Task: get_next_item
     #  // Retrieves the next available item from a sequence.
     #  //
-    #  extern virtual task          get_next_item (output REQ t);
+    #  extern virtual task          get_next_item (output REQ t)
     #
     #  // Task: try_next_item
     #  // Retrieves the next available item from a sequence if one is available.
     #  //
-    #  extern virtual task          try_next_item (output REQ t);
+    #  extern virtual task          try_next_item (output REQ t)
     #
     #  // Function: item_done
     #  // Indicates that the request is completed.
     #  //
-    #  extern virtual function void item_done     (RSP item = null);
+    #  extern virtual function void item_done     (RSP item = null)
     def item_done(self, item=None):
         t = []
         # Set flag to allow next get_next_item or peek to get a new sequence_item
@@ -121,7 +121,7 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Task: put
     #  // Sends a response back to the sequence that issued the request.
     #  //
-    #  extern virtual task          put           (RSP t);
+    #  extern virtual task          put           (RSP t)
     @cocotb.coroutine
     def put(self, t):
         self.put_response(t)
@@ -142,15 +142,15 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Task: peek
     #  // Returns the current request item if one is in the FIFO.
     #  //
-    #  extern task                  peek          (output REQ t);
+    #  extern task                  peek          (output REQ t)
     @cocotb.coroutine
     def peek(self, t):
         if (self.sequence_item_requested == 0):
-            self.m_select_sequence();
+            yield self.m_select_sequence()
        
         # Set flag indicating that the item has been requested to ensure that item_done or get
         # is called between requests
-        self.sequence_item_requested = 1;
+        self.sequence_item_requested = 1
         yield  self.m_req_fifo.peek(t)
 
     #
@@ -170,17 +170,17 @@ class UVMSequencer(UVMSequencerParamBase):
     #  //-----------------
     #  // Do not use directly, not part of standard
     #
-    #  extern function void         item_done_trigger(RSP item = null);
-    #  function RSP                 item_done_get_trigger_data();
-    #    return last_rsp(0);
+    #  extern function void         item_done_trigger(RSP item = null)
+    #  function RSP                 item_done_get_trigger_data()
+    #    return last_rsp(0)
     #  endfunction
-    #  extern protected virtual function int m_find_number_driver_connections();
+    #  extern protected virtual function int m_find_number_driver_connections()
     #
     #endclass
 #  `uvm_component_param_utils(this_type)
 uvm_component_utils(UVMSequencer)
 
-#typedef uvm_sequencer #(uvm_sequence_item) uvm_virtual_sequencer;
+#typedef uvm_sequencer #(uvm_sequence_item) uvm_virtual_sequencer
 
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
@@ -194,21 +194,21 @@ uvm_component_utils(UVMSequencer)
 #// that are currently queued.  This essentially resets the sequencer to an
 #// idle state.
 #//
-#function void uvm_sequencer::stop_sequences();
-#  REQ t;
-#  super.stop_sequences();
-#  sequence_item_requested  = 0;
-#  get_next_item_called     = 0;
+#function void uvm_sequencer::stop_sequences()
+#  REQ t
+#  super.stop_sequences()
+#  sequence_item_requested  = 0
+#  get_next_item_called     = 0
 #  // Empty the request fifo
 #  if (m_req_fifo.used()) begin
-#    uvm_report_info(get_full_name(), "Sequences stopped.  Removing request from sequencer fifo");
-#    while (m_req_fifo.try_get(t));
+#    uvm_report_info(get_full_name(), "Sequences stopped.  Removing request from sequencer fifo")
+#    while (m_req_fifo.try_get(t))
 #  end
 #endfunction
 #
 #
-#function string uvm_sequencer::get_type_name();
-#  return "uvm_sequencer";
+#function string uvm_sequencer::get_type_name()
+#  return "uvm_sequencer"
 #endfunction
 #
 #
@@ -223,84 +223,84 @@ uvm_component_utils(UVMSequencer)
 #// call super in one or the other, the sequencer will still
 #// have the correct value
 #
-#function int uvm_sequencer::m_find_number_driver_connections();
-#  uvm_port_component_base provided_to_port_list[string];
-#  uvm_port_component_base seq_port_base;
+#function int uvm_sequencer::m_find_number_driver_connections()
+#  uvm_port_component_base provided_to_port_list[string]
+#  uvm_port_component_base seq_port_base
 #
 #  // Check that the seq_item_pull_port is connected
-#  seq_port_base = seq_item_export.get_comp();
-#  seq_port_base.get_provided_to(provided_to_port_list);
-#  return provided_to_port_list.num();
+#  seq_port_base = seq_item_export.get_comp()
+#  seq_port_base.get_provided_to(provided_to_port_list)
+#  return provided_to_port_list.num()
 #endfunction
 #
 #
 #// get_next_item
 #// -------------
 #
-#task uvm_sequencer::get_next_item(output REQ t);
-#  REQ req_item;
+#task uvm_sequencer::get_next_item(output REQ t)
+#  REQ req_item
 #
 #  // If a sequence_item has already been requested, then get_next_item()
 #  // should not be called again until item_done() has been called.
 #
 #  if (get_next_item_called == 1)
 #    uvm_report_error(get_full_name(),
-#      "Get_next_item called twice without item_done or get in between", UVM_NONE);
+#      "Get_next_item called twice without item_done or get in between", UVM_NONE)
 #
 #  if (!sequence_item_requested)
-#    m_select_sequence();
+#    m_select_sequence()
 #
 #  // Set flag indicating that the item has been requested to ensure that item_done or get
 #  // is called between requests
-#  sequence_item_requested = 1;
-#  get_next_item_called = 1;
-#  m_req_fifo.peek(t);
+#  sequence_item_requested = 1
+#  get_next_item_called = 1
+#  m_req_fifo.peek(t)
 #endtask
 #
 #
 #// try_next_item
 #// -------------
 #
-#task uvm_sequencer::try_next_item(output REQ t);
-#  int selected_sequence;
-#  time arb_time;
-#  uvm_sequence_base seq;
+#task uvm_sequencer::try_next_item(output REQ t)
+#  int selected_sequence
+#  time arb_time
+#  uvm_sequence_base seq
 #
 #  if (get_next_item_called == 1) begin
-#    uvm_report_error(get_full_name(), "get_next_item/try_next_item called twice without item_done or get in between", UVM_NONE);
-#    return;
+#    uvm_report_error(get_full_name(), "get_next_item/try_next_item called twice without item_done or get in between", UVM_NONE)
+#    return
 #  end
 #
 #  // allow state from last transaction to settle such that sequences'
 #  // relevancy can be determined with up-to-date information
-#  wait_for_sequences();
+#  wait_for_sequences()
 #
 #  // choose the sequence based on relevancy
-#  selected_sequence = m_choose_next_request();
+#  selected_sequence = m_choose_next_request()
 #
 #  // return if none available
 #  if (selected_sequence == -1) begin
-#    t = null;
-#    return;
+#    t = null
+#    return
 #  end
 #
 #  // now, allow chosen sequence to resume
-#  m_set_arbitration_completed(arb_sequence_q[selected_sequence].request_id);
-#  seq = arb_sequence_q[selected_sequence].sequence_ptr;
-#  arb_sequence_q.delete(selected_sequence);
-#  m_update_lists();
-#  sequence_item_requested = 1;
-#  get_next_item_called = 1;
+#  m_set_arbitration_completed(arb_sequence_q[selected_sequence].request_id)
+#  seq = arb_sequence_q[selected_sequence].sequence_ptr
+#  arb_sequence_q.delete(selected_sequence)
+#  m_update_lists()
+#  sequence_item_requested = 1
+#  get_next_item_called = 1
 #
 #  // give it one NBA to put a new item in the fifo
-#  wait_for_sequences();
+#  wait_for_sequences()
 #
 #  // attempt to get the item; if it fails, produce an error and return
 #  if (!m_req_fifo.try_peek(t))
 #    uvm_report_error("TRY_NEXT_BLOCKED", {"try_next_item: the selected sequence '",
 #      seq.get_full_name(), "' did not produce an item within an NBA delay. ",
 #      "Sequences should not consume time between calls to start_item and finish_item. ",
-#      "Returning null item."}, UVM_NONE);
+#      "Returning null item."}, UVM_NONE)
 #
 #endtask
 
@@ -315,8 +315,8 @@ uvm_component_utils(UVMSequencer)
 #// item_done_trigger
 #// -----------------
 #
-#function void uvm_sequencer::item_done_trigger(RSP item = null);
-#  item_done(item);
+#function void uvm_sequencer::item_done_trigger(RSP item = null)
+#  item_done(item)
 #endfunction
 #
 #

@@ -92,6 +92,7 @@ class reg_driver(UVMComponent):
         self.m_parent = parent
         self.seqr_port = UVMSeqItemPullPort("seqr_port",self)
         self.T = reg_rw
+        self.dut = None
     #   endfunction
 
 
@@ -100,17 +101,22 @@ class reg_driver(UVMComponent):
         mon = self.m_parent.get_child("mon")
         while True:
             print("XYZ reg_driver while True loop")
-            rw = None  # reg_rw
+            rw = []  # reg_rw
             yield self.seqr_port.peek(rw)  # aka 'get_next_rw'
+            rw = rw[0]
             print("XYZ reg_driver after peek")
-            self.T.rw(rw)
+            yield self.drive_transaction(rw)
             print("XYZ reg_driver after rw")
             mon.ap.write(rw)
             print("XYZ reg_driver mon.ap.write")
             yield self.seqr_port.get(rw)  # aka 'item_done'
             print("XYZ reg_driver after get")
     #   endtask
-    #
+    
+    @cocotb.coroutine
+    def drive_transaction(self, rw):
+        print("reg_driver driving " + rw.convert2string())
+        yield Timer(0)
     #endclass
 uvm_component_utils(reg_driver)
 

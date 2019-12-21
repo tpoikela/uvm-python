@@ -577,7 +577,7 @@ class UVMSequencerBase(UVMComponent):
                 else:
                     not_blocked_seqs.push_back(item)
 
-            if b>self.arb_sequence_q.size()-1:
+            if b > (self.arb_sequence_q.size()-1):
                 self.arb_sequence_q = blocked_seqs
             else:
                 self.arb_sequence_q = {blocked_seqs,self.arb_sequence_q[b:self.arb_sequence_q.size()-1]}
@@ -596,8 +596,8 @@ class UVMSequencerBase(UVMComponent):
         selected_sequence = 0
 
         # Select a sequence
-        while (True):
-            self.wait_for_sequences()
+        while True:
+            yield self.wait_for_sequences()
             selected_sequence = self.m_choose_next_request()
             if selected_sequence == -1:
                 yield self.m_wait_for_available_sequence()
@@ -622,12 +622,12 @@ class UVMSequencerBase(UVMComponent):
     def m_choose_next_request(self) -> int:
         i = 0  #  int i, temp
         temp = 0
-        avail_sequence_count: int = 0  #  int avail_sequence_count
-        sum_priority_val: int = 0  #  int sum_priority_val
+        avail_sequence_count: int = 0  # int avail_sequence_count
+        sum_priority_val: int = 0  # int sum_priority_val
         avail_sequences: UVMQueue = UVMQueue()  # integer [$]
         highest_sequences:UVMQueue = UVMQueue()  # integer [$]
-        highest_pri = 0  # int highest_pri
-        s = ""  # string  s
+        highest_pri: int = 0  # int highest_pri
+        s: str = ""  # string s
 
         self.grant_queued_locks()
         i = 0
@@ -874,7 +874,6 @@ class UVMSequencerBase(UVMComponent):
     #  extern protected function void   self.m_update_lists()
     def m_update_lists(self):
         self.set_value('m_lock_arb_size', self.m_lock_arb_size + 1)
-        #m_lock_arb_size++
 
     #  extern           function string convert2string()
     #  extern protected
@@ -894,7 +893,6 @@ class UVMSequencerBase(UVMComponent):
                 break
 
     #  extern protected task            m_wait_for_available_sequence()
-    #// m_wait_for_available_sequence
     @cocotb.coroutine
     def m_wait_for_available_sequence(self):
         i = 0
@@ -932,7 +930,7 @@ class UVMSequencerBase(UVMComponent):
             if self.m_wait_relevant_count > self.m_max_zero_time_wait_relevant_count:
                 uvm_fatal("SEQRELEVANTLOOP",sv.sformatf(SEQ_FATAL1_MSG, self.m_wait_relevant_count))
         #self.m_is_relevant_completed = 1
-        self.set_value('m_is_relevant_completed', 1)
+        self.set_value('m_is_relevant_completed', True)
 
     @cocotb.coroutine
     def _fork_first_proc(self, is_relevant_entries):
@@ -952,8 +950,7 @@ class UVMSequencerBase(UVMComponent):
     def _fork_first_proc_sub_fork1(self, is_relevant_entries):
         # One path in fork is for any wait_for_relevant to return
         fork_procs_join_none = []
-        #self.m_is_relevant_completed = 0
-        self.set_value('m_is_relevant_completed', 0)
+        self.set_value('m_is_relevant_completed', False)
         for i in range(len(is_relevant_entries)):
             #fork
             forked_proc = cocotb.fork(self._rel_entry_fork_proc(i, is_relevant_entries))
@@ -965,7 +962,7 @@ class UVMSequencerBase(UVMComponent):
     def wait_is_relevant_completed(self):
         yield Timer(0)
         # TODO
-        while (True):
+        while True:
             self.m_event_value_changed.clear()
             yield self.m_event_value_changed.wait()
             if self.m_is_relevant_completed > 0:
