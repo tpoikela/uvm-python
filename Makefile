@@ -1,5 +1,5 @@
 
-test: test-simple
+test: test-simple test-integrated
 
 test-simple:
 	make -C test/examples/simple
