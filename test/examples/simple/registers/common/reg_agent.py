@@ -138,7 +138,7 @@ class reg_driver(UVMComponent):
             self.dut.read <= 0x0
             uvm_info("REG_DRIVER", "Read value from reg: " + str(rw.data) +
                 ' addr:' + str(rw.addr), UVM_LOW)
-            rw.data = 0x6666
+            #rw.data = 0x6666
     #endclass
 uvm_component_utils(reg_driver)
 
