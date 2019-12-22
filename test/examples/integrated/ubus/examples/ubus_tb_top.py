@@ -21,37 +21,52 @@
 #//----------------------------------------------------------------------
 
 import cocotb
+from cocotb.triggers import Timer
+#from cocotb.clock import Clock
+from uvm.base import run_test, UVMDebug
 
-UBUS_ADDR_WIDTH=16
+from test_lib import *
+
+UBUS_ADDR_WIDTH = 16
+
+UVMDebug.DEBUG = True
 
 #`include "ubus_pkg.sv"
 #`include "dut_dummy.v"
 #`include "ubus_if.sv"
 
+@cocotb.coroutine
+def initial_run_test(dut):
+    #cs_ = uvm_coreservice_t::get();
+    #uvm_config_db#(virtual ubus_if)::set(cs_.get_root(), "*", "vif", vif);
+    yield run_test()
+
+
+@cocotb.coroutine
+def initial_reset(vif):
+    vif.ubus_reset <= 1
+    vif.ubus_clock <= 1
+    yield Timer(51, "NS")
+    vif.ubus_reset <= 0
+
+
+@cocotb.coroutine
+def always_clk(dut, ncycles):
+    dut.ubus_clock <= 0
+    n = 0
+    while n < 2*ncycles:
+        n += 1
+        yield Timer(5, "NS")
+        dut.ubus_clock <= ~dut.ubus_clock
+
 #module ubus_tb_top;
 @cocotb.test()
 def module_ubus_tb(dut):
 
-    #  import uvm_pkg::*;
-    #  import ubus_pkg::*;
-    #  `include "test_lib.sv" 
-    #
     #  ubus_if vif(); // SystemVerilog Interface
-    #  
-    #  initial begin automatic uvm_coreservice_t cs_ = uvm_coreservice_t::get();
-    #
-    #    uvm_config_db#(virtual ubus_if)::set(cs_.get_root(), "*", "vif", vif);
-    #    run_test();
-    #  end
-    #
-    #  initial begin
-    #    vif.sig_reset <= 1'b1;
-    #    vif.sig_clock <= 1'b1;
-    #    #51 vif.sig_reset = 1'b0;
-    #  end
-    #
-    #  //Generate Clock
-    #  always
-    #    #5 vif.sig_clock = ~vif.sig_clock;
-    #
-    #endmodule
+
+    proc_run_test = cocotb.fork(initial_run_test(dut))
+    proc_reset = cocotb.fork(initial_reset(dut))
+    proc_clk = cocotb.fork(always_clk(dut, 100))
+
+    yield proc_run_test

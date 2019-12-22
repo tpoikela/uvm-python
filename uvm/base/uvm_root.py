@@ -106,7 +106,7 @@ class UVMRoot(UVMComponent):
     def __init__(self):
         UVMComponent.__init__(self, "__top__", None)
         #self.m_children = {}
-        self.clp = UVMCmdlineProcessor()
+        self.clp = UVMCmdlineProcessor.get_inst()
         self.finish_on_completion = True
         self.m_phase_all_done = False
         self.m_phase_all_done_event = Event('phase_all_done_event')
@@ -144,7 +144,7 @@ class UVMRoot(UVMComponent):
 
     @cocotb.coroutine
     def run_test(self, test_name=""):
-        uvm_debug(self, 'run_test', 'Called with testname ' + test_name)
+        uvm_debug(self, 'run_test', 'Called with testname |' + test_name + '|')
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         factory = cs.get_factory()
@@ -167,10 +167,12 @@ class UVMRoot(UVMComponent):
         # overrides the argument.
         test_name_count = self.clp.get_arg_values("+UVM_TESTNAME=", test_names)
 
+        uvm_debug(self, 'run_test', 'Found testnames from cmdline: ' +
+                str(test_names))
         # If at least one, use first in queue.
         if test_name_count > 0:
             test_name = test_names[0]
-            #uvm_debug(self,  'run_test', 'Found test name %s' % (test_name))
+            uvm_debug(self, 'run_test', 'Found test name %s' % (test_name))
             testname_plusarg = True
 
         # If multiple, provided the warning giving the number, which one will be

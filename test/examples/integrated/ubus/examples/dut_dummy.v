@@ -18,6 +18,8 @@
 //   permissions and limitations under the License.
 //----------------------------------------------------------------------
 
+`timescale 1ns/1ns
+
 //This is dummy DUT. 
 
 module dut_dummy( 

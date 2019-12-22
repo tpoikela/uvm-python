@@ -40,21 +40,21 @@ PWD=$(shell pwd)
 
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
-UVM_PYTHON := $(WPWD)/../../../../../..
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../..
+UVM_PYTHON := $(WPWD)/../../../../..
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../py
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
-UVM_PYTHON := $(WPWD)/../../../../../..
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../..
+UVM_PYTHON := $(WPWD)/../../../../..
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../py
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
 ifeq ($(TOPLEVEL_LANG),verilog)
     #VERILOG_SOURCES ?= $(WPWD)/../../common_stub.v
-    VERILOG_SOURCES ?= $(WPWD)/dut.sv
+    VERILOG_SOURCES ?= $(WPWD)/dut_dummy.v
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
@@ -63,9 +63,9 @@ ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
 endif
 
-SIM_ARGS = ""
-TOPLEVEL := dut
-MODULE   ?= tb_run
+PLUSARGS=+UVM_TESTNAME=ubus_example_base_test
+TOPLEVEL := dut_dummy
+MODULE   ?= ubus_tb_top
 
 include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim
