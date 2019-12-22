@@ -7,3 +7,5 @@ sim_build
 results.xml
 tags
 vimproject
+
+*.vcd
