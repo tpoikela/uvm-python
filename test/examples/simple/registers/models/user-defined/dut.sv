@@ -28,11 +28,12 @@ module dut(
     input[15:0] data_in,
     input[15:0] addr_in,
     input we,
+    input read,
     output[15:0] data_out
 );
 
 reg [15:0][15:0] acp;
-assign data_out = acp[addr_in];
+assign data_out = read ? acp[addr_in] : 16'hFFFF;
 
 always_ff@(posedge clk or negedge reset)
     if (!reset)

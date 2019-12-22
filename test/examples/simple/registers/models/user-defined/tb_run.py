@@ -42,10 +42,12 @@ class MyClock():
 
     def __init__(self, dut):
         self.dut = dut
+        self.period = 10
+        self.unit = 'ns'
 
     @cocotb.coroutine
     def start(self, n):
-        c = Clock(self.dut.clk, 10, 'ns')
+        c = Clock(self.dut.clk, self.period, self.unit)
         clk_fork = cocotb.fork(c.start())
         yield Timer(n, "NS")
         clk_fork.kill()
@@ -72,9 +74,10 @@ class tb_test(UVMTest):
         if env is None:
             uvm_fatal("test", "Cannot find tb_env")
 
-        env.regmodel.reset()
+        yield self.reset_dut()
+        #env.regmodel.reset()
 
-        clk_fork = cocotb.fork(MyClock(self.dut).start(100))
+        clk_fork = cocotb.fork(MyClock(self.dut).start(2000))
 
         #uvm_reg_sequence seq;
         seq = uvm_reg_hw_reset_seq.type_id.create("reg_hw_rst_seq")
@@ -85,25 +88,42 @@ class tb_test(UVMTest):
         yield seq.wait_for_sequence_state(UVM_FINISHED)
         print("AFTER yield seq.wait_for_sequence_state(UVM_FINISHED)")
 
-        nwrites = 16
+        nwrites = 8
         uvm_info("Test", "Performing " + str(nwrites) + " writes...", UVM_LOW)
 
         for i in range(nwrites):
             status = []
             uvm_info("WRITE", sv.sformatf("Write[%0d] now", i), UVM_LOW)
             yield env.regmodel.user_acp.write(status, sv.random())
+            if status[0] == UVM_NOT_OK:
+                raise Exception("Reg_write " + i + " failed with UVM_NOT_OK")
+            else:
+                uvm_info("WRITE_DONE", "UVM_OK status returned for write " +
+                    str(i), UVM_LOW)
         status = []
+        print("Now mirroring the reg status..")
         yield env.regmodel.user_acp.mirror(status, UVM_CHECK)
 
+        yield self.reset_dut()
+        status = []
+        print("Now mirroring the reg status after reset")
+        yield env.regmodel.user_acp.mirror(status, UVM_CHECK)
+        yield Timer(100, "NS")
+
+        clk_fork.kill()
+        phase.drop_objection(self)
+    #endclass
+
+    @cocotb.coroutine
+    def reset_dut(self):
+        env = self.get_child("env")
+        if env is None:
+            uvm_fatal("test", "Cannot find tb_env")
         uvm_info("Test", "Resetting DUT...", UVM_LOW)
         self.dut.reset <= 0
         yield Timer(5, "NS")
         self.dut.reset <= 1
         env.regmodel.reset()
-        env.regmodel.user_acp.mirror(status, UVM_CHECK)
-        clk_fork.kill()
-        phase.drop_objection(self)
-    #endclass
 
 
 @cocotb.test()

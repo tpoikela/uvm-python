@@ -23,6 +23,7 @@
 
 import cocotb
 
+from ..macros import uvm_error
 from ..base.sv import semaphore, sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
@@ -720,21 +721,20 @@ class UVMReg(UVMObject):
     #                             input  string            fname = "",
     #                             input  int               lineno = 0)
     @cocotb.coroutine
-    def write(self, status, value, path = UVM_DEFAULT_PATH, map = None, parent = None, prior = -1,
-            extension = None, fname = "", lineno = 0):
+    def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
+            extension=None, fname="", lineno=0):
 
         # create an abstract transaction for this operation
-        rw = 0
         self.XatomicX(1)
         self.set(value)
-        #
+
         rw = UVMRegItem.type_id.create("write_item", None, self.get_full_name())
         rw.element      = self
         rw.element_kind = UVM_REG
         rw.kind         = UVM_WRITE
         rw.value[0]     = value
         rw.path         = path
-        rw.map          = map
+        rw.map          = _map
         rw.parent       = parent
         rw.prior        = prior
         rw.extension    = extension
@@ -1070,11 +1070,11 @@ class UVMReg(UVMObject):
     #   extern virtual function bit do_check(uvm_reg_data_t expected,
     #                                        uvm_reg_data_t actual,
     #                                        uvm_reg_map    map)
-    def do_check(self, expected, actual, map):
+    def do_check(self, expected, actual, _map):
         dc = 0
 
         for i in range(len(self.m_fields)):
-            acc = self.m_fields[i].get_access(map)
+            acc = self.m_fields[i].get_access(_map)
             acc = acc[0:1]
             if (self.m_fields[i].get_compare() == UVM_NO_CHECK or
                     acc == "WO"):
@@ -1090,7 +1090,7 @@ class UVMReg(UVMObject):
 
         #foreach(self.m_fields[i]):
         for i in range(len(self.m_fields)):
-            acc = self.m_fields[i].get_access(map)
+            acc = self.m_fields[i].get_access(_map)
             acc = acc[0:1]
             if (not(self.m_fields[i].get_compare() == UVM_NO_CHECK or
                    acc == "WO")):
@@ -1122,8 +1122,8 @@ class UVMReg(UVMObject):
 
         self.m_fname  = rw.fname
         self.m_lineno = rw.lineno
-        #
-        if self.Xcheck_accessX(rw,map_info,"write()") is False:
+
+        if self.Xcheck_accessX(rw, map_info, "write()") is False:
             yield uvm_empty_delay()
             return
         map_info = map_info[0]
@@ -1145,7 +1145,7 @@ class UVMReg(UVMObject):
             cbs = UVMRegFieldCbIter(self.m_fields[i])
             f = self.m_fields[i]  # uvm_reg_field
             lsb = f.get_lsb_pos()
-            msk = ((1<<f.get_n_bits())-1) << lsb
+            msk = ((1 << f.get_n_bits() )-1) << lsb
             rw.value[0] = (value & msk) >> lsb
             yield f.pre_write(rw)  # TODO yield?
             cb = cbs.first()
@@ -1210,16 +1210,17 @@ class UVMReg(UVMObject):
             self.m_is_busy = True
 
             # ...VIA USER FRONTDOOR
-            if (map_info.frontdoor is not None):
+            if map_info.frontdoor is not None:
                 fd = map_info.frontdoor  # uvm_reg_frontdoor
                 fd.rw_info = rw
-                if (fd.sequencer is None):
+                if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
                 yield fd.start(fd.sequencer, rw.parent)
 
             # ...VIA BUILT-IN FRONTDOOR
             else:  # built_in_frontdoor
-                rw.local_map.do_write(rw)
+                print("BBB USing rw.local_map.do_write(rw)")
+                yield rw.local_map.do_write(rw)
 
             self.m_is_busy = False
 

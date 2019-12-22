@@ -18,7 +18,7 @@
 #//------------------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import RisingEdge, Timer
 
 from uvm.base import *
 from uvm.reg import UVMRegAdapter
@@ -76,7 +76,7 @@ class reg_monitor(UVMMonitor):
     #
     #   uvm_analysis_port#(reg_rw) ap
 
-    def __init__(self, name, parent = None):
+    def __init__(self, name, parent=None):
         UVMMonitor.__init__(self, name, parent)
         self.ap = UVMAnalysisPort("ap", self)
     #endclass: reg_monitor
@@ -113,17 +113,32 @@ class reg_driver(UVMComponent):
             yield self.seqr_port.get(rw)  # aka 'item_done'
             print("XYZ reg_driver after get")
     #   endtask
-    
+
     @cocotb.coroutine
     def drive_transaction(self, rw):
-        print("reg_driver driving " + rw.convert2string())
-        yield RisingEdge(self.dut.clk)
-        self.dut.we <= 1
-        self.dut.data_in <= rw.data
-        self.dut.addr_in <= rw.addr
-        yield RisingEdge(self.dut.clk)
-        self.dut.we <= 0
-        # yield Timer(0)
+        print("reg_driver driving into DUT: " + rw.convert2string())
+        if rw.read is False:
+            yield RisingEdge(self.dut.clk)
+            yield Timer(0)
+            self.dut.we <= 1
+            self.dut.data_in <= rw.data
+            self.dut.addr_in <= rw.addr
+
+            for i in range(2):
+                yield RisingEdge(self.dut.clk)
+            yield Timer(0)
+            self.dut.we <= 0
+        else:
+            yield RisingEdge(self.dut.clk)
+            self.dut.addr_in <= rw.addr
+            self.dut.read <= 0x1
+            yield RisingEdge(self.dut.clk)
+            rw.data = self.dut.data_out.value
+            yield RisingEdge(self.dut.clk)
+            self.dut.read <= 0x0
+            uvm_info("REG_DRIVER", "Read value from reg: " + str(rw.data) +
+                ' addr:' + str(rw.addr), UVM_LOW)
+            rw.data = 0x6666
     #endclass
 uvm_component_utils(reg_driver)
 

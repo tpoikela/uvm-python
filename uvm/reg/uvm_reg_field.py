@@ -1024,6 +1024,75 @@ class UVMRegField(UVMObject):
     #   extern virtual function uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
     #                                                     uvm_reg_data_t wr_val,
     #                                                     uvm_reg_map    map)
+    def XpredictX (self, cur_val, wr_val, _map):
+        mask = (1 << self.m_size)-1
+        acc = self.get_access(_map)
+        #   case (get_access(map))
+        if acc == "RO":
+            return cur_val
+        elif acc == "RW":
+            return wr_val
+        elif acc == "RC":
+            return cur_val
+        elif acc == "RS":
+            return cur_val
+        elif acc == "WC":
+            return 0
+        elif acc == "WS":
+            return mask
+        elif acc == "WRC":
+            return wr_val
+        elif acc == "WRS":
+            return wr_val
+        elif acc == "WSRC":
+            return mask
+        elif acc == "WCRS":
+            return 0
+        elif acc == "W1C":
+            return cur_val & (~wr_val)
+        elif acc == "W1S":
+            return cur_val | wr_val
+        elif acc == "W1T":
+            return cur_val ^ wr_val
+        elif acc == "W0C":
+            return cur_val & wr_val
+        elif acc == "W0S":
+            return cur_val | (~wr_val & mask)
+        elif acc == "W0T":
+            return cur_val ^ (~wr_val & mask)
+        elif acc == "W1SRC":
+            return cur_val | wr_val
+        elif acc == "W1CRS":
+            return cur_val & (~wr_val)
+        elif acc == "W0SRC":
+            return cur_val | (~wr_val & mask)
+        elif acc == "W0CRS":
+            return cur_val & wr_val
+        elif acc == "WO":
+            return wr_val
+        elif acc == "WOC":
+            return 0
+        elif acc == "WOS":
+            return mask
+        elif acc == "W1":
+            if (self.m_written):
+                return cur_val
+            else:
+                return wr_val
+        elif acc == "WO1":
+            if (self.m_written):
+                return cur_val
+            else:
+                return wr_val
+        elif acc == "NOACCESS":
+            return cur_val
+        else:
+            return wr_val
+
+        uvm_fatal("RegModel", "uvm_reg_field::XpredictX(): Internal error")
+        return 0
+        #endfunction: XpredictX
+
 
     #// XupdateX
     def XupdateX(self):
@@ -1272,44 +1341,6 @@ uvm_object_utils(UVMRegField)
 #// m_predefined_policies
 #
 #
-#function uvm_reg_data_t uvm_reg_field::XpredictX (uvm_reg_data_t cur_val,
-#                                                  uvm_reg_data_t wr_val,
-#                                                  uvm_reg_map    map)
-#   uvm_reg_data_t mask = ('b1 << self.m_size)-1
-#   
-#   case (get_access(map))
-#     "RO":    return cur_val
-#     "RW":    return wr_val
-#     "RC":    return cur_val
-#     "RS":    return cur_val
-#     "WC":    return '0
-#     "WS":    return mask
-#     "WRC":   return wr_val
-#     "WRS":   return wr_val
-#     "WSRC":  return mask
-#     "WCRS":  return '0
-#     "W1C":   return cur_val & (~wr_val)
-#     "W1S":   return cur_val | wr_val
-#     "W1T":   return cur_val ^ wr_val
-#     "W0C":   return cur_val & wr_val
-#     "W0S":   return cur_val | (~wr_val & mask)
-#     "W0T":   return cur_val ^ (~wr_val & mask)
-#     "W1SRC": return cur_val | wr_val
-#     "W1CRS": return cur_val & (~wr_val)
-#     "W0SRC": return cur_val | (~wr_val & mask)
-#     "W0CRS": return cur_val & wr_val
-#     "WO":    return wr_val
-#     "WOC":   return '0
-#     "WOS":   return mask
-#     "W1":    return (self.m_written) ? cur_val : wr_val
-#     "WO1":   return (self.m_written) ? cur_val : wr_val
-#     "NOACCESS": return cur_val
-#     default: return wr_val
-#   endcase
-#
-#   `uvm_fatal("RegModel", "uvm_reg_field::XpredictX(): Internal error")
-#   return 0
-#endfunction: XpredictX
 #
 #
 #typedef class uvm_reg_map_info

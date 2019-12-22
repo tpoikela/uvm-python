@@ -37,31 +37,31 @@
 #
 # 2-state data value with <`UVM_REG_DATA_WIDTH> bits
 #
-#typedef  bit unsigned [`UVM_REG_DATA_WIDTH-1:0]  uvm_reg_data_t ;
+#typedef  bit unsigned [`UVM_REG_DATA_WIDTH-1:0]  uvm_reg_data_t
 
 # Type: uvm_reg_data_logic_t
 #
 # 4-state data value with <`UVM_REG_DATA_WIDTH> bits
 #
-#typedef  logic unsigned [`UVM_REG_DATA_WIDTH-1:0]  uvm_reg_data_logic_t ;
+#typedef  logic unsigned [`UVM_REG_DATA_WIDTH-1:0]  uvm_reg_data_logic_t
 
 # Type: uvm_reg_addr_t
 #
 # 2-state address value with <`UVM_REG_ADDR_WIDTH> bits
 #
-#typedef  bit unsigned [`UVM_REG_ADDR_WIDTH-1:0]  uvm_reg_addr_t ;
+#typedef  bit unsigned [`UVM_REG_ADDR_WIDTH-1:0]  uvm_reg_addr_t
 
 # Type: uvm_reg_addr_logic_t
 #
 # 4-state address value with <`UVM_REG_ADDR_WIDTH> bits
 #
-#typedef  logic unsigned [`UVM_REG_ADDR_WIDTH-1:0]  uvm_reg_addr_logic_t ;
+#typedef  logic unsigned [`UVM_REG_ADDR_WIDTH-1:0]  uvm_reg_addr_logic_t
 
 # Type: uvm_reg_byte_en_t
 #
 # 2-state byte_enable value with <`UVM_REG_BYTENABLE_WIDTH> bits
 #
-#typedef  bit unsigned [`UVM_REG_BYTENABLE_WIDTH-1:0]  uvm_reg_byte_en_t ;
+#typedef  bit unsigned [`UVM_REG_BYTENABLE_WIDTH-1:0]  uvm_reg_byte_en_t
 
 # Type: uvm_reg_cvr_t
 #
@@ -78,7 +78,7 @@
 # 16-23   - User-defined coverage models
 # 24..    - Reserved
 #
-#typedef  bit [`UVM_REG_CVR_WIDTH-1:0]  uvm_reg_cvr_t ;
+#typedef  bit [`UVM_REG_CVR_WIDTH-1:0]  uvm_reg_cvr_t
 
 # Type: uvm_hdl_path_slice
 #
@@ -94,7 +94,7 @@
 # If the HDL variable implements all of the register, ~offset~ and ~size~
 # are specified as -1. For example:
 #|
-#| r1.add_hdl_path('{ '{"r1", -1, -1} });
+#| r1.add_hdl_path('{ '{"r1", -1, -1} })
 #|
 
 #typedef struct {
@@ -103,15 +103,16 @@ class uvm_hdl_path_slice:
         self.path = ""
         self.offset = -1
         self.size = -1
-#} uvm_hdl_path_slice;
+#} uvm_hdl_path_slice
 #
-#typedef uvm_resource_db#(uvm_reg_cvr_t) uvm_reg_cvr_rsrc_db;
+#typedef uvm_resource_db#(uvm_reg_cvr_t) uvm_reg_cvr_rsrc_db
 
 
 #--------------------
 # Group: Enumerations
 #--------------------
-#
+
+
 # Enum: uvm_status_e
 #
 # Return status for register operations
@@ -125,7 +126,7 @@ class uvm_hdl_path_slice:
 UVM_IS_OK = 0
 UVM_NOT_OK = 1
 UVM_HAS_X = 2
-#   } uvm_status_e;
+#   } uvm_status_e
 
 # Enum: uvm_path_e
 #
@@ -142,7 +143,7 @@ UVM_FRONTDOOR = 0
 UVM_BACKDOOR = 1
 UVM_PREDICT = 2
 UVM_DEFAULT_PATH = 3
-#   } uvm_path_e;
+#   } uvm_path_e
 
 # Enum: uvm_check_e
 #
@@ -154,7 +155,7 @@ UVM_DEFAULT_PATH = 3
 #   typedef enum {
 UVM_NO_CHECK = 0
 UVM_CHECK = 1
-#   } uvm_check_e;
+#   } uvm_check_e
 
 # Enum: uvm_endianness_e
 #
@@ -172,7 +173,7 @@ UVM_LITTLE_ENDIAN = 1
 UVM_BIG_ENDIAN = 2
 UVM_LITTLE_FIFO = 3
 UVM_BIG_FIFO = 4
-#   } uvm_endianness_e;
+#   } uvm_endianness_e
 
 # Enum: uvm_elem_kind_e
 #
@@ -186,7 +187,7 @@ UVM_BIG_FIFO = 4
 UVM_REG = 0
 UVM_FIELD = 1
 UVM_MEM = 2
-#   } uvm_elem_kind_e;
+#   } uvm_elem_kind_e
 
 # Enum: uvm_access_e
 #
@@ -200,7 +201,7 @@ UVM_READ = 0
 UVM_WRITE = 1
 UVM_BURST_READ = 2
 UVM_BURST_WRITE = 3
-#   } uvm_access_e;
+#   } uvm_access_e
 
 # Enum: uvm_hier_e
 #
@@ -212,7 +213,7 @@ UVM_BURST_WRITE = 3
 #   typedef enum {
 UVM_NO_HIER = 0
 UVM_HIER = 1
-#   } uvm_hier_e;
+#   } uvm_hier_e
 
 # Enum: uvm_predict_e
 #
@@ -226,7 +227,7 @@ UVM_HIER = 1
 UVM_PREDICT_DIRECT = 0
 UVM_PREDICT_READ = 1
 UVM_PREDICT_WRITE = 2
-#   } uvm_predict_e;
+#   } uvm_predict_e
 
 # Enum: uvm_coverage_model_e
 #
@@ -245,7 +246,7 @@ UVM_CVR_REG_BITS     = 0x0001
 UVM_CVR_ADDR_MAP     = 0x0002
 UVM_CVR_FIELD_VALS   = 0x0004
 UVM_CVR_ALL          = -1
-#} uvm_coverage_model_e;
+#} uvm_coverage_model_e
 
 # Enum: uvm_reg_mem_tests_e
 #
@@ -273,7 +274,7 @@ UVM_DO_MEM_ACCESS        = 0x0000000000000008
 UVM_DO_SHARED_ACCESS     = 0x0000000000000010
 UVM_DO_MEM_WALK          = 0x0000000000000020
 UVM_DO_ALL_REG_MEM_TESTS = 0xffffffffffffffff
-#} uvm_reg_mem_tests_e;
+#} uvm_reg_mem_tests_e
 #
 
 #-----------------------
@@ -305,7 +306,7 @@ UVM_DO_ALL_REG_MEM_TESTS = 0xffffffffffffffff
 # The array should specify a single slice with its ~offset~ and ~size~
 # specified as -1. For example:
 #
-#| concat.set('{ '{"r1", -1, -1} });
+#| concat.set('{ '{"r1", -1, -1} })
 #
 #------------------------------------------------------------------------------
 
@@ -317,12 +318,12 @@ class uvm_hdl_path_concat:
     # Variable: slices
     # Array of individual slices,
     # stored in most-to-least significant order
-    #uvm_hdl_path_slice slices[];
+    #uvm_hdl_path_slice slices[]
 
     # Function: set
     # Initialize the concatenation using an array literal
     def set(self, t):
-        self.slices = t;
+        self.slices = t
 
     # Function: add_slice
     # Append the specified ~slice~ literal to the path concatenation
@@ -337,7 +338,7 @@ class uvm_hdl_path_concat:
         t.offset = offset
         t.path   = path
         t.size   = size
-        self.add_slice(t);
+        self.add_slice(t)
     #endclass
 
 # concat2string

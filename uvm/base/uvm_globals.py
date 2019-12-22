@@ -49,7 +49,7 @@ def uvm_check_output_args(arr):
                     + str(item))
         elif len(item) != 0:
             raise Exception('All output args must be given as empty arrays. Got: '
-                    + str(item), + ' len: ' + len(item))
+                    + str(item) + ' len: ' + str(len(item)))
 
 #----------------------------------------------------------------------------
 #

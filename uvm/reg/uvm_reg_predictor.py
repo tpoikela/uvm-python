@@ -168,14 +168,17 @@ class UVMRegPredictor(UVMComponent):
         if self.adapter is None:
             uvm_fatal("REG/WRITE/None","write: adapter handle is None")
 
+        uvm_info("REG_PREDICTOR", "write(): Received " + tr.convert2string(),
+            UVM_MEDIUM)
         # In case they forget to set byte_en
         rw.byte_en = -1
-        self.adapter.bus2reg(tr,rw)
+        rw = self.adapter.bus2reg(tr, rw)
         rg = self.map.get_reg_by_offset(rw.addr, (rw.kind == UVM_READ))
 
         # TODO: Add memory look-up and call <uvm_mem::XsampleX()>
 
-        if (rg is not None):
+        if rg is not None:
+            print("OOO reg_predict 1")
             found = False
             reg_item = None  # uvm_reg_item
             local_map = None  # uvm_reg_map
@@ -215,18 +218,22 @@ class UVMRegPredictor(UVMComponent):
             for i in range(len(map_info.addr)):
                 if (rw.addr == map_info.addr[i]):
                     found = True
+                    print("OOO reg_predict 2 found is True")
                     reg_item.value[0] |= rw.data << (i * self.map.get_n_bytes()*8)
                     predict_info.addr[rw.addr] = 1
                     if len(predict_info.addr) == len(map_info.addr):
+                        print("OOO reg_predict 3 len matches OK")
                         # We've captured the entire abstract register transaction.
                         predict_kind = UVM_PREDICT_READ
                         if (reg_item.kind == UVM_WRITE):
                             predict_kind = UVM_PREDICT_WRITE
 
+                        is_ok = False
                         if (reg_item.kind == UVM_READ and
                                 local_map.get_check_on_read() and
                                 reg_item.status != UVM_NOT_OK):
-                            rg.do_check(ir.get_mirrored_value(), reg_item.value[0], local_map)
+                            print("OOO reg_predict 3.1 calling rg.do_check")
+                            is_ok = rg.do_check(ir.get_mirrored_value(), reg_item.value[0], local_map)
 
                         self.pre_predict(reg_item)
 
@@ -250,6 +257,8 @@ class UVMRegPredictor(UVMComponent):
                                      sv.sformatf("%0h", reg_item.value[0]),UVM_HIGH)
                         self.reg_ap.write(reg_item)
                         self.m_pending.delete(rg)
+                    else:
+                        print("OOO reg_predict 4 len DID NOT MATCH")
                     break
 
             if found is False:
