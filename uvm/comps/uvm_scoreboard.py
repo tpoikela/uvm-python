@@ -1,8 +1,9 @@
 #//
 #//-----------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
-#//   Copyright 2007-2010 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2019 Tuomas Poikela
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,37 +20,35 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//-----------------------------------------------------------------------------
-#
+
+from ..base.uvm_component import UVMComponent
+
 #//------------------------------------------------------------------------------
 #//
 #// CLASS: uvm_scoreboard
 #//
-#// The uvm_scoreboard virtual class should be used as the base class for 
+#// The uvm_scoreboard virtual class should be used as the base class for
 #// user-defined scoreboards.
 #//
 #// Deriving from uvm_scoreboard will allow you to distinguish scoreboards from
-#// other component types inheriting directly from uvm_component. Such 
+#// other component types inheriting directly from uvm_component. Such
 #// scoreboards will automatically inherit and benefit from features that may be
 #// added to uvm_scoreboard in the future.
 #//------------------------------------------------------------------------------
-#
-#virtual class uvm_scoreboard extends uvm_component;
-#
-#  // Function: new
-#  //
-#  // Creates and initializes an instance of this class using the normal
-#  // constructor arguments for <uvm_component>: ~name~ is the name of the
-#  // instance, and ~parent~ is the handle to the hierarchical parent, if any.
-#
-#  function new (string name, uvm_component parent);
-#    super.new(name, parent);
-#  endfunction
-#
-#  const static string type_name = "uvm_scoreboard";
-#
-#  virtual function string get_type_name ();
-#    return type_name;
-#  endfunction
-#
-#endclass
-#
+
+class UVMScoreboard(UVMComponent):
+    #
+    #  // Function: new
+    #  //
+    #  // Creates and initializes an instance of this class using the normal
+    #  // constructor arguments for <uvm_component>: ~name~ is the name of the
+    #  // instance, and ~parent~ is the handle to the hierarchical parent, if any.
+    #
+    def __init__(self, name, parent):
+        UVMComponent.__init__(self, name, parent)
+
+    type_name = "uvm_scoreboard"
+
+    def get_type_name(self):
+        return UVMScoreboard.type_name
+    #endclass
