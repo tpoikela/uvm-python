@@ -67,6 +67,10 @@ class UVMCmdlineProcessor(UVMReportObject):
     m_inst = None
     uvm_cmdline_proc = None
 
+    # Used in unit tests
+    m_test_mode = False
+    m_test_plusargs = {}
+
     # Group: Singleton
 
     # Function: get_inst
@@ -237,9 +241,13 @@ class UVMCmdlineProcessor(UVMReportObject):
         sub = ""
 
         ok = True
-        for name in cocotb.plusargs:
-            uvm_debug(self, '__init__', "name is %s, val %s" % (name, cocotb.plusargs[name]))
-            arg_val = cocotb.plusargs[name]
+        plusarg_dict = cocotb.plusargs
+        if UVMCmdlineProcessor.m_test_mode is True:
+            plusarg_dict = UVMCmdlineProcessor.m_test_plusargs
+
+        for name in plusarg_dict:
+            uvm_debug(self, '__init__', "name is %s, val %s" % (name, plusarg_dict[name]))
+            arg_val = plusarg_dict[name]
             s = name
             full_plus_arg = "+" + s + "=" + arg_val
             if s != "":
