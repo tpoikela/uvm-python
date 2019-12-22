@@ -18,6 +18,7 @@
 #//------------------------------------------------------------------------------
 
 import cocotb
+from cocotb.triggers import RisingEdge
 
 from uvm.base import *
 from uvm.reg import UVMRegAdapter
@@ -65,7 +66,7 @@ class reg_sequencer(UVMSequencer):  #(reg_rw)
 
     def __init__(self, name, parent=None):
         UVMSequencer.__init__(self, name, parent)
-    #      super.new(name, parent)
+        # super.new(name, parent)
 
     #endclass : reg_sequencer
 uvm_component_utils(reg_sequencer)
@@ -82,18 +83,17 @@ class reg_monitor(UVMMonitor):
 
 
 class reg_driver(UVMComponent):
-    #
+
     #   uvm_seq_item_pull_port #(reg_rw) seqr_port
-    #
     #   local uvm_component m_parent
-    #
+
     def __init__(self, name, parent=None):
         UVMComponent.__init__(self, name, parent)
         self.m_parent = parent
         self.seqr_port = UVMSeqItemPullPort("seqr_port",self)
         self.T = reg_rw
         self.dut = None
-    #   endfunction
+        #endfunction
 
 
     @cocotb.coroutine
@@ -117,7 +117,13 @@ class reg_driver(UVMComponent):
     @cocotb.coroutine
     def drive_transaction(self, rw):
         print("reg_driver driving " + rw.convert2string())
-        yield Timer(0)
+        yield RisingEdge(self.dut.clk)
+        self.dut.we <= 1
+        self.dut.data_in <= rw.data
+        self.dut.addr_in <= rw.addr
+        yield RisingEdge(self.dut.clk)
+        self.dut.we <= 0
+        # yield Timer(0)
     #endclass
 uvm_component_utils(reg_driver)
 
@@ -142,9 +148,13 @@ class reg_agent(UVMAgent):
         self.mon = reg_monitor("mon", self)
 
     def build_phase(self, phase):
-       print("Started building...\n")
-       UVMAgent.build_phase(self, phase)
-       print("Ended building...\n")
+        print("Started building...\n")
+        UVMAgent.build_phase(self, phase)
+        print("Ended building...\n")
+        dut = []
+        if not UVMConfigDb.get(self, "", "dut", dut):
+            uvm_fatal("REG_AGENT", "No 'dut' found inf config DB")
+        self.drv.dut = dut[0]
 
     def connect_phase(self, phase):
         self.drv.seqr_port.connect(self.sqr.seq_item_export)

@@ -247,7 +247,7 @@ class UVMRegPredictor(UVMComponent):
                         else:
                             uvm_info("REG_PREDICT", "Observed READ transaction to register "
                                      + ir.get_full_name() + ": value='h" +
-                                     sv.sformatf("%0h" + str(reg_item.value[0])),UVM_HIGH)
+                                     sv.sformatf("%0h", reg_item.value[0]),UVM_HIGH)
                         self.reg_ap.write(reg_item)
                         self.m_pending.delete(rg)
                     break

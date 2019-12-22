@@ -85,7 +85,7 @@ class sv:
     @classmethod
     def sformatf(cls, msg, *args):
         # TODO substitute old types %s/%d etc with {}
-        formats = ["%0d", "%d", "%s", "%0s", "%h", "%f", "%p", "%0t", "%t"]
+        formats = ["%b", "%0b", "%0d", "%d", "%s", "%0s", "%h", "%0h", "%f", "%p", "%0t", "%t"]
         for s in formats:
             msg = msg.replace(s, "{}")
         return msg.format(*args)

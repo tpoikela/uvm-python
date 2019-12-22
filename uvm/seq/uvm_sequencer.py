@@ -137,6 +137,7 @@ class UVMSequencer(UVMSequencerParamBase):
             yield self.m_select_sequence()
         self.sequence_item_requested = 1
         yield self.m_req_fifo.peek(t)
+        print("sequencer.get() item is now " + t[0].convert2string())
         self.item_done()
 
     #  // Task: peek

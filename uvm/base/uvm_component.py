@@ -250,6 +250,16 @@ class UVMComponent(UVMReportObject):
     # depth of 0. The test and any other top level components have a depth
     # of 1, and so on.
     # TODO extern function int unsigned get_depth();
+    def get_depth(self):
+        if (self.m_name == ""):
+            return 0
+        get_depth = 1
+        for i in range(len(self.m_name)):
+            if (self.m_name[i] == "."):
+                get_depth += 1
+        return get_depth
+        #endfunction
+        #
 
     #----------------------------------------------------------------------------
     # Group: Phasing Interface
@@ -2084,16 +2094,6 @@ class UVMComponent(UVMReportObject):
 #
 #endfunction
 #
-#
-#// get_depth
-#// ---------
-#
-#function int unsigned uvm_component::get_depth();
-#  if(m_name == "") return 0;
-#  get_depth = 1;
-#  foreach(m_name[i])
-#    if(m_name[i] == ".") ++get_depth;
-#endfunction
 #
 #
 #// m_extract_name

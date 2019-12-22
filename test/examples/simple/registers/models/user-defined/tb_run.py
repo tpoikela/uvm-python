@@ -28,7 +28,7 @@ from cocotb.triggers import Timer
 from cocotb.clock import Clock
 
 from uvm.base import (uvm_top, UVMCoreService, run_test, UVM_FINISHED, UVM_LOW,
-        sv, UVMDebug)
+        sv, UVMDebug, UVMConfigDb)
 from uvm.comps import UVMTest
 from uvm.macros import uvm_fatal, uvm_info
 from uvm.reg.sequences import uvm_reg_hw_reset_seq
@@ -59,6 +59,7 @@ class tb_test(UVMTest):
     def build_phase(self, phase):
         UVMTest.build_phase(self, phase)
         self.env = tb_env.type_id.create("env", self)
+        UVMConfigDb.set(self.env, "bus", "dut", self.dut)
 
 
     #   virtual task run_phase(uvm_phase phase);
@@ -82,6 +83,7 @@ class tb_test(UVMTest):
         yield seq.start(None)
         print("seq.start was called. Wait for seq state")
         yield seq.wait_for_sequence_state(UVM_FINISHED)
+        print("AFTER yield seq.wait_for_sequence_state(UVM_FINISHED)")
 
         nwrites = 16
         uvm_info("Test", "Performing " + str(nwrites) + " writes...", UVM_LOW)

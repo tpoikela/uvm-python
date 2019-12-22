@@ -26,18 +26,27 @@ module dut(
     input clk,
     input reset,
     input[15:0] data_in,
+    input[15:0] addr_in,
     input we,
     output[15:0] data_out
 );
 
-reg [15:0] acp;
-assign data_out = acp;
+reg [15:0][15:0] acp;
+assign data_out = acp[addr_in];
 
 always_ff@(posedge clk or negedge reset)
     if (!reset)
         acp <= 0;
     else begin
-        if (we) acp <= data_in;
+        if (we) acp[addr_in] <= data_in;
     end
+
+`ifdef COCOTB_SIM
+initial begin
+  $dumpfile ("gui.vcd");
+  $dumpvars (0, dut);
+  #1;
+end
+`endif
 
 endmodule
