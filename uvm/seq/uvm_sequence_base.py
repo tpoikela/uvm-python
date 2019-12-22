@@ -1013,10 +1013,13 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.mid_do(item)
         sequencer.send_request(self, item)
+        print("KKK yield sequencer.wait_for_item_done(self, -1)")
         yield sequencer.wait_for_item_done(self, -1)
+        print("KKK AFTER KKK yield sequencer.wait_for_item_done(self, -1)")
 
-        if sequencer.is_auto_item_recording_enabled():
-            sequencer.end_tr(item)
+        # tpoikela: commented out, otherwise item.end_event is not triggered
+        # if sequencer.is_auto_item_recording_enabled():
+        sequencer.end_tr(item)
         self.post_do(item)
 
     #  // Task: wait_for_grant

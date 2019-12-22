@@ -23,7 +23,7 @@
 #//------------------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Event
+from cocotb.triggers import Event, Timer
 
 from .sv import sv
 from .uvm_object import UVMObject
@@ -61,7 +61,12 @@ class UVMEventBase(UVMObject):
         self.trigger_time = 0
         self.callbacks = UVMQueue() # uvm_event_callback
         self.m_waiters = 0
+        self.m_value_changed_event = Event("value_changed_event_" + name)
     # endfunction
+
+    def set_value(self, key, value):
+        setattr(self, key, value)
+        self.m_value_changed_event.set()
 
     def set(self):
         if self.m_waiters > 0:
@@ -100,16 +105,25 @@ class UVMEventBase(UVMObject):
     #    //
     #    // Once an event has been triggered, it will be remain "on" until the event
     #    // is <reset>.
-    #
     #    virtual task wait_on (bit delta = 0);
-    #        if (self.on) begin
-    #            if (delta)
-    #                #0;
-    #            return;
-    #        end
-    #        self.num_waiters++;
-    #        @on;
-    #    endtask
+    @cocotb.coroutine
+    def wait_on(self, delta=0):
+        if self.on is True:
+            print("UUU wait_on self.on true Returning immediately")
+            if delta is True:
+                #0;
+                yield Timer(0)
+            yield Timer(0)
+            return
+        self.num_waiters += 1
+        #raise Exception("UUU")
+        while True:
+            print("UUU waiting for value change now " + self.name)
+            yield self.m_value_changed_event.wait()
+            self.m_value_changed_event.clear()
+            if self.on is True:
+                break
+        # endtask
 
     #    // Task: wait_off
     #    //
@@ -212,7 +226,7 @@ class UVMEventBase(UVMObject):
 #            ->self.m_event;
 #        self.m_event = e;
 #        self.num_waiters = 0;
-#        self.on = 0;
+#        self.set_value("on", False)
 #        self.trigger_time = 0;
 #    endfunction
 #
@@ -268,7 +282,7 @@ class UVMEventBase(UVMObject):
 #
 #        self.m_event = e.self.m_event;
 #        self.num_waiters = e.self.num_waiters;
-#        self.on = e.on;
+#        self.set_value("on", e.on)
 #        self.trigger_time = e.self.trigger_time;
 #        self.callbacks.delete();
 #        self.callbacks = e.self.callbacks;
@@ -296,6 +310,7 @@ class UVMEvent(UVMEventBase): #(type T=uvm_object) extends uvm_event_base;
     def __init__(self, name=""):
         UVMEventBase.__init__(self, name)
         self.trigger_data = None
+
     #endfunction
 
     # Task: wait_trigger_data
@@ -343,10 +358,11 @@ class UVMEvent(UVMEventBase): #(type T=uvm_object) extends uvm_event_base;
                     tmp = self.callbacks[i]
                     tmp.post_trigger(self,data)
             self.num_waiters = 0
-            self.on = 1
+            self.set_value("on", True)
             self.trigger_time = sv.realtime()
             self.trigger_data = data
     # endfunction
+
 
     # Function: get_trigger_data
     #

@@ -32,6 +32,7 @@ from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import uvm_object_utils
 from .uvm_reg_model import *
+from .uvm_reg_cbs import UVMRegFieldCbIter
 
 NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
    "W1C", "W1S", "W1T", "W0C", "W0S", "W0T",

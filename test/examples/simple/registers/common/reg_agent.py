@@ -109,6 +109,7 @@ class reg_driver(UVMComponent):
             print("XYZ reg_driver after rw")
             mon.ap.write(rw)
             print("XYZ reg_driver mon.ap.write")
+            rw = []
             yield self.seqr_port.get(rw)  # aka 'item_done'
             print("XYZ reg_driver after get")
     #   endtask

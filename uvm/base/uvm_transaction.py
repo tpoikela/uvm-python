@@ -367,6 +367,7 @@ class UVMTransaction(UVMObject):
                 self.tr_recorder.free()
         self.tr_recorder = None
 
+        print("UUU triggering now event for " + self.get_name())
         self.end_event.trigger()
         #endfunction
 

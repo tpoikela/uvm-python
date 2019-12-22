@@ -29,6 +29,7 @@ from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import *
 from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegBusOp
+from ..seq import UVMSequenceBase
 
 
 class UVMRegMapInfo:
@@ -38,7 +39,7 @@ class UVMRegMapInfo:
         self.unmapped = False
         self.addr = []  # uvm_reg_addr_t[]
         self.frontdoor = None  # uvm_reg_frontdoor
-        self.mem_range = None  # uvm_reg_map_addr_range
+        self.mem_range = uvm_reg_map_addr_range()
 
         # if set marks the uvm_reg_map_info as initialized,
         # prevents using an uninitialized map (for instance if the model
@@ -257,7 +258,7 @@ class UVMRegMap(UVMObject):
         # register share the same address.
         self.m_regs_by_offset_wo = {}  # uvm_reg[uvm_reg_addr_t]
         self.m_mems_by_offset = {}  # uvm_mem[uvm_reg_map_addr_range]
-        self.policy = None  #local uvm_reg_transaction_order_policy
+        self.policy = None  # local uvm_reg_transaction_order_policy
 
     #   // Function: configure
     #   //
@@ -315,7 +316,7 @@ class UVMRegMap(UVMObject):
     #   // A register may only be added to an address map whose parent block
     #   // is the same as the register's parent block.
     #   //
-    def add_reg(self, rg, offset, rights = "RW", unmapped=0, frontdoor=None):
+    def add_reg(self, rg, offset, rights="RW", unmapped=0, frontdoor=None):
         if rg in self.m_regs_info:
             uvm_report_error("RegModel", ("Register '" + rg.get_name()
                       + "' has already been added to map '" + self.get_name() + "'"))
@@ -361,7 +362,7 @@ class UVMRegMap(UVMObject):
     #                                         uvm_reg_addr_t offset,
     #                                         string         rights = "RW",
     #                                         bit            unmapped=0,
-    #                                         uvm_reg_frontdoor frontdoor=null)
+    #                                         uvm_reg_frontdoor frontdoor=None)
 
     #   // Function: add_submap
     #   //
@@ -392,11 +393,11 @@ class UVMRegMap(UVMObject):
     #   // ~must~ be called before starting any sequences based on uvm_reg_sequence.
     #
     #   extern virtual function void set_sequencer (uvm_sequencer_base sequencer,
-    #                                               uvm_reg_adapter    adapter=null)
+    #                                               uvm_reg_adapter    adapter=None)
     def set_sequencer(self, sequencer, adapter=None):
 
         if (sequencer is None):
-            uvm_error("REG_NULL_SQR", "Null reference specified for bus sequencer")
+            uvm_error("REG_None_SQR", "None reference specified for bus sequencer")
             return
 
         if (adapter is None):
@@ -600,7 +601,7 @@ class UVMRegMap(UVMObject):
     #   // Get the higher-level address map
     #   //
     #   // Return the address map in which this address map is mapped.
-    #   // returns ~null~ if this is a top-level address map.
+    #   // returns ~None~ if this is a top-level address map.
     #   //
     #   extern virtual function uvm_reg_map           get_parent_map()
     def get_parent_map(self):
@@ -901,13 +902,31 @@ class UVMRegMap(UVMObject):
     #   //
     #   // Identify the register located at the specified offset within
     #   // this address map for the specified type of access.
-    #   // Returns ~null~ if no such register is found.
+    #   // Returns ~None~ if no such register is found.
     #   //
     #   // The model must be locked using <uvm_reg_block::lock_model()>
     #   // to enable this functionality.
     #   //
     #   extern virtual function uvm_reg get_reg_by_offset(uvm_reg_addr_t offset,
     #                                                     bit            read = 1)
+    def get_reg_by_offset(self, offset, read=True):
+        if not(self.m_parent.is_locked()):
+            uvm_error("RegModel", sv.sformatf(
+                "Cannot get register by offset: Block %s is not locked.",
+                self.m_parent.get_full_name()))
+            return None
+     
+        if (not read and offset in self.m_regs_by_offset_wo):
+            return self.m_regs_by_offset_wo[offset]
+     
+        if offset in self.m_regs_by_offset:
+            return self.m_regs_by_offset[offset]
+     
+        return None
+    #endfunction
+
+
+
     #
     #   //
     #   // Function: get_mem_by_offset
@@ -916,7 +935,7 @@ class UVMRegMap(UVMObject):
     #   // Identify the memory located at the specified offset within
     #   // this address map. The offset may refer to any memory location
     #   // in that memory.
-    #   // Returns ~null~ if no such memory is found.
+    #   // Returns ~None~ if no such memory is found.
     #   //
     #   // The model must be locked using <uvm_reg_block::lock_model()>
     #   // to enable this functionality.
@@ -1030,7 +1049,7 @@ class UVMRegMap(UVMObject):
         accesses = []
 
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
-        addrs=map_info.addr
+        addrs = map_info.addr
 
         # if a memory, adjust addresses based on offset
         if (rw.element_kind == UVM_MEM):
@@ -1095,20 +1114,21 @@ class UVMRegMap(UVMObject):
             #end: foreach_addr
 
             # if set utilizy the order policy
-            if (policy is not None):
+            if (self.policy is not None):
                 policy.order(accesses)
 
             # perform accesses
             # foreach(accesses[i]):
             for i in range(len(accesses)):
-                rw_access=accesses[i]  # uvm_reg_bus_op
+                rw_access = accesses[i]  # uvm_reg_bus_op
                 bus_req = None  # uvm_sequence_item
                 adapter.m_set_item(rw)
                 bus_req = adapter.reg2bus(rw_access)
                 adapter.m_set_item(None)
 
-                if (bus_req is None):
-                    uvm_fatal("RegMem", "adapter [" + adapter.get_name() + "] didnt return a bus transaction")
+                if bus_req is None:
+                    uvm_fatal("RegMem",
+                        "adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
                 yield rw.parent.start_item(bus_req,rw.prior)
@@ -1119,7 +1139,7 @@ class UVMRegMap(UVMObject):
                 yield rw.parent.finish_item(bus_req)
                 yield bus_req.end_event.wait_on()
 
-                if (adapter.provides_responses):
+                if adapter.provides_responses:
                     bus_rsp = None  # uvm_sequence_item
                     op = None  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
@@ -1133,7 +1153,7 @@ class UVMRegMap(UVMObject):
 
                 rw.status = rw_access.status
 
-                uvm_info(get_type_name(),
+                uvm_info(self.get_type_name(),
                    sv.sformatf("Wrote 0x%0h at 0x%0h via map %s: %s...",
                       rw_access.data, addrs[i], rw.map.get_full_name(), rw.status.name()), UVM_FULL)
 
@@ -1265,10 +1285,12 @@ class UVMRegMap(UVMObject):
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
 
+                print("UUU Calling finish_item for bus_req now")
                 yield rw.parent.finish_item(bus_req)
+                print("UUU yield bus_req.end_event.wait_on() " + self.get_name())
                 yield bus_req.end_event.wait_on()
 
-                if (adapter.provides_responses):
+                if adapter.provides_responses:
                     bus_rsp = None  # uvm_sequence_item
                     op = 0  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
@@ -1285,14 +1307,14 @@ class UVMRegMap(UVMObject):
 
                 uvm_info(self.get_type_name(),
                    sv.sformatf("Read 0x%0h at 0x%0h via map %s: %s...", data,
-                       addrs[i], self.get_full_name(), rw.status.name()), UVM_FULL)
+                       addrs[i], self.get_full_name(), str(rw.status)), UVM_FULL)
 
                 if (rw.status == UVM_NOT_OK):
                     break
 
                 rw.value[val_idx] |= data << curr_byte_*8
 
-                if (rw.parent is not None and i == addrs.size()-1):
+                if (rw.parent is not None and i == len(addrs)-1):
                     rw.parent.post_do(rw)
 
             #foreach (addrs[i])
@@ -1419,10 +1441,13 @@ class UVMRegMap(UVMObject):
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_FIELD, " +
                     "but 'element' does not point to a field: " + rw.get_name())
             field = rw.element
-            map_info = self. get_reg_map_info(field.get_parent())
+            map_info = self.get_reg_map_info(field.get_parent())
             size = field.get_n_bits()
             lsb = field.get_lsb_pos()
             addr_skip = lsb/(self.get_n_bytes()*8)
+        else:
+            raise Exception("rw.element_kind value illegal: " +
+                    str(rw.element_kind))
         return [map_info, size, lsb, addr_skip]
         #endfunction
 
@@ -1467,7 +1492,7 @@ uvm_object_utils(UVMRegMap)
 #                                   uvm_reg_addr_t offset,
 #                                   string rights = "RW",
 #                                   bit unmapped=0,
-#                                   uvm_reg_frontdoor frontdoor=null)
+#                                   uvm_reg_frontdoor frontdoor=None)
 #   if (self.m_mems_info.exists(mem)):
 #      `uvm_error("RegModel", {"Memory '",mem.get_name(),
 #                 "' has already been added to map '",get_name(),"'"})
@@ -1601,7 +1626,7 @@ uvm_object_utils(UVMRegMap)
 #   uvm_reg_map parent_map
 #
 #   if (child_map is None):
-#      `uvm_error("RegModel", {"Attempting to add NULL map to map '",get_full_name(),"'"})
+#      `uvm_error("RegModel", {"Attempting to add None map to map '",get_full_name(),"'"})
 #      return
 #   end
 #
@@ -1628,7 +1653,7 @@ uvm_object_utils(UVMRegMap)
 #     while((child_blk is not None) && (child_blk.get_parent() != get_parent()))
 #	     	child_blk = child_blk.get_parent()
 #
-#     if (child_blk==null):
+#     if (child_blk==None):
 #        `uvm_error("RegModel",
 #          {"Submap '",child_map.get_full_name(),"' may not be added to this ",
 #          "address map, '", get_full_name(),"', as the submap's parent block, '",
@@ -1673,7 +1698,7 @@ uvm_object_utils(UVMRegMap)
 #
 #   if (parent_map is None):
 #      `uvm_error("RegModel",
-#          {"Attempting to add NULL parent map to map '",get_full_name(),"'"})
+#          {"Attempting to add None parent map to map '",get_full_name(),"'"})
 #      return
 #   end
 #
@@ -1808,7 +1833,7 @@ uvm_object_utils(UVMRegMap)
 #  if (!self.m_mems_info.exists(mem)):
 #    if (error)
 #      `uvm_error("REG_NO_MAP",{"Memory '",mem.get_name(),"' not in map '",get_name(),"'"})
-#    return null
+#    return None
 #  end
 #  return self.m_mems_info[mem]
 #endfunction
@@ -1906,7 +1931,7 @@ uvm_object_utils(UVMRegMap)
 #
 #function void uvm_reg_map::set_submap_offset(uvm_reg_map submap, uvm_reg_addr_t offset)
 #  if (submap is None):
-#    `uvm_error("REG/NULL","set_submap_offset: submap handle is null")
+#    `uvm_error("REG/None","set_submap_offset: submap handle is None")
 #    return
 #  end
 #  self.m_submaps[submap] = offset
@@ -1921,7 +1946,7 @@ uvm_object_utils(UVMRegMap)
 #
 #function uvm_reg_addr_t uvm_reg_map::get_submap_offset(uvm_reg_map submap)
 #  if (submap is None):
-#    `uvm_error("REG/NULL","set_submap_offset: submap handle is null")
+#    `uvm_error("REG/None","set_submap_offset: submap handle is None")
 #    return -1
 #  end
 #  if (!self.m_submaps.exists(submap)):
@@ -1933,23 +1958,6 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-# get_reg_by_offset
-#
-#function uvm_reg uvm_reg_map::get_reg_by_offset(uvm_reg_addr_t offset,
-#                                                bit            read = 1)
-#   if (!self.m_parent.is_locked()):
-#      `uvm_error("RegModel", $sformatf("Cannot get register by offset: Block %s is not locked.", self.m_parent.get_full_name()))
-#      return null
-#   end
-#
-#   if (!read && self.m_regs_by_offset_wo.exists(offset))
-#     return self.m_regs_by_offset_wo[offset]
-#
-#   if (self.m_regs_by_offset.exists(offset))
-#     return self.m_regs_by_offset[offset]
-#
-#   return null
-#endfunction
 #
 #
 # get_mem_by_offset
@@ -1957,7 +1965,7 @@ uvm_object_utils(UVMRegMap)
 #function uvm_mem uvm_reg_map::get_mem_by_offset(uvm_reg_addr_t offset)
 #   if (!self.m_parent.is_locked()):
 #      `uvm_error("RegModel", $sformatf("Cannot memory register by offset: Block %s is not locked.", self.m_parent.get_full_name()))
-#      return null
+#      return None
 #   end
 #
 #   foreach (self.m_mems_by_offset[range]):
@@ -1966,7 +1974,7 @@ uvm_object_utils(UVMRegMap)
 #      end
 #   end
 #
-#   return null
+#   return None
 #endfunction
 #
 #
@@ -2062,7 +2070,7 @@ uvm_object_utils(UVMRegMap)
 #  //uvm_rap_map me
 #  //me = new this
 #  //return me
-#  return null
+#  return None
 #endfunction
 #
 #

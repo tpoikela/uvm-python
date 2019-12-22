@@ -159,6 +159,12 @@ class UVMRegItem(UVMSequenceItem):
         UVMSequenceItem.__init__(self, name)
         self.value = [0]
         self.status = 0
+        self.fname = ""
+        self.lineno = 0
+        self.bd_kind = ""
+        self.prior = -1
+        self.extension = None
+        self.parent = None
 
     #  // Function: convert2string
     #  //

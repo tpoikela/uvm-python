@@ -21,7 +21,16 @@
 
 import cocotb
 
-#-----------------------------------------------------------------------------
+from ..base.uvm_globals import uvm_check_output_args
+
+
+def uvm_check_ref_arg(func_name, req_arg):
+    if not hasattr(req_arg, 'append'):
+        raise Exception("In python-uvm, ref args not supported. Variables "
+                + " need to be passed as empty lists to obtain the output "
+                + "values. Function: " + func_name)
+
+#----------------------------------------------------------------------------
 #
 # Title: TLM Implementation Port Declaration Macros
 #
@@ -558,6 +567,7 @@ def UVM_SEQ_ITEM_PULL_IMP(T, imp):
 
     @cocotb.coroutine
     def get_next_item(self, req_arg):
+        uvm_check_ref_arg('get_next_item', req_arg)
         yield getattr(self, imp).get_next_item(req_arg)
     setattr(T, 'get_next_item', get_next_item)
 
@@ -585,11 +595,13 @@ def UVM_SEQ_ITEM_PULL_IMP(T, imp):
 
     @cocotb.coroutine
     def get(self, req_arg):
+        uvm_check_ref_arg('get', req_arg)
         yield getattr(self, imp).get(req_arg)
     setattr(T, 'get', get)
 
     @cocotb.coroutine
     def peek(self, req_arg):
+        uvm_check_ref_arg('get', req_arg)
         yield getattr(self, imp).peek(req_arg)
     setattr(T, 'peek', peek)
 

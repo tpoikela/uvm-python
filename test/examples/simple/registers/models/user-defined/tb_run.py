@@ -38,6 +38,18 @@ from tb_env import tb_env
 
 #UVMDebug.DEBUG = True
 
+class MyClock():
+
+    def __init__(self, dut):
+        self.dut = dut
+
+    @cocotb.coroutine
+    def start(self, n):
+        c = Clock(self.dut.clk, 10, 'ns')
+        clk_fork = cocotb.fork(c.start())
+        yield Timer(n, "NS")
+        clk_fork.kill()
+
 class tb_test(UVMTest):
     #
     def __init__(self, name="tb_test", parent=None):
@@ -61,8 +73,7 @@ class tb_test(UVMTest):
 
         env.regmodel.reset()
 
-        #self.c = Clock(self.dut.clk, 10, 'ns')
-        #clk_fork = cocotb.fork(self.c.start())
+        clk_fork = cocotb.fork(MyClock(self.dut).start(100))
 
         #uvm_reg_sequence seq;
         seq = uvm_reg_hw_reset_seq.type_id.create("reg_hw_rst_seq")

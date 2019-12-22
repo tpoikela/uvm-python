@@ -1490,7 +1490,8 @@ class UVMReg(UVMObject):
         for field in self.m_fields:
             rw.value[0] = ((reg_value >> field.get_lsb_pos()) &
                 ((1 << field.get_n_bits())-1))
-            field.do_predict(rw, kind, be>>(field.get_lsb_pos()/8))
+            be_shift = int(field.get_lsb_pos() / 8)
+            field.do_predict(rw, kind, be >> be_shift)
         rw.value[0] = reg_value
 
     #endfunction: do_predict
@@ -1846,8 +1847,8 @@ class UVMReg(UVMObject):
     #   // the available functional coverage models.
     #   //
     #   extern virtual function uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on)
-    #
-    #
+
+
     #   // Function: get_coverage
     #   //
     #   // Check if coverage measurement is on.
@@ -1860,8 +1861,8 @@ class UVMReg(UVMObject):
     #   // See <uvm_reg::set_coverage()> for more details.
     #   //
     #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on)
-    #
-    #
+
+
     #   // Function: sample
     #   //
     #   // Functional coverage measurement method
@@ -1880,8 +1881,11 @@ class UVMReg(UVMObject):
     #                                          uvm_reg_data_t  byte_en,
     #                                          bit             is_read,
     #                                          uvm_reg_map     map)
-    #   endfunction
-    #
+    def sample(self, data, byte_en, is_read, _map):
+        pass
+        #   endfunction
+
+
     #   // Function: sample_values
     #   //
     #   // Functional coverage measurement method for field values
@@ -1899,19 +1903,23 @@ class UVMReg(UVMObject):
     #   virtual function void sample_values()
     #   endfunction
     #
+
     #   /*local*/ function void XsampleX(uvm_reg_data_t  data,
     #                                    uvm_reg_data_t  byte_en,
     #                                    bit             is_read,
     #                                    uvm_reg_map     map)
-    #      sample(data, byte_en, is_read, map)
-    #   endfunction
+    def XsampleX(self, data, byte_en, is_read, _map):
+        self.sample(data, byte_en, is_read, _map)
+        #   endfunction
+
     #
     #
     #   //-----------------
     #   // Group: Callbacks
     #   //-----------------
     #   `uvm_register_cb(uvm_reg, uvm_reg_cbs)
-    #
+
+
     #
     #   // Task: pre_write
     #   //
@@ -1929,8 +1937,8 @@ class UVMReg(UVMObject):
     #   // field callbacks
     #   //
     #   virtual task pre_write(uvm_reg_item rw); endtask
-    #
-    #
+
+
     #   // Task: post_write
     #   //
     #   // Called after register write.
@@ -1999,16 +2007,10 @@ class UVMReg(UVMObject):
     #   extern virtual function void            do_unpack  (uvm_packer packer)
     #
     #endclass: uvm_reg
-#
-#
+
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
 #//------------------------------------------------------------------------------
-#
-#// add_field
-#
-#
-#
 #
 #
 #//----------------------

@@ -691,8 +691,8 @@ class UVMRegBlock(UVMObject):
     #   // See <uvm_reg_block::set_coverage()> for more details.
     #   //
     #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL)
-    #
-    #
+
+
     #   // Function: sample
     #   //
     #   // Functional coverage measurement method
@@ -711,8 +711,9 @@ class UVMRegBlock(UVMObject):
     #                                           bit            is_read,
     #                                           UVMRegMap    map)
     #   endfunction
-    #
-    #
+    def sample(self, offset, is_read, _map):
+        pass
+
     #   // Function: sample_values
     #   //
     #   // Functional coverage measurement method for field values
@@ -736,6 +737,15 @@ class UVMRegBlock(UVMObject):
     #   /*local*/ extern function void XsampleX(uvm_reg_addr_t addr,
     #                                           bit            is_read,
     #                                           UVMRegMap    map)
+    def XsampleX(self, addr, is_read, _map):
+        self.sample(addr, is_read, _map)
+        if (self.parent is not None):
+            pass
+            # ToDo: Call XsampleX in the parent block
+            # with the offset and map within that block's context
+    #endfunction
+
+
     #
     #
     #   //--------------
@@ -1568,17 +1578,6 @@ class UVMRegBlock(UVMObject):
 #endfunction
 #
 #
-# XsampleX
-#
-#function void uvm_reg_block::XsampleX(uvm_reg_addr_t addr,
-#                                      bit            is_read,
-#                                      UVMRegMap    map)
-#   sample(addr, is_read, map)
-#   if (parent is not None):
-#      // ToDo: Call XsampleX in the parent block
-#      //       with the offset and map within that block's context
-#   end
-#endfunction
 #
 #
 #function uvm_reg_cvr_t uvm_reg_block::build_coverage(uvm_reg_cvr_t models)
