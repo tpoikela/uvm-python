@@ -15,6 +15,8 @@ should occur (unless the purpose of example is to cause uvm_fatal).
 [DONE] basic_examples/module/
 [DONE] sequence/basic_read_write_sequence/
 
+[DONE] registers/models/
+
 WIP
 ------------------
 
@@ -154,11 +156,6 @@ registers/models/shared_reg/Makefile.icarus
 registers/models/shared_reg/reg_B.sv
 registers/models/shared_reg/reg_pkg.sv
 
-registers/models/user-defined/dut.sv
-registers/models/user-defined/Makefile.icarus
-registers/models/user-defined/regmodel.sv
-registers/models/user-defined/tb_env.sv
-registers/models/user-defined/tb_run.sv
 
 
 registers/sequence_api/blk_dut.sv
