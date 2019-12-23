@@ -45,8 +45,8 @@ import cocotb
 
 #`define uvm_create(SEQ_OR_ITEM) \
 #  `uvm_create_on(T, SEQ_OR_ITEM, m_sequencer)
-def uvm_create(SEQ_OR_ITEM, m_sequencer):
-    return uvm_create_on(SEQ_OR_ITEM, m_sequencer)
+def uvm_create(seq_obj, SEQ_OR_ITEM, m_sequencer):
+    return uvm_create_on(seq_obj, SEQ_OR_ITEM, m_sequencer)
 
 
 #// MACRO: `uvm_do
@@ -160,9 +160,9 @@ def uvm_do_with(seq_obj, SEQ_OR_ITEM, CONSTRAINTS):
 #  w_ = SEQ_OR_ITEM.get_type(); \
 #  $cast(SEQ_OR_ITEM , create_item(w_, SEQR, `"SEQ_OR_ITEM`"));\
 #  end
-def uvm_create_on(SEQ_OR_ITEM, SEQR):
+def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
     w_ = SEQ_OR_ITEM.get_type()
-    return SEQ_OR_ITEM.create_item(w_, SEQR, "SEQ_OR_ITEM")
+    return seq_obj.create_item(w_, SEQR, "SEQ_OR_ITEM")
 
 
 #// MACRO: `uvm_do_on
@@ -223,7 +223,7 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 @cocotb.coroutine
 def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
     from ..seq.uvm_sequence import UVMSequence
-    _seq = uvm_create_on(SEQ_OR_ITEM, SEQR)
+    _seq = uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR)
     if isinstance(_seq, UVMSequence):
         yield SEQ_OR_ITEM.start(SEQR, seq_obj, PRIORITY, 0)
     else:
