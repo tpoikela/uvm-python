@@ -129,7 +129,8 @@ class UVMObject(sv_obj):
     #  //
     #  // This function is implemented by the `uvm_*_utils macros, if employed.
     def get_type(self):
-        uvm_report_error("NOTYPID", "get_type not implemented in derived class.", UVM_NONE)
+        uvm_report_error("NOTYPID", "get_type not implemented in derived class: "
+                + str(self), UVM_NONE)
         return None
 
     #  // Function: get_object_type

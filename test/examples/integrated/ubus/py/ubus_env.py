@@ -25,6 +25,7 @@ from uvm.macros import *
 from uvm.base import *
 from ubus_bus_monitor import ubus_bus_monitor
 from ubus_slave_agent import ubus_slave_agent
+from ubus_master_agent import ubus_master_agent
 
 #//------------------------------------------------------------------------------
 #//
@@ -67,8 +68,8 @@ class ubus_env(UVMEnv):
         self.vif = None
         # Control properties
         self.has_bus_monitor = True
-        self.num_masters = 0
-        self.num_slaves = 0
+        self.num_masters = 1
+        self.num_slaves = 1
 
     #  // build_phase
     def build_phase(self, phase):

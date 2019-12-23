@@ -27,6 +27,7 @@ from cocotb.triggers import Timer
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
 from ..macros import uvm_component_utils
+from ..base.uvm_globals import uvm_check_output_args
 
 #//------------------------------------------------------------------------------
 #//
@@ -87,11 +88,33 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Retrieves the next available item from a sequence.
     #  //
     #  extern virtual task          get_next_item (output REQ t)
+    @cocotb.coroutine
+    def get_next_item(self, t):
+        uvm_check_output_args([t])
+        # req_item = None
+
+        # If a sequence_item has already been requested, then get_next_item()
+        # should not be called again until item_done() has been called.
+
+        if self.get_next_item_called is True:
+            self.uvm_report_error(self.get_full_name(),
+                "Get_next_item called twice without item_done or get in between", UVM_NONE)
+
+        if self.sequence_item_requested is False:
+            yield self.m_select_sequence()
+
+        # Set flag indicating that the item has been requested to ensure that item_done or get
+        # is called between requests
+        self.sequence_item_requested = True
+        self.get_next_item_called = True
+        yield self.m_req_fifo.peek(t)
+        #endtask
     #
     #  // Task: try_next_item
     #  // Retrieves the next available item from a sequence if one is available.
     #  //
     #  extern virtual task          try_next_item (output REQ t)
+
     #
     #  // Function: item_done
     #  // Indicates that the request is completed.
@@ -235,28 +258,6 @@ uvm_component_utils(UVMSequencer)
 #endfunction
 #
 #
-#// get_next_item
-#// -------------
-#
-#task uvm_sequencer::get_next_item(output REQ t)
-#  REQ req_item
-#
-#  // If a sequence_item has already been requested, then get_next_item()
-#  // should not be called again until item_done() has been called.
-#
-#  if (get_next_item_called == 1)
-#    uvm_report_error(get_full_name(),
-#      "Get_next_item called twice without item_done or get in between", UVM_NONE)
-#
-#  if (!sequence_item_requested)
-#    m_select_sequence()
-#
-#  // Set flag indicating that the item has been requested to ensure that item_done or get
-#  // is called between requests
-#  sequence_item_requested = 1
-#  get_next_item_called = 1
-#  m_req_fifo.peek(t)
-#endtask
 #
 #
 #// try_next_item

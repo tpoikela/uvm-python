@@ -42,6 +42,14 @@ module dut_dummy(
 
   // Basic arbiter, supports two masters, 0 has priority over 1
 
+   `ifdef COCOTB_SIM
+   initial begin
+     $dumpfile ("dump.vcd");
+     $dumpvars (0, dut_dummy);
+     #1;
+   end
+   `endif
+
    always @(posedge ubus_clock or posedge ubus_reset) begin
      if(ubus_reset) begin
        ubus_start <= 1'b0;

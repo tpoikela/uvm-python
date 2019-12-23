@@ -19,10 +19,9 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
-#
+
 #typedef class uvm_sequence_library_cfg;
-#
+
 #//
 #// CLASS: uvm_sequence_library
 #//
@@ -60,7 +59,7 @@
 #//| endclass
 #//
 #//------------------------------------------------------------------------------
-#
+
 #class uvm_sequence_library #(type REQ=uvm_sequence_item,RSP=REQ) extends uvm_sequence #(REQ,RSP);
 #
 #   // Function: new

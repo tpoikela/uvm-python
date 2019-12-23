@@ -1387,6 +1387,14 @@ class UVMComponent(UVMReportObject):
     #                                        string label="",
     #                                        string desc="",
     #                                        time begin_time=0);
+    #function integer uvm_component::begin_child_tr (uvm_transaction tr,
+    #                                                integer parent_handle=0,
+    #                                                string stream_name="main",
+    #                                                string label="",
+    #                                                string desc="",
+    #                                                time begin_time=0);
+    #  return m_begin_tr(tr, parent_handle, stream_name, label, desc, begin_time);
+    #endfunction
 
 
     #// Function: do_begin_tr
@@ -2557,17 +2565,6 @@ class UVMComponent(UVMReportObject):
 #
 #
 #
-#// begin_child_tr
-#// --------------
-#
-#function integer uvm_component::begin_child_tr (uvm_transaction tr,
-#                                                integer parent_handle=0,
-#                                                string stream_name="main",
-#                                                string label="",
-#                                                string desc="",
-#                                                time begin_time=0);
-#  return m_begin_tr(tr, parent_handle, stream_name, label, desc, begin_time);
-#endfunction
 #
 #
 #// free_tr_stream

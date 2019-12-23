@@ -232,8 +232,8 @@ class UVMSequencerBase(UVMComponent):
     #  //
     #  //
     #
-
     #  extern virtual function void start_phase_sequence(uvm_phase phase)
+
     #
     #  // Function: stop_phase_sequence
     #  //
@@ -835,6 +835,10 @@ class UVMSequencerBase(UVMComponent):
     #
     #  extern virtual   function void   build()
     #  extern virtual   function void   build_phase(uvm_phase phase)
+    def build(self):
+        dummy = 0
+        UVMComponent.build(self)
+
     #  extern           function void   do_print (uvm_printer printer)
     #
     #
@@ -1049,37 +1053,6 @@ class UVMSequencerBase(UVMComponent):
 #  super.build_phase(phase)
 #endfunction
 #
-#
-#function void uvm_sequencer_base::build()
-#  int dummy
-#  super.build()
-#  `ifndef UVM_NO_DEPRECATED
-#  // deprecated parameters for sequencer. Use uvm_sequence_library class
-#  // for sequence library functionality.
-#  if (uvm_config_string::get(this, "", "default_sequence", default_sequence)) begin
-#    `uvm_warning("UVM_DEPRECATED",{"default_sequence config parameter is deprecated and not ",
-#                 "part of the UVM standard. See documentation for uvm_sequencer_base::start_phase_sequence()."})
-#    this.m_default_seq_set = 1
-#  end
-#  if (uvm_config_int::get(this, "", "count", count)) begin
-#    `uvm_warning("UVM_DEPRECATED",{"count config parameter is deprecated and not ",
-#                 "part of the UVM standard"})
-#  end
-#  if (uvm_config_int::get(this, "", "max_random_count", max_random_count)) begin
-#    `uvm_warning("UVM_DEPRECATED",{"count config parameter is deprecated and not ",
-#                 "part of the UVM standard"})
-#  end
-#  if (uvm_config_int::get(this, "", "max_random_depth", max_random_depth)) begin
-#    `uvm_warning("UVM_DEPRECATED",{"max_random_depth config parameter is deprecated and not ",
-#                 "part of the UVM standard. Use 'uvm_sequence_library' class for ",
-#                 "sequence library functionality"})
-#  end
-#  if (uvm_config_int::get(this, "", "pound_zero_count", dummy))
-#    `uvm_warning("UVM_DEPRECATED",
-#      {"pound_zero_count was set but ignored. ",
-#       "Sequencer/driver synchronization now uses 'uvm_wait_for_nba_region'"})
-#  `endif // UVM_NO_DEPRECATED
-#endfunction
 #
 #
 #// do_print

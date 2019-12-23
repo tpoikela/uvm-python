@@ -31,6 +31,7 @@ from ..base.uvm_object_globals import *
 from ..macros import uvm_fatal
 from ..base.uvm_pool import UVMPool
 from ..dap import uvm_get_to_lock_dap
+from ..base.uvm_recorder import UVMRecorder
 
 SEQ_ERR1_MSG = "neither the item's sequencer nor dedicated sequencer has been supplied to start item in "
 
@@ -68,10 +69,10 @@ SEQ_ERR1_MSG = "neither the item's sequencer nor dedicated sequencer has been su
 #//|
 #//|   sub_seq.pre_start()        (task)
 #//|   sub_seq.pre_body()         (task)  if call_pre_post==1
-#//|     parent_seq.pre_do(0)     (task)  if parent_sequence!=null
-#//|     parent_seq.mid_do(this)  (func)  if parent_sequence!=null
+#//|     parent_seq.pre_do(0)     (task)  if parent_sequence!=None
+#//|     parent_seq.mid_do(this)  (func)  if parent_sequence!=None
 #//|   sub_seq.body               (task)  YOUR STIMULUS CODE
-#//|     parent_seq.post_do(this) (func)  if parent_sequence!=null
+#//|     parent_seq.post_do(this) (func)  if parent_sequence!=None
 #//|   sub_seq.post_body()        (task)  if call_pre_post==1
 #//|   sub_seq.post_start()       (task)
 #//
@@ -235,12 +236,12 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Can be used to associate sub-sequences and sequence items as
     #  // child transactions when calling <uvm_component::begin_child_tr>.
     #
-    #  function integer get_tr_handle()
-    #     if (self.m_tr_recorder != null)
-    #       return self.m_tr_recorder.get_handle()
-    #     else
-    #       return 0
-    #  endfunction
+    def get_tr_handle(self):
+        if (self.m_tr_recorder is not None):
+            return self.m_tr_recorder.get_handle()
+        else:
+            return 0
+        #  endfunction
 
     #  //--------------------------
     #  // Group: Sequence Execution
@@ -254,7 +255,7 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // The ~sequencer~ argument specifies the sequencer on which to run this
     #  // sequence. The sequencer must be compatible with the sequence.
     #  //
-    #  // If ~parent_sequence~ is ~null~, then this sequence is a root parent,
+    #  // If ~parent_sequence~ is ~None~, then this sequence is a root parent,
     #  // otherwise it is a child of ~parent_sequence~. The ~parent_sequence~'s
     #  // pre_do, mid_do, and post_do methods will be called during the execution
     #  // of this sequence.
@@ -270,7 +271,7 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // <body> is called.
     #
     #  virtual task start (uvm_sequencer_base sequencer,
-    #                      uvm_sequence_base parent_sequence = null,
+    #                      uvm_sequence_base parent_sequence = None,
     #                      int this_priority = -1,
     #                      bit call_pre_post = 1)
     @cocotb.coroutine
@@ -308,14 +309,14 @@ class UVMSequenceBase(UVMSequenceItem):
             if self.m_parent_sequence is None:
                 stream = self.m_sequencer.get_tr_stream(self.get_name(), "Transactions")
                 handle = self.m_sequencer.begin_tr(self, self.get_name())
-                # TODO self.m_tr_recorder = UVMRecorder.get_recorder_from_handle(handle)
+                self.m_tr_recorder = UVMRecorder.get_recorder_from_handle(handle)
             else:
                 stream = self.m_sequencer.get_tr_stream(self.get_root_sequence_name(), "Transactions")
                 val = 0
-                if self.m_parent_sequence.self.m_tr_recorder is None:
-                    val = self.m_parent_sequence.self.m_tr_recorder.get_handle()
+                if self.m_parent_sequence.m_tr_recorder is not None:
+                    val = self.m_parent_sequence.m_tr_recorder.get_handle()
                 handle = self.m_sequencer.begin_child_tr(self, val, self.get_root_sequence_name())
-                # TODO self.m_tr_recorder = UVMRecorder.get_recorder_from_handle(handle)
+                self.m_tr_recorder = UVMRecorder.get_recorder_from_handle(handle)
 
         # Ensure that the sequence_id is intialized in case this sequence has been stopped previously
         self.set_sequence_id(-1)
@@ -517,7 +518,7 @@ class UVMSequenceBase(UVMSequenceItem):
 
         if create:
             self.m_automatic_phase_objection_dap = uvm_get_to_lock_dap.type_id.create(
-                    apo_name, self.get_sequencer())
+                apo_name, self.get_sequencer())
             self.m_starting_phase_dap = uvm_get_to_lock_dap.type_id.create(sp_name,
                     self.get_sequencer())
         else:
@@ -537,10 +538,11 @@ class UVMSequenceBase(UVMSequenceItem):
     #  bit m_warn_deprecated_set
     #`endif
     #
+
     #  // Function: get_starting_phase
     #  // Returns the 'starting phase'.
     #  //
-    #  // If non-~null~, the starting phase specifies the phase in which this
+    #  // If non-~None~, the starting phase specifies the phase in which this
     #  // sequence was started.  The starting phase is set automatically when
     #  // this sequence is started as the default sequence on a sequencer.
     #  // See <uvm_sequencer_base::start_phase_sequence> for more information.
@@ -551,34 +553,9 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // its execution (either via natural termination, or being killed),
     #  // then the starting phase value can be modified again.
     #  //
-    #  function uvm_phase get_starting_phase()
-    #`ifdef UVM_DEPRECATED_STARTING_PHASE
-    #     begin
-    #        bit throw_error
-    #
-    #        if (starting_phase != m_set_starting_phase) begin
-    #           if (!m_warn_deprecated_set) begin
-    #              `uvm_warning("UVM_DEPRECATED", "'starting_phase' is deprecated and not part of the UVM standard.  See documentation for uvm_sequence_base::set_starting_phase")
-    #              m_warn_deprecated_set = 1
-    #           end
-    #
-    #           if (m_starting_phase_dap.try_set(starting_phase))
-    #             m_set_starting_phase = starting_phase
-    #           else begin
-    #              uvm_phase dap_phase = m_starting_phase_dap.get()
-    #              `uvm_error("UVM/SEQ/LOCK_DEPR",
-    #                         {"The deprecated 'starting_phase' variable has been set to '",
-    #                          (starting_phase == null) ? "<null>" : starting_phase.get_full_name(),
-    #                          "' after a call to get_starting_phase locked the value to '",
-    #                          (dap_phase == null) ? "<null>" : dap_phase.get_full_name(),
-    #                          "'.  See documentation for uvm_sequence_base::set_starting_phase."})
-    #           end
-    #        end
-    #
-    #     end
-    #`endif
-    #     return m_starting_phase_dap.get()
-    #  endfunction : get_starting_phase
+    def get_starting_phase(self):
+        return self.m_starting_phase_dap.get()
+
     #
     #  // Function: set_starting_phase
     #  // Sets the 'starting phase'.
@@ -589,26 +566,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // its execution (either via natural termination, or being killed),
     #  // then the starting phase value can be modified again.
     #  //
-    #  function void set_starting_phase(uvm_phase phase)
-    #`ifdef UVM_DEPRECATED_STARTING_PHASE
-    #     begin
-    #        if (starting_phase != m_set_starting_phase) begin
-    #           if (!m_warn_deprecated_set) begin
-    #              `uvm_warning("UVM_DEPRECATED",
-    #                           {"The deprecated 'starting_phase' variable has been set to '",
-    #                            starting_phase.get_full_name(),
-    #                            "' manually.  See documentation for uvm_sequence_base::set_starting_phase."})
-    #              m_warn_deprecated_set = 1
-    #           end
-    #
-    #           starting_phase = phase
-    #           m_set_starting_phase = phase
-    #        end
-    #     end
-    #`endif
-    #
-    #     m_starting_phase_dap.set(phase)
-    #  endfunction : set_starting_phase
+    def set_starting_phase(self, phase):
+        self.m_starting_phase_dap.set(phase)
 
     #  // Function: set_automatic_phase_objection
     #  // Sets the 'automatically object to starting phase' bit.
@@ -663,7 +622,7 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // starting phase' bit.
     #  //
     #  // If 1, then the sequence will automatically raise an objection
-    #  // to the starting phase (if the starting phase is not ~null~) immediately
+    #  // to the starting phase (if the starting phase is not ~None~) immediately
     #  // prior to <pre_start> being called.  The objection will be dropped
     #  // after <post_start> has executed, or <kill> has been called.
     #  //
@@ -673,16 +632,17 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // m_safe_raise_starting_phase
     #  function void m_safe_raise_starting_phase(string description = "",
     #                                            int count = 1)
-    #     uvm_phase starting_phase = get_starting_phase()
-    #     if (starting_phase != null)
-    #       starting_phase.raise_objection(this, description, count)
-    #  endfunction : m_safe_raise_starting_phase
+    def m_safe_raise_starting_phase(self, description="", count=1):
+        starting_phase = self.get_starting_phase()
+        if (starting_phase is not None):
+            starting_phase.raise_objection(self, description, count)
+
     #
     #  // m_safe_drop_starting_phase
     #  function void m_safe_drop_starting_phase(string description = "",
     #                                           int count = 1)
     #     uvm_phase starting_phase = get_starting_phase()
-    #     if (starting_phase != null)
+    #     if (starting_phase is not None)
     #       starting_phase.drop_objection(this, description, count)
     #  endfunction : m_safe_drop_starting_phase
 
@@ -757,7 +717,7 @@ class UVMSequenceBase(UVMSequenceItem):
 
     #  // Task: lock
     #  //
-    #  // Requests a lock on the specified sequencer. If sequencer is ~null~, the lock
+    #  // Requests a lock on the specified sequencer. If sequencer is ~None~, the lock
     #  // will be requested on the current default sequencer.
     #  //
     #  // A lock request will be arbitrated the same as any other request.  A lock is
@@ -766,12 +726,12 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //
     #  // The lock call will return when the lock has been granted.
     #
-    #  task lock(uvm_sequencer_base sequencer = null)
-    #    if (sequencer == null)
+    #  task lock(uvm_sequencer_base sequencer = None)
+    #    if (sequencer == None)
     #      sequencer = self.m_sequencer
     #
-    #    if (sequencer == null)
-    #      uvm_report_fatal("LOCKSEQR", "Null self.m_sequencer reference", UVM_NONE)
+    #    if (sequencer == None)
+    #      uvm_report_fatal("LOCKSEQR", "None self.m_sequencer reference", UVM_NONE)
     #
     #    sequencer.lock(this)
     #  endtask
@@ -788,10 +748,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //
     #  // The grab call will return when the grab has been granted.
     #
-    #  task grab(uvm_sequencer_base sequencer = null)
-    #    if (sequencer == null) begin
-    #      if (self.m_sequencer == null) begin
-    #        uvm_report_fatal("GRAB", "Null self.m_sequencer reference", UVM_NONE)
+    #  task grab(uvm_sequencer_base sequencer = None)
+    #    if (sequencer == None) begin
+    #      if (self.m_sequencer == None) begin
+    #        uvm_report_fatal("GRAB", "None self.m_sequencer reference", UVM_NONE)
     #      end
     #      self.m_sequencer.grab(this)
     #    end
@@ -804,13 +764,13 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Function: unlock
     #  //
     #  // Removes any locks or grabs obtained by this sequence on the specified
-    #  // sequencer. If sequencer is ~null~, then the unlock will be done on the
+    #  // sequencer. If sequencer is ~None~, then the unlock will be done on the
     #  // current default sequencer.
     #
-    #  function void  unlock(uvm_sequencer_base sequencer = null)
-    #    if (sequencer == null) begin
-    #      if (self.m_sequencer == null) begin
-    #        uvm_report_fatal("UNLOCK", "Null self.m_sequencer reference", UVM_NONE)
+    #  function void  unlock(uvm_sequencer_base sequencer = None)
+    #    if (sequencer == None) begin
+    #      if (self.m_sequencer == None) begin
+    #        uvm_report_fatal("UNLOCK", "None self.m_sequencer reference", UVM_NONE)
     #      end
     #      self.m_sequencer.unlock(this)
     #    end else begin
@@ -822,10 +782,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Function: ungrab
     #  //
     #  // Removes any locks or grabs obtained by this sequence on the specified
-    #  // sequencer. If sequencer is ~null~, then the unlock will be done on the
+    #  // sequencer. If sequencer is ~None~, then the unlock will be done on the
     #  // current default sequencer.
     #
-    #  function void  ungrab(uvm_sequencer_base sequencer = null)
+    #  function void  ungrab(uvm_sequencer_base sequencer = None)
     #    unlock(sequencer)
     #  endfunction
     #
@@ -870,10 +830,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // method.
     #
     #  function void kill()
-    #    if (m_sequence_process != null) begin
+    #    if (m_sequence_process is not None) begin
     #      // If we are not connected to a sequencer, then issue
     #      // kill locally.
-    #      if (self.m_sequencer == null) begin
+    #      if (self.m_sequencer == None) begin
     #        m_kill()
     #        // We need to drop the objection if we raised it...
     #        if (get_automatic_phase_objection()) begin
@@ -908,12 +868,12 @@ class UVMSequenceBase(UVMSequenceItem):
     #    foreach(children_array[i]) begin
     #       i.kill()
     #    end
-    #    if (m_sequence_process != null) begin
+    #    if (m_sequence_process is not None) begin
     #      m_sequence_process.kill
-    #      m_sequence_process = null
+    #      m_sequence_process = None
     #    end
     #    m_sequence_state = UVM_STOPPED
-    #    if ((self.m_parent_sequence != null) && (self.m_parent_sequence.children_array.exists(this)))
+    #    if ((self.m_parent_sequence is not None) && (self.m_parent_sequence.children_array.exists(this)))
     #      self.m_parent_sequence.children_array.delete(this)
     #  endfunction
     #
@@ -922,6 +882,7 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Group: Sequence Item Execution
     #  //-------------------------------
     #
+
     #  // Function: create_item
     #  //
     #  // Create_item will create and initialize a sequence_item or sequence
@@ -930,13 +891,14 @@ class UVMSequenceBase(UVMSequenceItem):
     #
     #  protected function uvm_sequence_item create_item(uvm_object_wrapper type_var,
     #                                                   uvm_sequencer_base l_sequencer, string name)
-    #
-    #    uvm_coreservice_t cs = uvm_coreservice_t::get()
-    #    uvm_factory factory=cs.get_factory()
-    #    $cast(create_item,  factory.create_object_by_type( type_var, this.get_full_name(), name ))
-    #
-    #    create_item.set_item_context(this, l_sequencer)
-    #  endfunction
+    def create_item(self, type_var, l_sequencer, name):
+        from ..base.uvm_coreservice import UVMCoreService
+        cs = UVMCoreService.get()
+        factory = cs.get_factory()
+        item = factory.create_object_by_type(type_var, self.get_full_name(), name)
+        item.set_item_context(self, l_sequencer)
+        return item
+        #  endfunction
 
     #  // Function: start_item
     #  //
@@ -948,14 +910,14 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //
     #  virtual task start_item (uvm_sequence_item item,
     #                           int set_priority = -1,
-    #                           uvm_sequencer_base sequencer=null)
+    #                           uvm_sequencer_base sequencer=None)
     @cocotb.coroutine
     def start_item(self, item, set_priority=-1, sequencer=None):
         seq = None
 
         if item is None:
-            uvm_fatal("NULLITM",
-               "attempting to start a null item from sequence " + self. get_full_name())
+            uvm_fatal("NoneITM",
+               "attempting to start a None item from sequence " + self. get_full_name())
             return
 
         #if($cast(seq, item)) begin
@@ -989,7 +951,7 @@ class UVMSequenceBase(UVMSequenceItem):
         # TODO recording
         #if (sequencer.is_auto_item_recording_enabled()) begin
         #  void'(sequencer.begin_child_tr(item,
-        #                                 (self.m_tr_recorder == null) ? 0 : self.m_tr_recorder.get_handle(),
+        #                                 (self.m_tr_recorder == None) ? 0 : self.m_tr_recorder.get_handle(),
         #                                 item.get_root_sequence_name(), "Transactions"))
         #end
 
@@ -1009,7 +971,7 @@ class UVMSequenceBase(UVMSequenceItem):
         sequencer = item.get_sequencer()
 
         if sequencer is None:
-            uvm_fatal("STRITM", "sequence_item has null sequencer")
+            uvm_fatal("STRITM", "sequence_item has None sequencer")
 
         self.mid_do(item)
         sequencer.send_request(self, item)
@@ -1036,8 +998,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // item to be sent via the send_request call.
     #
     #  virtual task wait_for_grant(int item_priority = -1, bit lock_request = 0)
-    #    if (self.m_sequencer == null) begin
-    #      uvm_fatal("WAITGRANT", "Null self.m_sequencer reference")
+    #    if (self.m_sequencer == None) begin
+    #      uvm_fatal("WAITGRANT", "None self.m_sequencer reference")
     #    end
     #    self.m_sequencer.wait_for_grant(this, item_priority, lock_request)
     #  endtask
@@ -1051,8 +1013,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // randomized before being sent to the driver.
     #
     #  virtual function void send_request(uvm_sequence_item request, bit rerandomize = 0)
-    #    if (self.m_sequencer == null) begin
-    #        uvm_report_fatal("SENDREQ", "Null self.m_sequencer reference", UVM_NONE)
+    #    if (self.m_sequencer == None) begin
+    #        uvm_report_fatal("SENDREQ", "None self.m_sequencer reference", UVM_NONE)
     #      end
     #    self.m_sequencer.send_request(this, request, rerandomize)
     #  endfunction
@@ -1072,8 +1034,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #
     #
     #  virtual task wait_for_item_done(int transaction_id = -1)
-    #    if (self.m_sequencer == null) begin
-    #        uvm_report_fatal("WAITITEMDONE", "Null self.m_sequencer reference", UVM_NONE)
+    #    if (self.m_sequencer == None) begin
+    #        uvm_report_fatal("WAITITEMDONE", "None self.m_sequencer reference", UVM_NONE)
     #      end
     #    self.m_sequencer.wait_for_item_done(this, transaction_id)
     #  endtask
@@ -1240,7 +1202,7 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Returns the number of sequences in the sequencer's sequence library.
     #
     #  function int num_sequences()
-    #    if (self.m_sequencer == null)
+    #    if (self.m_sequencer == None)
     #      return 0
     #    return (self.m_sequencer.num_sequences())
     #  endfunction
@@ -1255,10 +1217,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #
     #  function int get_seq_kind(string type_name)
     #    `uvm_warning("UVM_DEPRECATED",$sformatf("%m deprecated."))
-    #    if(self.m_sequencer != null)
+    #    if(self.m_sequencer is not None)
     #      return self.m_sequencer.get_seq_kind(type_name)
     #    else
-    #      uvm_report_warning("NULLSQ", $sformatf("%0s sequencer is null.",
+    #      uvm_report_warning("NoneSQ", $sformatf("%0s sequencer is None.",
     #                                           get_type_name()), UVM_NONE)
     #  endfunction
     #

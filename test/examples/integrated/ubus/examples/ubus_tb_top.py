@@ -52,10 +52,12 @@ def initial_reset(vif):
 def always_clk(dut, ncycles):
     dut.ubus_clock <= 0
     n = 0
+    print("EEE starting always_clk")
     while n < 2*ncycles:
         n += 1
         yield Timer(5, "NS")
-        dut.ubus_clock <= ~dut.ubus_clock
+        next_val = not dut.ubus_clock.value
+        dut.ubus_clock <= int(next_val)
 
 #module ubus_tb_top;
 @cocotb.test()
@@ -67,4 +69,5 @@ def module_ubus_tb(dut):
     proc_reset = cocotb.fork(initial_reset(dut))
     proc_clk = cocotb.fork(always_clk(dut, 100))
 
-    yield proc_run_test
+    yield Timer(1000, "NS")
+    yield [proc_run_test, proc_clk.join()]

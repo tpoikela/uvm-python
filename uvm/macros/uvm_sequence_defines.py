@@ -1,10 +1,10 @@
 #//------------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
-#//   Copyright 2007-2010 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2019 Tuomas Poikela (tpoikela)
-#//   All Rights Reserved Worldwide 
-#//  
+#//   All Rights Reserved Worldwide
+#//
 #//   Licensed under the Apache License, Version 2.0 (the
 #//   "License"); you may not use this file except in
 #//   compliance with the License.  You may obtain a copy of
@@ -20,6 +20,8 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
+import cocotb
+
 #// Title: Sequence-Related Macros
 
 #//-----------------------------------------------------------------------------
@@ -27,7 +29,7 @@
 #// Group: Sequence Action Macros
 #//
 #// These macros are used to start sequences and sequence items on the default
-#// sequencer, ~m_sequencer~. This is determined a number of ways. 
+#// sequencer, ~m_sequencer~. This is determined a number of ways.
 #// - the sequencer handle provided in the <uvm_sequence_base::start> method
 #// - the sequencer used by the parent sequence
 #// - the sequencer that was set using the <uvm_sequence_item::set_sequencer> method
@@ -56,7 +58,7 @@ def uvm_create(SEQ_OR_ITEM, m_sequencer):
 #// then randomized.
 #// In the case of an item, it is randomized after the call to
 #// <uvm_sequence_base::start_item()> returns.
-#// This is called late-randomization. 
+#// This is called late-randomization.
 #// In the case of a sequence, the sub-sequence is started using
 #// <uvm_sequence_base::start()> with ~call_pre_post~ set to 0.
 #// In the case of an item,
@@ -88,8 +90,12 @@ def uvm_create(SEQ_OR_ITEM, m_sequencer):
 #//|   sub_seq.post_start()        (task)
 #//|
 #
-#`define uvm_do(SEQ_OR_ITEM) \
-#  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, {})
+#`define uvm_do(seq_obj, SEQ_OR_ITEM) \
+#  `uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, m_sequencer, -1, {})
+
+@cocotb.coroutine
+def uvm_do(seq_obj, SEQ_OR_ITEM):
+    yield uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1, [])
 #
 #
 #// MACRO: `uvm_do_pri
@@ -101,8 +107,8 @@ def uvm_create(SEQ_OR_ITEM, m_sequencer):
 #
 #`define uvm_do_pri(SEQ_OR_ITEM, PRIORITY) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, PRIORITY, {})
-#
-#
+
+
 #// MACRO: `uvm_do_with
 #//
 #//| `uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS)
@@ -113,8 +119,12 @@ def uvm_create(SEQ_OR_ITEM, m_sequencer):
 #
 #`define uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, CONSTRAINTS)
-#
-#
+@cocotb.coroutine
+def uvm_do_with(seq_obj, SEQ_OR_ITEM, CONSTRAINTS):
+    yield uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1,
+            CONSTRAINTS)
+
+
 #// MACRO: `uvm_do_pri_with
 #//
 #//| `uvm_do_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS)
@@ -190,8 +200,7 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #
 #`define uvm_do_on_with(SEQ_OR_ITEM, SEQR, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, -1, CONSTRAINTS)
-#
-#
+
 #// MACRO: `uvm_do_on_pri_with
 #//
 #//| `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS)
@@ -211,6 +220,17 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #  if (!$cast(__seq,SEQ_OR_ITEM)) finish_item(SEQ_OR_ITEM, PRIORITY); \
 #  else __seq.start(SEQR, this, PRIORITY, 0); \
 #  end
+@cocotb.coroutine
+def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
+    from ..seq.uvm_sequence import UVMSequence
+    _seq = uvm_create_on(SEQ_OR_ITEM, SEQR)
+    if isinstance(_seq, UVMSequence):
+        yield SEQ_OR_ITEM.start(SEQR, seq_obj, PRIORITY, 0)
+    else:
+        # TODO handle constraints
+        yield seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
+        yield seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
+
 #
 #
 #//-----------------------------------------------------------------------------
@@ -218,7 +238,7 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #// Group: Sequence Action Macros for Pre-Existing Sequences
 #//
 #// These macros are used to start sequences and sequence items that do not
-#// need to be created. 
+#// need to be created.
 #//-----------------------------------------------------------------------------
 #
 #
@@ -250,7 +270,7 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #  end \
 #  else __seq.start(__seq.get_sequencer(), this, PRIORITY, 0);\
 #  end
-#  
+#
 #
 #// MACRO: `uvm_rand_send
 #//
@@ -366,7 +386,7 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #// MACRO: `uvm_sequence_library_utils
 #//
 #//| `uvm_sequence_library_utils(TYPE)
-#// 
+#//
 #// Declares the infrastructure needed to define extensions to the
 #// <uvm_sequence_library> class. You define new sequence library subtypes
 #// to statically specify sequence membership from within sequence
@@ -447,7 +467,7 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #//|   endtask
 #//| endclass
 #//
-#
+
 #`define uvm_declare_p_sequencer(SEQUENCER) \
 #  SEQUENCER p_sequencer;\
 #  virtual function void m_set_p_sequencer();\
@@ -455,5 +475,5 @@ def uvm_create_on(SEQ_OR_ITEM, SEQR):
 #    if( !$cast(p_sequencer, m_sequencer)) \
 #        `uvm_fatal("DCLPSQ", \
 #        $sformatf("%m %s Error casting p_sequencer, please verify that this sequence/sequence item is intended to execute on this type of sequencer", get_full_name())) \
-#  endfunction  
+#  endfunction
 #

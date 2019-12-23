@@ -20,8 +20,8 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 
-#typedef class uvm_sequence_base;
-#typedef class uvm_sequencer_base;
+#typedef class uvm_sequence_base
+#typedef class uvm_sequencer_base
 
 from ..base.uvm_transaction import UVMTransaction
 from ..base.uvm_globals import *
@@ -38,14 +38,14 @@ from ..base.uvm_globals import *
 #------------------------------------------------------------------------------
 
 class UVMSequenceItem(UVMTransaction):
-    #  local      int                self.m_sequence_id = -1;
-    #  protected  bit                self.m_use_sequence_info;
-    #  protected  int                self.m_depth = -1;
-    #  protected  uvm_sequencer_base self.m_sequencer;
-    #  protected  uvm_sequence_base  self.m_parent_sequence;
-    #  bit        self.print_sequence_info;
+    #  local      int                self.m_sequence_id = -1
+    #  protected  bit                self.m_use_sequence_info
+    #  protected  int                self.m_depth = -1
+    #  protected  uvm_sequencer_base self.m_sequencer
+    #  protected  uvm_sequence_base  self.m_parent_sequence
+    #  bit        self.print_sequence_info
 
-    #  static     bit issued1,issued2;
+    #  static     bit issued1,issued2
     issued1 = False
     issued2 = False
 
@@ -59,6 +59,7 @@ class UVMSequenceItem(UVMTransaction):
         self.m_use_sequence_info = False
         self.m_depth = -1
         self.m_sequencer = None
+        self.p_sequencer = None
         self.m_parent_sequence = None
         self.print_sequence_info = False
     #  endfunction
@@ -146,7 +147,7 @@ class UVMSequenceItem(UVMTransaction):
     #  // initialize responses for future compatibility.
     def set_id_info(self, item):
         if item is None:
-            uvm_report_fatal(self.get_full_name(), "set_id_info called with null parameter", UVM_NONE)
+            uvm_report_fatal(self.get_full_name(), "set_id_info called with None parameter", UVM_NONE)
         self.set_transaction_id(item.get_transaction_id())
         self.set_sequence_id(item.get_sequence_id())
 
@@ -183,7 +184,7 @@ class UVMSequenceItem(UVMTransaction):
     #  // Function: get_parent_sequence
     #  //
     #  // Returns a reference to the parent sequence of any sequence on which this
-    #  // method was called. If this is a parent sequence, the method returns ~null~.
+    #  // method was called. If this is a parent sequence, the method returns ~None~.
     #
     def get_parent_sequence(self):
         return (self.m_parent_sequence)
@@ -252,7 +253,7 @@ class UVMSequenceItem(UVMTransaction):
     #  // Provides the name of the root sequence (the top-most parent sequence).
     #
     def get_root_sequence_name(self):
-        #uvm_sequence_base root_seq;
+        #uvm_sequence_base root_seq
         root_seq = self.get_root_sequence()
         if root_seq is None:
             return ""
@@ -263,75 +264,67 @@ class UVMSequenceItem(UVMTransaction):
     #  // Function- m_set_p_sequencer
     #  //
     #  // Internal method
-
     def m_set_p_sequencer(self):
-        return
-    # endfunction
+        self.p_sequencer = self.m_sequencer
 
     #  // Function: get_root_sequence
     #  //
     #  // Provides a reference to the root sequence (the top-most parent sequence).
     #
-    #  function uvm_sequence_base get_root_sequence();
-    #    UVMSequenceItem root_seq_base;
-    #    uvm_sequence_base root_seq;
-    #    root_seq_base = this;
-    #    while(1) begin
-    #      if(root_seq_base.get_parent_sequence()!=null) begin
-    #        root_seq_base = root_seq_base.get_parent_sequence();
-    #        $cast(root_seq, root_seq_base);
-    #      end
-    #      else
-    #        return root_seq;
-    #    end
-    #  endfunction
-    #
-    #
+    def get_root_sequence(self):
+        root_seq_base = None  # UVMSequenceItem
+        root_seq = None
+        root_seq_base = self
+        while True:
+            if (root_seq_base.get_parent_sequence() is not None):
+                root_seq_base = root_seq_base.get_parent_sequence()
+                #$cast(root_seq, root_seq_base)
+                root_seq = root_seq_base
+            else:
+                return root_seq
+        #  endfunction
+
     #  // Function: get_sequence_path
     #  //
     #  // Provides a string of names of each sequence in the full hierarchical
     #  // path. A "." is used as the separator between each sequence.
-    #
-    #  function string get_sequence_path();
-    #    UVMSequenceItem this_item;
-    #    string seq_path;
-    #    this_item = this;
-    #    seq_path = this.get_name();
-    #    while(1) begin
-    #      if(this_item.get_parent_sequence()!=null) begin
-    #        this_item = this_item.get_parent_sequence();
-    #        seq_path = {this_item.get_name(), ".", seq_path};
-    #      end
-    #      else
-    #        return seq_path;
-    #    end
-    #  endfunction
-    #
-    #
+    def get_sequence_path(self):
+        this_item = None  # UVMSequenceItem
+        seq_path = ""
+        this_item = self
+        seq_path = self.get_name()
+        while True:
+            if this_item.get_parent_sequence() is not None:
+                this_item = this_item.get_parent_sequence()
+                seq_path = this_item.get_name() + "." + seq_path
+            else:
+                return seq_path
+        #  endfunction
+
     #  //---------------------------
     #  // Group: Reporting Interface
     #  //---------------------------
     #  //
     #  // Sequence items and sequences will use the sequencer which they are
-    #  // associated with for reporting messages. If no sequencer has been set
+    #  // associated with for reporting messages. If no sequencer has been se
     #  // for the item/sequence using <set_sequencer> or indirectly via
     #  // <uvm_sequence_base::start_item> or <uvm_sequence_base::start>),
     #  // then the global reporter will be used.
     #
-    #  virtual function uvm_report_object uvm_get_report_object();
-    #    if(self.m_sequencer == null) begin
-    #      uvm_coreservice_t cs = uvm_coreservice_t::get();
-    #       return cs.get_root();
+    #  virtual function uvm_report_object uvm_get_report_object()
+    #    if(self.m_sequencer == None):
+    #      uvm_coreservice_t cs = uvm_coreservice_t::get()
+    #       return cs.get_root()
     #    end else
-    #      return self.m_sequencer;
+    #      return self.m_sequencer
     #  endfunction
     #
     #  function int uvm_report_enabled(int verbosity,
-    #    				  uvm_severity severity=UVM_INFO, string id="");
-    #    uvm_report_object l_report_object = uvm_get_report_object();
+    #    				  uvm_severity severity=UVM_INFO, string id="")
+    #    uvm_report_object l_report_object = uvm_get_report_object()
     #    if (l_report_object.get_report_verbosity_level(severity, id) < verbosity)
-    #      return 0;
-    #    return 1;
+    #      return 0
+    #    return 1
     #  endfunction
     #
     #  // Function: uvm_report
@@ -343,16 +336,16 @@ class UVMSequenceItem(UVMTransaction):
     #                                    string filename = "",
     #                                    int line = 0,
     #                                    string context_name = "",
-    #                                    bit report_enabled_checked = 0);
-    #    uvm_report_message l_report_message;
-    #    if (report_enabled_checked == 0) begin
+    #                                    bit report_enabled_checked = 0)
+    #    uvm_report_message l_report_message
+    #    if (report_enabled_checked == 0):
     #      if (!uvm_report_enabled(verbosity, severity, id))
-    #        return;
+    #        return
     #    end
-    #    l_report_message = uvm_report_message::new_report_message();
+    #    l_report_message = uvm_report_message::new_report_message()
     #    l_report_message.set_report_message(severity, id, message,
-    #					verbosity, filename, line, context_name);
-    #    uvm_process_report_message(l_report_message);
+    #					verbosity, filename, line, context_name)
+    #    uvm_process_report_message(l_report_message)
     #
     #  endfunction
     #
@@ -364,10 +357,10 @@ class UVMSequenceItem(UVMTransaction):
     #					 string filename = "",
     #					 int line = 0,
     #   					 string context_name = "",
-    #					 bit report_enabled_checked = 0);
+    #					 bit report_enabled_checked = 0)
     #
     #    this.uvm_report(UVM_INFO, id, message, verbosity, filename, line,
-    #                    context_name, report_enabled_checked);
+    #                    context_name, report_enabled_checked)
     #  endfunction
     #
     #  // Function: uvm_report_warning
@@ -378,10 +371,10 @@ class UVMSequenceItem(UVMTransaction):
     #					    string filename = "",
     #					    int line = 0,
     #   					    string context_name = "",
-    #					    bit report_enabled_checked = 0);
+    #					    bit report_enabled_checked = 0)
     #
     #    this.uvm_report(UVM_WARNING, id, message, verbosity, filename, line,
-    #                    context_name, report_enabled_checked);
+    #                    context_name, report_enabled_checked)
     #  endfunction
     #
     #  // Function: uvm_report_error
@@ -392,10 +385,10 @@ class UVMSequenceItem(UVMTransaction):
     #					  string filename = "",
     #					  int line = 0,
     #   					  string context_name = "",
-    #					  bit report_enabled_checked = 0);
+    #					  bit report_enabled_checked = 0)
     #
     #    this.uvm_report(UVM_ERROR, id, message, verbosity, filename, line,
-    #                    context_name, report_enabled_checked);
+    #                    context_name, report_enabled_checked)
     #  endfunction
     #
     #  // Function: uvm_report_fatal
@@ -411,18 +404,18 @@ class UVMSequenceItem(UVMTransaction):
     #					  string filename = "",
     #					  int line = 0,
     #   					  string context_name = "",
-    #					  bit report_enabled_checked = 0);
+    #					  bit report_enabled_checked = 0)
     #
     #    this.uvm_report(UVM_FATAL, id, message, verbosity, filename, line,
-    #                    context_name, report_enabled_checked);
+    #                    context_name, report_enabled_checked)
     #  endfunction
     #
-    #  virtual function void uvm_process_report_message (uvm_report_message report_message);
-    #    uvm_report_object l_report_object = uvm_get_report_object();
-    #    report_message.set_report_object(l_report_object);
+    #  virtual function void uvm_process_report_message (uvm_report_message report_message)
+    #    uvm_report_object l_report_object = uvm_get_report_object()
+    #    report_message.set_report_object(l_report_object)
     #    if (report_message.get_context() == "")
-    #      report_message.set_context(get_sequence_path());
-    #    l_report_object.m_rh.process_report_message(report_message);
+    #      report_message.set_context(get_sequence_path())
+    #    l_report_object.m_rh.process_report_message(report_message)
     #  endfunction
     #
     #
@@ -430,23 +423,23 @@ class UVMSequenceItem(UVMTransaction):
     #  //
     #  // Internal method
     #
-    #  function void do_print (uvm_printer printer);
-    #    string temp_str0, temp_str1;
-    #    int depth = get_depth();
-    #    super.do_print(printer);
-    #    if(self.print_sequence_info || self.m_use_sequence_info) begin
-    #      printer.print_field_int("depth", depth, $bits(depth), UVM_DEC, ".", "int");
-    #      if(self.m_parent_sequence != null) begin
-    #        temp_str0 = self.m_parent_sequence.get_name();
-    #        temp_str1 = self.m_parent_sequence.get_full_name();
+    #  function void do_print (uvm_printer printer)
+    #    string temp_str0, temp_str1
+    #    int depth = get_depth()
+    #    super.do_print(printer)
+    #    if(self.print_sequence_info || self.m_use_sequence_info):
+    #      printer.print_field_int("depth", depth, $bits(depth), UVM_DEC, ".", "int")
+    #      if(self.m_parent_sequence != None):
+    #        temp_str0 = self.m_parent_sequence.get_name()
+    #        temp_str1 = self.m_parent_sequence.get_full_name()
     #      end
-    #      printer.print_string("parent sequence (name)", temp_str0);
-    #      printer.print_string("parent sequence (full name)", temp_str1);
-    #      temp_str1 = "";
-    #      if(self.m_sequencer != null) begin
-    #        temp_str1 = self.m_sequencer.get_full_name();
+    #      printer.print_string("parent sequence (name)", temp_str0)
+    #      printer.print_string("parent sequence (full name)", temp_str1)
+    #      temp_str1 = ""
+    #      if(self.m_sequencer != None):
+    #        temp_str1 = self.m_sequencer.get_full_name()
     #      end
-    #      printer.print_string("sequencer", temp_str1);
+    #      printer.print_string("sequencer", temp_str1)
     #    end
     #  endfunction
     #

@@ -27,6 +27,7 @@
 #typedef class uvm_parent_child_link
 
 from .sv import sv
+from .uvm_recorder import UVMRecorder
 
 #------------------------------------------------------------------------------
 #
@@ -273,6 +274,7 @@ class UVMTransaction(UVMObject):
     #
     #  extern function integer begin_tr (time begin_time = 0)
     #
+
     #
     #  // Function: begin_child_tr
     #  //
@@ -308,6 +310,10 @@ class UVMTransaction(UVMObject):
     #
     #  extern function integer begin_child_tr (time begin_time = 0,
     #                                               integer parent_handle = 0)
+    #Use a parent handle of zero to link to the parent after begin
+    def begin_child_tr(self, begin_time=0, parent_handle=0):
+        return self.m_begin_tr(begin_time, parent_handle)
+
     #
     #
     #  // Function: do_begin_tr
@@ -508,8 +514,62 @@ class UVMTransaction(UVMObject):
     #  extern virtual function void do_copy   (uvm_object rhs)
     #
     #
+
     #  extern protected function integer m_begin_tr (time    begin_time=0,
     #                                                integer parent_handle=0)
+    def m_begin_tr(self, begin_time=0, parent_handle=0):
+        m_begin_tr = 0
+        tmp_time = begin_time
+        if (begin_time == 0):
+            tmp_time = sv.realtime()
+        parent_recorder = None
+        
+        if (parent_handle != 0):
+            parent_recorder = UVMRecorder.get_recorder_from_handle(parent_handle)
+
+        # If we haven't ended the previous record, end it.
+        if (self.tr_recorder is not None):
+            # Don't free the handle, someone else may be using it...
+            self.end_tr(tmp_time)
+
+        # May want to establish predecessor/successor relation
+        # (don't free handle until then)
+        if self.is_recording_enabled():
+            db = self.stream_handle.get_db()
+            self.end_time = -1
+            self.begin_time = tmp_time
+          
+            if (parent_recorder is None):
+                self.tr_recorder = self.stream_handle.open_recorder(self.get_type_name(),
+                        self.begin_time,
+                        "Begin_No_Parent, Link")
+            else:
+                self.tr_recorder = self.stream_handle.open_recorder(self.get_type_name(),
+                        self.begin_time,
+                        "Begin_End, Link")
+          
+                if (self.tr_recorder is not None):
+                    pass
+                    #link = uvm_parent_child_link::get_link(parent_recorder, self.tr_recorder)
+                    # TODO
+                    #db.establish_link(link)
+          
+            if (self.tr_recorder is not None):
+                m_begin_tr = self.tr_recorder.get_handle()
+            else:
+                m_begin_tr = 0
+        else:
+            self.tr_recorder = None
+            self.end_time = -1
+            self.begin_time = tmp_time
+            m_begin_tr = 0
+
+        self.do_begin_tr()  # execute callback before event trigger
+        self.begin_event.trigger()
+        return m_begin_tr
+
+        #endfunction
+
     #
     #  local integer self.m_transaction_id = -1
     #
@@ -605,7 +665,7 @@ class UVMTransaction(UVMObject):
 #    printer.print_time("begin_time", begin_time)
 #  if(end_time != -1)
 #    printer.print_time("end_time", end_time)
-#  if(initiator != null) begin
+#  if(initiator is not None):
 #    tmp_initiator = initiator
 #    $swrite(str,"@%0d", tmp_initiator.get_inst_id())
 #    printer.print_generic("initiator", initiator.get_type_name(), -1, str)
@@ -615,7 +675,7 @@ class UVMTransaction(UVMObject):
 #function void uvm_transaction::do_copy (uvm_object rhs)
 #  uvm_transaction txn
 #  super.do_copy(rhs)
-#  if(rhs == null) return
+#  if(rhs is None) return
 #  if(!$cast(txn, rhs) ) return
 #
 #  accept_time = txn.accept_time
@@ -634,7 +694,7 @@ class UVMTransaction(UVMObject):
 #  super.do_record(recorder)
 #  if(accept_time != -1)
 #     recorder.record_field("accept_time", accept_time, $bits(accept_time), UVM_TIME)
-#  if(initiator != null) begin
+#  if(initiator is not None):
 #    uvm_recursion_policy_enum p = recorder.policy
 #    recorder.policy = UVM_REFERENCE
 #    recorder.record_object("initiator", initiator)
@@ -646,7 +706,7 @@ class UVMTransaction(UVMObject):
 # ---------
 #
 #function integer uvm_transaction::get_tr_handle ()
-#   if (self.tr_recorder != null)
+#   if (self.tr_recorder is not None)
 #     return self.tr_recorder.get_handle()
 #   else
 #     return 0
@@ -657,7 +717,7 @@ class UVMTransaction(UVMObject):
 # -----------------
 #
 #function void uvm_transaction::disable_recording ()
-#   self.stream_handle = null
+#   self.stream_handle = None
 #endfunction
 #
 #
@@ -678,70 +738,7 @@ class UVMTransaction(UVMObject):
 #  return m_begin_tr(begin_time)
 #endfunction
 #
-# begin_child_tr
-# --------------
 #
-#Use a parent handle of zero to link to the parent after begin
-#function integer uvm_transaction::begin_child_tr (time begin_time=0,
-#                                                  integer parent_handle=0);
-#  return m_begin_tr(begin_time, parent_handle)
-#endfunction
-#
-# m_begin_tr
-# -----------
-#
-#function integer uvm_transaction::m_begin_tr (time begin_time=0,
-#                                              integer parent_handle=0)
-#   time tmp_time = (begin_time == 0) ? $realtime : begin_time
-#   uvm_recorder parent_recorder
-#
-#   if (parent_handle != 0)
-#     parent_recorder = uvm_recorder::get_recorder_from_handle(parent_handle)
-#
-#   // If we haven't ended the previous record, end it.
-#   if (self.tr_recorder != null)
-#     // Don't free the handle, someone else may be using it...
-#     end_tr(tmp_time)
-#
-#   // May want to establish predecessor/successor relation
-#   // (don't free handle until then)
-#   if(is_recording_enabled()) begin
-#      uvm_tr_database db = stream_handle.get_db()
-#
-#      self.end_time = -1
-#      self.begin_time = tmp_time
-#
-#      if(parent_recorder == null)
-#        self.tr_recorder = stream_handle.open_recorder(get_type_name(),
-#                                                  self.begin_time,
-#                                                  "Begin_No_Parent, Link")
-#      else begin
-#         self.tr_recorder = stream_handle.open_recorder(get_type_name(),
-#                                                   self.begin_time,
-#                                                   "Begin_End, Link")
-#
-#         if (self.tr_recorder != null)
-#           db.establish_link(uvm_parent_child_link::get_link(parent_recorder, self.tr_recorder))
-#      end
-#
-#      if (self.tr_recorder != null)
-#        m_begin_tr = self.tr_recorder.get_handle()
-#      else
-#        m_begin_tr = 0
-#   end
-#   else begin
-#      self.tr_recorder = null
-#      self.end_time = -1
-#      self.begin_time = tmp_time
-#
-#      m_begin_tr = 0
-#   end
-#
-#   do_begin_tr(); //execute callback before event trigger
-#
-#   self.begin_event.trigger()
-#
-#endfunction
 #
 #
 #

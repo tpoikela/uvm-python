@@ -401,7 +401,9 @@ class UVMDefaultFactory(UVMFactory):
 
     # create_object_by_type
     # ---------------------
-    def create_object_by_type (self, requested_type, parent_inst_path="", name=""):
+    def create_object_by_type(self, requested_type, parent_inst_path="", name=""):
+        if requested_type is None:
+            uvm_report_fatal("REQ_TYPE_NONE", "Requested type object was None")
         full_inst_path = ""
         if parent_inst_path == "":
             full_inst_path = name
@@ -412,11 +414,13 @@ class UVMDefaultFactory(UVMFactory):
 
         self.m_override_info.delete()
         requested_type = self.find_override_by_type(requested_type, full_inst_path)
+        if requested_type is None:
+            uvm_report_fatal("REQ_TYPE_NONE", "Requested type object was None after override")
         return requested_type.create_object(name)
 
     # create_component_by_name
     # ------------------------
-    def create_component_by_name (self, requested_type_name,
+    def create_component_by_name(self, requested_type_name,
             parent_inst_path, name, parent):
         wrapper = None
         inst_path = ""

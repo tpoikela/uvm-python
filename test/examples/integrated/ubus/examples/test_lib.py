@@ -20,12 +20,14 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-#`include "ubus_example_tb.sv"
+import cocotb
 
 from uvm.base import *
 from uvm.comps import UVMTest
 from uvm.macros import uvm_component_utils
 from ubus_example_tb import ubus_example_tb
+from ubus_example_master_seq_lib import read_modify_write_seq
+from ubus_slave_seq_lib import slave_memory_seq
 
 #// Base Test
 #class ubus_example_base_test extends uvm_test
@@ -64,7 +66,7 @@ class ubus_example_base_test(UVMTest):
     #    // Set verbosity for the bus monitor for this demo
     #     if(ubus_example_tb0.ubus0.bus_monitor != null)
     #       ubus_example_tb0.ubus0.bus_monitor.set_report_verbosity_level(UVM_FULL)
-    #    `uvm_info(get_type_name(),
+    #    `self.uvm_report_info(get_type_name(),
     #      $sformatf("Printing the test topology :\n%s", this.sprint(printer)), UVM_LOW)
     #  endfunction : end_of_elaboration_phase
     #
@@ -77,13 +79,17 @@ class ubus_example_base_test(UVMTest):
     def extract_phase(self, phase):
         if self.ubus_example_tb0.scoreboard0.sbd_error:
             self.test_pass = False
+        if self.ubus_example_tb0.scoreboard0.num_writes == 0:
+            self.test_pass = False
+        if self.ubus_example_tb0.scoreboard0.num_init_reads == 0:
+            self.test_pass = False
 
 
     def report_phase(self, phase):
         if self.test_pass:
-            uvm_info(self.get_type_name(), "** UVM TEST PASSED **", UVM_NONE)
+            self.uvm_report_info(self.get_type_name(), "** UVM TEST PASSED **", UVM_NONE)
         else:
-            uvm_fatal(self.get_type_name(), "** UVM TEST FAIL **")
+            self.uvm_report_fatal(self.get_type_name(), "** UVM TEST FAIL **")
     #  endfunction
 
     #endclass : ubus_example_base_test
@@ -91,29 +97,36 @@ uvm_component_utils(ubus_example_base_test)
 
 #// Read Modify Write Read Test
 #class test_read_modify_write extends ubus_example_base_test
-#
-#  `uvm_component_utils(test_read_modify_write)
-#
-#  function new(string name = "test_read_modify_write", uvm_component parent=null)
-#    super.new(name,parent)
-#  endfunction : new
-#
-#  virtual function void build_phase(uvm_phase phase)
-#  begin
-#    uvm_config_db#(uvm_object_wrapper)::set(this,
-#		    "ubus_example_tb0.ubus0.masters[0].sequencer.run_phase",
-#			       "default_sequence",
-#				read_modify_write_seq::type_id::get())
-#    uvm_config_db#(uvm_object_wrapper)::set(this,
-#		    "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
-#			       "default_sequence",
-#				slave_memory_seq::type_id::get())
-#    // Create the tb
-#    super.build_phase(phase)
-#  end
-#  endfunction : build_phase
-#
-#endclass : test_read_modify_write
+class test_read_modify_write(ubus_example_base_test):
+
+    def __init__(self, name="test_read_modify_write", parent=None):
+        ubus_example_base_test.__init__(self, name, parent)
+
+    def build_phase(self, phase):
+        UVMConfigDb.set(self, "ubus_example_tb0.ubus0.masters[0].sequencer.run_phase",
+                "default_sequence", read_modify_write_seq.type_id.get())
+        UVMConfigDb.set(self, "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
+                "default_sequence", slave_memory_seq.type_id.get())
+        #    // Create the tb
+        ubus_example_base_test.build_phase(self, phase)
+        #  endfunction : build_phase
+
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        phase.raise_objection(self)
+        master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
+        slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
+
+        master_seq = read_modify_write_seq("r_mod_w_seq")
+        master_proc = cocotb.fork(master_seq.start(master_sqr))
+
+        slave_seq = slave_memory_seq("mem_seq")
+        slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
+        yield [slave_proc, master_proc.join()]
+        phase.drop_objection(self)
+
+    #endclass : test_read_modify_write
+uvm_component_utils(test_read_modify_write)
 
 
 #// Large word read/write test

@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import RisingEdge, Timer
+from cocotb.triggers import RisingEdge, Timer, Combine, Edge
 
 from uvm.base.sv import sv_if
 
@@ -52,9 +52,20 @@ class ubus_if(sv_if):
                 "sig_request": "req_master_0",
                 "sig_grant": "gnt_master_0"}
         sv_if.__init__(self, dut, "ubus", bus_map)
+        self.rw = 0
         # Control flags
         self.has_checks = True
         self.has_coverage = True
+
+    @cocotb.coroutine
+    def drive_data(self):
+        triggers = []
+        for i in range(len(self.sig_data)):
+            triggers.append(Edge(self.sig_data[i]))
+        while True:
+            yield Combine(*triggers)
+            if self.rw == 1:
+                self.sig_data <= self.sig_data_out
 
     @cocotb.coroutine
     def always(self):
