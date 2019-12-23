@@ -378,8 +378,8 @@ class UVMSequenceBase(UVMSequenceItem):
             self.pre_body()
 
         if parent_sequence is not None:
-            parent_sequence.pre_do(0);    # task
-            parent_sequence.mid_do(this); # function
+            parent_sequence.pre_do(0)    # task
+            parent_sequence.mid_do(self)  # function
 
         self.m_sequence_state = UVM_BODY
         #0

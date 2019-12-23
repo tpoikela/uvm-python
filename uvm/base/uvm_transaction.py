@@ -182,8 +182,12 @@ class UVMTransaction(UVMObject):
         self.begin_event = self.events.get("begin")
         self.end_event = self.events.get("end")
         self.stream_handle = None  # For recording
+        self.tr_recorder = None
 
-    #endfunction // uvm_transaction
+        self.begin_time = -1
+        self.end_time = -1
+        self.accept_time = -1
+        #endfunction // uvm_transaction
 
     #
     #
@@ -273,7 +277,8 @@ class UVMTransaction(UVMObject):
     #
     #
     #  extern function integer begin_tr (time begin_time = 0)
-    #
+    def begin_tr(self, begin_time=0):
+        return self.m_begin_tr(begin_time)
 
     #
     #  // Function: begin_child_tr
@@ -323,6 +328,9 @@ class UVMTransaction(UVMObject):
     #  // ~super.do_begin_tr~ to ensure correct operation.
     #
     #  extern virtual protected function void do_begin_tr ()
+    def do_begin_tr(self):
+        pass
+
     #
     #
     #  // Function: end_tr
@@ -571,16 +579,6 @@ class UVMTransaction(UVMObject):
         #endfunction
 
     #
-    #  local integer self.m_transaction_id = -1
-    #
-    #  local time    begin_time=-1
-    #  local time    end_time=-1
-    #  local time    accept_time=-1
-    #
-    #  local uvm_component initiator
-    #  local uvm_tr_stream stream_handle
-    #  local uvm_recorder      self.tr_recorder
-    #
     #endclass
 #
 #
@@ -643,12 +641,6 @@ class UVMTransaction(UVMObject):
 #
 #
 #
-# do_begin_tr
-# ------------
-#
-#function void uvm_transaction::do_begin_tr()
-#  return
-#endfunction
 #
 #
 #
@@ -730,13 +722,6 @@ class UVMTransaction(UVMObject):
 #
 #
 #
-#
-# begin_tr
-# -----------
-#
-#function integer uvm_transaction::begin_tr (time begin_time=0);
-#  return m_begin_tr(begin_time)
-#endfunction
 #
 #
 #
