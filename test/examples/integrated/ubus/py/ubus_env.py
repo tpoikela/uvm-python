@@ -2,6 +2,7 @@
 #//   Copyright 2007-2010 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2019 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -21,6 +22,9 @@
 
 from uvm.comps import UVMEnv
 from uvm.macros import *
+from uvm.base import *
+from ubus_bus_monitor import ubus_bus_monitor
+from ubus_slave_agent import ubus_slave_agent
 
 #//------------------------------------------------------------------------------
 #//
@@ -33,10 +37,6 @@ class ubus_env(UVMEnv):
     #  // Virtual Interface variable
     #  protected virtual interface ubus_if vif
     #
-    #  // Control properties
-    #  protected bit has_bus_monitor = 1
-    #  protected int num_masters = 0
-    #  protected int num_slaves = 0
     #
     #  // The following two bits are used to control whether checks and coverage are
     #  // done both in the bus monitor class and the interface.
@@ -61,39 +61,51 @@ class ubus_env(UVMEnv):
     #  // new - constructor
     def __init__(self, name, parent):
         UVMEnv.__init__(self, name, parent)
+        self.monitor = None
+        self.masters = []
+        self.slaves = []
+        self.vif = None
+        # Control properties
+        self.has_bus_monitor = True
+        self.num_masters = 0
+        self.num_slaves = 0
 
     #  // build_phase
-    #  function void build_phase(uvm_phase phase)
-    #    string inst_name
-    #//    set_phase_domain("uvm")
-    #    super.build_phase(phase)
-    #     if(!uvm_config_db#(virtual ubus_if)::get(this, "", "vif", vif))
-    #       `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"})
-    #     
-    #    if(has_bus_monitor == 1) begin
-    #      bus_monitor = ubus_bus_monitor::type_id::create("bus_monitor", this)
-    #    end
-    #    
-    #    void'(uvm_config_db#(int)::get(this, "", "num_masters", num_masters))
-    #   
-    #    masters = new[num_masters]
-    #    for(int i = 0; i < num_masters; i++) begin
-    #      $sformat(inst_name, "masters[%0d]", i)
-    #      masters[i] = ubus_master_agent::type_id::create(inst_name, this)
-    #      void'(uvm_config_db#(int)::set(this,{inst_name,".monitor"}, 
-    #				 "master_id", i))
-    #      void'(uvm_config_db#(int)::set(this,{inst_name,".driver"}, 
-    #				 "master_id", i))
-    #    end
-    #
-    #    void'(uvm_config_db#(int)::get(this, "", "num_slaves", num_slaves))
-    #    
-    #    slaves = new[num_slaves]
-    #    for(int i = 0; i < num_slaves; i++) begin
-    #      $sformat(inst_name, "slaves[%0d]", i)
-    #      slaves[i] = ubus_slave_agent::type_id::create(inst_name, this)
-    #    end
-    #  endfunction : build_phase
+    def build_phase(self, phase):
+        inst_name = ""
+        UVMEnv.build_phase(self, phase)
+        #//    set_phase_domain("uvm")
+        arr = []
+        if UVMConfigDb.get(None, "*", "vif", arr):
+            uvm_info("GOT_VIF", "vif was received from configDb", UVM_HIGH)
+            self.vif = arr[0]
+
+        if self.vif is None:
+            self.uvm_report_fatal("NOVIF","virtual interface must be set for: " +
+                    self.get_full_name() + ".vif")
+
+        if self.has_bus_monitor is True:
+            self.bus_monitor = ubus_bus_monitor.type_id.create("bus_monitor", self)
+
+        arr = []
+        UVMConfigDb.get(self, "", "num_masters", arr)
+        self.num_masterts = arr[0]
+
+        for i in range(self.num_masters):
+            inst_name = sv.sformatf("masters[%0d]", i)
+            master = ubus_master_agent.type_id.create(inst_name, self)
+            self.masters.append(master)
+            UVMConfigDb.set(self, inst_name + ".monitor", "master_id", i)
+            UVMConfigDb.set(self, inst_name + ".driver", "master_id", i)
+
+        arr = []
+        UVMConfigDb.get(self, "", "num_slaves", arr)
+        self.num_slaves = arr[0]
+
+        for i in range(self.num_slaves):
+            inst_name = sv.sformatf("slaves[%0d]", i)
+            self.slaves.append(ubus_slave_agent.type_id.create(inst_name, self))
+        #  endfunction : build_phase
 
     #
     #  // set_slave_address_map

@@ -1262,7 +1262,10 @@ class UVMComponent(UVMReportObject):
     #// and their meaning.
 
     #  extern function void set_report_verbosity_level_hier (int verbosity);
-    #
+    def set_report_verbosity_level_hier(self, verbosity):
+        self.set_report_verbosity_level(verbosity)
+        for c in self.m_children:
+            self.m_children[c].set_report_verbosity_level_hier(verbosity)
 
     # Function: pre_abort
     #
@@ -1316,13 +1319,13 @@ class UVMComponent(UVMReportObject):
     #//   on this event will resume in the next delta cycle.
 
     #extern function void accept_tr (uvm_transaction tr, time accept_time = 0);
-    def accept_tr (self, tr, accept_time=0):
+    def accept_tr(self, tr, accept_time=0):
         e = None
         tr.accept_tr(accept_time)
         self.do_accept_tr(tr)
         e = self.event_pool.get("accept_tr")
         if e is not None:
-          e.trigger()
+            e.trigger()
 
 
     #// Function: do_accept_tr
@@ -2373,16 +2376,6 @@ class UVMComponent(UVMReportObject):
 #  set_report_severity_id_file(severity, id, file);
 #  foreach( m_children[c] )
 #    m_children[c].set_report_severity_id_file_hier(severity, id, file);
-#endfunction
-#
-#
-#// set_report_verbosity_level_hier
-#// -------------------------------
-#
-#function void uvm_component::set_report_verbosity_level_hier(int verbosity);
-#  set_report_verbosity_level(verbosity);
-#  foreach( m_children[c] )
-#    m_children[c].set_report_verbosity_level_hier(verbosity);
 #endfunction
 #
 #

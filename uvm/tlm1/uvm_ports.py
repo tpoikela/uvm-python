@@ -143,6 +143,11 @@ UVM_GET_IMP ('m_if', UVMGetPort)
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_PEEK_MASK,"uvm_blocking_peek_port")
 #  `UVM_BLOCKING_PEEK_IMP (this.m_if, T, t)
 #endclass 
+class UVMBlockingPeekPort():
+    pass
+UVMBlockingPeekPort = UVM_PORT_COMMON(UVMBlockingPeekPort,
+        UVM_TLM_BLOCKING_PEEK_MASK, "uvm_blocking_peek_port")
+UVM_BLOCKING_PEEK_IMP('m_if', UVMBlockingPeekPort)
 
 #class uvm_nonblocking_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));

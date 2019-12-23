@@ -51,6 +51,13 @@ class ubus_example_base_test(UVMTest):
         # Create a specific depth printer for printing the created topology
         self.printer = UVMTablePrinter()
         self.printer.knobs.depth = 3
+
+        arr = []
+        if UVMConfigDb.get(None, "*", "vif", arr) is True:
+            UVMConfigDb.set(self, "*", "vif", arr[0])
+        else:
+            self.uvm_report_fatal("NOVIF", "Could not get vif from config DB")
+
         #  endfunction : build_phase
 
     #  function void end_of_elaboration_phase(uvm_phase phase)

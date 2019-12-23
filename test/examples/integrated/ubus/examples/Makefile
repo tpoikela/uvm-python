@@ -63,7 +63,7 @@ ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
 endif
 
-PLUSARGS=+UVM_TESTNAME=ubus_example_base_test
+PLUSARGS=+UVM_TESTNAME=ubus_example_base_test +UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_HIGH
 TOPLEVEL := dut_dummy
 MODULE   ?= ubus_tb_top
 

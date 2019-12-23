@@ -1,4 +1,3 @@
-#
 #------------------------------------------------------------------------------
 #     Copyright 2007-2011 Mentor Graphics Corporation
 #     Copyright 2007-2011 Cadence Design Systems, Inc.
@@ -28,6 +27,13 @@ UVM_UNBOUNDED_CONNECTIONS = -1
 s_connection_error_id = "Connection Error"
 s_connection_warning_id = "Connection Warning"
 s_spaces = "                                             "
+
+ERR_MSG2 = ("Port parent: {}. Cannot call an imp port's connect method. "
+    + "An imp is connected only to the component passed in its constructor."
+    + "(You attempted to bind this imp to {})")
+
+ERR_MSG3 = ("Cannot connect exports to ports Try calling port.connect(export)"
+    + " instead. (You attempted to bind this export to {}).")
 
 ## typedef class uvm_port_component_base
 ## typedef uvm_port_component_base uvm_port_list[string]
@@ -208,8 +214,8 @@ class UVMPortBase():
     # <connect> for more information.
 
     def __init__(self, name, parent, port_type, min_size=0, max_size=1):
-        comp = None
-        tmp = 0
+        #comp = None
+        #tmp = 0
         self.m_port_type = port_type
         self.m_min_size    = min_size
         self.m_max_size    = max_size
@@ -391,31 +397,32 @@ class UVMPortBase():
             return
 
         if provider == self:
-           self.m_comp.uvm_report_error(s_connection_error_id,
-              "Cannot connect a port instance to itself", UVM_NONE)
-           return
+            self.m_comp.uvm_report_error(s_connection_error_id,
+               "Cannot connect a port instance to itself", UVM_NONE)
+            return
 
         if (provider.m_if_mask & self.m_if_mask) != self.m_if_mask:
-           self.m_comp.uvm_report_error(s_connection_error_id,
-                (provider.get_full_name()
-                 + " (of type " + provider.get_type_name()
-                 + ") doesn't provide the compl interface required of this port (type "
-                 + self.get_type_name() + ")"), UVM_NONE)
-           return
+            self.m_comp.uvm_report_error(s_connection_error_id,
+                 (provider.get_full_name()
+                  + " (of type " + provider.get_type_name()
+                  + ") doesn't provide the compl interface required of this port (type "
+                  + self.get_type_name() + ")"), UVM_NONE)
+            return
 
         # IMP.connect(anything) is illegal
         if self.is_imp() is True:
-           self.m_comp.uvm_report_error(s_connection_error_id,
-                "".format("Cannot call an imp port's connect method. An imp is connected only to the component passed in its constructor. (You attempted to bind this imp to {})",
-                    provider.get_full_name()), UVM_NONE)
-           return
+            parent_name = ""
+            if self.m_comp.get_parent() is not None:
+                parent_name = self.m_comp.get_full_name()
+            self.m_comp.uvm_report_error(s_connection_error_id,
+                 ERR_MSG2.format(parent_name, provider.get_full_name()), UVM_NONE)
+            return
 
         # EXPORT.connect(PORT) are illegal
         if self.is_export() is True and provider.is_port() is True:
-           self.m_comp.uvm_report_error(s_connection_error_id,
-                "".format("Cannot connect exports to ports Try calling port.connect(export) instead. (You attempted to bind this export to {}).",
-                    provider.get_full_name()), UVM_NONE)
-           return
+            self.m_comp.uvm_report_error(s_connection_error_id,
+                 ERR_MSG3.format(provider.get_full_name()), UVM_NONE)
+            return
 
         self.m_check_relationship(provider)
 
@@ -434,18 +441,18 @@ class UVMPortBase():
     indent = ""
     save = ""
 
-    def debug_connected_to (self, level=0,  max_level=-1):
+    def debug_connected_to(self, level=0, max_level=-1):
         sz = 0
         num = 0
         curr_num = 0
         s_sz = ""
         port = None
 
-        if level <    0:
+        if level < 0:
             level = 0
         if level == 0:
             save = ""
-            indent="    "
+            indent = "    "
 
         if max_level != -1 and level >= max_level:
             return
@@ -647,12 +654,12 @@ class UVMPortBase():
 
         if self.size() < self.min_size():
            self.m_comp.uvm_report_error(s_connection_error_id,
-                "".format("connection count of {} does not meet required minimum of {}",
-                self.size(), self.min_size()), UVM_NONE)
+                "connection count of {} does not meet required minimum of {}"
+                .format(self.size(), self.min_size()), UVM_NONE)
 
         if self.max_size() != UVM_UNBOUNDED_CONNECTIONS and self.size() > self.max_size():
            self.m_comp.uvm_report_error(s_connection_error_id,
-                "".format("connection count of {} exceeds maximum of {}",
+                "connection count of {} exceeds maximum of {}".format(
                 self.size(), self.max_size()), UVM_NONE)
 
         if self.size() > 0:
@@ -672,7 +679,7 @@ class UVMPortBase():
                 "Port size is zero; cannot get interface at any index", UVM_NONE)
             return None
         if index < 0 or index >= self.size():
-            s = "".format("Index {} out of range [0,{}]", index, self.size()-1)
+            s = "Index {} out of range [0,{}]".format(index, self.size()-1)
             self.m_comp.uvm_report_warning(s_connection_error_id, s, UVM_NONE)
             return None
         for nm in self.m_imp_list:

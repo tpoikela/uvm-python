@@ -5,6 +5,7 @@ import random
 import cocotb
 from cocotb.triggers import Lock, Timer
 from cocotb.utils import get_sim_time
+from cocotb.bus import Bus
 
 RET_ERR = 1
 RET_OK = 0
@@ -161,6 +162,14 @@ class semaphore():
             self.count -= count
             return True
         return False
+
+
+class sv_if(Bus):
+
+    def __init__(self, entity, name, signals,
+            optional_signals=[], bus_separator="_", array_idx=None):
+        Bus.__init__(self, entity, name, signals, optional_signals,
+                bus_separator, array_idx)
 
 
 import unittest

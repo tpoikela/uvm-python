@@ -137,20 +137,22 @@ class UVMCmdlineProcessor(UVMReportObject):
     def get_arg_matches(self, match, args):
         exp_h = None
         match_len = len(match)
-        args = []
+        args.clear()
         if len(match) > 2 and match[0] == "/" and match[len(match)-1] == "/":
             match = match[1:len(match)-2]
             exp_h = uvm_dpi_regcomp(match)
             if exp_h is None:
-                uvm_report_error("UVM_CMDLINE_PROC", 
+                uvm_report_error("UVM_CMDLINE_PROC",
                         "Unable to compile the regular expression: " + match, UVM_NONE)
                 return 0
-        for i in range(0, len(self.m_argv)):
+        for i in range(len(self.m_argv)):
             if exp_h is not None:
                 if not uvm_dpi_regexec(exp_h, self.m_argv[i]):
                     args.append(self.m_argv[i])
-            elif len(self.m_argv) >= match_len and self.m_argv[i][0:match_len - 1] == match:
-                args.append(self.m_argv[i])
+            elif len(self.m_argv[i]) >= match_len:
+                sub_argv = self.m_argv[i][0:match_len]
+                if sub_argv == match:
+                    args.append(self.m_argv[i])
         return len(args)
 
     # Group: Argument Values
@@ -164,7 +166,7 @@ class UVMCmdlineProcessor(UVMReportObject):
     # ~value~ is the value of the first match.
     def get_arg_value(self, match, value):
         chars = len(match)
-        get_arg_value = 0;
+        get_arg_value = 0
         for i in range(0, len(self.m_argv)):
             if len(self.m_argv[i]) >= chars:
                 if self.m_argv[i][0:chars-1] == match:
@@ -184,7 +186,7 @@ class UVMCmdlineProcessor(UVMReportObject):
     #
     #| string foo_values[$]
     #| initial begin
-    #|    void'(uvm_cmdline_proc.get_arg_values("+foo=",foo_values));
+    #|    void'(uvm_cmdline_proc.get_arg_values("+foo=",foo_values))
     #|
     #
     # The foo_values queue would contain two entries.  These entries are shown
@@ -256,9 +258,11 @@ class UVMCmdlineProcessor(UVMReportObject):
                 self.m_plus_arg_map[name].append(arg_val)
                 self.m_plus_argv.append(full_plus_arg)
                 self.m_argv.append(full_plus_arg)
+                uvm_debug(self, '__init__', "Added plusarg " + name + ' - ' +
+                        full_plus_arg)
                 if len(full_plus_arg) >= 4 and (full_plus_arg[0] == "-" or full_plus_arg[0] == "+"):
                     sub = full_plus_arg[1:4]
-                    #sub = sub.toupper();
+                    #sub = sub.toupper()
                     if sub == "UVM":
                         uvm_debug(self, '__init__', "Found UVM plusarg %s" % (full_plus_arg))
                         self.m_uvm_argv.append(full_plus_arg)
@@ -427,12 +431,12 @@ class UVMCmdlineProcessor(UVMReportObject):
         # This is functionally equivalent to calling the following in your
         # test:
         #
-        #| uvm_coreservice_t cs = uvm_coreservice_t::get();
-        #| uvm_factory f = cs.get_factory();
+        #| uvm_coreservice_t cs = uvm_coreservice_t::get()
+        #| uvm_factory f = cs.get_factory()
         #| uvm_config_db#(uvm_object_wrapper)::set(this,
         #|                                         "path.to.sequencer.main_phase",
         #|                                         "default_sequence",
-        #|                                         f.find_wrapper_by_name("seq_type"));
+        #|                                         f.find_wrapper_by_name("seq_type"))
         #
         # The implementation of this is in uvm_root.
 

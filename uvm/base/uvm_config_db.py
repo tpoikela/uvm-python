@@ -122,16 +122,16 @@ class UVMConfigDb(UVMResourceDb):
         r = UVMResource.get_highest_precedence(rq, T)
 
         if UVMConfigDbOptions.is_tracing():
-            UVMResourceDb.m_show_msg("CFGDB/GET", "Configuration","read", inst_name, field_name, cntxt, r)
-
+            UVMResourceDb.m_show_msg("CFGDB/GET", "Configuration","read", inst_name, field_name,
+                    cntxt, r)
         if r is None:
-            return 0
+            return False
 
         if hasattr(value, 'append'):
             value.append(r.read(cntxt))
         else:
             raise Exception('value must be a list-like with append')
-        return 1
+        return True
 
     #  // function: set
     #  //
@@ -412,7 +412,9 @@ class UVMConfigDbOptions:
         trace_args = []  # string trace_args[$];
         from .uvm_cmdline_processor import UVMCmdlineProcessor
         clp = UVMCmdlineProcessor.get_inst()
-        if clp.get_arg_matches("+UVM_CONFIG_DB_TRACE", trace_args):
+        if clp.get_arg_matches("+UVM_CONFIG_DB_TRACE", trace_args) > 0:
+            UVMConfigDbOptions.tracing = 1
+        if clp.get_arg_matches("+UVM_CONFIG_DB_TRACE=", trace_args) > 0:
             UVMConfigDbOptions.tracing = 1
         UVMConfigDbOptions.ready = 1
 

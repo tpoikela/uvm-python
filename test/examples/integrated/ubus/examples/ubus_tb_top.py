@@ -26,19 +26,17 @@ from cocotb.triggers import Timer
 from uvm.base import run_test, UVMDebug
 
 from test_lib import *
+from ubus_if import ubus_if
 
 UBUS_ADDR_WIDTH = 16
 
-UVMDebug.DEBUG = True
-
-#`include "ubus_pkg.sv"
-#`include "dut_dummy.v"
-#`include "ubus_if.sv"
+#UVMDebug.DEBUG = True
 
 @cocotb.coroutine
-def initial_run_test(dut):
-    #cs_ = uvm_coreservice_t::get();
-    #uvm_config_db#(virtual ubus_if)::set(cs_.get_root(), "*", "vif", vif);
+def initial_run_test(dut, vif):
+    from uvm.base import UVMCoreService
+    cs_ = UVMCoreService.get()
+    UVMConfigDb.set(None, "*", "vif", vif)
     yield run_test()
 
 
@@ -63,9 +61,9 @@ def always_clk(dut, ncycles):
 @cocotb.test()
 def module_ubus_tb(dut):
 
-    #  ubus_if vif(); // SystemVerilog Interface
+    vif = ubus_if(dut)
 
-    proc_run_test = cocotb.fork(initial_run_test(dut))
+    proc_run_test = cocotb.fork(initial_run_test(dut, vif))
     proc_reset = cocotb.fork(initial_reset(dut))
     proc_clk = cocotb.fork(always_clk(dut, 100))
 
