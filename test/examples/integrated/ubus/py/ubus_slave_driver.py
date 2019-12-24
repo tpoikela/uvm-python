@@ -27,6 +27,8 @@ from uvm.base import *
 from uvm.comps import UVMDriver
 from uvm.macros import uvm_component_utils
 
+from ubus_transfer import *
+
 #//------------------------------------------------------------------------------
 #//
 #// CLASS: ubus_slave_driver
@@ -69,9 +71,9 @@ class ubus_slave_driver(UVMDriver):
         while True:
             yield RisingEdge(self.vif.sig_clock)
             req = []
-            yield seq_item_port.get_next_item(req);
-            yield self.respond_to_transfer(req[0]);
-            seq_item_port.item_done();
+            yield self.seq_item_port.get_next_item(req)
+            yield self.respond_to_transfer(req[0])
+            self.seq_item_port.item_done()
         #  endtask : get_and_drive
 
 
