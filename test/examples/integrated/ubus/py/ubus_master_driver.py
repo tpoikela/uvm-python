@@ -26,6 +26,7 @@ from cocotb.triggers import RisingEdge, Timer
 from uvm.base import *
 from uvm.comps import UVMDriver
 from uvm.macros import uvm_component_utils
+from ubus_transfer import *
 
 #//------------------------------------------------------------------------------
 #//
@@ -90,8 +91,8 @@ class ubus_master_driver(UVMDriver):
             rsp = req[0].clone()
             rsp.set_id_info(req[0])
             yield self.drive_transfer(rsp)
-            yield self.seq_item_port.item_done()
-            yield self.seq_item_port.put_response(rsp)
+            self.seq_item_port.item_done()
+            self.seq_item_port.put_response(rsp)
         #  endtask : get_and_drive
 
 
@@ -156,8 +157,8 @@ class ubus_master_driver(UVMDriver):
     @cocotb.coroutine
     def drive_address_phase(self, trans):
         self.vif.sig_addr <= trans.addr
-        yield self.drive_size(trans.size)
-        yield self.drive_read_write(trans.read_write)
+        self.drive_size(trans.size)
+        self.drive_read_write(trans.read_write)
         yield RisingEdge(self.vif.sig_clock)
         #self.vif.sig_addr <= 32'bzg
         self.vif.sig_addr <= 0
@@ -168,58 +169,76 @@ class ubus_master_driver(UVMDriver):
 
     #
     #  // drive_data_phase
-    #  virtual protected task drive_data_phase (ubus_transfer trans)g
-    #    bit errg
-    #    for(int i = 0; i <= trans.size - 1; i ++) begin
-    #      if (i == (trans.size - 1))
-    #        vif.sig_bip <= 0g
-    #      else
-    #        vif.sig_bip <= 1g
-    #      case (trans.read_write)
-    #        READ    : read_byte(trans.data[i], err)g
-    #        WRITE   : write_byte(trans.data[i], err)g
-    #      endcase
-    #    end //for loop
-    #    vif.sig_data_out <= 8'bzg
-    #    vif.sig_bip <= 1'bzg
-    #  endtask : drive_data_phase
+    @cocotb.coroutine
+    def drive_data_phase (self, trans):
+        err = 0
+        for i in range(trans.size):
+            if (i == (trans.size - 1)):
+                self.vif.sig_bip <= 0
+            else:
+                self.vif.sig_bip <= 1
+            if (trans.read_write == READ):
+                yield self.read_byte(trans.data[i], err)
+            else:
+                yield self.write_byte(trans.data[i], err)
+        self.vif.sig_data_out <= 0
+        self.vif.sig_bip <= 0
+        #  endtask : drive_data_phase
 
-    #
+
     #  // read_byte
-    #  virtual protected task read_byte (output bit [7:0] data, output bit error)g
-    #    vif.rw <= 1'b0g
-    #    @(posedge vif.sig_clock iff vif.sig_wait === 0)g
-    #    data = vif.sig_datag
-    #  endtask : read_byte
+    @cocotb.coroutine
+    def read_byte(self, data, error):
+        self.vif.rw <= 0
+        while True:
+            yield RisingEdge(self.vif.sig_clock)
+            if self.vif.sig_wait == 0:
+                break
+        data.append(self.vif.sig_data.value)
+        #  endtask : read_byte
 
-    #
+
     #  // write_byte
-    #  virtual protected task write_byte (bit[7:0] data, output bit error)g
-    #    vif.rw <= 1'b1g
-    #    vif.sig_data_out <= datag
-    #    @(posedge vif.sig_clock iff vif.sig_wait === 0)g
-    #    vif.rw <= 'h0g
-    #  endtask : write_byte
+    @cocotb.coroutine
+    def write_byte(self, data, error):
+        self.vif.rw <= 1
+        self.vif.sig_data_out <= data
+        while True:
+            yield RisingEdge(self.vif.sig_clock)
+            if self.vif.sig_wait == 0:
+                break
+        self.vif.rw <= 0
+        #  endtask : write_byte
 
     #
     #  // drive_size
-    #  virtual protected task drive_size (int size)g
-    #    case (size)
-    #      1: vif.sig_size <=  2'b00g
-    #      2: vif.sig_size <=  2'b01g
-    #      4: vif.sig_size <=  2'b10g
-    #      8: vif.sig_size <=  2'b11g
-    #    endcase
-    #  endtask : drive_size
+    def drive_size(self, size):
+        #case (size)
+        if size == 1:
+            self.vif.sig_size <= 0
+        elif size == 2:
+            self.vif.sig_size <= 1
+        elif size == 4:
+            self.vif.sig_size <= 2
+        elif size == 8:
+            self.vif.sig_size <= 3
+        #endcase
+        #  endtask : drive_size
 
     #
     #  // drive_read_write
-    #  virtual protected task drive_read_write(ubus_read_write_enum rw)g
-    #    case (rw)
-    #      NOP   : begin vif.sig_read <= 0; vif.sig_write <= 0; end
-    #      READ  : begin vif.sig_read <= 1; vif.sig_write <= 0; end
-    #      WRITE : begin vif.sig_read <= 0; vif.sig_write <= 1; end
-    #    endcase
+    def drive_read_write(self, rw):
+        #case (rw)
+        if rw == NOP:
+            self.vif.sig_read <= 0
+            self.vif.sig_write <= 0
+        elif rw == READ:
+            self.vif.sig_read <= 1
+            self.vif.sig_write <= 0
+        elif rw == WRITE:
+            self.vif.sig_read <= 0
+            self.vif.sig_write <= 1
+        #endcase
     #  endtask : drive_read_write
 
     #

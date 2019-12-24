@@ -28,6 +28,11 @@ from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
 from ..macros import uvm_component_utils
 from ..base.uvm_globals import uvm_check_output_args
+from ..base.uvm_object_globals import *
+
+FATAL_MSG1 = ("Item_done() called with no outstanding requests." +
+    " Each call to item_done() must be paired with a previous call to "
+    + " get_next_item().")
 
 #//------------------------------------------------------------------------------
 #//
@@ -127,8 +132,7 @@ class UVMSequencer(UVMSequencerParamBase):
         self.get_next_item_called = False
 
         if self.m_req_fifo.try_get(t) is False:
-            self.uvm_report_fatal(self.get_full_name(), "Item_done() called with no outstanding requests." +
-            " Each call to item_done() must be paired with a previous call to get_next_item().")
+            self.uvm_report_fatal(self.get_full_name(), FATAL_MSG1)
         else:
             t = t[0]
             self.m_wait_for_item_sequence_id = t.get_sequence_id()

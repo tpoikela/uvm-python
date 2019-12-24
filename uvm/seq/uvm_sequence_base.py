@@ -1157,7 +1157,10 @@ class UVMSequenceBase(UVMSequenceItem):
                     yield Timer(0)
 
         if transaction_id == -1:
-            response.append(self.response_queue.pop_front())
+            resp_item = self.response_queue.pop_front()
+            print("LLL resp item is " + str(resp_item) + " " +
+                resp_item.convert2string())
+            response.append(resp_item)
             yield Timer(0)
             return
 

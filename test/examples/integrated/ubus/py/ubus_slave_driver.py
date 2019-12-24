@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import RisingEdge, Timer
+from cocotb.triggers import RisingEdge, Timer, FallingEdge
 
 from uvm.base import *
 from uvm.comps import UVMDriver
@@ -65,13 +65,13 @@ class ubus_slave_driver(UVMDriver):
     @cocotb.coroutine
     def get_and_drive(self):
         yield Timer(0)
-        #    @(negedge vif.sig_reset);
-        #    forever begin
-        #      @(posedge vif.sig_clock);
-        #      seq_item_port.get_next_item(req);
-        #      respond_to_transfer(req);
-        #      seq_item_port.item_done();
-        #    end
+        yield FallingEdge(self.vif.sig_reset)
+        while True:
+            yield RisingEdge(self.vif.sig_clock)
+            req = []
+            yield seq_item_port.get_next_item(req);
+            yield self.respond_to_transfer(req[0]);
+            seq_item_port.item_done();
         #  endtask : get_and_drive
 
 
@@ -87,34 +87,25 @@ class ubus_slave_driver(UVMDriver):
 
 
     #  // respond_to_transfer
-    #  virtual protected task respond_to_transfer(ubus_transfer resp);
-    #    if (resp.read_write != NOP)
-    #    begin
-    #      vif.sig_error <= 1'b0;
-    #      for (int i = 0; i < resp.size; i++)
-    #      begin
-    #        case (resp.read_write)
-    #          READ : begin
-    #            vif.rw <= 1'b1;
-    #            vif.sig_data_out <= resp.data[i];
-    #          end
-    #          WRITE : begin
-    #          end
-    #        endcase
-    #        if (resp.wait_state[i] > 0) begin
-    #          vif.sig_wait <= 1'b1;
-    #          repeat (resp.wait_state[i])
-    #            @(posedge vif.sig_clock);
-    #        end
-    #        vif.sig_wait <= 1'b0;
-    #        @(posedge vif.sig_clock);
-    #        resp.data[i] = vif.sig_data;
-    #      end
-    #      vif.rw <= 1'b0;
-    #      vif.sig_wait  <= 1'bz;
-    #      vif.sig_error <= 1'bz;
-    #    end
-    #  endtask : respond_to_transfer
+    @cocotb.coroutine
+    def respond_to_transfer(self, resp):
+        if (resp.read_write != NOP):
+            self.vif.sig_error <= 0
+            for i in range(resp.size):
+                if resp.read_write == READ:
+                    self.vif.rw <= 1
+                    self.vif.sig_data_out <= resp.data[i]
+                if (resp.wait_state[i] > 0):
+                    self.vif.sig_wait <= 1
+                    for i in range(resp.wait_state[i]):
+                        yield RisingEdge(self.vif.sig_clock)
+                self.vif.sig_wait <= 0
+                yield RisingEdge(self.vif.sig_clock)
+                resp.data[i] = self.vif.sig_data.value
+            self.vif.rw <= 0
+            self.vif.sig_wait  <= 0  # 1'bz
+            self.vif.sig_error <= 0  # 1'bz
+        #  endtask : respond_to_transfer
 
     #
     #endclass : ubus_slave_driver

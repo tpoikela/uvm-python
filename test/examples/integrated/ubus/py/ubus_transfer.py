@@ -80,6 +80,12 @@ class ubus_transfer(UVMSequenceItem):
         self.master = ""
         self.slave = ""
 
+
+    def convert2string(self):
+        res = "addr: " + str(self.addr) + ", read_write: " + str(self.read_write)
+        res += ", size: " + str(self.size) + ", wait_state: " + str(self.wait_state)
+        res += "\ndata: " + str(self.data)
+        return res
     #endclass : ubus_transfer
 
 uvm_object_utils(ubus_transfer)
