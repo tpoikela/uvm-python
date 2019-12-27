@@ -74,17 +74,11 @@ class UVMEventBase(UVMObject):
 
     @cocotb.coroutine
     def wait(self):
-        print("WWW There are " + str(self.m_waiters) + " waiters")
         if self.m_waiters == 0:
             self.on_event.clear()
-        else:
-            print("WWW There are " + str(self.m_waiters) + " so cannot clear()")
 
         self.m_waiters += 1
-        print("WW before self.m_event.wait()")
-        print("self.m_event: " + str(self.m_event))
         yield self.on_event.wait()
-        print("WW after self.m_event.wait()")
         self.m_waiters -= 1
         if self.m_waiters == 0:
             self.on_event.clear()
@@ -109,16 +103,13 @@ class UVMEventBase(UVMObject):
     @cocotb.coroutine
     def wait_on(self, delta=0):
         if self.on is True:
-            print("UUU wait_on self.on true Returning immediately")
             if delta is True:
                 #0;
                 yield Timer(0)
             yield Timer(0)
             return
         self.num_waiters += 1
-        #raise Exception("UUU")
         while True:
-            print("UUU waiting for value change now " + self.name)
             yield self.m_value_changed_event.wait()
             self.m_value_changed_event.clear()
             if self.on is True:

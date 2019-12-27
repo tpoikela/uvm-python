@@ -723,8 +723,7 @@ class UVMObjection(UVMReportObject):
             if ctxt.obj in objection.m_drain_proc:
                 del objection.m_drain_proc[ctxt.obj]
             else:
-                print("uvm_objection: XXXZZZ Warning. No key found: " +
-                        str(ctxt.obj.get_name()))
+                pass
             del objection.m_forked_contexts[ctxt.obj]
             # Clear out the context object (prevent memory leaks)
             ctxt.clear()

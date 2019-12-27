@@ -384,7 +384,6 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_sequence_state = UVM_BODY
         #0
         yield Timer(0)
-        print("PPP before self.body " + str(self) + " name: " + self.get_name())
         yield self.body()
 
         self.m_sequence_state = UVM_ENDED
@@ -944,10 +943,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if (set_priority < 0):
             set_priority = self.get_priority()
 
-        print("WWW  yield sequencer.wait_for_grant(self, set_priority)")
-        print(str(sequencer))
         yield sequencer.wait_for_grant(self, set_priority)
-        print("WWW  AFTER yield sequencer.wait_for_grant(self, set_priority)")
 
         # TODO recording
         #if (sequencer.is_auto_item_recording_enabled()) begin
@@ -976,9 +972,7 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.mid_do(item)
         sequencer.send_request(self, item)
-        print("KKK yield sequencer.wait_for_item_done(self, -1)")
         yield sequencer.wait_for_item_done(self, -1)
-        print("KKK AFTER KKK yield sequencer.wait_for_item_done(self, -1)")
 
         # tpoikela: commented out, otherwise item.end_event is not triggered
         # if sequencer.is_auto_item_recording_enabled():
@@ -1129,7 +1123,6 @@ class UVMSequenceBase(UVMSequenceItem):
         if ((self.response_queue_depth == -1) or
                 (self.response_queue.size() < self.response_queue_depth)):
             self.response_queue.push_back(response)
-            print("QQQ resp queue got a rsp: " + response.convert2string())
             self.m_resp_queue_event.set()
             return
         if self.response_queue_error_report_disabled == 0:
@@ -1160,8 +1153,6 @@ class UVMSequenceBase(UVMSequenceItem):
 
         if transaction_id == -1:
             resp_item = self.response_queue.pop_front()
-            print("LLL resp item is " + str(resp_item) + " " +
-                resp_item.convert2string())
             response.append(resp_item)
             yield Timer(0)
             return

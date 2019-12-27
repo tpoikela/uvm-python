@@ -301,7 +301,6 @@ class UVMSequencerBase(UVMComponent):
         self.arb_sequence_q.push_back(req_s)
         self.m_update_lists()
 
-        print("WWW yield self.m_wait_for_arbitration_completed(req_s.request_id)")
         # Wait until this entry is granted
         # Continue to point to the element, since location in queue will change
         yield self.m_wait_for_arbitration_completed(req_s.request_id)
@@ -741,21 +740,15 @@ class UVMSequencerBase(UVMComponent):
         lock_arb_size = 0
 
         # Search the list of arb_wait_q, see if this item is done
-        print("WWW m_wait_for_arbitration_completed entering while-True")
         while True:
             lock_arb_size  = self.m_lock_arb_size
 
             if self.arb_completed.exists(request_id):
-                print("WWW self.arb_completed.exists(request_id)")
                 self.arb_completed.delete(request_id)
                 return
-            print("Before self.m_event_value_changed.clear()")
             self.m_event_value_changed.clear()
-            print("Before self.m_event_value_changed.wait()")
             evt = self.m_event_value_changed.wait()
-            print('evt is ' + str(evt))
             yield evt
-            print("After self.m_event_value_changed.wait()")
             if lock_arb_size != self.m_lock_arb_size:
                 break
         #endtask

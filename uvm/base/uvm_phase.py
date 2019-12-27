@@ -885,7 +885,7 @@ class UVMPhase(UVMObject):
     def raise_objection(self, obj, description="", count=1):
         if self.phase_done is not None:
             uvm_debug(self, 'raise_objection', 'obj: {}'.format(obj.get_name()))
-            print(self.get_name() + ' raise_objection' + ' obj: {}'.format(obj.get_name()))
+            #print(self.get_name() + ' raise_objection' + ' obj: {}'.format(obj.get_name()))
             self.phase_done.raise_objection(obj,description,count)
         else:
             self.m_report_null_objection(obj, description, count, "raise")
@@ -1196,7 +1196,8 @@ class UVMPhase(UVMObject):
             #for pred in successors[s].m_predecessors:
             for pred in successors[s].m_predecessors:
                 if pred == self:
-                    print(self.get_name() + " ZZZ self found from pred_of_succ")
+                    uvm_debug(self, 'get_predecessors_for_successor', self.get_name()
+                        + " ZZZ self found from pred_of_succ")
                 pred_of_succ[pred] = 1
 
         # replace any terminal nodes with their predecessors, recursively.

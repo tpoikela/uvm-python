@@ -27,6 +27,7 @@ from uvm.comps import UVMMonitor
 from ubus_transfer import *
 from uvm.tlm1 import UVMAnalysisPort, UVMBlockingPeekImp
 from uvm.base import *
+from uvm.macros import uvm_info
 
 #//------------------------------------------------------------------------------
 #//
@@ -35,8 +36,11 @@ from uvm.base import *
 #//------------------------------------------------------------------------------
 #class ubus_slave_monitor extends uvm_monitor
 
+DEBUG = False
+
 def _print(msg):
-    print("MMM ubus_slave_mon: " + msg)
+    if DEBUG is True:
+        uvm_info("UBUS_SLAVE_MON", msg, UVM_LOW)
 
 class ubus_slave_monitor(UVMMonitor):
 
@@ -196,7 +200,6 @@ class ubus_slave_monitor(UVMMonitor):
             if self.vif.sig_read.value.is_resolvable and self.vif.sig_write.value.is_resolvable:
 
                 if self.vif.sig_read.value == 1 or self.vif.sig_write.value == 1:
-                    print("LLLLLL: " + str(self.vif.sig_addr))
                     addr = int(self.vif.sig_addr)
                     self.trans_collected.addr = addr
 
