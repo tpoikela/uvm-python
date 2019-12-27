@@ -26,6 +26,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install cocotb
+  - pip install python-constraint
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
   - ls iverilog/
