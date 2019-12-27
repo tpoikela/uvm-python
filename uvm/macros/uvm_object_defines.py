@@ -32,7 +32,8 @@ def m_uvm_component_registry_internal(T,S):
     def type_id():
         return T.type_id
 
-    def get_type(self):
+    @classmethod
+    def get_type(T):
         return T.type_id.get()
     setattr(T, 'get_type', get_type)
 
@@ -47,7 +48,8 @@ def m_uvm_object_registry_internal(T,S):
     def type_id():
         return T.type_id
 
-    def get_type(self):
+    @classmethod
+    def get_type(T):
         return T.type_id.get()
     setattr(T, 'get_type', get_type)
 

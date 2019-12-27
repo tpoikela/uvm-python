@@ -21,6 +21,7 @@
 #//------------------------------------------------------------------------------
 
 import cocotb
+from .uvm_message_defines import uvm_warning
 
 #// Title: Sequence-Related Macros
 
@@ -229,6 +230,8 @@ def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
     else:
         # TODO handle constraints
         yield seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
+        if SEQ_OR_ITEM.randomize_with(CONSTRAINTS) is False:
+            uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action")
         yield seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
 
 #

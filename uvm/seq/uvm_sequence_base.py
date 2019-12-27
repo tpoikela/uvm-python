@@ -28,7 +28,7 @@ from ..base.uvm_event import UVMEvent
 from ..base.uvm_queue import UVMQueue
 from .uvm_sequence_item import UVMSequenceItem
 from ..base.uvm_object_globals import *
-from ..macros import uvm_fatal
+from ..macros import uvm_fatal, uvm_warning
 from ..base.uvm_pool import UVMPool
 from ..dap import uvm_get_to_lock_dap
 from ..base.uvm_recorder import UVMRecorder
@@ -347,8 +347,8 @@ class UVMSequenceBase(UVMSequenceItem):
         yield Timer(0)
 
         if (self.m_parent_sequence is not None and
-            self.m_parent_sequence.children_array.exists(self)):
-            self.m_parent_sequence.children_array.delete(self)
+                self in self.m_parent_sequence.children_array):
+            del self.m_parent_sequence.children_array[self]
 
         old_automatic_phase_objection = self.get_automatic_phase_objection()
         self.m_init_phase_daps(1)
@@ -371,7 +371,7 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.pre_start()
 
-        if (call_pre_post == 1):
+        if call_pre_post == 1:
             self.m_sequence_state = UVM_PRE_BODY
             #0
             yield Timer(0)
@@ -384,6 +384,7 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_sequence_state = UVM_BODY
         #0
         yield Timer(0)
+        print("PPP before self.body " + str(self) + " name: " + self.get_name())
         yield self.body()
 
         self.m_sequence_state = UVM_ENDED
@@ -466,11 +467,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // This is the user-defined task where the main sequence code resides.
     #  // This method should not be called directly by the user.
     #
-    #  virtual task body()
-    #    uvm_report_warning("uvm_sequence_base", "Body definition undefined")
-    #    return
-    #  endtask
-    #
+    @cocotb.coroutine
+    def body(self):
+        uvm_warning("uvm_sequence_base", "Body definition undefined")
+        yield Timer(0, "NS")
 
     #  // Function: post_do
     #  //
@@ -641,10 +641,11 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // m_safe_drop_starting_phase
     #  function void m_safe_drop_starting_phase(string description = "",
     #                                           int count = 1)
-    #     uvm_phase starting_phase = get_starting_phase()
-    #     if (starting_phase is not None)
-    #       starting_phase.drop_objection(this, description, count)
-    #  endfunction : m_safe_drop_starting_phase
+    def m_safe_drop_starting_phase(self, description="", count=1):
+        starting_phase = self.get_starting_phase()
+        if (starting_phase is not None):
+            starting_phase.drop_objection(self, description, count)
+        #  endfunction : m_safe_drop_starting_phase
 
     #  //------------------------
     #  // Group: Sequence Control
@@ -1128,6 +1129,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if ((self.response_queue_depth == -1) or
                 (self.response_queue.size() < self.response_queue_depth)):
             self.response_queue.push_back(response)
+            print("QQQ resp queue got a rsp: " + response.convert2string())
             self.m_resp_queue_event.set()
             return
         if self.response_queue_error_report_disabled == 0:
@@ -1137,7 +1139,7 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //
     #  // Internal method.
     #  virtual function void put_response (uvm_sequence_item response_item)
-    def put_response (self, response_item):
+    def put_response(self, response_item):
         self.put_base_response(response_item)
 
     #  // Function- get_base_response

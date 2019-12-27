@@ -24,7 +24,7 @@ import cocotb
 from uvm.seq import UVMSequence
 from uvm.macros import *
 from uvm.base import sv
-from ubus_transfer import ubus_transfer
+from ubus_transfer import ubus_transfer, READ, WRITE
 
 #//------------------------------------------------------------------------------
 #//
@@ -41,6 +41,7 @@ class ubus_base_sequence(UVMSequence):
         UVMSequence.__init__(self, name)
         self.set_automatic_phase_objection(1)
         self.req = ubus_transfer()
+        self.rsp = ubus_transfer()
 
 #//------------------------------------------------------------------------------
 #//
@@ -59,6 +60,12 @@ class read_byte_seq(ubus_base_sequence):
 
     @cocotb.coroutine
     def body(self):
+        self.req.data = [1234]
+        self.req.addr = self.start_addr
+        self.req.read_write = READ
+        self.req.size = 1
+        self.req.error_pos = 1000
+        self.req.transmit_delay = self.transmit_delay
         yield uvm_do_with(self, self.req, {})
         #      { req.addr == start_addr
         #        req.read_write == READ
@@ -67,10 +74,10 @@ class read_byte_seq(ubus_base_sequence):
         #        req.transmit_delay == transmit_del; } )
         rsp = []
         yield self.get_response(rsp)
-        rsp = rsp[0]
+        self.rsp = rsp[0]
         uvm_info(self.get_type_name(),
             sv.sformatf("%s read : addr = `x%0h, data[0] = `x%0h",
-            self.get_sequence_path(), rsp.addr, rsp.data[0]),
+                self.get_sequence_path(), self.rsp.addr, self.rsp.data[0]),
             UVM_HIGH)
         #  endtask
     #
@@ -205,7 +212,13 @@ class write_byte_seq(ubus_base_sequence):
     @cocotb.coroutine
     def body(self):
         req = ubus_transfer()
-        uvm_do_with(self, req, {})
+        req.data.append(self.data0)
+        req.addr = self.start_addr
+        req.size = 1
+        req.error_pos = 1000
+        req.read_write = WRITE
+        req.transmit_delay = self.transmit_delay
+        yield uvm_do_with(self, req, {})
         #      { req.addr == start_addr
         #        req.read_write == WRITE
         #        req.size == 1

@@ -20,12 +20,15 @@
 #//   permissions and limitaions under the License.
 #//----------------------------------------------------------------------
 
-from uvm.base import UVMObject
+import cocotb
+from cocotb.triggers import RisingEdge, FallingEdge, Timer
+
+from uvm.base import UVMObject, sv, UVMConfigDb
 from uvm.macros import uvm_component_utils, uvm_object_utils
 from uvm.comps import UVMMonitor
 from uvm.tlm1 import UVMAnalysisPort
 
-from ubus_transfer import ubus_transfer
+from ubus_transfer import *
 
 #//------------------------------------------------------------------------------
 #//
@@ -35,7 +38,7 @@ from ubus_transfer import ubus_transfer
 #// to a transfer on the bus
 #//------------------------------------------------------------------------------
 
-#class slave_address_map_info extends uvm_object;
+#class slave_address_map_info extends uvm_object
 class slave_address_map_info(UVMObject):
 
     def __init__(self, name="slave_address_map_info"):
@@ -65,7 +68,7 @@ uvm_object_utils(slave_address_map_info)
 #// Enumerated for ubus bus state
 
 #typedef enum {RST_START, RST_STOP, NO_OP, ARBI, ADDR_PH, ADDR_PH_ERROR,
-#  DATA_PH} ubus_bus_state;
+#  DATA_PH} ubus_bus_state
 RST_START = 0
 RST_STOP = 1
 NO_OP = 2
@@ -100,282 +103,303 @@ uvm_object_utils(ubus_status)
 #// CLASS: ubus_bus_monitor
 #//
 #//------------------------------------------------------------------------------
-#class ubus_bus_monitor extends uvm_monitor;
+#class ubus_bus_monitor extends uvm_monitor
 
 class ubus_bus_monitor(UVMMonitor):
     #
     #  // The virtual interface used to view HDL signals.
-    #  protected virtual ubus_if vif;
+    #  protected virtual ubus_if vif
     #
     #  // Property indicating the number of transactions occuring on the ubus.
-    #  protected int unsigned num_transactions = 0;
+    #  protected int unsigned num_transactions = 0
     #
     #  // The following two bits are used to control whether checks and coverage are
     #  // done both in the bus monitor class and the interface.
-    #  bit checks_enable = 1;
-    #  bit coverage_enable = 1;
+    #  bit checks_enable = 1
+    #  bit coverage_enable = 1
     #
     #  // Analysis ports for the item_collected and state notifier.
-    #  uvm_analysis_port #(ubus_transfer) item_collected_port;
-    #  uvm_analysis_port #(ubus_status) state_port;
+    #  uvm_analysis_port #(ubus_transfer) item_collected_port
+    #  uvm_analysis_port #(ubus_status) state_port
     #
     #  // The state of the ubus
-    #  protected ubus_status status;
-    #
-    #  // The following property is used to store slave address map
-    #  protected slave_address_map_info slave_addr_map[string];
+    #  protected ubus_status status
     #
     #  // The following property holds the transaction information currently
     #  // being captured (by the collect_address_phase and data_phase methods).
-    #  protected ubus_transfer trans_collected;
+    #  protected ubus_transfer trans_collected
     #
     #  // Events needed to trigger covergroups
-    #  protected event cov_transaction;
-    #  protected event cov_transaction_beat;
+    #  protected event cov_transaction
+    #  protected event cov_transaction_beat
     #
     #  // Fields to hold trans data and wait_state.  No coverage of dynamic arrays.
-    #  protected bit [15:0] addr;
-    #  protected bit [7:0] data;
-    #  protected int unsigned wait_state;
+    #  protected bit [15:0] addr
+    #  protected bit [7:0] data
+    #  protected int unsigned wait_state
     #
     #  // Transfer collected covergroup
-    #  covergroup cov_trans @cov_transaction;
-    #    option.per_instance = 1;
+    #  covergroup cov_trans @cov_transaction
+    #    option.per_instance = 1
     #    trans_start_addr : coverpoint trans_collected.addr {
     #      option.auto_bin_max = 16; }
-    #    trans_dir : coverpoint trans_collected.read_write;
+    #    trans_dir : coverpoint trans_collected.read_write
     #    trans_size : coverpoint trans_collected.size {
-    #      bins sizes[] = {1, 2, 4, 8};
+    #      bins sizes[] = {1, 2, 4, 8}
     #      illegal_bins invalid_sizes = default; }
-    #    trans_addrXdir : cross trans_start_addr, trans_dir;
-    #    trans_dirXsize : cross trans_dir, trans_size;
+    #    trans_addrXdir : cross trans_start_addr, trans_dir
+    #    trans_dirXsize : cross trans_dir, trans_size
     #  endgroup : cov_trans
     #
     #  // Transfer collected data covergroup
-    #  covergroup cov_trans_beat @cov_transaction_beat;
-    #    option.per_instance = 1;
+    #  covergroup cov_trans_beat @cov_transaction_beat
+    #    option.per_instance = 1
     #    beat_addr : coverpoint addr {
     #      option.auto_bin_max = 16; }
-    #    beat_dir : coverpoint trans_collected.read_write;
+    #    beat_dir : coverpoint trans_collected.read_write
     #    beat_data : coverpoint data {
     #      option.auto_bin_max = 8; }
     #    beat_wait : coverpoint wait_state {
-    #      bins waits[] = { [0:9] };
+    #      bins waits[] = { [0:9] }
     #      bins others = { [10:$] }; }
-    #    beat_addrXdir : cross beat_addr, beat_dir;
-    #    beat_addrXdata : cross beat_addr, beat_data;
+    #    beat_addrXdir : cross beat_addr, beat_dir
+    #    beat_addrXdata : cross beat_addr, beat_data
     #  endgroup : cov_trans_beat
     #
 
     #  // new - constructor
     def __init__(self, name, parent):
         UVMMonitor.__init__(self, name, parent)
-        #    cov_trans = new();
-        #    cov_trans.set_inst_name({get_full_name(), ".cov_trans"});
-        #    cov_trans_beat = new();
-        #    cov_trans_beat.set_inst_name({get_full_name(), ".cov_trans_beat"});
+        #    cov_trans = new()
+        #    cov_trans.set_inst_name({get_full_name(), ".cov_trans"})
+        #    cov_trans_beat = new()
+        #    cov_trans_beat.set_inst_name({get_full_name(), ".cov_trans_beat"})
         self.trans_collected = ubus_transfer()
         self.item_collected_port = UVMAnalysisPort("item_collected_port", self)
         self.state_port = UVMAnalysisPort("state_port", self)
         self.status = ubus_status("status")
+
+        # The following property is used to store slave address map
+        # slave_address_map_info slave_addr_map[string]
+        self.slave_addr_map = {}
+
+        self.checks_enable = True
+        self.coverage_enable = True
         #  endfunction : new
 
     #  // set_slave_configs
-    #  function void set_slave_configs(string slave_name,
-    #    int min_addr, int max_addr);
-    #    slave_addr_map[slave_name] = new();
-    #    slave_addr_map[slave_name].set_address_map(min_addr, max_addr);
-    #  endfunction : set_slave_configs
-    #
+    def set_slave_configs(self, slave_name, min_addr=0, max_addr=0):
+        self.slave_addr_map[slave_name] = slave_address_map_info()
+        self.slave_addr_map[slave_name].set_address_map(min_addr, max_addr)
+        #  endfunction : set_slave_configs
 
-    #  function void build_phase(uvm_phase phase);
-    #      if(!uvm_config_db#(virtual ubus_if)::get(this, "", "vif", vif))
-    #       `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
-    #  endfunction: build_phase
-    #
+
+    def build_phase(self, phase):
+        vif = []
+        if not (UVMConfigDb.get(self, "", "vif", vif)):
+            uvm_fatal("NOVIF", ("virtual interface must be set for: " + self.get_full_name()
+                + ".vif"))
+        self.vif = vif[0]
 
     #  // run phase
-    #  task run_phase(uvm_phase phase);
-    #    fork
-    #      observe_reset();
-    #      collect_transactions();
-    #    join
-    #  endtask : run_phase
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        #    fork
+        reset_proc = cocotb.fork(self.observe_reset())
+        collect_proc = cocotb.fork(self.collect_transactions())
+        #    join
+        yield [reset_proc, collect_proc.join()]
+        #  endtask : run_phase
     #
 
     #  // observe_reset
-    #  task observe_reset();
-    #    fork
-    #      forever begin
-    #        @(posedge vif.sig_reset);
-    #        status.bus_state = RST_START;
-    #        state_port.write(status);
-    #      end
-    #      forever begin
-    #        @(negedge vif.sig_reset);
-    #        status.bus_state = RST_STOP;
-    #        state_port.write(status);
-    #      end
-    #    join
-    #  endtask : observe_reset
-    #
+    @cocotb.coroutine
+    def observe_reset(self):
+        #    fork
+        @cocotb.coroutine
+        def rst_start():
+            while True:
+                yield RisingEdge(self.vif.sig_reset)
+                self.status.bus_state = RST_START
+            self.state_port.write(self.status)
+
+        @cocotb.coroutine
+        def rst_stop():
+            while True:
+                yield RisingEdge(self.vif.sig_reset)
+                self.status.bus_state = RST_STOP
+                self.state_port.write(self.status)
+
+        start_proc = cocotb.fork(rst_start())
+        stop_proc = cocotb.fork(rst_stop())
+
+        yield [start_proc, stop_proc.join()]
+        #    join
+        #  endtask : observe_reset
+
 
     #  // collect_transactions
-    #  virtual protected task collect_transactions();
-    #    forever begin
-    #      collect_arbitration_phase();
-    #      collect_address_phase();
-    #      collect_data_phase();
-    #      `uvm_info(get_type_name(),$sformatf("Transfer collected :\n%s",
-    #        trans_collected.sprint()), UVM_HIGH)
-    #      if (checks_enable)
-    #        perform_transfer_checks();
-    #      if (coverage_enable)
-    #        perform_transfer_coverage();
-    #      item_collected_port.write(trans_collected);
-    #    end
-    #  endtask : collect_transactions
-    #
+    @cocotb.coroutine
+    def collect_transactions(self):
+        while True:
+            yield self.collect_arbitration_phase()
+            yield self.collect_address_phase()
+            yield self.collect_data_phase()
+            uvm_info("UBUS_MON", sv.sformatf("Transfer collected :\n%s",
+                self.trans_collected.sprint()), UVM_HIGH)
+            if (self.checks_enable):
+                self.perform_transfer_checks()
+            if (self.coverage_enable):
+                self.perform_transfer_coverage()
+            self.item_collected_port.write(self.trans_collected)
+        #  endtask : collect_transactions
 
     #  // collect_arbitration_phase
-    #  task collect_arbitration_phase();
-    #    string tmpStr;
-    #    @(posedge vif.sig_clock iff (vif.sig_grant != 0));
-    #    status.bus_state = ARBI;
-    #    state_port.write(status);
-    #    void'(this.begin_tr(trans_collected));
-    #    // Check which grant is asserted to determine which master is performing
-    #    // the transfer on the bus.
-    #    for (int j = 0; j <= 15; j++):
-    #      if (vif.sig_grant[j] === 1):
-    #        $sformat(tmpStr,"masters[%0d]", j);
-    #        trans_collected.master = tmpStr;
-    #        break;
-    #      end
-    #    end
-    #  endtask : collect_arbitration_phase
-    #
+    @cocotb.coroutine
+    def collect_arbitration_phase(self):
+        tmpStr = ""
+        # @(posedge vif.sig_clock iff (vif.sig_grant != 0))
+        while True:
+            yield RisingEdge(self.vif.sig_clock)
+            if self.vif.sig_grant != 0:
+                break
+        self.status.bus_state = ARBI
+        self.state_port.write(self.status)
+        self.begin_tr(self.trans_collected)
+        # Check which grant is asserted to determine which master is performing
+        # the transfer on the bus.
+        #for (int j = 0; j <= 15; j++):
+        for j in range(16):
+            if (self.vif.sig_grant.value[j] == 1):
+                tmpStr = sv.sformatf("masters[%0d]", j)
+                self.trans_collected.master = tmpStr
+                break
+        #  endtask : collect_arbitration_phase
+        #
 
     #  // collect_address_phase
-    #  task collect_address_phase();
-    #    @(posedge vif.sig_clock);
-    #    trans_collected.addr = vif.sig_addr;
-    #    case (vif.sig_size)
-    #      2'b00 : trans_collected.size = 1;
-    #      2'b01 : trans_collected.size = 2;
-    #      2'b10 : trans_collected.size = 4;
-    #      2'b11 : trans_collected.size = 8;
-    #    endcase
-    #    trans_collected.data = new[trans_collected.size];
-    #    case ({vif.sig_read,vif.sig_write})
-    #      2'b00 : begin
-    #        trans_collected.read_write = NOP;
-    #        status.bus_state = NO_OP;
-    #        state_port.write(status);
-    #      end
-    #      2'b10 : begin
-    #        trans_collected.read_write = READ;
-    #        status.bus_state = ADDR_PH;
-    #        state_port.write(status);
-    #      end
-    #      2'b01 : begin
-    #        trans_collected.read_write = WRITE;
-    #        status.bus_state = ADDR_PH;
-    #        state_port.write(status);
-    #      end
-    #      2'b11 : begin
-    #        status.bus_state = ADDR_PH_ERROR;
-    #        state_port.write(status);
-    #        if (checks_enable)
-    #          `uvm_error(get_type_name(),
-    #            "Read and Write true at the same time")
-    #      end
-    #    endcase
-    #  endtask : collect_address_phase
-    #
+    @cocotb.coroutine
+    def collect_address_phase(self):
+        yield RisingEdge(self.vif.sig_clock)
+        self.trans_collected.addr = int(self.vif.sig_addr.value)
+        sig_size = int(self.vif.sig_size)
+        if sig_size == 0:
+            self.trans_collected.size = 1
+        elif sig_size == 1:
+            self.trans_collected.size = 2
+        elif sig_size == 2:
+            self.trans_collected.size = 4
+        elif sig_size == 3:
+            self.trans_collected.size = 8
+
+        self.trans_collected.data = [0] * self.trans_collected.size
+
+        vec = int((int(self.vif.sig_read) << 1) & int(self.vif.sig_write))
+        if vec == 0:
+            self.trans_collected.read_write = NOP
+            self.status.bus_state = NO_OP
+            self.state_port.write(self.status)
+        elif vec == 1:
+            self.trans_collected.read_write = READ
+            self.status.bus_state = ADDR_PH
+            self.state_port.write(self.status)
+        elif vec == 2:
+            self.trans_collected.read_write = WRITE
+            self.status.bus_state = ADDR_PH
+            self.state_port.write(self.status)
+        elif vec == 3:
+            self.status.bus_state = ADDR_PH_ERROR
+            self.state_port.write(self.status)
+            if (self.checks_enable):
+                uvm_error(self.get_type_name(),
+                "Read and Write true at the same time")
+        #  endtask : collect_address_phase
+        #
 
     #  // collect_data_phase
-    #  task collect_data_phase();
-    #    int i;
-    #    if (trans_collected.read_write != NOP):
-    #      check_which_slave();
-    #      for (i = 0; i < trans_collected.size; i++):
-    #        status.bus_state = DATA_PH;
-    #        state_port.write(status);
-    #        @(posedge vif.sig_clock iff vif.sig_wait === 0);
-    #        trans_collected.data[i] = vif.sig_data;
-    #      end
-    #      num_transactions++;
-    #      this.end_tr(trans_collected);
-    #    end
-    #  endtask : collect_data_phase
-    #
+    @cocotb.coroutine
+    def collect_data_phase(self):
+        if (self.trans_collected.read_write != NOP):
+            self.check_which_slave()
+            for i in range(self.trans_collected.size):
+                self.status.bus_state = DATA_PH
+                self.state_port.write(self.status)
+                while True:
+                    yield RisingEdge(self.vif.sig_clock)
+                    if self.vif.sig_wait == 0:
+                        break
+                self.trans_collected.data[i] = self.vif.sig_data
+            self.num_transactions += 1
+            self.end_tr(self.trans_collected)
+        else:
+            yield Timer(0)
+        #  endtask : collect_data_phase
+        #
 
     #  // check_which_slave
-    #  function void check_which_slave();
-    #    string slave_name;
-    #    bit slave_found;
-    #    slave_found = 1'b0;
-    #    if(slave_addr_map.first(slave_name))
-    #      do begin
-    #        if (slave_addr_map[slave_name].get_min_addr() <= trans_collected.addr
-    #          && trans_collected.addr <= slave_addr_map[slave_name].get_max_addr())
-    #        begin
-    #          trans_collected.slave = slave_name;
-    #          slave_found = 1'b1;
-    #        end
-    #        if (slave_found == 1'b1)
-    #          break;
-    #      end
-    #    while (slave_addr_map.next(slave_name));
-    #      assert(slave_found) else begin
-    #        `uvm_error(get_type_name(),
-    #          $sformatf("Master attempted a transfer at illegal address 16'h%0h",
-    #          trans_collected.addr))
-    #      end
-    #  endfunction : check_which_slave
-    #
+    def check_which_slave(self):
+        slave_name = ""
+        slave_found = False
+
+        for slave_name in self.slave_addr_map:
+            if (self.slave_addr_map[slave_name].get_min_addr() <= self.trans_collected.addr
+              and self.trans_collected.addr <=
+              self.slave_addr_map[slave_name].get_max_addr()):
+                self.trans_collected.slave = slave_name
+                self.slave_found = True
+            if self.slave_found is True:
+                break
+
+        if slave_found is False:
+            uvm_error(self.get_type_name(),
+                sv.sformatf("Master attempted a transfer at illegal address 16'h%0h",
+                self.trans_collected.addr))
+        #  endfunction : check_which_slave
+        #
 
     #  // perform_transfer_checks
-    #  function void perform_transfer_checks();
-    #    check_transfer_size();
-    #    check_transfer_data_size();
-    #  endfunction : perform_transfer_checks
-    #
+    def perform_transfer_checks(self):
+        self.check_transfer_size()
+        self.check_transfer_data_size()
+        #  endfunction : perform_transfer_checks
 
     #  // check_transfer_size
-    #  function void check_transfer_size();
-    #   if (trans_collected.read_write != NOP):
-    #    assert_transfer_size : assert(trans_collected.size == 1 ||
-    #      trans_collected.size == 2 || trans_collected.size == 4 ||
-    #      trans_collected.size == 8) else begin
-    #      `uvm_error(get_type_name(),
-    #        "Invalid transfer size!")
-    #    end
-    #   end
-    #  endfunction : check_transfer_size
-    #
+    def check_transfer_size(self):
+        pass
+        #   if (trans_collected.read_write != NOP):
+        #    assert_transfer_size : assert(trans_collected.size == 1 ||
+        #      trans_collected.size == 2 || trans_collected.size == 4 ||
+        #      trans_collected.size == 8) else begin
+        #      `uvm_error(get_type_name(),
+        #        "Invalid transfer size!")
+        #    end
+        #   end
+        #  endfunction : check_transfer_size
+
+
     #  // check_transfer_data_size
-    #  function void check_transfer_data_size();
-    #    if (trans_collected.size != trans_collected.data.size())
-    #      `uvm_error(get_type_name(),
-    #        "Transfer size field / data size mismatch.")
-    #  endfunction : check_transfer_data_size
-    #
+    def check_transfer_data_size(self):
+        pass
+        #    if (trans_collected.size != trans_collected.data.size())
+        #      `uvm_error(get_type_name(),
+        #        "Transfer size field / data size mismatch.")
+        #  endfunction : check_transfer_data_size
+
 
     #  // perform_transfer_coverage
-    #  function void perform_transfer_coverage();
-    #    if (trans_collected.read_write != NOP):
-    #      -> cov_transaction;
-    #      for (int unsigned i = 0; i < trans_collected.size; i++):
-    #        addr = trans_collected.addr + i;
-    #        data = trans_collected.data[i];
-    #        //wait_state = trans_collected.wait_state[i];
-    #        -> cov_transaction_beat;
-    #      end
-    #    end
-    #  endfunction : perform_transfer_coverage
-    #
+    def perform_transfer_coverage(self):
+        pass
+        #    if (trans_collected.read_write != NOP):
+        #      -> cov_transaction
+        #      for (int unsigned i = 0; i < trans_collected.size; i++):
+        #        addr = trans_collected.addr + i
+        #        data = trans_collected.data[i]
+        #        //wait_state = trans_collected.wait_state[i]
+        #        -> cov_transaction_beat
+        #      end
+        #    end
+        #  endfunction : perform_transfer_coverage
+
     #endclass : ubus_bus_monitor
 uvm_component_utils(ubus_bus_monitor)
 

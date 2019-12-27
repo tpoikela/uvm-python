@@ -20,9 +20,11 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+from uvm.base import sv
 from uvm.comps import UVMScoreboard
-from uvm.macros import uvm_component_utils
+from uvm.macros import uvm_component_utils, uvm_info
 from uvm.tlm1 import UVMAnalysisImp
+from ubus_transfer import *
 
 #//------------------------------------------------------------------------------
 #//
@@ -66,62 +68,59 @@ class ubus_example_scoreboard(UVMScoreboard):
     def write(self, trans):
         if self.disable_scoreboard is False:
             self.memory_verify(trans)
-        #  endfunction : write
 
 
     #  // memory_verify
     #  protected function void memory_verify(input ubus_transfer trans)
     def memory_verify(self, trans):
+        print("SSSCCCBBB memory_verify called here")
         data = 0
         exp = 0
-        self.sbd_error = True
-        #    for (int i = 0; i < trans.size; i++) begin
-        #      // Check to see if entry in associative array for this address when read
-        #      // If so, check that transfer data matches associative array data.
-        #      if (m_mem_expected.exists(trans.addr + i)) begin
-        #        if (trans.read_write == READ) begin
-        #          data = trans.data[i]
-        #          `uvm_info(get_type_name(),
-        #            $sformatf("%s to existing address...Checking address : %0h with data : %0h", 
-        #            trans.read_write.name(), trans.addr, data), UVM_LOW)
-        #          assert(m_mem_expected[trans.addr + i] == trans.data[i]) else begin
-        #            exp = m_mem_expected[trans.addr + i]
-        #            `uvm_error(get_type_name(),
-        #              $sformatf("Read data mismatch.  Expected : %0h.  Actual : %0h", 
-        #              exp, data))
-        #	      sbd_error = 1
-        #          end
-        #          num_init_reads++
-        #        end
-        #        if (trans.read_write == WRITE) begin
-        #          data = trans.data[i]
-        #          `uvm_info(get_type_name(),
-        #            $sformatf("%s to existing address...Updating address : %0h with data : %0h", 
-        #            trans.read_write.name(), trans.addr + i, data), UVM_LOW)
-        #          m_mem_expected[trans.addr + i] = trans.data[i]
-        #          num_writes++
-        #        end
-        #      end
-        #      // Check to see if entry in associative array for this address
-        #      // If not, update the location regardless if read or write.
-        #      else begin
-        #        data = trans.data[i]
-        #        `uvm_info(get_type_name(),
-        #          $sformatf("%s to empty address...Updating address : %0h with data : %0h", 
-        #          trans.read_write.name(), trans.addr + i, data), UVM_LOW)
-        #        m_mem_expected[trans.addr + i] = trans.data[i]
-        #        if(trans.read_write == READ)
-        #          num_uninit_reads++
-        #        else if (trans.read_write == WRITE)
-        #          num_writes++
-        #      end
-        #    end
+        for i in range(trans.size):
+            # Check to see if entry in associative array for this address when read
+            # If so, check that transfer data matches associative array data.
+            if (trans.addr + i) in self.m_mem_expected:
+                if trans.read_write == READ:
+                    data = trans.data[i]
+                    uvm_info(self.get_type_name(),
+                        sv.sformatf("%s to existing address...Checking address : %0h with data : %0h",
+                            str(trans.read_write), trans.addr, data), UVM_LOW)
+
+                    if not (self.m_mem_expected[trans.addr + i] == trans.data[i]):
+                        exp = self.m_mem_expected[trans.addr + i]
+                        uvm_error(self.get_type_name(),
+                          sv.sformatf("Read data mismatch.  Expected : %0h.  Actual : %0h",
+                          exp, data))
+                        self.sbd_error = True
+
+                    self.num_init_reads += 1
+
+                if trans.read_write == WRITE:
+                    data = trans.data[i]
+                    uvm_info(self.get_type_name(),
+                      sv.sformatf("Op %s to existing address...Updating address : %0h with data : %0h",
+                          str(trans.read_write), trans.addr + i, data), UVM_LOW)
+                    self.m_mem_expected[trans.addr + i] = trans.data[i]
+                    self.num_writes += 1
+
+            # Check to see if entry in associative array for this address
+            # If not, update the location regardless if read or write.
+            else:
+                data = trans.data[i]
+                uvm_info(self.get_type_name(),
+                    sv.sformatf("%s to empty address...Updating address : %0h with data : %0h",
+                    str(trans.read_write), trans.addr + i, data), UVM_LOW)
+                self.m_mem_expected[trans.addr + i] = trans.data[i]
+                if trans.read_write == READ:
+                    self.num_uninit_reads += 1
+                elif (trans.read_write == WRITE):
+                    self.num_writes += 1
         #  endfunction : memory_verify
 
 
     #  // report_phase
     #  virtual function void report_phase(uvm_phase phase)
-    #    if(!disable_scoreboard) begin
+    #    if(!disable_scoreboard):
     #      `uvm_info(get_type_name(),
     #        $sformatf("Reporting scoreboard information...\n%s", this.sprint()), UVM_LOW)
     #    end

@@ -3,9 +3,12 @@
 import re
 import random
 import cocotb
+import copy
 from cocotb.triggers import Lock, Timer
 from cocotb.utils import get_sim_time
 from cocotb.bus import Bus
+
+from constraint import Problem
 
 RET_ERR = 1
 RET_OK = 0
@@ -95,6 +98,9 @@ class sv:
     def random(cls):
         return random.randint(0, SV_MAX_INT_VALUE)
 
+    @classmethod
+    def urandom(cls):
+        return random.randint(0, SV_MAX_INT_VALUE)
 
 random.seed(0)
 
@@ -102,31 +108,126 @@ SV_MAX_INT_VALUE = (1 << 31) - 1
 
 
 
-
-def urandom():
-    return random.randint(0, SV_MAX_INT_VALUE)
-
-
 #def process(func):
 #    return cocotb.coroutine(func)
 
+SV_MAX_RAND_TRIES = 10000
 
 class sv_obj():
+    """ sv_obj implement some basic features from SystemVerilog objects like 
+    constrained randomisation """
 
     def __init__(self):
-        self._sv_seed = urandom()
+        self._sv_seed = sv.urandom()
         self._sv_attr_rand = []
+        self._sv_attr_rand_list = []
+        self.problem = None
+        random.seed(self._sv_seed)
+        self._sv_rand_state = random.getstate()
 
     def constraint(self, key, func):
-        self._sv_attr_rand_constr.append(key)
+        """ Adds a contraint into the object """
+        if self.problem is None:
+            self.problem = Problem()
+        #if isinstance(key, str):
+        #    key = [key]
+        var_list = self._add_constraints(key, func)
+        # Add variables to a list for randomization
+        for vv in var_list:
+            self.rand(vv)
+
+    def _add_constraints(self, key, func):
+        var_list = []
+        if isinstance(key, dict):
+            for prop in key:
+                cvars = self._add_single_constraint(prop, key[prop])
+                var_list.extend(cvars)
+        elif isinstance(key, list):
+            for constr in key:
+                [key, func] = constr
+                cvars = self._add_single_constraint(key, func)
+                var_list.extend(cvars)
+        else:
+            cvars = self._add_single_constraint(key, func)
+            var_list.extend(cvars)
+        return var_list
+
+
+    def _add_single_constraint(self, key, func):
+        var_list = []
+        if isinstance(key, str):
+            self.problem.addVariable(key, func)
+            var_list.append(key)
+        elif isinstance(key, list):
+            if callable(func):
+                self.problem.addConstraint(func, key)
+            else:
+                self.problem.addVariables(key, func)
+            var_list.extend(key)
+        elif isinstance(key, tuple):
+            if callable(func):
+                self.problem.addConstraint(func, key)
+            else:
+                raise Exception("2nd arg must be lambda function. Got: " +
+                    str(func))
+            for tt in key:
+                var_list.append(tt)
+        return var_list
 
     def rand(self, key):
-        self._sv_attr_rand.append(key)
+        if isinstance(key, str) is True:
+            if key not in self._sv_attr_rand:
+                self._sv_attr_rand.append(key)
+            if isinstance(getattr(self, key), list):
+                self._sv_attr_rand_list.append(key)
+        else:
+            raise Exception("Key error. Key to rand() must be string. Got: " +
+                    str(key))
+
 
     def randomize(self):
-        random.seed(self._sv_seed)
+        """ Randomizes the value in object marked with rand() or constraint()
+        """
+        ok = True
+        chosen_sol = {}
+        # Non-random part which generates all solutions
+        if self.problem is not None:
+            sols = self.problem.getSolutions()
+            print("sols is now " + str(sols))
+            if len(sols) == 0:
+                return False
+            else:
+                # TODO choose solutions randomly
+                chosen_sol = sols[0]
+        random.setstate(self._sv_rand_state)
+        #random.seed(self._sv_seed)
         for key in self._sv_attr_rand:
-            setattr(self, key, urandom())
+            prop = getattr(self, key)
+            if key in chosen_sol:
+                setattr(self, key, chosen_sol[key])
+            else:
+                if isinstance(prop, sv_obj):
+                    ok = ok and prop.randomize()
+                elif isinstance(prop, int):
+                    setattr(self, key, sv.urandom())
+        return ok
+
+    # TODO add better support for constraints
+    def randomize_with(self, constr):
+        # Create new object with inline constraints, then randomize it
+        my_obj = None
+        try:
+            my_obj = copy.deepcopy(self)
+        except:
+            return False
+        my_obj._add_constraints(constr, None)
+        ok = my_obj.randomize()
+        # If OK, assign randomizes props. Note that this will work only
+        # if original object has property marked with rand()
+        if ok is True:
+            for key in self._sv_attr_rand:
+                setattr(self, key, getattr(my_obj, key))
+        return ok
 
 
 class semaphore():
@@ -172,29 +273,3 @@ class sv_if(Bus):
                 bus_separator, array_idx)
 
 
-import unittest
-
-class TestSV(unittest.TestCase):
-
-    def test_uvm_glob_to_re(self):
-        str1 = "uvm_*"
-        res1 = uvm_glob_to_re(str1)
-        self.assertEqual(res1, 'uvm_.*')
-        str2 = "uvm_*xxx*yyy"
-        res2 = uvm_glob_to_re(str2)
-        self.assertEqual(res2, 'uvm_.*xxx.*yyy')
-        str3 = "my_top.xxx*"
-        res3 = uvm_glob_to_re(str3)
-        self.assertEqual(res3, 'my_top\\.xxx.*')
-
-    def test_cast(self):
-        pass
-
-    def test_sformatf(self):
-        str1 = sv.sformatf("Number: %0d, String: %s", 555, "xxx")
-        self.assertRegex(str1, "Number: 555")
-        self.assertRegex(str1, "String: xxx")
-
-
-if __name__ == '__main__':
-    unittest.main()

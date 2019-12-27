@@ -21,16 +21,15 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import RisingEdge, Timer, Combine, Edge
+from cocotb.triggers import RisingEdge, Timer, Combine, Edge, FallingEdge
 
 from uvm.base.sv import sv_if
 
 #/******************************************************************************
 #
-#  FILE : ubus_bus_monitor_if.py
+#  FILE : ubus_if.py
 #
 # ******************************************************************************/
-#interface ubus_if;
 
 class ubus_if(sv_if):
 
@@ -52,19 +51,23 @@ class ubus_if(sv_if):
                 "sig_request": "req_master_0",
                 "sig_grant": "gnt_master_0"}
         sv_if.__init__(self, dut, "ubus", bus_map)
-        self.rw = 0
+        self.slave_en = 0
         # Control flags
         self.has_checks = True
         self.has_coverage = True
 
     @cocotb.coroutine
+    def start(self):
+        a = cocotb.fork(self.drive_data())
+        b = cocotb.fork(self.always())
+        c = cocotb.fork(self.always_assertions())
+        yield [a, b, c]
+
+    @cocotb.coroutine
     def drive_data(self):
-        triggers = []
-        for i in range(len(self.sig_data)):
-            triggers.append(Edge(self.sig_data[i]))
         while True:
-            yield Combine(*triggers)
-            if self.rw == 1:
+            yield Combine(Edge(self.sig_data_out), Edge(self.sig_data))
+            if self.slave_en == 1:
                 self.sig_data <= self.sig_data_out
 
     @cocotb.coroutine
@@ -76,87 +79,91 @@ class ubus_if(sv_if):
             yield Timer(0, "NS")
 
 
-    #// Coverage and assertions to be implemented here.
-    #
-    #always @(negedge sig_clock)
-    #begin
-    #
-    #// Address must not be X or Z during Address Phase
-    #assertAddrUnknown:assert property (
-    #                  disable iff(!has_checks) 
-    #                  ($onehot(sig_grant) |-> !$isunknown(sig_addr)))
-    #                  else
-    #                    $error("ERR_ADDR_XZ\n Address went to X or Z \
-    #                            during Address Phase");
-    #
-    #// Read must not be X or Z during Address Phase
-    #assertReadUnknown:assert property ( 
-    #                  disable iff(!has_checks) 
-    #                  ($onehot(sig_grant) |-> !$isunknown(sig_read)))
-    #                  else
-    #                    $error("ERR_READ_XZ\n READ went to X or Z during \
-    #                            Address Phase");
-    #
-    #// Write must not be X or Z during Address Phase
-    #assertWriteUnknown:assert property ( 
-    #                   disable iff(!has_checks) 
-    #                   ($onehot(sig_grant) |-> !$isunknown(sig_write)))
-    #                   else
-    #                     $error("ERR_WRITE_XZ\n WRITE went to X or Z during \
-    #                             Address Phase");
-    #
-    #// Size must not be X or Z during Address Phase
-    #assertSizeUnknown:assert property ( 
-    #                  disable iff(!has_checks) 
-    #                  ($onehot(sig_grant) |-> !$isunknown(sig_size)))
-    #                  else
-    #                    $error("ERR_SIZE_XZ\n SIZE went to X or Z during \
-    #                            Address Phase");
-    #
-    #
-    #// Wait must not be X or Z during Data Phase
-    #assertWaitUnknown:assert property ( 
-    #                  disable iff(!has_checks) 
-    #                  ($onehot(sig_grant) |=> !$isunknown(sig_wait)))
-    #                  else
-    #                    $error("ERR_WAIT_XZ\n WAIT went to X or Z during \
-    #                            Data Phase");
-    #
-    #
-    #// Error must not be X or Z during Data Phase
-    #assertErrorUnknown:assert property ( 
-    #                   disable iff(!has_checks) 
-    #                   ($onehot(sig_grant) |=> !$isunknown(sig_error)))
-    #                   else
-    #                    $error("ERR_ERROR_XZ\n ERROR went to X or Z during \
-    #                            Data Phase");
-    #
-    #
-    #//Reset must be asserted for at least 3 clocks each time it is asserted
-    #assertResetFor3Clocks: assert property (
-    #                       disable iff(!has_checks) 
-    #                       ($rose(sig_reset) |=> sig_reset[*2]))
-    #                       else 
-    #                         $error("ERR_SHORT_RESET_DURING_TEST\n",
-    #                                "Reset was asserted for less than 3 clock \
-    #                                 cycles");
-    #
-    #// Only one grant is asserted
-    #//assertSingleGrant: assert property (
-    #//                   disable iff(!has_checks)
-    #//                   (sig_start |=> $onehot0(sig_grant)))
-    #//                   else
-    #//                     $error("ERR_GRANT\n More that one grant asserted");
-    #
-    #// Read and write never true at the same time
-    #assertReadOrWrite: assert property (
-    #                   disable iff(!has_checks) 
-    #                   ($onehot(sig_grant) |-> !(sig_read && sig_write)))
-    #                   else
-    #                     $error("ERR_READ_OR_WRITE\n Read and Write true at \
-    #                             the same time");
-    #
-    #end
+    @cocotb.coroutine
+    def always_assertions(self):
+        while True:
+            yield FallingEdge(self.sig_clock)
+        #// Coverage and assertions to be implemented here.
+        #
+        #always @(negedge sig_clock)
+        #begin
+        #
+        #// Address must not be X or Z during Address Phase
+        #assertAddrUnknown:assert property (
+        #                  disable iff(!has_checks) 
+        #                  ($onehot(sig_grant) |-> !$isunknown(sig_addr)))
+        #                  else
+        #                    $error("ERR_ADDR_XZ\n Address went to X or Z \
+        #                            during Address Phase");
+        #
+        #// Read must not be X or Z during Address Phase
+        #assertReadUnknown:assert property ( 
+        #                  disable iff(!has_checks) 
+        #                  ($onehot(sig_grant) |-> !$isunknown(sig_read)))
+        #                  else
+        #                    $error("ERR_READ_XZ\n READ went to X or Z during \
+        #                            Address Phase");
+        #
+        #// Write must not be X or Z during Address Phase
+        #assertWriteUnknown:assert property ( 
+        #                   disable iff(!has_checks) 
+        #                   ($onehot(sig_grant) |-> !$isunknown(sig_write)))
+        #                   else
+        #                     $error("ERR_WRITE_XZ\n WRITE went to X or Z during \
+        #                             Address Phase");
+        #
+        #// Size must not be X or Z during Address Phase
+        #assertSizeUnknown:assert property ( 
+        #                  disable iff(!has_checks) 
+        #                  ($onehot(sig_grant) |-> !$isunknown(sig_size)))
+        #                  else
+        #                    $error("ERR_SIZE_XZ\n SIZE went to X or Z during \
+        #                            Address Phase");
+        #
+        #
+        #// Wait must not be X or Z during Data Phase
+        #assertWaitUnknown:assert property ( 
+        #                  disable iff(!has_checks) 
+        #                  ($onehot(sig_grant) |=> !$isunknown(sig_wait)))
+        #                  else
+        #                    $error("ERR_WAIT_XZ\n WAIT went to X or Z during \
+        #                            Data Phase");
+        #
+        #
+        #// Error must not be X or Z during Data Phase
+        #assertErrorUnknown:assert property ( 
+        #                   disable iff(!has_checks) 
+        #                   ($onehot(sig_grant) |=> !$isunknown(sig_error)))
+        #                   else
+        #                    $error("ERR_ERROR_XZ\n ERROR went to X or Z during \
+        #                            Data Phase");
+        #
+        #
+        #//Reset must be asserted for at least 3 clocks each time it is asserted
+        #assertResetFor3Clocks: assert property (
+        #                       disable iff(!has_checks) 
+        #                       ($rose(sig_reset) |=> sig_reset[*2]))
+        #                       else 
+        #                         $error("ERR_SHORT_RESET_DURING_TEST\n",
+        #                                "Reset was asserted for less than 3 clock \
+        #                                 cycles");
+        #
+        #// Only one grant is asserted
+        #//assertSingleGrant: assert property (
+        #//                   disable iff(!has_checks)
+        #//                   (sig_start |=> $onehot0(sig_grant)))
+        #//                   else
+        #//                     $error("ERR_GRANT\n More that one grant asserted");
+        #
+        #// Read and write never true at the same time
+        #assertReadOrWrite: assert property (
+        #                   disable iff(!has_checks) 
+        #                   ($onehot(sig_grant) |-> !(sig_read && sig_write)))
+        #                   else
+        #                     $error("ERR_READ_OR_WRITE\n Read and Write true at \
+        #                             the same time");
+        #
+        #end
     #
     #endinterface : ubus_if
 #

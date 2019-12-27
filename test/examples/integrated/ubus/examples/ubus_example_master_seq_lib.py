@@ -195,19 +195,26 @@ class read_modify_write_seq(ubus_base_sequence):
         yield uvm_do_with(self, self.read_byte_seq0, {})
         self.addr_check = self.read_byte_seq0.rsp.addr
         self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
+
         # WRITE MODIFIED READ DATA
-        #    `uvm_do_with(write_byte_seq0,
+        self.write_byte_seq0 = write_byte_seq("write_byte_seq")
+        self.write_byte_seq0.start_addr = self.addr_check
+        self.write_byte_seq0.data0 = self.m_data0_check
+        yield uvm_do_with(self, self.write_byte_seq0, {})
         #      { write_byte_seq0.start_addr == addr_check;
         #        write_byte_seq0.data0 == m_data0_check; } )
+
         #    // READ MODIFIED WRITE DATA
-        #    `uvm_do_with(read_byte_seq0,
+        self.read_byte_seq0.start_addr = self.addr_check
+        yield uvm_do_with(self, self.read_byte_seq0, {})
         #      { read_byte_seq0.start_addr == addr_check; } )
-        if (self.m_data0_check != self.read_byte_seq0.rsp.data[0]):
+
+        if self.m_data0_check != int(self.read_byte_seq0.rsp.data[0]):
             uvm_error(self.get_type_name(),
                 sv.sformatf("%s Read Modify Write Read error!\n\tADDR: %h, EXP: %h, ACT: %h", 
                     self.get_sequence_path(),
                     self.addr_check, self.m_data0_check,
-                    self.read_byte_seq0.rsp.data[0]))
+                    int(self.read_byte_seq0.rsp.data[0])))
         #  endtask : body
     #
     #endclass : read_modify_write_seq

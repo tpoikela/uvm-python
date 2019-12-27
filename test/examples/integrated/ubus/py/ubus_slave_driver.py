@@ -84,29 +84,32 @@ class ubus_slave_driver(UVMDriver):
             yield RisingEdge(self.vif.sig_reset)
             self.vif.sig_error      <= 0
             self.vif.sig_wait       <= 0
-            self.vif.rw             <= 0
+            self.vif.slave_en       <= 0
         #  endtask : reset_signals
 
 
     #  // respond_to_transfer
     @cocotb.coroutine
     def respond_to_transfer(self, resp):
-        if (resp.read_write != NOP):
+        if resp.read_write != NOP:
+            print("QQQ slave driver responding to " + resp.convert2string())
             self.vif.sig_error <= 0
             for i in range(resp.size):
                 if resp.read_write == READ:
-                    self.vif.rw <= 1
+                    self.vif.slave_en <= 1
                     self.vif.sig_data_out <= resp.data[i]
-                if (resp.wait_state[i] > 0):
+                if resp.wait_state[i] > 0:
                     self.vif.sig_wait <= 1
-                    for i in range(resp.wait_state[i]):
+                    for j in range(resp.wait_state[i]):
                         yield RisingEdge(self.vif.sig_clock)
                 self.vif.sig_wait <= 0
                 yield RisingEdge(self.vif.sig_clock)
-                resp.data[i] = self.vif.sig_data.value
-            self.vif.rw <= 0
+                resp.data[i] = int(self.vif.sig_data)
+            self.vif.slave_en <= 0
             self.vif.sig_wait  <= 0  # 1'bz
             self.vif.sig_error <= 0  # 1'bz
+        else:
+            yield Timer(0)
         #  endtask : respond_to_transfer
 
     #

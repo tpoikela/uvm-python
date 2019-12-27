@@ -12,6 +12,7 @@ from .uvm_debug import uvm_debug
 from .uvm_object import UVMObject
 from .uvm_pool import UVMEventPool
 from .sv import sv
+from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 
 
 class VerbositySetting:
@@ -118,13 +119,13 @@ class UVMComponent(UVMReportObject):
         common = UVMDomain.get_common_domain()
         bld = common.find(UVMBuildPhase.get())
         if bld is None:
-            self.uvm_report_fatal("COMP/INTERNAL",
+            uvm_fatal("COMP/INTERNAL",
                     "attempt to find build phase object failed",UVM_NONE)
         if bld.get_state() == UVM_PHASE_DONE:
             parent_name = top.get_full_name()
             if parent is not None:
                 parent_name = parent.get_full_name()
-            self.uvm_report_fatal("ILLCRT", ("It is illegal to create a component ('" +
+            uvm_fatal("ILLCRT", ("It is illegal to create a component ('" +
                 name + "' under '" + parent_name + "') after the build phase has ended."),
                 UVM_NONE)
 
@@ -132,7 +133,7 @@ class UVMComponent(UVMReportObject):
             name = "COMP_" + UVMObject.inst_count
 
         if parent == self:
-            self.uvm_report_fatal("THISPARENT",
+            uvm_fatal("THISPARENT",
                     "cannot set the parent of a component to itself")
 
         self.m_parent = parent
@@ -230,7 +231,7 @@ class UVMComponent(UVMReportObject):
     # full names. This is an internal function for now.
     def set_name(self, name):
         if self.m_name != "":
-            self.uvm_report_error("INVSTNM", ("It is illegal to change the name of a component."
+            uvm_error("INVSTNM", ("It is illegal to change the name of a component."
                 + "The component name will not be changed to \"{}\"".format(name)))
             return
         UVMReportObject.set_name(self, name)
@@ -244,6 +245,32 @@ class UVMComponent(UVMReportObject):
     # matching component is returned, else ~None~. The name must not contain
     # wildcards.
     # TODO extern function uvm_component lookup (string name)
+    def lookup(self, name):
+        leaf = ""
+        remainder = ""
+        comp = None
+        from .uvm_coreservice import UVMCoreService
+        cs = UVMCoreService.get()
+        top = cs.get_root()
+
+        comp = self
+        [leaf, remainder] = self.m_extract_name(name, leaf, remainder)
+
+        if leaf == "":
+            comp = top  # absolute lookup
+            [leaf, remainder] = self.m_extract_name(remainder, leaf, remainder)
+
+        if comp.has_child(leaf) is False:
+            uvm_warning("Lookup Error",
+               sv.sformatf("Cannot find child %0s from comp %s",leaf,
+                   comp.get_name()))
+            return None
+
+        if remainder != "":
+            return comp.m_children[leaf].lookup(remainder)
+        return comp.m_children[leaf]
+        #endfunction
+
 
     # Function: get_depth
     #
@@ -252,7 +279,7 @@ class UVMComponent(UVMReportObject):
     # of 1, and so on.
     # TODO extern function int unsigned get_depth()
     def get_depth(self):
-        if (self.m_name == ""):
+        if self.m_name == "":
             return 0
         get_depth = 1
         for i in range(len(self.m_name)):
@@ -298,7 +325,7 @@ class UVMComponent(UVMReportObject):
         self.m_build_done = True
         self.apply_config_settings(UVMComponent.print_config_matches)
         if self.m_phasing_active == 0:
-            self.uvm_report_warning("UVM_DEPRECATED",
+            uvm_warning("UVM_DEPRECATED",
                     "build()/build_phase() has been called explicitly")
 
     # Function: connect_phase
@@ -872,7 +899,7 @@ class UVMComponent(UVMReportObject):
     def print_config_settings(self, field="", comp=None, recurse=False):
         UVMComponent.have_been_warned = False
         if not UVMComponent.have_been_warned:
-            self.uvm_report_warning("deprecated",
+            uvm_warning("deprecated",
                     "uvm_component::print_config_settings has been deprecated.  Use print_config() instead")
         UVMComponent.have_been_warned = True
         self.print_config(recurse, 1)
@@ -893,7 +920,7 @@ class UVMComponent(UVMReportObject):
     def print_config(self, recurse=False, audit=False):
         from .uvm_resource import UVMResourcePool
         rp = UVMResourcePool.get()
-        self.uvm_report_info("CFGPRT","visible resources:", UVM_INFO)
+        uvm_info("CFGPRT","visible resources:", UVM_INFO)
         rp.print_resources(rp.lookup_scope(self.get_full_name()), audit)
         if recurse:
             pass  # TODO loop children
@@ -1610,7 +1637,7 @@ class UVMComponent(UVMReportObject):
     #// ---------------
     def m_set_full_name(self):
         if self.m_parent is None:
-            self.uvm_report_fatal("Should not be called with uvm_root")
+            uvm_fatal("Should not be called with uvm_root")
 
         from .uvm_root import UVMRoot
         top = UVMRoot.get()
@@ -1639,9 +1666,38 @@ class UVMComponent(UVMReportObject):
     #extern local             function void m_extract_name(string name ,
     #                                                      output string leaf ,
     #                                                      output string remainder )
+    def m_extract_name(self, name, leaf, remainder):
+        print("YYY called with " + name + "," + leaf + " rem: " + remainder)
+        _len = len(name)
+
+        i = 0
+        for i in range(len(name)):
+            if name[i] == ".":
+                break
+
+        if i == _len - 1:
+            leaf = name
+            remainder = ""
+            return [leaf, remainder]
+
+        leaf = name[0:i]
+        remainder = name[i + 1: _len]
+
+        print("YYY extracted " + leaf + ", " + remainder)
+
+        return [leaf, remainder]
+        #endfunction
+
 
     #// overridden to disable
     #extern virtual function uvm_object create (string name="")
+    def create(self, name=""):
+        uvm_error("ILLCRT",
+            "create cannot be called on a uvm_component. Use create_component instead.")
+        return None
+        #
+
+
     #extern virtual function uvm_object clone  ()
 
     #local uvm_tr_stream m_main_stream
@@ -1652,14 +1708,14 @@ class UVMComponent(UVMReportObject):
     #                                              string stream_name="main", string label="",
     #                                              string desc="", time begin_time=0)
     def m_begin_tr(self, tr, parent_handle=0, stream_name="main", label="",
-            desc="",  begin_time=0):
+            desc="", begin_time=0):
         e = None  # uvm_event#(uvm_object) e
         name = ""
         kind = ""
         db = None  # uvm_tr_database db
         handle = 0
         link_handle = 0
-        stream = None  # uvm_tr_stream stream
+        stream = None  # uvm_tr_stream
         # uvm_recorder
         recorder = None
         parent_recorder = None
@@ -1673,7 +1729,7 @@ class UVMComponent(UVMReportObject):
             parent_recorder = UVMRecorder.get_recorder_from_handle(parent_handle)
 
         if (parent_recorder is None):
-            seq = []  # uvm_sequence_item 
+            seq = []  # uvm_sequence_item
             from ..seq.uvm_sequence_item import UVMSequenceItem
             if (sv.cast(seq,tr, UVMSequenceItem)):
                 seq = seq[0]
@@ -1789,7 +1845,7 @@ class UVMComponent(UVMReportObject):
     def add_child(self, child):
         if child.get_name() in self.m_children:
             old_child = self.m_children[child.get_name()]
-            self.uvm_report_warning("BDCLD",
+            uvm_warning("BDCLD",
                     "A child with name {} (type={}) exists"
                     .format(child.get_name(), old_child.get_type_name()))
             return False
@@ -1877,10 +1933,10 @@ class UVMComponent(UVMReportObject):
 #    common = uvm_domain::get_common_domain()
 #    bld = common.find(uvm_build_phase::get())
 #    if (bld is None)
-#      self.uvm_report_fatal("COMP/INTERNAL",
+#      uvm_fatal("COMP/INTERNAL",
 #                       "attempt to find build phase object failed",UVM_NONE)
 #    if (bld.get_state() == UVM_PHASE_DONE):
-#      self.uvm_report_fatal("ILLCRT", {"It is illegal to create a component ('",
+#      uvm_fatal("ILLCRT", {"It is illegal to create a component ('",
 #                name,"' under '",
 #                (parent is None ? top.get_full_name() : parent.get_full_name()),
 #               "') after the build phase has ended."},
@@ -2060,69 +2116,8 @@ class UVMComponent(UVMReportObject):
 #
 #
 #
-#// lookup
-#// ------
-#
-#function uvm_component uvm_component::lookup( string name )
-#
-#  string leaf , remainder
-#  uvm_component comp
-#  uvm_root top
-#  uvm_coreservice_t cs
-#  cs = uvm_coreservice_t::get()
-#  top = cs.get_root()
-#
-#  comp = this
-#
-#  m_extract_name(name, leaf, remainder)
-#
-#  if (leaf == ""):
-#    comp = top; // absolute lookup
-#    m_extract_name(remainder, leaf, remainder)
-#  end
-#
-#  if (!comp.has_child(leaf)):
-#    `uvm_warning("Lookup Error",
-#       $sformatf("Cannot find child %0s",leaf))
-#    return None
-#  end
-#
-#  if( remainder != "" )
-#    return comp.m_children[leaf].lookup(remainder)
-#
-#  return comp.m_children[leaf]
-#
-#endfunction
 #
 #
-#
-#// m_extract_name
-#// --------------
-#
-#function void uvm_component::m_extract_name(input string name ,
-#                                            output string leaf ,
-#                                            output string remainder )
-#  int i , len
-#  string extract_str
-#  len = name.len()
-#
-#  for( i = 0; i < name.len(); i++ ):
-#    if( name[i] == "." ):
-#      break
-#    end
-#  end
-#
-#  if( i == len ):
-#    leaf = name
-#    remainder = ""
-#    return
-#  end
-#
-#  leaf = name.substr( 0 , i - 1 )
-#  remainder = name.substr( i + 1 , len - 1 )
-#
-#  return
-#endfunction
 #
 #
 #// flush
@@ -2150,15 +2145,6 @@ class UVMComponent(UVMReportObject):
 #//
 #//------------------------------------------------------------------------------
 #
-#
-#// create
-#// ------
-#
-#function uvm_object  uvm_component::create (string name ="")
-#  `uvm_error("ILLCRT",
-#    "create cannot be called on a uvm_component. Use create_component instead.")
-#  return None
-#endfunction
 #
 #
 #// clone
@@ -2769,7 +2755,7 @@ class UVMComponent(UVMReportObject):
 #  if(rq.size() == 0)
 #    return
 #
-#  self.uvm_report_info("CFGNRD"," ::: The following resources have at least one write and no reads :::",UVM_INFO)
+#  uvm_info("CFGNRD"," ::: The following resources have at least one write and no reads :::",UVM_INFO)
 #  rp.print_resources(rq, 1)
 #endfunction
 
@@ -2796,7 +2782,7 @@ class UVMComponent(UVMReportObject):
 #    return
 #
 #  if(verbose)
-#    self.uvm_report_info("CFGAPL","applying configuration settings", UVM_NONE)
+#    uvm_info("CFGAPL","applying configuration settings", UVM_NONE)
 #
 #  // The following is VERY expensive. Needs refactoring. Should
 #  // get config only for the specific field names in 'field_array'.
@@ -2832,7 +2818,7 @@ class UVMComponent(UVMReportObject):
 #      continue
 #
 #    if(verbose)
-#      self.uvm_report_info("CFGAPL",$sformatf("applying configuration to field %s", name),UVM_NONE)
+#      uvm_info("CFGAPL",$sformatf("applying configuration to field %s", name),UVM_NONE)
 #
 #    begin
 #       uvm_resource#(uvm_integral_t) rit
@@ -2870,7 +2856,7 @@ class UVMComponent(UVMReportObject):
 #                               set_object_local(name, ro.read(this), 0)
 #                            end
 #                            else if (verbose):
-#                               self.uvm_report_info("CFGAPL", $sformatf("field %s has an unsupported type", name), UVM_NONE)
+#                               uvm_info("CFGAPL", $sformatf("field %s has an unsupported type", name), UVM_NONE)
 #                            end
 #                         end // else: !if($cast(rcow, r))
 #                      end // else: !if($cast(rs, r))
@@ -3192,34 +3178,3 @@ class UVMComponent(UVMReportObject):
 #  pre_abort()
 #endfunction
 
-#------------------------------------------------------------------------------
-# UNIT TESTS
-#------------------------------------------------------------------------------
-
-
-class TestUVMComponent(unittest.TestCase):
-
-    def test_name(self):
-        from .uvm_root import UVMRoot
-        uvm_top = UVMRoot.get()
-        comp = UVMComponent("my_component", uvm_top)
-        self.assertEqual(comp.get_full_name(), "my_component")
-        comp_child = UVMComponent("my_child", comp)
-        self.assertEqual(comp_child.get_full_name(), "my_component.my_child")
-
-    def test_children(self):
-        comp = UVMComponent("parent", None)
-        child = UVMComponent("child", comp)
-        self.assertEqual(child.get_parent(), comp)
-        self.assertEqual(comp.get_first_child(), child)
-        self.assertEqual(comp.get_num_children(), 1)
-        self.assertEqual(comp.get_child("child"), child)
-        self.assertEqual(comp.has_child("child"), True)
-        self.assertEqual(comp.has_child("xchild"), False)
-        children = []
-        comp.get_children(children)
-        self.assertEqual(children[0], child)
-
-
-if __name__ == '__main__':
-    unittest.main()

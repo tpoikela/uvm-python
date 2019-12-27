@@ -35,6 +35,9 @@ from uvm.base import *
 #//------------------------------------------------------------------------------
 #class ubus_slave_monitor extends uvm_monitor
 
+def _print(msg):
+    print("MMM ubus_slave_mon: " + msg)
+
 class ubus_slave_monitor(UVMMonitor):
 
     #  // This property is the virtual interface needed for this component to drive
@@ -187,28 +190,34 @@ class ubus_slave_monitor(UVMMonitor):
     #  // collect_address_phase
     @cocotb.coroutine
     def collect_address_phase(self):
-        yield RisingEdge(self.vif.sig_clock)
-        if self.vif.sig_read.value.is_resolvable and self.vif.sig_write.value.is_resolvable:
-            if self.vif.sig_read.value == 1 or self.vif.sig_write.value == 1:
-                self.trans_collected.addr = self.vif.sig_addr.value
+        found = False
+        while found is False:
+            yield RisingEdge(self.vif.sig_clock)
+            if self.vif.sig_read.value.is_resolvable and self.vif.sig_write.value.is_resolvable:
 
-            if self.vif.sig_size.value == 0:
-                self.trans_collected.size = 1
-            elif self.vif.sig_size.value == 1:
-                self.trans_collected.size = 2
-            elif self.vif.sig_size.value == 2:
-                self.trans_collected.size = 4
-            elif self.vif.sig_size.value == 3:
-                self.trans_collected.size = 8
+                if self.vif.sig_read.value == 1 or self.vif.sig_write.value == 1:
+                    print("LLLLLL: " + str(self.vif.sig_addr))
+                    addr = int(self.vif.sig_addr)
+                    self.trans_collected.addr = addr
 
-            self.trans_collected.data = [0] * self.trans_collected.size
+                    if self.vif.sig_size.value == 0:
+                        self.trans_collected.size = 1
+                    elif self.vif.sig_size.value == 1:
+                        self.trans_collected.size = 2
+                    elif self.vif.sig_size.value == 2:
+                        self.trans_collected.size = 4
+                    elif self.vif.sig_size.value == 3:
+                        self.trans_collected.size = 8
 
-            if self.vif.sig_read.value == 0 and self.vif.sig_write.value == 0:
-                self.trans_collected.read_write = NOP
-            elif self.vif.sig_read.value == 1 and self.vif.sig_write.value == 0:
-                self.trans_collected.read_write = READ
-            elif self.vif.sig_read.value == 0 and self.vif.sig_write.value == 1:
-                self.trans_collected.read_write = WRITE
+                    self.trans_collected.data = [0] * self.trans_collected.size
+
+                    if self.vif.sig_read.value == 0 and self.vif.sig_write.value == 0:
+                        self.trans_collected.read_write = NOP
+                    elif self.vif.sig_read.value == 1 and self.vif.sig_write.value == 0:
+                        self.trans_collected.read_write = READ
+                    elif self.vif.sig_read.value == 0 and self.vif.sig_write.value == 1:
+                        self.trans_collected.read_write = WRITE
+                    found = True
         #  endtask : collect_address_phase
 
     #
@@ -263,7 +272,11 @@ class ubus_slave_monitor(UVMMonitor):
 
     @cocotb.coroutine
     def peek(self, trans):
+        _print("in blocking peek yielding to grabbed_wait")
         yield self.address_phase_grabbed.wait()
+        self.address_phase_grabbed.clear()
+        _print("in blocking peek AFTER grabbed_wait: " +
+            self.trans_collected.convert2string())
         trans.append(self.trans_collected)
         #  endtask : peek
 

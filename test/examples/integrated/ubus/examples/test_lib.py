@@ -24,7 +24,7 @@ import cocotb
 
 from uvm.base import *
 from uvm.comps import UVMTest
-from uvm.macros import uvm_component_utils
+from uvm.macros import uvm_component_utils, uvm_fatal, uvm_info
 from ubus_example_tb import ubus_example_tb
 from ubus_example_master_seq_lib import read_modify_write_seq
 from ubus_slave_seq_lib import slave_memory_seq
@@ -58,7 +58,7 @@ class ubus_example_base_test(UVMTest):
         if UVMConfigDb.get(None, "*", "vif", arr) is True:
             UVMConfigDb.set(self, "*", "vif", arr[0])
         else:
-            self.uvm_report_fatal("NOVIF", "Could not get vif from config DB")
+            uvm_fatal("NOVIF", "Could not get vif from config DB")
 
         #  endfunction : build_phase
 
@@ -77,19 +77,24 @@ class ubus_example_base_test(UVMTest):
     #  endtask : run_phase
 
     def extract_phase(self, phase):
+        self.err_msg = ""
         if self.ubus_example_tb0.scoreboard0.sbd_error:
             self.test_pass = False
+            self.err_msg += '\nScoreboard error flag set'
         if self.ubus_example_tb0.scoreboard0.num_writes == 0:
             self.test_pass = False
+            self.err_msg += '\nnum_writes == 0 in scb'
         if self.ubus_example_tb0.scoreboard0.num_init_reads == 0:
             self.test_pass = False
+            self.err_msg += '\nnum_init_reads == 0 in scb'
 
 
     def report_phase(self, phase):
         if self.test_pass:
-            self.uvm_report_info(self.get_type_name(), "** UVM TEST PASSED **", UVM_NONE)
+            uvm_info(self.get_type_name(), "** UVM TEST PASSED **", UVM_NONE)
         else:
-            self.uvm_report_fatal(self.get_type_name(), "** UVM TEST FAIL **")
+            uvm_fatal(self.get_type_name(), "** UVM TEST FAIL **\n" +
+                self.err_msg)
     #  endfunction
 
     #endclass : ubus_example_base_test

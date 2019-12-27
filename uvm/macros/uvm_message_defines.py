@@ -22,6 +22,10 @@
 
 from ..base.uvm_globals import *
 
+from inspect import getframeinfo, stack
+
+
+
 UVM_REPORT_DISABLE_FILE = False
 UVM_REPORT_DISABLE_LINE = False
 
@@ -115,7 +119,10 @@ if UVM_REPORT_DISABLE_LINE:
 
 def uvm_info(ID, MSG, VERBOSITY):
     if uvm_report_enabled(VERBOSITY,UVM_INFO,ID):
-        uvm_report_info (ID, MSG, VERBOSITY, uvm_file(), uvm_line(), "", 1)
+        caller = getframeinfo(stack()[1][0])
+        fname = caller.filename
+        lineno = caller.lineno
+        uvm_report_info (ID, MSG, VERBOSITY, fname, lineno, "", 1)
 
 
 #// MACRO: `uvm_warning
@@ -130,7 +137,10 @@ def uvm_info(ID, MSG, VERBOSITY):
 
 def uvm_warning(ID, MSG):
     if uvm_report_enabled(UVM_NONE,UVM_WARNING,ID):
-        uvm_report_warning (ID, MSG, UVM_NONE, uvm_file(), uvm_line(), "", 1)
+        caller = getframeinfo(stack()[1][0])
+        fname = caller.filename
+        lineno = caller.lineno
+        uvm_report_warning(ID, MSG, UVM_NONE, fname, lineno, "", 1)
 
 #// MACRO: `uvm_error
 #//
@@ -144,7 +154,10 @@ def uvm_warning(ID, MSG):
 
 def uvm_error(ID, MSG):
     if uvm_report_enabled(UVM_NONE,UVM_ERROR,ID):
-        uvm_report_error(ID, MSG, UVM_NONE, uvm_file(), uvm_line(), "", 1)
+        caller = getframeinfo(stack()[1][0])
+        fname = caller.filename
+        lineno = caller.lineno
+        uvm_report_error(ID, MSG, UVM_NONE, fname, lineno, "", 1)
 
 #// MACRO: `uvm_fatal
 #//
@@ -158,7 +171,10 @@ def uvm_error(ID, MSG):
 
 def uvm_fatal(ID, MSG):
     if uvm_report_enabled(UVM_NONE,UVM_FATAL,ID):
-        uvm_report_fatal (ID, MSG, UVM_NONE, uvm_file(), uvm_line(), "", 1)
+        caller = getframeinfo(stack()[1][0])
+        fname = caller.filename
+        lineno = caller.lineno
+        uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
 
 #// MACRO: `uvm_info_context
 #//

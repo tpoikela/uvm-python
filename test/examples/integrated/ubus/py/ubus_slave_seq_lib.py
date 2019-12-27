@@ -20,10 +20,17 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+import cocotb
+
 from ubus_transfer import *
 from uvm.seq import UVMSequence
 from uvm.base import sv
 from uvm.macros import *
+
+DEBUG = True
+def _print(msg):
+    if DEBUG:
+        print("[QQQ] slave_mem_seq " + msg)
 
 #//------------------------------------------------------------------------------
 #//
@@ -89,6 +96,7 @@ class slave_memory_seq(UVMSequence):
 
     def pre_do(self, is_item):
         # Update the properties that are relevant to both read and write
+        _print("calling PRE_DO now: " + self.util_transfer.convert2string())
         self.req.size       = self.util_transfer.size
         self.req.addr       = self.util_transfer.addr
         self.req.read_write = self.util_transfer.read_write
@@ -102,14 +110,14 @@ class slave_memory_seq(UVMSequence):
             # requested in util_transfer
             if (self.req.read_write == READ):
                 new_addr = self.util_transfer.addr + i
-                if new_addr not in self.m_mem.exists:
+                if new_addr not in self.m_mem:
                     self.m_mem[new_addr] = sv.urandom()
                 self.req.data[i] = self.m_mem[new_addr]
         #  endtask
 
     def post_do(self, this_item):
         # For writes, update the m_mem associative array
-        if (self.util_transfer.read_write == WRITE):
+        if self.util_transfer.read_write == WRITE:
             for i in range(self.req.size):
                 self.m_mem[self.req.addr + i] = self.req.data[i]
 
@@ -121,18 +129,26 @@ class slave_memory_seq(UVMSequence):
 
         #$cast(req, create_item(ubus_transfer::get_type(), p_sequencer, "req"))
         #p = self.get_starting_phase()
+        self.req = self.create_item(ubus_transfer.get_type(), self.p_sequencer,
+            "req")
 
         while True:
             util_transfer = []
             yield self.p_sequencer.addr_ph_port.peek(util_transfer)
-            util_transfer = util_transfer[0]
+            self.util_transfer = util_transfer[0]
+            _print("slave_mem_seq after peek. Got util_xfer: " +
+                self.util_transfer.convert2string())
 
             # Need to raise/drop objection before each item because we don't want
             # to be stopped in the middle of a transfer.
             #p.raise_objection(self)
 
+            _print("BEFORE start_item. req is " +
+                self.req.convert2string())
             yield self.start_item(self.req)
+            _print("after start_item")
             yield self.finish_item(self.req)
+            _print("after finish_item")
 
             #p.drop_objection(self)
         #  endtask : body

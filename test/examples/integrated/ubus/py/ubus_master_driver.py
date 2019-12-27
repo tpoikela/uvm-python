@@ -25,7 +25,7 @@ from cocotb.triggers import RisingEdge, Timer
 
 from uvm.base import *
 from uvm.comps import UVMDriver
-from uvm.macros import uvm_component_utils
+from uvm.macros import uvm_component_utils, uvm_info
 from ubus_transfer import *
 
 #//------------------------------------------------------------------------------
@@ -33,6 +33,9 @@ from ubus_transfer import *
 #// CLASS: ubus_master_driver
 #//
 #//------------------------------------------------------------------------------
+
+def _print(msg):
+    uvm_info("EEE_ubus_master_drv", msg, UVM_LOW)
 
 class ubus_master_driver(UVMDriver):
     #
@@ -77,16 +80,16 @@ class ubus_master_driver(UVMDriver):
     #  virtual protected task get_and_drive()g
     @cocotb.coroutine
     def get_and_drive(self):
-        print("EEE get_and_drive started")
+        _print(" get_and_drive started")
         # @(negedge vif.sig_reset)g
         yield RisingEdge(self.vif.sig_reset)
-        print("EEE got posedge reset")
+        _print(" got posedge reset")
         while True:
             yield RisingEdge(self.vif.sig_clock)
-            print("EEE got rising edge")
+            _print(" got rising edge of sig_clock")
             req = []
             yield self.seq_item_port.get_next_item(req)
-            print("EEE got  item from seq port")
+            _print(" got item from seq port: " + req[0].convert2string())
             #$cast(rsp, req.clone())g
             rsp = req[0].clone()
             rsp.set_id_info(req[0])
@@ -118,6 +121,7 @@ class ubus_master_driver(UVMDriver):
         if trans.transmit_delay > 0:
             for i in range(trans.transmit_delay):
                 yield RisingEdge(self.vif.sig_clock)
+        _print("Drivin trans into DUT now: " + trans.convert2string())
         yield self.arbitrate_for_bus()
         yield self.drive_address_phase(trans)
         yield self.drive_data_phase(trans)
@@ -170,17 +174,21 @@ class ubus_master_driver(UVMDriver):
     #
     #  // drive_data_phase
     @cocotb.coroutine
-    def drive_data_phase (self, trans):
+    def drive_data_phase(self, trans):
         err = 0
         for i in range(trans.size):
             if (i == (trans.size - 1)):
                 self.vif.sig_bip <= 0
             else:
                 self.vif.sig_bip <= 1
-            if (trans.read_write == READ):
-                yield self.read_byte(trans.data[i], err)
+
+            if trans.read_write == READ:
+                arr = []
+                yield self.read_byte(arr, err)
+                trans.data[i] = arr[0]
             else:
                 yield self.write_byte(trans.data[i], err)
+
         self.vif.sig_data_out <= 0
         self.vif.sig_bip <= 0
         #  endtask : drive_data_phase
@@ -201,6 +209,7 @@ class ubus_master_driver(UVMDriver):
     #  // write_byte
     @cocotb.coroutine
     def write_byte(self, data, error):
+        uvm_info("MASTER_DRV", "Setting rw to 1 now", UVM_LOW)
         self.vif.rw <= 1
         self.vif.sig_data_out <= data
         while True:
@@ -228,7 +237,8 @@ class ubus_master_driver(UVMDriver):
     #
     #  // drive_read_write
     def drive_read_write(self, rw):
-        #case (rw)
+        uvm_info("MASTER_DRV", "Driving rw-value: " + str(rw), UVM_LOW)
+
         if rw == NOP:
             self.vif.sig_read <= 0
             self.vif.sig_write <= 0

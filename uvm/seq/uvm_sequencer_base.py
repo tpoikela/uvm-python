@@ -79,20 +79,6 @@ SEQ_TYPE_GRAB = 2
 
 #class uvm_sequencer_base extends uvm_component
 class UVMSequencerBase(UVMComponent):
-    #
-    #// queue of sequences waiting for arbitration
-    #  protected uvm_sequence_request self.arb_sequence_q[$]
-    #
-    #  protected bit                 arb_completed[int]
-    #
-    #  protected uvm_sequence_base   self.lock_list[$]
-    #  protected int                 m_sequencer_id
-    #  protected int                 m_wait_for_item_sequence_id,
-    #                                m_wait_for_item_transaction_id
-    #  protected int                 m_wait_relevant_count = 0
-    #  protected int                 m_max_zero_time_wait_relevant_count = 10
-    #  protected time                m_last_wait_relevant_time = 0
-    #
 
     g_request_id = 0
     g_sequence_id = 1
@@ -112,6 +98,7 @@ class UVMSequencerBase(UVMComponent):
         # Hidden array, keeps track of running default sequences
         self.m_default_sequences = UVMPool()  # uvm_sequence_process_wrapper[uvm_phase]
 
+        # queue of sequences waiting for arbitration
         self.arb_sequence_q = UVMQueue()  # uvm_sequence_request [$]
         self.lock_list = UVMQueue()  # uvm_sequence_base lock_list[$]
 
@@ -127,6 +114,13 @@ class UVMSequencerBase(UVMComponent):
 
         self.m_auto_item_recording = False
         self.m_is_relevant_completed = 0
+
+        self.m_wait_for_item_sequence_id = 0
+        self.m_wait_for_item_transaction_id = 0
+
+        self.m_wait_relevant_count = 0
+        self.m_max_zero_time_wait_relevant_count = 10
+        self.m_last_wait_relevant_time = 0
 
     #  // Function: is_child
     #  //

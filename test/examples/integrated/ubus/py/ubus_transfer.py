@@ -81,8 +81,23 @@ class ubus_transfer(UVMSequenceItem):
         self.slave = ""
 
 
+    def do_copy(self, rhs):
+        self.addr = rhs.addr
+        self.read_write = rhs.read_write
+        self.size = rhs.size
+        for val in rhs.data:
+            self.data.append(val)
+        for val in rhs.wait_state:
+            self.wait_state.append(val)
+
+    def do_clone(self):
+        new_obj = ubus_transfer()
+        new_obj.copy(self)
+        return new_obj
+
     def convert2string(self):
-        res = "addr: " + str(self.addr) + ", read_write: " + str(self.read_write)
+        res = "ID: " + str(self.m_transaction_id)
+        res += ", addr: " + str(self.addr) + ", read_write: " + str(self.read_write)
         res += ", size: " + str(self.size) + ", wait_state: " + str(self.wait_state)
         res += "\ndata: " + str(self.data)
         return res
