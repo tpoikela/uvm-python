@@ -24,7 +24,7 @@ class TestUVMCmdLineProc(unittest.TestCase):
         UVMCmdlineProcessor.m_test_mode = True
         UVMCmdlineProcessor.m_test_plusargs = {"ABC": "123", "WW": "XX",
                 "TRACE": "123"}
-        UVMDebug.DEBUG = True
+        #UVMDebug.DEBUG = True
         clp = UVMCmdlineProcessor()
         args = []
         num = clp.get_arg_matches("XYZ", args)

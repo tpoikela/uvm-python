@@ -21,7 +21,6 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
-import unittest
 from .uvm_object import UVMObject
 from .uvm_object_globals import (UVM_WARNING, UVM_INFO, UVM_ERROR, UVM_FATAL, UVM_LOW, UVM_NONE,
         UVM_MEDIUM)
@@ -116,17 +115,17 @@ class UVMReportObject(UVMObject):
     #
     # See also <get_report_verbosity_level> and the global version of
     # <uvm_report_enabled>.
-    def uvm_report_enabled(self, verbosity, severity = UVM_INFO, id = ""):
+    def uvm_report_enabled(self, verbosity, severity=UVM_INFO, id=""):
         if self.get_report_verbosity_level(severity, id) >= verbosity:
             return True
         return False
 
     def uvm_report(self, severity, id, message,
-            verbosity = -1,
-            filename = "",
-            line = 0,
-            context_name = "",
-            report_enabled_checked = False):
+            verbosity=-1,
+            filename="",
+            line=0,
+            context_name="",
+            report_enabled_checked=False):
 
         if verbosity == -1:
             verbosity = get_verbosity(severity)
@@ -149,19 +148,19 @@ class UVMReportObject(UVMObject):
     def uvm_report_warning(self, id, message, verbosity = UVM_MEDIUM, filename = "",
             line = 0, context_name = "", report_enabled_checked = False):
         self.uvm_report (UVM_WARNING, id, message, verbosity,
-                filename, line, context_name, report_enabled_checked);
+                filename, line, context_name, report_enabled_checked)
 
     # Function: uvm_report_error
     def uvm_report_error(self, id, message, verbosity = UVM_LOW, filename = "",
             line = 0, context_name = "", report_enabled_checked = False):
         self.uvm_report (UVM_ERROR, id, message, verbosity,
-                filename, line, context_name, report_enabled_checked);
+                filename, line, context_name, report_enabled_checked)
 
     # Function: uvm_report_fatal
     def uvm_report_fatal(self, id, message, verbosity = UVM_NONE, filename = "",
             line = 0, context_name = "", report_enabled_checked = False):
         self.uvm_report (UVM_FATAL, id, message, verbosity,
-                filename, line, context_name, report_enabled_checked);
+                filename, line, context_name, report_enabled_checked)
 
     # Function: uvm_process_report_message
     #
@@ -198,12 +197,12 @@ class UVMReportObject(UVMObject):
     # This method sets the maximum verbosity level for reports for this component.
     # Any report from this component whose verbosity exceeds this maximum will
     # be ignored.
-    def set_report_verbosity_level (self, verbosity_level):
+    def set_report_verbosity_level(self, verbosity_level):
         self.m_rh.set_verbosity_level(verbosity_level)
 
     # Function: set_report_id_verbosity
     #
-    def set_report_id_verbosity (self, id, verbosity):
+    def set_report_id_verbosity(self, id, verbosity):
         self.m_rh.set_id_verbosity(id, verbosity)
 
     # Function: set_report_severity_id_verbosity
@@ -219,7 +218,7 @@ class UVMReportObject(UVMObject):
     # predefined <uvm_verbosity> value, <UVM_NONE>, <UVM_LOW>, <UVM_MEDIUM>,
     # <UVM_HIGH>, <UVM_FULL>.
 
-    def set_report_severity_id_verbosity (self, severity, id, verbosity):
+    def set_report_severity_id_verbosity(self, severity, id, verbosity):
         self.m_rh.set_severity_id_verbosity(severity, id, verbosity)
 
     #----------------------------------------------------------------------------
@@ -232,17 +231,17 @@ class UVMReportObject(UVMObject):
     # and ~id~.
 
     def get_report_action(self, severity, id):
-        return self.m_rh.get_action(severity,id);
+        return self.m_rh.get_action(severity,id)
 
     # Function: set_report_severity_action
     #
-    def set_report_severity_action (self, severity, action):
+    def set_report_severity_action(self, severity, action):
         self.m_rh.set_severity_action(severity, action)
 
     # Function: set_report_id_action
     #
-    def set_report_id_action (self, id, action):
-        self.m_rh.set_id_action(id, action);
+    def set_report_id_action(self, id, action):
+        self.m_rh.set_id_action(id, action)
 
     # Function: set_report_severity_id_action
     #
@@ -254,7 +253,7 @@ class UVMReportObject(UVMObject):
     # The ~action~ argument can take the value <UVM_NO_ACTION>, or it can be a
     # bitwise OR of any combination of <UVM_DISPLAY>, <UVM_LOG>, <UVM_COUNT>,
     # <UVM_STOP>, <UVM_EXIT>, and <UVM_CALL_HOOK>.
-    def set_report_severity_id_action (self, severity, id, action):
+    def set_report_severity_id_action(self, severity, id, action):
         self.m_rh.set_severity_id_action(severity, id, action)
 
     #----------------------------------------------------------------------------
@@ -269,17 +268,17 @@ class UVMReportObject(UVMObject):
         return self.m_rh.get_file_handle(severity,id)
 
     # Function: set_report_default_file
-    def set_report_default_file (self, file):
-        self.m_rh.set_default_file(file);
+    def set_report_default_file(self, file):
+        self.m_rh.set_default_file(file)
 
     # Function: set_report_id_file
-    def set_report_id_file (self, id, file):
+    def set_report_id_file(self, id, file):
         self.m_rh.set_id_file(id, file)
 
     # Function: set_report_severity_file
     #
-    def set_report_severity_file (self, severity, file):
-        self.m_rh.set_severity_file(severity, file);
+    def set_report_severity_file(self, severity, file):
+        self.m_rh.set_severity_file(severity, file)
 
     # Function: set_report_severity_id_file
     #
@@ -316,7 +315,7 @@ class UVMReportObject(UVMObject):
     # a specific ~id~ takes precedence over an upgrade or downgrade associated
     # with a ~severity~.
     def set_report_severity_id_override(self, cur_severity, id, new_severity):
-        self. m_rh.set_severity_id_override(cur_severity, id, new_severity);
+        self. m_rh.set_severity_id_override(cur_severity, id, new_severity)
 
     #----------------------------------------------------------------------------
     # Group: Report Handler Configuration
@@ -344,14 +343,3 @@ class UVMReportObject(UVMObject):
         self.m_rh.initialize()
 
 
-class TestUVMReportObject(unittest.TestCase):
-
-    def test_verbosity(self):
-        obj = UVMReportObject('rpt')
-        rh = obj.get_report_handler()
-        verb = rh.get_verbosity_level(UVM_INFO, "")
-        self.assertEqual(verb, UVM_MEDIUM)
-        self.assertEqual(obj.uvm_report_enabled(UVM_MEDIUM, UVM_INFO), True)
-
-if __name__ == '__main__':
-    unittest.main()
