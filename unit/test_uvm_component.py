@@ -31,7 +31,7 @@ class TestUVMComponent(unittest.TestCase):
         self.assertEqual(children[0], child)
 
     def test_lookup(self):
-        comp = UVMComponent("parent", None)
+        comp = UVMComponent("parent1", None)
         child = UVMComponent("child", comp)
         sub_child = UVMComponent("sub_child", child)
 

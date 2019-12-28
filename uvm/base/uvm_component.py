@@ -1,11 +1,8 @@
 
-import unittest
-
 import cocotb
 from cocotb.triggers import Timer
 from .uvm_report_object import UVMReportObject
 from .uvm_object_globals import UVM_NONE, UVM_MEDIUM, UVM_PHASE_DONE, UVM_INFO
-# from .uvm_globals import uvm_report_fatal
 from .uvm_common_phases import UVMBuildPhase
 from .uvm_domain import UVMDomain
 from .uvm_debug import uvm_debug
@@ -13,6 +10,14 @@ from .uvm_object import UVMObject
 from .uvm_pool import UVMEventPool
 from .sv import sv
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
+
+#typedef struct {
+#  string comp
+#  string phase
+#  time   offset
+#  uvm_verbosity verbosity
+#  string id
+#} m_verbosity_setting
 
 
 class VerbositySetting:
@@ -89,21 +94,21 @@ class UVMComponent(UVMReportObject):
         self.m_name = ""
         self.m_verbosity_settings = []
 
-        self.m_phase_imps = {}  # uvm_phase[uvm_phase] // functors to override ovm_root defaults
+        # functors to override uvm_root defaults
+        self.m_phase_imps = {}  # uvm_phase[uvm_phase]
 
         self.child_ptr = -1
+        self.m_tr_h = {}  # uvm_recorder m_tr_h[uvm_transaction]
 
         self.m_run_process = None
 
-        self.tr_database = None
-        #uvm_tr_database self.tr_database
+        self.tr_database = None  # uvm_tr_database
         self.m_domain = None
         # process    m_phase_process
 
         self.event_pool: UVMEventPool = UVMEventPool("evt_pool")
 
-        #local uvm_tr_stream m_streams[string][string]
-        self.m_streams = {}
+        self.m_streams = {}  # uvm_tr_stream [string][string]
 
         if parent is None and name == "__top__":
             # self.set_name("")
@@ -136,13 +141,49 @@ class UVMComponent(UVMReportObject):
             uvm_fatal("THISPARENT",
                     "cannot set the parent of a component to itself")
 
-        self.m_parent = parent
         if parent is None:
-            self.m_parent = top
+            parent = top
+
+        if self.uvm_report_enabled(UVM_MEDIUM+1, UVM_INFO, "NEWCOMP"):
+            nname = parent.get_full_name()
+            if parent == top:
+                nname = "uvm_top"
+            uvm_info("NEWCOMP", "Creating " + nname + "." + name, UVM_MEDIUM+1)
+
+        ###if parent.has_child(name) and self != parent.get_child(name):
+        ###    if parent == top:
+        ###        error_str = ("Name '" + name + "' is not unique to other top-level "
+        ###            + "instances. If parent is a module, build a unique name by combining the "
+        ###            + "the module name and component name: $sformatf('%m.%s','"
+        ###            + name + "').")
+        ###        uvm_fatal("CLDEXT", error_str)
+        ###    else:
+        ###        uvm_fatal("CLDEXT",
+        ###            sv.sformatf("Cannot set '%s' as a child of '%s', %s",
+        ###              name, parent.get_full_name(), "which already has a child by that name."))
+        ###    return
+
+        self.m_parent = parent
 
         self.set_name(name)
         if self.m_parent.add_child(self) is False:
             self.m_parent = None
+
+        self.m_domain = parent.m_domain  # by default, inherit domains from parents
+
+        # Now that inst name is established, reseed (if use_uvm_seeding is set)
+        self.reseed()
+        #
+        # Do local configuration settings
+        arr = []
+        from .uvm_config_db import UVMConfigDb
+        if (UVMConfigDb.get(self, "", "recording_detail", arr)):
+            self.recording_detail = arr[0]
+       
+        self.m_rh.set_name(self.get_full_name())
+        self.set_report_verbosity_level(parent.get_report_verbosity_level())
+        self.m_set_cl_msg_args()
+
 
     #----------------------------------------------------------------------------
     # Group: Hierarchy Interface
@@ -1470,11 +1511,11 @@ class UVMComponent(UVMReportObject):
         tr.end_tr(end_time,free_handle)
 
         if self.recording_detail != UVM_NONE:
-            if self.m_tr_h.exists(tr):
+            if tr in self.m_tr_h:
 
                 recorder = self.m_tr_h[tr]
                 self.do_end_tr(tr, recorder.get_handle())  # callback
-                self.m_tr_h.delete(tr)
+                del self.m_tr_h[tr]
                 tr.record(recorder)
                 recorder.close(end_time)
 
@@ -1498,7 +1539,8 @@ class UVMComponent(UVMReportObject):
 
     #extern virtual protected function void do_end_tr (uvm_transaction tr,
     #                                                  integer tr_handle)
-
+    def do_end_tr (self, tr, tr_handle):
+        return
 
     #// Function: record_error_tr
     #//
@@ -1697,7 +1739,6 @@ class UVMComponent(UVMReportObject):
     #extern virtual function uvm_object clone  ()
 
     #local uvm_tr_stream m_main_stream
-    #local uvm_recorder m_tr_h[uvm_transaction]
 
     #extern protected function integer m_begin_tr (uvm_transaction tr,
     #                                              integer parent_handle=0,
@@ -1793,34 +1834,33 @@ class UVMComponent(UVMReportObject):
         #endfunction
 
 
-    #string m_name
-
     #const static string type_name = "uvm_component"
     #virtual function string get_type_name()
     #  return type_name
     #endfunction
 
-
-    #int unsigned recording_detail = UVM_NONE
     #extern         function void   do_print(uvm_printer printer)
 
     #// Internal methods for setting up command line messaging stuff
     #extern function void m_set_cl_msg_args
+    def m_set_cl_msg_args(self):
+        pass  # TODO
+        #self.m_set_cl_verb()
+        #self.m_set_cl_action()
+        #self.m_set_cl_sev()
+        #endfunction
+
     #extern function void m_set_cl_verb
+
     #extern function void m_set_cl_action
+
     #extern function void m_set_cl_sev
+
     #extern function void m_apply_verbosity_settings(uvm_phase phase)
 
     #// The verbosity settings may have a specific phase to start at.
     #// We will do this work in the phase_started callback.
 
-    #typedef struct {
-    #  string comp
-    #  string phase
-    #  time   offset
-    #  uvm_verbosity verbosity
-    #  string id
-    #} m_verbosity_setting
 
     #m_verbosity_setting self.m_verbosity_settings[$]
     #static m_verbosity_setting m_time_settings[$]
@@ -1901,7 +1941,6 @@ class UVMComponent(UVMReportObject):
 #// CLASS- uvm_component
 #//
 #//------------------------------------------------------------------------------
-#
 #
 #// new
 #// ---
@@ -2695,14 +2734,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#// do_end_tr
-#// ---------
-#
-#function void uvm_component::do_end_tr (uvm_transaction tr,
-#                                        integer tr_handle)
-#  return
-#endfunction
-#
 #
 #//------------------------------------------------------------------------------
 #//
@@ -2927,14 +2958,6 @@ class UVMComponent(UVMReportObject):
 #typedef class uvm_cmdline_processor
 #
 #
-#// m_set_cl_msg_args
-#// -----------------
-#
-#function void uvm_component::m_set_cl_msg_args
-#  m_set_cl_verb()
-#  m_set_cl_action()
-#  m_set_cl_sev()
-#endfunction
 #
 #
 #// m_set_cl_verb
