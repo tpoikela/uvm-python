@@ -1667,7 +1667,6 @@ class UVMComponent(UVMReportObject):
     #                                                      output string leaf ,
     #                                                      output string remainder )
     def m_extract_name(self, name, leaf, remainder):
-        print("YYY called with " + name + "," + leaf + " rem: " + remainder)
         _len = len(name)
 
         i = 0
@@ -1683,8 +1682,6 @@ class UVMComponent(UVMReportObject):
         leaf = name[0:i]
         remainder = name[i + 1: _len]
 
-        print("YYY extracted " + leaf + ", " + remainder)
-
         return [leaf, remainder]
         #endfunction
 
@@ -1695,7 +1692,6 @@ class UVMComponent(UVMReportObject):
         uvm_error("ILLCRT",
             "create cannot be called on a uvm_component. Use create_component instead.")
         return None
-        #
 
 
     #extern virtual function uvm_object clone  ()
