@@ -118,7 +118,7 @@ class test_read_modify_write(ubus_example_base_test):
 
     @cocotb.coroutine
     def run_phase(self, phase):
-        phase.raise_objection(self)
+        phase.raise_objection(self, "test_read_modify_write OBJECTED")
         master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
         slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
 

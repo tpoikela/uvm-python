@@ -30,7 +30,7 @@ from ubus_if import ubus_if
 
 UBUS_ADDR_WIDTH = 16
 
-#UVMDebug.DEBUG = True
+UVMDebug.DEBUG = True
 
 @cocotb.coroutine
 def initial_run_test(dut, vif):

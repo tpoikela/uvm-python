@@ -31,8 +31,7 @@
 import cocotb
 from cocotb.triggers import Timer, Event, Combine
 
-from ..macros.uvm_callback_defines import *
-from ..macros.uvm_object_defines import *
+from ..macros import *
 from .uvm_callback import UVMCallback
 from .uvm_cmdline_processor import UVMCmdlineProcessor
 from .uvm_debug import uvm_debug
@@ -538,36 +537,36 @@ class UVMPhase(UVMObject):
         tmp_node = None
         state_chg = None
         if phase is None:
-            uvm_report_fatal("PH/NULL", "add: phase argument is null")
+            uvm_fatal("PH/NULL", "add: phase argument is null")
 
         if with_phase is not None and with_phase.get_phase_type() == UVM_PHASE_IMP:
             nm = with_phase.get_name()
             with_phase = self.find(with_phase)
             if with_phase is None:
-                uvm_report_fatal("PH_BAD_ADD", ("cannot find with_phase '" + nm
+                uvm_fatal("PH_BAD_ADD", ("cannot find with_phase '" + nm
                     + "' within node '" + get_name() + "'"))
 
         if before_phase is not None and before_phase.get_phase_type() == UVM_PHASE_IMP:
             nm = before_phase.get_name()
             before_phase = self.find(before_phase)
             if before_phase is None:
-                uvm_report_fatal("PH_BAD_ADD", ("cannot find before_phase '" + nm
+                uvm_fatal("PH_BAD_ADD", ("cannot find before_phase '" + nm
                   + "' within node '" + get_name() + "'"))
 
         if after_phase is not None and after_phase.get_phase_type() == UVM_PHASE_IMP:
             nm = after_phase.get_name()
             after_phase = self.find(after_phase)
             if after_phase is None:
-              uvm_report_fatal("PH_BAD_ADD",("cannot find after_phase '" + nm
+              uvm_fatal("PH_BAD_ADD",("cannot find after_phase '" + nm
                   + "' within node '" + self.get_name() + "'"))
 
         if with_phase is not None and (after_phase is not None or before_phase
                 is not None):
-            uvm_report_fatal("PH_BAD_ADD",
+            uvm_fatal("PH_BAD_ADD",
                     "cannot specify both 'with' and 'before/after' phase relationships")
 
         if before_phase == self or after_phase == self.m_end_node or with_phase == self.m_end_node:
-            uvm_report_fatal("PH_BAD_ADD",
+            uvm_fatal("PH_BAD_ADD",
                     "cannot add before begin node, after end node, or with end nodes")
 
         # If we are inserting a new "leaf node"
@@ -587,8 +586,6 @@ class UVMPhase(UVMObject):
                 #    DEPRECATED
                 #    new_node.phase_done = uvm_test_done_objection.get()
                 #else: # Other task based phase
-                    #raise Exception('Objection not implemented properly. See uvm_phase.py,L:~542')
-                    # TODO new_node.phase_done = UVMObjection.type_id.create(phase.get_name() + "_objection")
                 uvm_debug(self, 'add', ("Adding objection to phase " +
                     phase.get_name()))
                 new_node.phase_done = UVMObjection(phase.get_name() + "_objection")
@@ -652,7 +649,7 @@ class UVMPhase(UVMObject):
         # IN BETWEEN 'BEFORE' and 'AFTER' PHASES
         elif before_phase is not None and after_phase is not None:
             if not after_phase.is_before(before_phase):
-                uvm_report_fatal("PH_ADD_PHASE", ("Phase '" + before_phase.get_name()
+                uvm_fatal("PH_ADD_PHASE", ("Phase '" + before_phase.get_name()
                          + "' is not before phase '" + after_phase.get_name() + "'"))
             # before and after? add 1 pred and 1 succ
             begin_node.m_predecessors[after_phase] = 1;
@@ -1422,7 +1419,7 @@ class UVMPhase(UVMObject):
             del UVMPhase.m_executing_phases[self]
         else:
             pass
-            #uvm_report_fatal('NOT_IN_EXEC', 'self not in executing phases')
+            #uvm_fatal('NOT_IN_EXEC', 'self not in executing phases')
 
         # ---------
         #  JUMPING:
@@ -2132,7 +2129,7 @@ class UVMPhaseCb(UVMCallback):
     #  // have an error.
     #  //
     #  // If the phase is non-existant and thus we don't know where to jump
-    #  // we have a situation where the only thing to do is to uvm_report_fatal
+    #  // we have a situation where the only thing to do is to uvm_fatal
     #  // and terminate_phase.  By calling this function the intent was to
     #  // jump to some other phase. So, continuing in the current phase doesn't
     #  // make any sense.  And we don't have a valid phase to jump to.  So we're done.

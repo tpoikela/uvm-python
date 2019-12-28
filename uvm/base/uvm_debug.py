@@ -1,6 +1,7 @@
 
 import cocotb
 import inspect
+from inspect import getframeinfo, stack
 import re
 
 
@@ -29,6 +30,9 @@ class UVMDebug:
 
 def uvm_debug(self_or_cls, fname, msg):
     if UVMDebug.DEBUG is True:
+        sup_caller = getframeinfo(stack()[1][0])
+        filename = sup_caller.filename
+        lineno = sup_caller.lineno
         caller = ""
         if UVMDebug.INSPECT:
             curr_frame = inspect.currentframe()
@@ -43,7 +47,8 @@ def uvm_debug(self_or_cls, fname, msg):
             name = self_or_cls
         if UVMDebug.ONLY == "":
             #cocotb.log.info("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
-            print("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
+            print("[DEBUG] {} L{} {} - {}() - {}".format(
+                filename, str(lineno), name, fname, msg) + caller)
         else:
             if re.search(UVMDebug.ONLY, name):
                 #cocotb.log.info("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
