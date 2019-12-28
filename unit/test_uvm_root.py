@@ -1,0 +1,25 @@
+
+# UNIT TESTS
+
+import unittest
+from uvm.base.uvm_root import UVMRoot
+
+
+class TestUVMRoot(unittest.TestCase):
+
+    def test_name(self):
+        root = UVMRoot()
+        self.assertEqual(root.get_name(), "__top__")
+
+    def test_singletion(self):
+        root1 = UVMRoot.m_uvm_get_root()
+        root2 = UVMRoot.m_uvm_get_root()
+        self.assertEqual(root1, root2)
+
+    def test_run_phase(self):
+        root = UVMRoot()
+        yield root.run_phase()
+
+
+if __name__ == '__main__':
+    unittest.main()

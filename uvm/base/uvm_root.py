@@ -596,17 +596,8 @@ uvm_top = UVMRoot.get()
 #task uvm_root::run_test(string test_name="")
 #
 #  uvm_report_server l_rs
-#  uvm_coreservice_t cs = uvm_coreservice_t::get();
-#  uvm_factory factory=cs.get_factory()
-#  bit testname_plusarg
-#  int test_name_count
-#  string test_names[$]
-#  string msg
-#  uvm_component uvm_test_top
 #
 #  process phase_runner_proc; // store thread forked below for final cleanup
-#
-#  testname_plusarg = 0
 #
 #  // Set up the process that decouples the thread that drops objections from
 #  // the process that processes drop/all_dropped objections. Thus, if the
@@ -1172,25 +1163,3 @@ uvm_top = UVMRoot.get()
 #
 
 
-# UNIT TESTS
-
-import unittest
-
-class TestUVMRoot(unittest.TestCase):
-
-    def test_name(self):
-        root = UVMRoot()
-        self.assertEqual(root.get_name(), "")
-
-    def test_singletion(self):
-        root1 = UVMRoot.m_uvm_get_root()
-        root2 = UVMRoot.m_uvm_get_root()
-        self.assertEqual(root1, root2)
-
-    def test_run_phase(self):
-        root = UVMRoot()
-        yield root.run_phase()
-
-
-if __name__ == '__main__':
-    unittest.main()
