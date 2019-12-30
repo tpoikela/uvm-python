@@ -24,13 +24,16 @@ import cocotb
 from cocotb.triggers import Timer
 #from cocotb.clock import Clock
 from uvm.base import run_test, UVMDebug
+from uvm.base.uvm_phase import UVMPhase
 
 from test_lib import *
 from ubus_if import ubus_if
 
 UBUS_ADDR_WIDTH = 16
 
-UVMDebug.DEBUG = True
+#UVMDebug.DEBUG = True
+#UVMPhase.m_phase_trace = True
+
 
 @cocotb.coroutine
 def initial_run_test(dut, vif):

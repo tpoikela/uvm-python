@@ -82,6 +82,14 @@ class UVMComponent(UVMReportObject):
     def __init__(self, name, parent):
         UVMReportObject.__init__(self, name)
         self.m_children = {}  # uvm_component[string]
+
+        #// Variable: print_enabled
+        #//
+        #// This bit determines if this component should automatically be printed as a
+        #// child of its parent object.
+        #//
+        #// By default, all children are printed. However, this bit allows a parent
+        #// component to disable the printing of specific children.
         self.print_enabled = True
         self.m_current_phase = None
         self.m_parent = None
@@ -150,6 +158,7 @@ class UVMComponent(UVMReportObject):
                 nname = "uvm_top"
             uvm_info("NEWCOMP", "Creating " + nname + "." + name, UVM_MEDIUM+1)
 
+        # TODO to be uncommented once m_req_fifo bug is fixed
         ###if parent.has_child(name) and self != parent.get_child(name):
         ###    if parent == top:
         ###        error_str = ("Name '" + name + "' is not unique to other top-level "
@@ -1539,7 +1548,7 @@ class UVMComponent(UVMReportObject):
 
     #extern virtual protected function void do_end_tr (uvm_transaction tr,
     #                                                  integer tr_handle)
-    def do_end_tr (self, tr, tr_handle):
+    def do_end_tr(self, tr, tr_handle):
         return
 
     #// Function: record_error_tr
@@ -1616,15 +1625,6 @@ class UVMComponent(UVMReportObject):
     #// then it will be freed.
     #extern virtual function void free_tr_stream(uvm_tr_stream stream)
 
-    #// Variable: print_enabled
-    #//
-    #// This bit determines if this component should automatically be printed as a
-    #// child of its parent object.
-    #//
-    #// By default, all children are printed. However, this bit allows a parent
-    #// component to disable the printing of specific children.
-
-    #bit print_enabled = 1
 
     #// Variable: self.tr_database
     #//

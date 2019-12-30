@@ -211,14 +211,14 @@ class UVMPhaseStateChange(UVMObject):
     # Functionally equivalent to <uvm_phase::get_state()>.
     #
     def get_state(self):
-        return self.m_phase.get_state();
+        return self.m_phase.get_state()
 
     # Function: get_prev_state()
     #
     # Returns the state the phase just transitioned from.
     #
     def get_prev_state(self):
-        return self.m_prev_state;
+        return self.m_prev_state
 
     # Function: jump_to()
     #
@@ -227,7 +227,7 @@ class UVMPhaseStateChange(UVMObject):
     # Returns ~null~ otherwise.
     #
     def jump_to(self):
-      return self.m_jump_to;
+      return self.m_jump_to
 uvm_object_utils(UVMPhaseStateChange)
 
 #------------------------------------------------------------------------------
@@ -324,7 +324,7 @@ class UVMPhase(UVMObject):
     m_phase_trace = False
     m_use_ovm_run_semantic = False
     m_phase_hopper = UVMMailbox()
-    m_executing_phases = {} # UVMPhase -> bool
+    m_executing_phases = {}  # UVMPhase -> bool
 
     #--------------------
     # Group: Construction
@@ -343,11 +343,11 @@ class UVMPhase(UVMObject):
 
         self.m_ready_to_end_count = 0
         self.max_ready_to_end_iter = 20
-        self.m_successors = {} # UVMPhase -> bit
-        self.m_predecessors = {} # UVMPhase -> bit
+        self.m_successors = {}  # UVMPhase -> bit
+        self.m_predecessors = {}  # UVMPhase -> bit
         self.m_end_node = None
-        self.m_sync = [] # UVMPhase
-        self.m_imp = None # UVMPhase to call when we execute this node
+        self.m_sync = []  # UVMPhase
+        self.m_imp = None  # UVMPhase to call when we execute this node
         self.m_phase_done_event = Event(name + '_phase_done_event')
         self.m_phase_synced_event = Event(name + '_phase_synced')
         self.m_phase_set_state_event = Event(name + '_set_state_event')
@@ -370,7 +370,7 @@ class UVMPhase(UVMObject):
             self.set_state(UVM_PHASE_DORMANT)
 
         self.m_run_count = 0
-        self.m_parent = parent;
+        self.m_parent = parent
 
         clp = UVMCmdlineProcessor.get_inst()
         val = ""
@@ -384,13 +384,13 @@ class UVMPhase(UVMObject):
             UVMPhase.m_use_ovm_run_semantic = 0
 
         if parent is None and (phase_type == UVM_PHASE_SCHEDULE or
-                  phase_type == UVM_PHASE_DOMAIN ):
+                  phase_type == UVM_PHASE_DOMAIN):
             #self.m_parent = self
             self.m_end_node = UVMPhase(name + ' end', UVM_PHASE_TERMINAL, self)
             self.m_successors[self.m_end_node] = True
             self.m_end_node.m_predecessors[self] = True
 
-    # TSP: Used instead of $cast() to check phase type
+    # tpoikela: Used instead of $cast() to check phase type
     def is_task_phase(self):
         return self.m_is_task_phase
 
@@ -408,7 +408,7 @@ class UVMPhase(UVMObject):
     def set_state(self, state):
         if state is None:
             raise Exception('Proper state not given. Must be ' + str(UVM_PHASE2STR))
-        uvm_debug(self, 'set_state', (self.get_name() + ': ' +
+        uvm_debug(self, 'set_state()', (self.get_name() + ': ' +
                 ph2str(self.m_state) + ' => ' + ph2str(state)))
         self.m_state = state
         self.m_phase_set_state_event.set()
@@ -431,7 +431,7 @@ class UVMPhase(UVMObject):
     #  //
     #  // Accessor to return the integer number of times this phase has executed
     #  //
-    #  extern function int get_run_count();
+    #  extern function int get_run_count()
 
     #  // Function: find_by_name
     #  //
@@ -439,7 +439,7 @@ class UVMPhase(UVMObject):
     #  // With ~stay_in_scope~ set, searches only within this phase's schedule or
     #  // domain.
     #  //
-    #  extern function uvm_phase find_by_name(string name, bit stay_in_scope=1);
+    #  extern function uvm_phase find_by_name(string name, bit stay_in_scope=1)
 
     #  Function: find
     #
@@ -469,7 +469,7 @@ class UVMPhase(UVMObject):
     # returns 1 if the containing uvm_phase refers to the same phase
     # as the phase argument, 0 otherwise
     #
-    #  extern function bit is(uvm_phase phase);
+    #  extern function bit is(uvm_phase phase)
     def _is(self, phase):
         return (self.m_imp == phase or self == phase)
 
@@ -479,7 +479,7 @@ class UVMPhase(UVMObject):
     # than the phase argument, 0 otherwise
     #
     def is_before(self, phase):
-        # $display("this=%s is before phase=%s?",get_name(),phase.get_name());
+        # $display("this=%s is before phase=%s?",get_name(),phase.get_name())
         #  TODO: add support for 'stay_in_scope=1' functionality
         return not self._is(phase) and self.m_find_successor(phase,0,self) is not None
 
@@ -489,7 +489,7 @@ class UVMPhase(UVMObject):
     # than the phase argument, 0 otherwise
     #
     def is_after(self, phase):
-        #  //$display("this=%s is after phase=%s?",get_name(),phase.get_name());
+        #  //$display("this=%s is after phase=%s?",get_name(),phase.get_name())
         #  // TODO: add support for 'stay_in_scope=1' functionality
         return not self._is(phase) and self.m_find_predecessor(phase,0,self) is not None
 
@@ -573,7 +573,7 @@ class UVMPhase(UVMObject):
         if phase.get_phase_type() == UVM_PHASE_IMP:
             uvm_debug(self, 'add', 'ph_type == UVM_PHASE_IMP ph_name: ' +
                     phase.get_name())
-            new_node = UVMPhase(phase.get_name(),UVM_PHASE_NODE,self);
+            new_node = UVMPhase(phase.get_name(),UVM_PHASE_NODE,self)
             new_node.m_imp = phase
             begin_node = new_node
             end_node = new_node
@@ -605,7 +605,7 @@ class UVMPhase(UVMObject):
             before_phase = self.m_end_node
 
         if UVMPhase.m_phase_trace:
-            typ = phase.get_phase_type();
+            typ = phase.get_phase_type()
             uvm_report_info("PH/TRC/ADD_PH", (get_name() + " (" + self.m_phase_type.name()
                 + ") ADD_PHASE: phase=" + phase.get_full_name() + " ("
                 + typ.name() + ", inst_id=" + "{}".format(phase.get_inst_id())
@@ -639,8 +639,8 @@ class UVMPhase(UVMObject):
             before_phase.m_predecessors[end_node] = 1
         # INSERT AFTER PHASE
         elif before_phase is None and after_phase is not None:
-            end_node.m_successors = after_phase.m_successors;
-            begin_node.m_predecessors[after_phase] = 1;
+            end_node.m_successors = after_phase.m_successors
+            begin_node.m_predecessors[after_phase] = 1
             for succ in after_phase.m_successors[succ]:
                 succ.m_predecessors.delete(after_phase)
                 succ.m_predecessors[end_node] = 1
@@ -652,10 +652,10 @@ class UVMPhase(UVMObject):
                 uvm_fatal("PH_ADD_PHASE", ("Phase '" + before_phase.get_name()
                          + "' is not before phase '" + after_phase.get_name() + "'"))
             # before and after? add 1 pred and 1 succ
-            begin_node.m_predecessors[after_phase] = 1;
-            end_node.m_successors[before_phase] = 1;
-            after_phase.m_successors[begin_node] = 1;
-            before_phase.m_predecessors[end_node] = 1;
+            begin_node.m_predecessors[after_phase] = 1
+            end_node.m_successors[before_phase] = 1
+            after_phase.m_successors[begin_node] = 1
+            before_phase.m_predecessors[end_node] = 1
             if before_phase in after_phase.m_successors:
                 after_phase.m_successors.delete(before_phase)
                 before_phase.m_successors.delete(after_phase)
@@ -664,13 +664,13 @@ class UVMPhase(UVMObject):
         if new_node is None:
             tmp_node = phase
         else:
-            tmp_node = new_node;
+            tmp_node = new_node
         uvm_debug(self, "add", "GOT here. tmp_node is: " + tmp_node.convert2string())
         state_chg = UVMPhaseStateChange.type_id.create(tmp_node.get_name())
         state_chg.m_phase = tmp_node
         state_chg.m_jump_to = None
         state_chg.m_prev_state = tmp_node.m_state
-        tmp_node.m_state = UVM_PHASE_DORMANT;
+        tmp_node.m_state = UVM_PHASE_DORMANT
         uvm_do_callbacks(self, 'phase_state_change', tmp_node, state_chg)
 
     #  // Function: get_parent
@@ -678,7 +678,7 @@ class UVMPhase(UVMObject):
     #  // Returns the parent schedule node, if any, for hierarchical graph traversal
     #  //
     def get_parent(self):
-        return self.m_parent;
+        return self.m_parent
 
     #   Function: get_full_name
     #   Returns the full path from the enclosing domain down to this node.
@@ -688,7 +688,7 @@ class UVMPhase(UVMObject):
         if self.m_phase_type == UVM_PHASE_IMP:
             return self.get_name()
         get_full_name = self.get_domain_name()
-        sch = self.get_schedule_name();
+        sch = self.get_schedule_name()
         if sch != "":
             get_full_name = get_full_name + "." + sch
         if self.m_phase_type != UVM_PHASE_DOMAIN and self.m_phase_type != UVM_PHASE_SCHEDULE:
@@ -719,20 +719,20 @@ class UVMPhase(UVMObject):
     #  //
     #
     def get_schedule_name(self, hier=False):
-        #uvm_phase sched;
+        #uvm_phase sched
         s = ""
-        sched = self.get_schedule(hier);
+        sched = self.get_schedule(hier)
         if sched is None:
             return ""
-        s = sched.get_name();
+        s = sched.get_name()
         while (sched.m_parent is not None and sched.m_parent != sched and
                 (sched.m_parent.get_phase_type() == UVM_PHASE_SCHEDULE)):
-            sched = sched.m_parent;
+            sched = sched.m_parent
             sep = ""
             if len(s) > 0:
                 sep = "."
-            s = sched.get_name() + sep + s;
-        return s;
+            s = sched.get_name() + sep + s
+        return s
 
     # Function: get_domain
     # Returns the enclosing domain
@@ -752,14 +752,14 @@ class UVMPhase(UVMObject):
     #  // Returns the phase implementation for this this node.
     #  // Returns ~null~ if this phase type is not a UVM_PHASE_LEAF_NODE.
     #  //
-    #  extern function uvm_phase get_imp();
+    #  extern function uvm_phase get_imp()
     #
 
     #  // Function: get_domain_name
     #  //
     #  // Returns the domain name associated with this phase node
     #  //
-    #  extern function string get_domain_name();
+    #  extern function string get_domain_name()
     def get_domain_name(self):
         domain = self.get_domain()
         if domain is None:
@@ -774,7 +774,7 @@ class UVMPhase(UVMObject):
     #  // the phase graph, with no nodes between ~this~ node and
     #  // the predecessor node.
     #  //
-    #  extern function void get_adjacent_predecessor_nodes(ref uvm_phase pred[]);
+    #  extern function void get_adjacent_predecessor_nodes(ref uvm_phase pred[])
     #
 
     #  // Function: get_adjacent_successor_nodes
@@ -785,10 +785,10 @@ class UVMPhase(UVMObject):
     #  // the phase graph, with no nodes between ~this~ node
     #  // and the successor node.
     #  //
-    #function void uvm_phase::get_adjacent_successor_nodes(ref uvm_phase succ[]);
+    #function void uvm_phase::get_adjacent_successor_nodes(ref uvm_phase succ[])
     def get_adjacent_successor_nodes(self):
         done = False
-        successors = {}  #bit successors[uvm_phase];
+        successors = {}  #bit successors[uvm_phase]
         idx = 0
 
         # Get all successors (including TERMINALS, SCHEDULES, etc.)
@@ -797,16 +797,16 @@ class UVMPhase(UVMObject):
 
         # Replace any terminal / schedule nodes with their successors, recursively.
         #do begin
-        #   done = 1;
+        #   done = 1
         #   foreach (successors[s]) begin
         #      if (s.get_phase_type() != UVM_PHASE_NODE) begin
-        #         successors.delete(s);
+        #         successors.delete(s)
         #         foreach (s.m_successors[next_s])
-        #           successors[next_s] = 1;
-        #         done = 0;
+        #           successors[next_s] = 1
+        #         done = 0
         #      end
         #   end
-        #end while (!done);
+        #end while (!done)
         done = False
         while (True):
             done = True
@@ -873,16 +873,15 @@ class UVMPhase(UVMObject):
     #  // processes which are not implicit objectors to the phase.
     #  //
     #  //|   while(1) begin
-    #  //|     some_phase.raise_objection(this);
+    #  //|     some_phase.raise_objection(this)
     #  //|     ...
-    #  //|     some_phase.drop_objection(this);
+    #  //|     some_phase.drop_objection(this)
     #  //|   end
     #  //|   ...
     #  //
     def raise_objection(self, obj, description="", count=1):
         if self.phase_done is not None:
             uvm_debug(self, 'raise_objection', 'obj: {}'.format(obj.get_name()))
-            #print(self.get_name() + ' raise_objection' + ' obj: {}'.format(obj.get_name()))
             self.phase_done.raise_objection(obj,description,count)
         else:
             self.m_report_null_objection(obj, description, count, "raise")
@@ -905,7 +904,7 @@ class UVMPhase(UVMObject):
     #  //
     #  // Returns the current number of objections to ending this phase raised by the given ~object~.
     #  //
-    #  extern virtual function int get_objection_count( uvm_object obj=null );
+    #  extern virtual function int get_objection_count( uvm_object obj=null )
     #
     #  //-----------------------
     #  // Group: Synchronization
@@ -914,9 +913,9 @@ class UVMPhase(UVMObject):
     #  //
     #  // Summary of usage:
     #  //| my_phase.sync(.target(domain)
-    #  //|              [,.phase(phase)[,.with_phase(phase)]]);
+    #  //|              [,.phase(phase)[,.with_phase(phase)]])
     #  //| my_phase.unsync(.target(domain)
-    #  //|                [,.phase(phase)[,.with_phase(phase)]]);
+    #  //|                [,.phase(phase)[,.with_phase(phase)]])
     #  //
     #  // Components in different schedule domains can be phased independently or in sync
     #  // with each other. An API is provided to specify synchronization rules between any
@@ -950,7 +949,7 @@ class UVMPhase(UVMObject):
     #  //
     #  extern function void sync(uvm_domain target,
     #                            uvm_phase phase=null,
-    #                            uvm_phase with_phase=null);
+    #                            uvm_phase with_phase=null)
     #
     #  // Function: unsync
     #  //
@@ -964,7 +963,7 @@ class UVMPhase(UVMObject):
     #  //
     #  extern function void unsync(uvm_domain target,
     #                              uvm_phase phase=null,
-    #                              uvm_phase with_phase=null);
+    #                              uvm_phase with_phase=null)
     #
     #
     #  // Function: wait_for_state
@@ -977,13 +976,13 @@ class UVMPhase(UVMObject):
     #  //
     #  // To wait for the phase to be at the started state or after
     #  //
-    #  //| wait_for_state(UVM_PHASE_STARTED, UVM_GTE);
+    #  //| wait_for_state(UVM_PHASE_STARTED, UVM_GTE)
     #  //
     #  // To wait for the phase to be either started or executing
     #  //
-    #  //| wait_for_state(UVM_PHASE_STARTED | UVM_PHASE_EXECUTING, UVM_EQ);
+    #  //| wait_for_state(UVM_PHASE_STARTED | UVM_PHASE_EXECUTING, UVM_EQ)
     #  //
-    #  extern task wait_for_state(uvm_phase_state state, uvm_wait_op op=UVM_EQ);
+    #  extern task wait_for_state(uvm_phase_state state, uvm_wait_op op=UVM_EQ)
     @cocotb.coroutine
     def wait_for_state(self, state, op=UVM_EQ):
         func = None
@@ -1051,14 +1050,14 @@ class UVMPhase(UVMObject):
     #  // outside of the current schedule then the jump affects other schedules which
     #  // share the phase.
     #  //
-    #  extern function void jump(uvm_phase phase);
+    #  extern function void jump(uvm_phase phase)
     #
     #  // Function: set_jump_phase
     #  //
     #  // Specify a phase to transition to when phase is complete.
     #  // Note that this function is part of what jump() does; unlike jump()
     #  // it does not set the flag to terminate the phase prematurely.
-    #  extern function void set_jump_phase(uvm_phase phase) ;
+    #  extern function void set_jump_phase(uvm_phase phase) 
 
     #  // Function: end_prematurely
     #  //
@@ -1075,7 +1074,7 @@ class UVMPhase(UVMObject):
     #  // The jump happens to all phase schedules that contain the jump-to ~phase~
     #  // i.e. a global jump.
     #  //
-    #  extern static function void jump_all(uvm_phase phase);
+    #  extern static function void jump_all(uvm_phase phase)
     #
     #
     #  // Function: get_jump_target
@@ -1083,7 +1082,7 @@ class UVMPhase(UVMObject):
     #  // Return handle to the target phase of the current jump, or ~null~ if no jump
     #  // is in progress. Valid for use during the phase_ended() callback
     #  //
-    #  extern function uvm_phase get_jump_target();
+    #  extern function uvm_phase get_jump_target()
     #
 
     #// m_find_predecessor
@@ -1144,9 +1143,9 @@ class UVMPhase(UVMObject):
         return None
 
 
-    #  extern function uvm_phase m_find_predecessor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null);
-    #  extern function uvm_phase m_find_successor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null);
-    #  extern function void m_print_successors();
+    #  extern function uvm_phase m_find_predecessor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
+    #  extern function uvm_phase m_find_successor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
+    #  extern function void m_print_successors()
 
     #
     #  // Implementation - Callbacks
@@ -1154,22 +1153,22 @@ class UVMPhase(UVMObject):
     #  // Provide the required component traversal behavior. Called by execute()
     #  virtual function void traverse(uvm_component comp,
     #                                 uvm_phase phase,
-    #                                 uvm_phase_state state);
+    #                                 uvm_phase_state state)
     #  endfunction
 
     #  // Provide the required per-component execution flow. Called by traverse()
     #  virtual function void execute(uvm_component comp,
-    #                                 uvm_phase phase);
+    #                                 uvm_phase phase)
     #  endfunction
 
     #
     #  // Implementation - Schedule
     #  //--------------------------
-    #  protected bit  self.m_predecessors[uvm_phase];
-    #  protected bit  self.m_successors[uvm_phase];
-    #  protected uvm_phase self.m_end_node;
+    #  protected bit  self.m_predecessors[uvm_phase]
+    #  protected bit  self.m_successors[uvm_phase]
+    #  protected uvm_phase self.m_end_node
     #  // Track the currently executing real task phases (used for debug)
-    #  static protected bit m_executing_phases[uvm_phase];
+    #  static protected bit m_executing_phases[uvm_phase]
     #  function uvm_phase get_begin_node(); if (m_imp != null) return this; return null; endfunction
     #  function uvm_phase get_end_node();   return self.m_end_node; endfunction
 
@@ -1181,7 +1180,7 @@ class UVMPhase(UVMObject):
 
     # Internal implementation, more efficient than calling get_predessor_nodes on all
     # of the successors returned by get_adjacent_successor_nodes
-    #function void uvm_phase::get_predecessors_for_successors(output bit pred_of_succ[uvm_phase]);
+    #function void uvm_phase::get_predecessors_for_successors(output bit pred_of_succ[uvm_phase])
     def get_predecessors_for_successors(self, pred_of_succ):
         done = False
         successors = []  #uvm_phase[]
@@ -1217,7 +1216,7 @@ class UVMPhase(UVMObject):
 
     @cocotb.coroutine
     def m_wait_for_pred(self):
-        pred_of_succ = {}  # bit [uvm_phase];
+        pred_of_succ = {}  # bit [uvm_phase]
         self.get_predecessors_for_successors(pred_of_succ)
         yield Timer(0)
 
@@ -1230,7 +1229,7 @@ class UVMPhase(UVMObject):
                     sibling.get_name(),sibling.get_inst_id(),sibling.m_state.name())
                 UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",s,self,UVM_HIGH)
 
-            yield sibling.wait_for_state(UVM_PHASE_READY_TO_END, UVM_GTE);
+            yield sibling.wait_for_state(UVM_PHASE_READY_TO_END, UVM_GTE)
 
             if UVMPhase.m_phase_trace:
                 s = sv.sformatf("Phase '%s' (%0d) is now READY_TO_END. Releasing phase",
@@ -1258,18 +1257,18 @@ class UVMPhase(UVMObject):
     #
     #  // Implementation - Jumping
     #  //-------------------------
-    #  local bit                m_jump_bkwd;
-    #  local bit                m_jump_fwd;
-    #  local uvm_phase          m_jump_phase;
-    #  local bit                m_premature_end;
-    #  extern function void clear(uvm_phase_state state = UVM_PHASE_DORMANT);
+    #  local bit                m_jump_bkwd
+    #  local bit                m_jump_fwd
+    #  local uvm_phase          m_jump_phase
+    #  local bit                m_premature_end
+    #  extern function void clear(uvm_phase_state state = UVM_PHASE_DORMANT)
     #  extern function void clear_successors(
     #                             uvm_phase_state state = UVM_PHASE_DORMANT,
-    #                             uvm_phase end_state=null);
+    #                             uvm_phase end_state=null)
     #
     #  // Implementation - Overall Control
     #  //---------------------------------
-    #  local static mailbox #(uvm_phase) self.m_phase_hopper = new();
+    #  local static mailbox #(uvm_phase) self.m_phase_hopper = new()
     #
 
     # m_run_phases
@@ -1314,7 +1313,7 @@ class UVMPhase(UVMObject):
         state_chg = None
 
         cs = get_cs()
-        top = cs.get_root() # UVMRoot
+        top = cs.get_root()  # UVMRoot
         uvm_debug(self, 'execute_phase', 'Waiting predecessors to finish')
 
         # If we got here by jumping forward, we must wait for
@@ -1322,14 +1321,15 @@ class UVMPhase(UVMObject):
         # (the next conditional speeds this up)
         # Also, this helps us fast-forward through terminal (end) nodes
         yield self._wait_all_predecessors_done()
-        uvm_debug(self, 'execute_phase', 'All predecessors are DONE')
+        uvm_debug(self, 'execute_phase', 'All predecessors are DONE ' +
+            self.get_name())
 
         # If DONE (by, say, a forward jump), return immed
         if self.m_state == UVM_PHASE_DONE:
             uvm_debug(self, 'execute_phase', 'PHASE_DONE_REACHED - returning now')
             return
 
-        #state_chg = uvm_phase_state_change::type_id::create(get_name());
+        #state_chg = uvm_phase_state_change::type_id::create(get_name())
         state_chg = UVMPhaseStateChange(self.get_name())
         state_chg.m_phase      = self
         state_chg.m_jump_to    = None
@@ -1372,7 +1372,7 @@ class UVMPhase(UVMObject):
             #---------
             # STARTED:
             #---------
-            state_chg.m_prev_state = self.m_state;
+            state_chg.m_prev_state = self.m_state
 
             self.set_state(UVM_PHASE_STARTED)
             uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
@@ -1406,18 +1406,20 @@ class UVMPhase(UVMObject):
 
                 uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
                 #fork : master_phase_process
-                #self.m_phase_proc = process::self();
+                #self.m_phase_proc = process::self()
                 #-----------
                 # EXECUTING: (task phases)
                 #-----------
                 uvm_debug(self, 'execute_phase', "Forking now task_phase for " +
                         top.get_name())
-                task_proc = cocotb.fork(task_phase.traverse(top,self,UVM_PHASE_EXECUTING))
+                task_proc = cocotb.fork(task_phase.traverse(top,self, UVM_PHASE_EXECUTING))
                 #wait(0); // stay alive for later kill
                 #join_none
 
-                yield uvm_wait_for_nba_region() #Give sequences, etc. a chance to object
+                yield uvm_wait_for_nba_region()  # Give sequences, etc. a chance to object
                 yield self.wait_for_criterion_for_end_phase(state_chg)
+                uvm_debug(self, 'execute_phase', "End criterion reached for " +
+                        top.get_name())
         #  end # PHASE_NODE
 
         uvm_debug(self, 'execute_phase', 'Now deleting self from executing phases')
@@ -1446,9 +1448,9 @@ class UVMPhase(UVMObject):
                 if self.m_jump_phase is not None:
                     state_chg.m_jump_to = self.m_jump_phase
                     uvm_report_info("PH_JUMP", (
-                          "phase {} (schedule {}, domain {}) is jumping to phase {}".format(
-                          get_name(), self.get_schedule_name(), self.get_domain_name(),
-                          m_jump_phase.get_name())), UVM_MEDIUM)
+                        "phase {} (schedule {}, domain {}) is jumping to phase {}".format(
+                        self.get_name(), self.get_schedule_name(), self.get_domain_name(),
+                        self.m_jump_phase.get_name())), UVM_MEDIUM)
                 else:
                     uvm_report_info("PH_JUMP", (
                         "phase {} (schedule {}, domain {}) is ending prematurely".format(
@@ -1477,11 +1479,11 @@ class UVMPhase(UVMObject):
             uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
             if self.m_imp is not None:
                 if self.m_imp.is_task_phase():
-                    yield self.m_imp.traverse(top,self,UVM_PHASE_ENDED)
+                    yield self.m_imp.traverse(top,self, UVM_PHASE_ENDED)
                 else:
-                    self.m_imp.traverse(top,self,UVM_PHASE_ENDED)
+                    self.m_imp.traverse(top,self, UVM_PHASE_ENDED)
             uvm_debug(self, "execute_phase", "MMM KKK SSS ZZZ before yield")
-            #TODO yield Timer(0)
+            yield Timer(0)
             uvm_debug(self, "execute_phase", "Phase ended after yield")
             #0; // LET ANY WAITERS WAKE UP
 
@@ -1500,11 +1502,12 @@ class UVMPhase(UVMObject):
             if self.m_phase_proc is not None:
                 self.m_phase_proc.kill()
                 self.m_phase_proc = None
-            #TODO yield Timer(0)
+            yield Timer(0)
             #0; // LET ANY WAITERS WAKE UP
             uvm_debug(self, "execute_phase", "Cleanup DONE |" + self.m_imp.get_name() + "|")
             if self.phase_done is not None:
-                uvm_debug(self, "execute_phase", "clear() now after DONE |" +
+                nn = self.get_name()
+                uvm_debug(self, "execute_phase", nn + "| clear() now after DONE |" +
                         self.m_imp.get_name() + "|")
                 self.phase_done.clear()
 
@@ -1553,7 +1556,7 @@ class UVMPhase(UVMObject):
                     state_chg.m_phase = succ
                     succ.set_state(UVM_PHASE_SCHEDULED)
                     uvm_do_callbacks(self, 'phase_state_change', succ, state_chg)
-                    yield Timer(0) #0; // LET ANY WAITERS WAKE UP
+                    yield Timer(0)  #0; // LET ANY WAITERS WAKE UP
                     if not UVMPhase.m_phase_hopper.try_put(succ):
                         raise Exception('Failed try_put(succ). Should not ever fail')
                     if UVMPhase.m_phase_trace:
@@ -1564,8 +1567,9 @@ class UVMPhase(UVMObject):
 
     @cocotb.coroutine
     def _wait_all_predecessors_done(self):
+        nn = self.get_name()
         if self.has_predecessors():
-            uvm_debug(self, '_wait_all_predecessors_done', 'has predecessors OK')
+            uvm_debug(self, '_wait_all_predecessors_done', nn + '| has predecessors() OK')
             events = []
             for pred in self.m_predecessors:
                 uvm_debug(self, '_wait_all_predecessors_done', 'pred is now ' + str(pred))
@@ -1574,14 +1578,14 @@ class UVMPhase(UVMObject):
                 events.append(pred.get_phase_done_event().wait())
             #yield(Simultaneous(*events))
             #yield my_combine(events) # Combine expects *args, not list
-            uvm_debug(self, '_wait_all_predecessors_done', "Before combining events")
+            uvm_debug(self, '_wait_all_predecessors_done', nn + "| Before combining events")
             yield Combine(*events)  # Combine expects *args, not list
-            uvm_debug(self, '_wait_all_predecessors_done', "After combining events")
+            uvm_debug(self, '_wait_all_predecessors_done', nn + "| After combining events")
             #yield Timer(0)
         else:
-            uvm_debug(self, '_wait_all_predecessors_done', 'before yield Timer(0)')
+            uvm_debug(self, '_wait_all_predecessors_done', nn + '| before yield Timer(0)')
             yield Timer(0)
-            uvm_debug(self, '_wait_all_predecessors_done', 'after yield Timer(0)')
+            uvm_debug(self, '_wait_all_predecessors_done', nn + '| after yield Timer(0)')
 
     def _wait_phases_synced(self):
         events = []
@@ -1594,8 +1598,8 @@ class UVMPhase(UVMObject):
     def has_predecessors(self):
         return len(self.m_predecessors) > 0
 
-    #  extern local function void m_terminate_phase();
-    #  extern local function void m_print_termination_state();
+    #  extern local function void m_terminate_phase()
+    #  extern local function void m_print_termination_state()
 
     #//---------------------------------
     #// Implementation - Overall Control
@@ -1604,13 +1608,13 @@ class UVMPhase(UVMObject):
     #// -----------------------------
     #// This task loops until this phase instance and all its siblings, either
     #// sync'd or sharing a common successor, have all objections dropped.
-    #task uvm_phase::wait_for_self_and_siblings_to_drop() ;
+    #task uvm_phase::wait_for_self_and_siblings_to_drop() 
     @cocotb.coroutine
     def wait_for_self_and_siblings_to_drop(self):
         need_to_check_all = True
         top = None
         cs = None
-        siblings = {}  #  bit siblings[uvm_phase];
+        siblings = {}  # bit siblings[uvm_phase]
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         top = cs.get_root()
@@ -1620,8 +1624,8 @@ class UVMPhase(UVMObject):
             siblings[ss] = 1
         yield Timer(0)
 
-        while (need_to_check_all):
-            need_to_check_all = False # if all are dropped, we won't need to do this again
+        while need_to_check_all is True:
+            need_to_check_all = False  # if all are dropped, we won't need to do this again
 
             # wait for own objections to drop
             if ((self.phase_done is not None) and
@@ -1633,51 +1637,53 @@ class UVMPhase(UVMObject):
             # now wait for siblings to drop
             #foreach(siblings[sib]) begin
             for sib in siblings:
-                yield sib.wait_for_state(UVM_PHASE_EXECUTING, UVM_GTE) # sibling must be at least executing
+                # sibling must be at least executing
+                yield sib.wait_for_state(UVM_PHASE_EXECUTING, UVM_GTE)
                 if ((sib.phase_done is not None) and
                         (sib.phase_done.get_objection_total(top) != 0)):
                     self.set_state(UVM_PHASE_EXECUTING)
-                    yield sib.phase_done.wait_for(UVM_ALL_DROPPED, top) # sibling must drop any objection
+                    # sibling must drop any objection
+                    yield sib.phase_done.wait_for(UVM_ALL_DROPPED, top)
                     need_to_check_all = True
         #endtask
 
-    #  extern function void kill();
-    #  extern function void kill_successors();
+    #  extern function void kill()
+    #  extern function void kill_successors()
     #
     def convert2string(self):
-        #return $sformatf("PHASE %s = %p",get_name(),this);
+        #return $sformatf("PHASE %s = %p",get_name(),this)
         par_str = 'null'
         if self.m_parent is not None:
             par_str = self.get_schedule_name()
         pred_str = str(self.m_predecessors)
         succ_str = str(self.m_successors)
         s = "phase: {} parent={}  pred={}  succ={}".format(
-                self.get_name(), par_str, pred_str, succ_str)
+            self.get_name(), par_str, pred_str, succ_str)
         return s
 
     #  local function string m_aa2string(bit aa[uvm_phase]); // TBD tidy
-    #    string s;
-    #    int i;
-    #    s = "'{ ";
+    #    string s
+    #    int i
+    #    s = "'{ "
     #    foreach (aa[ph]) begin
-    #      uvm_phase n = ph;
+    #      uvm_phase n = ph
     #      s = {s, (n == null) ? "null" : n.get_name(),
-    #        (i == aa.num()-1) ? "" : ", "};
-    #      i++;
+    #        (i == aa.num()-1) ? "" : ", "}
+    #      i++
     #    end
-    #    s = {s, " }"};
-    #    return s;
+    #    s = {s, " }"}
+    #    return s
     #  endfunction
     #
-    #  function bit is_domain();
-    #    return (self.m_phase_type == UVM_PHASE_DOMAIN);
+    #  function bit is_domain()
+    #    return (self.m_phase_type == UVM_PHASE_DOMAIN)
     #  endfunction
     #
-    #  virtual function void m_get_transitive_children(ref uvm_phase phases[$]);
+    #  virtual function void m_get_transitive_children(ref uvm_phase phases[$])
     #    foreach (self.m_successors[succ])
     #    begin
-    #        phases.push_back(succ);
-    #        succ.m_get_transitive_children(phases);
+    #        phases.push_back(succ)
+    #        succ.m_get_transitive_children(phases)
     #    end
     #  endfunction
     #endclass
@@ -1695,7 +1701,7 @@ class UVMPhase(UVMObject):
         #           fork
         #             // JUMP
         #             begin
-        #                wait (self.m_premature_end);
+        #                wait (self.m_premature_end)
         #                `UVM_PH_TRACE("PH/TRC/EXE/JUMP","PHASE EXIT ON JUMP REQUEST",this,UVM_DEBUG)
         #             end
         #
@@ -1703,7 +1709,7 @@ class UVMPhase(UVMObject):
         #             begin
         #               if (this.get_name() == "run") begin
         #                  if (top.phase_timeout == 0)
-        #                    wait(top.phase_timeout != 0);
+        #                    wait(top.phase_timeout != 0)
         #                  if (UVMPhase.m_phase_trace)
         #                    `UVM_PH_TRACE("PH/TRC/TO_WAIT", $sformatf("STARTING PHASE TIMEOUT WATCHDOG (timeout == %t)", top.phase_timeout), this, UVM_HIGH)
         #                  `uvm_delay(top.phase_timeout)
@@ -1751,7 +1757,7 @@ class UVMPhase(UVMObject):
         #
         #
         #           join_any
-        #           disable fork;
+        #           disable fork
         #
         #          end
         #
@@ -1782,7 +1788,8 @@ class UVMPhase(UVMObject):
         #  READY_TO_END:
         # --------------
         while do_ready_to_end:
-            yield uvm_wait_for_nba_region()  # Let all siblings see no objections before traverse might raise another
+            # Let all siblings see no objections before traverse might raise another
+            yield uvm_wait_for_nba_region()
             UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",self,UVM_MEDIUM)
             self.m_ready_to_end_count += 1
             if (UVMPhase.m_phase_trace):
@@ -1791,7 +1798,7 @@ class UVMPhase(UVMObject):
             self.set_state(UVM_PHASE_READY_TO_END)
             uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
             if self.m_imp is not None:
-                self.m_imp.traverse(top,self,UVM_PHASE_READY_TO_END);
+                self.m_imp.traverse(top,self,UVM_PHASE_READY_TO_END)
 
             yield uvm_wait_for_nba_region()  # Give traverse targets a chance to object
             yield self.wait_for_self_and_siblings_to_drop()
@@ -1842,13 +1849,13 @@ class UVMPhaseCb(UVMCallback):
 #
 #------------------------------------------------------------------------------
 # Convenience type for the uvm_callbacks#(uvm_phase, uvm_phase_cb) class.
-#typedef uvm_callbacks#(uvm_phase, uvm_phase_cb) uvm_phase_cb_pool;
+#typedef uvm_callbacks#(uvm_phase, uvm_phase_cb) uvm_phase_cb_pool
 
     ##------------------------------------------------------------------------------
     ##                               IMPLEMENTATION
     ##------------------------------------------------------------------------------
     #
-    #typedef class uvm_cmdline_processor;
+    #typedef class uvm_cmdline_processor
 
 
     #//-----------------------------
@@ -1858,8 +1865,8 @@ class UVMPhaseCb(UVMCallback):
     #// get_imp
     #// -------
     #
-    #function uvm_phase uvm_phase::get_imp();
-    #  return m_imp;
+    #function uvm_phase uvm_phase::get_imp()
+    #  return m_imp
     #endfunction
     #
     #
@@ -1867,115 +1874,115 @@ class UVMPhaseCb(UVMCallback):
     #// get_run_count
     #// -------------
     #
-    #function int uvm_phase::get_run_count();
-    #  return self.m_run_count;
+    #function int uvm_phase::get_run_count()
+    #  return self.m_run_count
     #endfunction
     #
     #// m_print_successors
     #// ------------------
     #
-    #function void uvm_phase::m_print_successors();
-    #  uvm_phase found;
-    #  static string spaces = "                                                 ";
-    #  static int level;
+    #function void uvm_phase::m_print_successors()
+    #  uvm_phase found
+    #  static string spaces = "                                                 "
+    #  static int level
     #  if (self.m_phase_type == UVM_PHASE_DOMAIN)
-    #    level = 0;
+    #    level = 0
     #  `uvm_info("UVM/PHASE/SUCC",$sformatf("%s%s (%s) id=%0d",spaces.substr(0,level*2),get_name(), self.m_phase_type.name(),get_inst_id()),UVM_NONE)
-    #  level++;
+    #  level++
     #  foreach (self.m_successors[succ]) begin
-    #    succ.m_print_successors();
+    #    succ.m_print_successors()
     #  end
-    #  level--;
+    #  level--
     #endfunction
     #
     #
     #// m_find_predecessor_by_name
     #// --------------------------
     #
-    #function uvm_phase uvm_phase::m_find_predecessor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null);
-    #  uvm_phase found;
-    #  //$display("  FIND PRED node '",name,"' - checking against ",get_name()," (",self.m_phase_type.name()," id=",$sformatf("%0d",get_inst_id()),(m_imp==null)?"":{"/",$sformatf("%0d",m_imp.get_inst_id())},")");
+    #function uvm_phase uvm_phase::m_find_predecessor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
+    #  uvm_phase found
+    #  //$display("  FIND PRED node '",name,"' - checking against ",get_name()," (",self.m_phase_type.name()," id=",$sformatf("%0d",get_inst_id()),(m_imp==null)?"":{"/",$sformatf("%0d",m_imp.get_inst_id())},")")
     #  if (get_name() == name)
-    #    return this;
+    #    return this
     #  foreach (self.m_predecessors[pred]) begin
-    #    uvm_phase orig;
-    #    orig = (orig_phase==null) ? this : orig_phase;
+    #    uvm_phase orig
+    #    orig = (orig_phase==null) ? this : orig_phase
     #    if (!stay_in_scope ||
     #        (pred.get_schedule() == orig.get_schedule()) ||
     #        (pred.get_domain() == orig.get_domain())) begin
-    #      found = pred.m_find_predecessor_by_name(name,stay_in_scope,orig);
+    #      found = pred.m_find_predecessor_by_name(name,stay_in_scope,orig)
     #      if (found != null)
-    #        return found;
+    #        return found
     #    end
     #  end
-    #  return null;
+    #  return null
     #endfunction
     #
     #
     #// m_find_successor_by_name
     #// ------------------------
     #
-    #function uvm_phase uvm_phase::m_find_successor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null);
-    #  uvm_phase found;
-    #  //$display("  FIND SUCC node '",name,"' - checking against ",get_name()," (",self.m_phase_type.name()," id=",$sformatf("%0d",get_inst_id()),(m_imp==null)?"":{"/",$sformatf("%0d",m_imp.get_inst_id())},")");
+    #function uvm_phase uvm_phase::m_find_successor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
+    #  uvm_phase found
+    #  //$display("  FIND SUCC node '",name,"' - checking against ",get_name()," (",self.m_phase_type.name()," id=",$sformatf("%0d",get_inst_id()),(m_imp==null)?"":{"/",$sformatf("%0d",m_imp.get_inst_id())},")")
     #  if (get_name() == name)
-    #    return this;
+    #    return this
     #  foreach (self.m_successors[succ]) begin
-    #    uvm_phase orig;
-    #    orig = (orig_phase==null) ? this : orig_phase;
+    #    uvm_phase orig
+    #    orig = (orig_phase==null) ? this : orig_phase
     #    if (!stay_in_scope ||
     #        (succ.get_schedule() == orig.get_schedule()) ||
     #        (succ.get_domain() == orig.get_domain())) begin
-    #      found = succ.m_find_successor_by_name(name,stay_in_scope,orig);
+    #      found = succ.m_find_successor_by_name(name,stay_in_scope,orig)
     #      if (found != null)
-    #        return found;
+    #        return found
     #    end
     #  end
-    #  return null;
+    #  return null
     #endfunction
     #
     #// find_by_name
     #// ------------
     #
-    #function uvm_phase uvm_phase::find_by_name(string name, bit stay_in_scope=1);
+    #function uvm_phase uvm_phase::find_by_name(string name, bit stay_in_scope=1)
     #  // TBD full search
-    #  //$display({"\nFIND node named '",name,"' within ",get_name()," (scope ",self.m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""});
+    #  //$display({"\nFIND node named '",name,"' within ",get_name()," (scope ",self.m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""})
     #  if (get_name() == name)
-    #    return this;
-    #  find_by_name = m_find_predecessor_by_name(name,stay_in_scope,this);
+    #    return this
+    #  find_by_name = m_find_predecessor_by_name(name,stay_in_scope,this)
     #  if (find_by_name == null)
-    #    find_by_name = m_find_successor_by_name(name,stay_in_scope,this);
+    #    find_by_name = m_find_successor_by_name(name,stay_in_scope,this)
     #endfunction
     #
     #
     #
     #
-    #function void uvm_phase::get_adjacent_predecessor_nodes(ref uvm_phase pred[]);
-    #   bit done;
-    #   bit predecessors[uvm_phase];
-    #   int idx;
+    #function void uvm_phase::get_adjacent_predecessor_nodes(ref uvm_phase pred[])
+    #   bit done
+    #   bit predecessors[uvm_phase]
+    #   int idx
     #
     #   // Get all predecessors (including TERMINALS, SCHEDULES, etc.)
     #   foreach (self.m_predecessors[p])
-    #     predecessors[p] = 1;
+    #     predecessors[p] = 1
     #
     #   // Replace any terminal / schedule nodes with their predecessors,
     #   // recursively.
     #   do begin
-    #      done = 1;
+    #      done = 1
     #      foreach (predecessors[p]) begin
     #         if (p.get_phase_type() != UVM_PHASE_NODE) begin
-    #            predecessors.delete(p);
+    #            predecessors.delete(p)
     #            foreach (p.m_predecessors[next_p])
-    #              predecessors[next_p] = 1;
-    #            done = 0;
+    #              predecessors[next_p] = 1
+    #            done = 0
     #         end
     #      end
-    #   end while (!done);
+    #   end while (!done)
     #
-    #   pred = new [predecessors.size()];
+    #   pred = new [predecessors.size()]
     #   foreach (predecessors[p]) begin
-    #      pred[idx++] = p;
+    #      pred[idx++] = p
     #   end
     #endfunction : get_adjacent_predecessor_nodes
     #
@@ -1993,12 +2000,12 @@ class UVMPhaseCb(UVMCallback):
     #// get_objection_count
     #// -------------------
     #
-    #function int uvm_phase::get_objection_count (uvm_object obj=null);
+    #function int uvm_phase::get_objection_count (uvm_object obj=null)
     #   if (self.phase_done != null)
-    #     return self.phase_done.get_objection_count(obj);
+    #     return self.phase_done.get_objection_count(obj)
     #   else begin
-    #      m_report_null_objection(obj, "" , 0, "get_objection_count");
-    #      return 0;
+    #      m_report_null_objection(obj, "" , 0, "get_objection_count")
+    #      return 0
     #   end
     #endfunction : get_objection_count
     #
@@ -2007,51 +2014,51 @@ class UVMPhaseCb(UVMCallback):
     #
     #function void uvm_phase::sync(uvm_domain target,
     #                              uvm_phase phase=null,
-    #                              uvm_phase with_phase=null);
+    #                              uvm_phase with_phase=null)
     #  if (!this.is_domain()) begin
-    #    `uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase schedule node");
+    #    `uvm_fatal("PH_BADSYNC","sync() called from a non-domain phase schedule node")
     #  end
     #  else if (target == null) begin
-    #    `uvm_fatal("PH_BADSYNC","sync() called with a null target domain");
+    #    `uvm_fatal("PH_BADSYNC","sync() called with a null target domain")
     #  end
     #  else if (!target.is_domain()) begin
-    #    `uvm_fatal("PH_BADSYNC","sync() called with a non-domain phase schedule node as target");
+    #    `uvm_fatal("PH_BADSYNC","sync() called with a non-domain phase schedule node as target")
     #  end
     #  else if (phase == null && with_phase != null) begin
-    #    `uvm_fatal("PH_BADSYNC","sync() called with null phase and non-null with phase");
+    #    `uvm_fatal("PH_BADSYNC","sync() called with null phase and non-null with phase")
     #  end
     #  else if (phase == null) begin
     #    // whole domain sync - traverse this domain schedule from begin to end node and sync each node
-    #    int visited[uvm_phase];
-    #    uvm_phase queue[$];
-    #    queue.push_back(this);
-    #    visited[this] = 1;
+    #    int visited[uvm_phase]
+    #    uvm_phase queue[$]
+    #    queue.push_back(this)
+    #    visited[this] = 1
     #    while (queue.size()) begin
-    #      uvm_phase node;
-    #      node = queue.pop_front();
+    #      uvm_phase node
+    #      node = queue.pop_front()
     #      if (node.m_imp != null) begin
-    #        sync(target, node.m_imp);
+    #        sync(target, node.m_imp)
     #      end
     #      foreach (node.m_successors[succ]) begin
     #        if (!visited.exists(succ)) begin
-    #          queue.push_back(succ);
-    #          visited[succ] = 1;
+    #          queue.push_back(succ)
+    #          visited[succ] = 1
     #        end
     #      end
     #    end
     #  end else begin
     #    // single phase sync
     #    // this is a 2-way ('with') sync and we check first in case it is already there
-    #    uvm_phase from_node, to_node;
-    #    int found_to[$], found_from[$];
-    #    if(with_phase == null) with_phase = phase;
-    #    from_node = find(phase);
-    #    to_node = target.find(with_phase);
-    #    if(from_node == null || to_node == null) return;
-    #    found_to = from_node.m_sync.find_index(node) with (node == to_node);
-    #    found_from = to_node.m_sync.find_index(node) with (node == from_node);
-    #    if (found_to.size() == 0) from_node.m_sync.push_back(to_node);
-    #    if (found_from.size() == 0) to_node.m_sync.push_back(from_node);
+    #    uvm_phase from_node, to_node
+    #    int found_to[$], found_from[$]
+    #    if(with_phase == null) with_phase = phase
+    #    from_node = find(phase)
+    #    to_node = target.find(with_phase)
+    #    if(from_node == null || to_node == null) return
+    #    found_to = from_node.m_sync.find_index(node) with (node == to_node)
+    #    found_from = to_node.m_sync.find_index(node) with (node == from_node)
+    #    if (found_to.size() == 0) from_node.m_sync.push_back(to_node)
+    #    if (found_from.size() == 0) to_node.m_sync.push_back(from_node)
     #  end
     #endfunction
     #
@@ -2061,45 +2068,45 @@ class UVMPhaseCb(UVMCallback):
     #
     #function void uvm_phase::unsync(uvm_domain target,
     #                                uvm_phase phase=null,
-    #                                uvm_phase with_phase=null);
+    #                                uvm_phase with_phase=null)
     #  if (!this.is_domain()) begin
-    #    `uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase schedule node");
+    #    `uvm_fatal("PH_BADSYNC","unsync() called from a non-domain phase schedule node")
     #  end else if (target == null) begin
-    #    `uvm_fatal("PH_BADSYNC","unsync() called with a null target domain");
+    #    `uvm_fatal("PH_BADSYNC","unsync() called with a null target domain")
     #  end else if (!target.is_domain()) begin
-    #    `uvm_fatal("PH_BADSYNC","unsync() called with a non-domain phase schedule node as target");
+    #    `uvm_fatal("PH_BADSYNC","unsync() called with a non-domain phase schedule node as target")
     #  end else if (phase == null && with_phase != null) begin
-    #    `uvm_fatal("PH_BADSYNC","unsync() called with null phase and non-null with phase");
+    #    `uvm_fatal("PH_BADSYNC","unsync() called with null phase and non-null with phase")
     #  end else if (phase == null) begin
     #    // whole domain unsync - traverse this domain schedule from begin to end node and unsync each node
-    #    int visited[uvm_phase];
-    #    uvm_phase queue[$];
-    #    queue.push_back(this);
-    #    visited[this] = 1;
+    #    int visited[uvm_phase]
+    #    uvm_phase queue[$]
+    #    queue.push_back(this)
+    #    visited[this] = 1
     #    while (queue.size()) begin
-    #      uvm_phase node;
-    #      node = queue.pop_front();
-    #      if (node.m_imp != null) unsync(target,node.m_imp);
+    #      uvm_phase node
+    #      node = queue.pop_front()
+    #      if (node.m_imp != null) unsync(target,node.m_imp)
     #      foreach (node.m_successors[succ]) begin
     #        if (!visited.exists(succ)) begin
-    #          queue.push_back(succ);
-    #          visited[succ] = 1;
+    #          queue.push_back(succ)
+    #          visited[succ] = 1
     #        end
     #      end
     #    end
     #  end else begin
     #    // single phase unsync
     #    // this is a 2-way ('with') sync and we check first in case it is already there
-    #    uvm_phase from_node, to_node;
-    #    int found_to[$], found_from[$];
-    #    if(with_phase == null) with_phase = phase;
-    #    from_node = find(phase);
-    #    to_node = target.find(with_phase);
-    #    if(from_node == null || to_node == null) return;
-    #    found_to = from_node.m_sync.find_index(node) with (node == to_node);
-    #    found_from = to_node.m_sync.find_index(node) with (node == from_node);
-    #    if (found_to.size()) from_node.m_sync.delete(found_to[0]);
-    #    if (found_from.size()) to_node.m_sync.delete(found_from[0]);
+    #    uvm_phase from_node, to_node
+    #    int found_to[$], found_from[$]
+    #    if(with_phase == null) with_phase = phase
+    #    from_node = find(phase)
+    #    to_node = target.find(with_phase)
+    #    if(from_node == null || to_node == null) return
+    #    found_to = from_node.m_sync.find_index(node) with (node == to_node)
+    #    found_from = to_node.m_sync.find_index(node) with (node == from_node)
+    #    if (found_to.size()) from_node.m_sync.delete(found_to[0])
+    #    if (found_from.size()) to_node.m_sync.delete(found_from[0])
     #  end
     #endfunction
     #
@@ -2114,8 +2121,8 @@ class UVMPhaseCb(UVMCallback):
     #//
     #// Specify a phase to transition to when phase is complete.
     #
-    #function void uvm_phase::set_jump_phase(uvm_phase phase) ;
-    #  uvm_phase d;
+    #function void uvm_phase::set_jump_phase(uvm_phase phase) 
+    #  uvm_phase d
     #
     #  if ((self.m_state <  UVM_PHASE_STARTED) ||
     #      (self.m_state >  UVM_PHASE_ENDED) )
@@ -2140,30 +2147,30 @@ class UVMPhaseCb(UVMCallback):
     #  // jump to some other phase. So, continuing in the current phase doesn't
     #  // make any sense.  And we don't have a valid phase to jump to.  So we're done.
     #
-    #  d = m_find_predecessor(phase,0);
+    #  d = m_find_predecessor(phase,0)
     #  if (d == null) begin
-    #    d = m_find_successor(phase,0);
+    #    d = m_find_successor(phase,0)
     #    if (d == null) begin
-    #      string msg;
+    #      string msg
     #      $sformat(msg,{"phase %s is neither a predecessor or successor of ",
     #                    "phase %s or is non-existant, so we cannot jump to it.  ",
     #                    "Phase control flow is now undefined so the simulation ",
-    #                    "must terminate"}, phase.get_name(), get_name());
-    #      `uvm_fatal("PH_BADJUMP", msg);
+    #                    "must terminate"}, phase.get_name(), get_name())
+    #      `uvm_fatal("PH_BADJUMP", msg)
     #    end
     #    else begin
-    #      m_jump_fwd = 1;
+    #      m_jump_fwd = 1
     #      `uvm_info("PH_JUMPF",$sformatf("jumping forward to phase %s", phase.get_name()),
-    #                UVM_DEBUG);
+    #                UVM_DEBUG)
     #    end
     #  end
     #  else begin
-    #    m_jump_bkwd = 1;
+    #    m_jump_bkwd = 1
     #    `uvm_info("PH_JUMPB",$sformatf("jumping backward to phase %s", phase.get_name()),
-    #              UVM_DEBUG);
+    #              UVM_DEBUG)
     #  end
     #
-    #  m_jump_phase = d;
+    #  m_jump_phase = d
     #endfunction
     #
     #
@@ -2175,15 +2182,15 @@ class UVMPhaseCb(UVMCallback):
     #// Rather, flags are set which execute_phase() uses to determine
     #// that a jump has been requested and performs the jump.
     #
-    #function void uvm_phase::jump(uvm_phase phase);
-    #   set_jump_phase(phase) ;
-    #   end_prematurely() ;
+    #function void uvm_phase::jump(uvm_phase phase)
+    #   set_jump_phase(phase) 
+    #   end_prematurely() 
     #endfunction
     #
     #
     #// jump_all
     #// --------
-    #function void uvm_phase::jump_all(uvm_phase phase);
+    #function void uvm_phase::jump_all(uvm_phase phase)
     #    `uvm_warning("NOTIMPL","uvm_phase::jump_all is not implemented and has been replaced by uvm_domain::jump_all")
     #endfunction
     #
@@ -2191,19 +2198,19 @@ class UVMPhaseCb(UVMCallback):
     #// get_jump_target
     #// ---------------
     #
-    #function uvm_phase uvm_phase::get_jump_target();
-    #  return m_jump_phase;
+    #function uvm_phase uvm_phase::get_jump_target()
+    #  return m_jump_phase
     #endfunction
     #
     #
     #// clear
     #// -----
     #// for internal graph maintenance after a forward jump
-    #function void uvm_phase::clear(uvm_phase_state state = UVM_PHASE_DORMANT);
+    #function void uvm_phase::clear(uvm_phase_state state = UVM_PHASE_DORMANT)
     #  self.set_state(state)
-    #  self.m_phase_proc = null;
+    #  self.m_phase_proc = null
     #  if (self.phase_done != null)
-    #    self.phase_done.clear(this);
+    #    self.phase_done.clear(this)
     #endfunction
     #
     #
@@ -2214,12 +2221,12 @@ class UVMPhaseCb(UVMCallback):
     #// - depth-first traversal of the DAG, calliing clear() on each node
     #// - do not clear the end phase or beyond
     #function void uvm_phase::clear_successors(uvm_phase_state state = UVM_PHASE_DORMANT,
-    #    uvm_phase end_state=null);
+    #    uvm_phase end_state=null)
     #  if(this == end_state)
-    #    return;
-    #  clear(state);
+    #    return
+    #  clear(state)
     #  foreach(self.m_successors[succ]) begin
-    #    succ.clear_successors(state, end_state);
+    #    succ.clear_successors(state, end_state)
     #  end
     #endfunction
     #
@@ -2228,13 +2235,13 @@ class UVMPhaseCb(UVMCallback):
     #// kill
     #// ----
     #
-    #function void uvm_phase::kill();
+    #function void uvm_phase::kill()
     #
-    #  `uvm_info("PH_KILL", {"killing phase '", get_name(),"'"}, UVM_DEBUG);
+    #  `uvm_info("PH_KILL", {"killing phase '", get_name(),"'"}, UVM_DEBUG)
     #
     #  if (self.m_phase_proc != null) begin
-    #    self.m_phase_proc.kill();
-    #    self.m_phase_proc = null;
+    #    self.m_phase_proc.kill()
+    #    self.m_phase_proc = null
     #  end
     #
     #endfunction
@@ -2245,10 +2252,10 @@ class UVMPhaseCb(UVMCallback):
     #
     #// Using a depth-first traversal, kill all the successor phases of the
     #// current phase.
-    #function void uvm_phase::kill_successors();
+    #function void uvm_phase::kill_successors()
     #  foreach (self.m_successors[succ])
-    #    succ.kill_successors();
-    #  kill();
+    #    succ.kill_successors()
+    #  kill()
     #endfunction
     #
     #
@@ -2257,20 +2264,20 @@ class UVMPhaseCb(UVMCallback):
     #// terminate_phase
     #// ---------------
     #
-    #function void uvm_phase::m_terminate_phase();
+    #function void uvm_phase::m_terminate_phase()
     #  if (self.phase_done != null)
-    #    self.phase_done.clear(this);
+    #    self.phase_done.clear(this)
     #endfunction
     #
     #
     #// print_termination_state
     #// -----------------------
     #
-    #function void uvm_phase::m_print_termination_state();
-    #  uvm_root top;
-    #  uvm_coreservice_t cs;
-    #  cs = uvm_coreservice_t::get();
-    #  top = cs.get_root();
+    #function void uvm_phase::m_print_termination_state()
+    #  uvm_root top
+    #  uvm_coreservice_t cs
+    #  cs = uvm_coreservice_t::get()
+    #  top = cs.get_root()
     #  if (self.phase_done != null) begin
     #    `uvm_info("PH_TERMSTATE",
     #              $sformatf("phase %s outstanding objections = %0d",

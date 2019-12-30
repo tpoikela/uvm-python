@@ -122,6 +122,7 @@ class test_read_modify_write(ubus_example_base_test):
         master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
         slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
 
+        uvm_info("TEST_TOP", "FFFForking master_proc now", UVM_LOW)
         master_seq = read_modify_write_seq("r_mod_w_seq")
         master_proc = cocotb.fork(master_seq.start(master_sqr))
 

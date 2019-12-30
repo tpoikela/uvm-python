@@ -20,6 +20,8 @@
 #----------------------------------------------------------------------
 
 import cocotb
+from cocotb.triggers import Timer
+
 from .uvm_topdown_phase import UVMTopdownPhase
 from .uvm_bottomup_phase import UVMBottomupPhase
 from .uvm_debug import *
@@ -218,7 +220,7 @@ class UVMStartofSimulationPhase(UVMBottomupPhase):
         if UVMStartofSimulationPhase.m_inst is None:
             UVMStartofSimulationPhase.m_inst  = UVMStartofSimulationPhase()
         return UVMStartofSimulationPhase.m_inst
-    
+
     def get_type_name(self):
         return UVMStartofSimulationPhase.type_name;
     #endclass
@@ -283,7 +285,18 @@ class UVMRunPhase(UVMTaskPhase):
         comp.m_run_process = cocotb.fork(comp.run_phase(phase))
         yield comp.m_run_process
 
-    m_inst = None #   local static uvm_run_phase 
+        #parent = comp.get_parent()
+        #if parent is not None and parent.get_name() == '__top__':
+        #    for i in range(10):
+        #        print("HHH yielding timer 0 for test_top")
+        #        yield Timer(0, "NS")
+        #else:
+        #    if parent is not None:
+        #        print("HHH Parent was " + parent.get_name() + " for " +
+        #            comp.get_name())
+        uvm_debug(self, 'exec_task', comp.get_name() + ' returned from comp.run_phase()')
+
+    m_inst = None  # static uvm_run_phase
     type_name = "uvm_run_phase"
 
     #   # Function: get
@@ -293,10 +306,10 @@ class UVMRunPhase(UVMTaskPhase):
         if UVMRunPhase.m_inst is None:
             UVMRunPhase.m_inst = UVMRunPhase()
         return UVMRunPhase.m_inst
-    
+
     def __init__(self, name="run"):
         UVMTaskPhase.__init__(self, name)
-    
+
     def get_type_name(self):
         return UVMRunPhase.type_name
 
@@ -330,9 +343,9 @@ class UVMExtractPhase(UVMBottomupPhase):
     def exec_func(self, comp, phase):
         comp.extract_phase(phase)
 
-    m_inst = None #   local static uvm_extract_phase 
+    m_inst = None #   local static uvm_extract_phase
     type_name = "uvm_extract_phase"
-    
+
     # Function: get
     # Returns the singleton phase handle
     @classmethod
@@ -368,7 +381,7 @@ class UVMCheckPhase(UVMBottomupPhase):
     def exec_func(self, comp, phase):
         comp.check_phase(phase)
 
-    m_inst = None #   local static uvm_check_phase 
+    m_inst = None #   local static uvm_check_phase
 
     type_name = "uvm_check_phase"
     # Function: get
@@ -406,7 +419,7 @@ class UVMReportPhase(UVMBottomupPhase):
     def exec_func(self, comp, phase):
         comp.report_phase(phase)
 
-    m_inst = None #   local static uvm_report_phase 
+    m_inst = None #   local static uvm_report_phase
 
     type_name = "uvm_report_phase"
     # Function: get
@@ -443,7 +456,7 @@ class UVMFinalPhase(UVMBottomupPhase):
     def exec_func(self, comp, phase):
         comp.final_phase(phase)
 
-    m_inst = None #   local static uvm_final_phase 
+    m_inst = None  # static uvm_final_phase
 
     type_name = "uvm_final_phase"
     # Function: get

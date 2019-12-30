@@ -93,6 +93,12 @@ class UVMTaskPhase(UVMPhase):
         phase_domain = phase.get_domain()
         comp_domain = comp.get_domain()
 
+        children = []
+        comp.get_children(children)
+        children = map(lambda c: c.get_name(), children)
+        uvm_debug(self, "m_traverse", "Looping through children, comp: " +
+                comp.get_name() + ' children: ' + ", ".join(children))
+
         if comp.has_first_child():
             child = comp.get_first_child()
             while child is not None:
@@ -101,7 +107,7 @@ class UVMTaskPhase(UVMPhase):
                 yield self.m_traverse(child, phase, state)
                 child = comp.get_next_child()
 
-        uvm_debug(self, "m_traverse", comp.get_name() + "Comp children done.  Moving to its own phase..")
+        uvm_debug(self, "m_traverse", comp.get_name() + "| Comp children done.  Moving to its own phase..")
 
         if UVMPhase.m_phase_trace:
             dom_name = "unknown"
@@ -114,17 +120,18 @@ class UVMTaskPhase(UVMPhase):
 
         from .uvm_domain import UVMDomain
         if (phase_domain == UVMDomain.get_common_domain() or phase_domain == comp_domain):
-            print("XYZ phase match found. Proceeding now...state is " +
-                ph2str(state))
+            uvm_debug(self, 'm_traverse', "Comp: " + comp.get_name() + " - " + self.get_name() +
+                "| phase match found. Proceeding now...state is " + ph2str(state))
             if state == UVM_PHASE_STARTED:
                 comp.m_current_phase = phase
                 comp.m_apply_verbosity_settings(phase)
                 comp.phase_started(phase)
                 if hasattr(comp, 'm_sequencer_id'):
                     seqr = comp  # was if ($cast(seqr, comp))
+                    uvm_debug(self, "m_traverse", comp.get_name() + " is SQR")
                     yield seqr.start_phase_sequence(phase)
                 else:
-                    print("XYZ comp is not sequencer: " + comp.get_name())
+                    uvm_debug(self, "m_traverse", comp.get_name() + " is not SQR")
             elif state == UVM_PHASE_EXECUTING:
                 ph = self  # uvm_phase
                 if self in comp.m_phase_imps:
@@ -160,11 +167,22 @@ class UVMTaskPhase(UVMPhase):
         # reseed this process for random stability
         #proc = process::self()
         #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()))
-        phase.m_num_procs_not_yet_returned += 1
-        proc = cocotb.fork(self.exec_task(comp,phase))
-        phase.m_num_procs_not_yet_returned -= 1
+        #phase.m_num_procs_not_yet_returned += 1
+        proc = cocotb.fork(self._execute_fork_join_none(comp,phase))
+        #phase.m_num_procs_not_yet_returned -= 1
         yield Timer(0)
         #end
         #join_none
         #endfunction
     #endclass
+
+
+    @cocotb.coroutine
+    def _execute_fork_join_none(self, comp, phase):
+        phase.m_num_procs_not_yet_returned += 1
+        uvm_debug(self, '_execute_fork_join_none', 'exec task_phase |' + self.get_name()
+                + '| yielding comp: ' + comp.get_name())
+        yield self.exec_task(comp, phase)
+        uvm_debug(self, '_execute_fork_join_none', 'exec task_phase |' + self.get_name()
+                + '| AFTER yield comp: ' + comp.get_name())
+        phase.m_num_procs_not_yet_returned -= 1

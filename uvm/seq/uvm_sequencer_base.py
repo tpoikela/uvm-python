@@ -313,6 +313,7 @@ class UVMSequencerBase(UVMComponent):
             return
 
         cocotb.fork(self.c_seq_fork_proc(seq, phase))
+        yield Timer(0, "NS")
         #endfunction
 
     @cocotb.coroutine
