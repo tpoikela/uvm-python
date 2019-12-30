@@ -4,6 +4,7 @@ import unittest
 from uvm.base.uvm_cmdline_processor import UVMCmdlineProcessor
 from uvm.base.uvm_debug import UVMDebug
 
+UVMDebug.DEBUG = False
 
 class TestUVMCmdLineProc(unittest.TestCase):
     """ Unit tests for UVMCmdLineProcessor"""
@@ -34,6 +35,21 @@ class TestUVMCmdLineProc(unittest.TestCase):
         num = clp.get_arg_matches("+TRACE", args)
         self.assertEqual(num, 1)
         UVMCmdlineProcessor.m_test_mode = False
+
+    def test_regex_in_arg_matches(self):
+        UVMCmdlineProcessor.m_test_mode = True
+        UVMCmdlineProcessor.m_test_plusargs = {"ABC": "123", "WW": "XX",
+                "TRACE": "123", "COMPLEX_MATCH": "555"}
+        clp = UVMCmdlineProcessor()
+        args = []
+        num = clp.get_arg_matches("/^XYZ$/", args)
+        self.assertEqual(num, 0)
+
+        args = []
+        num = clp.get_arg_matches("/^\\+COMPLEX_MATCH=$/", args)
+        self.assertEqual(num, 1)
+        UVMCmdlineProcessor.m_test_mode = False
+
 
 
 
