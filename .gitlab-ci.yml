@@ -1,4 +1,4 @@
-# This file is a template, and might need editing before it works on your project.
+# gitlab CI config for uvm-python.
 # Official language image. Look for the different tagged releases at:
 # https://hub.docker.com/r/library/python/tags/
 image: python:latest
@@ -27,9 +27,9 @@ before_script:
   - source venv/bin/activate
   - pip install cocotb
   - pip install python-constraint
+  - pip install regex
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
-  - ls iverilog/
   - bash install_iverilog.sh
 
 test:
