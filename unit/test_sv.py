@@ -27,7 +27,7 @@ class TestSV(unittest.TestCase):
         pp.data = 1234
         ok = pp.randomize()
         self.assertEqual(ok, True)
-        print("pp.addr " + str(pp.addr))
+
         self.assertEqual(pp.addr in [1, 2, 3], True)
         self.assertNotEqual(pp.data, 1234)
         self.assertEqual(pp.tx_id, 888)

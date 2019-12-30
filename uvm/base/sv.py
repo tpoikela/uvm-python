@@ -221,7 +221,6 @@ class sv_obj():
         # Non-random part which generates all solutions
         if self.problem is not None:
             sols = self.problem.getSolutions()
-            print("sols is now " + str(sols))
             if len(sols) == 0:
                 return False
             else:

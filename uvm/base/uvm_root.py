@@ -635,9 +635,8 @@ class UVMRoot(UVMComponent):
         if UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR == 0:
             if UVMRoot.m_relnotes_done is False:
                 q.append("\n  ***********       IMPORTANT RELEASE NOTES         ************\n")
-            q.append("\n  You are using a version of the UVM library that has been compiled\n")
-            q.append("  with UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR==0.\n")
-            q.append("  See http://www.eda.org/svdb/view.php?id=3770 for more details.\n")
+            q.append("\n  You are using a Python version of the UVM library which \n")
+            q.append("  requires cocotb and an HDL simulator.\n")
             UVMRoot.m_relnotes_done = True
         #`endif
 
