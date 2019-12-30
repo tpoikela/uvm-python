@@ -26,6 +26,7 @@ from .uvm_resource import UVMResourceBase, UVMResource, UVMResourcePool, PRI_HIG
 from .uvm_resource_db import UVMResourceDb
 from .uvm_pool import UVMPool
 from .sv import uvm_re_match, uvm_glob_to_re
+from .uvm_debug import uvm_debug
 
 #//----------------------------------------------------------------------
 #// Title: UVM Configuration Database
@@ -119,11 +120,12 @@ class UVMConfigDb(UVMResourceDb):
 
         #rq = rp.lookup_regex_names(inst_name, field_name, uvm_resource#(T)::get_type());
         rq = rp.lookup_regex_names(inst_name, field_name)
+        uvm_debug(cls, 'get', 'rq size is ' + str(rq))
         r = UVMResource.get_highest_precedence(rq, T)
 
         if UVMConfigDbOptions.is_tracing():
-            UVMResourceDb.m_show_msg("CFGDB/GET", "Configuration","read", inst_name, field_name,
-                    cntxt, r)
+            UVMResourceDb.m_show_msg("CFGDB/GET", "Configuration","read", inst_name,
+                field_name, cntxt, r)
         if r is None:
             return False
 
@@ -418,51 +420,3 @@ class UVMConfigDbOptions:
             UVMConfigDbOptions.tracing = 1
         UVMConfigDbOptions.ready = 1
 
-#------------------------------------------------------------------------------
-# UNIT TESTS
-#------------------------------------------------------------------------------
-
-import unittest
-
-class TestUVMConfigDb(unittest.TestCase):
-
-    def test_exists(self):
-        pass
-        # ok = True
-        # self.assertEqual(ok, False)
-        # ok = False
-        # self.assertEqual(ok, True)
-
-    def test_set_get(self):
-        UVMConfigDbOptions.tracing = True
-        cntxt = None
-        inst_name = "my_comp"
-        field_name = "field1"
-        value = 123
-        UVMConfigDb.set(cntxt, "other_name", field_name, 666, T=None)
-        UVMConfigDb.set(cntxt, inst_name, field_name, value, T=None)
-        UVMConfigDb.set(cntxt, inst_name + ".*", field_name, 555, T=None)
-        got_val = []
-        ok = UVMConfigDb.get(cntxt, inst_name, field_name, got_val, T=None)
-        self.assertEqual(ok, True)
-        self.assertEqual(got_val[0], value)
-        got_val = []
-        ok = UVMConfigDb.get(cntxt, inst_name, "wrong_name", got_val, T=None)
-        self.assertEqual(ok, False)
-        self.assertEqual(len(got_val), 0)
-
-        hier_name = inst_name + "." + "child"
-        got_val = []
-        ok = UVMConfigDb.get(cntxt, hier_name, field_name, got_val, T=None)
-        self.assertEqual(ok, True)
-        self.assertEqual(got_val[0], 555)
-        UVMConfigDbOptions.tracing = False
-
-
-    def test_set_override(self):
-        pass
-        # self.assertEqual(0, 1)
-
-
-if __name__ == '__main__':
-    unittest.main()

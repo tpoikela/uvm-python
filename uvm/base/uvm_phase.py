@@ -408,7 +408,7 @@ class UVMPhase(UVMObject):
     def set_state(self, state):
         if state is None:
             raise Exception('Proper state not given. Must be ' + str(UVM_PHASE2STR))
-        uvm_debug(self, 'set_state()', (self.get_name() + ': ' +
+        uvm_debug(self, 'set_state', (self.get_name() + ': ' +
                 ph2str(self.m_state) + ' => ' + ph2str(state)))
         self.m_state = state
         self.m_phase_set_state_event.set()
@@ -882,7 +882,7 @@ class UVMPhase(UVMObject):
     def raise_objection(self, obj, description="", count=1):
         if self.phase_done is not None:
             uvm_debug(self, 'raise_objection', 'obj: {}'.format(obj.get_name()))
-            self.phase_done.raise_objection(obj,description,count)
+            self.phase_done.raise_objection(obj, description, count)
         else:
             self.m_report_null_objection(obj, description, count, "raise")
 

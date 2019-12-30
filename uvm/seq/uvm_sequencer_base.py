@@ -255,7 +255,7 @@ class UVMSequencerBase(UVMComponent):
         for i in range(len(rq)):
             if seq is not None:
                 break
-            rsrc = rq.get(i)  # uvm_resource_base
+            rsrc = rq[i]  # uvm_resource_base
             sbr = []  # uvm_resource#(uvm_sequence_base)
             owr = []  # uvm_resource#(uvm_object_wrapper)
 

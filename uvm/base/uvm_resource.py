@@ -481,7 +481,7 @@ class UVMResourceBase(UVMObject):
     #// function: record_read_access
     #function void record_read_access(uvm_object accessor = None)
     def record_read_access(self, accessor=None):
-        str = ""
+        _str = ""
         access_record = None  # uvm_resource_types::access_t access_record
         #  // If an accessor object is supplied then get the accessor record.
         #  // Otherwise create a new access record.  In either case populate
@@ -494,13 +494,13 @@ class UVMResourceBase(UVMObject):
         # as the database entry for the accessor record.
         #  Otherwise, use "<empty>" as the database entry.
         if accessor is not None:
-            str = accessor.get_full_name()
+            _str = accessor.get_full_name()
         else:
-            str = "<empty>"
+            _str = "<empty>"
 
         # Create a new accessor record if one does not exist
-        if str in self.access:
-            access_record = self.access[str]
+        if _str in self.access:
+            access_record = self.access[_str]
         else:
             access_record = Access_t()
             self.init_access_record(access_record)
@@ -508,7 +508,7 @@ class UVMResourceBase(UVMObject):
         # Update the accessor record
         access_record.read_count += 1
         # TODO access_record.read_time = $realtime
-        self.access[str] = access_record
+        self.access[_str] = access_record
 
     #// function: record_write_access
     #
@@ -520,15 +520,15 @@ class UVMResourceBase(UVMObject):
         if UVMResourceOptions.is_auditing():
             if accessor is not None:
                 access_record = None  # uvm_resource_types::access_t
-                str = accessor.get_full_name()
-                if str in self.access:
-                    access_record = self.access[str]
+                _str = accessor.get_full_name()
+                if _str in self.access:
+                    access_record = self.access[_str]
                 else:
                     access_record = Access_t()
                     self.init_access_record(access_record)
                 access_record.write_count += 1
                 # TODO access_record.write_time = $realtime
-                self.access[str] = access_record
+                self.access[_str] = access_record
 
 
     #// Function: print_accessors
@@ -1100,7 +1100,7 @@ class UVMResourcePool:
 
         # Does an entry in the name map exist with the specified name?
         # If not, then we're done
-        if not (name in self.rtab):
+        if name not in self.rtab:
             if rpterr:
                 self.spell_check(name)
             return q
@@ -1545,74 +1545,3 @@ class UVMResourcePool:
 
     #endfunction
 
-
-import unittest
-
-
-class TestUVMResource(unittest.TestCase):
-
-    def test_scope_match(self):
-        nname1 = "my_comp.field1"
-        nname2 = "my_comp.*.field1"
-        rr = UVMResource("fname", "my_comp.field1")
-        self.assertEqual(True, rr.match_scope(nname1))
-        self.assertEqual(False, rr.match_scope(nname2))
-
-
-    def test_write_read(self):
-        rsc = UVMResource("rname", "scope_name")
-        rsc.write(123, accessor=None)
-        val = rsc.read()
-        self.assertEqual(val, 123)
-
-
-class TestUVMResourcePool(unittest.TestCase):
-
-    def test_get(self):
-        pool = UVMResourcePool.get()
-
-    def test_regex_lookup(self):
-        # pool = UVMPool()
-        field_name = "field"
-        inst_re_name = "globbed_name.*"
-        r = UVMResource(field_name, inst_re_name)
-        r.write(666)
-        # lookup = inst_re_name + "__M_UVM__" + field_name
-        # pool.add(lookup, r)
-        inst_name = "globbed_name.child"
-        rp = UVMResourcePool.get()
-        rp.set(r)
-        rq = rp.lookup_regex_names(inst_name, field_name)
-        self.assertEqual(len(rq), 1)
-
-        # Add another resource and make sure we're not getting it
-        r2 = UVMResource('field_xxx', 'inst_yyy')
-        r2.write(444)
-        rp.set(r2)
-        rq = rp.lookup_regex_names(inst_name, field_name)
-        self.assertEqual(len(rq), 1)
-
-        nname1 = "my_comp.field1"
-        nname2 = "my_comp.*.field1"
-        rn1 = UVMResource(field_name, nname1)
-        rn1.write(111)
-        rn2 = UVMResource(field_name, nname2)
-        rn2.write(222)
-        rp.set(rn1)
-        rp.set(rn2)
-        rq = rp.lookup_regex_names("my_comp.field1", field_name)
-        self.assertEqual(rq[0].read(), 111)
-
-
-    def test_set_get(self):
-        return
-        rsrc = UVMResource("name_xxx", "scope_yyy")
-        rsrc.write(567, accessor=None)
-        pool = UVMResourcePool.get()
-        pool.set(rsrc, False)
-        rq = pool.lookup_name("scope_yyy", "name_xxx")
-        self.assertEqual(len(rq), 1)
-        self.assertEqual(rq[0].read(), 567)
-
-if __name__ == '__main__':
-    unittest.main()

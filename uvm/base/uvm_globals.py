@@ -27,7 +27,7 @@ from cocotb.utils import get_sim_time, simulator
 from .uvm_object_globals import *
 from .sv import uvm_glob_to_re, uvm_re_match
 
-UVM_POUND_ZERO_COUNT = 20
+UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
 
 
@@ -155,6 +155,7 @@ def uvm_wait_for_nba_region():
         yield Timer(0)
     else:
         for i in range(0, UVM_POUND_ZERO_COUNT):
+            # print("ABC yield UVM_POUND_ZERO_COUNT " + str(i))
             yield Timer(0)
 
 # Function: uvm_report_enabled

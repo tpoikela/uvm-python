@@ -625,8 +625,9 @@ class UVMObjection(UVMReportObject):
             name = obj.get_full_name()
 
         uvm_debug(self, 'clear', 'KKK MMM')
-        if not self.m_top_all_dropped and self.get_objection_total(self.m_top):
-            uvm_report_info("OBJTN_CLEAR",("Object '" + name
+        if (self.m_top_all_dropped is False and
+                self.get_objection_total(self.m_top) > 0):
+            uvm_report_warning("OBJTN_CLEAR",("Object '" + name
                 + "' cleared objection counts for " + self.get_name()))
         # Should there be a warning if there are outstanding objections
         self.m_source_count = {}
@@ -665,7 +666,7 @@ class UVMObjection(UVMReportObject):
             UVMObjection.m_context_pool.append(self.m_forked_contexts[o])
             del self.m_forked_contexts[o]
 
-        self.m_top_all_dropped = 0
+        self.m_top_all_dropped = False
         self.m_cleared = 1
         if self.m_top in self.m_events:
             self.m_events[self.m_top].all_dropped.set()
@@ -680,6 +681,7 @@ class UVMObjection(UVMReportObject):
             uvm_debug(self, 'm_execute_scheduled_forks', 'waiting list to not be empty')
             yield UVMObjection.m_scheduled_list_not_empty_event.wait()
             UVMObjection.m_scheduled_list_not_empty_event.clear()
+
             if len(UVMObjection.m_scheduled_list) != 0:
                 c = None  # uvm_objection_context_object
                 o = None  # uvm_objection
@@ -734,7 +736,6 @@ class UVMObjection(UVMReportObject):
 
     #  // m_forked_drain
     #  // -------------
-    #
     #  task m_forked_drain (uvm_object obj,
     #                       uvm_object source_obj,
     #                       string description="",
@@ -796,11 +797,10 @@ class UVMObjection(UVMReportObject):
     #  // the drain_time/all_dropped execution is terminated.
     #
     #  // AE: set_drain_time(drain,obj=null)?
-    #  function void set_drain_time (uvm_object obj=null, time drain)
-    #    if (obj==null)
-    #      obj = self.m_top
-    #    self.m_drain_time[obj] = drain
-    #  endfunction
+    def set_drain_time(self, obj=None, drain=0):
+        if obj is None:
+            obj = self.m_top
+            self.m_drain_time[obj] = drain
 
     #  //----------------------
     #  // Group: Callback Hooks
@@ -813,7 +813,7 @@ class UVMObjection(UVMReportObject):
     #
     def raised(self, obj, source_obj, description, count):
         if hasattr(obj, 'raised'):
-            comp.raised(self, source_obj, description, count)
+            obj.raised(self, source_obj, description, count)
         # TODO `uvm_do_callbacks(uvm_objection,uvm_objection_callback,raised(this,obj,source_obj,description,count))
         if obj in self.m_events:
             self.m_events[obj].raised.set()
@@ -939,8 +939,11 @@ class UVMObjection(UVMReportObject):
             obj = self.m_top
 
         if obj not in self.m_total_count:
+            uvm_debug(self, 'get_objection_total', 'Returning 0')
             return 0
         else:
+            cnt = self.m_total_count[obj]
+            uvm_debug(self, 'get_objection_total', 'Returning cnt ' + str(cnt))
             return self.m_total_count[obj]
         #endfunction
 
