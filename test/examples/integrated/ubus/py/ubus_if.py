@@ -52,6 +52,8 @@ class ubus_if(sv_if):
                 "sig_grant": "gnt_master_0"}
         sv_if.__init__(self, dut, "ubus", bus_map)
         self.slave_en = 0
+        self.sig_req = [dut.ubus_req_master_0, dut.ubus_req_master_1]
+        self.sig_gnt = [dut.ubus_gnt_master_0, dut.ubus_gnt_master_1]
         # Control flags
         self.has_checks = True
         self.has_coverage = True

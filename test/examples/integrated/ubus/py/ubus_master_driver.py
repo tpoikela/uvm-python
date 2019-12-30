@@ -65,6 +65,9 @@ class ubus_master_driver(UVMDriver):
         if self.vif is None:
             self.uvm_report_fatal("NOVIF", "virtual interface must be set for: " +
                 self.get_full_name() + ".vif")
+        arr = []
+        if UVMConfigDb.get(self, "", "master_id", arr):
+            self.master_id = arr[0]
 
 
     @cocotb.coroutine
@@ -102,10 +105,12 @@ class ubus_master_driver(UVMDriver):
     #  // reset_signals
     @cocotb.coroutine
     def reset_signals(self):
+        _id = str(self.master_id)
+        print("RRR master_driver " + _id + " resetting signals")
         while True:
             yield RisingEdge(self.vif.sig_reset)
             self.vif.rw = 0
-            self.vif.sig_request <= 0
+            self.vif.sig_req[self.master_id] <= 0
             self.vif.sig_addr           <= 0
             self.vif.sig_data_out       <= 0
             self.vif.sig_size           <= 0
@@ -129,25 +134,28 @@ class ubus_master_driver(UVMDriver):
 
 
     def get_req_val(self, val):
-        req_val = self.vif.sig_request.value.get_value()
-        if val == 1:
-            req_val = req_val | (1 << self.master_id)
-        else:
-            print("get_req_val read val " + str(req_val))
-            req_val = req_val & ~(1 << self.master_id) & 0xFFFF
-        return req_val
+        return int(self.vif.sig_req[self.master_id])
+        #req_val = self.vif.sig_request.value.get_value()
+        #if val == 1:
+        #    req_val = req_val | (1 << self.master_id)
+        #else:
+        #    print("get_req_val read val " + str(req_val))
+        #    req_val = req_val & ~(1 << self.master_id) & 0xFFFF
+        #return req_val
 
     #  // arbitrate_for_bus
     @cocotb.coroutine
     def arbitrate_for_bus(self):
-        self.vif.sig_request <= self.get_req_val(1)
+        #self.vif.sig_request <= self.get_req_val(1)
+        self.vif.sig_req[self.master_id] <= 1
         while True:
             yield RisingEdge(self.vif.sig_clock)
             #grant_val = self.vif.sig_grant.value[self.master_id]
-            grant_val = self.vif.sig_grant.value[self.master_id]
+            grant_val = int(self.vif.sig_gnt[self.master_id])
             if grant_val != 0:
                 break
-        self.vif.sig_request <= self.get_req_val(0)
+        self.vif.sig_req[self.master_id] <= 0
+        #self.vif.sig_request <= self.get_req_val(0)
         #  endtask : arbitrate_for_bus
 
     def is_grant_ok(self, grant_val):

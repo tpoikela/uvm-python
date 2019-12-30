@@ -35,8 +35,6 @@ from ubus_master_sequencer import ubus_master_sequencer
 
 class ubus_master_agent(UVMAgent):
     #
-    #  protected int master_id;
-    #
     #  ubus_master_driver driver;
     #  uvm_sequencer#(ubus_transfer) sequencer;
     #  ubus_master_monitor monitor;
@@ -49,6 +47,7 @@ class ubus_master_agent(UVMAgent):
     #  // new - constructor
     def __init__(self, name, parent):
         UVMAgent.__init__(self, name, parent)
+        self.master_id = 0
         self.driver = None
         self.sequencer = None
         self.monitor = None
@@ -60,6 +59,11 @@ class ubus_master_agent(UVMAgent):
             self.driver = ubus_master_driver.type_id.create("driver", self)
             self.sequencer = ubus_master_sequencer.type_id.create("sequencer",
                     self)
+
+        arr = []
+        if UVMConfigDb.get(self, "*", "master_id", arr) is True:
+            self.master_id = arr[0]
+        UVMConfigDb.set(self, "", "master_id", self.master_id)
 
     # connect_phase
     def connect_phase(self, phase):

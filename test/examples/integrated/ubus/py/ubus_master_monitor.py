@@ -41,9 +41,6 @@ class ubus_master_monitor(UVMMonitor):
     #  // and view HDL signals. 
     #  protected virtual ubus_if vif
     #
-    #  // Master Id
-    #  protected int master_id
-    #
     #  // The following two bits are used to control whether checks and coverage are
     #  // done both in the monitor class and the interface.
     #  bit checks_enable = 1
@@ -121,20 +118,15 @@ class ubus_master_monitor(UVMMonitor):
         if self.vif is None:
             self.uvm_report_fatal("NOVIF", "virtual interface must be set for: " +
                 self.get_full_name() + ".vif")
+        arr = []
+        if UVMConfigDb.get(self, "", "master_id", arr):
+            self.master_id = arr[0]
 
 
-
-    #  // run phase
-    #  virtual task run_phase(uvm_phase phase)
-    #    `uvm_info({get_full_name()," MASTER ID"},$sformatf(" = %0d",master_id),UVM_MEDIUM)
-    #    fork
-    #      collect_transactions()
-    #    join
-    #  endtask : run_phase
     @cocotb.coroutine
     def run_phase(self, phase):
-        self.uvm_report_info(self.get_full_name() + " MASTER ID",sv.sformatf(" = %0d",
-            self.master_id),UVM_MEDIUM)
+        self.uvm_report_info(self.get_full_name() + " MASTER ID", sv.sformatf(" = %0d",
+            self.master_id), UVM_MEDIUM)
         #    fork
         forked_proc = cocotb.fork(self.collect_transactions())
         #    join
@@ -169,13 +161,13 @@ class ubus_master_monitor(UVMMonitor):
         #    @(posedge vif.sig_clock iff vif.sig_grant[master_id] === 1)
         while True:
             yield RisingEdge(self.vif.sig_request)
-            sig_req = self.vif.sig_request.value[self.master_id]
+            sig_req = self.vif.sig_req[self.master_id]
             if sig_req == 1:
                 break
 
         while True:
             yield RisingEdge(self.vif.sig_clock)
-            grant = int(self.vif.sig_grant.value[self.master_id])
+            grant = int(self.vif.sig_gnt[self.master_id])
             if grant == 1:
                 break
         self.begin_tr(self.trans_collected)

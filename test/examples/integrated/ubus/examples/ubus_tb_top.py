@@ -73,5 +73,5 @@ def module_ubus_tb(dut):
     proc_clk = cocotb.fork(always_clk(dut, 100))
     proc_vif = cocotb.fork(vif.start())
 
-    yield Timer(1000, "NS")
+    yield Timer(999, "NS")
     yield [proc_run_test, proc_clk.join()]

@@ -89,8 +89,8 @@ class ubus_env(UVMEnv):
             self.bus_monitor = ubus_bus_monitor.type_id.create("bus_monitor", self)
 
         arr = []
-        UVMConfigDb.get(self, "", "num_masters", arr)
-        self.num_masterts = arr[0]
+        if UVMConfigDb.get(self, "", "num_masters", arr) is True:
+            self.num_masters = arr[0]
 
         for i in range(self.num_masters):
             inst_name = sv.sformatf("masters[%0d]", i)
@@ -100,8 +100,8 @@ class ubus_env(UVMEnv):
             UVMConfigDb.set(self, inst_name + ".driver", "master_id", i)
 
         arr = []
-        UVMConfigDb.get(self, "", "num_slaves", arr)
-        self.num_slaves = arr[0]
+        if UVMConfigDb.get(self, "", "num_slaves", arr) is True:
+            self.num_slaves = arr[0]
 
         for i in range(self.num_slaves):
             inst_name = sv.sformatf("slaves[%0d]", i)

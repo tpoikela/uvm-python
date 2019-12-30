@@ -21,6 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
+from cocotb.triggers import Timer
 
 from uvm.base import *
 from uvm.comps import UVMTest
@@ -183,7 +184,7 @@ class seq_2m_4s(UVMSequence):
         for sqr in self.slave_sqr:
             slave_seq = slave_memory_seq("mem_seq_" + str(i))
             slave_proc = cocotb.fork(slave_seq.start(sqr))
-            i += i
+            i += 1
         yield Timer(0, "NS")
 
 #// 2 Master, 4 Slave test
@@ -231,7 +232,7 @@ class test_2m_4s(ubus_example_base_test):
 
     @cocotb.coroutine
     def run_phase(self, phase):
-        phase.raise_objection(self)
+        phase.raise_objection(self, "test_2m_4s objects", 1)
         top_seq = seq_2m_4s("seq_2m_4s")
         for slave in self.ubus_example_tb0.ubus0.slaves:
             top_seq.slave_sqr.append(slave.sequencer)
@@ -239,6 +240,8 @@ class test_2m_4s(ubus_example_base_test):
             top_seq.master_sqr.append(master.sequencer)
         # TODO add handles for sequencers
         yield top_seq.start(None)  # vseq runs with sequencer
+        #yield Timer(1000, "NS")
+        yield Timer(500, "NS")
         phase.drop_objection(self)
 
 
