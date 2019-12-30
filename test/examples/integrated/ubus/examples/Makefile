@@ -67,9 +67,9 @@ endif
 #PLUSARGS=+UVM_TESTNAME=test_2m_4s +UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_HIGH
 PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_HIGH
 ifneq ($(UVM_TEST),)
-    PLUSARGS=+UVM_TESTNAME=$(UVM_TEST)
+    PLUSARGS += +UVM_TESTNAME=$(UVM_TEST)
 else
-    PLUSARGS=+UVM_TESTNAME=test_read_modify_write 
+    PLUSARGS += +UVM_TESTNAME=test_read_modify_write 
 endif
 TOPLEVEL := dut_dummy
 MODULE   ?= ubus_tb_top

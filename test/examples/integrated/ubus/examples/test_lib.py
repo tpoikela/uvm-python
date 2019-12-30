@@ -191,7 +191,7 @@ class test_2m_4s(ubus_example_base_test):
     #
     #
     def __init__(self, name="test_2m_4s", parent=None):
-        ubus_example_base_test.__init__(self, name, parent)
+        super().__init__(name, parent)
 
     def build_phase(self, phase):
         # loop_read_modify_write_seq lrmw_seq
@@ -233,30 +233,31 @@ class test_2m_4s(ubus_example_base_test):
     def run_phase(self, phase):
         phase.raise_objection(self)
         top_seq = seq_2m_4s("seq_2m_4s")
+        for slave in self.ubus_example_tb0.ubus0.slaves:
+            top_seq.slave_sqr.append(slave.sequencer)
+        for master in self.ubus_example_tb0.ubus0.masters:
+            top_seq.master_sqr.append(master.sequencer)
         # TODO add handles for sequencers
         yield top_seq.start(None)  # vseq runs with sequencer
         phase.drop_objection(self)
 
 
-    #  function void connect_phase(uvm_phase phase)
-    #    // Connect other slaves monitor to scoreboard
-    #    ubus_example_tb0.ubus0.slaves[1].monitor.item_collected_port.connect(
-    #      ubus_example_tb0.scoreboard0.item_collected_export)
-    #    ubus_example_tb0.ubus0.slaves[2].monitor.item_collected_port.connect(
-    #      ubus_example_tb0.scoreboard0.item_collected_export)
-    #    ubus_example_tb0.ubus0.slaves[3].monitor.item_collected_port.connect(
-    #      ubus_example_tb0.scoreboard0.item_collected_export)
-    #  endfunction : connect_phase
-    #
+    def connect_phase(self, phase):
+        # Connect other slaves monitor to scoreboard
+        for i in range(1, 4):
+            self.ubus_example_tb0.ubus0.slaves[i].monitor.item_collected_port.connect(
+                self.ubus_example_tb0.scoreboard0.item_collected_export)
+        #  endfunction : connect_phase
+        #
 
-    #  function void end_of_elaboration_phase(uvm_phase phase)
-    #    // Set up slave address map for ubus0 (slaves[0] is overwritten here)
-    #    self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[0]", 16'h0000, 16'h3fff)
-    #    self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[1]", 16'h4000, 16'h7fff)
-    #    self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[2]", 16'h8000, 16'hBfff)
-    #    self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[3]", 16'hC000, 16'hFfff)
-    #     super.end_of_elaboration_phase(phase)
-    #  endfunction : end_of_elaboration_phase
+    def end_of_elaboration_phase(self, phase):
+        # Set up slave address map for ubus0 (slaves[0] is overwritten here)
+        self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[0]", 0x0000, 0x3fff)
+        self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[1]", 0x4000, 0x7fff)
+        self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[2]", 0x8000, 0xBfff)
+        self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[3]", 0xC000, 0xFfff)
+        super().end_of_elaboration_phase(phase)
+        #  endfunction : end_of_elaboration_phase
 
     #
     #endclass : test_2m_4s
