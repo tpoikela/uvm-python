@@ -2,6 +2,7 @@
 import unittest
 from uvm.base.sv import (sv, sv_obj, uvm_glob_to_re)
 
+
 class Packet(sv_obj):
     def __init__(self, name):
         sv_obj.__init__(self)
@@ -15,6 +16,7 @@ class Packet(sv_obj):
         self.rand("data")
         self.constraint(("b_addr", "addr"),
             lambda addr, b_addr: b_addr == 3 * addr)
+
 
 class TestSV(unittest.TestCase):
 
@@ -47,8 +49,20 @@ class TestSV(unittest.TestCase):
         res3 = uvm_glob_to_re(str3)
         self.assertEqual(res3, 'my_top\\.xxx.*')
 
+        str4 = "__top__.master[0].slave*"
+        res4 = uvm_glob_to_re(str4)
+        self.assertEqual(res4, '__top__\\.master\\[0\\]\\.slave.*')
+
     def test_cast(self):
-        pass
+        my_int = 6
+        arr = []
+        ok = sv.cast(arr, my_int, int)
+        self.assertEqual(ok, True)
+        self.assertEqual(arr[0], 6)
+        arr = []
+        ok = sv.cast(arr, my_int, str)
+        self.assertEqual(ok, False)
+        self.assertEqual(len(arr), 0)
 
     def test_sformatf(self):
         str1 = sv.sformatf("Number: %0d, String: %s", 555, "xxx")
