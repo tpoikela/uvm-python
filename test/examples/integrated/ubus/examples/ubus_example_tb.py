@@ -56,7 +56,14 @@ class ubus_example_tb(UVMEnv):
     #  // build_phase
     def build_phase(self, phase):
         UVMEnv.build_phase(self, phase)
-        UVMConfigDb.set(self, "ubus0", "num_masters", 1)
+
+        num_masters = []
+        if UVMConfigDb.get(self, "ubus0", "num_masters", num_masters):
+            num_masters = num_masters[0]
+        else:
+            num_masters = 1
+        UVMConfigDb.set(self, "ubus0", "num_masters", num_masters)
+
         UVMConfigDb.set(self, "ubus0", "num_slaves", 1)
         self.ubus0 = ubus_env.type_id.create("ubus0", self)
         self.scoreboard0 = ubus_example_scoreboard.type_id.create("scoreboard0",

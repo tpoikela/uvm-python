@@ -55,8 +55,8 @@ class UVMTopdownPhase(UVMPhase):
     # each component.
     #
     def traverse(self, comp, phase, state):
-        uvm_debug(self, 'traverse', self.get_name() + ' traversing topdown phase now with comp' +
-                comp.get_name())
+        uvm_debug(self, 'traverse', self.get_name() +
+            ' traversing topdown phase now with comp' + comp.get_name())
         name = ""
         phase_domain = phase.get_domain()
         comp_domain = comp.get_domain()

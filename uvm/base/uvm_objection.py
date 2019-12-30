@@ -626,7 +626,7 @@ class UVMObjection(UVMReportObject):
 
         uvm_debug(self, 'clear', 'KKK MMM')
         if not self.m_top_all_dropped and self.get_objection_total(self.m_top):
-            uvm_report_fatal("OBJTN_CLEAR",("Object '" + name
+            uvm_report_info("OBJTN_CLEAR",("Object '" + name
                 + "' cleared objection counts for " + self.get_name()))
         # Should there be a warning if there are outstanding objections
         self.m_source_count = {}
