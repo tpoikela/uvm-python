@@ -53,8 +53,8 @@ from .uvm_object_globals import UVM_NONE
 class UVMComponentRegistry(UVMObjectWrapper):
 
     # dict of UVMComponentRegistry
-    registry_db = {} #tname -> UVMComponentRegistry
-    registered = {} #tname -> bool
+    registry_db = {}  # tname -> UVMComponentRegistry
+    registered = {}  # tname -> bool
     # Stores the actual constructors
     comps = {}
 
@@ -63,8 +63,8 @@ class UVMComponentRegistry(UVMObjectWrapper):
         self.tname = tname
         self.type_name = tname
         if tname in UVMComponentRegistry.registry_db:
-            uvm_report_warning("COMP_REGD", (tname + 'has already been'
-                + 'added into the UVMComponentRegistry'))
+            uvm_report_warning("COMP_REGD", (tname + ' has already been'
+                + ' added into the UVMComponentRegistry'))
         UVMComponentRegistry.comps[tname] = Constr
         UVMComponentRegistry.registered[tname] = False
         UVMComponentRegistry.registry_db[tname] = self.get()
@@ -184,8 +184,8 @@ class UVMObjectRegistry(UVMObjectWrapper):
         self.tname = tname
         self.type_name = tname
         if tname in UVMObjectRegistry.registry_db:
-            uvm_report_warning("COMP_REGD", (tname + 'has already been'
-                + 'added into the UVMComponentRegistry'))
+            uvm_report_warning("COMP_REGD", (tname + ' has already been'
+                + ' added into the UVMObjectRegistry'))
         UVMObjectRegistry.objs[tname] = Constr
         UVMObjectRegistry.registered[tname] = False
         UVMObjectRegistry.registry_db[tname] = self.get()
@@ -225,7 +225,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
     # ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
     # ~parent~'s context. The new instance will have the given leaf ~name~,
     # if provided.
-    def create(self, name, parent = None, contxt=""):
+    def create(self, name, parent=None, contxt=""):
         factory = get_factory()
 
         if contxt == "" and parent is not None:
@@ -234,7 +234,6 @@ class UVMObjectRegistry(UVMObjectWrapper):
         if obj is not None:
             return obj
         create = obj
-        return create
         #if (!$cast(create, obj)) begin
         #    string msg;
         #    msg = {"Factory did not return an object of type '",type_name,
@@ -242,6 +241,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         #      "' was returned instead. Name=",name," Parent=",
         #      parent==null?"null":parent.get_type_name()," contxt=",contxt};
         #    uvm_report_fatal("FCTTYP", msg, UVM_NONE);
+        return create
 
     # Function: set_type_override
     #
@@ -284,23 +284,3 @@ def get_factory():
     cs = UVMCoreService.get()
     return cs.get_factory()
 
-import unittest
-import sys
-#sys.path.insert(0, './macros')
-
-class TestUVMRegistry(unittest.TestCase):
-
-    def test_registry(self):
-        class ABC:
-            def __init__(self, name, parent):
-                self.name = name
-                self.parent = parent
-        from ..macros.uvm_object_defines import uvm_component_utils
-        uvm_component_utils(ABC)
-        reg = UVMComponentRegistry(ABC, 'ABC')
-        abc_comp = reg.create('inst_name', None)
-        self.assertEqual(abc_comp.name, 'inst_name')
-        self.assertEqual(abc_comp.parent, None)
-
-if __name__ == '__main__':
-    unittest.main()
