@@ -3,6 +3,7 @@
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2013-2014 NVIDIA Corporation
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -26,6 +27,8 @@ from cocotb.triggers import Timer, Event
 from ..base.sv import sv, process
 from ..base.uvm_component import UVMComponent
 from ..base.uvm_event import UVMEvent
+from ..base.uvm_resource import UVMResourcePool
+from ..base.uvm_config_db import UVMConfigDb
 from ..macros import uvm_info
 from ..base.uvm_object_globals import *
 from ..base.uvm_pool import UVMPool
@@ -40,11 +43,11 @@ SEQ_ERR2_MSG = ("The task responsible for requesting a wait_for_grant on sequenc
         + "'%s' for sequence '%s' has been killed, to avoid a deadlock the sequence "
         + "will be removed from the arbitration queues")
 
-SEQ_ERR3_MSG = ("Parent sequence '%s' should not finish before all items from itself " 
+SEQ_ERR3_MSG = ("Parent sequence '%s' should not finish before all items from itself "
         + "and items from descendent sequences are processed.  The item request from " +
         "the sequence '%s' is being removed.")
 
-SEQ_ERR4_MSG = ("Parent sequence '%s' should not finish before locks from itself " 
+SEQ_ERR4_MSG = ("Parent sequence '%s' should not finish before locks from itself "
         + "and descedent sequences are removed.  The lock held by the child "
         + "sequence '%s' is being removed.")
 
@@ -55,10 +58,15 @@ SEQ_FATAL1_MSG = (
 #typedef class uvm_sequence_request
 
 #// Utility class for tracking default_sequences
-#class uvm_sequence_process_wrapper
-#    process pid
-#    uvm_sequence_base seq
-#endclass : uvm_sequence_process_wrapper
+
+
+class uvm_sequence_process_wrapper:
+    # process pid
+    # uvm_sequence_base seq
+    def __init__(self):
+        self.pid = 0
+        self.seq = None
+    #endclass : uvm_sequence_process_wrapper
 
 #//------------------------------------------------------------------------------
 #//
@@ -132,10 +140,10 @@ class UVMSequencerBase(UVMComponent):
         child_parent = None  # uvm_sequence_base
 
         if child is None:
-            self.uvm_report_fatal("uvm_sequencer", "is_child passed null child", UVM_NONE)
+            self.uvm_report_fatal("uvm_sequencer", "is_child passed None child", UVM_NONE)
 
         if parent is None:
-            self.uvm_report_fatal("uvm_sequencer", "is_child passed null parent", UVM_NONE)
+            self.uvm_report_fatal("uvm_sequencer", "is_child passed None parent", UVM_NONE)
 
         child_parent = child.get_parent_sequence()
         while child_parent is not None:
@@ -174,6 +182,7 @@ class UVMSequencerBase(UVMComponent):
     #  extern virtual task execute_item(uvm_sequence_item item)
     #
     #
+
     #  // Function: start_phase_sequence
     #  //
     #  // Start the default sequence for this phase, if any.
@@ -186,7 +195,7 @@ class UVMSequencerBase(UVMComponent):
     #  // take effect.
     #  //
     #  // When setting the resource using ~set~, the 1st argument specifies the
-    #  // context pointer, usually ~this~ for components or ~null~ when executed from
+    #  // context pointer, usually ~this~ for components or ~None~ when executed from
     #  // outside the component hierarchy (i.e. in module).
     #  // The 2nd argument is the instance string, which is a path name to the
     #  // target sequencer, relative to the context pointer.  The path must include
@@ -200,14 +209,14 @@ class UVMSequencerBase(UVMComponent):
     #  //
     #  //| myseq_t myseq = new("myseq")
     #  //| myseq.randomize() with { ... }
-    #  //| uvm_config_db #(uvm_sequence_base)::set(null, "top.agent.myseqr.main_phase",
+    #  //| uvm_config_db #(uvm_sequence_base)::set(None, "top.agent.myseqr.main_phase",
     #  //|                                         "default_sequence",
     #  //|                                         myseq)
     #  //
     #  // Configuration by type is shorter and can be substituted via
     #  // the factory.
     #  //
-    #  //| uvm_config_db #(uvm_object_wrapper)::set(null, "top.agent.myseqr.main_phase",
+    #  //| uvm_config_db #(uvm_object_wrapper)::set(None, "top.agent.myseqr.main_phase",
     #  //|                                          "default_sequence",
     #  //|                                          myseq_type::type_id::get())
     #  //
@@ -227,6 +236,99 @@ class UVMSequencerBase(UVMComponent):
     #  //
     #
     #  extern virtual function void start_phase_sequence(uvm_phase phase)
+    @cocotb.coroutine
+    def start_phase_sequence(self, phase):
+        rp = UVMResourcePool.get()  # uvm_resource_pool
+        rq = []  # uvm_resource_types::rsrc_q_t
+        seq = None  # uvm_sequence_base
+        from ..base.uvm_coreservice import UVMCoreService
+        cs = UVMCoreService.get()
+        f = cs.get_factory()  # uvm_factory
+
+        # Has a default sequence been specified?
+        rq = rp.lookup_name(self.get_full_name() + "." + phase.get_name() + "_phase",
+                "default_sequence", None, 0)
+        rq = UVMResourcePool.sort_by_precedence(rq)
+
+        # Look for the first one if the appropriate type
+        #for (int i = 0; seq is None && i < rq.size(); i++):
+        for i in range(len(rq)):
+            if seq is not None:
+                break
+            rsrc = rq.get(i)  # uvm_resource_base
+            sbr = []  # uvm_resource#(uvm_sequence_base)
+            owr = []  # uvm_resource#(uvm_object_wrapper)
+
+            # uvm_config_db#(uvm_sequence_base)?
+            # Priority is given to uvm_sequence_base because it is a specific sequence instance
+            # and thus more specific than one that is dynamically created via the
+            # factory and the object wrapper.
+            if (sv.cast(sbr, rsrc, UVMConfigDb) and sbr[0] is not None):
+                seq = sbr.read(self)
+                if seq is None:
+                    uvm_info("UVM/SQR/PH/DEF/SB/None", "Default phase sequence for phase '"
+                            + phase.get_name() + "' explicitly disabled", UVM_FULL)
+                    yield Timer(0, "NS")
+                    return
+
+            # uvm_config_db#(uvm_object_wrapper)?
+            elif (sv.cast(owr, rsrc, UVMConfigDb) and owr is not None):
+                wrapper = None  # uvm_object_wrapper
+                wrapper = owr.read(self)
+                if wrapper is None:
+                    uvm_info("UVM/SQR/PH/DEF/OW/None", "Default phase sequence for phase '"
+                            + phase.get_name() + "' explicitly disabled", UVM_FULL)
+                    yield Timer(0, "NS")
+                    return
+
+                new_obj = f.create_object_by_type(wrapper, self.get_full_name(),
+                        wrapper.get_type_name())
+                seq_arr = []
+                if not(sv.cast(seq_arr, new_obj, UVMSequence) or seq_arr[0] is None):
+                    uvm_warning("PHASESEQ", "Default sequence for phase '" +
+                            phase.get_name() + "' %s is not a sequence type")
+                    yield Timer(0, "NS")
+                    return
+                else:
+                    seq = seq_arr[0]
+
+        if seq is None:
+            uvm_info("PHASESEQ", "No default phase sequence for phase '"
+                    + phase.get_name() + "'", UVM_FULL)
+            yield Timer(0, "NS")
+            return
+
+        uvm_info("PHASESEQ", "Starting default sequence '" + seq.get_type_name()
+                + "' for phase '" + phase.get_name() + "'", UVM_FULL)
+
+        seq.print_sequence_info = 1
+        seq.set_sequencer(self)
+        seq.reseed()
+        seq.set_starting_phase(phase)
+
+        if (seq.do_not_randomize is False and seq.randomize() is False):
+            uvm_warning("STRDEFSEQ", "Randomization failed for default sequence '"
+                    + seq.get_type_name() + "' for phase '" + phase.get_name() + "'")
+            yield Timer(0, "NS")
+            return
+
+        cocotb.fork(self.c_seq_fork_proc(seq, phase))
+        #endfunction
+
+    @cocotb.coroutine
+    def _seq_fork_proc(self, seq, phase):
+        #fork begin TODO this section incomplete
+        w = uvm_sequence_process_wrapper()
+        # reseed this process for random stability
+        # w.pid = process::self()
+        w.seq = seq
+        # w.pid.srandom(uvm_create_random_seed(seq.get_type_name(), self.get_full_name()))
+        self.m_default_sequences[phase] = w
+        # this will either complete naturally, or be killed later
+        yield seq.start(self)
+        self.m_default_sequences.delete(phase)
+        #join_none
+
 
     #
     #  // Function: stop_phase_sequence
@@ -271,7 +373,7 @@ class UVMSequencerBase(UVMComponent):
 
         if sequence_ptr is None:
             self.uvm_report_fatal("uvm_sequencer",
-                "wait_for_grant passed null sequence_ptr", UVM_NONE)
+                "wait_for_grant passed None sequence_ptr", UVM_NONE)
 
         my_seq_id = self.m_register_sequence(sequence_ptr)
 
@@ -364,9 +466,9 @@ class UVMSequencerBase(UVMComponent):
     def is_blocked(self, sequence_ptr):
         if sequence_ptr is None:
             uvm_report_fatal("uvm_sequence_controller",
-                           "self.is_blocked passed null sequence_ptr", UVM_NONE)
+                           "self.is_blocked passed None sequence_ptr", UVM_NONE)
 
-        #foreach (self.lock_list[i]) begin
+        #foreach (self.lock_list[i]):
         for i in range(len(self.lock_list)):
             if ((self.lock_list[i].get_inst_id() !=
                  sequence_ptr.get_inst_id()) and
@@ -666,18 +768,18 @@ class UVMSequencerBase(UVMComponent):
     #
     #  //  Weighted Priority Distribution
     #  // Pick an available sequence based on weighted priorities of available sequences
-    #  if (self.m_arbitration == UVM_SEQ_ARB_WEIGHTED) begin
+    #  if (self.m_arbitration == UVM_SEQ_ARB_WEIGHTED):
     #    sum_priority_val = 0
-    #    for (i = 0; i < avail_sequences.size(); i++) begin
+    #    for (i = 0; i < avail_sequences.size(); i++):
     #      sum_priority_val += m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]])
     #    end
     #
     #    temp = $urandom_range(sum_priority_val-1, 0)
     #
     #    sum_priority_val = 0
-    #    for (i = 0; i < avail_sequences.size(); i++) begin
+    #    for (i = 0; i < avail_sequences.size(); i++):
     #      if ((m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]]) +
-    #           sum_priority_val) > temp) begin
+    #           sum_priority_val) > temp):
     #        return avail_sequences[i]
     #      end
     #      sum_priority_val += m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]])
@@ -686,29 +788,29 @@ class UVMSequencerBase(UVMComponent):
     #  end
     #
     #  //  Random Distribution
-    #  if (self.m_arbitration == UVM_SEQ_ARB_RANDOM) begin
+    #  if (self.m_arbitration == UVM_SEQ_ARB_RANDOM):
     #    i = $urandom_range(avail_sequences.size()-1, 0)
     #    return avail_sequences[i]
     #  end
     #
     #  //  Strict Fifo
-    #  if ((self.m_arbitration == UVM_SEQ_ARB_STRICT_FIFO) || self.m_arbitration == UVM_SEQ_ARB_STRICT_RANDOM) begin
+    #  if ((self.m_arbitration == UVM_SEQ_ARB_STRICT_FIFO) || self.m_arbitration == UVM_SEQ_ARB_STRICT_RANDOM):
     #    highest_pri = 0
     #    // Build a list of sequences at the highest priority
-    #    for (i = 0; i < avail_sequences.size(); i++) begin
-    #      if (m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]]) > highest_pri) begin
+    #    for (i = 0; i < avail_sequences.size(); i++):
+    #      if (m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]]) > highest_pri):
     #        // New highest priority, so start new list
     #        highest_sequences.delete()
     #        highest_sequences.push_back(avail_sequences[i])
     #        highest_pri = m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]])
     #      end
-    #      else if (m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]]) == highest_pri) begin
+    #      else if (m_get_seq_item_priority(self.arb_sequence_q[avail_sequences[i]]) == highest_pri):
     #        highest_sequences.push_back(avail_sequences[i])
     #      end
     #    end
     #
     #    // Now choose one based on arbitration type
-    #    if (self.m_arbitration == UVM_SEQ_ARB_STRICT_FIFO) begin
+    #    if (self.m_arbitration == UVM_SEQ_ARB_STRICT_FIFO):
     #      return(highest_sequences[0])
     #    end
     #
@@ -716,13 +818,13 @@ class UVMSequencerBase(UVMComponent):
     #    return highest_sequences[i]
     #  end
     #
-    #  if (self.m_arbitration == UVM_SEQ_ARB_USER) begin
+    #  if (self.m_arbitration == UVM_SEQ_ARB_USER):
     #    i = user_priority_arbitration( avail_sequences)
     #
     #    // Check that the returned sequence is in the list of available sequences.  Failure to
     #    // use an available sequence will cause highly unpredictable results.
     #    highest_sequences = avail_sequences.find with (item == i)
-    #    if (highest_sequences.size() == 0) begin
+    #    if (highest_sequences.size() == 0):
     #      uvm_report_fatal("Sequencer",
     #          $sformatf("Error in User arbitration, sequence %0d not available\n%s",
     #                    i, convert2string()), UVM_NONE)
@@ -1069,11 +1171,11 @@ class UVMSequencerBase(UVMComponent):
 #  string s
 #
 #  $sformat(s, "  -- arb i/id/type: ")
-#  foreach (self.arb_sequence_q[i]) begin
+#  foreach (self.arb_sequence_q[i]):
 #    $sformat(s, "%s %0d/%0d/%s ", s, i, self.arb_sequence_q[i].sequence_id, self.arb_sequence_q[i].request.name())
 #  end
 #  $sformat(s, "%s\n -- self.lock_list i/id: ", s)
-#  foreach (self.lock_list[i]) begin
+#  foreach (self.lock_list[i]):
 #    $sformat(s, "%s %0d/%0d",s, i, self.lock_list[i].get_sequence_id())
 #  end
 #  return(s)
@@ -1107,8 +1209,8 @@ class UVMSequencerBase(UVMComponent):
 #
 #function int uvm_sequencer_base::m_get_seq_item_priority(uvm_sequence_request seq_q_entry)
 #  // If the priority was set on the item, then that is used
-#  if (seq_q_entry.item_priority != -1) begin
-#    if (seq_q_entry.item_priority <= 0) begin
+#  if (seq_q_entry.item_priority != -1):
+#    if (seq_q_entry.item_priority <= 0):
 #      uvm_report_fatal("SEQITEMPRI",
 #                    $sformatf("Sequence item from %s has illegal priority: %0d",
 #                            seq_q_entry.sequence_ptr.get_full_name(),
@@ -1117,7 +1219,7 @@ class UVMSequencerBase(UVMComponent):
 #    return seq_q_entry.item_priority
 #  end
 #  // Otherwise, use the priority of the calling sequence
-#  if (seq_q_entry.sequence_ptr.get_priority() < 0) begin
+#  if (seq_q_entry.sequence_ptr.get_priority() < 0):
 #    uvm_report_fatal("SEQDEFPRI",
 #                    $sformatf("Sequence %s has illegal priority: %0d",
 #                            seq_q_entry.sequence_ptr.get_full_name(),
@@ -1157,12 +1259,12 @@ class UVMSequencerBase(UVMComponent):
 #function bit uvm_sequencer_base::has_lock(uvm_sequence_base sequence_ptr)
 #  int my_seq_id
 #
-#  if (sequence_ptr == null)
+#  if (sequence_ptr is None)
 #    uvm_report_fatal("uvm_sequence_controller",
-#                     "has_lock passed null sequence_ptr", UVM_NONE)
+#                     "has_lock passed None sequence_ptr", UVM_NONE)
 #  my_seq_id = m_register_sequence(sequence_ptr)
-#    foreach (self.lock_list[i]) begin
-#      if (self.lock_list[i].get_inst_id() == sequence_ptr.get_inst_id()) begin
+#    foreach (self.lock_list[i]):
+#      if (self.lock_list[i].get_inst_id() == sequence_ptr.get_inst_id()):
 #        return 1
 #      end
 #    end
@@ -1179,9 +1281,9 @@ class UVMSequencerBase(UVMComponent):
 #  int my_seq_id
 #  uvm_sequence_request new_req
 #
-#  if (sequence_ptr == null)
+#  if (sequence_ptr is None)
 #    uvm_report_fatal("uvm_sequence_controller",
-#                     "lock_req passed null sequence_ptr", UVM_NONE)
+#                     "lock_req passed None sequence_ptr", UVM_NONE)
 #
 #  my_seq_id = m_register_sequence(sequence_ptr)
 #  new_req = new()
@@ -1192,7 +1294,7 @@ class UVMSequencerBase(UVMComponent):
 #  new_req.request_id = g_request_id++
 #  new_req.process_id = process::self()
 #
-#  if (lock == 1) begin
+#  if (lock == 1):
 #    // Locks are arbitrated just like all other requests
 #    self.arb_sequence_q.push_back(new_req)
 #  end else begin
@@ -1216,16 +1318,16 @@ class UVMSequencerBase(UVMComponent):
 #// will remove a lock for this sequence if it exists
 #
 #function void uvm_sequencer_base::m_unlock_req(uvm_sequence_base sequence_ptr)
-#  if (sequence_ptr == null) begin
+#  if (sequence_ptr is None):
 #    uvm_report_fatal("uvm_sequencer",
-#                     "m_unlock_req passed null sequence_ptr", UVM_NONE)
+#                     "m_unlock_req passed None sequence_ptr", UVM_NONE)
 #  end
 #
 #  begin
 #      int q[$]
 #      int seqid=sequence_ptr.get_inst_id()
 #      q=self.lock_list.find_first_index(item) with (item.get_inst_id() == seqid)
-#      if(q.size()==1) begin
+#      if(q.size()==1):
 #          self.lock_list.delete(q[0])
 #          grant_queued_locks(); // grant lock requests
 #          self.m_update_lists();
@@ -1280,7 +1382,7 @@ class UVMSequencerBase(UVMComponent):
 #  uvm_sequence_base seq_ptr
 #
 #  seq_ptr = m_find_sequence(-1)
-#  while (seq_ptr != null)
+#  while (seq_ptr is not None)
 #    begin
 #      kill_sequence(seq_ptr)
 #      seq_ptr = m_find_sequence(-1)
@@ -1310,8 +1412,8 @@ class UVMSequencerBase(UVMComponent):
 #// ---------------
 #
 #function uvm_sequence_base uvm_sequencer_base::current_grabber()
-#  if (self.lock_list.size() == 0) begin
-#    return null
+#  if (self.lock_list.size() == 0):
+#    return None
 #  end
 #  return self.lock_list[self.lock_list.size()-1]
 #endfunction
@@ -1322,9 +1424,9 @@ class UVMSequencerBase(UVMComponent):
 #
 #function bit uvm_sequencer_base::has_do_available()
 #
-#  foreach (self.arb_sequence_q[i]) begin
+#  foreach (self.arb_sequence_q[i]):
 #    if ((self.arb_sequence_q[i].sequence_ptr.is_relevant() == 1) &&
-#        (self.is_blocked(self.arb_sequence_q[i].sequence_ptr) == 0)) begin
+#        (self.is_blocked(self.arb_sequence_q[i].sequence_ptr) == 0)):
 #      return 1
 #    end
 #  end
@@ -1375,96 +1477,6 @@ class UVMSequencerBase(UVMComponent):
 #endfunction
 #
 #
-#// start_phase_sequence
-#// --------------------
-#
-#function void uvm_sequencer_base::start_phase_sequence(uvm_phase phase)
-#  uvm_resource_pool            rp = uvm_resource_pool::get()
-#  uvm_resource_types::rsrc_q_t rq
-#  uvm_sequence_base            seq
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory                  f = cs.get_factory()
-#
-#  // Has a default sequence been specified?
-#  rq = rp.lookup_name({get_full_name(), ".", phase.get_name(), "_phase"},
-#                      "default_sequence", null, 0)
-#  rq = UVMResourcePool.sort_by_precedence(rq)
-#
-#  // Look for the first one if the appropriate type
-#  for (int i = 0; seq == null && i < rq.size(); i++) begin
-#    uvm_resource_base rsrc = rq.get(i)
-#
-#    uvm_resource#(uvm_sequence_base)  sbr
-#    uvm_resource#(uvm_object_wrapper) owr
-#
-#    // uvm_config_db#(uvm_sequence_base)?
-#    // Priority is given to uvm_sequence_base because it is a specific sequence instance
-#    // and thus more specific than one that is dynamically created via the
-#    // factory and the object wrapper.
-#    if ($cast(sbr, rsrc) && sbr != null) begin
-#      seq = sbr.read(this)
-#      if (seq == null) begin
-#        `uvm_info("UVM/SQR/PH/DEF/SB/NULL", {"Default phase sequence for phase '",
-#                                             phase.get_name(),"' explicitly disabled"}, UVM_FULL)
-#        return
-#      end
-#    end
-#
-#    // uvm_config_db#(uvm_object_wrapper)?
-#    else if ($cast(owr, rsrc) && owr != null) begin
-#      uvm_object_wrapper wrapper
-#
-#      wrapper = owr.read(this)
-#      if (wrapper == null) begin
-#        `uvm_info("UVM/SQR/PH/DEF/OW/NULL", {"Default phase sequence for phase '",
-#                                             phase.get_name(),"' explicitly disabled"}, UVM_FULL)
-#        return
-#      end
-#
-#      if (!$cast(seq, f.create_object_by_type(wrapper, get_full_name(),
-#                                              wrapper.get_type_name()))
-#          || seq == null) begin
-#        `uvm_warning("PHASESEQ", {"Default sequence for phase '",
-#                                  phase.get_name(),"' %s is not a sequence type"})
-#        return
-#      end
-#    end
-#  end
-#
-#  if (seq == null) begin
-#    `uvm_info("PHASESEQ", {"No default phase sequence for phase '",
-#                           phase.get_name(),"'"}, UVM_FULL)
-#    return
-#  end
-#
-#  `uvm_info("PHASESEQ", {"Starting default sequence '",
-#                         seq.get_type_name(),"' for phase '", phase.get_name(),"'"}, UVM_FULL)
-#
-#  seq.print_sequence_info = 1
-#  seq.set_sequencer(this)
-#  seq.reseed()
-#  seq.set_starting_phase(phase)
-#
-#  if (!seq.do_not_randomize && !seq.randomize()) begin
-#    `uvm_warning("STRDEFSEQ", {"Randomization failed for default sequence '",
-#                               seq.get_type_name(),"' for phase '", phase.get_name(),"'"})
-#    return
-#  end
-#
-#  fork begin
-#    uvm_sequence_process_wrapper w = new()
-#    // reseed this process for random stability
-#    w.pid = process::self()
-#    w.seq = seq
-#    w.pid.srandom(uvm_create_random_seed(seq.get_type_name(), this.get_full_name()))
-#    m_default_sequences[phase] = w
-#    // this will either complete naturally, or be killed later
-#    seq.start(this)
-#    m_default_sequences.delete(phase)
-#  end
-#  join_none
-#
-#endfunction
 #
 #
 #
@@ -1492,7 +1504,7 @@ class UVMSequencerBase(UVMComponent):
 #
 #  //assign typename key to an int based on size
 #  //used with get_seq_kind to return an int key to match a type name
-#  if (!sequence_ids.exists(type_name)) begin
+#  if (!sequence_ids.exists(type_name)):
 #    sequence_ids[type_name] = sequences.size()
 #    //used w/ get_sequence to return a uvm_sequence factory object that
 #    //matches an int id
@@ -1506,7 +1518,7 @@ class UVMSequencerBase(UVMComponent):
 #
 #function void uvm_sequencer_base::remove_sequence(string type_name)
 #  sequence_ids.delete(type_name)
-#  for (int i = 0; i < this.sequences.size(); i++) begin
+#  for (int i = 0; i < this.sequences.size(); i++):
 #    if (this.sequences[i] == type_name)
 #      this.sequences.delete(i)
 #  end
@@ -1519,7 +1531,7 @@ class UVMSequencerBase(UVMComponent):
 #function void uvm_sequencer_base::set_sequences_queue(
 #                                    ref string sequencer_sequence_lib[$])
 #
-#  for(int j=0; j < sequencer_sequence_lib.size(); j++) begin
+#  for(int j=0; j < sequencer_sequence_lib.size(); j++):
 #    sequence_ids[sequencer_sequence_lib[j]] = sequences.size()
 #    this.sequences.push_back(sequencer_sequence_lib[j])
 #  end
@@ -1543,7 +1555,7 @@ class UVMSequencerBase(UVMComponent):
 #    return
 #
 #  // Have run-time phases and no user setting of default sequence
-#  if(this.m_default_seq_set == 0 && m_domain != null) begin
+#  if(this.m_default_seq_set == 0 && m_domain is not None):
 #    default_sequence = ""
 #    `uvm_info("NODEFSEQ", {"The \"default_sequence\" has not been set. ",
 #       "Since this sequencer has a runtime phase schedule, the ",
@@ -1565,7 +1577,7 @@ class UVMSequencerBase(UVMComponent):
 #  // no user sequences to choose from
 #  if(sequences.size() == 2 &&
 #     sequences[0] == "uvm_random_sequence" &&
-#     sequences[1] == "uvm_exhaustive_sequence") begin
+#     sequences[1] == "uvm_exhaustive_sequence"):
 #    uvm_report_warning("NOUSERSEQ", {"No user sequence available. ",
 #                       "Not starting the (deprecated) default sequence."}, UVM_HIGH)
 #    return
@@ -1584,15 +1596,15 @@ class UVMSequencerBase(UVMComponent):
 #                                   default_sequence}, UVM_NONE)
 #      end
 #
-#    if (m_seq == null) begin
-#      uvm_report_fatal("STRDEFSEQ", "Null m_sequencer reference", UVM_NONE)
+#    if (m_seq is None):
+#      uvm_report_fatal("STRDEFSEQ", "None m_sequencer reference", UVM_NONE)
 #    end
 #    m_seq.set_starting_phase(run_ph)
 #    m_seq.print_sequence_info = 1
-#    m_seq.set_parent_sequence(null)
+#    m_seq.set_parent_sequence(None)
 #    m_seq.set_sequencer(this)
 #    m_seq.reseed()
-#    if (!m_seq.randomize()) begin
+#    if (!m_seq.randomize()):
 #      uvm_report_warning("STRDEFSEQ", "Failed to randomize sequence")
 #    end
 #    m_seq.start(this)
@@ -1632,7 +1644,7 @@ class UVMSequencerBase(UVMComponent):
 #
 #  `uvm_warning("UVM_DEPRECATED", $sformatf("%m is deprecated"))
 #
-#  if (req_kind < 0 || req_kind >= sequences.size()) begin
+#  if (req_kind < 0 || req_kind >= sequences.size()):
 #    uvm_report_error("SEQRNG",
 #      $sformatf("Kind arg '%0d' out of range. Need 0-%0d",
 #      req_kind, sequences.size()-1))
@@ -1671,7 +1683,7 @@ class UVMSequencerBase(UVMComponent):
 #    add_sequence("uvm_random_sequence")
 #  if(!sequence_ids.exists("uvm_exhaustive_sequence"))
 #    add_sequence("uvm_exhaustive_sequence")
-#  if(add_simple == 1) begin
+#  if(add_simple == 1):
 #    if(!sequence_ids.exists("uvm_simple_sequence"))
 #      add_sequence("uvm_simple_sequence")
 #  end

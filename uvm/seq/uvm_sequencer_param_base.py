@@ -63,7 +63,11 @@ class UVMSequencerParamBase(UVMSequencerBase):
         self.m_num_last_rsps = 1
         self.m_num_reqs_sent = 0
         self.m_num_rsps_received = 0
-        self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo")  # uvm_tlm_fifo #(REQ) m_req_fifo
+
+        # TODO Adding self as 2nd arg makes the sim fail, it does not advance
+        # properly. This is uvm_phase issue most likely
+        self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo")
+        #self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo", self)  # uvm_tlm_fifo
         self.m_req_fifo.print_enabled = False
         #  rsp_export              = new("rsp_export", this)
         #  sqr_rsp_analysis_fifo   = new("sqr_rsp_analysis_fifo", this)
