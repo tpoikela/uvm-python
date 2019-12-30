@@ -1373,12 +1373,18 @@ class UVMPhase(UVMObject):
             # STARTED:
             #---------
             state_chg.m_prev_state = self.m_state;
+
             self.set_state(UVM_PHASE_STARTED)
             uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
 
-            self.m_imp.traverse(top,self,UVM_PHASE_STARTED)
-            self.m_ready_to_end_count = 0 # reset the ready_to_end count when phase starts
-            yield Timer(0) # LET ANY WAITERS WAKE UP
+            # Task-phases must use yield here
+            if not self.m_imp.is_task_phase():
+                self.m_imp.traverse(top,self, UVM_PHASE_STARTED)
+            else:
+                yield self.m_imp.traverse(top,self, UVM_PHASE_STARTED)
+
+            self.m_ready_to_end_count = 0  # reset the ready_to_end count when phase starts
+            yield Timer(0)  # LET ANY WAITERS WAKE UP
 
             if not self.m_imp.is_task_phase():
                 #-----------
@@ -1392,7 +1398,7 @@ class UVMPhase(UVMObject):
                 uvm_debug(self, 'execute_phase', 'Will traverse something now')
                 self.m_imp.traverse(top,self,UVM_PHASE_EXECUTING)
             else:
-                task_phase = self.m_imp # was $cast(task_phase, m_imp)
+                task_phase = self.m_imp  # was $cast(task_phase, m_imp)
                 # Execute task phase (which can consume time/fork procs)
                 UVMPhase.m_executing_phases[self] = 1
                 state_chg.m_prev_state = self.m_state
@@ -1518,8 +1524,8 @@ class UVMPhase(UVMObject):
             uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
             uvm_debug(self, 'exec_phase', 'DONE after uvm_callbacks done')
             self.m_phase_proc = None
-            yield Timer(0) #0; // LET ANY WAITERS WAKE UP
-        yield Timer(0) #0; // LET ANY WAITERS WAKE UP
+            yield Timer(0)  # 0; // LET ANY WAITERS WAKE UP
+        yield Timer(0)  # 0; // LET ANY WAITERS WAKE UP
         if self.phase_done is not None:
             self.phase_done.clear()
 

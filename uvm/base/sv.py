@@ -1,3 +1,22 @@
+#//----------------------------------------------------------------------
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//----------------------------------------------------------------------
+
 """ Some SystemVerilog system functions mocked here """
 
 import re
@@ -33,6 +52,13 @@ def uvm_glob_to_re(_str):
     return res
 
 
+def uvm_split_string(_str, sep, split_vals):
+    res = _str.split(sep)
+    for val in res:
+        split_vals.append(val)
+    return res
+
+
 class process():
 
     FINISHED = 0
@@ -43,6 +69,7 @@ class process():
 
     def __init__(self):
         self.status = process.RUNNING
+        self.pid = -1
 
 
 class sv:
@@ -102,19 +129,18 @@ class sv:
     def urandom(cls):
         return random.randint(0, SV_MAX_INT_VALUE)
 
+
 random.seed(0)
 
 SV_MAX_INT_VALUE = (1 << 31) - 1
 
 
 
-#def process(func):
-#    return cocotb.coroutine(func)
-
 SV_MAX_RAND_TRIES = 10000
 
+
 class sv_obj():
-    """ sv_obj implement some basic features from SystemVerilog objects like 
+    """ sv_obj implement some basic features from SystemVerilog objects like
     constrained randomisation """
 
     def __init__(self):

@@ -24,8 +24,11 @@
 
 
 import os
+import regex
 from .uvm_report_object import UVMReportObject
 from .uvm_debug import *
+from ..macros import uvm_error
+from .uvm_object_globals import *
 import cocotb
 
 
@@ -56,10 +59,18 @@ def uvm_dpi_get_tool_name():
     return "cocotb + iverilog"
 
 def uvm_dpi_regcomp(match):
-    pass
+    rr = None
+    try:
+        rr = regex.compile(match)
+    except:
+        pass
+    return rr
+
 
 def uvm_dpi_regexec(exp_h, elem):
-    pass
+    if exp_h.match(elem) is not None:
+        return 0
+    return 1
 
 
 class UVMCmdlineProcessor(UVMReportObject):
@@ -142,12 +153,12 @@ class UVMCmdlineProcessor(UVMReportObject):
             match = match[1:len(match)-2]
             exp_h = uvm_dpi_regcomp(match)
             if exp_h is None:
-                uvm_report_error("UVM_CMDLINE_PROC",
-                        "Unable to compile the regular expression: " + match, UVM_NONE)
+                uvm_error("UVM_CMDLINE_PROC",
+                        "Unable to compile the regular expression: " + match)
                 return 0
         for i in range(len(self.m_argv)):
             if exp_h is not None:
-                if not uvm_dpi_regexec(exp_h, self.m_argv[i]):
+                if uvm_dpi_regexec(exp_h, self.m_argv[i]) == 0:
                     args.append(self.m_argv[i])
             elif len(self.m_argv[i]) >= match_len:
                 sub_argv = self.m_argv[i][0:match_len]

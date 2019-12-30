@@ -2480,17 +2480,6 @@ class UVMComponent(UVMReportObject):
 #// current phase convenience API
 #//------------------------------
 #
-#
-#// phase_started
-#// -------------
-#// phase_started() and phase_ended() are extra callbacks called at the
-#// beginning and end of each phase, respectively.  Since they are
-#// called for all phases the phase is passed in as an argument so the
-#// extender can decide what to do, if anything, for each phase.
-#
-#function void uvm_component::phase_started(uvm_phase phase)
-#endfunction
-#
 #// phase_ended
 #// -----------
 #

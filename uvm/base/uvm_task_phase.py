@@ -23,7 +23,7 @@
 
 import cocotb
 from cocotb.triggers import Timer
-from .uvm_phase import UVMPhase
+from .uvm_phase import UVMPhase, ph2str
 from .uvm_object_globals import *
 from .uvm_debug import uvm_debug
 from .uvm_globals import *
@@ -43,8 +43,8 @@ from .uvm_globals import *
 #
 # By default, the way for a task phase to extend over time is if there is
 # at least one component that raises an objection.
-#| class my_comp extends uvm_component;
-#|    task main_phase(uvm_phase phase);
+#| class my_comp extends uvm_component
+#|    task main_phase(uvm_phase phase)
 #|       phase.raise_objection(this, "Applying stimulus")
 #|       ...
 #|       phase.drop_objection(this, "Applied enough stimulus")
@@ -114,28 +114,32 @@ class UVMTaskPhase(UVMPhase):
 
         from .uvm_domain import UVMDomain
         if (phase_domain == UVMDomain.get_common_domain() or phase_domain == comp_domain):
+            print("XYZ phase match found. Proceeding now...state is " +
+                ph2str(state))
             if state == UVM_PHASE_STARTED:
                 comp.m_current_phase = phase
                 comp.m_apply_verbosity_settings(phase)
                 comp.phase_started(phase)
                 if hasattr(comp, 'm_sequencer_id'):
-                    seqr = comp # was if ($cast(seqr, comp))
+                    seqr = comp  # was if ($cast(seqr, comp))
                     yield seqr.start_phase_sequence(phase)
+                else:
+                    print("XYZ comp is not sequencer: " + comp.get_name())
             elif state == UVM_PHASE_EXECUTING:
-                ph = self # uvm_phase
+                ph = self  # uvm_phase
                 if self in comp.m_phase_imps:
                     ph = comp.m_phase_imps[self]
 
                 uvm_debug(self, "m_traverse", comp.get_name() + " yield ph.execute")
-                yield ph.execute(comp, phase);
+                yield ph.execute(comp, phase)
             elif state == UVM_PHASE_READY_TO_END:
                 comp.phase_ready_to_end(phase)
             elif state == UVM_PHASE_ENDED:
                 uvm_debug(self, "m_traverse", "KKK")
                 if hasattr(comp, 'm_sequencer_id'):
-                    seqr = comp # was if ($cast(seqr, comp))
-                    seqr.stop_phase_sequence(phase);
-                comp.phase_ended(phase);
+                    seqr = comp  # was if ($cast(seqr, comp))
+                    seqr.stop_phase_sequence(phase)
+                comp.phase_ended(phase)
                 comp.m_current_phase = None
             else:
                 uvm_report_fatal("PH_BADEXEC","task phase traverse internal error")
@@ -152,10 +156,10 @@ class UVMTaskPhase(UVMPhase):
                 comp.get_name())
         #fork
         #begin
-        #process proc;
+        #process proc
         # reseed this process for random stability
-        #proc = process::self();
-        #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()));
+        #proc = process::self()
+        #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()))
         phase.m_num_procs_not_yet_returned += 1
         proc = cocotb.fork(self.exec_task(comp,phase))
         phase.m_num_procs_not_yet_returned -= 1

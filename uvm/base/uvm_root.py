@@ -24,7 +24,7 @@
 import cocotb
 from cocotb.triggers import Timer, Event
 
-from .sv import sv
+from .sv import sv, uvm_split_string
 from .uvm_component import UVMComponent
 from .uvm_version import *
 from .uvm_cmdline_processor import UVMCmdlineProcessor
@@ -48,6 +48,12 @@ NON_STD_VERB = "Non-standard verbosity value, using provided '%0d'."
 LINE = "----------------------------------------------------------------"
 
 UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR = 0
+
+MSG_MULTTIMOUT = ("Multiple (%0d) +UVM_TIMEOUT arguments provided on the command line. "
+    + "'%s' will be used.  Provided list: %s.")
+
+MSG_INVLCMDARGS = ("Invalid number of arguments found on the command line for setting "
+    + "'+uvm_set_verbosity=%s'.  Setting ignored.")
 
 #------------------------------------------------------------------------------
 #
@@ -212,7 +218,7 @@ class UVMRoot(UVMComponent):
         uvm_debug(self, 'run_test', 'Running now test ' + test_name)
         if test_name != "":
             if "uvm_test_top" in self.m_children:
-                self.uvm_report_fatal("TTINST",
+                uvm_fatal("TTINST",
                     "An uvm_test_top already exists via a previous call to run_test", UVM_NONE)
             #0; // forces shutdown because $finish is forked
             yield Timer(0, "NS")
@@ -226,7 +232,7 @@ class UVMRoot(UVMComponent):
                     msg = "command line +UVM_TESTNAME=" + test_name
                 else:
                     msg = "call to run_test(" + test_name + ")"
-                self.uvm_report_fatal("INVTST",
+                uvm_fatal("INVTST",
                     "Requested test from " + msg + " not found." , UVM_NONE)
         yield Timer(0, "NS")
 
@@ -390,16 +396,145 @@ class UVMRoot(UVMComponent):
     #
     #  extern protected function new ()
     #  extern protected virtual function bit m_add_child (uvm_component child)
+
     #  extern function void build_phase(uvm_phase phase)
+    def build_phase(self, phase):
+        UVMComponent.build_phase(self, phase)
+        #self.m_set_cl_msg_args()
+        self.m_do_verbosity_settings()
+        self.m_do_timeout_settings()
+        self.m_do_factory_settings()
+        # TODO self.m_do_config_settings()
+        # TODO self.m_do_max_quit_settings()
+        self.m_do_dump_args()
+        #endfunction
+
     #  extern local function void m_do_verbosity_settings()
+    def m_do_verbosity_settings(self):
+        set_verbosity_settings = []
+        split_vals = []
+        tmp_verb = 0
+
+        # Retrieve them all into set_verbosity_settings
+        self.clp.get_arg_values("+uvm_set_verbosity=", set_verbosity_settings)
+
+        for i in range(len(set_verbosity_settings)):
+            uvm_split_string(set_verbosity_settings[i], ",", split_vals)
+            if split_vals.size() < 4 or split_vals.size() > 5:
+                self.uvm_report_warning("INVLCMDARGS",
+                  sv.sformatf(MSG_INVLCMDARGS, set_verbosity_settings[i]), UVM_NONE, "", "")
+
+            # Invalid verbosity
+            if not (self.clp.m_convert_verb(split_vals[2], tmp_verb)):
+                self.uvm_report_warning("INVLCMDVERB",
+                  sv.sformatf("Invalid verbosity found on the command line for setting '%s'.",
+                  set_verbosity_settings[i]), UVM_NONE, "", "")
+        #endfunction
+        #
+        #
+
     #  extern local function void m_do_timeout_settings()
+    def m_do_timeout_settings(self):
+        timeout_settings = []
+        timeout = ""
+        timeout_int = 0
+        override_spec = ""
+        timeout_count = self.clp.get_arg_values("+UVM_TIMEOUT=", timeout_settings)
+
+        if timeout_count == 0:
+            return
+        else:
+            timeout = timeout_settings[0]
+            if timeout_count > 1:
+                timeout_list = ""
+                sep = ""
+                # for (int i = 0; i < timeout_settings.size(); i++):
+                for i in range(len(timeout_settings)):
+                    if (i != 0):
+                        sep = "; "
+                    timeout_list = timeout_list + sep + timeout_settings[i]
+
+                self.uvm_report_warning("MULTTIMOUT",
+                  sv.sformatf(MSG_MULTTIMOUT, timeout_count, timeout, timeout_list), UVM_NONE)
+
+            self.uvm_report_info("TIMOUTSET",
+                sv.sformatf("'+UVM_TIMEOUT=%s' provided on the command line is being applied.",
+                    timeout), UVM_NONE)
+            sv.sscanf(timeout,"%d,%s",timeout_int,override_spec)
+            #case(override_spec)
+            if override_spec == "YES":
+                self.set_timeout(timeout_int, 1)
+            elif override_spec == "NO":
+                self.set_timeout(timeout_int, 0)
+            else:
+                self.set_timeout(timeout_int, 1)
+        #endfunction
+        #
+
     #  extern local function void m_do_factory_settings()
+    def m_do_factory_settings(self):
+        args = []
+
+        self.clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",args)
+        print("QQQ arg matches is " + str(args))
+        for i in range(len(args)):
+            value = args[i][23:len(args[i])]
+            self.m_process_inst_override(value)
+
+        self.clp.get_arg_matches("/^\\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/",args)
+        print("QQQ2 arg matches is " + str(args))
+        for i in range(len(args)):
+            value = args[i][23:len(args[i])]
+            self.m_process_type_override(value)
+        #endfunction
+        #
+
     #  extern local function void m_process_inst_override(string ovr)
+    def m_process_inst_override(self, ovr):
+        from .uvm_coreservice import UVMCoreService
+        split_val = []
+        cs = UVMCoreService.get()
+        factory = cs.get_factory()
+
+        uvm_split_string(ovr, ",", split_val)
+
+        if len(split_val) != 3:
+            self.uvm_report_error("UVM_CMDLINE_PROC", "Invalid setting for +uvm_set_inst_override="
+                + ovr
+                + ", setting must specify <requested_type>,<override_type>,<instance_path>", UVM_NONE)
+            return
+
+        uvm_info("INSTOVR",
+            "Applying instance override from the command line: +uvm_set_inst_override=", ovr, UVM_NONE)
+        factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2])
+        #endfunction
+        #
+
     #  extern local function void m_process_type_override(string ovr)
+    def m_process_type_override(self, ovr):
+        pass  # TODO
+
+
     #  extern local function void m_do_config_settings()
+
     #  extern local function void m_do_max_quit_settings()
+
     #  extern local function void m_do_dump_args()
+    def m_do_dump_args(self):
+        dump_args = []
+        all_args = []
+        out_string = ""
+        if (self.clp.get_arg_matches("+UVM_DUMP_CMDLINE_ARGS", dump_args)):
+            self.clp.get_args(all_args)
+            for i in range(len(all_args)):
+                if (all_args[i] == "__-f__"):
+                    continue
+                out_string = out_string + all_args[i] + " "
+            uvm_info("DUMPARGS", out_string, UVM_NONE)
+        #endfunction
+
     #  extern local function void m_process_config(string cfg, bit is_int)
+
     #  extern local function void m_process_default_sequence(string cfg)
 
     #  extern function void m_check_verbosity()
@@ -585,127 +720,6 @@ uvm_top = UVMRoot.get()
 #   return cs.get_root()
 #endfunction
 #
-#
-#
-#
-#
-#
-#// run_test
-#// --------
-#
-#task uvm_root::run_test(string test_name="")
-#
-#  uvm_report_server l_rs
-#
-#  process phase_runner_proc; // store thread forked below for final cleanup
-#
-#  // Set up the process that decouples the thread that drops objections from
-#  // the process that processes drop/all_dropped objections. Thus, if the
-#  // original calling thread (the "dropper") gets killed, it does not affect
-#  // drain-time and propagation of the drop up the hierarchy.
-#  // Needs to be done in run_test since it needs to be in an
-#  // initial block to fork a process.
-#  uvm_objection::m_init_objections()
-#
-#`ifndef UVM_NO_DPI
-#
-#  // Retrieve the test names provided on the command line.  Command line
-#  // overrides the argument.
-#  test_name_count = clp.get_arg_values("+UVM_TESTNAME=", test_names)
-#
-#  // If at least one, use first in queue.
-#  if (test_name_count > 0):
-#    test_name = test_names[0]
-#    testname_plusarg = 1
-#  end
-#
-#  // If multiple, provided the warning giving the number, which one will be
-#  // used and the complete list.
-#  if (test_name_count > 1):
-#    string test_list
-#    string sep
-#    for (int i = 0; i < test_names.size(); i++):
-#      if (i != 0)
-#        sep = ", "
-#      test_list = {test_list, sep, test_names[i]}
-#    end
-#    self.uvm_report_warning("MULTTST",
-#      $sformatf("Multiple (%0d) +UVM_TESTNAME arguments provided on the command line.  '%s' will be used.  Provided list: %s.", test_name_count, test_name, test_list), UVM_NONE)
-#  end
-#
-#`else
-#
-#     // plusarg overrides argument
-#  if ($value$plusargs("UVM_TESTNAME=%s", test_name)):
-#    `self.uvm_report_info("NO_DPI_TSTNAME", "UVM_NO_DPI defined--getting UVM_TESTNAME directly, without DPI", UVM_NONE)
-#    testname_plusarg = 1
-#  end
-#
-#`endif
-#
-#  // if test now defined, create it using common factory
-#  if (test_name != ""):
-#  	uvm_coreservice_t cs = uvm_coreservice_t::get();
-#  	uvm_factory factory=cs.get_factory()
-#
-#    if(m_children.exists("uvm_test_top")):
-#      self.uvm_report_fatal("TTINST",
-#          "An uvm_test_top already exists via a previous call to run_test", UVM_NONE)
-#      #0; // forces shutdown because $finish is forked
-#    end
-#    $cast(uvm_test_top, factory.create_component_by_name(test_name,
-#          "", "uvm_test_top", null))
-#
-#    if (uvm_test_top == null):
-#      msg = testname_plusarg ? {"command line +UVM_TESTNAME=",test_name} :
-#                               {"call to run_test(",test_name,")"}
-#      self.uvm_report_fatal("INVTST",
-#          {"Requested test from ",msg, " not found." }, UVM_NONE)
-#    end
-#  end
-#
-#  if (m_children.num() == 0):
-#    self.uvm_report_fatal("NOCOMP",
-#          {"No components instantiated. You must either instantiate",
-#           " at least one component before calling run_test or use",
-#           " run_test to do so. To run a test using run_test,",
-#           " use +UVM_TESTNAME or supply the test name in",
-#           " the argument to run_test(). Exiting simulation."}, UVM_NONE)
-#    return
-#  end
-#
-#  begin
-#  	if(test_name=="")
-#  		self.uvm_report_info("RNTST", "Running test ...", UVM_LOW);
-#  	else if (test_name == uvm_test_top.get_type_name())
-#  		self.uvm_report_info("RNTST", {"Running test ",test_name,"..."}, UVM_LOW);
-#  	else
-#  		self.uvm_report_info("RNTST", {"Running test ",uvm_test_top.get_type_name()," (via factory override for test \"",test_name,"\")..."}, UVM_LOW)
-#  end
-#
-#  // phase runner, isolated from calling process
-#  fork begin
-#    // spawn the phase runner task
-#    phase_runner_proc = process::self()
-#    uvm_phase::m_run_phases()
-#  end
-#  join_none
-#  #0; // let the phase runner start
-#
-#  wait (m_phase_all_done == 1)
-#
-#  // clean up after ourselves
-#  phase_runner_proc.kill()
-#
-#  l_rs = uvm_report_server::get_server()
-#  l_rs.report_summarize()
-#
-#  if (finish_on_completion)
-#    $finish
-#
-#endtask
-#
-#
 #// find_all
 #// --------
 #
@@ -795,130 +809,6 @@ uvm_top = UVMRoot.get()
 #  end
 #  else
 #    return 0
-#endfunction
-#
-#
-#// build_phase
-#// -----
-#
-#function void uvm_root::build_phase(uvm_phase phase)
-#
-#  super.build_phase(phase)
-#
-#  m_set_cl_msg_args()
-#
-#  m_do_verbosity_settings()
-#  m_do_timeout_settings()
-#  m_do_factory_settings()
-#  m_do_config_settings()
-#  m_do_max_quit_settings()
-#  m_do_dump_args()
-#
-#endfunction
-#
-#
-#// m_do_verbosity_settings
-#// -----------------------
-#
-#function void uvm_root::m_do_verbosity_settings()
-#  string set_verbosity_settings[$]
-#  string split_vals[$]
-#  uvm_verbosity tmp_verb
-#
-#  // Retrieve them all into set_verbosity_settings
-#  void'(clp.get_arg_values("+uvm_set_verbosity=", set_verbosity_settings))
-#
-#  for(int i = 0; i < set_verbosity_settings.size(); i++):
-#    uvm_split_string(set_verbosity_settings[i], ",", split_vals)
-#    if(split_vals.size() < 4 || split_vals.size() > 5):
-#      self.uvm_report_warning("INVLCMDARGS",
-#        $sformatf("Invalid number of arguments found on the command line for setting '+uvm_set_verbosity=%s'.  Setting ignored.",
-#        set_verbosity_settings[i]), UVM_NONE, "", "")
-#    end
-#    // Invalid verbosity
-#    if(!clp.m_convert_verb(split_vals[2], tmp_verb)):
-#      self.uvm_report_warning("INVLCMDVERB",
-#        $sformatf("Invalid verbosity found on the command line for setting '%s'.",
-#        set_verbosity_settings[i]), UVM_NONE, "", "")
-#    end
-#  end
-#endfunction
-#
-#
-#// m_do_timeout_settings
-#// ---------------------
-#
-#function void uvm_root::m_do_timeout_settings()
-#  string timeout_settings[$]
-#  string timeout
-#  string split_timeout[$]
-#  int timeout_count
-#  time timeout_int
-#  string override_spec
-#  timeout_count = clp.get_arg_values("+UVM_TIMEOUT=", timeout_settings)
-#  if (timeout_count ==  0)
-#    return
-#  else begin
-#    timeout = timeout_settings[0]
-#    if (timeout_count > 1):
-#      string timeout_list
-#      string sep
-#      for (int i = 0; i < timeout_settings.size(); i++):
-#        if (i != 0)
-#          sep = "; "
-#        timeout_list = {timeout_list, sep, timeout_settings[i]}
-#      end
-#      self.uvm_report_warning("MULTTIMOUT",
-#        $sformatf("Multiple (%0d) +UVM_TIMEOUT arguments provided on the command line.  '%s' will be used.  Provided list: %s.",
-#        timeout_count, timeout, timeout_list), UVM_NONE)
-#    end
-#    self.uvm_report_info("TIMOUTSET",
-#      $sformatf("'+UVM_TIMEOUT=%s' provided on the command line is being applied.", timeout), UVM_NONE)
-#      void'($sscanf(timeout,"%d,%s",timeout_int,override_spec))
-#    case(override_spec)
-#      "YES"   : set_timeout(timeout_int, 1)
-#      "NO"    : set_timeout(timeout_int, 0)
-#      default : set_timeout(timeout_int, 1)
-#    endcase
-#  end
-#endfunction
-#
-#
-#// m_do_factory_settings
-#// ---------------------
-#
-#function void uvm_root::m_do_factory_settings()
-#  string args[$]
-#
-#  void'(clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",args))
-#  foreach(args[i]):
-#    m_process_inst_override(args[i].substr(23, args[i].len()-1))
-#  end
-#  void'(clp.get_arg_matches("/^\\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/",args))
-#  foreach(args[i]):
-#    m_process_type_override(args[i].substr(23, args[i].len()-1))
-#  end
-#endfunction
-#
-#
-#// m_process_inst_override
-#// -----------------------
-#
-#function void uvm_root::m_process_inst_override(string ovr)
-#  string split_val[$]
-#  uvm_coreservice_t cs = uvm_coreservice_t::get();
-#  uvm_factory factory=cs.get_factory()
-#
-#  uvm_split_string(ovr, ",", split_val)
-#
-#  if(split_val.size() != 3 ):
-#    uvm_report_error("UVM_CMDLINE_PROC", {"Invalid setting for +uvm_set_inst_override=", ovr,
-#      ", setting must specify <requested_type>,<override_type>,<instance_path>"}, UVM_NONE)
-#    return
-#  end
-#
-#  self.uvm_report_info("INSTOVR", {"Applying instance override from the command line: +uvm_set_inst_override=", ovr}, UVM_NONE)
-#  factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2])
 #endfunction
 #
 #
@@ -1120,23 +1010,6 @@ uvm_top = UVMRoot.get()
 #endfunction
 #
 #
-#// m_do_dump_args
-#// --------------
-#
-#function void uvm_root::m_do_dump_args()
-#  string dump_args[$]
-#  string all_args[$]
-#  string out_string
-#  if(clp.get_arg_matches("+UVM_DUMP_CMDLINE_ARGS", dump_args)):
-#    clp.get_args(all_args)
-#    for (int i = 0; i < all_args.size(); i++):
-#      if (all_args[i] == "__-f__")
-#        continue
-#      out_string = {out_string, all_args[i], " "}
-#    end
-#    self.uvm_report_info("DUMPARGS", out_string, UVM_NONE)
-#  end
-#endfunction
 #
 #
 #
