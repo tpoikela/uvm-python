@@ -433,7 +433,8 @@ class UVMObject(sv_obj):
             return
 
         if rhs is None:
-            uvm_report_warning("NULLCP", "A null object was supplied to copy; copy is ignored", UVM_NONE)
+            uvm_report_warning("NULLCP", 
+                "A null object was supplied to copy; copy is ignored", UVM_NONE)
             return
 
         UVMObject.uvm_global_copy_map[rhs] = self

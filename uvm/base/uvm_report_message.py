@@ -1,7 +1,6 @@
-#
 #------------------------------------------------------------------------------
 #   Copyright 2007-2010 Mentor Graphics Corporation
-#   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#   Copyright 2007-2011 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
 #   Copyright 2019 Tuomas Poikela
 #   All Rights Reserved Worldwide
@@ -35,7 +34,7 @@ from .uvm_object_globals import *
 
 class UVMReportMessageElementBase(UVMObject):
 
-    def __init__(self, name = ""):
+    def __init__(self, name=""):
         UVMObject.__init__(self, name)
         self._action = UVM_DISPLAY
         self._name = ""
@@ -68,7 +67,7 @@ class UVMReportMessageElementBase(UVMObject):
             self.do_record(recorder)
 
     def copy(self, rhs):
-        self.do_copy(rhs);
+        self.do_copy(rhs)
 
     def clone(self):
         return self.do_clone()
@@ -110,9 +109,10 @@ class UVMReportMessageObjectElement(UVMReportMessageElementBase):
 #
 #------------------------------------------------------------------------------
 
+
 class UVMReportMessageElementContainer(UVMObject):
 
-    def __init__(self, name = "element_container"):
+    def __init__(self, name="element_container"):
         UVMObject.__init__(self, name)
         self.elements = []
 
@@ -126,13 +126,13 @@ class UVMReportMessageElementContainer(UVMObject):
                 elements.append(self.elements[i])
         self.elements = elements
 
-    def delete_elements(self, index):
+    def delete_elements(self):
         self.elements = []
 
     def get_elements(self):
         return self.elements
 
-    def add(self, name, val, action = UVM_LOG|UVM_RM_RECORD):
+    def add(self, name, val, action=UVM_LOG|UVM_RM_RECORD):
         elem = UVMReportMessageElementBase()
         elem.set_name(name)
         elem.set_val(val)
@@ -150,26 +150,39 @@ class UVMReportMessageElementContainer(UVMObject):
             self.elements[i].record(recorder)
 
     def do_copy(self, rhs):
-        raise Exception("Not implemented")
+        super().do_copy(rhs)
+        #uvm_report_message_element_container urme_container
+        #if(!$cast(urme_container, rhs) || (rhs==null))
+        #    return
+        urme_container = rhs
+        if rhs is None:
+            return
+
+        self.delete_elements()
+        for i in range(len(urme_container.elements)):
+            self.elements.append(urme_container.elements[i].clone())
+
 
 #------------------------------------------------------------------------------
 #
 # CLASS: uvm_report_message
 #
-# The uvm_report_message is the basic UVM object message class.  It provides 
-# the fields that are common to all messages.  It also has a message element 
+# The uvm_report_message is the basic UVM object message class.  It provides
+# the fields that are common to all messages.  It also has a message element
 # container and provides the APIs necessary to add integral types, strings and
 # uvm_objects to the container. The report message object can be initialized
-# with the common fields, and passes through the whole reporting system (i.e. 
+# with the common fields, and passes through the whole reporting system (i.e.
 # report object, report handler, report server, report catcher, etc) as an
-# object. The additional elements can be added/deleted to/from the message 
+# object. The additional elements can be added/deleted to/from the message
 # object anywhere in the reporting system, and can be printed or recorded
 # along with the common fields.
 #
 #------------------------------------------------------------------------------
+
+
 class UVMReportMessage(UVMObject):
 
-    def __init__(self, name = ""):
+    def __init__(self, name=""):
         UVMObject.__init__(self, name)
 
         self._report_object = None
@@ -188,22 +201,23 @@ class UVMReportMessage(UVMObject):
         self._report_message_element_container = UVMReportMessageElementContainer()
 
     # Function: new_report_message
-    # 
-    # Creates a new uvm_report_message object.
-    # This function is the same as new(), but keeps the random stability.
+    #
     #
     @classmethod
-    def new_report_message(cls, name = "uvm_report_message"):
+    def new_report_message(cls, name="uvm_report_message"):
+        """ Creates a new uvm_report_message object.
+        This function is the same as new(), but keeps the random stability.
+        """
         p = None
         rand_state = ""
-        #p = process::self();
+        #p = process::self()
 
-        if not p is None:
+        if p is not None:
             pass
-            #rand_state = p.get_randstate();
+            #rand_state = p.get_randstate()
         new_report_message = UVMReportMessage(name)
         #if (p != null):
-            #p.set_randstate(rand_state);
+            #p.set_randstate(rand_state)
         return new_report_message
 
     # Function: print
@@ -215,18 +229,18 @@ class UVMReportMessage(UVMObject):
     def do_print(self, printer):
         l_verbosity = 0
         UVMObject.do_print(self, printer)
-        printer.print_generic("severity", "uvm_severity", 
-                          32, _severity.name());
-        printer.print_string("id", _id);
-        printer.print_string("message",_message);
-        printer.print_int("verbosity", _verbosity, 32, UVM_HEX);
-        printer.print_string("filename", _filename);
-        printer.print_int("line", _line, 32, UVM_UNSIGNED);
-        printer.print_string("context_name", _context_name);
+        printer.print_generic("severity", "uvm_severity",
+                          32, self._severity.name())
+        printer.print_string("id", self._id)
+        printer.print_string("message", self._message)
+        printer.print_int("verbosity", self._verbosity, 32, UVM_HEX)
+        printer.print_string("filename", self._filename)
+        printer.print_int("line", self._line, 32, UVM_UNSIGNED)
+        printer.print_string("context_name", self._context_name)
         if self._report_message_element_container.size() != 0:
-            self._report_message_element_container.pprint(printer);
+            self._report_message_element_container.pprint(printer)
 
-    def do_copy (self, rhs):
+    def do_copy(self, rhs):
         report_message = rhs
         UVMObject.do_copy(self, rhs)
         if rhs is None:
@@ -257,7 +271,7 @@ class UVMReportMessage(UVMObject):
     #
     # Get or set the uvm_report_object that originated the message.
     def set_report_object(self, ro):
-        self._report_object = ro;
+        self._report_object = ro
 
     # Function: get_report_handler
     def get_report_handler(self):
@@ -269,7 +283,7 @@ class UVMReportMessage(UVMObject):
     # whether the message is enabled, should be upgraded/downgraded, etc.
     def set_report_handler(self, rh):
         self._report_handler = rh
-  
+
     # Function: get_report_server
     def get_report_server(self):
         return self._report_server
@@ -277,9 +291,9 @@ class UVMReportMessage(UVMObject):
     # Function: set_report_server
     #
     # Get or set the uvm_report_server that is responsible for servicing
-    # the message's actions.  
+    # the message's actions.
     def set_report_server(self, rs):
-        self._report_server = rs;
+        self._report_server = rs
 
     #----------------------------------------------------------------------------
     # Group:  Message Fields
@@ -291,11 +305,11 @@ class UVMReportMessage(UVMObject):
 
     # Function: set_severity
     #
-    # Get or set the severity (UVM_INFO, UVM_WARNING, UVM_ERROR or 
+    # Get or set the severity (UVM_INFO, UVM_WARNING, UVM_ERROR or
     # UVM_FATAL) of the message.  The value of this field is determined via
     # the API used (`uvm_info(), `uvm_waring(), etc.) and populated for the user.
     def set_severity(self, sev):
-        self._severity = sev;
+        self._severity = sev
 
     # Function: get_id
     def get_id(self):
@@ -303,12 +317,12 @@ class UVMReportMessage(UVMObject):
 
     # Function: set_id
     #
-    # Get or set the id of the message.  The value of this field is 
+    # Get or set the id of the message.  The value of this field is
     # completely under user discretion.  Users are recommended to follow a
     # consistent convention.  Settings in the uvm_report_handler allow various
     # messaging controls based on this field.  See <uvm_report_handler>.
     def set_id(self, id):
-        self._id = id;
+        self._id = id
 
     # Function: get_message
     def get_message(self):
@@ -318,7 +332,7 @@ class UVMReportMessage(UVMObject):
     #
     # Get or set the user message content string.
     def set_message(self, msg):
-        self._message = msg;
+        self._message = msg
 
     # Function: get_verbosity
     def get_verbosity(self):
@@ -330,7 +344,7 @@ class UVMReportMessage(UVMObject):
     # against settings in the <uvm_report_handler> to determine whether this
     # message should be executed.
     def set_verbosity(self, ver):
-        self._verbosity = ver;
+        self._verbosity = ver
 
     # Function: get_filename
     def get_filename(self):
@@ -341,7 +355,7 @@ class UVMReportMessage(UVMObject):
     # Get or set the file from which the message originates.  This value
     # is automatically populated by the messaging macros.
     def set_filename(self, fname):
-        self._filename = fname;
+        self._filename = fname
 
     # Function: get_line
     def get_line(self):
@@ -352,7 +366,7 @@ class UVMReportMessage(UVMObject):
     # Get or set the line in the ~file~ from which the message originates.
     # This value is automatically populate by the messaging macros.
     def set_line(self, ln):
-        self._line = ln;
+        self._line = ln
 
     # Function: get_context
     def get_context(self):
@@ -364,7 +378,7 @@ class UVMReportMessage(UVMObject):
     # the context of the message.  It can be useful in scopes that are not
     # inherently UVM like modules, interfaces, etc.
     def set_context(self, cn):
-        self._context_name = cn;
+        self._context_name = cn
 
     # Function: get_action
     def get_action(self):
@@ -384,8 +398,8 @@ class UVMReportMessage(UVMObject):
 
     # Function: set_file
     #
-    # Get or set the file that the message is to be written to when the 
-    # message's action is UVM_LOG.  This field is populated by the 
+    # Get or set the file that the message is to be written to when the
+    # message's action is UVM_LOG.  This field is populated by the
     # uvm_report_handler during message execution flow.
     def set_file(self, fl):
         self._file = fl
@@ -402,13 +416,13 @@ class UVMReportMessage(UVMObject):
     #
     def set_report_message(self, severity, id, message, verbosity, filename,
             line, context_name):
-        self._context_name = context_name;
-        self._filename = filename;
-        self._line = line;
-        self._severity = severity;
-        self._id = id;
-        self._message = message;
-        self._verbosity = verbosity;
+        self._context_name = context_name
+        self._filename = filename
+        self._line = line
+        self._severity = severity
+        self._id = id
+        self._message = message
+        self._verbosity = verbosity
 
     #----------------------------------------------------------------------------
     # Group-  Message Recording
@@ -418,19 +432,5 @@ class UVMReportMessage(UVMObject):
     #----------------------------------------------------------------------------
     # Group:  Message Element APIs
     #----------------------------------------------------------------------------
-    def add(self, name, value, action = UVM_LOG|UVM_RM_RECORD):
+    def add(self, name, value, action=UVM_LOG|UVM_RM_RECORD):
          self._report_message_element_container.add(name, value, action)
-
-import unittest
-
-class TestUVMReportMessage(unittest.TestCase):
-
-    def test_message(self):
-        msg = UVMReportMessage()
-        cont = msg.get_element_container()
-        self.assertEqual(cont.size(), 0)
-        msg.add("msg", {1: 2}, UVM_LOG)
-        self.assertEqual(cont.size(), 1)
-
-if __name__ == '__main__':
-    unittest.main()

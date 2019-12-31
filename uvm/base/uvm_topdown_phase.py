@@ -1,8 +1,8 @@
-#
 #----------------------------------------------------------------------
 #   Copyright 2007-2011 Mentor Graphics Corporation
 #   Copyright 2007-2010 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
+#   Copyright 2019 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -20,7 +20,6 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 
-import unittest
 
 #------------------------------------------------------------------------------
 #
@@ -66,10 +65,9 @@ class UVMTopdownPhase(UVMPhase):
             if comp_domain is not None:
                 dom_name = comp_domain.get_name(
             uvm_report_info("PH_TRACE", ("topdown-phase phase={} state={} comp={}"
-                    +"comp.domain={} phase.domain={}").format(
-                    str(phase), str(state), comp.get_full_name()
-                    ,dom_name),phase_domain.get_name()),
-              UVM_DEBUG)
+                + "comp.domain={} phase.domain={}").format(
+                str(phase), str(state), comp.get_full_name(),
+                    dom_name),phase_domain.get_name()), UVM_DEBUG)
 
         from .uvm_domain import UVMDomain
         if phase_domain == UVMDomain.get_common_domain() or phase_domain == comp_domain:
@@ -110,27 +108,3 @@ class UVMTopdownPhase(UVMPhase):
 
         comp.m_current_phase = phase
         self.exec_func(comp,phase)
-
-
-class TestUVMTopdownPhase(unittest.TestCase):
-
-    def test_traverse(self):
-        from uvm_component import UVMComponent
-        c1 = UVMComponent('uvm_test_top', None)
-        c2 = UVMComponent('sub_c1', c1)
-        c3 = UVMComponent('sub_c2', c1)
-        c4 = UVMComponent('sub_c2_c4', c2)
-        td_phase = UVMTopdownPhase('MyPhase')
-        states = [UVM_PHASE_STARTED]
-        phase = UVMPhase('MyActualPhase')
-        for state in states:
-            td_phase.traverse(c1, phase, state)
-
-        children_c2 = []
-        c2.get_children(children_c2)
-        self.assertEqual(len(children_c2), 1)
-        self.assertEqual(children_c2[0].get_name(), c4.get_name())
-
-
-if __name__ == '__main__':
-    unittest.main()
