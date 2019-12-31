@@ -22,7 +22,6 @@
 #   permissions and limitations under the License.
 # ------------------------------------------------------------------------------
 
-#from .uvm_printer import UVMTablePrinter
 
 # This bit marks where filtering should occur to remove uvm stuff from a
 # scope
@@ -78,19 +77,20 @@ UVM_NORADIX   = 0
 
 UVM_RADIX = 0xf000000  # 4 bits setting the radix
 
-UVM_RADIX_TO_STRING_DICT = {UVM_BIN: "b",
-        UVM_OCT: "o",
-        UVM_DEC: "d",
-        UVM_HEX: "h",
-        UVM_UNSIGNED: "u",
-        UVM_UNFORMAT2: "u",
-        UVM_UNFORMAT4: "z",
-        UVM_STRING: "s",
-        UVM_TIME: "t",
-        UVM_ENUM: "s",
-        UVM_REAL: "g",
-        UVM_REAL_DEC: "f",
-        UVM_REAL_EXP: "e"
+UVM_RADIX_TO_STRING_DICT = {
+    UVM_BIN: "b",
+    UVM_OCT: "o",
+    UVM_DEC: "d",
+    UVM_HEX: "h",
+    UVM_UNSIGNED: "u",
+    UVM_UNFORMAT2: "u",
+    UVM_UNFORMAT4: "z",
+    UVM_STRING: "s",
+    UVM_TIME: "t",
+    UVM_ENUM: "s",
+    UVM_REAL: "g",
+    UVM_REAL_DEC: "f",
+    UVM_REAL_EXP: "e"
 }
 
 # Function- uvm_radix_to_string
@@ -106,6 +106,7 @@ def uvm_radix_to_string(radix):
 # UVM_DEEP      - Objects are deep copied (object must implement <uvm_object::copy> method)
 # UVM_SHALLOW   - Objects are shallow copied using default SV copy.
 # UVM_REFERENCE - Only object handles are copied.
+
 
 UVM_DEFAULT_POLICY = 0
 UVM_DEEP           = 0x400
@@ -158,26 +159,26 @@ UVM_FLAGS_OFF   = 0
 
 # Values are OR'ed into a 32 bit value
 # and externally
-UVM_COPY         = (1<<0)
-UVM_NOCOPY       = (1<<1)
-UVM_COMPARE      = (1<<2)
-UVM_NOCOMPARE    = (1<<3)
-UVM_PRINT        = (1<<4)
-UVM_NOPRINT      = (1<<5)
-UVM_RECORD       = (1<<6)
-UVM_NORECORD     = (1<<7)
-UVM_PACK         = (1<<8)
-UVM_NOPACK       = (1<<9)
+UVM_COPY         = (1 << 0)
+UVM_NOCOPY       = (1 << 1)
+UVM_COMPARE      = (1 << 2)
+UVM_NOCOMPARE    = (1 << 3)
+UVM_PRINT        = (1 << 4)
+UVM_NOPRINT      = (1 << 5)
+UVM_RECORD       = (1 << 6)
+UVM_NORECORD     = (1 << 7)
+UVM_PACK         = (1 << 8)
+UVM_NOPACK       = (1 << 9)
 # parameter UVM_DEEP         = (1<<10);
 # parameter UVM_SHALLOW      = (1<<11);
 # parameter UVM_REFERENCE    = (1<<12);
-UVM_PHYSICAL     = (1<<13)
-UVM_ABSTRACT     = (1<<14)
-UVM_READONLY     = (1<<15)
-UVM_NODEFPRINT   = (1<<16)
+UVM_PHYSICAL     = (1 << 13)
+UVM_ABSTRACT     = (1 << 14)
+UVM_READONLY     = (1 << 15)
+UVM_NODEFPRINT   = (1 << 16)
 
 # Extra values that are used for extra methods
-UVM_MACRO_EXTRAS  = (1<<UVM_MACRO_NUMFLAGS)
+UVM_MACRO_EXTRAS  = (1 << UVM_MACRO_NUMFLAGS)
 UVM_FLAGS        = UVM_MACRO_EXTRAS+1
 UVM_UNPACK       = UVM_MACRO_EXTRAS+2
 UVM_CHECK_FIELDS = UVM_MACRO_EXTRAS+3
@@ -570,4 +571,3 @@ UVM_ALL_DROPPED = 4
 # do not specify a comparer policy.
 
 ### uvm_comparer uvm_default_comparer = new(); // uvm_comparer::init();
-

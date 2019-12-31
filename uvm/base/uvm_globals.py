@@ -3,6 +3,7 @@
 #   Copyright 2007-2011 Cadence Design Systems, Inc.
 #   Copyright 2010-2011 Synopsys, Inc.
 #   Copyright 2013-2014 NVIDIA Corporation
+#   Copyright 2019 Tuomas Poikela
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -18,9 +19,12 @@
 #   CONDITIONS OF ANY KIND, either express or implied.  See
 #   the License for the specific language governing
 #   permissions and limitations under the License.
+
+#   uvm-python NOTE: All code ported from SystemVerilog UVM 1.2 to
+#   python. Original code structures (including comments)
+#   preserved where possible.
 # ------------------------------------------------------------------------------
 
-import re
 import cocotb
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time, simulator
