@@ -39,13 +39,13 @@ class TestUVMPool(unittest.TestCase):
 
     def test_len_and_in(self):
         pool = UVMPool()
-        self.assertEqual('xxx' in pool, False)
+        self.assertNotIn('xxx', pool)
         self.assertEqual(len(pool), 0)
         pool.add('xxx', 1234)
-        self.assertEqual('xxx' in pool, True)
+        self.assertIn('xxx', pool)
         self.assertEqual(len(pool), 1)
         empty = UVMPool()
-        self.assertEqual('xxx' in empty, False)
+        self.assertNotIn('xxx', empty)
 
     def test_while_has_next(self):
         pool = UVMPool()
@@ -54,6 +54,8 @@ class TestUVMPool(unittest.TestCase):
         pool.add(8, 16)
         while (pool.has_next()):
             val = pool.next()
+            self.assertTrue(pool.exists(val))
+            self.assertIn(pool[val], [2, 8, 16])
 
     def test_for_loop(self):
         pool = UVMPool()
@@ -63,8 +65,8 @@ class TestUVMPool(unittest.TestCase):
         pool.add("c", 16)
         for key in pool:
             val = pool[key]
-            self.assertEqual(val in [0, 4, 8, 16], True)
-            self.assertEqual(key in ["z", "a", "b", "c"], True)
+            self.assertTrue(val in [0, 4, 8, 16])
+            self.assertTrue(key in ["z", "a", "b", "c"])
 
 
 class TestUVMEventPool(unittest.TestCase):
@@ -76,7 +78,7 @@ class TestUVMEventPool(unittest.TestCase):
         self.assertEqual(evt_start.get_name(), 'start')
         self.assertEqual(evt_end.get_name(), 'end')
         evt_end2 = event_pool.get('end')
-        self.assertEqual(evt_end, evt_end2)
+        self.assertIs(evt_end, evt_end2)
         self.assertNotEqual(evt_end, evt_start)
 
 

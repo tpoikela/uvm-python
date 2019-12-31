@@ -1,8 +1,7 @@
 
-import unittest
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
-from .uvm_object_globals import UVM_PRINT, UVM_NONE, UVM_COPY
+from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE)
 from .uvm_globals import uvm_report_error, uvm_report_warning
 
 
@@ -111,21 +110,21 @@ class UVMObject(sv_obj):
     #  // means of supplying those arguments.
     #  //
     #  // The default implementation of this method produces an error and returns
-    #  // ~null~. To enable use of this method, a user's subtype must implement a
+    #  // ~None~. To enable use of this method, a user's subtype must implement a
     #  // version that returns the subtype's wrapper.
     #  //
     #  // For example:
     #  //
-    #  //|  class cmd extends uvm_object;
-    #  //|    typedef uvm_object_registry #(cmd) type_id;
-    #  //|    static function type_id get_type();
-    #  //|      return type_id::get();
+    #  //|  class cmd extends uvm_object
+    #  //|    typedef uvm_object_registry #(cmd) type_id
+    #  //|    static function type_id get_type()
+    #  //|      return type_id::get()
     #  //|    endfunction
     #  //|  endclass
     #  //
     #  // Then, to use:
     #  //
-    #  //|  factory.set_type_override(cmd::get_type(),subcmd::get_type());
+    #  //|  factory.set_type_override(cmd::get_type(),subcmd::get_type())
     #  //
     #  // This function is implemented by the `uvm_*_utils macros, if employed.
     def get_type(self):
@@ -144,18 +143,18 @@ class UVMObject(sv_obj):
     #  //
     #  // The default implementation of this method does a factory lookup of the
     #  // proxy using the return value from <get_type_name>. If the type returned
-    #  // by <get_type_name> is not registered with the factory, then a ~null~
+    #  // by <get_type_name> is not registered with the factory, then a ~None~
     #  // handle is returned.
     #  //
     #  // For example:
     #  //
-    #  //|  class cmd extends uvm_object;
-    #  //|    typedef uvm_object_registry #(cmd) type_id;
-    #  //|    static function type_id get_type();
-    #  //|      return type_id::get();
+    #  //|  class cmd extends uvm_object
+    #  //|    typedef uvm_object_registry #(cmd) type_id
+    #  //|    static function type_id get_type()
+    #  //|      return type_id::get()
     #  //|    endfunction
-    #  //|    virtual function type_id get_object_type();
-    #  //|      return type_id::get();
+    #  //|    virtual function type_id get_object_type()
+    #  //|      return type_id::get()
     #  //|    endfunction
     #  //|  endclass
     #  //
@@ -179,12 +178,12 @@ class UVMObject(sv_obj):
     #  //
     #  // A typical implementation is as follows:
     #  //
-    #  //|  class mytype extends uvm_object;
+    #  //|  class mytype extends uvm_object
     #  //|    ...
-    #  //|    const static string type_name = "mytype";
+    #  //|    const static string type_name = "mytype"
     #  //|
-    #  //|    virtual function string get_type_name();
-    #  //|      return type_name;
+    #  //|    virtual function string get_type_name()
+    #  //|      return type_name
     #  //|    endfunction
     #  //
     #  // We define the ~type_name~ static variable to enable access to the type name
@@ -204,11 +203,11 @@ class UVMObject(sv_obj):
     #  //
     #  // A typical implementation is as follows:
     #  //
-    #  //|  class mytype extends uvm_object;
+    #  //|  class mytype extends uvm_object
     #  //|    ...
-    #  //|    virtual function uvm_object create(string name="");
-    #  //|      mytype t = new(name);
-    #  //|      return t;
+    #  //|    virtual function uvm_object create(string name="")
+    #  //|      mytype t = new(name)
+    #  //|      return t
     #  //|    endfunction
     #
     def create(self, name=""):
@@ -251,7 +250,7 @@ class UVMObject(sv_obj):
             from .uvm_global_vars import uvm_default_printer
             printer = uvm_default_printer
         if printer is None:
-            uvm_report_error("NULLPRINTER", "uvm_default_printer is null")
+            uvm_report_error("NonePRINTER", "uvm_default_printer is None")
         sv.fwrite(printer.knobs.mcd, self.sprint(printer))
 
     #  // Function: sprint
@@ -270,7 +269,7 @@ class UVMObject(sv_obj):
             printer = uvm_default_printer
         if not printer.istop():
             UVMObject._m_uvm_status_container.printer = printer
-            self.__m_uvm_field_automation(None, UVM_PRINT, "")
+            self._m_uvm_field_automation(None, UVM_PRINT, "")
             self.do_print(printer)
             return ""
         self._m_uvm_status_container = UVMObject._m_uvm_status_container
@@ -295,20 +294,20 @@ class UVMObject(sv_obj):
     #  //
     #  // An example implementation of ~do_print~ is as follows:
     #  //
-    #  //| class mytype extends uvm_object;
-    #  //|   data_obj data;
-    #  //|   int f1;
-    #  //|   virtual function void do_print (uvm_printer printer);
-    #  //|     super.do_print(printer);
-    #  //|     printer.print_field_int("f1", f1, $bits(f1), UVM_DEC);
-    #  //|     printer.print_object("data", data);
+    #  //| class mytype extends uvm_object
+    #  //|   data_obj data
+    #  //|   int f1
+    #  //|   virtual function void do_print (uvm_printer printer)
+    #  //|     super.do_print(printer)
+    #  //|     printer.print_field_int("f1", f1, $bits(f1), UVM_DEC)
+    #  //|     printer.print_object("data", data)
     #  //|   endfunction
     #  //
     #  // Then, to print and sprint the object, you could write:
     #  //
-    #  //| mytype t = new;
-    #  //| t.print();
-    #  //| uvm_report_info("Received",t.sprint());
+    #  //| mytype t = new
+    #  //| t.print()
+    #  //| uvm_report_info("Received",t.sprint())
     #  //
     #  // See <uvm_printer> for information about the printer API.
     def do_print(self, printer):
@@ -329,46 +328,46 @@ class UVMObject(sv_obj):
     #  //
     #  // An example implementation of convert2string follows.
     #  //
-    #  //| class base extends uvm_object;
-    #  //|   string field = "foo";
-    #  //|   virtual function string convert2string();
-    #  //|     convert2string = {"base_field=",field};
+    #  //| class base extends uvm_object
+    #  //|   string field = "foo"
+    #  //|   virtual function string convert2string()
+    #  //|     convert2string = {"base_field=",field}
     #  //|   endfunction
     #  //| endclass
     #  //|
-    #  //| class obj2 extends uvm_object;
-    #  //|   string field = "bar";
-    #  //|   virtual function string convert2string();
-    #  //|     convert2string = {"child_field=",field};
+    #  //| class obj2 extends uvm_object
+    #  //|   string field = "bar"
+    #  //|   virtual function string convert2string()
+    #  //|     convert2string = {"child_field=",field}
     #  //|   endfunction
     #  //| endclass
     #  //|
-    #  //| class obj extends base;
-    #  //|   int addr = 'h123;
-    #  //|   int data = 'h456;
-    #  //|   bit write = 1;
-    #  //|   obj2 child = new;
-    #  //|   virtual function string convert2string();
+    #  //| class obj extends base
+    #  //|   int addr = 'h123
+    #  //|   int data = 'h456
+    #  //|   bit write = 1
+    #  //|   obj2 child = new
+    #  //|   virtual function string convert2string()
     #  //|      convert2string = {super.convert2string(),
     #  //|        $sformatf(" write=%0d addr=%8h data=%8h ",write,addr,data),
-    #  //|        child.convert2string()};
+    #  //|        child.convert2string()}
     #  //|   endfunction
     #  //| endclass
     #  //
     #  // Then, to display an object, you could write:
     #  //
-    #  //| obj o = new;
-    #  //| uvm_report_info("BusMaster",{"Sending:\n ",o.convert2string()});
+    #  //| obj o = new
+    #  //| uvm_report_info("BusMaster",{"Sending:\n ",o.convert2string()})
     #  //
     #  // The output will look similar to:
     #  //
     #  //| UVM_INFO @ 0: reporter [BusMaster] Sending:
     #  //|    base_field=foo write=1 addr=00000123 data=00000456 child_field=bar
-    #  extern virtual function string convert2string();
+    #  extern virtual function string convert2string()
     def convert2string(self):
         return ""
 
-    def __m_uvm_field_automation(self, tmp_data__, what__, str__):
+    def _m_uvm_field_automation(self, tmp_data__, what__, str__):
         pass
 
     #  // Group: Recording
@@ -388,7 +387,7 @@ class UVMObject(sv_obj):
     #  // via a common interface, the uvm_recorder policy provides vendor-independent
     #  // access to a simulator's recording capabilities.
     #
-    #  extern function void record (uvm_recorder recorder=null);
+    #  extern function void record (uvm_recorder recorder=None)
     # TODO
 
 
@@ -406,15 +405,15 @@ class UVMObject(sv_obj):
     #  //
     #  // A typical implementation is as follows:
     #  //
-    #  //| class mytype extends uvm_object;
-    #  //|   data_obj data;
-    #  //|   int f1;
-    #  //|   function void do_record (uvm_recorder recorder);
-    #  //|     recorder.record_field("f1", f1, $bits(f1), UVM_DEC);
-    #  //|     recorder.record_object("data", data);
+    #  //| class mytype extends uvm_object
+    #  //|   data_obj data
+    #  //|   int f1
+    #  //|   function void do_record (uvm_recorder recorder)
+    #  //|     recorder.record_field("f1", f1, $bits(f1), UVM_DEC)
+    #  //|     recorder.record_object("data", data)
     #  //|   endfunction
     #
-    #  extern virtual function void do_record (uvm_recorder recorder);
+    #  extern virtual function void do_record (uvm_recorder recorder)
     # TODO
 
     #  // Group: Copying
@@ -433,13 +432,14 @@ class UVMObject(sv_obj):
             return
 
         if rhs is None:
-            uvm_report_warning("NULLCP", 
-                "A null object was supplied to copy; copy is ignored", UVM_NONE)
+            uvm_report_warning("NoneCP", 
+                "A None object was supplied to copy; copy is ignored", UVM_NONE)
             return
 
         UVMObject.uvm_global_copy_map[rhs] = self
         UVMObject.depth += 1
-        self.__m_uvm_field_automation(rhs, UVM_COPY, "")
+        print("JJJ going here now")
+        self._m_uvm_field_automation(rhs, UVM_COPY, "")
         self.do_copy(rhs)
 
         UVMObject.depth -= 1
@@ -454,20 +454,20 @@ class UVMObject(sv_obj):
     #  //
     #  // A typical implementation is as follows:
     #  //
-    #  //|  class mytype extends uvm_object;
+    #  //|  class mytype extends uvm_object
     #  //|    ...
-    #  //|    int f1;
-    #  //|    function void do_copy (uvm_object rhs);
-    #  //|      mytype rhs_;
-    #  //|      super.do_copy(rhs);
-    #  //|      $cast(rhs_,rhs);
-    #  //|      field_1 = rhs_.field_1;
+    #  //|    int f1
+    #  //|    function void do_copy (uvm_object rhs)
+    #  //|      mytype rhs_
+    #  //|      super.do_copy(rhs)
+    #  //|      $cast(rhs_,rhs)
+    #  //|      field_1 = rhs_.field_1
     #  //|    endfunction
     #  //
     #  // The implementation must call ~super.do_copy~, and it must $cast the rhs
     #  // argument to the derived type before copying.
     #
-    #  extern virtual function void do_copy (uvm_object rhs);
+    #  extern virtual function void do_copy (uvm_object rhs)
     def do_copy(self, rhs):
         return
 
@@ -489,8 +489,69 @@ class UVMObject(sv_obj):
     #  // then the global ~uvm_default_comparer~ policy is used. See <uvm_comparer>
     #  // for more information.
     #
-    #  extern function bit compare (uvm_object rhs, uvm_comparer comparer=null);
-    #
+    #  extern function bit compare (uvm_object rhs, uvm_comparer comparer=None)
+    def compare(self, rhs, comparer=None):
+        t = 0
+        dc = 0
+        #static int style
+        style = 0
+        done = 0
+        cls = UVMObject
+        if comparer is not None:
+            cls._m_uvm_status_container.comparer = comparer
+        else:
+            from .uvm_global_vars import uvm_default_comparer
+            cls._m_uvm_status_container.comparer = uvm_default_comparer
+        comparer = cls._m_uvm_status_container.comparer
+
+        if(not cls._m_uvm_status_container.scope.depth()):
+            comparer.compare_map.delete()
+            comparer.result = 0
+            comparer.miscompares = ""
+            comparer.scope = cls._m_uvm_status_container.scope
+            if self.get_name() == "":
+                cls._m_uvm_status_container.scope.down("<object>")
+            else:
+                cls._m_uvm_status_container.scope.down(self.get_name())
+
+        if(not done and (rhs is None)):
+            if(cls._m_uvm_status_container.scope.depth()):
+                comparer.print_msg_object(self, rhs)
+            else:
+                comparer.print_msg_object(self, rhs)
+                uvm_report_info("MISCMP",
+                     sv.sformatf("%0d Miscompare(s) for object %s@%0d vs. None",
+                     comparer.result,
+                     cls._m_uvm_status_container.scope.get(),
+                      self.get_inst_id()),
+                      cls._m_uvm_status_container.comparer.verbosity)
+                done = 1
+
+        if(not done and comparer.compare_map.exists(rhs)):
+            if(comparer.compare_map[rhs] != self):
+                comparer.print_msg_object(self, comparer.compare_map[rhs])
+            done = 1  # don't do any more work after this case, but do cleanup
+
+        if(not done and comparer.check_type and (rhs is not None) and
+                (self.get_type_name() != rhs.get_type_name())):
+            cls._m_uvm_status_container.stringv = ("lhs type = \"" + self.get_type_name()
+                + "' : rhs type = '" + rhs.get_type_name() + "'")
+            comparer.print_msg(cls._m_uvm_status_container.stringv)
+        
+        if not done:
+            comparer.compare_map[rhs] = self
+            self._m_uvm_field_automation(rhs, UVM_COMPARE, "")
+            dc = self.do_compare(rhs, comparer)
+        
+        if cls._m_uvm_status_container.scope.depth() == 1:
+            cls._m_uvm_status_container.scope.up()
+        
+        if rhs is not None:
+            comparer.print_rollup(self, rhs)
+        return (comparer.result == 0 and dc == 1)
+        #endfunction
+
+
 
     #  // Function: do_compare
     #  //
@@ -501,14 +562,14 @@ class UVMObject(sv_obj):
     #  //
     #  // A typical implementation is as follows:
     #  //
-    #  //|  class mytype extends uvm_object;
+    #  //|  class mytype extends uvm_object
     #  //|    ...
-    #  //|    int f1;
-    #  //|    virtual function bit do_compare (uvm_object rhs,uvm_comparer comparer);
-    #  //|      mytype rhs_;
-    #  //|      do_compare = super.do_compare(rhs,comparer);
-    #  //|      $cast(rhs_,rhs);
-    #  //|      do_compare &= comparer.compare_field_int("f1", f1, rhs_.f1);
+    #  //|    int f1
+    #  //|    virtual function bit do_compare (uvm_object rhs,uvm_comparer comparer)
+    #  //|      mytype rhs_
+    #  //|      do_compare = super.do_compare(rhs,comparer)
+    #  //|      $cast(rhs_,rhs)
+    #  //|      do_compare &= comparer.compare_field_int("f1", f1, rhs_.f1)
     #  //|    endfunction
     #  //
     #  // A derived class implementation must call ~super.do_compare()~ to ensure its
@@ -522,7 +583,10 @@ class UVMObject(sv_obj):
     #  // information is collected. See uvm_comparer for more details.
     #
     #  extern virtual function bit do_compare (uvm_object  rhs,
-    #                                          uvm_comparer comparer);
+    #                                          uvm_comparer comparer)
+    def do_compare(self, rhs, comparer):
+        return True
+        #endfunction
 
 
     #  // Group: Packing
@@ -530,12 +594,12 @@ class UVMObject(sv_obj):
     #  // Function: pack
     #
     #  extern function int pack (ref bit bitstream[],
-    #                            input uvm_packer packer=null);
+    #                            input uvm_packer packer=None)
     #
     #  // Function: pack_bytes
     #
     #  extern function int pack_bytes (ref byte unsigned bytestream[],
-    #                                  input uvm_packer packer=null);
+    #                                  input uvm_packer packer=None)
     #
     #  // Function: pack_ints
     #  //
@@ -553,7 +617,7 @@ class UVMObject(sv_obj):
     #  // consumed during the packing process.
     #
     #  extern function int pack_ints (ref int unsigned intstream[],
-    #                                 input uvm_packer packer=null);
+    #                                 input uvm_packer packer=None)
     #
     #
     #  // Function: do_pack
@@ -567,19 +631,19 @@ class UVMObject(sv_obj):
     #  //
     #  // A typical example of an object packing itself is as follows
     #  //
-    #  //|  class mysubtype extends mysupertype;
+    #  //|  class mysubtype extends mysupertype
     #  //|    ...
-    #  //|    shortint myshort;
-    #  //|    obj_type myobj;
-    #  //|    byte myarray[];
+    #  //|    shortint myshort
+    #  //|    obj_type myobj
+    #  //|    byte myarray[]
     #  //|    ...
-    #  //|    function void do_pack (uvm_packer packer);
+    #  //|    function void do_pack (uvm_packer packer)
     #  //|      super.do_pack(packer); // pack mysupertype properties
-    #  //|      packer.pack_field_int(myarray.size(), 32);
+    #  //|      packer.pack_field_int(myarray.size(), 32)
     #  //|      foreach (myarray)
-    #  //|        packer.pack_field_int(myarray[index], 8);
-    #  //|      packer.pack_field_int(myshort, $bits(myshort));
-    #  //|      packer.pack_object(myobj);
+    #  //|        packer.pack_field_int(myarray[index], 8)
+    #  //|      packer.pack_field_int(myshort, $bits(myshort))
+    #  //|      packer.pack_object(myobj)
     #  //|    endfunction
     #  //
     #  // The implementation must call ~super.do_pack~ so that base class properties
@@ -597,8 +661,8 @@ class UVMObject(sv_obj):
     #  //  - For string data types, append a zero byte after packing the string
     #  //    contents.
     #  //
-    #  //  - For objects, pack 4 bits immediately before packing the object. For ~null~
-    #  //    objects, pack 4'b0000. For non-~null~ objects, pack 4'b0001.
+    #  //  - For objects, pack 4 bits immediately before packing the object. For ~None~
+    #  //    objects, pack 4'b0000. For non-~None~ objects, pack 4'b0001.
     #  //
     #  // When the `uvm_field_* macros are used,
     #  // <Utility and Field Macros for Components and Objects>,
@@ -608,7 +672,7 @@ class UVMObject(sv_obj):
     #  // Packing order does not need to match declaration order. However, unpacking
     #  // order must match packing order.
     #
-    #  extern virtual function void do_pack (uvm_packer packer);
+    #  extern virtual function void do_pack (uvm_packer packer)
     #
     #
     #  // Group: Unpacking
@@ -616,12 +680,12 @@ class UVMObject(sv_obj):
     #  // Function: unpack
     #
     #  extern function int unpack (ref   bit        bitstream[],
-    #                              input uvm_packer packer=null);
+    #                              input uvm_packer packer=None)
     #
     #  // Function: unpack_bytes
     #
     #  extern function int unpack_bytes (ref byte unsigned bytestream[],
-    #                                    input uvm_packer packer=null);
+    #                                    input uvm_packer packer=None)
     #
     #  // Function: unpack_ints
     #  //
@@ -643,7 +707,7 @@ class UVMObject(sv_obj):
     #  // The return value is the actual number of bits unpacked from the given array.
     #
     #  extern function int unpack_ints (ref   int unsigned intstream[],
-    #                                   input uvm_packer packer=null);
+    #                                   input uvm_packer packer=None)
     #
     #
     #  // Function: do_unpack
@@ -659,15 +723,15 @@ class UVMObject(sv_obj):
     #  //
     #  // The following implementation corresponds to the example given in do_pack.
     #  //
-    #  //|  function void do_unpack (uvm_packer packer);
-    #  //|   int sz;
+    #  //|  function void do_unpack (uvm_packer packer)
+    #  //|   int sz
     #  //|    super.do_unpack(packer); // unpack super's properties
-    #  //|    sz = packer.unpack_field_int(myarray.size(), 32);
-    #  //|    myarray.delete();
+    #  //|    sz = packer.unpack_field_int(myarray.size(), 32)
+    #  //|    myarray.delete()
     #  //|    for(int index=0; index<sz; index++)
-    #  //|      myarray[index] = packer.unpack_field_int(8);
-    #  //|    myshort = packer.unpack_field_int($bits(myshort));
-    #  //|    packer.unpack_object(myobj);
+    #  //|      myarray[index] = packer.unpack_field_int(8)
+    #  //|    myshort = packer.unpack_field_int($bits(myshort))
+    #  //|    packer.unpack_object(myobj)
     #  //|  endfunction
     #  //
     #  // If your object contains dynamic data (object, string, queue, dynamic array,
@@ -679,15 +743,15 @@ class UVMObject(sv_obj):
     #  //   elements in the array from the 32 bits immediately before unpacking
     #  //   individual elements, as shown above.
     #  //
-    #  // - For string data types, unpack into the new string until a ~null~ byte is
+    #  // - For string data types, unpack into the new string until a ~None~ byte is
     #  //   encountered.
     #  //
     #  // - For objects, unpack 4 bits into a byte or int variable. If the value
-    #  //   is 0, the target object should be set to ~null~ and unpacking continues to
+    #  //   is 0, the target object should be set to ~None~ and unpacking continues to
     #  //   the next property, if any. If the least significant bit is 1, then the
     #  //   target object should be allocated and its properties unpacked.
     #
-    #  extern virtual function void do_unpack (uvm_packer packer);
+    #  extern virtual function void do_unpack (uvm_packer packer)
     #
     #
     #  // Group: Configuration
@@ -696,13 +760,13 @@ class UVMObject(sv_obj):
     #
     #  extern virtual function void  set_int_local    (string      field_name,
     #                                                  uvm_bitstream_t value,
-    #                                                  bit         recurse=1);
+    #                                                  bit         recurse=1)
     #
     #  // Function: set_string_local
     #
     #  extern virtual function void  set_string_local (string field_name,
     #                                                  string value,
-    #                                                  bit    recurse=1);
+    #                                                  bit    recurse=1)
     #
     #  // Function: set_object_local
     #  //
@@ -718,46 +782,46 @@ class UVMObject(sv_obj):
     #  //
     #  // An example implementation of all three methods is as follows.
     #  //
-    #  //| class mytype extends uvm_object;
+    #  //| class mytype extends uvm_object
     #  //|
-    #  //|   local int myint;
-    #  //|   local byte mybyte;
+    #  //|   local int myint
+    #  //|   local byte mybyte
     #  //|   local shortint myshort; // no access
-    #  //|   local string mystring;
-    #  //|   local obj_type myobj;
+    #  //|   local string mystring
+    #  //|   local obj_type myobj
     #  //|
     #  //|   // provide access to integral properties
-    #  //|   function void set_int_local(string field_name, uvm_bitstream_t value);
+    #  //|   function void set_int_local(string field_name, uvm_bitstream_t value)
     #  //|     if (uvm_is_match (field_name, "myint"))
-    #  //|       myint = value;
+    #  //|       myint = value
     #  //|     else if (uvm_is_match (field_name, "mybyte"))
-    #  //|       mybyte = value;
+    #  //|       mybyte = value
     #  //|   endfunction
     #  //|
     #  //|   // provide access to string properties
-    #  //|   function void set_string_local(string field_name, string value);
+    #  //|   function void set_string_local(string field_name, string value)
     #  //|     if (uvm_is_match (field_name, "mystring"))
-    #  //|       mystring = value;
+    #  //|       mystring = value
     #  //|   endfunction
     #  //|
     #  //|   // provide access to sub-objects
     #  //|   function void set_object_local(string field_name, uvm_object value,
-    #  //|                                  bit clone=1);
-    #  //|     if (uvm_is_match (field_name, "myobj")) begin
-    #  //|       if (value != null) begin
-    #  //|         obj_type tmp;
+    #  //|                                  bit clone=1)
+    #  //|     if (uvm_is_match (field_name, "myobj")):
+    #  //|       if (value is not None):
+    #  //|         obj_type tmp
     #  //|         // if provided value is not correct type, produce error
     #  //|         if (!$cast(tmp, value) )
     #  //|           /* error */
     #  //|         else begin
     #  //|           if(clone)
-    #  //|             $cast(myobj, tmp.clone());
+    #  //|             $cast(myobj, tmp.clone())
     #  //|           else
-    #  //|             myobj = tmp;
+    #  //|             myobj = tmp
     #  //|         end
     #  //|       end
     #  //|       else
-    #  //|         myobj = null; // value is null, so simply assign null to myobj
+    #  //|         myobj = None; // value is None, so simply assign None to myobj
     #  //|     end
     #  //|   endfunction
     #  //|   ...
@@ -770,7 +834,7 @@ class UVMObject(sv_obj):
     #  extern virtual function void  set_object_local (string      field_name,
     #                                                  uvm_object  value,
     #                                                  bit         clone=1,
-    #                                                  bit         recurse=1);
+    #                                                  bit         recurse=1)
     #
     #
     #
@@ -779,28 +843,28 @@ class UVMObject(sv_obj):
     #  //                           Do not use directly
     #  //---------------------------------------------------------------------------
     #
-    #  extern local function void m_pack        (inout uvm_packer packer);
-    #  extern local function void m_unpack_pre  (inout uvm_packer packer);
-    #  extern local function void m_unpack_post (uvm_packer packer);
+    #  extern local function void m_pack        (inout uvm_packer packer)
+    #  extern local function void m_unpack_pre  (inout uvm_packer packer)
+    #  extern local function void m_unpack_post (uvm_packer packer)
     #
     #  // The print_matches bit causes an informative message to be printed
     #  // when a field is set using one of the set methods.
     #
-    #  local string m_leaf_name;
+    #  local string m_leaf_name
     #
-    #  local int m_inst_id;
-    #  static protected int m_inst_count;
+    #  local int m_inst_id
+    #  static protected int m_inst_count
     #
-    #  static /*protected*/ uvm_status_container _m_uvm_status_container = new;
+    #  static /*protected*/ uvm_status_container _m_uvm_status_container = new
     #
-    #  extern virtual function void __m_uvm_field_automation (uvm_object tmp_data__,
+    #  extern virtual function void _m_uvm_field_automation (uvm_object tmp_data__,
     #                                                   int        what__,
-    #                                                   string     str__);
+    #                                                   string     str__)
     #
-    #  extern protected virtual function uvm_report_object m_get_report_object();
+    #  extern protected virtual function uvm_report_object m_get_report_object()
     #
     #  // the lookup table
-    #  local static uvm_object uvm_global_copy_map[uvm_object];
+    #  local static uvm_object uvm_global_copy_map[uvm_object]
     #endclass
 
 #//------------------------------------------------------------------------------
@@ -810,40 +874,40 @@ class UVMObject(sv_obj):
 #// reseed
 #// ------
 #
-#function void uvm_object::reseed ();
+#function void uvm_object::reseed ()
 #  if(use_uvm_seeding)
-#    this.srandom(uvm_create_random_seed(get_type_name(), get_full_name()));
+#    self.srandom(uvm_create_random_seed(get_type_name(), get_full_name()))
 #endfunction
 #
 #// get inst_id
 #// -----------
 #
-#function int uvm_object::get_inst_id();
-#  return m_inst_id;
+#function int uvm_object::get_inst_id()
+#  return m_inst_id
 #endfunction
 #
 #
 #// get inst_count
 #// --------------
 #
-#function int uvm_object::get_inst_count();
-#  return m_inst_count;
+#function int uvm_object::get_inst_count()
+#  return m_inst_count
 #endfunction
 #
 #
 #// get_name
 #// --------
 #
-#function string uvm_object::get_name ();
-#  return m_leaf_name;
+#function string uvm_object::get_name ()
+#  return m_leaf_name
 #endfunction
 #
 #
 #// get_full_name
 #// -------------
 #
-#function string uvm_object::get_full_name ();
-#  return get_name();
+#function string uvm_object::get_full_name ()
+#  return get_name()
 #endfunction
 #
 #// set_int_local
@@ -851,19 +915,19 @@ class UVMObject(sv_obj):
 #
 #function void  uvm_object::set_int_local (string      field_name,
 #                                          uvm_bitstream_t value,
-#                                          bit         recurse=1);
-#  _m_uvm_status_container.cycle_check.delete();
-#  _m_uvm_status_container.m_uvm_cycle_scopes.delete();
+#                                          bit         recurse=1)
+#  _m_uvm_status_container.cycle_check.delete()
+#  _m_uvm_status_container.m_uvm_cycle_scopes.delete()
 #
-#  this._m_uvm_status_container.status = 0;
-#  this._m_uvm_status_container.bitstream = value;
+#  self._m_uvm_status_container.status = 0
+#  self._m_uvm_status_container.bitstream = value
 #
-#  __m_uvm_field_automation(null, UVM_SETINT, field_name);
+#  _m_uvm_field_automation(None, UVM_SETINT, field_name)
 #
-#  if(_m_uvm_status_container.warning && !this._m_uvm_status_container.status) begin
-#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s", field_name),UVM_NONE);
+#  if(_m_uvm_status_container.warning and !self._m_uvm_status_container.status):
+#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s", field_name),UVM_NONE)
 #  end
-#  _m_uvm_status_container.cycle_check.delete();
+#  _m_uvm_status_container.cycle_check.delete()
 #endfunction
 #
 #
@@ -873,27 +937,27 @@ class UVMObject(sv_obj):
 #function void  uvm_object::set_object_local (string     field_name,
 #                                             uvm_object value,
 #                                             bit        clone=1,
-#                                             bit        recurse=1);
-#  uvm_object cc;
-#  _m_uvm_status_container.cycle_check.delete();
-#  _m_uvm_status_container.m_uvm_cycle_scopes.delete();
+#                                             bit        recurse=1)
+#  uvm_object cc
+#  _m_uvm_status_container.cycle_check.delete()
+#  _m_uvm_status_container.m_uvm_cycle_scopes.delete()
 #
-#  if(clone && (value!=null)) begin
-#    cc = value.clone();
-#    if(cc != null) cc.set_name(field_name);
-#    value = cc;
+#  if(clone and (value!=None)):
+#    cc = value.clone()
+#    if(cc is not None) cc.set_name(field_name)
+#    value = cc
 #  end
 #
-#  this._m_uvm_status_container.status = 0;
-#  this._m_uvm_status_container.object = value;
-#  _m_uvm_status_container.clone = clone;
+#  self._m_uvm_status_container.status = 0
+#  self._m_uvm_status_container.object = value
+#  _m_uvm_status_container.clone = clone
 #
-#  __m_uvm_field_automation(null, UVM_SETOBJ, field_name);
+#  _m_uvm_field_automation(None, UVM_SETOBJ, field_name)
 #
-#  if(_m_uvm_status_container.warning && !this._m_uvm_status_container.status) begin
-#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s", field_name), UVM_NONE);
+#  if(_m_uvm_status_container.warning and !self._m_uvm_status_container.status):
+#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s", field_name), UVM_NONE)
 #  end
-#  _m_uvm_status_container.cycle_check.delete();
+#  _m_uvm_status_container.cycle_check.delete()
 #
 #endfunction
 #
@@ -902,130 +966,55 @@ class UVMObject(sv_obj):
 #// ----------------
 #function void  uvm_object::set_string_local (string field_name,
 #                                             string value,
-#                                             bit    recurse=1);
+#                                             bit    recurse=1)
 #
-#  _m_uvm_status_container.cycle_check.delete();
-#  _m_uvm_status_container.m_uvm_cycle_scopes.delete();
+#  _m_uvm_status_container.cycle_check.delete()
+#  _m_uvm_status_container.m_uvm_cycle_scopes.delete()
 #
-#  this._m_uvm_status_container.status = 0;
-#  this._m_uvm_status_container.stringv = value;
+#  self._m_uvm_status_container.status = 0
+#  self._m_uvm_status_container.stringv = value
 #
-#  __m_uvm_field_automation(null, UVM_SETSTR, field_name);
+#  _m_uvm_field_automation(None, UVM_SETSTR, field_name)
 #
-#  if(_m_uvm_status_container.warning && !this._m_uvm_status_container.status) begin
-#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s (@%0d)", field_name, this.get_inst_id()), UVM_NONE);
+#  if(_m_uvm_status_container.warning and !self._m_uvm_status_container.status):
+#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s (@%0d)", field_name, self.get_inst_id()), UVM_NONE)
 #  end
-#  _m_uvm_status_container.cycle_check.delete();
-#endfunction
-#
-#// compare
-#// -------
-#
-#function bit  uvm_object::compare (uvm_object rhs,
-#                                   uvm_comparer comparer=null);
-#  bit t, dc;
-#  static int style;
-#  bit done;
-#  done = 0;
-#  if(comparer != null)
-#    _m_uvm_status_container.comparer = comparer;
-#  else
-#    _m_uvm_status_container.comparer = uvm_default_comparer;
-#  comparer = _m_uvm_status_container.comparer;
-#
-#  if(!_m_uvm_status_container.scope.depth()) begin
-#    comparer.compare_map.delete();
-#    comparer.result = 0;
-#    comparer.miscompares = "";
-#    comparer.scope = _m_uvm_status_container.scope;
-#    if(get_name() == "")
-#      _m_uvm_status_container.scope.down("<object>");
-#    else
-#      _m_uvm_status_container.scope.down(this.get_name());
-#  end
-#  if(!done && (rhs == null)) begin
-#    if(_m_uvm_status_container.scope.depth()) begin
-#      comparer.print_msg_object(this, rhs);
-#    end
-#    else begin
-#      comparer.print_msg_object(this, rhs);
-#      uvm_report_info("MISCMP",
-#           $sformatf("%0d Miscompare(s) for object %s@%0d vs. null",
-#           comparer.result,
-#           _m_uvm_status_container.scope.get(),
-#            this.get_inst_id()),
-#            _m_uvm_status_container.comparer.verbosity);
-#      done = 1;
-#    end
-#  end
-#
-#  if(!done && comparer.compare_map.exists(rhs)) begin
-#    if(comparer.compare_map[rhs] != this) begin
-#      comparer.print_msg_object(this, comparer.compare_map[rhs]);
-#    end
-#    done = 1;  //don't do any more work after this case, but do cleanup
-#  end
-#
-#  if(!done && comparer.check_type && (rhs != null) && (get_type_name() != rhs.get_type_name())) begin
-#    _m_uvm_status_container.stringv = { "lhs type = \"", get_type_name(),
-#                     "\" : rhs type = \"", rhs.get_type_name(), "\""};
-#    comparer.print_msg(_m_uvm_status_container.stringv);
-#  end
-#
-#  if(!done) begin
-#    comparer.compare_map[rhs]= this;
-#    __m_uvm_field_automation(rhs, UVM_COMPARE, "");
-#    dc = do_compare(rhs, comparer);
-#  end
-#
-#  if(_m_uvm_status_container.scope.depth()==1)  begin
-#    _m_uvm_status_container.scope.up();
-#  end
-#
-#  if(rhs != null)
-#    comparer.print_rollup(this, rhs);
-#  return (comparer.result == 0 && dc == 1);
+#  _m_uvm_status_container.cycle_check.delete()
 #endfunction
 #
 #
-#// do_compare
-#// ----------
-#
-#function bit  uvm_object::do_compare (uvm_object rhs,
-#                                      uvm_comparer comparer);
-#  return 1;
-#endfunction
 #
 #
-#// __m_uvm_field_automation
+#
+#// _m_uvm_field_automation
 #// ------------------
 #
-#function void uvm_object::__m_uvm_field_automation (uvm_object tmp_data__,
+#function void uvm_object::_m_uvm_field_automation (uvm_object tmp_data__,
 #                                              int        what__,
-#                                              string     str__ );
-#  return;
+#                                              string     str__ )
+#  return
 #endfunction
 #
 #// m_pack
 #// ------
 #
-#function void uvm_object::m_pack (inout uvm_packer packer);
+#function void uvm_object::m_pack (inout uvm_packer packer)
 #
-#  if(packer!=null)
-#    _m_uvm_status_container.packer = packer;
+#  if(packer!=None)
+#    _m_uvm_status_container.packer = packer
 #  else
-#    _m_uvm_status_container.packer = uvm_default_packer;
-#  packer = _m_uvm_status_container.packer;
+#    _m_uvm_status_container.packer = uvm_default_packer
+#  packer = _m_uvm_status_container.packer
 #
-#  packer.reset();
-#  packer.scope.down(get_name());
+#  packer.reset()
+#  packer.scope.down(get_name())
 #
-#  __m_uvm_field_automation(null, UVM_PACK, "");
-#  do_pack(packer);
+#  _m_uvm_field_automation(None, UVM_PACK, "")
+#  do_pack(packer)
 #
-#  packer.set_packed_size();
+#  packer.set_packed_size()
 #
-#  packer.scope.up();
+#  packer.scope.up()
 #
 #endfunction
 #
@@ -1034,20 +1023,20 @@ class UVMObject(sv_obj):
 #// ----
 #
 #function int uvm_object::pack (ref bit bitstream [],
-#                               input uvm_packer packer =null );
-#  m_pack(packer);
-#  packer.get_bits(bitstream);
-#  return packer.get_packed_size();
+#                               input uvm_packer packer =None )
+#  m_pack(packer)
+#  packer.get_bits(bitstream)
+#  return packer.get_packed_size()
 #endfunction
 #
 #// pack_bytes
 #// ----------
 #
 #function int uvm_object::pack_bytes (ref byte unsigned bytestream [],
-#                                     input uvm_packer packer=null );
-#  m_pack(packer);
-#  packer.get_bytes(bytestream);
-#  return packer.get_packed_size();
+#                                     input uvm_packer packer=None )
+#  m_pack(packer)
+#  packer.get_bytes(bytestream)
+#  return packer.get_packed_size()
 #endfunction
 #
 #
@@ -1055,55 +1044,55 @@ class UVMObject(sv_obj):
 #// ---------
 #
 #function int uvm_object::pack_ints (ref int unsigned intstream [],
-#                                    input uvm_packer packer=null );
-#  m_pack(packer);
-#  packer.get_ints(intstream);
-#  return packer.get_packed_size();
+#                                    input uvm_packer packer=None )
+#  m_pack(packer)
+#  packer.get_ints(intstream)
+#  return packer.get_packed_size()
 #endfunction
 #
 #
 #// do_pack
 #// -------
 #
-#function void uvm_object::do_pack (uvm_packer packer );
-#  return;
+#function void uvm_object::do_pack (uvm_packer packer )
+#  return
 #endfunction
 #
 #
 #// m_unpack_pre
 #// ------------
 #
-#function void uvm_object::m_unpack_pre (inout uvm_packer packer);
-#  if(packer!=null)
-#    _m_uvm_status_container.packer = packer;
+#function void uvm_object::m_unpack_pre (inout uvm_packer packer)
+#  if(packer!=None)
+#    _m_uvm_status_container.packer = packer
 #  else
-#    _m_uvm_status_container.packer = uvm_default_packer;
-#  packer = _m_uvm_status_container.packer;
-#  packer.reset();
+#    _m_uvm_status_container.packer = uvm_default_packer
+#  packer = _m_uvm_status_container.packer
+#  packer.reset()
 #endfunction
 #
 #
 #// m_unpack_post
 #// -------------
 #
-#function void uvm_object::m_unpack_post (uvm_packer packer);
+#function void uvm_object::m_unpack_post (uvm_packer packer)
 #
-#  int provided_size;
+#  int provided_size
 #
-#  provided_size = packer.get_packed_size();
+#  provided_size = packer.get_packed_size()
 #
 #  //Put this object into the hierarchy
-#  packer.scope.down(get_name());
+#  packer.scope.down(get_name())
 #
-#  __m_uvm_field_automation(null, UVM_UNPACK, "");
+#  _m_uvm_field_automation(None, UVM_UNPACK, "")
 #
-#  do_unpack(packer);
+#  do_unpack(packer)
 #
 #  //Scope back up before leaving
-#  packer.scope.up();
+#  packer.scope.up()
 #
-#  if(packer.get_packed_size() != provided_size) begin
-#    uvm_report_warning("BDUNPK", $sformatf("Unpack operation unsuccessful: unpacked %0d bits from a total of %0d bits", packer.get_packed_size(), provided_size), UVM_NONE);
+#  if(packer.get_packed_size() != provided_size):
+#    uvm_report_warning("BDUNPK", $sformatf("Unpack operation unsuccessful: unpacked %0d bits from a total of %0d bits", packer.get_packed_size(), provided_size), UVM_NONE)
 #  end
 #
 #endfunction
@@ -1113,12 +1102,12 @@ class UVMObject(sv_obj):
 #// ------
 #
 #function int uvm_object::unpack (ref    bit        bitstream [],
-#                                 input  uvm_packer packer=null);
-#  m_unpack_pre(packer);
-#  packer.put_bits(bitstream);
-#  m_unpack_post(packer);
-#  packer.set_packed_size();
-#  return packer.get_packed_size();
+#                                 input  uvm_packer packer=None)
+#  m_unpack_pre(packer)
+#  packer.put_bits(bitstream)
+#  m_unpack_post(packer)
+#  packer.set_packed_size()
+#  return packer.get_packed_size()
 #endfunction
 #
 #
@@ -1126,12 +1115,12 @@ class UVMObject(sv_obj):
 #// ------------
 #
 #function int uvm_object::unpack_bytes (ref    byte unsigned bytestream [],
-#                                       input  uvm_packer packer=null);
-#  m_unpack_pre(packer);
-#  packer.put_bytes(bytestream);
-#  m_unpack_post(packer);
-#  packer.set_packed_size();
-#  return packer.get_packed_size();
+#                                       input  uvm_packer packer=None)
+#  m_unpack_pre(packer)
+#  packer.put_bytes(bytestream)
+#  m_unpack_post(packer)
+#  packer.set_packed_size()
+#  return packer.get_packed_size()
 #endfunction
 #
 #
@@ -1139,43 +1128,43 @@ class UVMObject(sv_obj):
 #// -----------
 #
 #function int uvm_object::unpack_ints (ref    int unsigned intstream [],
-#                                      input  uvm_packer packer=null);
-#  m_unpack_pre(packer);
-#  packer.put_ints(intstream);
-#  m_unpack_post(packer);
-#  packer.set_packed_size();
-#  return packer.get_packed_size();
+#                                      input  uvm_packer packer=None)
+#  m_unpack_pre(packer)
+#  packer.put_ints(intstream)
+#  m_unpack_post(packer)
+#  packer.set_packed_size()
+#  return packer.get_packed_size()
 #endfunction
 #
 #
 #// do_unpack
 #// ---------
 #
-#function void uvm_object::do_unpack (uvm_packer packer);
-#  return;
+#function void uvm_object::do_unpack (uvm_packer packer)
+#  return
 #endfunction
 #
 #
 #// record
 #// ------
 #
-#function void uvm_object::record (uvm_recorder recorder=null);
+#function void uvm_object::record (uvm_recorder recorder=None)
 #
-#  if(recorder == null)
-#    return;
-#//    recorder = uvm_default_recorder;
+#  if(recorder is None)
+#    return
+#//    recorder = uvm_default_recorder
 #
-#  //if(!recorder.tr_handle) return;
+#  //if(!recorder.tr_handle) return
 #
-#  _m_uvm_status_container.recorder = recorder;
-#  recorder.recording_depth++;
-#  __m_uvm_field_automation(null, UVM_RECORD, "");
-#  do_record(recorder);
+#  _m_uvm_status_container.recorder = recorder
+#  recorder.recording_depth++
+#  _m_uvm_field_automation(None, UVM_RECORD, "")
+#  do_record(recorder)
 #
-#  recorder.recording_depth--;
+#  recorder.recording_depth--
 #
-#  //if(recorder.recording_depth==0) begin
-#  //  recorder.tr_handle = 0;
+#  //if(recorder.recording_depth==0):
+#  //  recorder.tr_handle = 0
 #  //end
 #endfunction
 #
@@ -1183,31 +1172,14 @@ class UVMObject(sv_obj):
 #// do_record (virtual)
 #// ---------
 #
-#function void uvm_object::do_record (uvm_recorder recorder);
-#  return;
+#function void uvm_object::do_record (uvm_recorder recorder)
+#  return
 #endfunction
 #
 #
 #// m_get_report_object
 #// -------------------
 #
-#function uvm_report_object uvm_object::m_get_report_object();
-#  return null;
+#function uvm_report_object uvm_object::m_get_report_object()
+#  return None
 #endfunction
-
-
-
-class TestUVMObject(unittest.TestCase):
-
-    def test_name(self):
-        comp = UVMObject("my_component")
-        self.assertEqual(comp.get_name(), "my_component")
-
-    def test_inst_count(self):
-        UVMObject.inst_id_count = 0
-        comp = UVMObject("my_component")
-        self.assertEqual(comp.get_inst_count(), 1)
-
-
-if __name__ == '__main__':
-    unittest.main()
