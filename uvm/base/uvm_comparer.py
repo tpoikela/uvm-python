@@ -327,20 +327,16 @@ class UVMComparer:
     #  //
     #  // The ~lhs~ and ~rhs~ objects are the two objects used for comparison.
     #
-    #  virtual function bit compare_string (string name,
-    #                                       string lhs,
-    #                                       string rhs)
-    #    string msg
-    #    if(lhs != rhs):
-    #      UVMObject._m_uvm_status_container.scope.set_arg(name)
-    #      msg = { "lhs = \"", lhs, "\" : rhs = \"", rhs, "\""}
-    #      print_msg(msg)
-    #      return 0
-    #    end
-    #    return 1
-    #  endfunction
-    #
-    #
+    def compare_string(self, name, lhs, rhs):
+        msg = ""
+        if lhs != rhs:
+            UVMObject._m_uvm_status_container.scope.set_arg(name)
+            msg = "lhs = \"" + lhs + "\" : rhs = \"" + rhs + "\""
+            self.print_msg(msg)
+            return 0
+        return 1
+        #  endfunction
+
 
     #  // Function: print_msg
     #  //

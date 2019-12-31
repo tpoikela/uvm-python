@@ -89,27 +89,27 @@ def uvm_object_utils_end(T):
 
 
 def uvm_field_utils_start(T):
+    # Create static member containers for var names and masks
     if not hasattr(T, "_m_uvm_field_names"):
         setattr(T, "_m_uvm_field_names", [])
     if not hasattr(T, "_m_uvm_field_masks"):
         setattr(T, "_m_uvm_field_masks", {})
 
     def _m_uvm_field_automation(self, rhs, what__, str__):
-        print("JJJ now starting to copy stuff")
         bases = T.__bases__
         for Base in bases:
             if hasattr(Base, "_m_uvm_field_automation"):
                 Base._m_uvm_field_automation(self, rhs, what__, str__)
         vals = T._m_uvm_field_names
         masks = T._m_uvm_field_masks
-        print("JJJ now starting to copy stuff")
+
+        T_cont = T._m_uvm_status_container
         # This part does the actually work
         if what__ == UVM_COPY:
             for v in vals:
                 mask_v = masks[v]
                 if mask_v & UVM_COPY != 0:
                     v_attr = getattr(rhs, v)
-                    print("JJJ Copying attr " + v)
                     if hasattr(v_attr, "clone"):
                         setattr(self, v, v_attr.clone())
                     else:
@@ -121,13 +121,22 @@ def uvm_field_utils_start(T):
                     v_attr_rhs = getattr(rhs, v)
                     v_attr_self = getattr(self, v)
                     if v_attr_rhs != v_attr_self:
-                        T._m_uvm_status_container.comparer.compare_field(v,
-                            v_attr_self, v_attr_rhs, 0)
-                    # TODO compare these
+                        if isinstance(v_attr_self, int):
+                            T_cont.comparer.compare_field(v,
+                                v_attr_self, v_attr_rhs, 0)
+                        elif isinstance(v_attr_self, str):
+                            T_cont.comparer.compare_string(v,
+                                v_attr_self, v_attr_rhs, 0)
+                        elif hasattr(v_attr_self, "compare"):
+                            T_cont.comparer.compare_object(v,
+                                v_attr_self, v_attr_rhs)
+
+                        if (T_cont.comparer.result and
+                                T_cont.comparer.show_max <= T_cont.comparer.result):
+                            return
         elif what__ == UVM_PRINT:
             pass
     setattr(T, "_m_uvm_field_automation", _m_uvm_field_automation)
-    print("JJJ setattr for field_automation now")
 
 
 def uvm_field_utils_end(T):
@@ -140,4 +149,10 @@ def uvm_field_val(name, mask):
     masks[name] = mask
 
 def uvm_field_int(name, mask=UVM_DEFAULT):
+    uvm_field_val(name, mask)
+
+def uvm_field_string(name, mask=UVM_DEFAULT):
+    uvm_field_val(name, mask)
+
+def uvm_field_object(name, mask=UVM_DEFAULT):
     uvm_field_val(name, mask)
