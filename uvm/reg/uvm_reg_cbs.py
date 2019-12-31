@@ -22,6 +22,9 @@
 #// -------------------------------------------------------------
 #//
 
+import cocotb
+from cocotb.triggers import Timer
+
 from ..base.uvm_callback import UVMCallback, UVMCallbackIter, UVMCallbacks
 from ..macros import uvm_object_utils
 
@@ -39,7 +42,8 @@ from ..macros import uvm_object_utils
 #// Facade class for field, register, memory and backdoor
 #// access callback methods.
 #//------------------------------------------------------------------------------
-#virtual class uvm_reg_cbs extends uvm_callback
+
+
 class UVMRegCbs(UVMCallback):
 
     def __init__(self, name="uvm_reg_cbs"):
@@ -87,6 +91,9 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task pre_write(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def pre_write(self, rw):
+        yield Timer(0, "NS")
 
     #   // Task: post_write
     #   //
@@ -125,6 +132,9 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def post_write(self, rw):
+        yield Timer(0, "NS")
 
     #   // Task: pre_read
     #   //
@@ -168,6 +178,9 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def pre_read(self, rw):
+        yield Timer(0, "NS")
 
     #   // Task: post_read
     #   //
@@ -205,6 +218,9 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task post_read(uvm_reg_item rw); endtask
+    def post_read(self, rw):
+        pass
+
     #
     #
     #   // Task: post_predict

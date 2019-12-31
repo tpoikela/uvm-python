@@ -900,6 +900,7 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #  endfunction
     #
     #
+
     #  # Function: get_next
     #  #
     #  # Returns the next enabled callback of type CB which resides in the queue for ~obj~,
@@ -915,15 +916,19 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #  # iterator interface.
     #
     #  static function CB get_next (ref int itr, input T obj)
-    #    uvm_queue#(uvm_callback) q
-    #    CB cb
-    #    void'(get())
-    #    q = m_get_q(obj)
-    #    for(itr = itr+1; itr<q.size(); ++itr)
-    #      if ($cast(cb, q.get(itr)) && cb.callback_mode())
-    #         return cb
-    #    return None
-    #  endfunction
+    @classmethod
+    def get_next(cls, itr, obj):
+        q = []  # uvm_queue#(uvm_callback)
+        cls.get()
+        q = cls.m_get_q(obj)
+        for i in range(itr.m_i + 1, len(q)):
+            itr.m_i = i
+            cb = []
+            if sv.cast(cb, q[itr], UVMCallback) and cb[0].callback_mode():
+                return cb[0]
+        return None
+        #  endfunction
+
     #
     #
     #  # Function: get_prev
@@ -1087,7 +1092,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # a derivative) that is in the queue of the context object. If there
     # are no more valid callbacks in the queue, then ~None~ is returned.
     def next(self):
-        self.m_cb = UVMCallbacks.get_next(self.m_i, self.m_obj)
+        self.m_cb = UVMCallbacks.get_next(self, self.m_obj)
         return self.m_cb
 
     # Function: prev
