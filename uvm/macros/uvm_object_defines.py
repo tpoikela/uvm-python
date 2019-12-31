@@ -1,6 +1,6 @@
 
-import unittest
 from ..base.uvm_registry import *
+from ..base.sv import sv
 
 from ..base.uvm_object_globals import *
 
@@ -108,7 +108,7 @@ def uvm_field_utils_start(T):
         if what__ == UVM_COPY:
             for v in vals:
                 mask_v = masks[v]
-                if mask_v & UVM_COPY != 0:
+                if not(mask_v & UVM_NOCOPY) and (mask_v & UVM_COPY != 0):
                     v_attr = getattr(rhs, v)
                     if hasattr(v_attr, "clone"):
                         setattr(self, v, v_attr.clone())
@@ -117,7 +117,7 @@ def uvm_field_utils_start(T):
         elif what__ == UVM_COMPARE:
             for v in vals:
                 mask_v = masks[v]
-                if mask_v & UVM_COMPARE != 0:
+                if not(mask_v & UVM_NOCOMPARE) and (mask_v & UVM_COMPARE != 0):
                     v_attr_rhs = getattr(rhs, v)
                     v_attr_self = getattr(self, v)
                     if v_attr_rhs != v_attr_self:
@@ -135,7 +135,15 @@ def uvm_field_utils_start(T):
                                 T_cont.comparer.show_max <= T_cont.comparer.result):
                             return
         elif what__ == UVM_PRINT:
-            pass
+            for v in vals:
+                mask_v = masks[v]
+                if not(mask_v & UVM_NOPRINT) and (mask_v & UVM_PRINT != 0):
+                    v_attr_self = getattr(self, v)
+                    if isinstance(v_attr_self, int):
+                        T_cont.printer.print_field(v, v_attr_self,
+                            sv.bits(v_attr_self), (what__ & UVM_RADIX))
+                    else:
+                        raise Exception("Print not implemented yet with field macros")
     setattr(T, "_m_uvm_field_automation", _m_uvm_field_automation)
 
 
