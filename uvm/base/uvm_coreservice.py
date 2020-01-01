@@ -1,5 +1,4 @@
 
-import unittest
 from .uvm_factory import UVMDefaultFactory
 from .uvm_report_server import UVMReportServer
 
@@ -18,7 +17,8 @@ class UVMCoreService:
     def __init__(self):
         self.report_server = None
         self.factory = None
-        self.tr_database = None # uvm_tr_database
+        self.tr_database = None  # uvm_tr_database
+        self._visitor = None
 
     @classmethod
     def get(cls):
@@ -42,15 +42,16 @@ class UVMCoreService:
     # Function: set_factory
     #
     # Sets the current uvm factory.
-    # Please note: it is up to the user to preserve the contents of the original factory or delegate calls to the original factory
+    # Please note: it is up to the user to preserve the contents of the original factory or
+    # delegate calls to the original factory
     def set_factory(self, factory):
         self.factory = factory
 
-    #// Function: get_default_tr_database
-    #// returns the current default record database
-    #//
-    #// If no default record database has been set before this method
-    #// is called, returns an instance of <uvm_text_tr_database>
+    # Function: get_default_tr_database
+    # returns the current default record database
+    #
+    # If no default record database has been set before this method
+    # is called, returns an instance of <uvm_text_tr_database>
     def get_default_tr_database(self):
         if self.tr_database is None:
             #process p = process::self();
@@ -71,9 +72,8 @@ class UVMCoreService:
 
     #// Function: set_default_tr_database
     #// Sets the current default record database to ~db~
-    #virtual function void set_default_tr_database(uvm_tr_database db);
-    #   self.tr_database = db;
-    #endfunction : set_default_tr_database
+    def set_default_tr_database(self, db):
+        self.tr_database = db
 
     def get_report_server(self):
         if self.report_server is None:
@@ -83,14 +83,22 @@ class UVMCoreService:
     def set_report_server(self, server):
         self.report_server = server
 
+    #// Function: set_component_visitor
+    #// sets the component visitor to ~v~
+    #// (this visitor is being used for the traversal at end_of_elaboration_phase
+    #// for instance for name checking)
+    #virtual function void set_component_visitor(uvm_visitor#(uvm_component) v);
+    #        _visitor=v;
+    #endfunction
 
-class TestUVMCoreService(unittest.TestCase):
 
-    def test_name(self):
-        cs = UVMCoreService()
-        root = cs.get_root()
-        self.assertEqual(root.get_full_name(), "__top__")
-
-
-if __name__ == '__main__':
-    unittest.main()
+    #// Function: get_component_visitor
+    #// retrieves the current component visitor
+    #// if unset(or ~null~) returns a <uvm_component_name_check_visitor> instance
+    #virtual function uvm_visitor#(uvm_component) get_component_visitor();
+    #        if(_visitor==null) begin
+    #                uvm_component_name_check_visitor v = new("name-check-visitor");
+    #                _visitor=v;
+    #        end
+    #        return _visitor;
+    #endfunction
