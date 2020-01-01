@@ -10,12 +10,15 @@ class Packet(sv_obj):
         self.addr = 0
         self.b_addr = 0
         self.tx_id = 0
-        self.constraint("addr", [1, 2, 3])
-        self.constraint("b_addr", range(0, 256))
+        self.rand("addr", list(range(3)))
+        self.rand("b_addr", list(range(0, 256)))
+        #self.constraint("addr", [1, 2, 3])
+        #self.constraint("b_addr", range(0, 256))
         self.data = 0
-        self.rand("data")
-        self.constraint(("b_addr", "addr"),
-            lambda addr, b_addr: b_addr == 3 * addr)
+        self.rand("data", [0, 1, 2, 4, 8, 16, 32])
+
+        c1 = lambda addr, b_addr: b_addr == 3 * addr
+        self.constraint(c1)
 
 
 class TestSV(unittest.TestCase):
@@ -31,7 +34,7 @@ class TestSV(unittest.TestCase):
         self.assertEqual(pp.addr in [1, 2, 3], True)
         self.assertNotEqual(pp.data, 1234)
         self.assertEqual(pp.tx_id, 888)
-        self.assertEqual(pp.addr, 3 * pp.b_addr)
+        self.assertEqual(3 * pp.addr, pp.b_addr)
 
         #ok = pp.randomize_with([["addr", [5, 6, 7]]])
         #self.assertEqual(ok, True)

@@ -388,7 +388,14 @@ class UVMObject(sv_obj):
     #  // access to a simulator's recording capabilities.
     #
     #  extern function void record (uvm_recorder recorder=None)
-    # TODO
+    def record(self, recorder=None):
+        if recorder is None:
+            return
+        UVMObject._m_uvm_status_container.recorder = recorder
+        recorder.recording_depth += 1
+        self._m_uvm_field_automation(None, UVM_RECORD, "")
+        self.do_record(recorder)
+        recorder.recording_depth -= 1
 
 
     #  // Function: do_record
@@ -414,7 +421,8 @@ class UVMObject(sv_obj):
     #  //|   endfunction
     #
     #  extern virtual function void do_record (uvm_recorder recorder)
-    # TODO
+    def do_record(self, recorder):
+        return
 
     #  // Group: Copying
     #
@@ -432,13 +440,12 @@ class UVMObject(sv_obj):
             return
 
         if rhs is None:
-            uvm_report_warning("NoneCP", 
+            uvm_report_warning("NoneCP",
                 "A None object was supplied to copy; copy is ignored", UVM_NONE)
             return
 
         UVMObject.uvm_global_copy_map[rhs] = self
         UVMObject.depth += 1
-        print("JJJ going here now")
         self._m_uvm_field_automation(rhs, UVM_COPY, "")
         self.do_copy(rhs)
 
@@ -537,15 +544,15 @@ class UVMObject(sv_obj):
             cls._m_uvm_status_container.stringv = ("lhs type = \"" + self.get_type_name()
                 + "' : rhs type = '" + rhs.get_type_name() + "'")
             comparer.print_msg(cls._m_uvm_status_container.stringv)
-        
+
         if not done:
             comparer.compare_map[rhs] = self
             self._m_uvm_field_automation(rhs, UVM_COMPARE, "")
             dc = self.do_compare(rhs, comparer)
-        
+
         if cls._m_uvm_status_container.scope.depth() == 1:
             cls._m_uvm_status_container.scope.up()
-        
+
         if rhs is not None:
             comparer.print_rollup(self, rhs)
         return (comparer.result == 0 and dc == 1)
@@ -857,10 +864,6 @@ class UVMObject(sv_obj):
     #
     #  static /*protected*/ uvm_status_container _m_uvm_status_container = new
     #
-    #  extern virtual function void _m_uvm_field_automation (uvm_object tmp_data__,
-    #                                                   int        what__,
-    #                                                   string     str__)
-    #
     #  extern protected virtual function uvm_report_object m_get_report_object()
     #
     #  // the lookup table
@@ -892,22 +895,6 @@ class UVMObject(sv_obj):
 #
 #function int uvm_object::get_inst_count()
 #  return m_inst_count
-#endfunction
-#
-#
-#// get_name
-#// --------
-#
-#function string uvm_object::get_name ()
-#  return m_leaf_name
-#endfunction
-#
-#
-#// get_full_name
-#// -------------
-#
-#function string uvm_object::get_full_name ()
-#  return get_name()
 #endfunction
 #
 #// set_int_local
@@ -983,17 +970,6 @@ class UVMObject(sv_obj):
 #endfunction
 #
 #
-#
-#
-#
-#// _m_uvm_field_automation
-#// ------------------
-#
-#function void uvm_object::_m_uvm_field_automation (uvm_object tmp_data__,
-#                                              int        what__,
-#                                              string     str__ )
-#  return
-#endfunction
 #
 #// m_pack
 #// ------
@@ -1145,36 +1121,7 @@ class UVMObject(sv_obj):
 #endfunction
 #
 #
-#// record
-#// ------
 #
-#function void uvm_object::record (uvm_recorder recorder=None)
-#
-#  if(recorder is None)
-#    return
-#//    recorder = uvm_default_recorder
-#
-#  //if(!recorder.tr_handle) return
-#
-#  _m_uvm_status_container.recorder = recorder
-#  recorder.recording_depth++
-#  _m_uvm_field_automation(None, UVM_RECORD, "")
-#  do_record(recorder)
-#
-#  recorder.recording_depth--
-#
-#  //if(recorder.recording_depth==0):
-#  //  recorder.tr_handle = 0
-#  //end
-#endfunction
-#
-#
-#// do_record (virtual)
-#// ---------
-#
-#function void uvm_object::do_record (uvm_recorder recorder)
-#  return
-#endfunction
 #
 #
 #// m_get_report_object
