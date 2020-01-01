@@ -22,6 +22,7 @@
 import re
 import random
 import cocotb
+from cocotb_coverage.coverage import *
 import copy
 from cocotb.triggers import Lock, Timer
 from cocotb.utils import get_sim_time

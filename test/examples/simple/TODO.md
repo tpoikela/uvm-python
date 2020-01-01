@@ -13,9 +13,11 @@ should occur (unless the purpose of example is to cause uvm_fatal).
 [DONE] trivial/
 [DONE] basic_examples/event_pool/
 [DONE] basic_examples/module/
+[DONE] basic_examples/pkg/
+[DONE] hello_world/
 [DONE] sequence/basic_read_write_sequence/
 
-[DONE] registers/models/
+[DONE] registers/models/user-defined
 
 WIP
 ------------------
@@ -23,13 +25,7 @@ WIP
 Files in this section are Work in Progress (WIP). This means the example is
 being converted into working Python code.
 
-[WIP] basic_examples/pkg/
-
-[WIP] hello_world/consumer.sv
-[WIP] hello_world/hello_world.sv
-[WIP] hello_world/packet.sv
-[WIP] hello_world/producer.sv
-[WIP] hello_world/top.sv
+[WIP1] registers/vertical_reuse
 
 [WIP2] registers/primer/cmdline_test.sv
 [WIP2] registers/primer/dut.sv
@@ -82,8 +78,6 @@ phases/timeout/Makefile.icarus
 phases/timeout/tb_env.svh
 phases/timeout/tb_timer.svh
 phases/timeout/test.sv
-
-README.txt
 
 registers/common/any_agent.sv
 registers/common/any_config.sv
@@ -169,26 +163,6 @@ registers/sequence_api/blk_top.sv
 registers/sequence_api/Makefile.icarus
 registers/sequence_api/README.txt
 registers/sequence_api/reg_B.sv
-
-registers/vertical_reuse/blk_dut.sv
-registers/vertical_reuse/blk_env.sv
-registers/vertical_reuse/blk_pkg.sv
-registers/vertical_reuse/blk_reg_pkg.sv
-registers/vertical_reuse/blk_run.sv
-registers/vertical_reuse/blk_seqlib.sv
-registers/vertical_reuse/blk_testlib.sv
-registers/vertical_reuse/blk_top.sv
-registers/vertical_reuse/Makefile.icarus
-registers/vertical_reuse/reg_B.sv
-registers/vertical_reuse/reg_S.sv
-registers/vertical_reuse/sys_dut.sv
-registers/vertical_reuse/sys_env.sv
-registers/vertical_reuse/sys_pkg.sv
-registers/vertical_reuse/sys_reg_pkg.sv
-registers/vertical_reuse/sys_run.sv
-registers/vertical_reuse/sys_seqlib.sv
-registers/vertical_reuse/sys_testlib.sv
-registers/vertical_reuse/sys_top.sv
 
 tlm1/bidir/bidir.sv
 tlm1/bidir/Makefile.icarus

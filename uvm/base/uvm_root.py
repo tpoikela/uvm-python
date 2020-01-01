@@ -476,13 +476,11 @@ class UVMRoot(UVMComponent):
         args = []
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",args)
-        print("QQQ arg matches is " + str(args))
         for i in range(len(args)):
             value = args[i][23:len(args[i])]
             self.m_process_inst_override(value)
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_TYPE_OVERRIDE|uvm_set_type_override)=/",args)
-        print("QQQ2 arg matches is " + str(args))
         for i in range(len(args)):
             value = args[i][23:len(args[i])]
             self.m_process_type_override(value)
