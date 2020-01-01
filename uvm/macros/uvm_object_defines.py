@@ -67,6 +67,8 @@ def m_uvm_object_create_func(T,S):
     setattr(T, 'create', create)
 
 
+# Needed to make uvm_field_* macros work with similar args as in SV,
+# stores the class object of last uvm_object_utils_begin(...)
 __CURR_OBJ = None
 
 
@@ -120,6 +122,7 @@ def uvm_field_utils_start(T):
                 if not(mask_v & UVM_NOCOMPARE) and (mask_v & UVM_COMPARE != 0):
                     v_attr_rhs = getattr(rhs, v)
                     v_attr_self = getattr(self, v)
+                    # Try simple equality first
                     if v_attr_rhs != v_attr_self:
                         if isinstance(v_attr_self, int):
                             T_cont.comparer.compare_field(v,
