@@ -75,6 +75,16 @@ class process():
 
 
 class sv:
+    """ Namespace for SV functions """
+
+    @classmethod
+    def clog2(cls, value):
+        value = value - 1
+        res = 0
+        while value > 0:
+            value = value >> 1
+            res += 1
+        return res
 
     @classmethod
     def realtime(cls, unit=None):

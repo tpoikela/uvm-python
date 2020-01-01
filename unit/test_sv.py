@@ -70,5 +70,15 @@ class TestSV(unittest.TestCase):
         self.assertRegex(str1, "String: xxx")
 
 
+    def test_clog2(self):
+        self.assertEqual(sv.clog2(0), 0)
+        self.assertEqual(sv.clog2(3), 2)
+        self.assertEqual(sv.clog2(5), 3)
+        self.assertEqual(sv.clog2(16), 4)
+        for i in range(0, 64):
+            self.assertEqual(sv.clog2(1 << i), i)
+
+
+
 if __name__ == '__main__':
     unittest.main()
