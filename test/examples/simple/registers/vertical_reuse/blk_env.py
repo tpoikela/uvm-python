@@ -27,7 +27,7 @@ from uvm.macros import *
 
 from apb.apb_agent import apb_agent
 from apb.apb_rw import reg2apb_adapter
-from reg_block_B import reg_block_B
+from reg_B import reg_block_B
 
 
 class blk_env(UVMEnv):

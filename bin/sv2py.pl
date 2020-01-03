@@ -221,10 +221,10 @@ sub process_file {
 
 
         # Replace standard UVM functions
-        $line =~ s/virtual function void build\(\)/$def_build_phase/g;
-        $line =~ s/virtual function void connect\(\)/$def_build_phase/g;
-        $line =~ s/virtual function void connect_phase\(uvm_phase phase\)/$def_conn_phase/g;
-        $line =~ s/virtual function void build_phase\(uvm_phase phase\)/$def_build_phase/g;
+        $line =~ s/(virtual)? function void build\(\)/$def_build_phase/g;
+        $line =~ s/(virtual)? function void connect\(\)/$def_build_phase/g;
+        $line =~ s/(virtual)? function void connect_phase\(uvm_phase phase\)/$def_conn_phase/g;
+        $line =~ s/(virtual)? function void build_phase\(uvm_phase phase\)/$def_build_phase/g;
         $line =~ s/class (\w+) extends (\w+)/class $1($2):/g;
 
         # SystemVerilog functions
@@ -233,7 +233,7 @@ sub process_file {
         $line =~ s/uvm_config_db#\(.*\)::(set|get)/UVMConfigDb.$1/g;
         $line =~ s/uvm_resource_db#\(.*\)::(set|get)/UVMResourceDb.$1/g;
 
-        $line =~ s/virtual (protected )?task (\w+)\(/def $2(self,/g;
+        $line =~ s/(virtual\s+)?(protected\s+)?task\s+(\w+)\s*\(/def $3(self,/g;
 
         $line =~ s/super\.(\w+)_phase(phase)/super().$1_phase(phase)/g;
         $line =~ s/uvm_component parent = None/parent=None/g;
