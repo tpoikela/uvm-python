@@ -1,12 +1,12 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 #===============================================================================
 #
 #         FILE: sv2py.pl
 #
-#        USAGE: ./sv2py.pl  
+#        USAGE: ./sv2py.pl
 #
 #  DESCRIPTION: Convert some SV structs into Python. Does not do full
-#               conversion. 
+#               conversion.
 #
 #      OPTIONS: ---
 # REQUIREMENTS: ---
@@ -145,10 +145,11 @@ sub process_file {
         }
 
         if ($st == $IN_CLASS) {
-            if ($line !~ m{^\s*//} && $line =~ /^\s*(local|protected(\s+))?(\w+)\s+(\w+)\s*;/) {
+            if ($line !~ m{^\s*//} && $line
+                =~ /^\s*(local|protected(\s+))?(\w+(#\(\w+\))?)\s+(\w+)\s*;/) {
                 my $value = "None";
                 my $var_type = $3;
-                my $var_name = $4;
+                my $var_name = $5;
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 my $self_var = "${ws}#self.$var_name = $value  # $var_type\n";
@@ -162,7 +163,7 @@ sub process_file {
             $new_endfunction = $lineno;
             $st = $st & ~$IN_NEW;
         }
-        
+
         $line =~ s/;$//g;  # Remove trailing semicolon
         $line =~ s/\s*==\s*null/ is None/g;
         $line =~ s/\s*!=\s*null/ is not None/g;
@@ -177,12 +178,15 @@ sub process_file {
         $line =~ s/(\W)'b([01]+)/$1 0b$2/g;
         $line =~ s/(\W)'([0-9]+)/$1 $2/g;
         $line =~ s/&&/ and /g;
+        $line =~ s/!==/!=/g;
         $line =~ s/\|\|/ or /g;
         $line =~ s/forever\s+begin/while True:/g;
 
-        if ($line =~ /^\s*\@\s*\((\w+\s+)?\s*(.*)\)/) {
-            my $edge = $1;
-            my $sig = $2;
+        if ($line =~ /^(\s*)\@\s*\((\w+\s+)?\s*(.*)\)/) {
+            my $edge = $2;
+            my $sig = $3;
+            my $ii = "";
+            $ii = $1 if defined $1;
             $add_line = 0;
             if (defined $edge) {
                 $edge = $edge eq 'posedge' ? "RisingEdge" : "FallingEdge";
@@ -190,7 +194,7 @@ sub process_file {
             else {
                 $edge = "Edge";
             }
-            push(@outfile, "$ws#yield $edge($sig)\n");
+            push(@outfile, "$ws#${ii}yield $edge($sig)\n");
             add_import(\@imports, "from cocotb.triggers import *\n");
 
         }
