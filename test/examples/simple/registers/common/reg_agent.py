@@ -43,14 +43,15 @@ class reg_rw(UVMSequenceItem):
     #
     def __init__(self, name="reg_rw"):
         UVMSequenceItem.__init__(self, name)
+        r32b = range(0, (1 << 32) - 1)
         self.read = False
-        self.rand('read')
+        self.rand('read', [False, True])
         self.addr = 0
-        self.rand('addr')
+        self.rand('addr', r32b)
         self.data = 0
-        self.rand('data')
+        self.rand('data', r32b)
         self.byte_en = 0x0
-        self.rand('byte_en')
+        self.rand('byte_en', list(range(0, 16)))
 
     def convert2string(self):
         tt = "WRITE"
@@ -65,8 +66,7 @@ uvm_object_utils(reg_rw)
 class reg_sequencer(UVMSequencer):  #(reg_rw)
 
     def __init__(self, name, parent=None):
-        UVMSequencer.__init__(self, name, parent)
-        # super.new(name, parent)
+        super().__init__(name, parent)
 
     #endclass : reg_sequencer
 uvm_component_utils(reg_sequencer)
