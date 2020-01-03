@@ -22,9 +22,10 @@
 #//
 
 from uvm.base.uvm_callback import *
-from uvm.comps.uvm_monitor import *
+from uvm.comps.uvm_monitor import UVMMonitor
 from uvm.macros import *
 from cocotb.triggers import *
+from apb import *
 
 class apb_monitor_cbs(UVMCallback):
     def trans_observed(self, xactor, cycle):
@@ -54,35 +55,35 @@ class apb_monitor(UVMMonitor):
 
     @cocotb.coroutine
     def run_phase(self, phase):
-       super().run_phase(phase)
-       while True:
-          tr = None
+        super().run_phase(phase)
+        while True:
+            tr = None
     
-          # Wait for a SETUP cycle
-          while True:
-              yield Edge(self.sigs.pck)
-              if (self.sigs.pck.psel != 1 or
-                     self.sigs.pck.penable != b0):
-                 break
+            # Wait for a SETUP cycle
+            while True:
+                yield Edge(self.sigs.pck)
+                if (self.sigs.pck.psel != 1 or
+                   self.sigs.pck.penable != 0):
+                    break
     
-          tr = apb_rw.type_id.create("tr", self)
+            tr = apb_rw.type_id.create("tr", self)
     
-          tr.kind = apb_rw.READ
-          if (self.sigs.pck.pwrite):
-              tr.kind = apb_rw.WRITE
-          tr.addr = self.sigs.pck.paddr
+            tr.kind = apb_rw.READ
+            if (self.sigs.pck.pwrite):
+                tr.kind = apb_rw.WRITE
+            tr.addr = self.sigs.pck.paddr
     
-          yield Edge(self.sigs.pck)
-          if (self.sigs.pck.penable != 1):
-              uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle")
-          tr.data = self.sigs.pck.pwdata
-          if (tr.kind == apb_rw.READ):
-              tr.data = self.sigs.pck.prdata
+            yield Edge(self.sigs.pck)
+            if (self.sigs.pck.penable != 1):
+                uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle")
+            tr.data = self.sigs.pck.pwdata
+            if (tr.kind == apb_rw.READ):
+                tr.data = self.sigs.pck.prdata
     
-          selef.trans_observed(tr)
-          uvm_do_callbacks(apb_monitor,apb_monitor_cbs,
-                  self.trans_observed(self, tr))
-          ap.write(tr)
+            self.trans_observed(tr)
+            uvm_do_callbacks(apb_monitor,apb_monitor_cbs,
+                    self.trans_observed(self, tr))
+            self.ap.write(tr)
 
     def trans_observed(self, tr):
         pass

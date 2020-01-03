@@ -22,6 +22,7 @@
 
 from uvm.seq import UVMSequenceItem
 from uvm.macros import *
+from uvm.base.sv import sv
 
 #//------------------------------------------------------------------------------
 #//
@@ -64,21 +65,30 @@ class ubus_transfer(UVMSequenceItem):
     def __init__(self, name="ubus_transfer_inst"):
         UVMSequenceItem.__init__(self, name)
         self.addr = 0
-        self.rand("addr")
+        self.rand("addr", None)
         self.read_write = 0
-        self.rand("read_write")
+        self.rand("read_write", [READ, WRITE])
         self.size = 0
-        self.rand("size")
+        self.rand("size", [1, 2, 4, 8])
         self.data = []
-        self.rand("data")
+        #self.rand("data")
         self.wait_state = []
-        self.rand("wait_state")
+        #self.rand("wait_state")
         self.error_pos = 0
-        self.rand("error_pos")
+        #c_data_wait_size = lambda data, size: len(data) == size
+        #self.constraint(c_data_wait_size)
+        #self.rand("error_pos")
         self.transmit_delay = 0
-        self.rand("transmit_delay")
+        self.rand("transmit_delay", range(0, 11))
         self.master = ""
         self.slave = ""
+
+    def post_randomize(self):
+        self.wait_state = []
+        self.data = []
+        for i in range(self.size):
+            self.wait_state.append(sv.urandom_range(0, 1))
+            self.data.append(sv.urandom_range(1, 1 << 8))
 
 
     def do_copy(self, rhs):
