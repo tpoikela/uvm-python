@@ -21,11 +21,15 @@
 #// -------------------------------------------------------------
 #//
 
+import cocotb
+from uvm.base.sv import sv
 from uvm.base.uvm_callback import *
 from uvm.comps.uvm_monitor import UVMMonitor
 from uvm.macros import *
+from uvm.tlm1 import UVMAnalysisPort
 from cocotb.triggers import *
 from apb import *
+
 
 class apb_monitor_cbs(UVMCallback):
     def trans_observed(self, xactor, cycle):
@@ -43,15 +47,15 @@ class apb_monitor(UVMMonitor):
     #   endfunction: new
 
     def build_phase(self, phase):
-       agent = []
-       if (sv.cast(agent, self.get_parent(), apb_agent)  and  agent is not None):
-           self.sigs = agent[0].vif
-       else:
-           tmp = []
-           if (not UVMConfigDb.get(self, "", "vif", tmp)):
-              uvm_fatal("APB/MON/NOVIF", "No virtual interface specified for self monitor instance")
-           end
-           self.sigs = tmp[0]
+        agent = []
+        if (sv.cast(agent, self.get_parent(), apb_agent) and len(agent) == 1):
+            self.sigs = agent[0].vif
+        else:
+            tmp = []
+            if (not UVMConfigDb.get(self, "", "vif", tmp)):
+                uvm_fatal("APB/MON/NOVIF",
+                   "No virtual interface specified for self monitor instance")
+            self.sigs = tmp[0]
 
     @cocotb.coroutine
     def run_phase(self, phase):

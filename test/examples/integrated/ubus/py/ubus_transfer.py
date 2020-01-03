@@ -24,42 +24,31 @@ from uvm.seq import UVMSequenceItem
 from uvm.macros import *
 from uvm.base.sv import sv
 
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 #//
 #// ubus transfer enums, parameters, and events
 #//
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 
-#typedef enum { NOP,
-#               READ,
-#               WRITE
-#             } ubus_read_write_enum;
+# ubus_read_write_enum;
 NOP = 0
 READ = 1
 WRITE = 2
 
-
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 #//
 #// CLASS: ubus_transfer
 #//
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
+
 
 class ubus_transfer(UVMSequenceItem):
 
+
     # TODO add these constraints
-    #  constraint c_read_write {
-    #    read_write inside { READ, WRITE };
-    #  }
-    #  constraint c_size {
-    #    size inside {1,2,4,8};
-    #  }
     #  constraint c_data_wait_size {
     #    data.size() == size;
     #    wait_state.size() == size;
-    #  }
-    #  constraint c_transmit_delay {
-    #    transmit_delay <= 10 ;
     #  }
 
     def __init__(self, name="ubus_transfer_inst"):

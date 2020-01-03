@@ -39,6 +39,13 @@ GetOptions(
 
 my $AUTHOR = $opt{author} || "Tuomas Poikela (tpoikela)";
 
+my $re_qual = qr/(protected|local)/;  # $1
+my $re_type = qr/(\w+(#\(\w+\))?)/;   # $2, $3
+my $re_packed = qr/(\[.*\])/;           # $4
+my $re_name = qr/(\w+)/;              # $5
+my $re_unpacked = qr/(\[.*\])/;       # $6
+my $re_var = qr/rand?$re_qual?\s+$re_type\s+$re_packed?\s*$re_name\s*$re_unpacked?/;
+
 my $GLOBAL = 1 << 0;
 my $IN_CLASS = 1 << 1;
 my $IN_NEW = 1 << 2;
@@ -145,13 +152,13 @@ sub process_file {
         }
 
         if ($st == $IN_CLASS) {
-            if ($line !~ m{^\s*//} && $line
-                =~ /^\s*(local|protected(\s+))?(\w+(#\(\w+\))?)\s+(\w+)\s*;/) {
+            if ($line !~ m{^\s*//} && $line =~ $re_var) {
+                #=~ /^\s*(local|protected(\s+))?(\w+(#\(\w+\))?)\s+(\w+)\s*;/) {
                 my $value = "None";
-                my $var_type = $3;
+                my $var_type = $2;
                 my $var_name = $5;
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
-                if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
+                if ($var_type =~ /\bstring\b/ ) {$value = "";}
                 my $self_var = "${ws}#self.$var_name = $value  # $var_type\n";
                 push(@found_vars, $self_var);
             }
@@ -171,7 +178,7 @@ sub process_file {
         $line =~ s/\bthis\b/self/g;
         $line =~ s/\) begin\b/):/g;
         $line =~ s/\belse\s+if\b/elif/g;
-        $line =~ s/function new\(string name/def __init__(self, name/g;
+        $line =~ s/function new\s*\(string name/def __init__(self, name/g;
         $line =~ s/::type_id::create/.type_id.create/g;
         $line =~ s/super\.new\(/super().__init__(/g;
         $line =~ s/(\W)'h([a-fA-F0-9]+)/$1 0x$2/g;
