@@ -141,6 +141,10 @@ sub process_file {
         $line =~ s/uvm_config_db#\(.*\)::(set|get)/UVMConfigDb.$1/g;
         $line =~ s/uvm_resource_db#\(.*\)::(set|get)/UVMResourceDb.$1/g;
 
+        $line =~ s/virtual task (\w+)\(/def $1(self,/g;
+
+
+        $line =~ s/\(self,\)/(self)/g;
         push(@outfile, "$ws#$line");
 
         if ($line =~ /^class /) {++$ind;}
