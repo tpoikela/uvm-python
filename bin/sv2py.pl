@@ -41,10 +41,10 @@ my $AUTHOR = $opt{author} || "Tuomas Poikela (tpoikela)";
 
 my $re_qual = qr/(protected|local)/;  # $1
 my $re_type = qr/(\w+(#\(\w+\))?)/;   # $2, $3
-my $re_packed = qr/(\[.*\])/;           # $4
+my $re_packed = qr/(\[.*\])?/;           # $4
 my $re_name = qr/(\w+)/;              # $5
 my $re_unpacked = qr/(\[.*\])/;       # $6
-my $re_var = qr/rand?$re_qual?\s+$re_type\s+$re_packed?\s*$re_name\s*$re_unpacked?/;
+my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?\s*;\s*$/;
 
 my $GLOBAL = 1 << 0;
 my $IN_CLASS = 1 << 1;
@@ -134,7 +134,7 @@ sub process_file {
             push(@outfile, $cline);
         }
 
-        if ($line =~ /^\s*(virtual\s+)?(protected\s+)?task\s+(\w+) /) {
+        if ($line =~ /^\s*(virtual\s+)?(protected\s+)?task\s+(\w+)/) {
             my $task_name = $1;
             $st = $st | $IN_TASK;
             push(@outfile, "$ws#\@cocotb.coroutine\n");
@@ -155,8 +155,9 @@ sub process_file {
             if ($line !~ m{^\s*//} && $line =~ $re_var) {
                 #=~ /^\s*(local|protected(\s+))?(\w+(#\(\w+\))?)\s+(\w+)\s*;/) {
                 my $value = "None";
-                my $var_type = $2;
-                my $var_name = $5;
+                my $var_type = $3;
+                my $var_name = $6;
+                print("$fname,$lineno var matches: $var_name\n");
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bstring\b/ ) {$value = "";}
                 my $self_var = "${ws}#self.$var_name = $value  # $var_type\n";
@@ -235,6 +236,7 @@ sub process_file {
         $line =~ s/virtual (protected )?task (\w+)\(/def $2(self,/g;
 
         $line =~ s/super\.(\w+)_phase(phase)/super().$1_phase(phase)/g;
+        $line =~ s/uvm_component parent = None/parent=None/g;
 
 
         $line =~ s/\(self,\)/(self)/g;

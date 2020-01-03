@@ -26,8 +26,6 @@ from uvm.seq.uvm_sequence_item import UVMSequenceItem
 from uvm.macros import *
 from uvm.reg.uvm_reg_adapter import *
 
-#   typedef enum {READ, WRITE} kind_e
-
 
 class apb_rw(UVMSequenceItem):
 
@@ -50,14 +48,14 @@ class apb_rw(UVMSequenceItem):
 uvm_object_utils_begin(apb_rw)
 uvm_field_int("addr", UVM_ALL_ON | UVM_NOPACK)
 uvm_field_int("data", UVM_ALL_ON | UVM_NOPACK)
-uvm_field_enum("kind", UVM_ALL_ON | UVM_NOPACK)
 uvm_object_utils_end(apb_rw)
 
-class reg2apb_adapter(uvm_reg_adapter):
+
+class reg2apb_adapter(UVMRegAdapter):
 
 
     def __init__(self, name="reg2apb_adapter"):
-       super().__init__(name)
+        super().__init__(name)
 
     def reg2bus(self, rw):
         apb = apb_rw.type_id.create("apb_rw")
@@ -69,12 +67,11 @@ class reg2apb_adapter(uvm_reg_adapter):
         return apb
 
 
-    # rw must be ref
-    def bus2reg(self, bus_item, rw):
+    def bus2reg(self, bus_item, rw):  # rw must be ref
         apb = None
         arr = []
         if (not sv.cast(arr,bus_item, apb_rw)):
-            uvm_fatal("NOT_APB_TYPE","Provided bus_item is not of the correct type")
+            uvm_fatal("NOT_APB_TYPE", "Provided bus_item is not of the correct type")
             return
 
         apb = arr[0]
