@@ -30,7 +30,7 @@ from uvm.base.uvm_config_db import UVMConfigDb
 from uvm import run_test
 
 from apb.apb_if import apb_if
-from sys_env import blk_env
+from sys_env import sys_env
 from sys_testlib import *
 
 #class dut_reset_seq(uvm_sequence):
