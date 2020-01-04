@@ -31,6 +31,7 @@ from uvm import run_test
 
 from apb.apb_if import apb_if
 from blk_env import blk_env
+from blk_testlib import *
 
 
 class dut_reset_seq(UVMSequence):

@@ -72,6 +72,10 @@ else
     PLUSARGS += +UVM_TESTNAME=test_read_modify_write 
 endif
 
+ifneq ($(SIMARGS),)
+    PLUSARGS += $(SIMARGS)
+endif
+
 ifeq ($(IMG),BLK)
     TOPLEVEL := blk_dut
     MODULE   ?= blk_run

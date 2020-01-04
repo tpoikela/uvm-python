@@ -30,6 +30,7 @@ from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time, simulator
 from .uvm_object_globals import *
 from .sv import uvm_glob_to_re, uvm_re_match
+from inspect import getframeinfo, stack
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
@@ -101,36 +102,64 @@ def uvm_info(id, message, verbosity):
     uvm_report_info(id, message, verbosity)
 
 
-def uvm_report_info(id, message, verbosity = UVM_MEDIUM, filename = "", line = 0,
-        context_name = "",  report_enabled_checked = False):
-    cs = get_cs()
-    top = cs.get_root();
-    top.uvm_report_info(id, message, verbosity, filename, line, context_name,
-            report_enabled_checked)
+def uvm_report_info(id, message, verbosity=UVM_MEDIUM, filename="", line=0,
+        context_name="", report_enabled_checked=False):
+    if uvm_report_enabled(verbosity, UVM_INFO, id):
+        cs = get_cs()
+        top = cs.get_root()
+        if filename == "":
+            caller = getframeinfo(stack()[1][0])
+            filename = caller.filename
+        if line == 0:
+            caller = getframeinfo(stack()[1][0])
+            line = caller.lineno
+        top.uvm_report_info(id, message, verbosity, filename, line, context_name,
+                report_enabled_checked)
 
 
-def uvm_report_error(id, message, verbosity = UVM_LOW, filename = "", line = 0,
-        context_name = "",  report_enabled_checked = False):
-    cs = get_cs()
-    top = cs.get_root();
-    top.uvm_report_error(id, message, verbosity, filename, line, context_name,
-            report_enabled_checked)
+def uvm_report_error(id, message, verbosity=UVM_LOW, filename="", line=0,
+        context_name="", report_enabled_checked=False):
+    if uvm_report_enabled(verbosity, UVM_ERROR, id):
+        cs = get_cs()
+        top = cs.get_root()
+        if filename == "":
+            caller = getframeinfo(stack()[1][0])
+            filename = caller.filename
+        if line == 0:
+            caller = getframeinfo(stack()[1][0])
+            line = caller.lineno
+        top.uvm_report_error(id, message, verbosity, filename, line, context_name,
+                report_enabled_checked)
 
 
-def uvm_report_warning(id, message, verbosity = UVM_LOW, filename = "", line = 0,
-        context_name = "",  report_enabled_checked = False):
-    cs = get_cs()
-    top = cs.get_root();
-    top.uvm_report_warning(id, message, verbosity, filename, line, context_name,
-            report_enabled_checked)
+def uvm_report_warning(id, message, verbosity=UVM_LOW, filename="", line=0,
+        context_name="", report_enabled_checked=False):
+    if uvm_report_enabled(verbosity, UVM_WARNING, id):
+        cs = get_cs()
+        top = cs.get_root()
+        if filename == "":
+            caller = getframeinfo(stack()[1][0])
+            filename = caller.filename
+        if line == 0:
+            caller = getframeinfo(stack()[1][0])
+            line = caller.lineno
+        top.uvm_report_warning(id, message, verbosity, filename, line, context_name,
+                report_enabled_checked)
 
 
-def uvm_report_fatal(id, message, verbosity = UVM_NONE, filename = "", line = 0,
-        context_name = "",  report_enabled_checked = False):
-    cs = get_cs()
-    top = cs.get_root();
-    top.uvm_report_fatal(id, message, verbosity, filename, line, context_name,
-            report_enabled_checked)
+def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
+        context_name="", report_enabled_checked=False):
+    if uvm_report_enabled(verbosity, UVM_FATAL, id):
+        cs = get_cs()
+        top = cs.get_root()
+        if filename == "":
+            caller = getframeinfo(stack()[1][0])
+            filename = caller.filename
+        if line == 0:
+            caller = getframeinfo(stack()[1][0])
+            line = caller.lineno
+        top.uvm_report_fatal(id, message, verbosity, filename, line, context_name,
+                report_enabled_checked)
 
 
 #----------------------------------------------------------------------------
@@ -153,9 +182,9 @@ def uvm_wait_for_nba_region():
     #but it isn't needed since program blocks are in a separate region.
     if UVM_NO_WAIT_FOR_NBA is False:
         next_nba += 1
-        #nba <= next_nba;
+        #nba <= next_nba
         nba = next_nba
-        #@(nba);
+        #@(nba)
         yield Timer(0)
     else:
         for i in range(0, UVM_POUND_ZERO_COUNT):

@@ -158,19 +158,18 @@ class UVMComponent(UVMReportObject):
                 nname = "uvm_top"
             uvm_info("NEWCOMP", "Creating " + nname + "." + name, UVM_MEDIUM+1)
 
-        # TODO to be uncommented once m_req_fifo bug is fixed
-        ###if parent.has_child(name) and self != parent.get_child(name):
-        ###    if parent == top:
-        ###        error_str = ("Name '" + name + "' is not unique to other top-level "
-        ###            + "instances. If parent is a module, build a unique name by combining the "
-        ###            + "the module name and component name: $sformatf('%m.%s','"
-        ###            + name + "').")
-        ###        uvm_fatal("CLDEXT", error_str)
-        ###    else:
-        ###        uvm_fatal("CLDEXT",
-        ###            sv.sformatf("Cannot set '%s' as a child of '%s', %s",
-        ###              name, parent.get_full_name(), "which already has a child by that name."))
-        ###    return
+        if parent.has_child(name) and self != parent.get_child(name):
+            if parent == top:
+                error_str = ("Name '" + name + "' is not unique to other top-level "
+                    + "instances. If parent is a module, build a unique name by combining the "
+                    + "the module name and component name: $sformatf('%m.%s','"
+                    + name + "').")
+                uvm_fatal("CLDEXT", error_str)
+            else:
+                uvm_fatal("CLDEXT",
+                    sv.sformatf("Cannot set '%s' as a child of '%s', %s",
+                      name, parent.get_full_name(), "which already has a child by that name."))
+            return
 
         self.m_parent = parent
 

@@ -230,8 +230,16 @@ sub process_file {
         # SystemVerilog functions
         $line =~ s/\$(urandom|sformatf|cast)/sv.$1/g;
 
-        $line =~ s/uvm_config_db#\(.*\)::(set|get)/UVMConfigDb.$1/g;
-        $line =~ s/uvm_resource_db#\(.*\)::(set|get)/UVMResourceDb.$1/g;
+        my $conf_db_re = qr/uvm_config_db#\(.*\)::(set|get)/;
+        if ($line =~ $conf_db_re) {
+            $line =~ s/$conf_db_re/UVMConfigDb.$1/g;
+            add_import(\@imports, "from uvm.base.uvm_config_db import *\n");
+        }
+        my $res_db_re = qr/uvm_resource_db#\(.*\)::(set|get)/;
+        if ($line =~ $res_db_re) {
+            $line =~ s/$res_db_re/UVMResourceDb.$1/g;
+            add_import(\@imports, "from uvm.base.uvm_resource_db import *\n");
+        }
 
         $line =~ s/(virtual\s+)?(protected\s+)?task\s+(\w+)\s*\(/def $3(self,/g;
 

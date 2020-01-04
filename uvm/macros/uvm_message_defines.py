@@ -30,17 +30,7 @@ UVM_REPORT_DISABLE_FILE = False
 UVM_REPORT_DISABLE_LINE = False
 
 UVM_LINE_WIDTH = 120
-
 UVM_NUM_LINES = 120
-
-#//`ifndef UVM_USE_FILE_LINE
-#//`define UVM_REPORT_DISABLE_FILE_LINE
-#//`endif
-
-#`ifdef UVM_REPORT_DISABLE_FILE_LINE
-#`define UVM_REPORT_DISABLE_FILE
-#`define UVM_REPORT_DISABLE_LINE
-#`endif
 
 
 def uvm_file():
@@ -136,7 +126,7 @@ def uvm_info(ID, MSG, VERBOSITY):
 #// |`uvm_warning(ID, MSG)
 
 def uvm_warning(ID, MSG):
-    if uvm_report_enabled(UVM_NONE,UVM_WARNING,ID):
+    if uvm_report_enabled(UVM_NONE, UVM_WARNING,ID):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
@@ -153,7 +143,7 @@ def uvm_warning(ID, MSG):
 #// |`uvm_error(ID, MSG)
 
 def uvm_error(ID, MSG):
-    if uvm_report_enabled(UVM_NONE,UVM_ERROR,ID):
+    if uvm_report_enabled(UVM_NONE, UVM_ERROR,ID):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
@@ -169,8 +159,9 @@ def uvm_error(ID, MSG):
 #//
 #// |`uvm_fatal(ID, MSG)
 
+
 def uvm_fatal(ID, MSG):
-    if uvm_report_enabled(UVM_NONE,UVM_FATAL,ID):
+    if uvm_report_enabled(UVM_NONE, UVM_FATAL,ID):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno

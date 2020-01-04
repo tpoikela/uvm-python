@@ -26,6 +26,7 @@ from uvm.reg.uvm_reg import *
 from uvm.macros import *
 from uvm.reg.uvm_reg_block import *
 from uvm.reg.uvm_reg_field import *
+from uvm.base.uvm_resource_db import UVMResourceDb
 
 class reg_B_R(UVMReg):
 
@@ -96,7 +97,7 @@ class reg_block_B(UVMRegBlock):
         self.default_map.add_reg(self.CTL, 0x1, "RW")
 
         # assign field aliases
-        self.F = R.F
+        self.F = self.R.F
 
 
 

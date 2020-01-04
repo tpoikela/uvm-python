@@ -69,7 +69,7 @@ MSG_INVLCMDARGS = ("Invalid number of arguments found on the command line for se
 # The ~uvm_top~ instance of ~uvm_root~ plays several key roles in the UVM.
 #
 # Implicit top-level - The ~uvm_top~ serves as an implicit top-level component.
-# Any component whose parent is specified as ~null~ becomes a child of ~uvm_top~.
+# Any component whose parent is specified as ~None~ becomes a child of ~uvm_top~.
 # Thus, all UVM components in simulation are descendants of ~uvm_top~.
 #
 # Phase control - ~uvm_top~ manages the phasing for all components.
@@ -139,6 +139,14 @@ class UVMRoot(UVMComponent):
         #  // This sets up the global verbosity. Other command line args may
         #  // change individual component verbosity.
         self.m_check_verbosity()
+
+        #  // Variable: top_levels
+        #  //
+        #  // This variable is a list of all of the top level components in UVM. It
+        #  // includes the uvm_test_top component that is created by <run_test> as
+        #  // well as any other top level components that have been instantiated
+        #  // anywhere in the hierarchy.
+        self.top_levels = []
     #endfunction
 
     @classmethod
@@ -232,7 +240,7 @@ class UVMRoot(UVMComponent):
                     msg = "command line +UVM_TESTNAME=" + test_name
                 else:
                     msg = "call to run_test(" + test_name + ")"
-                uvm_fatal("INVTST",
+                uvm_report_fatal("INVTST",
                     "Requested test from " + msg + " not found." , UVM_NONE)
         yield Timer(0, "NS")
 
@@ -330,19 +338,29 @@ class UVMRoot(UVMComponent):
     #  //----------------------------------------------------------------------------
     #
     #
-    #  // Variable: top_levels
-    #  //
-    #  // This variable is a list of all of the top level components in UVM. It
-    #  // includes the uvm_test_top component that is created by <run_test> as
-    #  // well as any other top level components that have been instantiated
-    #  // anywhere in the hierarchy.
-    #
-    #  uvm_component top_levels[$]
-    #
-    #
+
+
     #  // Function: find
     #
     #  extern function uvm_component find (string comp_match)
+    def find(self, comp_match):
+        comp_list = []
+
+        self.find_all(comp_match, comp_list)
+
+        if len(comp_list) > 1:
+            uvm_report_warning("MMATCH",
+            sv.sformatf("Found %0d components matching '%s'. Returning first match, %0s.",
+                      len(comp_list), comp_match,comp_list[0].get_full_name()), UVM_NONE)
+
+        if len(comp_list) == 0:
+            uvm_report_warning("CMPNFD",
+              "Component matching '", comp_match,
+               "' was not found in the list of uvm_components", UVM_NONE)
+            return None
+
+        return comp_list[0]
+
     #
     #  // Function: find_all
     #  //
@@ -354,17 +372,21 @@ class UVMRoot(UVMComponent):
     #
     #  extern function void find_all (string comp_match,
     #                                 ref uvm_component comps[$],
-    #                                 input uvm_component comp=null)
+    #                                 input uvm_component comp=None)
     #
+    def find_all(self, comp_match, comps,comp=None):
+        if (comp is None):
+            comp = self
+        self.m_find_all_recurse(comp_match, comps, comp)
 
     #  // Function: print_topology
     #  //
     #  // Print the verification environment's component topology. The
     #  // ~printer~ is a <uvm_printer> object that controls the format
-    #  // of the topology printout; a ~null~ printer prints with the
+    #  // of the topology printout; a ~None~ printer prints with the
     #  // default output.
     #
-    #function void uvm_root::print_topology(uvm_printer printer=null)
+    #function void uvm_root::print_topology(uvm_printer printer=None)
     def print_topology(self, printer=None):
         s = ""
         if (len(self.m_children) == 0):
@@ -389,13 +411,42 @@ class UVMRoot(UVMComponent):
     #  time phase_timeout = `UVM_DEFAULT_TIMEOUT
     #
     #
+
     #  // PRIVATE members
     #  extern function void m_find_all_recurse(string comp_match,
     #                                          ref uvm_component comps[$],
-    #                                          input uvm_component comp=null);
-    #
+    #                                          input uvm_component comp=None);
+    def m_find_all_recurse(self, comp_match, comps, comp=None):
+        child_comp = None
+
+        if comp.has_first_child():
+            child_comp = comp.get_first_child()
+            while True:
+                self.m_find_all_recurse(comp_match, comps, child_comp)
+                if not comp.has_next_child():
+                    break
+                else:
+                    child_comp = comp.get_next_child()
+        if uvm_is_match(comp_match, comp.get_full_name()) and comp.get_name() != "":
+            comps.append(comp)
+        
+
+
     #  extern protected function new ()
+
     #  extern protected virtual function bit m_add_child (uvm_component child)
+    #// Add to the top levels array
+    def m_add_child(self, child):
+        if (super().m_add_child(child)):
+            if child.get_name() == "uvm_test_top":
+                top_levels.insert(0, child)
+            else:
+                top_levels.append(child)
+            return True
+        else:
+            return False
+        #endfunction
+        #
 
     #  extern function void build_phase(uvm_phase phase)
     def build_phase(self, phase):
@@ -420,7 +471,7 @@ class UVMRoot(UVMComponent):
 
         for i in range(len(set_verbosity_settings)):
             uvm_split_string(set_verbosity_settings[i], ",", split_vals)
-            if split_vals.size() < 4 or split_vals.size() > 5:
+            if len(split_vals) < 4 or len(split_vals) > 5:
                 self.uvm_report_warning("INVLCMDARGS",
                   sv.sformatf(MSG_INVLCMDARGS, set_verbosity_settings[i]), UVM_NONE, "", "")
 
@@ -448,7 +499,6 @@ class UVMRoot(UVMComponent):
             if timeout_count > 1:
                 timeout_list = ""
                 sep = ""
-                # for (int i = 0; i < timeout_settings.size(); i++):
                 for i in range(len(timeout_settings)):
                     if (i != 0):
                         sep = "; "
@@ -562,7 +612,6 @@ class UVMRoot(UVMComponent):
         if (verb_count > 1):
             verb_list = ""
             sep = ""
-            #for (int i = 0; i < verb_settings.size(); i++):
             for i in range(len(verb_settings)):
                 if (i != 0):
                     sep = ", "
@@ -670,7 +719,7 @@ class UVMRoot(UVMComponent):
     #   // internal function not to be used
     #   // get the initialized singleton instance of uvm_root
     #   static function uvm_root m_uvm_get_root()
-    #      if (m_inst == null):
+    #      if (m_inst == None):
     #	 m_inst = new()
     #	 void'(uvm_domain::get_common_domain())
     #	 m_inst.m_domain = uvm_domain::get_uvm_domain()
@@ -717,43 +766,6 @@ uvm_top = UVMRoot.get()
 #   return cs.get_root()
 #endfunction
 #
-#// find_all
-#// --------
-#
-#function void uvm_root::find_all(string comp_match, ref uvm_component comps[$],
-#                                 input uvm_component comp=null);
-#
-#  if (comp==null)
-#    comp = this
-#  m_find_all_recurse(comp_match, comps, comp)
-#
-#endfunction
-#
-#
-#// find
-#// ----
-#
-#function uvm_component uvm_root::find (string comp_match)
-#  uvm_component comp_list[$]
-#
-#  find_all(comp_match,comp_list)
-#
-#  if (comp_list.size() > 1)
-#    self.uvm_report_warning("MMATCH",
-#    $sformatf("Found %0d components matching '%s'. Returning first match, %0s.",
-#              comp_list.size(),comp_match,comp_list[0].get_full_name()), UVM_NONE)
-#
-#  if (comp_list.size() == 0):
-#    self.uvm_report_warning("CMPNFD",
-#      {"Component matching '",comp_match,
-#       "' was not found in the list of uvm_components"}, UVM_NONE)
-#    return null
-#  end
-#
-#  return comp_list[0]
-#endfunction
-#
-#
 #
 #
 #// set_timeout
@@ -773,40 +785,6 @@ uvm_top = UVMRoot.get()
 #
 #
 #
-#// m_find_all_recurse
-#// ------------------
-#
-#function void uvm_root::m_find_all_recurse(string comp_match, ref uvm_component comps[$],
-#                                           input uvm_component comp=null);
-#  string name
-#
-#  if (comp.get_first_child(name))
-#    do begin
-#      this.m_find_all_recurse(comp_match, comps, comp.get_child(name))
-#    end
-#    while (comp.get_next_child(name))
-#  if (uvm_is_match(comp_match, comp.get_full_name()) &&
-#      comp.get_name() != "") /* uvm_top */
-#    comps.push_back(comp)
-#
-#endfunction
-#
-#
-#// m_add_child
-#// -----------
-#
-#// Add to the top levels array
-#function bit uvm_root::m_add_child (uvm_component child)
-#  if(super.m_add_child(child)):
-#    if(child.get_name() == "uvm_test_top")
-#      top_levels.push_front(child)
-#    else
-#      top_levels.push_back(child)
-#    return 1
-#  end
-#  else
-#    return 0
-#endfunction
 #
 #
 #// m_process_type_override
@@ -931,7 +909,7 @@ uvm_top = UVMRoot.get()
 #  end
 #
 #  w = f.find_wrapper_by_name(split_val[2])
-#  if (w == null):
+#  if (w == None):
 #      uvm_report_error("UVM_CMDLINE_PROC",
 #                       $sformatf("Invalid type '%s' provided to +uvm_set_default_sequence", split_val[2]),
 #                       UVM_NONE)
