@@ -36,9 +36,12 @@ class apb_if(sv_if):
     #   wire [31:0] prdata
     #   wire [31:0] pwdata
 
-    def __init__(self, dut):
-        bus_map = {}
+    def __init__(self, dut, bus_map=None):
+        if bus_map is None:
+            bus_map = {"clk": "pclk", "psel": "psel", "penable": "penable",
+                    "pwrite": "pwrite", "prdata": "prdata", "pwdata": "pwdata"}
         super().__init__(dut, "apb", bus_map)
+        self.rst = dut.rst
 
 
     @cocotb.coroutine

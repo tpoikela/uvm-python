@@ -37,6 +37,7 @@ class blk_env(UVMEnv):
         super().__init__(name, parent)
         self.model = None  # reg_block_B
         self.apb = None  # apb_agent
+        self.all_ok = False
 
     def build_phase(self, phase):
         super().build_phase(phase)
@@ -53,6 +54,10 @@ class blk_env(UVMEnv):
             reg2apb = reg2apb_adapter()
             self.model.default_map.set_sequencer(self.apb.sqr, reg2apb)
             self.model.default_map.set_auto_predict()
+
+
+    def report_phase(self, phase):
+        self.all_ok = True
 
 
 uvm_component_utils(blk_env)

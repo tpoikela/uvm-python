@@ -25,6 +25,7 @@
 from uvm.seq.uvm_sequence_item import UVMSequenceItem
 from uvm.macros import *
 from uvm.reg.uvm_reg_adapter import *
+from uvm.reg.uvm_reg_model import *
 
 
 class apb_rw(UVMSequenceItem):

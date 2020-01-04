@@ -55,8 +55,10 @@ class blk_R_test(UVMTest):
         phase.raise_objection(self)
     
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)
-        rst_seq.vif = self.env.vif
+        rst_seq.vif = self.env.apb.vif
+        print("CXXX BEFORE rst_seq.start()")
         yield rst_seq.start(None)
+        print("CXXX after rst_seq.start()")
         self.env.model.reset()
     
         seq = blk_R_test_seq.type_id.create("blk_R_test_seq",self)

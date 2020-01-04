@@ -21,12 +21,13 @@
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
 
+import cocotb
+from cocotb.triggers import *
+
 from uvm.base.uvm_callback import *
 from uvm.base.uvm_config_db import *
-import cocotb
 from uvm.comps.uvm_driver import *
 from uvm.macros import *
-from cocotb.triggers import *
 
 
 class apb_master_cbs(UVMCallback):
@@ -54,6 +55,7 @@ class apb_master(UVMDriver):  #(apb_rw)
 
 
     def build_phase(self, phase):
+        super().build_phase(phase)
         agent = self.get_parent()
         if agent is not None:
             self.sigs = agent.vif
@@ -65,48 +67,40 @@ class apb_master(UVMDriver):  #(apb_rw)
                 self.sigs = arr[0]
 
 
-    #@cocotb.coroutine
-    #   def run_phase(self,uvm_phase phase)
-    #      super.run_phase(phase)
-    #
-    #      self.sigs.mck.psel    <=  0
-    #      self.sigs.mck.penable <=  0
-    #
-    #      while True:
-    #         apb_rw tr
-    #         yield Edge(self.sigs.mck)
-    #
-    #         seq_item_port.get_next_item(tr)
-    #
-    #         // TODO: QUESTA issue with hier ref to sequence via modport; need workaround?
-    #`ifdef VCS
-    #         if (!self.sigs.mck.at_posedge.triggered)
-    #`endif
-    #
-    #`ifdef INCA
-    #          // FIXME      if (!self.sigs.mck.at_posedge.triggered) // self is wrong and has to be reviewed
-    #`endif
-    #`ifdef QUESTA
-    #	   if (!self.sigs.mck.triggered)
-    #`endif
-    #	    yield Edge(self.sigs.mck)
-    #
-    #         self.trans_received(tr)
-    #         `uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
-    #
-    #	 case (tr.kind)
-    #          apb_rw::READ:  self.read(tr.addr, tr.data);
-    #          apb_rw::WRITE: self.write(tr.addr, tr.data)
-    #         endcase
-    #
-    #         self.trans_executed(tr)
-    #         `uvm_do_callbacks(apb_master,apb_master_cbs,trans_executed(self,tr))
-    #
-    #         seq_item_port.item_done()
-    #	 ->trig
-    #      end
-    #   endtask: run_phase
-    #
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        #super.run_phase(phase)
+        uvm_info("APB_MASTER", "apb_master run_phase started", UVM_MEDIUM)
+
+        self.sigs.psel    <= 0
+        self.sigs.penable <= 0
+
+        while True:
+            # apb_rw tr
+            yield Edge(self.sigs.clk)
+
+            tr = []
+            yield self.seq_item_port.get_next_item(tr)
+            tr = tr[0]
+
+            if (not self.sigs.mck.triggered):
+                yield Edge(self.sigs.clk)
+
+            self.trans_received(tr)
+            #uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
+    
+            if tr.kind == apb_rw.READ:
+                yield self.read(tr.addr, tr.data)
+            elif tr.kind == apb_rw.WRITE:
+                yield self.write(tr.addr, tr.data)
+
+            self.trans_executed(tr)
+            #uvm_do_callbacks(apb_master,apb_master_cbs,trans_executed(self,tr))
+
+            seq_item_port.item_done()
+    	    #->trig
+        #   endtask: run_phase
+
 
     #@cocotb.coroutine
     #   def read(self,input  bit   [31:0] addr,

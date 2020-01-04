@@ -20,7 +20,7 @@
 // -------------------------------------------------------------
 // 
 
-`timescale 1ns/1ns
+`timescale 1ns/100ps
 
 module blk_dut #(
     parameter int BASE_ADDR='h0
@@ -49,6 +49,13 @@ assign pr_addr = apb_paddr - BASE_ADDR;
 
 assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite && in_range) ? pr_data : 'z;
 
+`ifdef COCOTB_SIM
+initial begin
+ $dumpfile ("blk_dut.vcd");
+ $dumpvars (0, blk_dut);
+ #2;
+end
+`endif
 
 always @ (posedge apb_pclk)
   begin
