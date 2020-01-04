@@ -22,11 +22,24 @@
 
 `include "blk_dut.sv"
 
-module sys_dut #(int BASE_ADDR='h0) (apb_if    apb,
-                                     input bit rst);
+module sys_dut #(
+    parameter int BASE_ADDR='h0
+)
+(
+   //apb_if    apb,
+   input apb_pclk,
+   input wire [31:0] apb_paddr,
+   input        apb_psel,
+   input        apb_penable,
+   input        apb_pwrite,
+   output [31:0] apb_prdata,
+   input [31:0] apb_pwdata,
 
-  blk_dut #(BASE_ADDR)       b1 (apb, rst);
-  blk_dut #(BASE_ADDR+'h100) b2 (apb, rst);
+   input bit rst
+);
+
+  blk_dut #(BASE_ADDR)       b1 (.*);
+  blk_dut #(BASE_ADDR+'h100) b2 (.*);
 
 endmodule
 

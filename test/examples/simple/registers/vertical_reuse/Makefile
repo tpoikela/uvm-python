@@ -52,12 +52,17 @@ PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
+
 ifeq ($(TOPLEVEL_LANG),verilog)
-    #VERILOG_SOURCES ?= $(WPWD)/../../common_stub.v
-    VERILOG_SOURCES ?= $(WPWD)/blk_dut.sv
+    ifeq ($(IMG),BLK)
+        VERILOG_SOURCES ?= $(WPWD)/blk_dut.sv
+    else
+        VERILOG_SOURCES ?= $(WPWD)/sys_dut.sv
+    endif
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
+
 
 ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
