@@ -54,6 +54,7 @@ class apb_master(UVMDriver):  #(apb_rw)
         self.trig = None  # event
         self.sigs = None  # apb_vif
         self.cfg = None  # apb_config
+        self.tag = "APB_MASTER"
 
 
     def build_phase(self, phase):
@@ -79,14 +80,16 @@ class apb_master(UVMDriver):  #(apb_rw)
 
         while True:
             # apb_rw tr
-            yield Edge(self.sigs.clk)
+            #yield Edge(self.sigs.clk)
+            yield self.drive_delay()
 
             tr = []
             yield self.seq_item_port.get_next_item(tr)
             tr = tr[0]
 
             #if (not self.sigs.clk.triggered):
-            yield Edge(self.sigs.clk)
+            #yield Edge(self.sigs.clk)
+            yield self.drive_delay()
 
             self.trans_received(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
@@ -108,13 +111,14 @@ class apb_master(UVMDriver):  #(apb_rw)
 
     @cocotb.coroutine
     def read(self, addr, data):
+        uvm_info(self.tag, "Doing APB read to addr " + str(addr), UVM_MEDIUM)
         
         self.sigs.paddr   <= addr
         self.sigs.pwrite  <= 0
         self.sigs.psel    <= 1
-        yield Edge(self.sigs.clk)
+        yield self.drive_delay()
         self.sigs.penable <= 1
-        yield Edge(self.sigs.clk)
+        yield self.drive_delay()
         data.append(int(self.sigs.prdata))
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
@@ -123,18 +127,24 @@ class apb_master(UVMDriver):  #(apb_rw)
 
     @cocotb.coroutine
     def write(self, addr, data):
+        uvm_info(self.tag, "Doing APB write to addr " + str(addr), UVM_MEDIUM)
         self.sigs.paddr   <= addr
         self.sigs.pwdata  <= data
         self.sigs.pwrite  <= 1
         self.sigs.psel    <= 1
-        yield Edge(self.sigs.clk)
+        yield self.drive_delay()
         self.sigs.penable <= 1
-        yield Edge(self.sigs.clk)
+        yield self.drive_delay()
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
         #   endtask: write
         #
 
+    @cocotb.coroutine
+    def drive_delay(self):
+        yield Edge(self.sigs.clk)
+        yield Timer(1, "NS")
+    
     @cocotb.coroutine
     def trans_received(self, tr):
         yield Timer(0, "NS")

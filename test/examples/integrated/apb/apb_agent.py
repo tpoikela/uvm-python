@@ -24,8 +24,10 @@
 from uvm.comps.uvm_agent import UVMAgent
 from uvm.base import UVMConfigDb
 from uvm.macros import *
+from uvm.tlm1 import *
 from .apb_master import apb_master
 from .apb_sequencer import apb_sequencer
+from .apb_monitor import apb_monitor
 
 class apb_agent(UVMAgent):
 
@@ -36,12 +38,14 @@ class apb_agent(UVMAgent):
         self.drv = None  # apb_master
         self.mon = None  # apb_monitor
         self.vif = None  # apb_vif
+        self.error = False
+        #self.ap = UVMAnalysisExport("ap", self)
 
 
     def build_phase(self, phase):
         self.sqr = apb_sequencer.type_id.create("sqr", self)
         self.drv = apb_master.type_id.create("drv", self)
-        #      mon = apb_monitor.type_id.create("mon", self)
+        self.mon = apb_monitor.type_id.create("mon", self)
 
         arr = []
         if (not UVMConfigDb.get(self, "", "vif", arr)):
@@ -51,6 +55,13 @@ class apb_agent(UVMAgent):
 
     def connect_phase(self, phase):
         self.drv.seq_item_port.connect(self.sqr.seq_item_export)
+        #self.mon.ap.connect(self.ap)
+
+    def extract_phase(self, phase):
+        if self.mon.errors > 0:
+            self.error = True
+        if self.mon.num_items == 0:
+            self.error = True
 
     #endclass: apb_agent
 

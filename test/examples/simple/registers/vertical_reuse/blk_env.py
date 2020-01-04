@@ -57,7 +57,9 @@ class blk_env(UVMEnv):
 
 
     def report_phase(self, phase):
-        self.all_ok = True
+        if self.apb.error is False:
+            self.all_ok = True
+
 
 
 uvm_component_utils(blk_env)

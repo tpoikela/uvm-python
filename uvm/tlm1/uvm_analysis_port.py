@@ -1,7 +1,7 @@
 #
 #----------------------------------------------------------------------
 #   Copyright 2007-2011 Mentor Graphics Corporation
-#   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#   Copyright 2007-2011 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
 #   Copyright 2019 Tuomas Poikela
 #   All Rights Reserved Worldwide
@@ -38,19 +38,19 @@ from .uvm_tlm_imps import *
 # Class: uvm_analysis_port
 #
 # Broadcasts a value to all subscribers implementing a <uvm_analysis_imp>.
-# 
-#| class mon extends uvm_component;
-#|   uvm_analysis_port#(trans) ap;
+#
+#| class mon extends uvm_component
+#|   uvm_analysis_port#(trans) ap
 #|
-#|   function new(string name = "sb", uvm_component parent = null);
-#|      super.new(name, parent);
-#|      ap = new("ap", this);
+#|   function new(string name = "sb", uvm_component parent = null)
+#|      super.new(name, parent)
+#|      ap = new("ap", this)
 #|   endfunction
 #|
-#|   task run_phase(uvm_phase phase);
-#|       trans t;
+#|   task run_phase(uvm_phase phase)
+#|       trans t
 #|       ...
-#|       ap.write(t);
+#|       ap.write(t)
 #|       ...
 #|   endfunction
 #| endclass
@@ -89,15 +89,15 @@ class UVMAnalysisPort(UVMPortBase):
 # The implementation of the ~write(T)~ method must not modify
 # the value passed to it.
 #
-#| class sb extends uvm_component;
-#|   uvm_analysis_imp#(trans, sb) ap;
+#| class sb extends uvm_component
+#|   uvm_analysis_imp#(trans, sb) ap
 #|
-#|   function new(string name = "sb", uvm_component parent = null);
-#|      super.new(name, parent);
-#|      ap = new("ap", this);
+#|   function new(string name = "sb", uvm_component parent = null)
+#|      super.new(name, parent)
+#|      ap = new("ap", this)
 #|   endfunction
 #|
-#|   function void write(trans t);
+#|   function void write(trans t)
 #|       ...
 #|   endfunction
 #| endclass
@@ -120,23 +120,23 @@ class UVMAnalysisExport(UVMPortBase):
 
     # Function: new
     # Instantiate the export.
-    def __init__(self, name, parent = None):
+    def __init__(self, name, parent=None):
         UVMPortBase.__init__(self, name, parent, UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS)
         self.m_if_mask = UVM_TLM_ANALYSIS_MASK
-    
+
     def get_type_name(self):
-        return "uvm_analysis_export";
-    
+        return "uvm_analysis_export"
+
     # analysis port differs from other ports in that it broadcasts
     # to all connected interfaces. Ports only send to the interface
     # at the index specified in a call to set_if (0 by default).
-    def write (self, t):
+    def write(self, t):
         for i in range(0, self.size()):
-            tif = self.get_if (i)
+            tif = self.get_if(i)
             if tif is None:
-                uvm_report_fatal ("NTCONN", ("No uvm_tlm interface is connected to "
-                    + get_full_name() + " for executing write()"), UVM_NONE)
-            tif.write (t)
+                uvm_report_fatal("NTCONN", ("No uvm_tlm interface is connected to "
+                    + self.get_full_name() + " for executing write()"), UVM_NONE)
+            tif.write(t)
 
     #endclass
 
@@ -148,12 +148,15 @@ class TestUVMAnalysisPort(unittest.TestCase):
         from ..base.uvm_domain import UVMDomain
         from ..base.uvm_component import UVMComponent
         domains = UVMDomain.get_common_domain()
+
         class MyComp(UVMComponent):
             def build(self):
                 self.analysis_imp = UVMAnalysisImp('ap', self)
+
             def write(self, t):
                 self.written = True
                 self.t = t
+
         imp = UVMComponent("port_parent", None)
         analysis_port = UVMAnalysisPort('aport', None)
         analysis_export = UVMAnalysisExport('my_export_in_test1', imp)
@@ -164,7 +167,7 @@ class TestUVMAnalysisPort(unittest.TestCase):
         #analysis_port.connect(targetComp.analysis_imp)
         analysis_port.resolve_bindings()
 
-        analysis_port.write(12345);
+        analysis_port.write(12345)
         self.assertEqual(targetComp.written, True)
         self.assertEqual(targetComp.t, 12345)
 
