@@ -82,6 +82,7 @@ class reg2apb_adapter(UVMRegAdapter):
         rw.addr = apb.addr
         rw.data = apb.data
         rw.status = UVM_IS_OK
+        return rw
     #  endfunction
     #
     #endclass

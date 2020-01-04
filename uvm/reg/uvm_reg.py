@@ -724,6 +724,7 @@ class UVMReg(UVMObject):
     def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
             extension=None, fname="", lineno=0):
 
+        uvm_check_output_args([status])
         # create an abstract transaction for this operation
         self.XatomicX(1)
         self.set(value)

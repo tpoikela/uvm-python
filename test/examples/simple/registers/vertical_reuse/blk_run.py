@@ -47,4 +47,4 @@ def initial(dut):
     if env.all_ok is False:
         uvm_fatal("ALL_NOT_OK", "env.all_ok == False, something went wrong!")
     else:
-        uvm_info("ALL_OK", "*** TEST PASSED ***")
+        uvm_info("ALL_OK", "*** TEST PASSED ***", UVM_NONE)

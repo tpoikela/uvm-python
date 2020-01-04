@@ -1153,7 +1153,13 @@ class UVMRegMap(UVMObject):
                     rw_access = adapter.bus2reg(bus_rsp,rw_access)
                 else:
                     print("AAABBB 7: Adapter does not give any response")
-                    rw_access = adapter.bus2reg(bus_req,rw_access)
+                    rw_access = adapter.bus2reg(bus_req, rw_access)
+                    if rw_access is None:
+                        uvm_error("ADAPTER_BUS2REG_NONE", sv.sformatf("Adapter %s",
+                            + " returned None for RW item %s",
+                            adapter.get_name(),
+                            bus_req.convert2string())
+                        )
 
                 if (rw.parent is not None and i == len(addrs)-1):
                     rw.parent.post_do(rw)

@@ -39,7 +39,8 @@ class apb_if(sv_if):
     def __init__(self, dut, bus_map=None):
         if bus_map is None:
             bus_map = {"clk": "pclk", "psel": "psel", "penable": "penable",
-                    "pwrite": "pwrite", "prdata": "prdata", "pwdata": "pwdata"}
+                    "pwrite": "pwrite", "prdata": "prdata", "pwdata": "pwdata",
+                    "paddr": "paddr"}
         super().__init__(dut, "apb", bus_map)
         self.rst = dut.rst
 

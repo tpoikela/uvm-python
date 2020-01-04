@@ -29,6 +29,8 @@ from uvm.base.uvm_config_db import *
 from uvm.comps.uvm_driver import *
 from uvm.macros import *
 
+from .apb_rw import *
+
 
 class apb_master_cbs(UVMCallback):
     @cocotb.coroutine
@@ -83,64 +85,63 @@ class apb_master(UVMDriver):  #(apb_rw)
             yield self.seq_item_port.get_next_item(tr)
             tr = tr[0]
 
-            if (not self.sigs.mck.triggered):
-                yield Edge(self.sigs.clk)
+            #if (not self.sigs.clk.triggered):
+            yield Edge(self.sigs.clk)
 
             self.trans_received(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
     
             if tr.kind == apb_rw.READ:
-                yield self.read(tr.addr, tr.data)
+                data = []
+                yield self.read(tr.addr, data)
+                tr.data = data[0]
             elif tr.kind == apb_rw.WRITE:
                 yield self.write(tr.addr, tr.data)
 
             self.trans_executed(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_executed(self,tr))
 
-            seq_item_port.item_done()
+            self.seq_item_port.item_done()
     	    #->trig
         #   endtask: run_phase
 
 
-    #@cocotb.coroutine
-    #   def read(self,input  bit   [31:0] addr,
-    #                               output logic [31:0] data)
-    #
-    #      self.sigs.mck.paddr   <= addr
-    #      self.sigs.mck.pwrite  <=  0
-    #      self.sigs.mck.psel    <=  1
-    #      yield Edge(self.sigs.mck)
-    #      self.sigs.mck.penable <=  1
-    #      yield Edge(self.sigs.mck)
-    #      data = self.sigs.mck.prdata
-    #      self.sigs.mck.psel    <=  0
-    #      self.sigs.mck.penable <=  0
-    #   endtask: read
-    #
+    @cocotb.coroutine
+    def read(self, addr, data):
+        
+        self.sigs.paddr   <= addr
+        self.sigs.pwrite  <= 0
+        self.sigs.psel    <= 1
+        yield Edge(self.sigs.clk)
+        self.sigs.penable <= 1
+        yield Edge(self.sigs.clk)
+        data.append(int(self.sigs.prdata))
+        self.sigs.psel    <= 0
+        self.sigs.penable <= 0
+        #   endtask: read
+        #
 
-    #@cocotb.coroutine
-    #   def write(self,input bit [31:0] addr,
-    #                                input bit [31:0] data)
-    #      self.sigs.mck.paddr   <= addr
-    #      self.sigs.mck.pwdata  <= data
-    #      self.sigs.mck.pwrite  <=  1
-    #      self.sigs.mck.psel    <=  1
-    #      yield Edge(self.sigs.mck)
-    #      self.sigs.mck.penable <=  1
-    #      yield Edge(self.sigs.mck)
-    #      self.sigs.mck.psel    <=  0
-    #      self.sigs.mck.penable <=  0
-    #   endtask: write
-    #
+    @cocotb.coroutine
+    def write(self, addr, data):
+        self.sigs.paddr   <= addr
+        self.sigs.pwdata  <= data
+        self.sigs.pwrite  <= 1
+        self.sigs.psel    <= 1
+        yield Edge(self.sigs.clk)
+        self.sigs.penable <= 1
+        yield Edge(self.sigs.clk)
+        self.sigs.psel    <= 0
+        self.sigs.penable <= 0
+        #   endtask: write
+        #
 
-    #@cocotb.coroutine
-    #   def trans_received(self,apb_rw tr)
-    #   endtask
-    #
+    @cocotb.coroutine
+    def trans_received(self, tr):
+        yield Timer(0, "NS")
 
-    #@cocotb.coroutine
-    #   def trans_executed(self,apb_rw tr)
-    #   endtask
+    @cocotb.coroutine
+    def trans_executed(self, tr):
+        yield Timer(0, "NS")
 
 
 uvm_component_utils(apb_master)
