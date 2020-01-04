@@ -24,6 +24,8 @@
 from uvm.comps.uvm_agent import UVMAgent
 from uvm.base import UVMConfigDb
 from uvm.macros import *
+from .apb_master import apb_master
+from .apb_sequencer import apb_sequencer
 
 class apb_agent(UVMAgent):
 
@@ -37,8 +39,8 @@ class apb_agent(UVMAgent):
 
 
     def build_phase(self, phase):
-        #      sqr = apb_sequencer.type_id.create("sqr", self)
-        #      drv = apb_master.type_id.create("drv", self)
+        self.sqr = apb_sequencer.type_id.create("sqr", self)
+        self.drv = apb_master.type_id.create("drv", self)
         #      mon = apb_monitor.type_id.create("mon", self)
 
         arr = []
