@@ -32,8 +32,6 @@ from reg_B import reg_block_B
 
 class blk_env(UVMEnv):
 
-    #   reg_block_B model
-    #   apb_agent   apb
 
     def __init__(self, name="blk_env", parent=None):
         super().__init__(name, parent)

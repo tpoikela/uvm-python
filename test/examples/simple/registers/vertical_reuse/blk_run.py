@@ -24,7 +24,6 @@
 import cocotb
 from cocotb.triggers import *
 
-from uvm.seq.uvm_sequence import *
 from uvm.macros import *
 from uvm.base.uvm_config_db import UVMConfigDb
 from uvm import run_test
@@ -32,23 +31,6 @@ from uvm import run_test
 from apb.apb_if import apb_if
 from blk_env import blk_env
 from blk_testlib import *
-
-
-class dut_reset_seq(UVMSequence):
-
-    def __init__(self, name="dut_reset_seq"):
-        super().__init__(name)
-        self.dut = None
-
-
-    @cocotb.coroutine
-    def body(self):
-        self.dut.rst <= 1
-        for i in range(5):
-            yield FallingEdge(self.dut.clk)
-        self.dut.rst <= 0
-
-uvm_object_utils(dut_reset_seq)
 
 
 @cocotb.test()

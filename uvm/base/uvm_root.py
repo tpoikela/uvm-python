@@ -374,7 +374,7 @@ class UVMRoot(UVMComponent):
     #                                 ref uvm_component comps[$],
     #                                 input uvm_component comp=None)
     #
-    def find_all(self, comp_match, comps,comp=None):
+    def find_all(self, comp_match, comps, comp=None):
         if (comp is None):
             comp = self
         self.m_find_all_recurse(comp_match, comps, comp)

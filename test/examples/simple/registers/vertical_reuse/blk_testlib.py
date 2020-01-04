@@ -29,6 +29,8 @@ from uvm.base.sv import sv
 from uvm.base.uvm_root import uvm_top
 from blk_env import blk_env
 
+from blk_seqlib import *
+
 class blk_R_test(UVMTest):
 
     #
@@ -41,8 +43,10 @@ class blk_R_test(UVMTest):
     def build_phase(self, phase):
         if (self.env is None):
             arr = []
-            if (sv.cast(arr, uvm_top.find("env"), blk_env)):
+            if (sv.cast(arr, uvm_top.find("env$"), blk_env)):
                 self.env = arr[0]
+            else:
+                uvm_fatal("NO_ENV_ERR", "test_top unable to find 'env'")
 
     @cocotb.coroutine
     def run_phase(self, phase):
@@ -51,11 +55,12 @@ class blk_R_test(UVMTest):
         phase.raise_objection(self)
     
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)
+        rst_seq.vif = self.env.vif
         yield rst_seq.start(None)
-        env.model.reset()
+        self.env.model.reset()
     
         seq = blk_R_test_seq.type_id.create("blk_R_test_seq",self)
-        seq.model = env.model
+        seq.model = self.env.model
         yield seq.start(None)
     
         phase.drop_objection(self)
