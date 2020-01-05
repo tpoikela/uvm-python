@@ -280,10 +280,9 @@ class UVMSequenceBase(UVMSequenceItem):
         old_automatic_phase_objection = False
         self.set_item_context(parent_sequence, sequencer)
 
-        # TODO
-        #if (not(m_sequence_state inside {UVM_CREATED,UVM_STOPPED,UVM_FINISHED})) begin
-        #  uvm_report_fatal("SEQ_NOT_DONE",
-        #     {"Sequence ", get_full_name(), " already started"},UVM_NONE)
+        if not(self.m_sequence_state in [UVM_CREATED,UVM_STOPPED,UVM_FINISHED]):
+            uvm_fatal("SEQ_NOT_DONE",
+                "Sequence " + self.get_full_name() + " already started")
         #end
 
         if self.m_parent_sequence is not None:
