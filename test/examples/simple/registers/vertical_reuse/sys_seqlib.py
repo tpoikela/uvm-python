@@ -64,15 +64,8 @@ class sys_R_test_seq(uvm_reg_sequence):
         if self.model is None:
             uvm_fatal("NO_REG","RegModel model handle is None")
             return
-        
-        procs = []
         for i in range(2):
-            #fork
-            pp = cocotb.fork(self.start_blk_seq(i))
-            procs.append(pp)
-            #join_none
-        # wait fork
-        yield [procs[0], procs[1].join()]
+            yield self.start_blk_seq(i)
 
 
     @cocotb.coroutine

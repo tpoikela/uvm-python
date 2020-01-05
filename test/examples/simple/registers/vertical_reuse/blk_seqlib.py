@@ -80,8 +80,6 @@ class blk_R_test_seq(uvm_reg_sequence):
         yield self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR FAIL")
 
-        print("YYY After R.mirror blk_R_test_seq")
-
         # Perform a random number of INC operations
         n = (sv.urandom() % 7) + 3
         uvm_info("blk_R_test_seq", sv.sformatf("Incrementing R %0d times...", n), UVM_NONE)

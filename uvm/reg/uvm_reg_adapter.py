@@ -21,6 +21,7 @@
 #// -------------------------------------------------------------
 
 from ..base.uvm_object import UVMObject
+from ..macros.uvm_message_defines import *
 
 #//------------------------------------------------------------------------------
 #// Title: Classes for Adapting Between Register and Bus Operations
@@ -121,6 +122,10 @@ class UVMRegAdapter(UVMObject):
 
     #  virtual function void m_set_item(uvm_reg_item item)
     def m_set_item(self, item):
+        if item is not None and isinstance(item.offset, int) is False:
+            uvm_fatal("OFFSET/NOT_INT", "Item offset must be int. Got: {}"
+                .format(item.offset))
+
         self.m_item = item
 
     #endclass

@@ -22,7 +22,7 @@
 
 from ..seq.uvm_sequence_item import *
 from ..macros.uvm_object_defines import *
-from .uvm_reg_model import UVM_READ, UVM_NOT_OK
+from .uvm_reg_model import UVM_READ, UVM_NOT_OK, UVM_MEM, UVM_FRONTDOOR
 
 #//------------------------------------------------------------------------------
 #// Title: Generic Register Operation Descriptors
@@ -46,28 +46,8 @@ class UVMRegItem(UVMSequenceItem):
     #  //
     #  // Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
     #  //
-    #  uvm_elem_kind_e element_kind;
+    #  uvm_elem_kind_e element_kind
 
-    #  // Variable: element
-    #  //
-    #  // A handle to the RegModel model element associated with this transaction.
-    #  // Use <element_kind> to determine the type to cast  to: <uvm_reg>,
-    #  // <uvm_mem>, or <uvm_reg_field>.
-    #  //
-    #  uvm_object element;
-
-    #  // Variable: kind
-    #  //
-    #  // Kind of access: READ or WRITE.
-    #  //
-    #  rand uvm_access_e kind;
-
-    #  // Variable: value
-    #  //
-    #  // The value to write to, or after completion, the value read from the DUT.
-    #  // Burst operations use the <values> property.
-    #  //
-    #  rand uvm_reg_data_t value[];
 
     #  // TODO: parameterize
     #  constraint max_values { value.size() > 0 && value.size() < 1000; }
@@ -77,14 +57,14 @@ class UVMRegItem(UVMSequenceItem):
     #  // For memory accesses, the offset address. For bursts,
     #  // the ~starting~ offset address.
     #  //
-    #  rand uvm_reg_addr_t offset;
+    #  rand uvm_reg_addr_t offset
 
     #  // Variable: status
     #  //
     #  // The result of the transaction: IS_OK, HAS_X, or ERROR.
     #  // See <uvm_status_e>.
     #  //
-    #  uvm_status_e status;
+    #  uvm_status_e status
 
     #  // Variable: local_map
     #  //
@@ -94,62 +74,50 @@ class UVMRegItem(UVMSequenceItem):
     #  // then calling <uvm_reg_map::get_sequencer> and 
     #  // <uvm_reg_map::get_adapter>.
     #  //
-    #  uvm_reg_map local_map;
+    #  uvm_reg_map local_map
 
-    #  // Variable: map
-    #  //
-    #  // The original map specified for the operation. The actual <map>
-    #  // used may differ when a test or sequence written at the block
-    #  // level is reused at the system level.
-    #  //
-    #  uvm_reg_map map;
 
-    #  // Variable: path
-    #  //
-    #  // The path being used: <UVM_FRONTDOOR> or <UVM_BACKDOOR>.
-    #  //
-    #  uvm_path_e path;
 
     #  // Variable: parent
     #  //
     #  // The sequence from which the operation originated.
     #  //
-    #  rand uvm_sequence_base parent;
+    #  rand uvm_sequence_base parent
 
     #  // Variable: prior
     #  //
     #  // The priority requested of this transfer, as defined by
     #  // <uvm_sequence_base::start_item>.
     #  //
-    #  int prior = -1;
+    #  int prior = -1
 
     #  // Variable: extension
     #  //
     #  // Handle to optional user data, as conveyed in the call to
     #  // write(), read(), mirror(), or update() used to trigger the operation.
     #  //
-    #  rand uvm_object extension;
+    #  rand uvm_object extension
 
     #  // Variable: bd_kind
     #  //
     #  // If path is UVM_BACKDOOR, this member specifies the abstraction 
     #  // kind for the backdoor access, e.g. "RTL" or "GATES".
     #  //
-    #  string bd_kind;
+    #  string bd_kind
 
     #  // Variable: fname
     #  //
     #  // The file name from where this transaction originated, if provided
     #  // at the call site.
     #  //
-    #  string fname;
+    #  string fname
 
     #  // Variable: lineno
     #  //
     #  // The file name from where this transaction originated, if provided 
     #  // at the call site.
     #  //
-    #  int lineno;
+    #  int lineno
 
     #  // Function: new
     #  //
@@ -157,7 +125,20 @@ class UVMRegItem(UVMSequenceItem):
     #  //
     def __init__(self, name=""):
         UVMSequenceItem.__init__(self, name)
-        self.value = [0]
+        #  // Variable: value
+        #  //
+        #  // The value to write to, or after completion, the value read from the DUT.
+        #  // Burst operations use the <values> property.
+        #  //
+        self.value = [0]  # rand uvm_reg_data_t value[]
+
+        #  // Variable: path
+        #  //
+        #  // The path being used: <UVM_FRONTDOOR> or <UVM_BACKDOOR>.
+        #  //
+        #  uvm_path_e path
+        self.path = UVM_FRONTDOOR
+
         self.status = 0
         self.fname = ""
         self.lineno = 0
@@ -165,65 +146,94 @@ class UVMRegItem(UVMSequenceItem):
         self.prior = -1
         self.extension = None
         self.parent = None
+        self.offset = 0
+        #  // Variable: kind
+        #  //
+        #  // Kind of access: READ or WRITE.
+        #  //
+        #  rand uvm_access_e kind
+        self.kind = UVM_READ
+
+        #  // Variable: element
+        #  //
+        #  // A handle to the RegModel model element associated with this transaction.
+        #  // Use <element_kind> to determine the type to cast  to: <uvm_reg>,
+        #  // <uvm_mem>, or <uvm_reg_field>.
+        #  //
+        self.element = None
+
+        #  // Variable: map
+        #  //
+        #  // The original map specified for the operation. The actual <map>
+        #  // used may differ when a test or sequence written at the block
+        #  // level is reused at the system level.
+        #  //
+        self.map = None
 
     #  // Function: convert2string
     #  //
     #  // Returns a string showing the contents of this transaction.
     #  //
-    #  virtual function string convert2string();
-    #    string s,value_s;
-    #    s = {"kind=",kind.name(),
-    #         " ele_kind=",element_kind.name(),
-    #         " ele_name=",element==null?"null":element.get_full_name() };
-    #
-    #    if (value.size() > 1 && uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")) begin
-    #      value_s = "'{";
-    #      foreach (value[i])
-    #         value_s = {value_s,$sformatf("%0h,",value[i])};
-    #      value_s[value_s.len()-1]="}";
-    #    end
-    #    else
-    #      value_s = $sformatf("%0h",value[0]);
-    #    s = {s, " value=",value_s};
-    #
-    #    if (element_kind == UVM_MEM)
-    #      s = {s, $sformatf(" offset=%0h",offset)};
-    #    s = {s," map=",(map==null?"null":map.get_full_name())," path=",path.name()};
-    #    s = {s," status=",status.name()};
-    #    return s;
-    #  endfunction
-    #
-    #
+    def convert2string(self):
+        value_s = ""
+        ele_name = "null"
+        if self.element is not None:
+            ele_name = self.element.get_full_name()
+        s = ("kind=" + str(self.kind) +
+             " ele_kind=" + str(self.element_kind) +
+             " ele_name=" + ele_name)
+        
+        if (len(self.value) > 1 and uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
+            value_s = "'{"
+            for i in range(len(self.value)):
+                value_s = value_s + sv.sformatf("%0h,", self.value[i])
+            value_s[value_s.len()-1]="}"
+        else:
+            value_s = sv.sformatf("%0h", self.value[0])
+        s = s + " value=" + value_s
+        if self.element_kind == UVM_MEM:
+            s = s + sv.sformatf(" offset=%0h", self.offset)
+
+        map_name = "null"
+        if self.map is not None:
+            map_name = self.map.get_full_name()
+        s = s + " map=" + map_name + " path=" + str(self.path)
+        s = s + " status=" + str(self.status)
+        return s
+        #  endfunction
+
+
+
     #  // Function: do_copy
     #  //
     #  // Copy the ~rhs~ object into this object. The ~rhs~ object must
     #  // derive from <uvm_reg_item>.
     #  //
-    #  virtual function void do_copy(uvm_object rhs);
-    #    uvm_reg_item rhs_;
+    #  virtual function void do_copy(uvm_object rhs)
+    #    uvm_reg_item rhs_
     #    if (rhs == null)
     #     `uvm_fatal("REG/NULL","do_copy: rhs argument is null") 
     #
-    #    if (!$cast(rhs_,rhs)) begin
+    #    if (!$cast(rhs_,rhs)):
     #      `uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item")
-    #      return;
+    #      return
     #    end
-    #    super.copy(rhs);
-    #    element_kind = rhs_.element_kind;
-    #    element = rhs_.element;
-    #    kind = rhs_.kind;
-    #    value = rhs_.value;
-    #    offset = rhs_.offset;
-    #    status = rhs_.status;
-    #    local_map = rhs_.local_map;
-    #    map = rhs_.map;
-    #    path = rhs_.path;
-    #    extension = rhs_.extension;
-    #    bd_kind = rhs_.bd_kind;
-    #    parent = rhs_.parent;
-    #    prior = rhs_.prior;
-    #    fname = rhs_.fname;
-    #    lineno = rhs_.lineno;
+    #    super.copy(rhs)
+    #    element_kind = rhs_.element_kind
+    #    element = rhs_.element
+    #    kind = rhs_.kind
+    #    value = rhs_.value
+    #    offset = rhs_.offset
+    #    status = rhs_.status
+    #    local_map = rhs_.local_map
+    #    map = rhs_.map
+    #    path = rhs_.path
+    #    extension = rhs_.extension
+    #    bd_kind = rhs_.bd_kind
+    #    parent = rhs_.parent
+    #    prior = rhs_.prior
+    #    fname = rhs_.fname
+    #    lineno = rhs_.lineno
     #  endfunction
     #
     #endclass
@@ -250,14 +260,14 @@ class UVMRegBusOp():
     #  //
     #  // Kind of access: READ or WRITE.
     #  //
-    #  uvm_access_e kind;
+    #  uvm_access_e kind
     #
     #
     #  // Variable: addr
     #  //
     #  // The bus address.
     #  //
-    #  uvm_reg_addr_t addr;
+    #  uvm_reg_addr_t addr
     #
     #
     #  // Variable: data
@@ -266,7 +276,7 @@ class UVMRegBusOp():
     #  // memory width, ~data~ represents only the portion of ~value~ that is
     #  // being transferred this bus cycle.
     #  //
-    #  uvm_reg_data_t data;
+    #  uvm_reg_data_t data
     #
     #   
     #  // Variable: n_bits
@@ -274,12 +284,12 @@ class UVMRegBusOp():
     #  // The number of bits of <uvm_reg_item::value> being transferred by
     #  // this transaction.
     #
-    #  int n_bits;
+    #  int n_bits
     #
     #  /*
     #  constraint valid_n_bits {
-    #     n_bits > 0;
-    #     n_bits <= `UVM_REG_DATA_WIDTH;
+    #     n_bits > 0
+    #     n_bits <= `UVM_REG_DATA_WIDTH
     #  }
     #  */
     #
@@ -290,7 +300,7 @@ class UVMRegBusOp():
     #  // bus supports byte enables and the operation originates from a field
     #  // write/read.
     #  //
-    #  uvm_reg_byte_en_t byte_en;
+    #  uvm_reg_byte_en_t byte_en
     #
     #
     #  // Variable: status
@@ -298,9 +308,9 @@ class UVMRegBusOp():
     #  // The result of the transaction: UVM_IS_OK, UVM_HAS_X, UVM_NOT_OK.
     #  // See <uvm_status_e>.
     #  //
-    #  uvm_status_e status;
+    #  uvm_status_e status
     #
-    #} uvm_reg_bus_op;
+    #} uvm_reg_bus_op
     def __init__(self):
         self.kind = UVM_READ
         self.addr = 0

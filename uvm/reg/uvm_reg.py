@@ -1233,7 +1233,8 @@ class UVMReg(UVMObject):
 
             # ...VIA BUILT-IN FRONTDOOR
             else:  # built_in_frontdoor
-                print("BBB USing rw.local_map.do_write(rw)")
+                print("uvm_reg BBB USing rw.local_map.do_write(rw): " +
+                        rw.convert2string())
                 yield rw.local_map.do_write(rw)
 
             self.m_is_busy = False

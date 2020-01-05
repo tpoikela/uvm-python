@@ -574,7 +574,7 @@ class UVMRegMap(UVMObject):
             # remove any existing cached addresses
             if info.unmapped is False:
                 for addr in info.addr:
-                    if not addr in top_map.m_regs_by_offset_wo:
+                    if addr not in top_map.m_regs_by_offset_wo:
                         del top_map.m_regs_by_offset[addr]
                     else:
                         if top_map.m_regs_by_offset[addr] == rg:
@@ -868,7 +868,7 @@ class UVMRegMap(UVMObject):
     # get_reg_map_info
     def get_reg_map_info(self, rg, error=1):
         result = None
-        if not rg in self.m_regs_info:
+        if rg not in self.m_regs_info:
             if error:
                 uvm_report_error("REG_NO_MAP", ("Register '" + rg.get_name()
                     + "' not in map '" + self.get_name() + "'"))
@@ -951,7 +951,7 @@ class UVMRegMap(UVMObject):
         up_map = self.get_parent_map()
 
         # Then translate these addresses in the parent's space
-        if (up_map is None):
+        if up_map is None:
             # This is the top-most system/block!
             addr.clear()
             addr.extend(local_addr)
@@ -967,7 +967,7 @@ class UVMRegMap(UVMObject):
             if (bus_width < up_map.get_n_bytes(UVM_NO_HIER)):
                 k = 1
             else:
-                k = ((bus_width-1) / up_map.get_n_bytes(UVM_NO_HIER)) + 1
+                k = int((bus_width-1) / up_map.get_n_bytes(UVM_NO_HIER)) + 1
 
             base_addr = up_map.get_submap_offset(self)
             for i in range(len(local_addr)):
@@ -1143,6 +1143,8 @@ class UVMRegMap(UVMObject):
 
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         addrs = map_info.addr
+        print("map_info addr is " + str(addrs))
+
 
         # if a memory, adjust addresses based on offset
         if (rw.element_kind == UVM_MEM):
@@ -1218,6 +1220,7 @@ class UVMRegMap(UVMObject):
                 bus_req = None  # uvm_sequence_item
                 adapter.m_set_item(rw)
                 bus_req = adapter.reg2bus(rw_access)
+                print("AAABBB 1.5 Adapter returned bus_req " + bus_req.convert2string())
                 adapter.m_set_item(None)
 
                 if bus_req is None:
@@ -1391,7 +1394,7 @@ class UVMRegMap(UVMObject):
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
 
-                print("UUU Calling finish_item for bus_req now")
+                print("UUU do_bus_read() Calling finish_item for bus_req now")
                 yield rw.parent.finish_item(bus_req)
                 print("UUU yield bus_req.end_event.wait_on() " + self.get_name())
                 yield bus_req.end_event.wait_on()
@@ -1455,12 +1458,12 @@ class UVMRegMap(UVMObject):
             rw.parent = seq
             tmp_parent_seq = seq
 
-        if (rw.parent is None):
+        if rw.parent is None:
              #rw.parent = new("default_parent_seq")
              rw.parent = UVMSequenceBase("default_parent_seq")
              tmp_parent_seq = rw.parent
 
-        if (adapter is None):
+        if adapter is None:
             print("VVV Starting sequence because adapter None")
             rw.set_sequencer(sequencer)
             yield rw.parent.start_item(rw,rw.prior)
@@ -1527,15 +1530,15 @@ class UVMRegMap(UVMObject):
     #                                        output int lsb,
     #                                        output int addr_skip)
     def Xget_bus_infoX(self, rw, map_info, size, lsb, addr_skip):
-        if (rw.element_kind == UVM_MEM):
+        if rw.element_kind == UVM_MEM:
             mem = None  # uvm_mem
-            if(rw.element is None):  # || !$cast(mem,rw.element)):
+            if rw.element is None:  # || !$cast(mem,rw.element)):
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_MEM, " +
                     "but 'element' does not point to a memory: " + rw.get_name())
             mem = rw.element
             map_info = self.get_mem_map_info(mem)
             size = mem.get_n_bits()
-        elif (rw.element_kind == UVM_REG):
+        elif rw.element_kind == UVM_REG:
             rg = None  # uvm_reg
             if(rw.element is None):  # || !$cast(rg,rw.element))
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_REG, " +
@@ -1543,9 +1546,9 @@ class UVMRegMap(UVMObject):
             rg = rw.element
             map_info = self.get_reg_map_info(rg)
             size = rg.get_n_bits()
-        elif (rw.element_kind == UVM_FIELD):
+        elif rw.element_kind == UVM_FIELD:
             field = None  # uvm_reg_field
-            if(rw.element is None):  # || !$cast(field,rw.element))
+            if rw.element is None:  # || !$cast(field,rw.element))
                 uvm_fatal("REG/CAST", "uvm_reg_item 'element_kind' is UVM_FIELD, " +
                     "but 'element' does not point to a field: " + rw.get_name())
             field = rw.element
