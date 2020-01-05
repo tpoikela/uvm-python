@@ -23,8 +23,11 @@
 #    Original SV code has been adapter to Python.
 # -------------------------------------------------------------
 
+from ..base.sv import sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
+from ..base.uvm_queue import UVMQueue
+from ..base.uvm_resource_db import UVMResourceDb
 from .uvm_reg_model import *
 from .uvm_reg_map import UVMRegMap
 from .uvm_mem import UVMMem
@@ -88,7 +91,7 @@ class UVMRegBlock(UVMObject):
     #   function new(string name="", int has_coverage=UVM_NO_COVERAGE)
     def __init__(self, name="", has_coverage=UVM_NO_COVERAGE):
         UVMObject.__init__(self, name)
-        self.hdl_paths_pool = UVMObjectStringPool("hdl_paths")
+        self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
         self.has_cover = has_coverage
         # Root block until registered with a parent
         UVMRegBlock.m_roots[self] = 0
@@ -117,8 +120,15 @@ class UVMRegBlock(UVMObject):
     #   // structure (e.g. it is physically flattened) and does not contribute
     #   // to the hierarchical HDL path of any contained registers or memories.
     #   //
-    #   extern function void configure(uvm_reg_block parent=null,
+    #   extern function void configure(uvm_reg_block parent=None,
     #                                  string hdl_path="")
+    def configure(self, parent=None, hdl_path=""):
+        self.parent = parent
+        if parent is not None:
+            self.parent.add_block(self)
+        self.add_hdl_path(hdl_path)
+
+        UVMResourceDb.set("uvm_reg::*", self.get_full_name(), self)
 
 
     #   // Function: create_map
@@ -206,8 +216,24 @@ class UVMRegBlock(UVMObject):
 
     #   extern virtual function void set_parent(uvm_reg_block parent)
 
-    #
-    #   /*local*/ extern function void add_block (uvm_reg_block blk)
+    # function void add_block (uvm_reg_block blk)
+    def add_block(self, blk):
+        if self.is_locked():
+            uvm_error("RegModel", "Cannot add subblock to locked block model")
+            return
+
+        if blk in self.blks:
+            uvm_error("RegModel", "Subblock '" + blk.get_name()
+                    + "' has already been registered with block '" + self.get_name() + "'")
+            return
+
+        self.blks[blk] = UVMRegBlock.id
+        UVMRegBlock.id += 1
+        if blk in UVMRegBlock.m_roots:
+            del UVMRegBlock.m_roots[blk]
+        #endfunction
+        #
+        #
 
     #   /*local*/ extern function void add_map   (UVMRegMap map)
 
@@ -331,7 +357,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   // Get the parent block
     #   //
-    #   // If this a top-level block, returns ~null~.
+    #   // If this a top-level block, returns ~None~.
     #   //
     #   extern virtual function uvm_reg_block get_parent()
     def get_parent(self):
@@ -359,8 +385,8 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern static function int find_blocks(input string        name,
     #                                          ref   uvm_reg_block blks[$],
-    #                                          input uvm_reg_block root = null,
-    #                                          input uvm_object    accessor = null)
+    #                                          input uvm_reg_block root = None,
+    #                                          input uvm_object    accessor = None)
     #
     #
     #   // Function: find_block
@@ -370,12 +396,12 @@ class UVMRegBlock(UVMObject):
     #   // If a ~root~ block is specified, the name of the blocks are
     #   // relative to that block, otherwise they are absolute.
     #   //
-    #   // Returns the first block found or ~null~ otherwise.
+    #   // Returns the first block found or ~None~ otherwise.
     #   // A warning is issued if more than one block is found.
     #   //
     #   extern static function uvm_reg_block find_block(input string        name,
-    #                                                   input uvm_reg_block root = null,
-    #                                                   input uvm_object    accessor = null)
+    #                                                   input uvm_reg_block root = None,
+    #                                                   input uvm_object    accessor = None)
     #
     #
 
@@ -468,6 +494,7 @@ class UVMRegBlock(UVMObject):
     #                                                input uvm_hier_e hier=UVM_HIER)
     #
     #
+
     #   // Function: get_virtual_fields
     #   //
     #   // Get the virtual fields
@@ -479,6 +506,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_virtual_fields (ref uvm_vreg_field fields[$],
     #                                                 input uvm_hier_e hier=UVM_HIER)
+
     #
     #
     #   // Function: get_block_by_name
@@ -491,9 +519,10 @@ class UVMRegBlock(UVMObject):
     #   // are searched for a block of that name and the first one to be found
     #   // is returned.
     #   //
-    #   // If no blocks are found, returns ~null~.
+    #   // If no blocks are found, returns ~None~.
     #   //
-    #   extern virtual function uvm_reg_block get_block_by_name (string name);
+    #   extern virtual function uvm_reg_block get_block_by_name (string name)
+
     #
     #
     #   // Function: get_map_by_name
@@ -506,9 +535,10 @@ class UVMRegBlock(UVMObject):
     #   // are searched for a map of that name and the first one to be found
     #   // is returned.
     #   //
-    #   // If no address maps are found, returns ~null~.
+    #   // If no address maps are found, returns ~None~.
     #   //
     #   extern virtual function UVMRegMap get_map_by_name (string name)
+
     #
     #
     #   // Function: get_reg_by_name
@@ -521,7 +551,7 @@ class UVMRegBlock(UVMObject):
     #   // are searched for a register of that name and the first one to be found
     #   // is returned.
     #   //
-    #   // If no registers are found, returns ~null~.
+    #   // If no registers are found, returns ~None~.
     #   //
     #   extern virtual function uvm_reg get_reg_by_name (string name)
     def get_reg_by_name(self, name):
@@ -555,7 +585,7 @@ class UVMRegBlock(UVMObject):
     #   // are searched for a field of that name and the first one to be found
     #   // is returned.
     #   //
-    #   // If no fields are found, returns ~null~.
+    #   // If no fields are found, returns ~None~.
     #   //
     #   extern virtual function uvm_reg_field get_field_by_name (string name)
     #
@@ -570,7 +600,7 @@ class UVMRegBlock(UVMObject):
     #   // are searched for a memory of that name and the first one to be found
     #   // is returned.
     #   //
-    #   // If no memories are found, returns ~null~.
+    #   // If no memories are found, returns ~None~.
     #   //
     #   extern virtual function uvm_mem get_mem_by_name (string name)
     #
@@ -586,7 +616,7 @@ class UVMRegBlock(UVMObject):
     #   // the sub-blocks are searched for a virtual register of that name
     #   // and the first one to be found is returned.
     #   //
-    #   // If no virtual registers are found, returns ~null~.
+    #   // If no virtual registers are found, returns ~None~.
     #   //
     #   extern virtual function uvm_vreg get_vreg_by_name (string name)
     #
@@ -602,7 +632,7 @@ class UVMRegBlock(UVMObject):
     #   // the sub-blocks are searched for a virtual field of that name
     #   // and the first one to be found is returned.
     #   //
-    #   // If no virtual fields are found, returns ~null~.
+    #   // If no virtual fields are found, returns ~None~.
     #   //
     #   extern virtual function uvm_vreg_field get_vfield_by_name (string name)
     #
@@ -824,9 +854,9 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual task update(output uvm_status_e       status,
     #                              input  uvm_path_e         path = UVM_DEFAULT_PATH,
-    #                              input  uvm_sequence_base  parent = null,
+    #                              input  uvm_sequence_base  parent = None,
     #                              input  int                prior = -1,
-    #                              input  uvm_object         extension = null,
+    #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
     #
@@ -847,9 +877,9 @@ class UVMRegBlock(UVMObject):
     #   extern virtual task mirror(output uvm_status_e       status,
     #                              input  uvm_check_e        check = UVM_NO_CHECK,
     #                              input  uvm_path_e         path  = UVM_DEFAULT_PATH,
-    #                              input  uvm_sequence_base  parent = null,
+    #                              input  uvm_sequence_base  parent = None,
     #                              input  int                prior = -1,
-    #                              input  uvm_object         extension = null,
+    #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
     #
@@ -865,10 +895,10 @@ class UVMRegBlock(UVMObject):
     #                              input  string              name,
     #                              input  uvm_reg_data_t      data,
     #                              input  uvm_path_e     path = UVM_DEFAULT_PATH,
-    #                              input  UVMRegMap         map = null,
-    #                              input  uvm_sequence_base   parent = null,
+    #                              input  UVMRegMap         map = None,
+    #                              input  uvm_sequence_base   parent = None,
     #                              input  int                 prior = -1,
-    #                              input  uvm_object          extension = null,
+    #                              input  uvm_object          extension = None,
     #                              input  string              fname = "",
     #                              input  int                 lineno = 0)
     #
@@ -884,10 +914,10 @@ class UVMRegBlock(UVMObject):
     #                              input  string             name,
     #                              output uvm_reg_data_t     data,
     #                              input  uvm_path_e    path = UVM_DEFAULT_PATH,
-    #                              input  UVMRegMap        map = null,
-    #                              input  uvm_sequence_base  parent = null,
+    #                              input  UVMRegMap        map = None,
+    #                              input  uvm_sequence_base  parent = None,
     #                              input  int                prior = -1,
-    #                              input  uvm_object         extension = null,
+    #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
     #
@@ -904,10 +934,10 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_reg_addr_t     offset,
     #                              input  uvm_reg_data_t     data,
     #                              input  uvm_path_e    path = UVM_DEFAULT_PATH,
-    #                              input  UVMRegMap        map = null,
-    #                              input  uvm_sequence_base  parent = null,
+    #                              input  UVMRegMap        map = None,
+    #                              input  uvm_sequence_base  parent = None,
     #                              input  int                prior = -1,
-    #                              input  uvm_object         extension = null,
+    #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
     #
@@ -924,10 +954,10 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_reg_addr_t     offset,
     #                              output uvm_reg_data_t     data,
     #                              input  uvm_path_e    path = UVM_DEFAULT_PATH,
-    #                              input  UVMRegMap        map = null,
-    #                              input  uvm_sequence_base  parent = null,
+    #                              input  UVMRegMap        map = None,
+    #                              input  uvm_sequence_base  parent = None,
     #                              input  int                prior = -1,
-    #                              input  uvm_object         extension = null,
+    #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
     #
@@ -989,6 +1019,7 @@ class UVMRegBlock(UVMObject):
     #   extern function void clear_hdl_path (string kind = "RTL")
     #
     #
+
     #   // Function:  add_hdl_path
     #   //
     #   // Add an HDL path
@@ -999,6 +1030,14 @@ class UVMRegBlock(UVMObject):
     #   // in the design abstraction
     #   //
     #   extern function void add_hdl_path (string path, string kind = "RTL")
+    def add_hdl_path(self, path, kind="RTL"):
+        #  uvm_queue #(string) paths
+        paths = self.hdl_paths_pool.get(kind)
+        paths.push_back(path)
+        #
+        #endfunction
+        #
+
     #
     #
     #   // Function:   has_hdl_path
@@ -1138,35 +1177,6 @@ class UVMRegBlock(UVMObject):
 #
 # new
 #
-#
-# configure
-#
-#function void uvm_reg_block::configure(uvm_reg_block parent=null, string hdl_path="")
-#  self.parent = parent;
-#  if (parent is not None)
-#    self.parent.add_block(this)
-#  add_hdl_path(hdl_path)
-#
-#  uvm_resource_db#(uvm_reg_block)::set("uvm_reg::*", get_full_name(), this)
-#endfunction
-#
-#
-# add_block
-#
-#function void uvm_reg_block::add_block (uvm_reg_block blk)
-#   if (self.is_locked()):
-#      `uvm_error("RegModel", "Cannot add subblock to locked block model")
-#      return
-#   end
-#   if (self.blks.exists(blk)):
-#      `uvm_error("RegModel", {"Subblock '",blk.get_name(),
-#         "' has already been registered with block '",get_name(),"'"})
-#       return
-#   end
-#   blks[blk] = UVMRegBlock.id
-#   UVMRegBlock.id += 1
-#   if (UVMRegBlock.m_roots.exists(blk)) UVMRegBlock.m_roots.delete(blk)
-#endfunction
 #
 #
 #
@@ -1329,8 +1339,8 @@ class UVMRegBlock(UVMObject):
 #
 #function int uvm_reg_block::find_blocks(input string        name,
 #                                        ref   uvm_reg_block blks[$],
-#                                        input uvm_reg_block root = null,
-#                                        input uvm_object    accessor = null)
+#                                        input uvm_reg_block root = None,
+#                                        input uvm_object    accessor = None)
 #
 #   uvm_resource_pool rpl = uvm_resource_pool::get()
 #   uvm_resource_types::rsrc_q_t rs
@@ -1353,12 +1363,12 @@ class UVMRegBlock(UVMObject):
 # find_blocks
 #
 #function uvm_reg_block uvm_reg_block::find_block(input string        name,
-#                                                 input uvm_reg_block root = null,
-#                                                 input uvm_object    accessor = null)
+#                                                 input uvm_reg_block root = None,
+#                                                 input uvm_object    accessor = None)
 #
 #   uvm_reg_block blks[$]
 #   if (!find_blocks(name, blks, root, accessor))
-#      return null
+#      return None
 #
 #   if (blks.size() > 1):
 #      `uvm_warning("MRTH1BLK",
@@ -1401,7 +1411,7 @@ class UVMRegBlock(UVMObject):
 #
 #   `uvm_warning("RegModel", {"Unable to locate block '",name,
 #                "' in block '",get_full_name(),"'"})
-#   return null
+#   return None
 #
 #endfunction: get_block_by_name
 #
@@ -1430,7 +1440,7 @@ class UVMRegBlock(UVMObject):
 #
 #   `uvm_warning("RegModel", {"Unable to locate virtual register '",name,
 #                "' in block '",get_full_name(),"'"})
-#   return null
+#   return None
 #
 #endfunction: get_vreg_by_name
 #
@@ -1457,7 +1467,7 @@ class UVMRegBlock(UVMObject):
 #
 #   `uvm_warning("RegModel", {"Unable to locate memory '",name,
 #                "' in block '",get_full_name(),"'"})
-#   return null
+#   return None
 #
 #endfunction: get_mem_by_name
 #
@@ -1493,7 +1503,7 @@ class UVMRegBlock(UVMObject):
 #   `uvm_warning("RegModel", {"Unable to locate field '",name,
 #                "' in block '",get_full_name(),"'"})
 #
-#   return null
+#   return None
 #
 #endfunction: get_field_by_name
 #
@@ -1529,7 +1539,7 @@ class UVMRegBlock(UVMObject):
 #   `uvm_warning("RegModel", {"Unable to locate virtual field '",name,
 #                "' in block '",get_full_name(),"'"})
 #
-#   return null
+#   return None
 #
 #endfunction: get_vfield_by_name
 #
@@ -1640,9 +1650,9 @@ class UVMRegBlock(UVMObject):
 #
 #task uvm_reg_block::update(output uvm_status_e  status,
 #                           input  uvm_path_e    path = UVM_DEFAULT_PATH,
-#                           input  uvm_sequence_base  parent = null,
+#                           input  uvm_sequence_base  parent = None,
 #                           input  int                prior = -1,
-#                           input  uvm_object         extension = null,
+#                           input  uvm_object         extension = None,
 #                           input  string             fname = "",
 #                           input  int                lineno = 0)
 #   status = UVM_IS_OK
@@ -1659,7 +1669,7 @@ class UVMRegBlock(UVMObject):
 #   foreach (regs[rg_]):
 #      uvm_reg rg = rg_
 #      if (rg.needs_update()):
-#         rg.update(status, path, null, parent, prior, extension)
+#         rg.update(status, path, None, parent, prior, extension)
 #         if (status != UVM_IS_OK && status != UVM_HAS_X):
 #           `uvm_error("RegModel", $sformatf("Register \"%s\" could not be updated",
 #                                        rg.get_full_name()))
@@ -1680,16 +1690,16 @@ class UVMRegBlock(UVMObject):
 #task uvm_reg_block::mirror(output uvm_status_e       status,
 #                           input  uvm_check_e        check = UVM_NO_CHECK,
 #                           input  uvm_path_e         path = UVM_DEFAULT_PATH,
-#                           input  uvm_sequence_base  parent = null,
+#                           input  uvm_sequence_base  parent = None,
 #                           input  int                prior = -1,
-#                           input  uvm_object         extension = null,
+#                           input  uvm_object         extension = None,
 #                           input  string             fname = "",
 #                           input  int                lineno = 0)
 #   uvm_status_e final_status = UVM_IS_OK
 #
 #   foreach (regs[rg_]):
 #      uvm_reg rg = rg_
-#      rg.mirror(status, check, path, null,
+#      rg.mirror(status, check, path, None,
 #                parent, prior, extension, fname, lineno)
 #      if (status != UVM_IS_OK && status != UVM_HAS_X):
 #         final_status = status
@@ -1714,10 +1724,10 @@ class UVMRegBlock(UVMObject):
 #                                      input  string              name,
 #                                      input  uvm_reg_data_t      data,
 #                                      input  uvm_path_e     path = UVM_DEFAULT_PATH,
-#                                      input  UVMRegMap      map = null,
-#                                      input  uvm_sequence_base   parent = null,
+#                                      input  UVMRegMap      map = None,
+#                                      input  uvm_sequence_base   parent = None,
 #                                      input  int                 prior = -1,
-#                                      input  uvm_object          extension = null,
+#                                      input  uvm_object          extension = None,
 #                                      input  string              fname = "",
 #                                      input  int                 lineno = 0)
 #   uvm_reg rg
@@ -1738,10 +1748,10 @@ class UVMRegBlock(UVMObject):
 #                                     input  string             name,
 #                                     output uvm_reg_data_t     data,
 #                                     input  uvm_path_e    path = UVM_DEFAULT_PATH,
-#                                     input  UVMRegMap     map = null,
-#                                     input  uvm_sequence_base  parent = null,
+#                                     input  UVMRegMap     map = None,
+#                                     input  uvm_sequence_base  parent = None,
 #                                     input  int                prior = -1,
-#                                     input  uvm_object         extension = null,
+#                                     input  uvm_object         extension = None,
 #                                     input  string             fname = "",
 #                                     input  int                lineno = 0)
 #   uvm_reg rg
@@ -1762,10 +1772,10 @@ class UVMRegBlock(UVMObject):
 #                                          input  uvm_reg_addr_t     offset,
 #                                          input  uvm_reg_data_t     data,
 #                                          input  uvm_path_e    path = UVM_DEFAULT_PATH,
-#                                          input  UVMRegMap     map = null,
-#                                          input  uvm_sequence_base  parent = null,
+#                                          input  UVMRegMap     map = None,
+#                                          input  uvm_sequence_base  parent = None,
 #                                          input  int                prior = -1,
-#                                          input  uvm_object         extension = null,
+#                                          input  uvm_object         extension = None,
 #                                          input  string             fname = "",
 #                                          input  int                lineno = 0)
 #   uvm_mem mem
@@ -1786,10 +1796,10 @@ class UVMRegBlock(UVMObject):
 #                                         input  uvm_reg_addr_t     offset,
 #                                         output uvm_reg_data_t     data,
 #                                         input  uvm_path_e    path = UVM_DEFAULT_PATH,
-#                                         input  UVMRegMap     map = null,
-#                                         input  uvm_sequence_base  parent = null,
+#                                         input  UVMRegMap     map = None,
+#                                         input  uvm_sequence_base  parent = None,
 #                                         input  int                prior = -1,
-#                                         input  uvm_object         extension = null,
+#                                         input  uvm_object         extension = None,
 #                                         input  string             fname = "",
 #                                         input  int                lineno = 0)
 #   uvm_mem mem
@@ -1867,7 +1877,7 @@ class UVMRegBlock(UVMObject):
 #
 #
 #   `uvm_warning("RegModel", {"Map with name '",name,"' does not exist in block"})
-#   return null
+#   return None
 #endfunction
 #
 #
@@ -1930,18 +1940,6 @@ class UVMRegBlock(UVMObject):
 #  hdl_paths_pool.delete(kind)
 #endfunction
 #
-#
-# add_hdl_path
-#
-#function void uvm_reg_block::add_hdl_path(string path, string kind = "RTL")
-#
-#  uvm_queue #(string) paths
-#
-#  paths = hdl_paths_pool.get(kind)
-#
-#  paths.push_back(path)
-#
-#endfunction
 #
 #
 # has_hdl_path
@@ -2109,7 +2107,7 @@ class UVMRegBlock(UVMObject):
 #
 #function uvm_object uvm_reg_block::clone()
 #  `uvm_fatal("RegModel","RegModel blocks cannot be cloned")
-#  return null
+#  return None
 #endfunction
 #
 # do_copy

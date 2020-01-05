@@ -545,7 +545,7 @@ class UVMResourceBase(UVMObject):
     #  if(access.num() == 0)
     #    return
 
-    #  foreach (access[i]) begin
+    #  foreach (access[i]):
     #    str = i
     #    access_record = access[str]
     #    qs.push_back($sformatf("%s reads: %0d @ %0t  writes: %0d @ %0t\n",str,
@@ -678,7 +678,7 @@ class UVMResource(UVMResourceBase):
     #// looks up a resource by ~type_handle~ in the type map. The first resource
     #// with the specified ~type_handle~ that is visible in the specified ~scope~ is
     #// returned, if one exists. If there is no resource matching the specifications,
-    #// ~null~ is returned.
+    #// ~None~ is returned.
 
     #static function this_type get_by_type(string scope = "",
     #                                      uvm_resource_base type_handle)
@@ -688,17 +688,17 @@ class UVMResource(UVMResourceBase):
     #  this_type rsrc
     #  string msg
 
-    #  if(type_handle == null)
-    #    return null
+    #  if(type_handle is None)
+    #    return None
 
     #  rsrc_base = rp.get_by_type(scope, type_handle)
-    #  if(rsrc_base == null)
-    #    return null
+    #  if(rsrc_base is None)
+    #    return None
 
-    #  if(!$cast(rsrc, rsrc_base)) begin
+    #  if(!$cast(rsrc, rsrc_base)):
     #    $sformat(msg, "Resource with specified type handle in scope %s was not located", scope)
     #    `uvm_warning("RSRCNF", msg)
-    #    return null
+    #    return None
     #  end
 
     #  return rsrc
@@ -811,7 +811,7 @@ class UVMResource(UVMResourceBase):
 
         # start searching from the next resource after the first resource
         # whose type is T
-        # for(int i = first+1; i < q.size(); ++i) begin
+        # for(int i = first+1; i < q.size(); ++i):
         for i in range(first + 1, len(q)):
             if T is not None:
                 if sv.cast(r, q[i], T):
@@ -1041,9 +1041,9 @@ class UVMResourcePool:
         #  string qs[$]
 
         #  qs.push_back("--- resource get records ---\n")
-        #  foreach (get_record[i]) begin
+        #  foreach (get_record[i]):
         #    record = get_record[i]
-        #    success = (record.rsrc != null)
+        #    success = (record.rsrc != None)
         #    qs.push_back($sformatf("get: name=%s  scope=%s  %s @ %0t\n",
         #             record.name, record.scope,
         #             ((success)?"success":"fail"),
@@ -1137,9 +1137,9 @@ class UVMResourcePool:
     #  prec = rsrc.precedence
     #
     #  // start searching from the second resource
-    #  for(int i = 1; i < q.size(); ++i) begin
+    #  for(int i = 1; i < q.size(); ++i):
     #    r = q.get(i)
-    #    if(r.precedence > prec) begin
+    #    if(r.precedence > prec):
     #      rsrc = r
     #      prec = r.precedence
     #    end
@@ -1219,12 +1219,12 @@ class UVMResourcePool:
     #  uvm_resource_base r
     #  int unsigned i
     #
-    #  if(type_handle == None || !ttab.exists(type_handle)) begin
+    #  if(type_handle is None || !ttab.exists(type_handle)):
     #    return q
     #  end
     #
     #  rq = ttab[type_handle]
-    #  for(int i = 0; i < rq.size(); ++i) begin
+    #  for(int i = 0; i < rq.size(); ++i):
     #    r = rq.get(i)
     #    if(r.match_scope(scope))
     #      q.push_back(r)
@@ -1247,7 +1247,7 @@ class UVMResourcePool:
     #
     #  q = lookup_type(scope, type_handle)
     #
-    #  if(q.size() == 0) begin
+    #  if(q.size() == 0):
     #    push_get_record("<type>", scope, None)
     #    return None
     #  end
@@ -1286,11 +1286,11 @@ class UVMResourcePool:
     #  re = uvm_glob_to_re(re)
     #  result_q = new()
     #
-    #  foreach (rtab[name]) begin
+    #  foreach (rtab[name]):
     #    if(uvm_re_match(re, name))
     #      continue
     #    rq = rtab[name]
-    #    for(i = 0; i < rq.size(); i++) begin
+    #    for(i = 0; i < rq.size(); i++):
     #      r = rq.get(i)
     #      if(r.match_scope(scope))
     #        result_q.push_back(r)
@@ -1319,7 +1319,7 @@ class UVMResourcePool:
         name = ""
         if self.rtab.has_last():
             name = self.rtab.last()
-            while (True):
+            while True:
                 rq = self.rtab[name]
                 for i in range(len(rq)):
                     r = rq[i]
@@ -1353,32 +1353,32 @@ class UVMResourcePool:
     #local function void set_priority_queue(uvm_resource_base rsrc,
     #                                       ref uvm_resource_types::rsrc_q_t q,
     #                                       uvm_resource_types::priority_e pri)
+    def set_priority_queue(self, rsrc, q, pri):
+        r = None  ##  uvm_resource_base 
+        i = 0
 
-    #  uvm_resource_base r
-    #  int unsigned i
+        msg = ""
+        name = rsrc.get_name()
 
-    #  string msg
-    #  string name = rsrc.get_name()
+        for i in range(len(q)):
+            r = q[i]
+            if (r == rsrc):
+                break
 
-    #  for(i = 0; i < q.size(); i++) begin
-    #    r = q.get(i)
-    #    if(r == rsrc) break
-    #  end
+        if r != rsrc:
+            msg = sv.sformatf("Handle for res named %s not in the name name; cannot change its priority",
+                name)
+            uvm_report_error("NORSRC", msg)
+            return
 
-    #  if(r != rsrc) begin
-    #    $sformat(msg, "Handle for resource named %s is not in the name name; cannot change its priority", name)
-    #    uvm_report_error("NORSRC", msg)
-    #    return
-    #  end
+        q.pop(i)
 
-    #  q.delete(i)
+        if pri == PRI_HIGH:
+            q.append(rsrc)
+        elif pri == PRI_LOW:
+            q.append(rsrc)
 
-    #  case(pri)
-    #    uvm_resource_types::PRI_HIGH: q.push_front(rsrc)
-    #    uvm_resource_types::PRI_LOW:  q.push_back(rsrc)
-    #  endcase
-
-    #endfunction
+        #endfunction
 
 
     #// Function: set_priority_type
@@ -1394,13 +1394,13 @@ class UVMResourcePool:
     #  string msg
     #  uvm_resource_types::rsrc_q_t q
 
-    #  if(rsrc == null) begin
-    #    uvm_report_warning("NULLRASRC", "attempting to change the serach priority of a null resource")
+    #  if(rsrc is None):
+    #    uvm_report_warning("NoneRASRC", "attempting to change the serach priority of a None resource")
     #    return
     #  end
 
     #  type_handle = rsrc.get_type_handle()
-    #  if(!ttab.exists(type_handle)) begin
+    #  if(!ttab.exists(type_handle)):
     #    $sformat(msg, "Type handle for resrouce named %s not found in type map; cannot change its search priority", rsrc.get_name())
     #    uvm_report_error("RNFTYPE", msg)
     #    return
@@ -1419,25 +1419,24 @@ class UVMResourcePool:
 
     #function void set_priority_name(uvm_resource_base rsrc,
     #                                uvm_resource_types::priority_e pri)
+    def set_priority_name(self, rsrc, pri):
+        name = ""
+        msg = ""
+        q = []
 
-    #  string name
-    #  string msg
-    #  uvm_resource_types::rsrc_q_t q
+        if(rsrc is None):
+            uvm_report_warning("NoneRASRC", "attempting to change the serach priority of a None resource")
+            return
 
-    #  if(rsrc == null) begin
-    #    uvm_report_warning("NULLRASRC", "attempting to change the serach priority of a null resource")
-    #    return
-    #  end
+        name = rsrc.get_name()
+        if not self.rtab.exists(name):
+            msg = sv.sformatf("Res named %s not found in name map; cannot change its search priority", name)
+            uvm_report_error("RNFNAME", msg)
+            return
 
-    #  name = rsrc.get_name()
-    #  if(!rtab.exists(name)) begin
-    #    $sformat(msg, "Resrouce named %s not found in name map; cannot change its search priority", name)
-    #    uvm_report_error("RNFNAME", msg)
-    #    return
-    #  end
 
-    #  q = rtab[name]
-    #  set_priority_queue(rsrc, q, pri)
+        q = self.rtab[name]
+        self.set_priority_queue(rsrc, q, pri)
 
     #endfunction
 
@@ -1472,13 +1471,13 @@ class UVMResourcePool:
     #  int reads
     #  int writes
 
-    #  foreach (rtab[name]) begin
+    #  foreach (rtab[name]):
     #    rq = rtab[name]
-    #    for(int i=0; i<rq.size(); ++i) begin
+    #    for(int i=0; i<rq.size(); ++i):
     #      r = rq.get(i)
     #      reads = 0
     #      writes = 0
-    #      foreach(r.access[str]) begin
+    #      foreach(r.access[str]):
     #        a = r.access[str]
     #        reads += a.read_count
     #        writes += a.write_count
@@ -1536,7 +1535,7 @@ class UVMResourcePool:
 
     #  `uvm_info("UVM/RESOURCE/DUMP","\n=== resource pool ===",UVM_NONE)
 
-    #  foreach (rtab[name]) begin
+    #  foreach (rtab[name]):
     #    rq = rtab[name]
     #    print_resources(rq, audit)
     #  end

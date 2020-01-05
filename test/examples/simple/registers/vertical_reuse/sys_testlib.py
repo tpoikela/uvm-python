@@ -39,8 +39,10 @@ class sys_R_test(UVMTest):
     def build_phase(self, phase):
         env = []
         if self.env is None:
-            if sv.cast(env, uvm_top.find("env"), sys_env) is True:
+            if sv.cast(env, uvm_top.find("env$"), sys_env) is True:
                 self.env = env[0]
+            else:
+                uvm_fatal("SYS_TEST/NO_ENV", "Unable to find/cast sys_env")
 
     @cocotb.coroutine
     def run_phase(self, phase):
@@ -50,11 +52,12 @@ class sys_R_test(UVMTest):
 
         # dut_reset_seq rst_seq
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)
-        rst_seq.start(None)
+        rst_seq.vif = self.env.vif
+        yield rst_seq.start(None)
         self.env.model.reset()
 
         seq = sys_R_test_seq.type_id.create("sys_R_test_seq",self)
-        seq.model = env.model
+        seq.model = self.env.model
         yield seq.start(None)
 
         phase.drop_objection(self)

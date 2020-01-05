@@ -31,14 +31,13 @@ class reg_sys_S(UVMRegBlock):
     #
     # rand reg_block_B B[2]
 
-
     def __init__(self, name="S"):
         super().__init__(name, UVM_NO_COVERAGE)
         self.B = [None] * 2  # reg_block_B
         self.rand("B")
         #  endfunction: new
 
-    def build_phase(self, phase):
+    def build(self):
 
         self.default_map = self.create_map("default_map", 0x0, 1, UVM_LITTLE_ENDIAN)
 

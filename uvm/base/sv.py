@@ -155,8 +155,7 @@ class sv_obj(crv.Randomized):
     def __init__(self):
         crv.Randomized.__init__(self)
         self._sv_seed = sv.urandom()
-        self._sv_attr_rand = []
-        self._sv_attr_rand_list = []
+        self._sv_rand_obj = []
         random.seed(self._sv_seed)
         self._sv_rand_state = random.getstate()
 
@@ -165,24 +164,42 @@ class sv_obj(crv.Randomized):
         self.add_constraint(c)
 
 
-    def rand(self, key, val_list):
-        self.add_rand(key, val_list)
+    def rand(self, key, val_list=None):
+        if (hasattr(key, "randomize")):
+            if val_list is None:
+                self._sv_rand_obj.append(key)
+        elif hasattr(self, key) and val_list is None:
+            self._sv_rand_obj.append(key)
+        else:
+            self.add_rand(key, val_list)
 
 
-    def randomize(self):
-        """ Randomizes the value in object marked with rand() or constraint()
-        """
+    def randomize(self, recurse=True):
+        """ Randomizes values in object marked with rand() """
         try:
+            ok = True
+            if recurse:
+                for entry in self._sv_rand_obj:
+                    obj = entry
+                    if hasattr(self, entry):
+                        obj = getattr(self, entry)
+                    ok = ok and obj.randomize()
             super().randomize()
-            return True
+            return True and ok
         except:
             return False
 
 
     def randomize_with(self, *constr):
         try:
+            ok = True
+            for entry in self._sv_rand_obj:
+                obj = entry
+                if hasattr(self, entry):
+                    obj = getattr(self, entry)
+                ok = ok and obj.randomize()
             super().randomize_with(*constr)
-            return True
+            return True and ok
         except:
             return False
 

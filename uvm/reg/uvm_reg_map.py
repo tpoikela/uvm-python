@@ -27,6 +27,7 @@ from ..base.sv import sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import *
+from ..macros.uvm_message_defines import *
 from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegBusOp
 from ..seq import UVMSequenceBase
@@ -384,6 +385,59 @@ class UVMRegMap(UVMObject):
     #   //
     #   extern virtual function void add_submap (uvm_reg_map    child_map,
     #                                            uvm_reg_addr_t offset)
+    def add_submap(self, child_map, offset):
+        parent_map = None  # #   uvm_reg_map
+
+        if child_map is None:
+            uvm_error("RegModel", "Attempting to add None map to map '" +
+                    self.get_full_name() + "'")
+            return
+
+        parent_map = child_map.get_parent_map()
+
+        # Cannot have more than one parent (currently)
+        if parent_map is not None:
+            uvm_error("RegModel", ("Map '" + child_map.get_full_name() +
+                      "' is already a child of map '" +
+                      parent_map.get_full_name() +
+                      "'. Cannot also be a child of map '" +
+                      self.get_full_name() + "'"))
+            return
+
+        # begin : parent_block_check
+        child_blk = child_map.get_parent()
+        if child_blk is None:
+            uvm_error("RegModel", "Cannot add submap '" +child_map.get_full_name()
+                  + "' because it does not have a parent block")
+            return
+
+        while ((child_blk is not None) and (child_blk.get_parent() != self.get_parent())):
+            child_blk = child_blk.get_parent()
+
+        if child_blk is None:
+            uvm_error("RegModel", ("Submap '" + child_map.get_full_name()
+                + "' may not be added to this address map, '"
+                + self.get_full_name(),"', as the submap's parent block, '"
+                + child_blk.get_full_name()
+                + "', is neither this map's parent block nor a descendent of this map's parent block, '"
+                + self.m_parent.get_full_name() + "'"))
+            return
+
+
+        if self.m_n_bytes > child_map.get_n_bytes(UVM_NO_HIER):
+            uvm_warning("RegModel",
+               sv.sformatf("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
+                         child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
+                         self.m_n_bytes, get_full_name()))
+
+
+        child_map.add_parent_map(self, offset)
+        self.set_submap_offset(child_map, offset)
+        #endfunction: add_submap
+
+
+
+
     #
     #
 
@@ -419,6 +473,19 @@ class UVMRegMap(UVMObject):
     #
     #   extern virtual function void set_submap_offset (uvm_reg_map submap,
     #                                                   uvm_reg_addr_t offset)
+    def set_submap_offset(self, submap, offset):
+        if (submap is None):
+            uvm_error("REG/None","set_submap_offset: submap handle is None")
+            return
+
+        self.m_submaps[submap] = offset
+        if self.m_parent.is_locked():
+            root_map = self.get_root_map()
+            root_map.Xinit_address_mapX()
+
+        #endfunction
+
+
     #
     #
     #   // Function: get_submap_offset
@@ -426,6 +493,18 @@ class UVMRegMap(UVMObject):
     #   // Return the offset of the given ~submap~.
     #
     #   extern virtual function uvm_reg_addr_t get_submap_offset (uvm_reg_map submap)
+    def get_submap_offset(self, submap):
+        if submap is None:
+            uvm_error("REG/None","set_submap_offset: submap handle is None")
+            return -1
+
+        if submap not in self.m_submaps:
+            uvm_error("RegModel", "Map '" + submap.get_full_name()
+                  + "' is not a submap of '" + self.get_full_name() + "'")
+            return -1
+        return self.m_submaps[submap]
+        #endfunction
+        
     #
     #
     #   // Function: set_base_addr
@@ -452,8 +531,30 @@ class UVMRegMap(UVMObject):
     #   extern virtual function void reset(string kind = "SOFT")
     #
     #
+
     #   /*local*/ extern virtual function void add_parent_map(uvm_reg_map  parent_map,
     #                                                         uvm_reg_addr_t offset)
+    def add_parent_map(self, parent_map, offset):
+        if (parent_map is None):
+            uvm_error("RegModel",
+               "Attempting to add None parent map to map '" +
+               self.get_full_name() + "'")
+            return
+
+        if self.m_parent_map is not None:
+            uvm_error("RegModel",
+               sv.sformatf("Map \"%s\" already a submap of map \"%s\" at offset 'h%h",
+                         self.get_full_name(), self.m_parent_map.get_full_name(),
+                         self.m_parent_map.get_submap_offset(self)))
+            return
+
+
+        self.m_parent_map = parent_map
+        self.m_parent_maps[parent_map] = offset  # prep for multiple parents
+        parent_map.m_submaps[self] = offset
+        #
+        #endfunction: add_parent_map
+
     #
     #   /*local*/ extern virtual function void Xverify_map_configX()
     #
@@ -878,7 +979,7 @@ class UVMRegMap(UVMObject):
 
             base_addr = up_map.get_submap_offset(self)
             for i in range(len(local_addr)):
-                n = addr.size()
+                n = len(addr)
                 w = up_map.get_physical_addresses(base_addr + local_addr[i] * k,
                         0, bus_width, sys_addr)
 
@@ -915,13 +1016,13 @@ class UVMRegMap(UVMObject):
                 "Cannot get register by offset: Block %s is not locked.",
                 self.m_parent.get_full_name()))
             return None
-     
+
         if (not read and offset in self.m_regs_by_offset_wo):
             return self.m_regs_by_offset_wo[offset]
-     
+
         if offset in self.m_regs_by_offset:
             return self.m_regs_by_offset[offset]
-     
+
         return None
     #endfunction
 
@@ -1634,64 +1735,6 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-# add_submap
-#
-#function void uvm_reg_map::add_submap (uvm_reg_map child_map,
-#                                       uvm_reg_addr_t offset)
-#   uvm_reg_map parent_map
-#
-#   if (child_map is None):
-#      `uvm_error("RegModel", {"Attempting to add None map to map '",get_full_name(),"'"})
-#      return
-#   end
-#
-#   parent_map = child_map.get_parent_map()
-#
-#   // Cannot have more than one parent (currently)
-#   if (parent_map is not None):
-#      `uvm_error("RegModel", {"Map '", child_map.get_full_name(),
-#                 "' is already a child of map '",
-#                 parent_map.get_full_name(),
-#                 "'. Cannot also be a child of map '",
-#                 get_full_name(),
-#                 "'"})
-#      return
-#   end
-#
-#   begin : parent_block_check
-#     uvm_reg_block child_blk = child_map.get_parent()
-#     if (child_blk is None):
-#        `uvm_error("RegModel", {"Cannot add submap '",child_map.get_full_name(),
-#                   "' because it does not have a parent block"})
-#        return
-#     end
-#     while((child_blk is not None) && (child_blk.get_parent() != get_parent()))
-#	     	child_blk = child_blk.get_parent()
-#
-#     if (child_blk==None):
-#        `uvm_error("RegModel",
-#          {"Submap '",child_map.get_full_name(),"' may not be added to this ",
-#          "address map, '", get_full_name(),"', as the submap's parent block, '",
-#          child_blk.get_full_name(),"', is neither this map's parent block nor a descendent of this map's parent block, '",
-#          self.m_parent.get_full_name(),"'"})
-#      return
-#     end
-#   end
-#
-#   begin : n_bytes_match_check
-#      if (self.m_n_bytes > child_map.get_n_bytes(UVM_NO_HIER)):
-#         `uvm_warning("RegModel",
-#             $sformatf("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
-#                       child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
-#                       self.m_n_bytes, get_full_name()))
-#      end
-#   end
-#
-#   child_map.add_parent_map(this,offset)
-#
-#   set_submap_offset(child_map, offset)
-#
-#endfunction: add_submap
 #
 #
 # reset
@@ -1707,29 +1750,6 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-# add_parent_map
-#
-#function void uvm_reg_map::add_parent_map(uvm_reg_map parent_map, uvm_reg_addr_t offset)
-#
-#   if (parent_map is None):
-#      `uvm_error("RegModel",
-#          {"Attempting to add None parent map to map '",get_full_name(),"'"})
-#      return
-#   end
-#
-#   if (self.m_parent_map is not None):
-#      `uvm_error("RegModel",
-#          $sformatf("Map \"%s\" already a submap of map \"%s\" at offset 'h%h",
-#                    get_full_name(), self.m_parent_map.get_full_name(),
-#                    self.m_parent_map.get_submap_offset(this)))
-#      return
-#   end
-#
-#   self.m_parent_map = parent_map
-#   self.m_parent_maps[parent_map] = offset; // prep for multiple parents
-#   parent_map.self.m_submaps[this] = offset
-#
-#endfunction: add_parent_map
 #
 #
 #
@@ -1942,35 +1962,8 @@ uvm_object_utils(UVMRegMap)
 #--------------
 #
 #
-# set_submap_offset
-#
-#function void uvm_reg_map::set_submap_offset(uvm_reg_map submap, uvm_reg_addr_t offset)
-#  if (submap is None):
-#    `uvm_error("REG/None","set_submap_offset: submap handle is None")
-#    return
-#  end
-#  self.m_submaps[submap] = offset
-#  if (self.m_parent.is_locked()):
-#    uvm_reg_map root_map = get_root_map()
-#    root_map.Xinit_address_mapX()
-#  end
-#endfunction
 #
 #
-# get_submap_offset
-#
-#function uvm_reg_addr_t uvm_reg_map::get_submap_offset(uvm_reg_map submap)
-#  if (submap is None):
-#    `uvm_error("REG/None","set_submap_offset: submap handle is None")
-#    return -1
-#  end
-#  if (!self.m_submaps.exists(submap)):
-#    `uvm_error("RegModel",{"Map '",submap.get_full_name(),
-#                      "' is not a submap of '",get_full_name(),"'"})
-#    return -1
-#  end
-#  return self.m_submaps[submap]
-#endfunction
 #
 #
 #

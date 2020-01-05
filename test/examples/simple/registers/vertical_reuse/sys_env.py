@@ -22,12 +22,15 @@
 #//
 
 
-from uvm.comps.uvm_env import *
+from uvm.comps.uvm_env import UVMEnv
+from uvm.base.uvm_config_db import UVMConfigDb
 from uvm.macros import *
 
 from blk_env import blk_env
-from apb.apb_agent import apb_agent
 from reg_S import *
+
+from apb.apb_agent import apb_agent
+from apb.apb_rw import reg2apb_adapter
 
 
 class sys_env(UVMEnv):
@@ -40,36 +43,43 @@ class sys_env(UVMEnv):
         self.blk1 = None  # blk_env
         self.model = None  # reg_sys_S
         self.apb = None  # apb_agent
+        self.vif = None
 
 
     def build_phase(self, phase):
         super().build_phase(phase)
+        arr = []
+        if UVMConfigDb.get(self, "apb", "vif", arr) is False:
+            uvm_fatal("APB/SYS_ENV/NO_VIF", "Could not get vif from config_db")
+        self.vif = arr[0]
 
+        print("XYZ now here 222")
         self.blk0 = blk_env.type_id.create("blk0", self)
         self.blk1 = blk_env.type_id.create("blk1", self)
+        UVMConfigDb.set(self.blk0, "apb", "vif", arr[0])
+        UVMConfigDb.set(self.blk1, "apb", "vif", arr[0])
 
         if self.model is None:
-            self.model = reg_sys_S.type_id.create("reg_sys_S",None,
+            self.model = reg_sys_S.type_id.create("reg_sys_S", None,
                 self.get_full_name())
             self.model.build()
             self.model.lock_model()
 
 
-        #      blk0.model = model.B[0]
-        #      blk1.model = model.B[1]
+        self.blk0.model = self.model.B[0]
+        self.blk1.model = self.model.B[1]
         #
         self.apb = apb_agent.type_id.create("apb", self)
         #   endfunction: build_phase
 
 
-    #   def connect_phase(self, phase):
-    #      if (model.get_parent() is None):
-    #         reg2apb_adapter reg2apb = new
-    #         model.default_map.set_sequencer(apb.sqr,reg2apb)
-    #         model.default_map.set_auto_predict()
-    #      end
-    #   endfunction
-    #
+    def connect_phase(self, phase):
+        if self.model.get_parent() is None:
+            reg2apb = reg2apb_adapter()
+            self.model.default_map.set_sequencer(self.apb.sqr,reg2apb)
+            self.model.default_map.set_auto_predict()
+
+
     #endclass: sys_env
 
 uvm_component_utils(sys_env)

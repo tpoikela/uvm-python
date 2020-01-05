@@ -21,6 +21,7 @@ from .uvm_pool import *
 from .uvm_port_base import *
 from .uvm_printer import *
 from .uvm_queue import *
+from .uvm_recorder import *
 from .uvm_registry import *
 from .uvm_report_catcher import *
 from .uvm_report_handler import *
@@ -36,3 +37,4 @@ from .uvm_spell_chkr import *
 from .uvm_task_phase import *
 from .uvm_topdown_phase import *
 from .uvm_transaction import *
+from .sv import *

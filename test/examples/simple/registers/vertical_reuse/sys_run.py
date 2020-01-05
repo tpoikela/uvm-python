@@ -33,22 +33,6 @@ from apb.apb_if import apb_if
 from sys_env import sys_env
 from sys_testlib import *
 
-#class dut_reset_seq(uvm_sequence):
-    #
-    #   def __init__(self, name = "dut_reset_seq")
-    #      super().__init__(name)
-    #   endfunction
-    #
-    #   `uvm_object_utils(dut_reset_seq)
-    #
-    #@cocotb.coroutine
-    #   def body(self)
-    #      sys_top.rst = 1
-    #      repeat (5) @(negedge sys_top.clk)
-    #      sys_top.rst = 0
-    #   endtask
-    #endclass
-#
 
 
 @cocotb.test()

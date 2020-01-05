@@ -29,6 +29,7 @@ from .apb_master import apb_master
 from .apb_sequencer import apb_sequencer
 from .apb_monitor import apb_monitor
 
+
 class apb_agent(UVMAgent):
 
 
@@ -48,9 +49,10 @@ class apb_agent(UVMAgent):
         self.mon = apb_monitor.type_id.create("mon", self)
 
         arr = []
-        if (not UVMConfigDb.get(self, "", "vif", arr)):
-            uvm_fatal("APB/AGT/NOVIF", "No virtual interface specified for self agent instance")
-        self.vif = arr[0]
+        if UVMConfigDb.get(self, "", "vif", arr):
+            self.vif = arr[0]
+        if self.vif is None:
+            uvm_fatal("APB/AGT/NOVIF", "No virtual interface specified for apb_agent instance")
 
 
     def connect_phase(self, phase):
