@@ -109,7 +109,7 @@ class UVMSequencerParamBase(UVMSequencerBase):
         param_t.set_sequence_id(sequence_ptr.m_get_sqr_sequence_id(self.m_sequencer_id, 1))
         t.set_sequencer(self)
         if self.m_req_fifo.try_put(param_t) is False:
-            self.uvm_report_fatal(self.get_full_name(), ERR_MSG2, UVM_NONE)
+            uvm_fatal(self.get_full_name(), ERR_MSG2)
 
         self.m_num_reqs_sent += 1
         # Grant any locks as soon as possible
