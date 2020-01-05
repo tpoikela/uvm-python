@@ -24,7 +24,8 @@
 import cocotb
 
 from ..macros import uvm_error
-from ..base.sv import semaphore, sv
+from ..base.sv import sv
+from ..base.uvm_mailbox import UVMMailbox
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
 from ..base.uvm_queue import UVMQueue
@@ -79,7 +80,11 @@ class UVMReg(UVMObject):
         self.m_n_bits      = n_bits
         self.m_has_cover   = has_coverage
         self.m_cover_on    = False
-        self.m_atomic  = semaphore(1)  # semaphore
+
+        self.m_atomic_rw = None
+        self.m_atomic  = UVMMailbox(1)
+        self.m_atomic.try_put(1)
+
         #   self.m_process = None
         self.m_n_used_bits = 0
         self.m_locked      = False
@@ -646,13 +651,15 @@ class UVMReg(UVMObject):
     #   // was completed
     #   //
     #   extern virtual function void reset(string kind = "HARD")
+    @cocotb.coroutine
     def reset(self, kind="HARD"):
         for i in range(len(self.m_fields)):
             self.m_fields[i].reset(kind)
         # Put back a key in the semaphore if it is checked out
         # in case a thread was killed during an operation
-        self.m_atomic.try_get(1)
-        self.m_atomic.put(1)
+        q = []
+        self.m_atomic.try_get(q)
+        yield self.m_atomic.put(1)
         self.m_process = None
         self.Xset_busyX(0)
         #endfunction: reset
@@ -726,10 +733,10 @@ class UVMReg(UVMObject):
 
         uvm_check_output_args([status])
         # create an abstract transaction for this operation
-        self.XatomicX(1)
+        rw = UVMRegItem.type_id.create("write_item", None, self.get_full_name())
+        yield self.XatomicX(1, rw)
         self.set(value)
 
-        rw = UVMRegItem.type_id.create("write_item", None, self.get_full_name())
         rw.element      = self
         rw.element_kind = UVM_REG
         rw.kind         = UVM_WRITE
@@ -744,7 +751,7 @@ class UVMReg(UVMObject):
 
         yield self.do_write(rw)
         status.append(rw.status)
-        self.XatomicX(0)
+        yield self.XatomicX(0)
         #endtask
 
 
@@ -889,11 +896,12 @@ class UVMReg(UVMObject):
         exp = 0  # uvm_reg_data_t  exp
         bkdr = self.get_backdoor()
 
-        self.XatomicX(1)
+        rw = UVMRegItem.type_id.create("mirror_pseudo_item", None, self.get_full_name())
+        yield self.XatomicX(1, rw)
         self.m_fname = fname
         self.m_lineno = lineno
 
-        if (path == UVM_DEFAULT_PATH):
+        if path == UVM_DEFAULT_PATH:
             path = self.m_parent.get_default_path()
 
         if (path == UVM_BACKDOOR and (bkdr is not None or self.has_hdl_path())):
@@ -912,14 +920,14 @@ class UVMReg(UVMObject):
         yield self.XreadX(status, v, path, _map, parent, prior, extension, fname, lineno)
         v = v[0]
 
-        if (status == UVM_NOT_OK):
-            self.XatomicX(0)
+        if status == UVM_NOT_OK:
+            yield self.XatomicX(0)
             return
 
-        if (check == UVM_CHECK):
+        if check == UVM_CHECK:
             self.do_check(exp, v, _map)
 
-        self.XatomicX(0)
+        yield self.XatomicX(0)
         #endtask: mirror
 
     #   // Function: predict
@@ -995,22 +1003,26 @@ class UVMReg(UVMObject):
         #endtask: XreadX
 
     #   /*local*/ extern task XatomicX(bit on)
-    def XatomicX(self, on):
-        pass  # TODO
+    @cocotb.coroutine
+    def XatomicX(self, on, rw=None):
         #   process m_reg_process
         #   m_reg_process=process::self()
-        #
-        #   if (on):
-        #     if (m_reg_process == self.m_process)
-        #       return
-        #     self.m_atomic.get(1)
-        #     self.m_process = m_reg_process;
+        if on == 1:
+            if rw is None:
+                raise Exception("rw must not be None for on=1")
+            if (rw is not None) and rw == self.m_atomic_rw:
+                yield Timer(0, "NS")
+                return
+            q = []
+            yield self.m_atomic.get(q)
+            self.m_atomic_rw = rw
         #   end
-        #   else begin
-        #      // Maybe a key was put back in by a spurious call to reset()
-        #      void'(self.m_atomic.try_get(1))
-        #      self.m_atomic.put(1)
-        #      self.m_process = None
+        else:
+            # Maybe a key was put back in by a spurious call to reset()
+            q = []
+            self.m_atomic.try_get(q)
+            yield self.m_atomic.put(1)
+            self.m_atomic_rw = None
         #   end
         #endtask: XatomicX
         #
@@ -1129,7 +1141,8 @@ class UVMReg(UVMObject):
             return
         map_info = map_info[0]
 
-        self.XatomicX(1)
+        print("in reg do_write() before XatomicX(1)")
+        yield self.XatomicX(1, rw)
 
         self.m_write_in_progress = True
 
@@ -1168,9 +1181,9 @@ class UVMReg(UVMObject):
             yield cb.pre_write(rw)
             cb = cbs.next()
 
-        if (rw.status != UVM_IS_OK):
+        if rw.status != UVM_IS_OK:
             self.m_write_in_progress = False
-            self.XatomicX(0)
+            yield self.XatomicX(0)
             return
 
         if rw.path == UVM_BACKDOOR:
@@ -1280,7 +1293,7 @@ class UVMReg(UVMObject):
                     + self.get_full_name() + value_s, UVM_HIGH)
 
         self.m_write_in_progress = False
-        self.XatomicX(0)
+        yield self.XatomicX(0)
         #endtask: do_write
 
 
@@ -1474,6 +1487,7 @@ class UVMReg(UVMObject):
                     + self.get_full_name() + value_s, UVM_HIGH)
         self.m_read_in_progress = False
         #endtask: do_read
+
 
     def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
         reg_value = rw.value[0]
@@ -2442,9 +2456,10 @@ class UVMReg(UVMObject):
 #                   input  uvm_object        extension = None,
 #                   input  string            fname = "",
 #                   input  int               lineno = 0)
-#   XatomicX(1)
+#   TODO create pseudo-rw
+#   yield self.XatomicX(1, rw)
 #   XreadX(status, value, path, map, parent, prior, extension, fname, lineno)
-#   XatomicX(0)
+#   yield self.XatomicX(0)
 #endtask: read
 #
 #
@@ -2572,11 +2587,11 @@ class UVMReg(UVMObject):
 #      return
 #   end
 #
+#   rw = uvm_reg_item::type_id::create("reg_poke_item",,get_full_name())
 #   if (!self.m_is_locked_by_field)
-#     XatomicX(1)
+#     yield self.XatomicX(1, rw)
 #
 #   // create an abstract transaction for this operation
-#   rw = uvm_reg_item::type_id::create("reg_poke_item",,get_full_name())
 #   rw.element      = this
 #   rw.path         = UVM_BACKDOOR
 #   rw.element_kind = UVM_REG
@@ -2601,7 +2616,7 @@ class UVMReg(UVMObject):
 #   do_predict(rw, UVM_PREDICT_WRITE)
 #
 #   if (!self.m_is_locked_by_field)
-#     XatomicX(0)
+#     yield self.XatomicX(0)
 #endtask: poke
 #
 #
@@ -2629,11 +2644,11 @@ class UVMReg(UVMObject):
 #      return
 #   end
 #
+#   rw = uvm_reg_item::type_id::create("mem_peek_item",,get_full_name())
 #   if(!self.m_is_locked_by_field)
-#      XatomicX(1)
+#      yield self.XatomicX(1, rw)
 #
 #   // create an abstract transaction for this operation
-#   rw = uvm_reg_item::type_id::create("mem_peek_item",,get_full_name())
 #   rw.element      = this
 #   rw.path         = UVM_BACKDOOR
 #   rw.element_kind = UVM_REG
@@ -2658,7 +2673,7 @@ class UVMReg(UVMObject):
 #   do_predict(rw, UVM_PREDICT_READ)
 #
 #   if (!self.m_is_locked_by_field)
-#      XatomicX(0)
+#      yield self.XatomicX(0)
 #endtask: peek
 #
 #

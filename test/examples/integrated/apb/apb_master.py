@@ -84,6 +84,7 @@ class apb_master(UVMDriver):  #(apb_rw)
             yield self.drive_delay()
 
             tr = []
+            print("LLL calling get_next_item()")
             yield self.seq_item_port.get_next_item(tr)
             tr = tr[0]
 
