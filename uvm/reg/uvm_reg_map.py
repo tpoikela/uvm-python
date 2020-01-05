@@ -436,11 +436,6 @@ class UVMRegMap(UVMObject):
         #endfunction: add_submap
 
 
-
-
-    #
-    #
-
     #   // Function: set_sequencer
     #   //
     #   // Set the sequencer and adapter associated with this map. This method
@@ -449,12 +444,11 @@ class UVMRegMap(UVMObject):
     #   extern virtual function void set_sequencer (uvm_sequencer_base sequencer,
     #                                               uvm_reg_adapter    adapter=None)
     def set_sequencer(self, sequencer, adapter=None):
-
-        if (sequencer is None):
+        if sequencer is None:
             uvm_error("REG_None_SQR", "None reference specified for bus sequencer")
             return
 
-        if (adapter is None):
+        if adapter is None:
             uvm_info("REG_NO_ADAPT", ("Adapter not specified for map '" +
                 self.get_full_name() +
                 "'. Accesses via this map will send abstract 'uvm_reg_item' items to sequencer '"
@@ -464,8 +458,6 @@ class UVMRegMap(UVMObject):
         self.m_adapter = adapter
         #endfunction
 
-    #
-    #
     #
     #   // Function: set_submap_offset
     #   //
@@ -2094,7 +2086,7 @@ uvm_object_utils(UVMRegMap)
 #  //rhs_.blks = blks
 #  //... and so on
 #endfunction
-#
+
 
 import unittest
 
