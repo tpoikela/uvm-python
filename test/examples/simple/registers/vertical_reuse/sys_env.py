@@ -27,6 +27,7 @@ from uvm.macros import *
 
 from blk_env import blk_env
 from apb.apb_agent import apb_agent
+from reg_S import *
 
 
 class sys_env(UVMEnv):
