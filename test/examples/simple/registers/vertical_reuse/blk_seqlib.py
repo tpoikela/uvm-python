@@ -68,14 +68,11 @@ class blk_R_test_seq(uvm_reg_sequence):
         status = 0
         n = 0
 
-        print("YYY Starting blk_R_test_seq")
         # Initialize R with a random value then check against mirror
         data = sv.urandom()
         status = []
-        print("YYY Before R.write blk_R_test_seq")
         yield self.model.R.write(status, data, parent=self)
         self.check_status(status, "WRITE_FAIL")
-        print("YYY After R.write blk_R_test_seq")
         status = []
         yield self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR FAIL")

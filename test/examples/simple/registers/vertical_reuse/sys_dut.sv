@@ -2,6 +2,7 @@
 // -------------------------------------------------------------
 //    Copyright 2010 Mentor Graphics Corporation
 //    Copyright 2004-2011 Synopsys, Inc.
+//    Copyright 2019-2020 Tuomas Poikela (tpoikela)
 //    All Rights Reserved Worldwide
 //
 //    Licensed under the Apache License, Version 2.0 (the
@@ -25,7 +26,8 @@
 `include "blk_dut.sv"
 
 module sys_dut #(
-    parameter int BASE_ADDR='h100
+    parameter int BASE_ADDR='h100,
+    parameter int NUM_BLKS = 2
 )
 (
    //apb_if    apb,
@@ -40,8 +42,17 @@ module sys_dut #(
    input bit rst
 );
 
-  blk_dut #(BASE_ADDR)       b1 (.*);
-  blk_dut #(BASE_ADDR+'h100) b2 (.*);
+/*
+  genvar gk;
+  generate
+  for (gk = 0; gk < NUM_BLKS; NUM_BLKS = NUM_BLKS + 1) begin
+      blk_dut #(BASE_ADDR+'h100 * gk) i_blk_dut(.*);
+  end
+  endgenerate
+  */
+
+  blk_dut #(BASE_ADDR)        b1 (.*);
+  blk_dut #(BASE_ADDR+'h100 ) b2(.*);
 
 `ifdef COCOTB_SIM
 initial begin

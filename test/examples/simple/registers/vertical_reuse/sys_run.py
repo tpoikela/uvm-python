@@ -37,6 +37,7 @@ from sys_testlib import *
 
 @cocotb.test()
 def initial(dut):
+    print("dut NUM_BLKS: " + str(dut.NUM_BLKS))
     env = sys_env("env")
     vif = apb_if(dut)
     UVMConfigDb.set(env, "apb", "vif", vif)

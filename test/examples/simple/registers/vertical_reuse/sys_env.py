@@ -54,7 +54,6 @@ class sys_env(UVMEnv):
             uvm_fatal("APB/SYS_ENV/NO_VIF", "Could not get vif from config_db")
         self.vif = arr[0]
 
-        print("XYZ now here 222")
         self.blk0 = blk_env.type_id.create("blk0", self)
         self.blk1 = blk_env.type_id.create("blk1", self)
         UVMConfigDb.set(self.blk0, "apb", "vif", arr[0])

@@ -633,7 +633,7 @@ class UVMReg(UVMObject):
     #   // See <uvm_reg_field::needs_update()> for details.
     #   // Use the <uvm_reg::update()> to actually update the DUT register.
     #   //
-    #   extern virtual function bit needs_update();
+    #   extern virtual function bit needs_update()
 
 
     #   // Function: reset
@@ -1131,7 +1131,7 @@ class UVMReg(UVMObject):
         # TODO finish this
         cbs = UVMRegCbIter(self)  # uvm_reg_cb_iter  cbs = new(this)
         map_info = []  # uvm_reg_map_info
-        value = 0  # uvm_reg_data_t   value;
+        value = 0  # uvm_reg_data_t   value
 
         self.m_fname  = rw.fname
         self.m_lineno = rw.lineno
@@ -1141,7 +1141,6 @@ class UVMReg(UVMObject):
             return
         map_info = map_info[0]
 
-        print("in reg do_write() before XatomicX(1)")
         yield self.XatomicX(1, rw)
 
         self.m_write_in_progress = True
@@ -2548,7 +2547,7 @@ class UVMReg(UVMObject):
 #        `uvm_error("RegModel", $sformatf("Backdoor read of register %s with multiple HDL copies: values are not the same: %0h at path '%s', and %0h at path '%s'. Returning first value.",
 #               get_full_name(),
 #               rw.value[0], uvm_hdl_concat2string(paths[0]),
-#               val, uvm_hdl_concat2string(paths[i])));
+#               val, uvm_hdl_concat2string(paths[i])))
 #        return UVM_NOT_OK
 #      end
 #      `uvm_info("RegMem",
@@ -2683,6 +2682,7 @@ class UVMReg(UVMObject):
 #
 #// convert2string
 #
+
 #function string uvm_reg::convert2string()
 #   string res_str
 #   string t_str
@@ -2725,16 +2725,17 @@ class UVMReg(UVMObject):
 #      if (self.m_fname != "" && self.m_lineno != 0)
 #         $sformat(res_str, "%s:%0d ",self.m_fname, self.m_lineno)
 #      convert2string = {convert2string, "\n", res_str,
-#                        "currently executing read method"};
+#                        "currently executing read method"}
 #   end
 #   if ( self.m_write_in_progress == 1'b1):
 #      if (self.m_fname != "" && self.m_lineno != 0)
 #         $sformat(res_str, "%s:%0d ",self.m_fname, self.m_lineno)
 #      convert2string = {convert2string, "\n", res_str,
-#                        "currently executing write method"};
+#                        "currently executing write method"}
 #   end
 #
 #endfunction: convert2string
+
 #
 #
 #// do_print

@@ -74,11 +74,10 @@ class sys_R_test_seq(uvm_reg_sequence):
         seq = blk_R_test_seq.type_id.create(sv.sformatf("blk_seq%0d",i),
                 None, self.get_full_name())
         seq.model = self.model.B[i]
-        print("ZYX seq started on model " + str(i) + " " + seq.model.get_name())
         yield seq.start(None, self)
         #end join_none
 
-    #
+
     #endclass
 
 uvm_object_utils(sys_R_test_seq)
