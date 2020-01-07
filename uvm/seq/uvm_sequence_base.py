@@ -965,7 +965,6 @@ class UVMSequenceBase(UVMSequenceItem):
     @cocotb.coroutine
     def finish_item(self, item, set_priority=-1):
         sequencer = item.get_sequencer()
-        print("SSS finish_item called for " + item.convert2string())
 
         if sequencer is None:
             uvm_fatal("STRITM", "sequence_item has None sequencer")
