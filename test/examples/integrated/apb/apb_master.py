@@ -26,7 +26,7 @@ from cocotb.triggers import *
 
 from uvm.base.uvm_callback import *
 from uvm.base.uvm_config_db import *
-from uvm.comps.uvm_driver import *
+from uvm.comps.uvm_driver import UVMDriver
 from uvm.macros import *
 
 from .apb_rw import *
@@ -34,7 +34,7 @@ from .apb_rw import *
 
 class apb_master_cbs(UVMCallback):
     @cocotb.coroutine
-    def trans_received(self, xactor , cycle):
+    def trans_received(self, xactor, cycle):
         yield Timer(0, "NS")
 
     @cocotb.coroutine
@@ -51,7 +51,7 @@ class apb_master(UVMDriver):  #(apb_rw)
     #
     def __init__(self, name, parent=None):
         super().__init__(name,parent)
-        self.trig = None  # event
+        self.trig = Event("trans_exec")  # event
         self.sigs = None  # apb_vif
         self.cfg = None  # apb_config
         self.tag = "APB_MASTER"
@@ -79,12 +79,9 @@ class apb_master(UVMDriver):  #(apb_rw)
         self.sigs.penable <= 0
 
         while True:
-            # apb_rw tr
-            #yield Edge(self.sigs.clk)
             yield self.drive_delay()
 
             tr = []
-            print("LLL calling get_next_item()")
             yield self.seq_item_port.get_next_item(tr)
             tr = tr[0]
 
@@ -94,7 +91,7 @@ class apb_master(UVMDriver):  #(apb_rw)
 
             self.trans_received(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
-    
+
             if tr.kind == apb_rw.READ:
                 data = []
                 yield self.read(tr.addr, data)
@@ -106,6 +103,7 @@ class apb_master(UVMDriver):  #(apb_rw)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_executed(self,tr))
 
             self.seq_item_port.item_done()
+            self.trig.set()
     	    #->trig
         #   endtask: run_phase
 
@@ -113,7 +111,7 @@ class apb_master(UVMDriver):  #(apb_rw)
     @cocotb.coroutine
     def read(self, addr, data):
         uvm_info(self.tag, "Doing APB read to addr " + str(addr), UVM_MEDIUM)
-        
+
         self.sigs.paddr   <= addr
         self.sigs.pwrite  <= 0
         self.sigs.psel    <= 1
@@ -124,7 +122,7 @@ class apb_master(UVMDriver):  #(apb_rw)
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
         #   endtask: read
-        #
+
 
     @cocotb.coroutine
     def write(self, addr, data):
@@ -139,13 +137,13 @@ class apb_master(UVMDriver):  #(apb_rw)
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
         #   endtask: write
-        #
+
 
     @cocotb.coroutine
     def drive_delay(self):
         yield Edge(self.sigs.clk)
         yield Timer(1, "NS")
-    
+
     @cocotb.coroutine
     def trans_received(self, tr):
         yield Timer(0, "NS")

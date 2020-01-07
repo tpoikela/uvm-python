@@ -24,6 +24,7 @@
 import cocotb
 
 from ..base.sv import sv
+from ..base.uvm_debug import uvm_debug
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
 from ..macros.uvm_object_defines import *
@@ -1143,8 +1144,6 @@ class UVMRegMap(UVMObject):
 
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         addrs = map_info.addr
-        print("map_info addr is " + str(addrs))
-
 
         # if a memory, adjust addresses based on offset
         if (rw.element_kind == UVM_MEM):
@@ -1214,41 +1213,33 @@ class UVMRegMap(UVMObject):
 
             # perform accesses
             # foreach(accesses[i]):
-            print("AAABBB 1")
             for i in range(len(accesses)):
                 rw_access = accesses[i]  # uvm_reg_bus_op
                 bus_req = None  # uvm_sequence_item
                 adapter.m_set_item(rw)
                 bus_req = adapter.reg2bus(rw_access)
-                print("AAABBB 1.5 Adapter returned bus_req " + bus_req.convert2string())
                 adapter.m_set_item(None)
 
                 if bus_req is None:
                     uvm_fatal("RegMem",
                         "adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
-                print("AAABBB 2")
                 bus_req.set_sequencer(sequencer)
                 yield rw.parent.start_item(bus_req,rw.prior)
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
 
-                print("AAABBB 3")
                 yield rw.parent.finish_item(bus_req)
-                print("AAABBB 4")
                 yield bus_req.end_event.wait_on()
-                print("AAABBB 5")
 
                 if adapter.provides_responses:
-                    print("AAABBB 6")
                     bus_rsp = None  # uvm_sequence_item
                     op = None  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
                     yield rw.parent.get_base_response(bus_rsp)
                     rw_access = adapter.bus2reg(bus_rsp,rw_access)
                 else:
-                    print("AAABBB 7: Adapter does not give any response")
                     rw_access = adapter.bus2reg(bus_req, rw_access)
                     if rw_access is None:
                         uvm_error("ADAPTER_BUS2REG_NONE", sv.sformatf("Adapter %s",
@@ -1386,17 +1377,12 @@ class UVMRegMap(UVMObject):
                     uvm_fatal("RegMem","adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
-                print("WWW before start_item WWW")
-                print(rw.parent)
                 yield rw.parent.start_item(bus_req, rw.prior)
-                print("WWW after start_item WWW")
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
 
-                print("UUU do_bus_read() Calling finish_item for bus_req now")
                 yield rw.parent.finish_item(bus_req)
-                print("UUU yield bus_req.end_event.wait_on() " + self.get_name())
                 yield bus_req.end_event.wait_on()
 
                 if adapter.provides_responses:
@@ -1464,13 +1450,13 @@ class UVMRegMap(UVMObject):
              tmp_parent_seq = rw.parent
 
         if adapter is None:
-            print("VVV Starting sequence because adapter None")
+            uvm_debug(self, 'do_write', 'Start seq because adapter is None')
             rw.set_sequencer(sequencer)
             yield rw.parent.start_item(rw,rw.prior)
             yield rw.parent.finish_item(rw)
             yield rw.end_event.wait_on()
         else:
-            print("VVV do_bus_write because adapter exists")
+            uvm_debug(self, 'do_write', 'do_bus_write because adapter exists')
             yield self.do_bus_write(rw, sequencer, adapter)
 
         #
@@ -1499,26 +1485,22 @@ class UVMRegMap(UVMObject):
             # assert($cast(seq,o)) TODO check this
             seq = o
             seq.set_parent_sequence(rw.parent)
-            print("WWW set rw.parent to " + str(seq))
             rw.parent = seq
             tmp_parent_seq = seq
 
-        if (rw.parent is None):
+        if rw.parent is None:
             rw.parent = UVMSequenceBase("default_parent_seq")
-            print("WWW rw.parent is None| set rw.parent to " + str(rw.parent))
             tmp_parent_seq = rw.parent
 
-        if (adapter is None):
+        if adapter is None:
             rw.set_sequencer(sequencer)
-            yield rw.parent.start_item(rw,rw.prior)
+            yield rw.parent.start_item(rw, rw.prior)
             yield rw.parent.finish_item(rw)
             yield rw.end_event.wait_on()
         else:
-            print("WWW yield self.do_bus_read(rw, sequencer, adapter)" +
-                str(adapter))
             yield self.do_bus_read(rw, sequencer, adapter)
 
-        if (tmp_parent_seq is not None):
+        if tmp_parent_seq is not None:
             sequencer.m_sequence_exiting(tmp_parent_seq)
 
         #endtask

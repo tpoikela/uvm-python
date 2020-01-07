@@ -173,17 +173,13 @@ class UVMSequencer(UVMSequencerParamBase):
     #  extern task                  peek          (output REQ t)
     @cocotb.coroutine
     def peek(self, t):
-        print("SSS In sequencer in peek()")
-        if (self.sequence_item_requested == 0):
-            print("SSS yield m_select_sequence")
+        if self.sequence_item_requested == 0:
             yield self.m_select_sequence()
        
         # Set flag indicating that the item has been requested to ensure that item_done or get
         # is called between requests
         self.sequence_item_requested = 1
-        print("SSS yield to m_req_fifo")
         yield self.m_req_fifo.peek(t)
-        print("SSS sqr peek got item from req_fifo" + t[0].convert2string())
 
     #
     #  /// Documented here for clarity, implemented in uvm_sequencer_base
@@ -315,19 +311,9 @@ uvm_component_utils(UVMSequencer)
 #endtask
 
 
-#
-#
-#
-#
-#
-#
-#
 #// item_done_trigger
 #// -----------------
 #
 #function void uvm_sequencer::item_done_trigger(RSP item = null)
 #  item_done(item)
 #endfunction
-#
-#
-#

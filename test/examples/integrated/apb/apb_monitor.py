@@ -47,8 +47,8 @@ class apb_monitor(UVMMonitor):
         self.errors = 0
         self.num_items = 0
         self.tag = "APB_MONITOR"
-    #   endfunction: new
-    #
+        #   endfunction: new
+
     def build_phase(self, phase):
         super().build_phase(phase)
         agent = self.get_parent()

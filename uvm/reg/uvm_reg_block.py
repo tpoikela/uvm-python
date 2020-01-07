@@ -195,6 +195,10 @@ class UVMRegBlock(UVMObject):
     #   // block. The address map must be a map of this address block.
     #   //
     #   extern function void set_default_map (UVMRegMap map)
+    def set_default_map(self, _map):
+        if _map not in self.maps:
+            uvm_warning("RegModel", "Map '" + _map.get_full_name() + "' does not exist in block")
+        self.default_map = _map
 
 
     #   // Variable: default_map
@@ -213,8 +217,14 @@ class UVMRegBlock(UVMObject):
     #
     #   extern function UVMRegMap get_default_map ()
     #
+    def get_default_map(self):
+        return self.default_map
 
     #   extern virtual function void set_parent(uvm_reg_block parent)
+    def set_parent(self, parent):
+        if self != parent:
+            self.parent = parent
+
 
     # function void add_block (uvm_reg_block blk)
     def add_block(self, blk):
@@ -303,9 +313,9 @@ class UVMRegBlock(UVMObject):
             # Check that root register models have unique names
 
             # Has this name has been checked before?
-            if (UVMRegBlock.m_roots[self] != 1):
+            if self in UVMRegBlock.m_roots and UVMRegBlock.m_roots[self] != 1:
                 n = 0
-                #foreach (UVMRegBlock.m_roots[_blk]):
+
                 for _blk in UVMRegBlock.m_roots:
                     blk = _blk  # uvm_reg_block
                     if (blk.get_name() == self.get_name()):
@@ -335,8 +345,9 @@ class UVMRegBlock(UVMObject):
     #   //
     #   // Return the simple object name of this block.
     #   //
-    #
-    #
+
+
+
     #   // Function: get_full_name
     #   //
     #   // Get the hierarchical name
@@ -389,6 +400,7 @@ class UVMRegBlock(UVMObject):
     #                                          input uvm_object    accessor = None)
     #
     #
+
     #   // Function: find_block
     #   //
     #   // Find the first block whose hierarchical names match the
@@ -402,8 +414,8 @@ class UVMRegBlock(UVMObject):
     #   extern static function uvm_reg_block find_block(input string        name,
     #                                                   input uvm_reg_block root = None,
     #                                                   input uvm_object    accessor = None)
-    #
-    #
+
+
 
     #   // Function: get_blocks
     #   //
@@ -538,6 +550,25 @@ class UVMRegBlock(UVMObject):
     #   // If no address maps are found, returns ~None~.
     #   //
     #   extern virtual function UVMRegMap get_map_by_name (string name)
+    def get_map_by_name(self, name):
+        maps = []  #   UVMRegMap
+        self.get_maps(maps)
+
+        for i in range(len(maps)):
+            if (maps[i].get_name() == name):
+                return maps[i]
+
+        for i in range(len(maps)):
+            submaps = []  # UVMRegMap
+            maps[i].get_submaps(submaps, UVM_HIER)
+
+            for j in range(len(submaps)):
+                if (submaps[j].get_name() == name):
+                    return submaps[j]
+
+        uvm_warning("RegModel", "Map with name '" + name + "' does not exist in block")
+        return None
+        #endfunction
 
     #
     #
@@ -1217,14 +1248,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: add_mem
 #
 #
-# set_parent
-#
-#function void uvm_reg_block::set_parent(uvm_reg_block parent)
-#  if (this != parent)
-#    self.parent = parent
-#endfunction
-#
-#
 #
 #
 #
@@ -1855,47 +1878,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: add_map
 #
 #
-# get_map_by_name
-#
-#function UVMRegMap uvm_reg_block::get_map_by_name(string name)
-#   UVMRegMap maps[$]
-#
-#   self.get_maps(maps)
-#
-#   foreach (maps[i])
-#     if (maps[i].get_name() == name)
-#       return maps[i]
-#
-#   foreach (maps[i]):
-#      UVMRegMap submaps[$]
-#      maps[i].get_submaps(submaps, UVM_HIER)
-#
-#      foreach (submaps[j])
-#         if (submaps[j].get_name() == name)
-#            return submaps[j]
-#   end
-#
-#
-#   `uvm_warning("RegModel", {"Map with name '",name,"' does not exist in block"})
-#   return None
-#endfunction
-#
-#
-# set_default_map
-#
-#function void uvm_reg_block::set_default_map(UVMRegMap map)
-#  if (!maps.exists(map))
-#   `uvm_warning("RegModel", {"Map '",map.get_full_name(),"' does not exist in block"})
-#  default_map = map
-#endfunction
-#
-#
-# get_default_map
-#
-#function UVMRegMap uvm_reg_block::get_default_map()
-#  return default_map
-#endfunction
-#
 #
 #
 #
@@ -2204,28 +2186,4 @@ class UVMRegBlock(UVMObject):
 #   return image
 #endfunction: convert2string
 #
-#
-#
 
-import unittest
-
-
-class TestUVMRegBlock(unittest.TestCase):
-
-    def test_add_reg(self):
-        rb = UVMRegBlock("rb_blk")
-        rb.create_map("", 0, 1, UVM_BIG_ENDIAN)
-        reg1 = UVMReg("xx", 32, rb.get_full_name())
-        reg1.configure(rb, None, "acp")
-        # reg1.build()
-        rb.default_map.add_reg(reg1, 0x0000,  "RW")
-        print("len is now " + str(len(rb.regs)))
-        rr = rb.get_reg_by_name('xx')
-        self.assertEqual(rr.get_name(), 'xx')
-
-        r_none = rb.get_reg_by_name('y_reg')
-        self.assertEqual(r_none, None)
-
-
-if __name__ == '__main__':
-    unittest.main()
