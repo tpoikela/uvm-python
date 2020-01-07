@@ -47,8 +47,9 @@ wire [31:0] pr_addr;
 assign in_range = (apb_paddr - BASE_ADDR) < 'h100;
 assign pr_addr = apb_paddr - BASE_ADDR;
 
-assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite && in_range) ? pr_data : 'z;
+assign #2ns apb_prdata = (apb_psel && apb_penable && !apb_pwrite && in_range) ? pr_data : 'z;
 
+/*
 `ifdef COCOTB_SIM
 initial begin
  $dumpfile ("blk_dut.vcd");
@@ -56,6 +57,7 @@ initial begin
  #2;
 end
 `endif
+*/
 
 always @ (posedge apb_pclk)
   begin

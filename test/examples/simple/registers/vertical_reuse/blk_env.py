@@ -57,7 +57,7 @@ class blk_env(UVMEnv):
 
 
     def report_phase(self, phase):
-        if self.apb.error is False:
+        if self.apb is not None and self.apb.error is False:
             self.all_ok = True
 
 

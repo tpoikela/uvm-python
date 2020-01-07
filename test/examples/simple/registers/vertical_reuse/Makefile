@@ -89,5 +89,7 @@ else
     MODULE   ?= sys_run
 endif
 
+EXTRA_ARGS="-PBASE_ADDR='h100"
+
 include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

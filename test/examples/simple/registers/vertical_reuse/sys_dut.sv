@@ -25,7 +25,7 @@
 `include "blk_dut.sv"
 
 module sys_dut #(
-    parameter int BASE_ADDR='h0
+    parameter int BASE_ADDR='h100
 )
 (
    //apb_if    apb,

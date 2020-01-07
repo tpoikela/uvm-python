@@ -18,3 +18,5 @@ test-hello_world:
 test-registers:
 	make -C registers/models/user-defined
 	make -C registers/vertical_reuse IMG=BLK SIMARGS="+UVM_TESTNAME=blk_R_test"
+	make -C registers/vertical_reuse clean
+	make -C registers/vertical_reuse SIMARGS="+UVM_TESTNAME=sys_R_test"

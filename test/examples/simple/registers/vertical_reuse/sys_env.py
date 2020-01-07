@@ -44,6 +44,7 @@ class sys_env(UVMEnv):
         self.model = None  # reg_sys_S
         self.apb = None  # apb_agent
         self.vif = None
+        self.all_ok = False
 
 
     def build_phase(self, phase):
@@ -79,6 +80,9 @@ class sys_env(UVMEnv):
             self.model.default_map.set_sequencer(self.apb.sqr,reg2apb)
             self.model.default_map.set_auto_predict()
 
+    def extract_phase(self, phase):
+        if self.apb.mon.num_items > 0 and self.apb.mon.errors == 0:
+            self.all_ok = True
 
     #endclass: sys_env
 
