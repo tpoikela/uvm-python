@@ -456,7 +456,7 @@ class UVMRoot(UVMComponent):
         self.m_do_verbosity_settings()
         self.m_do_timeout_settings()
         self.m_do_factory_settings()
-        # TODO self.m_do_config_settings()
+        self.m_do_config_settings()
         # TODO self.m_do_max_quit_settings()
         self.m_do_dump_args()
         #endfunction
@@ -565,7 +565,25 @@ class UVMRoot(UVMComponent):
 
 
     #  extern local function void m_do_config_settings()
+    def m_do_config_settings(self):
+        args = []
+        
+        self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/", args)
+        for i in range(len(args)):
+            self.m_process_config(args[i][20:len(args[i])], 1)
 
+        self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/",args)
+        for i in range(len(args)):
+            self.m_process_config(args[i][23:len(args[i])], 0)
+
+        # TODO might not be needed, ever
+        #self.clp.get_arg_matches("/^\\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/", args)
+        #for i in range(len(args)):
+        #    self.m_process_default_sequence(args[i][26:len(args[i])])
+
+        #endfunction
+        #
+        
     #  extern local function void m_do_max_quit_settings()
 
     #  extern local function void m_do_dump_args()
@@ -583,6 +601,61 @@ class UVMRoot(UVMComponent):
         #endfunction
 
     #  extern local function void m_process_config(string cfg, bit is_int)
+    def m_process_config(self, cfg, is_int):
+        v = 0
+        split_val = []
+        cs = UVMCoreService.get()
+        m_uvm_top = cs.get_root()
+
+        uvm_split_string(cfg, ",", split_val)
+        if len(split_val) == 1:
+            uvm_report_error("UVM_CMDLINE_PROC", ("Invalid +uvm_set_config command\""
+                + cfg + "\" missing field and value: component is \""
+                + split_val[0] + "\""), UVM_NONE)
+            return
+
+        if len(split_val) == 2:
+            uvm_report_error("UVM_CMDLINE_PROC", "Invalid +uvm_set_config command\""
+                + cfg + "\" missing value: component is \"" + split_val[0]
+                + "\"  field is \"" + split_val[1] + "\"", UVM_NONE)
+            return
+
+        if len(split_val) > 3:
+            uvm_report_error("UVM_CMDLINE_PROC", sv.sformatf(
+                "Invalid +uvm_set_config command\"%s\" : expected only 3 fields (component, field and value).",
+                cfg), UVM_NONE)
+            return
+
+        # TODO finish this
+        #  if(is_int):
+        #    if(split_val[2].len() > 2):
+        #      string base, extval
+        #      base = split_val[2].substr(0,1)
+        #      extval = split_val[2].substr(2,split_val[2].len()-1);
+        #      case(base)
+        #        "'b" : v = extval.atobin()
+        #        "0b" : v = extval.atobin()
+        #        "'o" : v = extval.atooct()
+        #        "'d" : v = extval.atoi()
+        #        "'h" : v = extval.atohex()
+        #        "'x" : v = extval.atohex()
+        #        "0x" : v = extval.atohex()
+        #        default : v = split_val[2].atoi()
+        #      endcase
+        #    end
+        #    else begin
+        #      v = split_val[2].atoi()
+        #    end
+        #    self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying config setting from the command line: +uvm_set_config_int=", cfg}, UVM_NONE)
+        #    uvm_config_int::set(m_uvm_top, split_val[0], split_val[1], v)
+        #  end
+        #  else begin
+        #    self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying config setting from the command line: +uvm_set_config_string=", cfg}, UVM_NONE)
+        #    uvm_config_string::set(m_uvm_top, split_val[0], split_val[1], split_val[2])
+        #  end
+        #
+        #endfunction
+        
 
     #  extern local function void m_process_default_sequence(string cfg)
 
@@ -821,65 +894,6 @@ uvm_top = UVMRoot.get()
 #endfunction
 #
 #
-#// m_process_config
-#// ----------------
-#
-#function void uvm_root::m_process_config(string cfg, bit is_int)
-#  uvm_bitstream_t v
-#  string split_val[$];
-#  uvm_root m_uvm_top
-#  uvm_coreservice_t cs
-#  cs = uvm_coreservice_t::get()
-#  m_uvm_top = cs.get_root()
-#
-#
-#  uvm_split_string(cfg, ",", split_val)
-#  if(split_val.size() == 1):
-#    uvm_report_error("UVM_CMDLINE_PROC", {"Invalid +uvm_set_config command\"", cfg,
-#      "\" missing field and value: component is \"", split_val[0], "\""}, UVM_NONE)
-#    return
-#  end
-#
-#  if(split_val.size() == 2):
-#    uvm_report_error("UVM_CMDLINE_PROC", {"Invalid +uvm_set_config command\"", cfg,
-#      "\" missing value: component is \"", split_val[0], "\"  field is \"", split_val[1], "\""}, UVM_NONE)
-#    return
-#  end
-#
-#  if(split_val.size() > 3):
-#    uvm_report_error("UVM_CMDLINE_PROC",
-#      $sformatf("Invalid +uvm_set_config command\"%s\" : expected only 3 fields (component, field and value).", cfg), UVM_NONE)
-#    return
-#  end
-#
-#  if(is_int):
-#    if(split_val[2].len() > 2):
-#      string base, extval
-#      base = split_val[2].substr(0,1)
-#      extval = split_val[2].substr(2,split_val[2].len()-1);
-#      case(base)
-#        "'b" : v = extval.atobin()
-#        "0b" : v = extval.atobin()
-#        "'o" : v = extval.atooct()
-#        "'d" : v = extval.atoi()
-#        "'h" : v = extval.atohex()
-#        "'x" : v = extval.atohex()
-#        "0x" : v = extval.atohex()
-#        default : v = split_val[2].atoi()
-#      endcase
-#    end
-#    else begin
-#      v = split_val[2].atoi()
-#    end
-#    self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying config setting from the command line: +uvm_set_config_int=", cfg}, UVM_NONE)
-#    uvm_config_int::set(m_uvm_top, split_val[0], split_val[1], v)
-#  end
-#  else begin
-#    self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying config setting from the command line: +uvm_set_config_string=", cfg}, UVM_NONE)
-#    uvm_config_string::set(m_uvm_top, split_val[0], split_val[1], split_val[2])
-#  end
-#
-#endfunction
 #
 #// m_process_default_sequence
 #// ----------------
@@ -924,26 +938,6 @@ uvm_top = UVMRoot.get()
 #
 #endfunction : m_process_default_sequence
 #
-#
-#// m_do_config_settings
-#// --------------------
-#
-#function void uvm_root::m_do_config_settings()
-#  string args[$]
-#
-#  void'(clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/",args))
-#  foreach(args[i]):
-#    m_process_config(args[i].substr(20, args[i].len()-1), 1)
-#  end
-#  void'(clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/",args))
-#  foreach(args[i]):
-#    m_process_config(args[i].substr(23, args[i].len()-1), 0)
-#  end
-#  void'(clp.get_arg_matches("/^\\+(UVM_SET_DEFAULT_SEQUENCE|uvm_set_default_sequence)=/", args))
-#  foreach(args[i]):
-#    m_process_default_sequence(args[i].substr(26, args[i].len()-1))
-#  end
-#endfunction
 #
 #
 #// m_do_max_quit_settings
