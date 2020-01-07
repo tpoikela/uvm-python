@@ -297,7 +297,6 @@ class UVMRegField(UVMObject):
         if name in UVMRegField.m_policy_names:
             return 0
      
-        print("UVMRegField set policy name " + name + " to 1")
         UVMRegField.m_policy_names[name] = 1
         return True
 

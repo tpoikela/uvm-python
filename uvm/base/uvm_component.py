@@ -1873,7 +1873,8 @@ class UVMComponent(UVMReportObject):
     #	string args[$]
     #	int unsigned used
     #} uvm_cmdline_parsed_arg_t
-    #
+
+
     #static uvm_cmdline_parsed_arg_t m_uvm_applied_cl_action[$]
     #static uvm_cmdline_parsed_arg_t m_uvm_applied_cl_sev[$]
 

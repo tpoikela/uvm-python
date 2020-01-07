@@ -45,14 +45,15 @@ module sys_dut #(
 /*
   genvar gk;
   generate
-  for (gk = 0; gk < NUM_BLKS; NUM_BLKS = NUM_BLKS + 1) begin
+  for (gk = 0; gk <= NUM_BLKS; NUM_BLKS = NUM_BLKS + 1) begin: Blks
       blk_dut #(BASE_ADDR+'h100 * gk) i_blk_dut(.*);
   end
   endgenerate
-  */
+*/
 
   blk_dut #(BASE_ADDR)        b1 (.*);
   blk_dut #(BASE_ADDR+'h100 ) b2(.*);
+
 
 `ifdef COCOTB_SIM
 initial begin

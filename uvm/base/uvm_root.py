@@ -136,6 +136,7 @@ class UVMRoot(UVMComponent):
 
         self.m_rh.set_name("reporter")
         self.report_header()
+
         #  // This sets up the global verbosity. Other command line args may
         #  // change individual component verbosity.
         self.m_check_verbosity()
@@ -429,7 +430,7 @@ class UVMRoot(UVMComponent):
                     child_comp = comp.get_next_child()
         if uvm_is_match(comp_match, comp.get_full_name()) and comp.get_name() != "":
             comps.append(comp)
-        
+
 
 
     #  extern protected function new ()
@@ -599,8 +600,9 @@ class UVMRoot(UVMComponent):
             verb_settings.append(verb_string)
 
         # If none provided, provide message about the default being used.
-        #  //if (verb_count == 0)
-        #  //  self.uvm_report_info("DEFVERB", ("No verbosity specified on the command line.  Using the default: UVM_MEDIUM"), UVM_NONE)
+        if verb_count == 0:
+            self.uvm_report_info("DEFVERB",
+                "No verbosity specified on the command line.  Using the default: UVM_MEDIUM", UVM_NONE)
         #
         # If at least one, use the first.
         if (verb_count > 0):
