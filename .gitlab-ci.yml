@@ -30,13 +30,13 @@ before_script:
   - pip install regex
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
-  - bash install_iverilog.sh
+  - bash ci/install_iverilog.sh
 
 test:
   script:
     - make test || exit 1
     - find -name results.xml -exec cat {} \; > results.log
-    - bash check_errors.sh
+    - bash ci/check_errors.sh
     # - RET_VAL=`grep failure results.log`
     # - python setup.py test
     # - pip install tox flake8  # you can also use tox
