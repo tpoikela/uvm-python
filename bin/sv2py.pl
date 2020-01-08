@@ -134,6 +134,7 @@ sub process_file {
             push(@outfile, $cline);
         }
 
+        # Check for various tasks and functions
         if ($line =~ /^\s*(virtual\s+)?(protected\s+)?task\s+(\w+)/) {
             my $task_name = $1;
             $st = $st | $IN_TASK;
@@ -247,8 +248,15 @@ sub process_file {
         $line =~ s/uvm_component parent = None/parent=None/g;
         $line =~ s/phase\(self,\s*uvm_phase\s+phase\s*\)$/phase(self, phase):/g;
 
+        if ($IN_CLASS) {
+            $line =~ s/function (.*)\((.*)\)/def $1(self,$2):/g;
+            $line =~ s/task (.*)\((.*)\)/def $1(self,$2):  # task/g;
+        }
 
+
+        # Final trimmings due to bad substitutions
         $line =~ s/\(self,\)/(self)/g;
+        $line =~ s/,\s*uvm_component parent/, parent/g;
 
         if ($add_line) {
             push(@outfile, "$ws#$line");
