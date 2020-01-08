@@ -88,6 +88,11 @@ class sv:
         return res
 
     @classmethod
+    def display(cls, msg, *args):
+        form_msg = sv.sformatf(msg, *args)
+        print(form_msg)
+
+    @classmethod
     def realtime(cls, unit=None):
         if unit is None:
             return get_sim_time()

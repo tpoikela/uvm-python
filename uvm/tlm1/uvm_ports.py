@@ -135,8 +135,8 @@ UVM_NONBLOCKING_GET_IMP ('m_if', UVMNonBlockingGetPort)
 #endclass 
 class UVMGetPort():
     pass
-UVMGetPort = UVM_PORT_COMMON(UVMGetPort, UVM_TLM_GET_MASK,"uvm_get_port")
-UVM_GET_IMP ('m_if', UVMGetPort)
+UVMGetPort = UVM_PORT_COMMON(UVMGetPort, UVM_TLM_GET_MASK, "uvm_get_port")
+UVM_GET_IMP('m_if', UVMGetPort)
 
 #class uvm_blocking_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));

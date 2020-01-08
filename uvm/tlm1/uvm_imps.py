@@ -173,7 +173,7 @@ UVM_PEEK_IMP ('m_imp', UVMPeekImp)
 #  `UVM_BLOCKING_GET_PEEK_IMP (m_imp, T, t)
 class UVMBlockingGetPeekImp():
     pass
-UVMBlockingGetPeekImp = UVM_IMP_COMMON(UVMBlockingGetPeekImp, UVM_TLM_BLOCKING_GET_PEEK_MASK,"uvm_blocking_get_peek_imp")
+UVMBlockingGetPeekImp = UVM_IMP_COMMON(UVMBlockingGetPeekImp, UVM_TLM_BLOCKING_GET_PEEK_MASK, "uvm_blocking_get_peek_imp")
 UVM_BLOCKING_GET_PEEK_IMP ('m_imp', UVMBlockingGetPeekImp)
 
 #class uvm_nonblocking_get_peek_imp #(type T=int, type IMP=int)

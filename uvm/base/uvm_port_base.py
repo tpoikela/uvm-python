@@ -22,6 +22,7 @@
 from .uvm_component import UVMComponent
 from .uvm_object_globals import *
 from .uvm_domain import end_of_elaboration_ph
+from .sv import sv
 
 UVM_UNBOUNDED_CONNECTIONS = -1
 s_connection_error_id = "Connection Error"
@@ -402,6 +403,8 @@ class UVMPortBase():
             return
 
         if (provider.m_if_mask & self.m_if_mask) != self.m_if_mask:
+            print(sv.sformatf("provider: %h, m_if_mask: %h", provider.m_if_mask,
+                    self.m_if_mask))
             self.m_comp.uvm_report_error(s_connection_error_id,
                  (provider.get_full_name()
                   + " (of type " + provider.get_type_name()

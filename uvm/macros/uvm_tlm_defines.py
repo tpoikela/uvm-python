@@ -610,6 +610,7 @@ def UVM_SEQ_ITEM_PULL_IMP(T, imp):
         yield getattr(self, imp).put(rsp_arg)
     setattr(T, 'put', put)
 
+
 # primitive interfaces
 UVM_TLM_BLOCKING_PUT_MASK =         (1<<0)
 UVM_TLM_BLOCKING_GET_MASK =         (1<<1)
@@ -666,4 +667,3 @@ UVM_SEQ_ITEM_UNI_PULL_MASK = (UVM_SEQ_ITEM_GET_NEXT_ITEM_MASK |
 
 UVM_SEQ_ITEM_PUSH_MASK = (UVM_SEQ_ITEM_PUT_MASK)
 
-#`include "tlm1/uvm_tlm_imps.svh"

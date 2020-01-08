@@ -160,7 +160,7 @@ def UVM_BLOCKING_PEEK_IMP(imp, T):
 #  function bit can_peek(); \
 #    return imp.can_peek(); \
 def UVM_NONBLOCKING_PEEK_IMP(imp, T):
-    def try_peek (self, arg):
+    def try_peek(self, arg):
         return getattr(self, imp).try_peek(arg)
     setattr(T, 'try_peek', try_peek)
     def can_peek(self):

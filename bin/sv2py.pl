@@ -228,7 +228,7 @@ sub process_file {
         $line =~ s/class (\w+) extends (\w+)/class $1($2):/g;
 
         # SystemVerilog functions
-        $line =~ s/\$(urandom|sformatf|cast)/sv.$1/g;
+        $line =~ s/\$(urandom|random|sformatf|cast)\b/sv.$1/g;
 
         my $conf_db_re = qr/uvm_config_db#\(.*\)::(set|get)/;
         if ($line =~ $conf_db_re) {
@@ -245,6 +245,7 @@ sub process_file {
 
         $line =~ s/super\.(\w+)_phase(phase)/super().$1_phase(phase)/g;
         $line =~ s/uvm_component parent = None/parent=None/g;
+        $line =~ s/phase\(self,\s*uvm_phase\s+phase\s*\)$/phase(self, phase):/g;
 
 
         $line =~ s/\(self,\)/(self)/g;
