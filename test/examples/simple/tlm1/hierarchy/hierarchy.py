@@ -48,11 +48,9 @@
 #
 
 import cocotb
-from uvm.base.uvm_transaction import *
-from uvm.base.uvm_component import *
-from uvm.base.sv import sv
-from uvm.comps.uvm_subscriber import *
-from uvm.comps.uvm_env import *
+from cocotb.triggers import Timer
+
+from uvm import *
 
 #  //----------------------------------------------------------------------
 #  // class transaction
@@ -181,33 +179,33 @@ class transaction(UVMTransaction):
 #  // componenet producer
 #  //----------------------------------------------------------------------
 #  // begin codeblock producer
-#  class producer(uvm_component):
-#
-#    uvm_blocking_put_port #(transaction) put_port
-#    uvm_analysis_port #(transaction) ap
-#
-#    gen g
-#    conv c
-#    uvm_tlm_fifo #(transaction) f
-#
-#    def __init__(self, name, parent)
-#      super().__init__(name, parent)
-#      put_port = new("put_port", self)
-#      ap = new("analysis_port", self)
-#      g = new("gen", self)
-#      c = new("conv", self)
-#      f = new("fifo", self)
-#    endfunction
-#
-#   def connect_phase(self, phase):
-#      g.put_port.connect(f.blocking_put_export);  // A
-#      c.get_port.connect(f.blocking_get_export);  // B
-#      c.put_port.connect(put_port); // C
-#      c.ap.connect(ap)
-#    endfunction
-#
-#  endclass
-#
+class producer(UVMComponent):
+    #
+    #    uvm_blocking_put_port #(transaction) put_port
+    #    uvm_analysis_port #(transaction) ap
+    #
+    #    gen g
+    #    conv c
+    #    uvm_tlm_fifo #(transaction) f
+    #
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        self.put_port = UVMBlockingPutPort("put_port", self)
+        self.ap = UVMAnalysisPort("analysis_port", self)
+        #g = new("gen", self)
+        #c = new("conv", self)
+        #f = new("fifo", self)
+
+    #
+    #   def connect_phase(self, phase):
+    #      g.put_port.connect(f.blocking_put_export);  // A
+    #      c.get_port.connect(f.blocking_get_export);  // B
+    #      c.put_port.connect(put_port); // C
+    #      c.ap.connect(ap)
+    #    endfunction
+    #
+    #  endclass
+    #
 
 #  //----------------------------------------------------------------------
 #  // componenet consumer
@@ -237,60 +235,55 @@ class transaction(UVMTransaction):
 #  //----------------------------------------------------------------------
 #  // componenet top
 #  //----------------------------------------------------------------------
-#  class top(uvm_env):
-#
-#    producer p
-#    consumer c
-#    listener l
-#
-#    def __init__(self, name, parent)
-#      super().__init__(name, parent)
-#      p = new("producer", self)
-#      c = new("consumer", self)
-#      l = new("listener", self)
-#
-#      // Connections may also be done in the constructor, if you wish
-#      p.put_port.connect(c.put_export)
-#      p.ap.connect(l.analysis_export)
-#    endfunction
-#@cocotb.coroutine
-#    def run_phase(self, phase):
-#      begin
-#      end
-#    endtask
-#
-#  endclass
+class top(UVMEnv):
+    #
+    #    producer p
+    #    consumer c
+    #    listener l
+    #
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        p = producer("producer", self)
+        #      c = new("consumer", self)
+        #      l = new("listener", self)
+        #
+        #      // Connections may also be done in the constructor, if you wish
+        #      p.put_port.connect(c.put_export)
+        #      p.ap.connect(l.analysis_export)
+        #    endfunction
 
-#
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        phase.raise_objection(self)
+        uvm_info("ENV_TOP", "run_phase started", UVM_MEDIUM)
+        yield Timer(100, "NS")
+        phase.drop_objection(self)
+
+
 #  //----------------------------------------------------------------------
 #  // environment env
 #  //----------------------------------------------------------------------
-#  class env(uvm_env):
-#    top t
-#
-#    def __init__(self, name = "env")
-#      super().__init__(name)
-#      t = new("top", self)
-#    endfunction
-#
-#@cocotb.coroutine
-#    def run_phase(self, phase):
-#      phase.raise_objection(self)
-#      #1000;
-#      phase.drop_objection(self)
-#    endtask
-#
-#  endclass
+class env(UVMEnv):
+
+    def __init__(self, name = "env"):
+        super().__init__(name)
+        t = top("top", self)
+
+
+    #@cocotb.coroutine
+    #    def run_phase(self, phase):
+    #      phase.raise_objection(self)
+    #      #1000;
+    #      phase.drop_objection(self)
+    #    endtask
+    #
+    #  endclass
 
 
 #  //----------------------------------------------------------------------
 #  // module test
 #  //----------------------------------------------------------------------
-#  env e
-#
-#  initial begin
-#    e = new("e")
-#    run_test()
-#  end
-#
-#endmodule // test
+@cocotb.test()
+def module_top(dut):
+    e = env("e")
+    yield run_test()
