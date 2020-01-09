@@ -1,9 +1,39 @@
+#//
+#//------------------------------------------------------------------------------
+#//   Copyright 2007-2011 Mentor Graphics Corporation
+#//   Copyright 2007-2010 Cadence Design Systems, Inc.
+#//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2019 Tuomas Poikela (tpoikela)
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//------------------------------------------------------------------------------
 
 import collections
 
 from .uvm_object import UVMObject
-from ...macros import uvm_warning
+from ..macros import uvm_warning
 
+#//------------------------------------------------------------------------------
+#//
+#// CLASS: uvm_pool #(KEY,T)
+#//
+#//------------------------------------------------------------------------------
+#// Implements a class-based dynamic associative array. Allows sparse arrays to
+#// be allocated on demand, and passed and stored by reference.
+#//------------------------------------------------------------------------------
 
 class UVMPool(UVMObject):
 
@@ -11,11 +41,17 @@ class UVMPool(UVMObject):
     m_global_pool = None
 
 
-    def __init__(self, name=""):
+    def __init__(self, name="", T=None):
         UVMObject.__init__(self, name)
         self.pool = collections.OrderedDict()
         self.ptr = -1
 
+    #// Function: get_global_pool
+    #//
+    #// Returns the singleton global pool for the item type, T.
+    #//
+    #// This allows items to be shared amongst components throughout the
+    #// verification environment.
     @classmethod
     def get_global_pool(cls):
         """ Returns the singleton global pool """
@@ -23,13 +59,25 @@ class UVMPool(UVMObject):
             UVMPool.m_global_pool = UVMPool("pool")
         return UVMPool.m_global_pool
 
+    #// Function: get_global
+    #//
+    #// Returns the specified item instance from the global item pool. 
     @classmethod
     def get_global(cls, key):
         gpool = UVMPool.get_global_pool()
         return gpool.get(key)
 
+    #// Function: get
+    #//
+    #// Returns the item with the given ~key~.
+    #//
+    #// If no item exists by that key, a new item is created with that key
+    #// and returned.
     def get(self, key):
         if key in self.pool:
+            return self.pool[key]
+        elif self.T is None:
+            self.pool[key] = self.T()
             return self.pool[key]
         return None
 
@@ -38,25 +86,6 @@ class UVMPool(UVMObject):
 
     def num(self):
         return len(self.pool.keys())
-
-    # len() operator
-    def __len__(self):
-        return self.num()
-
-    # Implements X in Y operator
-    def __contains__(self, key):
-        return key in self.pool
-
-    # Implements aa[x] = y
-    def __setitem__(self, key, value):
-        self.pool[key] = value
-
-    # Implements aa[x]
-    def __getitem__(self, key):
-        if key in self.pool:
-            return self.pool[key]
-        else:
-            raise IndexError('No key found')
 
     def keys(self):
         return self.pool.keys()
@@ -120,13 +149,12 @@ class UVMPool(UVMObject):
         return None
 
     def create(self, name=""):
-        return UVMPool(name)
+        return UVMPool(name, self.T)
 
     def do_print(self, printer):
         while self.has_next():
             key = self.next()
             item = self.pool[key]
-            print("tttt key is " + str(key))
             # print_generic(self, name, type_name, size, value, scope_separator="."):
             if hasattr(item, 'convert2string'):
                 printer.print_string(item.get_name(), item.convert2string())
@@ -135,6 +163,26 @@ class UVMPool(UVMObject):
                 if hasattr(key, 'get_name'):
                     name = key.get_name()
                 printer.print_generic(name, '', 0, str(item))
+
+    # len() operator
+    def __len__(self):
+        return self.num()
+
+    # Implements X in Y operator
+    def __contains__(self, key):
+        return key in self.pool
+
+    # Implements aa[x] = y
+    def __setitem__(self, key, value):
+        self.pool[key] = value
+
+    # Implements aa[x]
+    def __getitem__(self, key):
+        if key in self.pool:
+            return self.pool[key]
+        else:
+            raise IndexError('No key found')
+
 
 #//------------------------------------------------------------------------------
 #//
