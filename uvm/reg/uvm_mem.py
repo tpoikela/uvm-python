@@ -49,10 +49,11 @@ from .uvm_reg_model import *
 UNKNOWNS = 0
 ZEROES = 1
 ONES = 2
-ADDRESS =3
+ADDRESS = 3
 VALUE = 4
 INCR = 5
 DECR = 6
+
 
 class UVMMem(UVMObject):
     #
@@ -102,7 +103,7 @@ class UVMMem(UVMObject):
         UVMObject.__init__(self, name)
         self.m_locked = 0
         if n_bits == 0:
-            uvm_error("RegModel", {"Memory '",get_full_name(),"' cannot have 0 bits"})
+            uvm_error("RegModel", "Memory '" + self.get_full_name() + "' cannot have 0 bits")
             n_bits = 1
 
         self.m_parent = None
@@ -139,6 +140,7 @@ class UVMMem(UVMObject):
     #   //
     #   extern function void configure (uvm_reg_block parent,
     #                                   string        hdl_path = "")
+
     #
     #
     #   // Function: set_offset
@@ -156,6 +158,7 @@ class UVMMem(UVMObject):
     #                                            uvm_reg_addr_t offset,
     #                                            bit            unmapped = 0)
     #
+
     #
     #   /*local*/ extern virtual function void set_parent(uvm_reg_block parent)
     #   /*local*/ extern function void add_map(uvm_reg_map map)
@@ -164,6 +167,7 @@ class UVMMem(UVMObject):
     #   /*local*/ extern function void Xdelete_vregX(uvm_vreg vreg)
     #
     #
+
     #   // variable: mam
     #   //
     #   // Memory allocation manager
@@ -175,8 +179,8 @@ class UVMMem(UVMObject):
     #   // or to locate virtual register array.
     #   //
     #   uvm_mem_mam mam
-    #
-    #
+
+
     #   //---------------------
     #   // Group: Introspection
     #   //---------------------
@@ -196,6 +200,7 @@ class UVMMem(UVMObject):
     #   // The base of the hierarchical name is the root block.
     #   //
     #   extern virtual function string get_full_name()
+
     #
     #
     #   // Function: get_parent
@@ -203,7 +208,9 @@ class UVMMem(UVMObject):
     #   // Get the parent block
     #   //
     #   extern virtual function uvm_reg_block get_parent ()
+
     #   extern virtual function uvm_reg_block get_block  ()
+
     #
     #
     #   // Function: get_n_maps
@@ -211,6 +218,7 @@ class UVMMem(UVMObject):
     #   // Returns the number of address maps this memory is mapped in
     #   //
     #   extern virtual function int get_n_maps ()
+
     #
     #
     #   // Function: is_in_map

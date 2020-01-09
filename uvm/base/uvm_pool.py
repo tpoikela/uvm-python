@@ -45,6 +45,7 @@ class UVMPool(UVMObject):
         UVMObject.__init__(self, name)
         self.pool = collections.OrderedDict()
         self.ptr = -1
+        self.T = T
 
     #// Function: get_global_pool
     #//
@@ -76,7 +77,7 @@ class UVMPool(UVMObject):
     def get(self, key):
         if key in self.pool:
             return self.pool[key]
-        elif self.T is None:
+        elif self.T is not None:
             self.pool[key] = self.T()
             return self.pool[key]
         return None
