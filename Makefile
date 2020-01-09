@@ -15,3 +15,6 @@ test-integrated:
 
 test-unit:
 	python -m unittest $(UNIT_ARGS)
+
+lint:   
+	flake8 ./uvm --count --select=E9,F63,F7,F82 --show-source --statistics
