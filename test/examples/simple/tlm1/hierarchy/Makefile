@@ -79,10 +79,10 @@ endif
 
 ifeq ($(IMG),BLK)
     TOPLEVEL := module_top
-    MODULE   ?= fifo
+    MODULE   ?= hierarchy
 else
     TOPLEVEL := module_top
-    MODULE   ?= fifo
+    MODULE   ?= hierarchy
 endif
 
 # Will be passed to compilation
