@@ -132,7 +132,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
         else:
             msg += parent.get_type_name()
         msg +=  " contxt=" + contxt
-        uvm_report_fatal("FCTTYP", msg, UVM_NONE);
+        uvm_report_fatal("FCTTYP", msg, UVM_NONE)
 
     # Function: set_type_override
     #
@@ -142,7 +142,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
     # original type, ~T~, is typically a super class of the override type.
     def set_type_override(self, override_type, replace=True):
         factory = get_factory()
-        factory.set_type_override_by_type(self.get(),override_type,replace);
+        factory.set_type_override_by_type(self.get(),override_type,replace)
 
     # Function: set_inst_override
     #
@@ -235,12 +235,12 @@ class UVMObjectRegistry(UVMObjectWrapper):
             return obj
         create = obj
         #if (!$cast(create, obj)) begin
-        #    string msg;
+        #    string msg
         #    msg = {"Factory did not return an object of type '",type_name,
         #      "'. A component of type '",obj == null ? "null" : obj.get_type_name(),
         #      "' was returned instead. Name=",name," Parent=",
-        #      parent==null?"null":parent.get_type_name()," contxt=",contxt};
-        #    uvm_report_fatal("FCTTYP", msg, UVM_NONE);
+        #      parent==null?"null":parent.get_type_name()," contxt=",contxt}
+        #    uvm_report_fatal("FCTTYP", msg, UVM_NONE)
         return create
 
     # Function: set_type_override
@@ -251,7 +251,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
     # original type, ~T~, is typically a super class of the override type.
     def set_type_override(self, override_type, replace=True):
         factory = get_factory()
-        factory.set_type_override_by_type(get(),override_type,replace);
+        factory.set_type_override_by_type(self.get(),override_type,replace)
 
     # Function: set_inst_override
     #
@@ -276,7 +276,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
                 inst_path = parent.get_full_name()
             else:
                 inst_path = parent.get_full_name() + "." + inst_path
-        factory.set_inst_override_by_type(get(),override_type,inst_path);
+        factory.set_inst_override_by_type(self.get(),override_type,inst_path)
     #endclass
 
 def get_factory():

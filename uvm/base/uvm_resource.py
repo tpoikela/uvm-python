@@ -24,7 +24,7 @@ from .uvm_object import UVMObject
 from .sv import sv, uvm_re_match, uvm_glob_to_re
 from ..uvm_macros import uvm_typename
 from ..macros import uvm_info
-from .uvm_globals import uvm_report_error
+from .uvm_globals import (uvm_report_error, uvm_report_warning)
 from .uvm_object_globals import UVM_NONE
 from .uvm_spell_chkr import UVMSpellChkr
 from .uvm_pool import UVMPool

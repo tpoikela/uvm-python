@@ -1,11 +1,34 @@
-
+#//
+#//------------------------------------------------------------------------------
+#//   Copyright 2007-2011 Mentor Graphics Corporation
+#//   Copyright 2007-2011 Cadence Design Systems, Inc.
+#//   Copyright 2010-2011 Synopsys, Inc.
+#//   Copyright 2013      NVIDIA Corporation
+#//   Copyright 2013      Verilab, Inc.
+#//   Copyright 2019 Tuomas Poikela (tpoikela)
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//------------------------------------------------------------------------------
 
 from .sv import sv
 from .uvm_queue import UVMQueue
 from .uvm_pool import UVMPool
 from .uvm_globals import (uvm_report_error, uvm_report_fatal, uvm_report_warning,
-    uvm_is_match)
-from .uvm_object_globals import UVM_NONE
+    uvm_is_match, uvm_report_info)
+from .uvm_object_globals import UVM_NONE, UVM_MEDIUM
 from ..macros import uvm_info
 from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 
@@ -57,13 +80,32 @@ class uvm_factory_queue_class:
 
 class UVMFactory:
 
+    #// Group: Retrieving the factory
+
+    #// Function: get
+    #// Static accessor for <uvm_factory>
+    #//
+    #// The static accessor is provided as a convenience wrapper
+    #// around retrieving the factory via the <uvm_coreservice_t::get_factory>
+    #// method.
+    #//
+    #// | // Using the uvm_coreservice_t:
+    #// | uvm_coreservice_t cs;
+    #// | uvm_factory f;
+    #// | cs = uvm_coreservice_t::get();
+    #// | f = cs.get_factory();
+    #//
+    #// | // Not using the uvm_coreservice_t:
+    #// | uvm_factory f;
+    #// | f = uvm_factory::get();
+    #//
     @classmethod
     def get(cls):
         from uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         return cs.get_factory()
 
-    # SV virtual functions not implemented, not needed in python
+    # NOTE: SV virtual functions not added from original uvm_factory, not needed in python
 
 #------------------------------------------------------------------------------
 #
@@ -100,9 +142,9 @@ class UVMDefaultFactory(UVMFactory):
 
         if obj.get_type_name() != "" and obj.get_type_name() != "<unknown>":
             if self.m_type_names.exists(obj.get_type_name()):
-              uvm_report_warning("TPRGED", ("Type name '" + obj.get_type_name()
-                + "' already registered with factory. No string-based lookup "
-                + "support for multiple types with the same type name."), UVM_NONE)
+                uvm_report_warning("TPRGED", ("Type name '" + obj.get_type_name()
+                    + "' already registered with factory. No string-based lookup "
+                    + "support for multiple types with the same type name."), UVM_NONE)
             else:
                 self.m_type_names.add(obj.get_type_name(), obj)
 
@@ -236,7 +278,7 @@ class UVMDefaultFactory(UVMFactory):
                 self.m_type_overrides[index].ovrd_type_name = override_type_name
 
         if original_type is None:
-            m_lookup_strs[original_type_name] = 1
+            self.m_lookup_strs[original_type_name] = 1
 
         if not replaced:
             # uvm_factory_override override
@@ -561,13 +603,13 @@ class UVMDefaultFactory(UVMFactory):
         # inst override; return first match; takes precedence over type overrides
         if full_inst_path != "" and qc is not None:
             for index in range(0, qc.size()):
-                if self.are_args_ok(qc[index], requested_type):
+                if self.are_args_ok(qc[index], requested_type, full_inst_path):
                     self.m_override_info.push_back(qc[index])
                     if UVMDefaultFactory.m_debug_pass:
                         if override is None:
                             override = qc[index].ovrd_type
                             qc[index].selected = 1
-                            lindex=qc[index]
+                            lindex = qc[index]
                     else:
                         qc[index].used += 1
                         if qc[index].ovrd_type == requested_type:
@@ -583,13 +625,14 @@ class UVMDefaultFactory(UVMFactory):
                     if override is None:
                         override = self.m_type_overrides[index].ovrd_type
                         self.m_type_overrides[index].selected = 1
-                        lindex=self.m_type_overrides[index]
+                        lindex = self.m_type_overrides[index]
                 else:
                     self.m_type_overrides[index].used += 1
                     if self.m_type_overrides[index].ovrd_type == requested_type:
                         return requested_type
                     else:
-                        return self.find_override_by_type(self.m_type_overrides[index].ovrd_type,full_inst_path)
+                        return self.find_override_by_type(self.m_type_overrides[index].ovrd_type,
+                            full_inst_path)
 
         if UVMDefaultFactory.m_debug_pass and override is not None:
             lindex.used += 1
@@ -618,7 +661,7 @@ class UVMDefaultFactory(UVMFactory):
             if tmp == "":
                 sv.swrite(tmp, "__unnamed_id_%0d", id)
                 id += 1
-            sorted_override_queues[tmp] = self.m_inst_override_queues[i]
+            sorted_override_queues[tmp] = self.m_inst_override_queues[key]
 
         for key in self.m_inst_override_name_queues:
             sorted_override_queues[key] = self.m_inst_override_name_queues[key]
@@ -633,7 +676,7 @@ class UVMDefaultFactory(UVMFactory):
             max2 = 0
             max3 = 0
             dash = "-" * 100
-            space= " " * 100
+            space = " " * 100
             # print instance overrides
             if len(sorted_override_queues) == 0:
                 qs.push_back("No instance overrides are registered with this factory\n")
@@ -643,11 +686,11 @@ class UVMDefaultFactory(UVMFactory):
                     #for (int i=0; i<qc.queue.size(); ++i) begin
                     for i in range(len(qc.queue)):
                         if (qc.queue[i].orig_type_name.len() > max1):
-                            max1= len(qc.queue[i].orig_type_name)
+                            max1 = len(qc.queue[i].orig_type_name)
                         if (qc.queue[i].full_inst_path.len() > max2):
-                            max2= len(qc.queue[i].full_inst_path)
+                            max2 = len(qc.queue[i].full_inst_path)
                         if (qc.queue[i].ovrd_type_name.len() > max3):
-                            max3= len(qc.queue[i].ovrd_type_name)
+                            max3 = len(qc.queue[i].ovrd_type_name)
 
                 if (max1 < 14):
                     max1 = 14
@@ -667,10 +710,10 @@ class UVMDefaultFactory(UVMFactory):
                     # qc = sorted_override_queues[j]
                     for i in range(len(qc.queue)):
                         qs.push_back(sv.sformatf("  %0s%0s  %0s%0s",qc.queue[i].orig_type_name,
-                                space[1:max1-len(qc.queue[i].orig_type_name)],
-                               qc.queue[i].full_inst_path,
-                               space[1:max2-len(qc.queue[i].full_inst_path)]))
-                        qs.push_back(sv.sformatf("  %0s\n",     qc.queue[i].ovrd_type_name))
+                            space[1:max1-len(qc.queue[i].orig_type_name)],
+                            qc.queue[i].full_inst_path,
+                            space[1:max2-len(qc.queue[i].full_inst_path)]))
+                        qs.push_back(sv.sformatf("  %0s\n", qc.queue[i].ovrd_type_name))
 
             # print type overrides
             if len(self.m_type_overrides) == 0:
@@ -866,7 +909,7 @@ class UVMDefaultFactory(UVMFactory):
 
     # Internal helper functions
 
-    def are_args_ok(self, qc_elem, requested_type):
+    def are_args_ok(self, qc_elem, requested_type, full_inst_path):
         name_ok = (qc_elem.orig_type == requested_type or
                    (qc_elem.orig_type_name != "<unknown>" and
                     qc_elem.orig_type_name != "" and

@@ -3,6 +3,7 @@
 #//    Copyright 2004-2009 Synopsys, Inc.
 #//    Copyright 2010-2011 Mentor Graphics Corporation
 #//    Copyright 2010-2011 Cadence Design Systems, Inc.
+#//    Copyright 2019 Tuomas Poikela (tpoikela)
 #//    All Rights Reserved Worldwide
 #//
 #//    Licensed under the Apache License, Version 2.0 (the
@@ -26,6 +27,7 @@ from cocotb.triggers import Timer
 from ..seq.uvm_sequence import UVMSequence
 from ..macros import uvm_object_utils, uvm_fatal, uvm_warning, uvm_info
 from ..base import UVM_LOW, UVM_HIGH
+from .uvm_reg_model import UVM_WRITE
 
 #//------------------------------------------------------------------------------
 #// TITLE: Register Sequence Classes
@@ -35,7 +37,7 @@ from ..base import UVM_LOW, UVM_HIGH
 #//------------------------------------------------------------------------------
 
 LOCAL = 0
-UPSTREAM = 0
+UPSTREAM = 1
 
 #//------------------------------------------------------------------------------
 #//

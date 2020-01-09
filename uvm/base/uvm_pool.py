@@ -2,6 +2,7 @@
 import collections
 
 from .uvm_object import UVMObject
+from ...macros import uvm_warning
 
 
 class UVMPool(UVMObject):
@@ -147,6 +148,7 @@ class UVMPool(UVMObject):
 #// ~uvm_barrier_pool~ (a uvm_obejct_string_pool storing <uvm_barrier>).
 #//------------------------------------------------------------------------------
 
+
 class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(string,T);
     #  typedef uvm_object_string_pool #(T) this_type;
     m_global_pool = None
@@ -211,7 +213,7 @@ class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(st
     #
     def delete(self, key):
         if not self.exists(key):
-            uvm_report_warning("POOLDEL", "delete: key '{}' doesn't exist".format(key))
+            uvm_warning("POOLDEL", "delete: key '{}' doesn't exist".format(key))
             return
         self.delete(key)
     #  endfunction

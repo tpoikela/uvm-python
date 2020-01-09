@@ -4,6 +4,7 @@
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2013 NVIDIA Corporation
+#//   Copyright 2019-2020 Tuomas Poikela
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -20,12 +21,13 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//-----------------------------------------------------------------------------
-#
+
 
 from .sv import sv
 from ..dap.uvm_set_before_get_dap import uvm_set_before_get_dap
 from .uvm_object import UVMObject
 from ..macros.uvm_object_defines import uvm_object_utils
+from ..macros.uvm_message_defines import uvm_error
 from .uvm_globals import uvm_sim_time
 
 #//------------------------------------------------------------------------------
@@ -38,14 +40,14 @@ from .uvm_globals import uvm_sim_time
 
 class m_uvm_tr_stream_cfg():
     def __init__(self):
-        self.db = None  # uvm_tr_database db;
+        self.db = None  # uvm_tr_database db
         self.scope = ""
         self.stream_type_name = ""
 #endclass : m_uvm_tr_stream_cfg
 
 #
-#typedef class uvm_set_before_get_dap;
-#typedef class uvm_text_recorder;
+#typedef class uvm_set_before_get_dap
+#typedef class uvm_text_recorder
 
 #//------------------------------------------------------------------------------
 #//
@@ -61,29 +63,29 @@ class m_uvm_tr_stream_cfg():
 #// implementation.  A default text-based implementation is provided via the
 #// <uvm_text_tr_stream> class.
 #//
-#virtual class uvm_tr_stream extends uvm_object;
+#virtual class uvm_tr_stream extends uvm_object
 
 class uvm_tr_stream(UVMObject):
     #
     #   // Variable- m_cfg_dap
     #   // Data access protected reference to the DB
-    #   local uvm_set_before_get_dap#(m_uvm_tr_stream_cfg) m_cfg_dap;
+    #   local uvm_set_before_get_dap#(m_uvm_tr_stream_cfg) m_cfg_dap
     #
     #   // Variable- m_records
     #   // Active records in the stream (active == open or closed)
-    #   local bit m_records[uvm_recorder];
+    #   local bit m_records[uvm_recorder]
     #
     #   // Variable- m_warn_null_cfg
     #   // Used to limit the number of warnings
-    #   local bit m_warn_null_cfg;
+    #   local bit m_warn_null_cfg
     #
     #   // Variable- m_is_opened
     #   // Used to indicate stream is open
-    #   local bit m_is_opened;
+    #   local bit m_is_opened
     #
     #   // Variable- m_is_closed
     #   // Used to indicate stream is closed
-    #   local bit m_is_closed;
+    #   local bit m_is_closed
     #
     #   // !m_is_opened && !m_is_closed == m_is_freed
     #
@@ -95,7 +97,7 @@ class uvm_tr_stream(UVMObject):
     #   // name - Stream instance name
     def __init__(self, name="unnamed-uvm_tr_stream"):
         UVMObject.__init__(self, name)
-        self.m_cfg_dap = uvm_set_before_get_dap("cfg_dap");
+        self.m_cfg_dap = uvm_set_before_get_dap("cfg_dap")
         #   endfunction : new
 
     #
@@ -107,7 +109,7 @@ class uvm_tr_stream(UVMObject):
     #   // By default, neither ~m_ids_by_stream~ or ~m_streams_by_id~ are
     #   // used.  Streams are only placed in the arrays when the user
     #   // attempts to determine the id for a stream.
-    #   local static integer m_ids_by_stream[uvm_tr_stream];
+    #   local static integer m_ids_by_stream[uvm_tr_stream]
     m_ids_by_stream = {}
 
     #
@@ -119,17 +121,17 @@ class uvm_tr_stream(UVMObject):
     #   //
     #   // A warning will be asserted if get_db is called prior to
     #   // the stream being initialized via <do_open>.
-    #   function uvm_tr_database get_db();
-    #      m_uvm_tr_stream_cfg m_cfg;
+    #   function uvm_tr_database get_db()
+    #      m_uvm_tr_stream_cfg m_cfg
     #      if (!m_cfg_dap.try_get(m_cfg)) begin
     #         if (m_warn_null_cfg == 1)
     #           `uvm_warning("UVM/REC_STR/NO_CFG",
     #                        $sformatf("attempt to retrieve DB from '%s' before it was set!",
     #                                  get_name()))
-    #         m_warn_null_cfg = 0;
-    #         return null;
+    #         m_warn_null_cfg = 0
+    #         return null
     #      end
-    #      return m_cfg.db;
+    #      return m_cfg.db
     #   endfunction : get_db
     #
     #   // Function: get_scope
@@ -137,17 +139,17 @@ class uvm_tr_stream(UVMObject):
     #   //
     #   // A warning will be asserted if get_scope is called prior to
     #   // the stream being initialized via <do_open>.
-    #   function string get_scope();
-    #      m_uvm_tr_stream_cfg m_cfg;
+    #   function string get_scope()
+    #      m_uvm_tr_stream_cfg m_cfg
     #      if (!m_cfg_dap.try_get(m_cfg)) begin
     #         if (m_warn_null_cfg == 1)
     #           `uvm_warning("UVM/REC_STR/NO_CFG",
     #                        $sformatf("attempt to retrieve scope from '%s' before it was set!",
     #                                  get_name()))
-    #         m_warn_null_cfg = 0;
-    #         return "";
+    #         m_warn_null_cfg = 0
+    #         return ""
     #      end
-    #      return m_cfg.scope;
+    #      return m_cfg.scope
     #   endfunction : get_scope
     #
     #   // Function: get_stream_type_name
@@ -156,17 +158,17 @@ class uvm_tr_stream(UVMObject):
     #   //
     #   // A warning will be asserted if get_stream_type_name is called prior to
     #   // the stream being initialized via <do_open>.
-    #   function string get_stream_type_name();
-    #      m_uvm_tr_stream_cfg m_cfg;
+    #   function string get_stream_type_name()
+    #      m_uvm_tr_stream_cfg m_cfg
     #      if (!m_cfg_dap.try_get(m_cfg)) begin
     #         if (m_warn_null_cfg == 1)
     #           `uvm_warning("UVM/REC_STR/NO_CFG",
     #                        $sformatf("attempt to retrieve STREAM_TYPE_NAME from '%s' before it was set!",
     #                                  get_name()))
-    #         m_warn_null_cfg = 0;
-    #         return "";
+    #         m_warn_null_cfg = 0
+    #         return ""
     #      end
-    #      return m_cfg.stream_type_name;
+    #      return m_cfg.stream_type_name
     #   endfunction : get_stream_type_name
     #
     #   // Group: Stream API
@@ -189,18 +191,18 @@ class uvm_tr_stream(UVMObject):
     #   // This method will trigger a <do_close> call, followed by
     #   // <uvm_recorder::close> on all open recorders within the
     #   // stream.
-    #   function void close();
+    #   function void close()
     #      if (!is_open())
-    #        return;
+    #        return
     #
-    #      do_close();
+    #      do_close()
     #
     #      foreach (m_records[idx])
     #        if (idx.is_open())
-    #          idx.close();
+    #          idx.close()
     #
-    #      m_is_opened = 0;
-    #      m_is_closed = 1;
+    #      m_is_opened = 0
+    #      m_is_closed = 1
     #   endfunction : close
     #
     #   // Function: free
@@ -212,37 +214,37 @@ class uvm_tr_stream(UVMObject):
     #   //
     #   // This method will trigger a <do_free> call, followed by
     #   // <uvm_recorder::free> on all recorders within the stream.
-    #   function void free();
-    #	   process p;
-    #	   string s;
-    #      uvm_tr_database db;
+    #   function void free()
+    #	   process p
+    #	   string s
+    #      uvm_tr_database db
     #      if (!is_open() && !is_closed())
-    #        return;
+    #        return
     #
     #      if (is_open())
-    #        close();
+    #        close()
     #
-    #      do_free();
+    #      do_free()
     #
     #      foreach (m_records[idx])
-    #        idx.free();
+    #        idx.free()
     #
     #      // Clear out internal state
-    #      db = get_db();
-    #      m_is_closed = 0;
-    #      p = process::self();
+    #      db = get_db()
+    #      m_is_closed = 0
+    #      p = process::self()
     #      if(p != null)
-    #      	s = p.get_randstate();
-    #      m_cfg_dap = new("cfg_dap");
+    #      	s = p.get_randstate()
+    #      m_cfg_dap = new("cfg_dap")
     #      if(p != null)
-    #      	p.set_randstate(s);
-    #      m_warn_null_cfg = 1;
+    #      	p.set_randstate(s)
+    #      m_warn_null_cfg = 1
     #      if (m_ids_by_stream.exists(this))
-    #        m_free_id(m_ids_by_stream[this]);
+    #        m_free_id(m_ids_by_stream[this])
     #
     #      // Clear out DB state
     #      if (db != null)
-    #        db.m_free_stream(this);
+    #        db.m_free_stream(this)
     #   endfunction : free
 
     #   // Function- m_do_open
@@ -261,7 +263,7 @@ class uvm_tr_stream(UVMObject):
     #   // - m_do_open is passed a ~null~ db
     #   function void m_do_open(uvm_tr_database db,
     #                           string scope="",
-    #                           string stream_type_name="");
+    #                           string stream_type_name="")
     def m_do_open(self, db, scope="", stream_type_name=""):
         m_cfg = None # m_uvm_tr_stream_cfg
         m_db = None  # uvm_tr_database
@@ -278,13 +280,13 @@ class uvm_tr_stream(UVMObject):
         else:
             # Never set before
             m_cfg = m_uvm_tr_stream_cfg()
-            m_cfg.db = db;
-            m_cfg.scope = scope;
-            m_cfg.stream_type_name = stream_type_name;
-            self.m_cfg_dap.set(m_cfg);
+            m_cfg.db = db
+            m_cfg.scope = scope
+            m_cfg.stream_type_name = stream_type_name
+            self.m_cfg_dap.set(m_cfg)
             self.m_is_opened = True
 
-            self.do_open(db, scope, stream_type_name);
+            self.do_open(db, scope, stream_type_name)
         #   endfunction : m_do_open
 
     #
@@ -330,39 +332,39 @@ class uvm_tr_stream(UVMObject):
     #   // request will be ignored, and ~null~ will be returned.
     #   function uvm_recorder open_recorder(string name,
     #                                      time   open_time = 0,
-    #                                      string type_name="");
-    #      time m_time = (open_time == 0) ? $time : open_time;
+    #                                      string type_name="")
+    #      time m_time = (open_time == 0) ? $time : open_time
     #
     #      // Check to make sure we're open
     #      if (!is_open())
-    #        return null;
+    #        return null
     #      else begin
-    #         process p = process::self();
-    #         string s;
+    #         process p = process::self()
+    #         string s
     #
     #         if (p != null)
-    #           s = p.get_randstate();
+    #           s = p.get_randstate()
     #
     #         open_recorder = do_open_recorder(name,
     #                                          m_time,
-    #                                          type_name);
+    #                                          type_name)
     #
     #
     #
     #         if (open_recorder != null) begin
-    #            m_records[open_recorder] = 1;
-    #            open_recorder.m_do_open(this, m_time, type_name);
+    #            m_records[open_recorder] = 1
+    #            open_recorder.m_do_open(this, m_time, type_name)
     #         end
     #         if (p != null)
-    #           p.set_randstate(s);
+    #           p.set_randstate(s)
     #      end
     #   endfunction : open_recorder
     #
     #   // Function- m_free_recorder
     #   // Removes recorder from the internal array
-    #   function void m_free_recorder(uvm_recorder recorder);
+    #   function void m_free_recorder(uvm_recorder recorder)
     #      if (m_records.exists(recorder))
-    #        m_records.delete(recorder);
+    #        m_records.delete(recorder)
     #   endfunction : m_free_recorder
     #
     #   // Function: get_recorders
@@ -374,19 +376,19 @@ class uvm_tr_stream(UVMObject):
     #   // The <get_recorders> method returns the size of the queue,
     #   // such that the user can conditionally process the elements.
     #   //
-    #   // | uvm_recorder tr_q[$];
+    #   // | uvm_recorder tr_q[$]
     #   // | if (my_stream.get_recorders(tr_q)) begin
     #   // |   // Process the queue...
     #   // | end
     #   //
-    #   function unsigned get_recorders(ref uvm_recorder q[$]);
+    #   function unsigned get_recorders(ref uvm_recorder q[$])
     #      // Clear out the queue first...
-    #      q.delete();
+    #      q.delete()
     #      // Fill in the values
     #      foreach (m_records[idx])
-    #        q.push_back(idx);
+    #        q.push_back(idx)
     #      // Finally return the size of the queue
-    #      return q.size();
+    #      return q.size()
     #   endfunction : get_recorders
     #
 
@@ -395,7 +397,7 @@ class uvm_tr_stream(UVMObject):
     #   // Variable- m_streams_by_id
     #   // A corollary to ~m_ids_by_stream~, this indexes the streams by their
     #   // unique ids.
-    #   local static uvm_tr_stream m_streams_by_id[integer];
+    #   local static uvm_tr_stream m_streams_by_id[integer]
     m_streams_by_id = {}
 
 
@@ -432,8 +434,8 @@ class uvm_tr_stream(UVMObject):
     #   //
     #   // This is an implementation detail of the UVM library, which allows
     #   // for vendors to (optionally) put vendor-specific methods into the library.
-    #   virtual function integer m_get_handle();
-    #      return get_handle();
+    #   virtual function integer m_get_handle()
+    #      return get_handle()
     #   endfunction : m_get_handle
     #
     #   // Function: get_stream_from_handle
@@ -443,27 +445,27 @@ class uvm_tr_stream(UVMObject):
     #   // stream with that ~id~ has been freed, then ~null~ is
     #   // returned.
     #   //
-    #   static function uvm_tr_stream get_stream_from_handle(integer id);
+    #   static function uvm_tr_stream get_stream_from_handle(integer id)
     #      if (id == 0)
-    #        return null;
+    #        return null
     #
     #      if ($isunknown(id) || !m_streams_by_id.exists(id))
-    #        return null;
+    #        return null
     #
-    #      return m_streams_by_id[id];
+    #      return m_streams_by_id[id]
     #   endfunction : get_stream_from_handle
     #
     #   // Function- m_free_id
     #   // Frees the id/stream link (memory cleanup)
     #   //
-    #   static function void m_free_id(integer id);
-    #      uvm_tr_stream stream;
+    #   static function void m_free_id(integer id)
+    #      uvm_tr_stream stream
     #      if (!$isunknown(id) && m_streams_by_id.exists(id))
-    #        stream = m_streams_by_id[id];
+    #        stream = m_streams_by_id[id]
     #
     #      if (stream != null) begin
-    #         m_streams_by_id.delete(id);
-    #         m_ids_by_stream.delete(stream);
+    #         m_streams_by_id.delete(id)
+    #         m_ids_by_stream.delete(stream)
     #      end
     #   endfunction : m_free_id
     #
@@ -484,7 +486,7 @@ class uvm_tr_stream(UVMObject):
     #   // record any initial information about the stream.
     #   protected virtual function void do_open(uvm_tr_database db,
     #                                           string scope,
-    #                                           string stream_type_name);
+    #                                           string stream_type_name)
     #   endfunction : do_open
 
     #
@@ -494,7 +496,7 @@ class uvm_tr_stream(UVMObject):
     #   // The ~do_close~ callback can be used to set internal state
     #   // within the stream, as well as providing a location to
     #   // record any closing information.
-    #   protected virtual function void do_close();
+    #   protected virtual function void do_close()
     #   endfunction : do_close
     #
     #   // Function: do_free
@@ -503,7 +505,7 @@ class uvm_tr_stream(UVMObject):
     #   // The ~do_free~ callback can be used to release the internal
     #   // state within the stream, as well as providing a location
     #   // to record any "freeing" information.
-    #   protected virtual function void do_free();
+    #   protected virtual function void do_free()
     #   endfunction : do_free
     #
     #   // Function: do_open_recorder
@@ -512,8 +514,8 @@ class uvm_tr_stream(UVMObject):
     #   // Backend implementation of <open_recorder>
     #   protected virtual function uvm_recorder do_open_recorder(string name,
     #                                                            time   open_time,
-    #                                                            string type_name);
-    #      return null;
+    #                                                            string type_name)
+    #      return null
     #   endfunction : do_open_recorder
     #
     #endclass : uvm_tr_stream
@@ -528,12 +530,12 @@ class uvm_tr_stream(UVMObject):
 #//
 #//
 #
-#class uvm_text_tr_stream extends uvm_tr_stream;
+#class uvm_text_tr_stream extends uvm_tr_stream
 class uvm_text_tr_stream(uvm_tr_stream):
     #
     #   // Variable- m_text_db
     #   // Internal reference to the text-based backend
-    #   local uvm_text_tr_database m_text_db;
+    #   local uvm_text_tr_database m_text_db
     #
     #
 
@@ -554,9 +556,9 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #   //
     #   protected virtual function void do_open(uvm_tr_database db,
     #                                           string scope,
-    #                                           string stream_type_name);
+    #                                           string stream_type_name)
     def do_open(self, db, scope, stream_type_name):
-        # $cast(m_text_db, db);
+        # $cast(m_text_db, db)
         self.m_text_db = db
         if (self.m_text_db.open_db()):
             sv.fdisplay(self.m_text_db.m_file,
@@ -569,7 +571,7 @@ class uvm_text_tr_stream(uvm_tr_stream):
 
     #   // Function: do_close
     #   // Callback triggered via <uvm_tr_stream::close>.
-    #   protected virtual function void do_close();
+    #   protected virtual function void do_close()
     #      if (m_text_db.open_db())
     #        $fdisplay(m_text_db.m_file,
     #                  "  CLOSE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%0d}",
@@ -577,13 +579,14 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #                  this.get_name(),
     #                  this.get_stream_type_name(),
     #                  this.get_scope(),
-    #                  this.get_handle());
+    #                  this.get_handle())
     #   endfunction : do_close
     #
+
     #   // Function: do_free
     #   // Callback triggered via <uvm_tr_stream::free>.
     #   //
-    #   protected virtual function void do_free();
+    #   protected virtual function void do_free()
     #      if (m_text_db.open_db())
     #        $fdisplay(m_text_db.m_file,
     #                  "  FREE_STREAM @%0t {NAME:%s T:%s SCOPE:%s STREAM:%0d}",
@@ -591,23 +594,24 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #                  this.get_name(),
     #                  this.get_stream_type_name(),
     #                  this.get_scope(),
-    #                  this.get_handle());
-    #      m_text_db = null;
-    #      return;
+    #                  this.get_handle())
+    #      m_text_db = null
+    #      return
     #   endfunction : do_free
     #
+
     #   // Function: do_open_recorder
     #   // Marks the beginning of a new record in the stream
     #   //
     #   // Text-backend specific implementation.
     #   protected virtual function uvm_recorder do_open_recorder(string name,
     #                                                           time   open_time,
-    #                                                           string type_name);
+    #                                                           string type_name)
     #      if (m_text_db.open_db()) begin
-    #         return uvm_text_recorder::type_id::create(name);
+    #         return uvm_text_recorder::type_id::create(name)
     #      end
     #
-    #      return null;
+    #      return null
     #   endfunction : do_open_recorder
     #
     #endclass : uvm_text_tr_stream

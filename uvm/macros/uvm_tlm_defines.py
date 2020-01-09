@@ -2,6 +2,7 @@
 #   Copyright 2007-2011 Mentor Graphics Corporation
 #   Copyright 2007-2010 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
+#   Copyright 2019-2020 Tuomas Poikela
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the

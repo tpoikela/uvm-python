@@ -32,7 +32,8 @@ from .uvm_queue import UVMQueue
 from .uvm_misc import UVM_APPEND
 from ..macros import uvm_cb_trace_noobj
 from .uvm_object_globals import UVM_NONE
-from .uvm_globals import (uvm_report_warning, uvm_report_error)
+from .uvm_globals import (uvm_report_warning, uvm_report_error,
+    uvm_report_fatal)
 
 
 #------------------------------------------------------------------------------

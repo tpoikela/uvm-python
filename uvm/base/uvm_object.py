@@ -1,8 +1,9 @@
 
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
-from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE)
-from .uvm_globals import uvm_report_error, uvm_report_warning
+from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
+        UVM_RECORD)
+from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 
 class UVMObject(sv_obj):

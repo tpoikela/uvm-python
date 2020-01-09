@@ -10,14 +10,7 @@ from .uvm_object import UVMObject
 from .uvm_pool import UVMEventPool
 from .sv import sv
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
-
-#typedef struct {
-#  string comp
-#  string phase
-#  time   offset
-#  uvm_verbosity verbosity
-#  string id
-#} m_verbosity_setting
+from .uvm_recorder import UVMRecorder
 
 
 class VerbositySetting:
