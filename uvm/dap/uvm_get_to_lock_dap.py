@@ -1,5 +1,5 @@
-#// 
-#//------------------------------------------------------------------------------
+#//
+#//----------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
@@ -20,7 +20,7 @@
 #//   CONDITIONS OF ANY KIND, either express or implied.  See
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 
 from .uvm_set_get_dap_base import uvm_set_get_dap_base
 from ..base.sv import sv
@@ -32,13 +32,15 @@ ERR_MSG1 = "Attempt to set new value on '%s', but the data access policy forbids
 #// Provides a 'Get-To-Lock' Data Access Policy.
 #//
 #// The 'Get-To-Lock' Data Access Policy allows for any number of 'sets',
-#// until the value is retrieved via a 'get'.  Once 'get' has been called, 
+#// until the value is retrieved via a 'get'.  Once 'get' has been called,
 #// it is illegal to 'set' a new value.
 #//
-#// The UVM uses this policy to protect the ~starting phase~ and ~automatic objection~
+#// The UVM uses this policy to protect the ~starting phase~ and
+#// ~automatic objection~
 #// values in <uvm_sequence_base>.
 #//
 #class uvm_get_to_lock_dap#(type T=int) extends uvm_set_get_dap_base#(T);
+
 
 class uvm_get_to_lock_dap(uvm_set_get_dap_base):
     #
@@ -46,7 +48,7 @@ class uvm_get_to_lock_dap(uvm_set_get_dap_base):
     # typedef uvm_get_to_lock_dap#(T) this_type;
 
     # Parameterized Utils
-    #   
+    #
     #   // Stored data
     #   local T m_value;
     #
@@ -59,7 +61,7 @@ class uvm_get_to_lock_dap(uvm_set_get_dap_base):
         self.m_value = None
 
     #   // Group: Set/Get Interface
-    #   
+    #
     #   // Function: set
     #   // Updates the value stored within the DAP.
     #   //
@@ -109,9 +111,9 @@ class uvm_get_to_lock_dap(uvm_set_get_dap_base):
     #   //
     #   // The ~uvm_get_to_lock_dap~ cannot support the standard UVM
     #   // instrumentation methods (~copy~, ~clone~, ~pack~ and
-    #   // ~unpack~), due to the fact that they would potentially 
+    #   // ~unpack~), due to the fact that they would potentially
     #   // violate the access policy.
-    #   //  
+    #   //
     #   // A call to any of these methods will result in an error.
     #
     #   virtual function void do_copy(uvm_object rhs);
@@ -130,7 +132,7 @@ class uvm_get_to_lock_dap(uvm_set_get_dap_base):
     #   endfunction : do_unpack
     #
     #   // Group- Reporting
-    #   
+    #
     #   // Function- convert2string
     #   virtual function string convert2string();
     #      if (m_locked)
@@ -138,17 +140,19 @@ class uvm_get_to_lock_dap(uvm_set_get_dap_base):
     #      else
     #        return $sformatf("(%s) %0p [UNLOCKED]", `uvm_typename(m_value), m_value);
     #   endfunction : convert2string
-    #   
+    #
     #   // Function- do_print
     #   virtual function void do_print(uvm_printer printer);
     #      super.do_print(printer);
     #      printer.print_field_int("lock_state", m_locked, $bits(m_locked));
-    #      printer.print_generic("value", 
-    #                            `uvm_typename(m_value), 
-    #                            0, 
+    #      printer.print_generic("value",
+    #                            `uvm_typename(m_value),
+    #                            0,
     #                            $sformatf("%0p", m_value));
-    #      
+    #
     #   endfunction : do_print
     #
     #endclass // uvm_get_to_lock_dap
+
+
 uvm_object_utils(uvm_get_to_lock_dap)

@@ -1,9 +1,10 @@
-#// 
-#//------------------------------------------------------------------------------
+#//
+#//----------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2013      NVIDIA Corporation
+#//   Copyright 2019      Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,7 +20,7 @@
 #//   CONDITIONS OF ANY KIND, either express or implied.  See
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 #
 
 from .uvm_set_get_dap_base import uvm_set_get_dap_base
@@ -87,7 +88,7 @@ class uvm_set_before_get_dap(uvm_set_get_dap_base):
         self.m_value = None
 
     #   // Group: Set/Get Interface
-    #   
+    #
     #   // Function: set
     #   // Updates the value stored within the DAP.
     #   //
@@ -103,7 +104,7 @@ class uvm_set_before_get_dap(uvm_set_get_dap_base):
     #      set(value);
     #      return 1;
     #   endfunction : try_set
-    #   
+    #
 
     #   // Function: get
     #   // Returns the current value stored within the DAP.
@@ -134,9 +135,9 @@ class uvm_set_before_get_dap(uvm_set_get_dap_base):
     #   //
     #   // The ~uvm_set_before_get_dap~ cannot support the standard UVM
     #   // instrumentation methods (~copy~, ~clone~, ~pack~ and
-    #   // ~unpack~), due to the fact that they would potentially 
+    #   // ~unpack~), due to the fact that they would potentially
     #   // violate the access policy.
-    #   //  
+    #   //
     #   // A call to any of these methods will result in an error.
     #
     #   virtual function void do_copy(uvm_object rhs);
@@ -155,7 +156,7 @@ class uvm_set_before_get_dap(uvm_set_get_dap_base):
     #   endfunction : do_unpack
     #
     #   // Group- Reporting
-    #   
+    #
     #   // Function- convert2string
     #   virtual function string convert2string();
     #      if (m_set)
@@ -163,19 +164,19 @@ class uvm_set_before_get_dap(uvm_set_get_dap_base):
     #      else
     #        return $sformatf("(%s) %0p [UNSET]", `uvm_typename(m_value), m_value);
     #   endfunction : convert2string
-    #   
+    #
     #   // Function- do_print
     #   virtual function void do_print(uvm_printer printer);
     #      super.do_print(printer);
     #      printer.print_field_int("set_state", m_set, $bits(m_set));
-    #      printer.print_generic("value", 
-    #                            `uvm_typename(m_value), 
-    #                            0, 
+    #      printer.print_generic("value",
+    #                            `uvm_typename(m_value),
+    #                            0,
     #                            $sformatf("%0p", m_value));
-    #      
+    #
     #   endfunction : do_print
     #
     #endclass // uvm_set_before_get_dap
-    #
+
 
 uvm_object_utils(uvm_set_before_get_dap)
