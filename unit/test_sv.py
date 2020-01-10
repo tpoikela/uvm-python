@@ -71,6 +71,13 @@ class TestSV(unittest.TestCase):
         str1 = sv.sformatf("Number: %0d, String: %s", 555, "xxx")
         self.assertRegex(str1, "Number: 555")
         self.assertRegex(str1, "String: xxx")
+        test_str = [
+            ["Hexadecimal: %5h", 123],
+            ["Time value: %0t", 55555]
+        ]
+        for pair in test_str:
+            str1 = sv.sformatf(pair[0], pair[1])
+
 
 
     def test_clog2(self):

@@ -131,10 +131,15 @@ class sv:
             return True
         return False
 
+    STR_RE = re.compile(r'%(\d*[bdshxfpt])')
+
     @classmethod
     def sformatf(cls, msg, *args):
         # TODO substitute old types %s/%d etc with {}
-        formats = ["%b", "%0b", "%0d", "%d", "%s", "%0s", "%h", "%0h", "%f", "%p", "%0t", "%t"]
+        formats = ["%b", "%0b", "%0d", "%d", "%s", "%0s", "%h", "%0h", "%f",
+                "%p", "%0t", "%t", "%x"]
+        #new_msg = cls.STR_RE.sub(r'{:\1}', msg)
+        #print("new_msg is " + new_msg)
         for s in formats:
             msg = msg.replace(s, "{}")
         return msg.format(*args)
