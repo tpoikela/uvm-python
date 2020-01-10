@@ -57,6 +57,8 @@ my $st = $GLOBAL;
 my @suffixlist = ('.py');
 
 my @files = ();
+my $pkg_map = build_pkg_map();
+
 
 if (defined $opt{f} and -e $opt{f}) {
     process_file($opt{f});
@@ -68,8 +70,6 @@ elsif (defined $opt{all}) {
 else {
     @files = @ARGV;
 }
-
-my $pkg_map = build_pkg_map();
 
 
 # Finally process the input files here
@@ -268,6 +268,7 @@ sub process_file {
         }
         elsif ($line =~ /^endclass/) {
             --$ind;
+            if ($ind < 0) {$ind = 0;}
             $st = $GLOBAL;
         }
     }

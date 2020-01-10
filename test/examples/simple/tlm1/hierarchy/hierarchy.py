@@ -24,27 +24,29 @@
 # About: hierarchy
 # This test is supposed to test the hierarchical connection
 # between ports of hierarchical threads using a uvm_tlm_fifo exports.
-# Walk through the test: #A thread *gen* will use a uvm_blocking_put_port to put
-# a transaction.
 #
-# A *conv* thread will use a uvm_blocking_put_port to put a transaction,an
+# Walk through the test:
+# ======================
+# 1. A thread *gen* will use a uvm_blocking_put_port to put a transaction.
+#
+# 2. A *conv* thread will use a uvm_blocking_put_port to put a transaction,an
 # uvm_blocking_get_port to get a transactions, and a uvm_analysis_ port to a
 # write a transaction through it.
 #
-# Another thread *bfm* will use a uvm_blocking_get_port to only get the
+# 3. Another thread *bfm* will use a uvm_blocking_get_port to only get the
 # transactions that has been sent by the other threads.
 #
-# A *listener* will extends the uvm_subscriber, to implement the analysis port
+# 4. A *listener* will extends the uvm_subscriber, to implement the analysis port
 # write function.
 #
-# A *producer* component will use uvm_blocking_put_port and uvm_analysis_port and
+# 5. A *producer* component will use uvm_blocking_put_port and uvm_analysis_port and
 # a uvm_tlm_fifo, to connect the *gen* and *conv* put, get and analysis ports
 # through the fifo exports.
 #
-# A *consumer* component will use uvm_blocking_put export and connect it directly
+# 6. A *consumer* component will use uvm_blocking_put export and connect it directly
 # to a fifo export, also will connect the *bfm*  get port to the fifo export
 #
-# At *top* env, the *producer*, *consumer*, and the *listener* will be connected
+# 7. At *top* env, the *producer*, *consumer*, and the *listener* will be connected
 #
 
 import cocotb
@@ -60,17 +62,22 @@ from uvm import *
 class transaction(UVMTransaction):
 
 
-    def copy(self, t):
-        self.data = t.data
+    def __init__(self, name='trans'):
+        super().__init__(name)
+        self.addr = 0
+        self.data = 0
         self.rand("data", range(1 << 32))
-        self.addr = t.addr
         self.rand("addr", range(1 << 32))
+
+    def do_copy(self, t):
+        self.data = t.data
+        self.addr = t.addr
         #    endfunction
 
-    def comp(self, a, b):
-        return ((a.data == b.data)  and  (a.addr == b.addr))
+    def do_compare(self, a, b):
+        return a.data == b.data and a.addr == b.addr
 
-    def clone(self):
+    def do_clone(self):
         t = transaction()
         t.copy(self)
         return t
@@ -79,100 +86,85 @@ class transaction(UVMTransaction):
         s = sv.sformatf("[ addr = %x, data = %x ]", self.addr, self.data)
         return s
     #  endclass
+uvm_object_utils(transaction)
 
 #  //----------------------------------------------------------------------
 #  // component gen
 #  //----------------------------------------------------------------------
 
-#  class gen(uvm_component):
-#
-#    uvm_blocking_put_port #(transaction) put_port
-#
-#    def __init__(self, name, parent)
-#      super().__init__(name, parent)
-#      put_port = new("put_port", self)
-#    endfunction
-#
-#@cocotb.coroutine
-#    def run_phase(self, phase):
-#      transaction t
-#      string msg
-#
-#      for(int i=0; i < 20; i++):
-#        t = new()
-#        assert(t.randomize())
-#        `uvm_info("gen", sv.sformatf("sending  : %s", t.convert2string()), UVM_MEDIUM)
-#        put_port.put(t)
-#      end
-#    endtask
-#
-#  endclass
+class gen(UVMComponent):
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        self.put_port = UVMBlockingPutPort("put_port", self)
+        self.num_items = 0
+
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        for i in range(20):
+            t = transaction()
+            if not t.randomize():
+                uvm_error("GEN", "Failed to randomize transaction")
+            uvm_info("gen", sv.sformatf("sending  : %s", t.convert2string()), UVM_MEDIUM)
+            yield self.put_port.put(t)
+            self.num_items += 1
 
 
 #  //----------------------------------------------------------------------
 #  // componenet conv
 #  //----------------------------------------------------------------------
-#  class conv(uvm_component):
-#
-#    uvm_blocking_put_port #(transaction) put_port
-#    uvm_blocking_get_port #(transaction) get_port
-#    uvm_analysis_port #(transaction) ap
-#
-#    def __init__(self, name, parent)
-#      super().__init__(name, parent)
-#      put_port = new("put_port", self)
-#      get_port = new("get_port", self)
-#      ap = new("analysis_port", self)
-#    endfunction
-#
-#@cocotb.coroutine
-#    def run_phase(self, phase):
-#      transaction t
-#
-#      while True:
-#        get_port.get(t)
-#        ap.write(t)
-#        put_port.put(t)
-#      end
-#    endtask
-#
-#  endclass
+
+class conv(UVMComponent):
+
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        self.put_port = UVMBlockingPutPort("put_port", self)
+        self.get_port = UVMBlockingGetPort("get_port", self)
+        self.ap = UVMAnalysisPort("analysis_port", self)
+
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        while True:
+            t = []
+            yield self.get_port.get(t)
+            t = t[0]
+            self.ap.write(t)
+            yield self.put_port.put(t)
+
+    #  endclass
 
 #
 #  //----------------------------------------------------------------------
 #  // componenet bfm
 #  //----------------------------------------------------------------------
-#  class bfm(uvm_component):
-#
-#    uvm_blocking_get_port #(transaction) get_port
-#
-#    def __init__(self, name, parent)
-#      super().__init__(name, parent)
-#      get_port = new("get_port", self)
-#    endfunction
-#
-#@cocotb.coroutine
-#    def run_phase(self, phase):
-#      transaction t
-#
-#      while True:
-#        get_port.get(t)
-#        `uvm_info("bfm", sv.sformatf("receiving: %s", t.convert2string()),UVM_MEDIUM)
-#      end
-#    endtask
-#
-#  endclass
+
+class bfm(UVMComponent):
+    #
+    #    uvm_blocking_get_port #(transaction) get_port
+    #
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        self.get_port = UVMBlockingGetPort("get_port", self)
+
+    @cocotb.coroutine
+    def run_phase(self, phase):
+
+        while True:
+            t = []
+            yield self.get_port.get(t)
+            t = t[0]
+            uvm_info("bfm", sv.sformatf("receiving: %s", t.convert2string()),UVM_MEDIUM)
+
+    #  endclass
 
 
-#  class listener(uvm_subscriber): #(transaction)
-#    def __init__(self, name, parent)
-#      super().__init__(name,parent)
-#    endfunction // new
-#
-#    def void write(self,input transaction t):
-#      `uvm_info(m_name, sv.sformatf("Received: %s", t.convert2string()), UVM_MEDIUM)
-#    endfunction // write
-#  endclass // listener
+class listener(UVMSubscriber): #(transaction)
+    def __init__(self, name, parent):
+        super().__init__(name,parent)
+
+    def write(self, t):
+        uvm_info(m_name, sv.sformatf("Received: %s", t.convert2string()), UVM_MEDIUM)
 
 
 #  //----------------------------------------------------------------------
@@ -192,49 +184,47 @@ class producer(UVMComponent):
         super().__init__(name, parent)
         self.put_port = UVMBlockingPutPort("put_port", self)
         self.ap = UVMAnalysisPort("analysis_port", self)
-        #g = new("gen", self)
-        #c = new("conv", self)
-        #f = new("fifo", self)
+        self.g = gen("gen", self)
+        self.c = conv("conv", self)
+        self.f = UVMTLMFIFO("fifo", self)
 
-    #
-    #   def connect_phase(self, phase):
-    #      g.put_port.connect(f.blocking_put_export);  // A
-    #      c.get_port.connect(f.blocking_get_export);  // B
-    #      c.put_port.connect(put_port); // C
-    #      c.ap.connect(ap)
-    #    endfunction
-    #
+
+    def connect_phase(self, phase):
+        self.g.put_port.connect(self.f.blocking_put_export)  # A
+        self.c.get_port.connect(self.f.blocking_get_export)  # B
+        self.c.put_port.connect(self.put_port) # C
+        self.c.ap.connect(self.ap)
+
     #  endclass
     #
 
 #  //----------------------------------------------------------------------
 #  // componenet consumer
 #  //----------------------------------------------------------------------
-#  class consumer(uvm_component):
-#
-#    uvm_blocking_put_export #(transaction) put_export
-#
-#    bfm b
-#    uvm_tlm_fifo #(transaction) f
-#
-#    def __init__(self, name, parent)
-#      super().__init__(name, parent)
-#      put_export = new("put_export", self)
-#      f = new("fifo", self)
-#      b = new("bfm", self)
-#    endfunction
-#
-#   def connect_phase(self, phase):
-#      put_export.connect(f.blocking_put_export)
-#      b.get_port.connect(f.blocking_get_export)
-#    endfunction
-#
-#  endclass
+class consumer(UVMComponent):
+    #
+    #    uvm_blocking_put_export #(transaction) put_export
+    #
+    #    bfm b
+    #    uvm_tlm_fifo #(transaction) f
+    #
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        self.put_export = UVMBlockingPutExport("put_export", self)
+        self.f = UVMTLMFIFO("fifo", self)
+        self.b = bfm("bfm", self)
 
-#
+    def connect_phase(self, phase):
+       self.put_export.connect(self.f.blocking_put_export)
+       self.b.get_port.connect(self.f.blocking_get_export)
+
+    #  endclass
+
+
 #  //----------------------------------------------------------------------
 #  // componenet top
 #  //----------------------------------------------------------------------
+
 class top(UVMEnv):
     #
     #    producer p
@@ -243,13 +233,13 @@ class top(UVMEnv):
     #
     def __init__(self, name, parent):
         super().__init__(name, parent)
-        p = producer("producer", self)
-        #      c = new("consumer", self)
-        #      l = new("listener", self)
-        #
-        #      // Connections may also be done in the constructor, if you wish
-        #      p.put_port.connect(c.put_export)
-        #      p.ap.connect(l.analysis_export)
+        self.p = producer("producer", self)
+        self.c = consumer("consumer", self)
+        self.list = listener("listener", self)
+
+        # Connections may also be done in the constructor, if you wish
+        self.p.put_port.connect(self.c.put_export)
+        self.p.ap.connect(self.list.analysis_export)
         #    endfunction
 
     @cocotb.coroutine
@@ -265,18 +255,17 @@ class top(UVMEnv):
 #  //----------------------------------------------------------------------
 class env(UVMEnv):
 
-    def __init__(self, name = "env"):
+    def __init__(self, name="env"):
         super().__init__(name)
-        t = top("top", self)
+        self.t = top("top", self)
 
 
-    #@cocotb.coroutine
-    #    def run_phase(self, phase):
-    #      phase.raise_objection(self)
-    #      #1000;
-    #      phase.drop_objection(self)
-    #    endtask
-    #
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        phase.raise_objection(self)
+        yield Timer(900, "NS")
+        phase.drop_objection(self)
+
     #  endclass
 
 
