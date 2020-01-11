@@ -133,6 +133,8 @@ class sv:
 
     STR_RE = re.compile(r'%(\d*[bdshxfpt])')
 
+    # This is to make porting faster, but should be switched to native python
+    # formatting inside UVM code
     @classmethod
     def sformatf(cls, msg, *args):
         # TODO substitute old types %s/%d etc with {}
