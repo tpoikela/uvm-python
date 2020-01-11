@@ -393,7 +393,8 @@ class tb_env extends uvm_env;
    endtask
 
    
-   function void report_phase(uvm_phase phase); uvm_coreservice_t cs_ = uvm_coreservice_t::get();
+   function void report_phase(uvm_phase phase);
+       uvm_coreservice_t cs_ = uvm_coreservice_t::get();
 
       uvm_report_server svr;
       svr = cs_.get_report_server();
