@@ -16,6 +16,9 @@ test-integrated:
 test-unit:
 	python -m unittest $(UNIT_ARGS)
 
+test-sim-integration:
+	make -C test/sim_integration MODULE=test_uvm_events
+
 lint:   
 	flake8 ./uvm --count --select=E9,F63,F7,F82 --show-source --statistics
 	flake8 ./uvm --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
