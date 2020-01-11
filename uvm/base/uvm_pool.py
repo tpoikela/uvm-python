@@ -201,7 +201,6 @@ class UVMPool(UVMObject):
 class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(string,T);
     #  typedef uvm_object_string_pool #(T) this_type;
     m_global_pool = None
-    #  const static string type_name = {"uvm_obj_str_pool"};
     type_name = "uvm_obj_str_pool"
 
     #  // Function: new
@@ -282,7 +281,6 @@ class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(st
                     break
         printer.print_array_footer()
     # endfunction
-#endclass
 
 
 class UVMEventPool(UVMObjectStringPool):

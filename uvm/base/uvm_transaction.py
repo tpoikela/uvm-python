@@ -21,11 +21,6 @@
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
 
-#typedef class uvm_event
-#typedef class uvm_event_pool
-#typedef class uvm_component
-#typedef class uvm_parent_child_link
-
 from .sv import sv
 from .uvm_recorder import UVMRecorder
 
@@ -229,8 +224,7 @@ class UVMTransaction(UVMObject):
         if e is not None:
             e.trigger()
 
-    #
-    #
+
     #  // Function: do_accept_tr
     #  //
     #  // This user-definable callback is called by <accept_tr> just before the accept
@@ -331,8 +325,7 @@ class UVMTransaction(UVMObject):
     def do_begin_tr(self):
         pass
 
-    #
-    #
+
     #  // Function: end_tr
     #  //
     #  // This function indicates that the transaction execution has ended.
@@ -517,10 +510,10 @@ class UVMTransaction(UVMObject):
     #
     #  //Override data control methods for internal properties
     #  extern virtual function void do_print  (uvm_printer printer)
+
     #  extern virtual function void do_record (uvm_recorder recorder)
+
     #  extern virtual function void do_copy   (uvm_object rhs)
-    #
-    #
 
     #  extern protected function integer m_begin_tr (time    begin_time=0,
     #                                                integer parent_handle=0)
@@ -579,18 +572,11 @@ class UVMTransaction(UVMObject):
 
     #
     #endclass
-#
-#
+
 #------------------------------------------------------------------------------
 # IMPLEMENTATION
 #------------------------------------------------------------------------------
-#
-#
-#
-#
-#
-#
-#
+
 # get_initiator
 # ------------
 #
