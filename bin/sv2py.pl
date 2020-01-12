@@ -191,20 +191,21 @@ sub process_file {
 
         if ($st == $IN_CLASS) {
             if ($line !~ m{^\s*//} && $line =~ $re_var) {
-                #=~ /^\s*(local|protected(\s+))?(\w+(#\(\w+\))?)\s+(\w+)\s*;/) {
                 my $value = "None";
                 my $var_type = $3;
                 my $var_name = $6;
                 my $unpacked = $8;
                 my $var_init = $9;
-                print("$fname,$lineno var matches: $var_name, init: $var_init\n");
+
+                #print("$fname,$lineno var matches: $var_name, init: $var_init\n");
+
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bstring\b/ ) {$value = "";}
                 if (defined $var_init) {
                     $value = $var_init;
                     $value =~ s/=//;
                 }
-                my $self_var = "${ws}#    self.$var_name = $value  # $var_type\n";
+                my $self_var = "${ws}#    self.$var_name = $value  # type: $var_type\n";
                 push(@found_vars, $self_var);
             }
         }

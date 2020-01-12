@@ -7,5 +7,6 @@ sim_build
 results.xml
 tags
 vimproject
+.mypy_cache
 
 *.vcd
