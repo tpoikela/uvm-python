@@ -77,13 +77,8 @@ ifneq ($(SIMARGS),)
     PLUSARGS += $(SIMARGS)
 endif
 
-ifeq ($(IMG),BLK)
-    TOPLEVEL := module_top
-    MODULE   ?= hierarchy
-else
-    TOPLEVEL := module_top
-    MODULE   ?= hierarchy
-endif
+TOPLEVEL ?= module_top
+MODULE   ?= top
 
 # Will be passed to compilation
 EXTRA_ARGS=""
