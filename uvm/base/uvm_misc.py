@@ -54,6 +54,25 @@ UVM_ENABLE_FIELD_CHECKS = 0
 def isunknown(value):
     return False
 
+# Function- uvm_get_array_index_string
+#
+#
+def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
+    i = 0
+    res = ""
+    is_wildcard = 1
+    i = len(arg) - 1
+    if(arg[i] == "]"):
+        while (i > 0 and (arg[i] != "[")):
+            if ((arg[i] == "*") or (arg[i] == "?")):
+                i = 0
+            i -= 1
+
+    if i > 0:
+        res = arg[i+1: len(arg)-1]
+        is_wildcard = 0
+    return res
+
 # Function- uvm_bitstream_to_string
 #
 #

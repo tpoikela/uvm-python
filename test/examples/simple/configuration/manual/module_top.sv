@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------
 // File: module_top.sv
 // Created on 2020-01-08
-// Tuomas Poikela, tuomas.poikela@cern.ch
+// Tuomas Poikela, tuomas.sakari.poikela@gmail.com
 //
 // Description: 
 //---------------------------------------------------------------------------
