@@ -22,13 +22,11 @@
 
 #from typings import Dict
 from uvm import (UVMComponent, UVMConfigDb, sv, uvm_get_array_index_string,
-    uvm_is_match)
+    uvm_is_match, uvm_error)
 
 
 class ClassC(UVMComponent):
-    #  int v=0
-    #  int s=0
-    #  string myaa [string]
+
 
     def __init__(self, name, parent):
         super().__init__(name, parent)
@@ -50,12 +48,20 @@ class ClassC(UVMComponent):
         if UVMConfigDb.get(self, "", "myaa[foo]", _str):
             self.myaa["foo"] = _str[0]
             _str = []
-        if UVMConfigDb.get(self, "", "myaa[bar]", str):
+        else:
+            uvm_error("NO_CONF_MATCH", "Did not get myaa[foo]")
+
+        if UVMConfigDb.get(self, "", "myaa[bar]", _str):
             self.myaa["bar"] = _str[0]
             _str = []
-        if UVMConfigDb.get(self, "", "myaa[foobar]", str):
+        else:
+            uvm_error("NO_CONF_MATCH", "Did not get myaa[bar]")
+
+        if UVMConfigDb.get(self, "", "myaa[foobar]", _str):
             self.myaa["foobar"] = _str[0]
             _str = []
+        else:
+            uvm_error("NO_CONF_MATCH", "Did not get myaa[foobar]")
 
 
     def get_type_name(self):

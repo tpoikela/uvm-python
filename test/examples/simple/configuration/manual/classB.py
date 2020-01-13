@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 
-from uvm import (UVMComponent, UVMConfigDb, sv)
+from uvm import (UVMComponent, UVMConfigDb, sv, uvm_error)
 from classC import ClassC
 
 
@@ -35,12 +35,16 @@ class ClassB(UVMComponent):
 
     def build_phase(self, phase):
         super().build_phase(phase)
-      
-        UVMConfigDb.get(self, "", "debug", self.debug)
+
+        _str = []
+        if UVMConfigDb.get(self, "", "debug", _str):
+            self.debug = _str[0]
+        else:
+            uvm_error("NO_CONF_MATCH", "Did not get debug")
         UVMConfigDb.set(self, "u1", "v", 0)
-      
+
         sv.display("%s: In Build: debug = %0d", self.get_full_name(), self.debug)
-      
+
         self.u1 = ClassC("u1", self)
 
 
@@ -49,4 +53,3 @@ class ClassB(UVMComponent):
 
     def do_print(self, printer):
         printer.print_field("debug", self.debug, 1)
-

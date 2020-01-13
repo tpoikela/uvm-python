@@ -115,7 +115,7 @@ class UVMConfigDb(UVMResourceDb):
             cntxt = cs.get_root()
         if inst_name == "":
             inst_name = cntxt.get_full_name()
-        elif (cntxt.get_full_name() != ""):
+        elif cntxt.get_full_name() != "":
             inst_name = cntxt.get_full_name() + "." + inst_name
 
         #rq = rp.lookup_regex_names(inst_name, field_name, uvm_resource#(T)::get_type());

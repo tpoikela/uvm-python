@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 
-from uvm import (UVMComponent, UVMConfigDb, sv)
+from uvm import (UVMComponent, UVMConfigDb, sv, uvm_error)
 from classC import ClassC
 
 
@@ -38,7 +38,11 @@ class ClassA(UVMComponent):
     def build_phase(self, phase):
         super().build_phase(phase)
 
-        UVMConfigDb.get(self, "", "debug", self.debug)
+        arr = []
+        if UVMConfigDb.get(self, "", "debug", arr):
+            self.debug = arr[0]
+        else:
+            uvm_error("NO_CONF_MATCH", "Failed to get 'debug' from config DB")
         UVMConfigDb.set(self, "*", "v", 0)
 
         sv.display("%s: In Build: debug = %0d", self.get_full_name(), self.debug)
