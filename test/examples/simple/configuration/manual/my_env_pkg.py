@@ -24,7 +24,7 @@ import cocotb
 from cocotb.triggers import Timer
 
 from uvm.comps.uvm_env import UVMEnv
-from uvm import UVMConfigDb, sv, uvm_top
+from uvm import (UVMConfigDb, sv, uvm_top, uvm_info, uvm_error, UVM_MEDIUM)
 from classA import ClassA
 from classB import ClassB
 
@@ -51,6 +51,10 @@ class my_env(UVMEnv):
 
         self.inst1 = ClassA("inst1", self)
         self.inst2 = ClassB("inst2", self)
+        if UVMConfigDb.get(uvm_top, "topenv", "should_match", arr):
+            uvm_info("MATCH_OK", "should_match found from DB", UVM_MEDIUM)
+        else:
+            uvm_error("MATCH_ERROR", "should_match NOT found from DB")
 
 
     def get_type_name(self):

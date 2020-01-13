@@ -9,9 +9,9 @@ class TestUVMRoot(unittest.TestCase):
 
     def test_name(self):
         root = UVMRoot()
-        self.assertEqual(root.get_name(), "__top__")
+        self.assertEqual(root.get_name(), "")
 
-    def test_singletion(self):
+    def test_singleton(self):
         root1 = UVMRoot.m_uvm_get_root()
         root2 = UVMRoot.m_uvm_get_root()
         self.assertEqual(root1, root2)

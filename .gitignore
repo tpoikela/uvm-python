@@ -10,3 +10,6 @@ vimproject
 .mypy_cache
 
 *.vcd
+
+uvm-1.2
+uvm_ref/

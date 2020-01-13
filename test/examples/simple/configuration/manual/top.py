@@ -44,7 +44,7 @@ def module_top(dut):
     UVMConfigDb.set(None, "topenv.inst1.u1", "myaa[foo]", "boo")
     UVMConfigDb.set(None, "topenv.inst1.u1", "myaa[foobar]", "boobah")
 
-    topenv = my_env("topenv", None)
+    topenv = my_env("topenv", uvm_top)
     UVMConfigDb.set(topenv, "*.u1", "v", 30)
     UVMConfigDb.set(topenv, "inst2.u1", "v", 10)
     UVMConfigDb.set(topenv, "*", "debug", 1)
@@ -53,5 +53,7 @@ def module_top(dut):
     UVMConfigDb.set(topenv, "*", "myaa[foobar]", "howdy")
     UVMConfigDb.set(topenv, "inst1.u1", "myaa[foo]", "boo")
     UVMConfigDb.set(topenv, "inst1.u1", "myaa[foobar]", "boobah")
-    
+
+    UVMConfigDb.set(uvm_top, "topenv", "should_match", 1234)
+   
     yield run_test()

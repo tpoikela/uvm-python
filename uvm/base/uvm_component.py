@@ -111,10 +111,11 @@ class UVMComponent(UVMReportObject):
 
         self.m_streams = {}  # uvm_tr_stream [string][string]
 
+        # If uvm_top, reset name to "" so it doesn't show in full paths then return
         if parent is None and name == "__top__":
-            # self.set_name("")
-            UVMReportObject.set_name(self, name)
-            self.m_name = self.get_name()
+            self.set_name("")
+            #UVMReportObject.set_name(self, name)
+            #self.m_name = self.get_name()
             return
 
         from .uvm_coreservice import UVMCoreService
@@ -276,7 +277,7 @@ class UVMComponent(UVMReportObject):
             uvm_error("INVSTNM", ("It is illegal to change the name of a component."
                 + "The component name will not be changed to \"{}\"".format(name)))
             return
-        UVMReportObject.set_name(self, name)
+        super().set_name(name)
         self.m_set_full_name()
 
     # Function: lookup
@@ -1670,13 +1671,14 @@ class UVMComponent(UVMReportObject):
     #// m_set_full_name
     #// ---------------
     def m_set_full_name(self):
-        if self.m_parent is None:
-            uvm_fatal("Should not be called with uvm_root")
+        #if self.m_parent is None:
+        #    uvm_fatal("Should not be called with uvm_root")
 
         from .uvm_root import UVMRoot
-        top = UVMRoot.get()
+        #top = UVMRoot.get()
         # top = None
-        if self.m_parent == top:  # or self.m_parent is None:
+        top = []
+        if sv.cast(top, self.m_parent, UVMRoot) or self.m_parent is None:
             self.m_name = self.get_name()
         else:
             self.m_name = self.m_parent.get_full_name() + "." + self.get_name()

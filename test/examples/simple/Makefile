@@ -1,5 +1,5 @@
 
-test: test-trivial test-basic_examples test-sequence test-hello_world test-registers test-tlm1
+test: test-trivial test-basic_examples test-sequence test-hello_world test-registers test-tlm1 test-configuration
 
 test-trivial:
 	make -C trivial/
@@ -18,6 +18,9 @@ test-hello_world:
 test-tlm1:
 	make -C tlm1/producer_consumer/
 	make -C tlm1/hierarchy/
+
+test-configuration:
+	make -C configuration/manual/
 
 test-registers:
 	make -C registers/models/user-defined/
