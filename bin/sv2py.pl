@@ -47,16 +47,23 @@ my $re_packed = qr/(\[.*\])?/;       # $5
 my $re_name = qr/(\w+)/;             # $6
 my $re_unpacked = qr/((\[.*\])+)/;   # $7, $8 (full)
 my $re_init_var = qr/(=[^;]+)/;      # $9
+
 my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?$re_init_var?\s*;\s*$/;
+my $re_new_call = qr/(\w+)\s*=\s*new\s*\(/;
 
 my $conf_db_re = qr/uvm_config_db#\(.*\)::(set|get)/;
+my $conf_db_re2 = qr/uvm_config_(int|string|object)::(set|get)/;
 my $res_db_re = qr/uvm_resource_db#\(.*\)::(set|get)/;
+my $edge_re = qr/^(\s*)\@\s*\((\w+\s+)?\s*(.*)\)/;
 
 my $GLOBAL = 1 << 0;
 my $IN_CLASS = 1 << 1;
 my $IN_NEW = 1 << 2;
 my $IN_TASK = 1 << 3;
 my $IN_FUNC = 1 << 4;
+
+# Store info about classes
+my $classes = {};
 
 my $st = $GLOBAL;
 
@@ -66,8 +73,8 @@ my @files = ();
 my $pkg_map = build_pkg_map();
 
 
+# Find files to process first, and put them into array
 if (defined $opt{f} and -e $opt{f}) {
-    #process_file($opt{f});
     push(@files, $opt{f});
 }
 elsif (defined $opt{all}) {
@@ -77,7 +84,6 @@ elsif (defined $opt{all}) {
 else {
     @files = @ARGV;
 }
-
 
 # Finally process the input files here
 for my $file (@files) {
@@ -131,6 +137,7 @@ sub process_file {
     my $include_line = -1;
     my $ifndef_line = -1;
 
+    my $curr_class = '';
     my @imports = ();
 
     my @found_vars = ();
@@ -142,13 +149,14 @@ sub process_file {
         ++$lineno;
         my $add_line = 1;  # If set to 0, skip adding this line to file
 
+        # In .py files, skip uncommented lines to avoid overwriting modifications
         if ($is_py and $line !~ /^\s*#/) {
             print "Skipping line $lineno: $line.\n";
             push(@outfile, $line);
             next;
         }
 
-        # Skip commented
+        # Skip commented in SV files
         if ($is_py == 0 && $line =~ m{^\s*//} && $has_author) {
             push(@outfile, "$ws#$line");
             next;
@@ -165,6 +173,7 @@ sub process_file {
             $ifndef_line = $lineno;
         }
 
+        # Add author name
         if ($line =~ /^(.*)All rights reserved worldwide/i) {
             my $cline = "#$1Copyright 2019-2020 $AUTHOR\n";
             my $has_author = 1;
@@ -189,6 +198,7 @@ sub process_file {
             $st = ~$IN_FUNC & $st;
         }
 
+        # Inside class, finds member variables
         if ($st == $IN_CLASS) {
             if ($line !~ m{^\s*//} && $line =~ $re_var) {
                 my $value = "None";
@@ -197,7 +207,7 @@ sub process_file {
                 my $unpacked = $8;
                 my $var_init = $9;
 
-                #print("$fname,$lineno var matches: $var_name, init: $var_init\n");
+                $classes->{$curr_class}->{var}->{$var_name} = $var_type;
 
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bstring\b/ ) {$value = "";}
@@ -209,6 +219,17 @@ sub process_file {
                 push(@found_vars, $self_var);
             }
         }
+
+        if ($line =~ $re_new_call) {
+            my $var_name = $1;
+            my $var_data = $classes->{$curr_class}->{var};
+            if (exists $var_data->{$var_name}) {
+                my $var_type = $var_data->{$var_name};
+                $line =~ s/$re_new_call/self.$var_name = $var_type(/;
+            }
+
+        }
+
         if ($line =~ /function\s+new\s*\(/) {
             $st = $st | $IN_NEW;
         }
@@ -235,7 +256,7 @@ sub process_file {
         $line =~ s/\|\|/ or /g;
         $line =~ s/forever\s+begin/while True:/g;
 
-        if ($line =~ /^(\s*)\@\s*\((\w+\s+)?\s*(.*)\)/) {
+        if ($line =~ $edge_re) {
             my $edge = $2;
             my $sig = $3;
             my $ii = "";
@@ -271,6 +292,7 @@ sub process_file {
         $line =~ s/(virtual)? function void connect_phase\(uvm_phase phase\)/$def_conn_phase/g;
         $line =~ s/(virtual)? function void build_phase\(uvm_phase phase\)/$def_build_phase/g;
         $line =~ s/class (\w+) extends (\w+)/class $1($2):/g;
+        $line =~ s/super\./super()./g;
 
         # SystemVerilog functions
         $line =~ s/\$(urandom|random|sformatf|cast|display)\b/sv.$1/g;
@@ -279,7 +301,11 @@ sub process_file {
             $line =~ s/$conf_db_re/UVMConfigDb.$1/g;
             add_import(\@imports, "from uvm.base.uvm_config_db import *\n");
         }
-        if ($line =~ $res_db_re) {
+        elsif ($line =~ $conf_db_re2) {
+            $line =~ s/$conf_db_re2/UVMConfigDb.$2/g;
+            add_import(\@imports, "from uvm.base.uvm_config_db import *\n");
+        }
+        elsif ($line =~ $res_db_re) {
             $line =~ s/$res_db_re/UVMResourceDb.$1/g;
             add_import(\@imports, "from uvm.base.uvm_resource_db import *\n");
         }
@@ -304,9 +330,13 @@ sub process_file {
             push(@outfile, "$ws#$line");
         }
 
-        if ($line =~ /^class /) {
+        if ($line =~ /^class\s+(\w+)/) {
             ++$ind;
             $st = $IN_CLASS;
+            $classes->{$1} = {
+                func => {}, var => {}
+            };
+            $curr_class = $1;
         }
         elsif ($line =~ /^endclass/) {
             --$ind;
