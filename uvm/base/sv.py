@@ -107,6 +107,12 @@ class sv:
             print(msg)
 
     @classmethod
+    def bits(cls, var):
+        if isinstance(var, int):
+            return 32
+        return 0
+
+    @classmethod
     def fopen(cls, name, mode):
         return open(name, mode)
 

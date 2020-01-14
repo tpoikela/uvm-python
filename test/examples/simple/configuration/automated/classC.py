@@ -1,6 +1,6 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2007-2010 Mentor Graphics Corporation
-#//   Copyright 2007-2011 Cadence Design Systems, Inc.
+#//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
@@ -20,30 +20,31 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-from uvm.base.uvm_component import UVMComponent
+from uvm import (UVMComponent, sv, UVM_DEFAULT)
 from uvm.macros import *
-from uvm.base.uvm_config_db import *
 
-from classC import C
 
-class A(UVMComponent):
-    #
+class C(UVMComponent):
+
+
     def __init__(self, name, parent):
         super().__init__(name, parent)
-        self.debug = 0  # type: int
-        self.u1 = None  # type: C
-        self.u2 = None  # type: C
+        self.v = 0  # type: int
+        self.s = 0  # type: int
+        self.myaa = {}  # type: str
+
 
     def build_phase(self, phase):
         super().build_phase(phase)
-        UVMConfigDb.set(self, "*", "v", 0)
-        sv.display("%s: In Build: debug = %0d", self.get_full_name(), self.debug)
-        self.u1 = C("u1", self)
-        self.u2 = C("u2", self)
+        sv.display("%s: In Build: v = %0d  s = %0d", self.get_full_name(),
+            self.v, self.s)
+
 
     #endclass
-
-
-uvm_component_utils_begin(A)
-uvm_field_int('debug', UVM_DEFAULT)
-uvm_component_utils_end
+#
+#`endif
+uvm_component_utils_begin(C)
+uvm_field_int('v', UVM_DEFAULT)
+uvm_field_int('s', UVM_DEFAULT)
+#uvm_field_aa_string_string('myaa', UVM_DEFAULT)
+uvm_component_utils_end(C)

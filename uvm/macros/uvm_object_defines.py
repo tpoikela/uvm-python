@@ -72,6 +72,21 @@ def m_uvm_object_create_func(T,S):
 __CURR_OBJ = None
 
 
+def uvm_component_utils_begin(T):
+    global __CURR_OBJ
+    __CURR_OBJ = T
+    uvm_component_utils(T)
+    uvm_field_utils_start(T)
+
+def uvm_component_utils_end(T):
+    global __CURR_OBJ
+    if __CURR_OBJ is not T:
+        raise Exception('Expected: ' + str(__CURR_OBJ) + ' Got: ' + str(T))
+    else:
+        __CURR_OBJ = None
+    uvm_field_utils_end(T)
+
+
 def uvm_object_utils_begin(T):
     global __CURR_OBJ
     __CURR_OBJ = T
@@ -86,8 +101,6 @@ def uvm_object_utils_end(T):
     else:
         __CURR_OBJ = None
     uvm_field_utils_end(T)
-
-
 
 
 def uvm_field_utils_start(T):
@@ -106,7 +119,7 @@ def uvm_field_utils_start(T):
         masks = T._m_uvm_field_masks
 
         T_cont = T._m_uvm_status_container
-        # This part does the actually work
+        # This part does the actual work
         if what__ == UVM_COPY:
             for v in vals:
                 mask_v = masks[v]
@@ -167,3 +180,9 @@ def uvm_field_string(name, mask=UVM_DEFAULT):
 
 def uvm_field_object(name, mask=UVM_DEFAULT):
     uvm_field_val(name, mask)
+
+def uvm_field_aa(name, mask=UVM_DEFAULT):
+    uvm_field_val(name, mask)
+
+def uvm_field_aa_string_string(name, mask=UVM_DEFAULT):
+    uvm_field_aa(name, mask)

@@ -49,6 +49,10 @@ class my_env(UVMEnv):
         self.inst1 = A("inst1", self)
         self.inst2 = B("inst2", self)
 
+    def connect_phase(self, phase):
+        if self.inst1.u2.v != 5:
+            uvm_error("CONF_VAL_ERR", "Value should 5 but got " +
+                    str(self.inst1.u2.v))
 
     @cocotb.coroutine
     def run_phase(self, phase):
@@ -60,4 +64,4 @@ class my_env(UVMEnv):
 
 uvm_component_utils_begin(my_env)
 uvm_field_int('debug', UVM_DEFAULT)
-uvm_component_utils_end
+uvm_component_utils_end(my_env)

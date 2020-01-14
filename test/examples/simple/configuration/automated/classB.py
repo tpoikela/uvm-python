@@ -20,30 +20,26 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-from uvm.base.uvm_component import UVMComponent
+from uvm import (UVMComponent, sv, UVMConfigDb, UVM_DEFAULT)
 from uvm.macros import *
-from uvm.base.uvm_config_db import *
 
 from classC import C
 
-class A(UVMComponent):
-    #
+
+class B(UVMComponent):
+
     def __init__(self, name, parent):
         super().__init__(name, parent)
         self.debug = 0  # type: int
         self.u1 = None  # type: C
-        self.u2 = None  # type: C
 
     def build_phase(self, phase):
         super().build_phase(phase)
-        UVMConfigDb.set(self, "*", "v", 0)
+        UVMConfigDb.set(self, "u1", "v", 0)
+    
         sv.display("%s: In Build: debug = %0d", self.get_full_name(), self.debug)
         self.u1 = C("u1", self)
-        self.u2 = C("u2", self)
 
-    #endclass
-
-
-uvm_component_utils_begin(A)
+uvm_component_utils_begin(B)
 uvm_field_int('debug', UVM_DEFAULT)
-uvm_component_utils_end
+uvm_component_utils_end(B)
