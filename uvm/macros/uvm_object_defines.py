@@ -160,6 +160,25 @@ def uvm_field_utils_start(T):
                             sv.bits(v_attr_self), (what__ & UVM_RADIX))
                     else:
                         raise Exception("Print not implemented yet with field macros")
+        elif what__ == UVM_SETINT:
+            for v in vals:
+                mask_v = masks[v]
+                matched = False
+                T_cont.scope.set_arg(v)
+                matched = uvm_is_match(str__, T_cont.scope.get())
+                if matched:
+                    if mask_v & UVM_READONLY:
+                        uvm_report_warning("RDONLY", sv.sformatf("Readonly argument match %s is ignored",
+                         T_cont.get_full_scope_arg()), UVM_NONE)
+                    else:
+                        if T_cont.print_matches:
+                            uvm_report_info("STRMTC", "set_int()" + ": Matched string "
+                                + str__ + " to field " + T_cont.get_full_scope_arg(), UVM_LOW)
+                    val = UVMObject._m_uvm_status_container.bitstream
+                    setattr(self, v, val)
+                    UVMObject.__m_uvm_status_container.status = 1
+                T_cont.scope.unset_arg(v)
+
     setattr(T, "_m_uvm_field_automation", _m_uvm_field_automation)
 
 
