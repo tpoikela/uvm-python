@@ -220,6 +220,7 @@ sub process_file {
             }
         }
 
+        # Finds new call like 'a = new()' and changes it to 'self.a = MyClass()'
         if ($line =~ $re_new_call) {
             my $var_name = $1;
             my $var_data = $classes->{$curr_class}->{var};
