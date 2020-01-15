@@ -2,7 +2,7 @@
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
 from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
-        UVM_RECORD)
+        UVM_RECORD, UVM_SETINT, UVM_SETOBJ)
 from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 
@@ -762,6 +762,7 @@ class UVMObject(sv_obj):
     #  extern virtual function void do_unpack (uvm_packer packer)
     #
     #
+
     #  // Group: Configuration
     #
     #  // Function: set_int_local
@@ -769,6 +770,21 @@ class UVMObject(sv_obj):
     #  extern virtual function void  set_int_local    (string      field_name,
     #                                                  uvm_bitstream_t value,
     #                                                  bit         recurse=1)
+    def set_int_local(self, field_name, value, recurse=1):
+        UVMObject._m_uvm_status_container.cycle_check.clear()
+        UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
+
+        UVMObject._m_uvm_status_container.status = 0
+        UVMObject._m_uvm_status_container.bitstream = value
+
+        print(self.get_name() + " calling UVM_SETINT field autom now with " + field_name)
+        self._m_uvm_field_automation(None, UVM_SETINT, field_name)
+        
+        if UVMObject._m_uvm_status_container.warning and not self._m_uvm_status_container.status:
+            uvm_report_error("NOMTC", sv.sformatf("did not find a match for field %s", field_name),UVM_NONE)
+        UVMObject._m_uvm_status_container.cycle_check.clear()
+
+
     #
     #  // Function: set_string_local
     #
@@ -843,6 +859,30 @@ class UVMObject(sv_obj):
     #                                                  uvm_object  value,
     #                                                  bit         clone=1,
     #                                                  bit         recurse=1)
+    def set_object_local(self, field_name, value, clone=1, recurse=1):
+        cc = None  # uvm_object cc
+        UVMObject._m_uvm_status_container.cycle_check.clear()
+        UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
+
+        if clone and (value is not None):
+            cc = value.clone()
+            if cc is not None:
+                cc.set_name(field_name)
+            value = cc
+
+        UVMObject._m_uvm_status_container.status = 0
+        UVMObject._m_uvm_status_container.object = value
+        print("AZYK obj value was set to " + str(value))
+        UVMObject._m_uvm_status_container.clone = clone
+
+        self._m_uvm_field_automation(None, UVM_SETOBJ, field_name)
+
+        if UVMObject._m_uvm_status_container.warning and not UVMObject._m_uvm_status_container.status:
+            uvm_report_error("NOMTC", sv.sformatf("did not find a match for field %s", field_name), UVM_NONE)
+
+        UVMObject._m_uvm_status_container.cycle_check.clear()
+        #endfunction
+
     #
     #
     #
@@ -898,56 +938,8 @@ class UVMObject(sv_obj):
 #  return m_inst_count
 #endfunction
 #
-#// set_int_local
-#// -------------
-#
-#function void  uvm_object::set_int_local (string      field_name,
-#                                          uvm_bitstream_t value,
-#                                          bit         recurse=1)
-#  _m_uvm_status_container.cycle_check.delete()
-#  _m_uvm_status_container.m_uvm_cycle_scopes.delete()
-#
-#  self._m_uvm_status_container.status = 0
-#  self._m_uvm_status_container.bitstream = value
-#
-#  _m_uvm_field_automation(None, UVM_SETINT, field_name)
-#
-#  if(_m_uvm_status_container.warning and !self._m_uvm_status_container.status):
-#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s", field_name),UVM_NONE)
-#  end
-#  _m_uvm_status_container.cycle_check.delete()
-#endfunction
 #
 #
-#// set_object_local
-#// ----------------
-#
-#function void  uvm_object::set_object_local (string     field_name,
-#                                             uvm_object value,
-#                                             bit        clone=1,
-#                                             bit        recurse=1)
-#  uvm_object cc
-#  _m_uvm_status_container.cycle_check.delete()
-#  _m_uvm_status_container.m_uvm_cycle_scopes.delete()
-#
-#  if(clone and (value!=None)):
-#    cc = value.clone()
-#    if(cc is not None) cc.set_name(field_name)
-#    value = cc
-#  end
-#
-#  self._m_uvm_status_container.status = 0
-#  self._m_uvm_status_container.object = value
-#  _m_uvm_status_container.clone = clone
-#
-#  _m_uvm_field_automation(None, UVM_SETOBJ, field_name)
-#
-#  if(_m_uvm_status_container.warning and !self._m_uvm_status_container.status):
-#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s", field_name), UVM_NONE)
-#  end
-#  _m_uvm_status_container.cycle_check.delete()
-#
-#endfunction
 #
 #
 #// set_string_local

@@ -221,6 +221,8 @@ class UVMStatusContainer:
         # The scope stack is used for messages that are emitted by policy classes.
         self.scope = UVMScopeStack()
 
+        self.m_uvm_cycle_scopes = []  # uvm_object [$];
+
         #  //Used for checking cycles. When a data function is entered, if the depth is
         #  //non-zero, then then the existeance of the object in the map means that a
         #  //cycle has occured and the function should immediately exit. When the
@@ -233,7 +235,7 @@ class UVMStatusContainer:
             if field in self.field_array:
                 uvm_report_error("MLTFLD", "Field {} is defined multiple times in type '{}'".
                 format(field, obj.get_type_name()), UVM_NONE)
-        UVMStatusContainer.self.field_array[field] = 1
+        UVMStatusContainer.field_array[field] = 1
 
     def get_function_type(self, what):
         if what == UVM_COPY:
@@ -257,52 +259,56 @@ class UVMStatusContainer:
         elif what == UVM_SETSTR:
             return "set_string"
         else:
-            return "unknown";
+            return "unknown"
     #  endfunction
 
-#
-#  function string get_full_scope_arg ();
-#    get_full_scope_arg = scope.get();
-#  endfunction
-#
-#
-#  //These are the policy objects currently in use. The policy object gets set
-#  //when a function starts up. The macros use this.
-#  uvm_comparer    comparer;
-#  uvm_packer      packer;
-#  uvm_recorder    recorder;
-#  uvm_printer     printer;
-#
-#  // utility function used to perform a cycle check when config setting are pushed
-#  // to uvm_objects. the function has to look at the current object stack representing
-#  // the call stack of all __m_uvm_field_automation() invocations.
-#  // it is a only a cycle if the previous __m_uvm_field_automation call scope
-#  // is not identical with the current scope AND the scope is already present in the
-#  // object stack
-#  uvm_object m_uvm_cycle_scopes[$];
-#  function bit m_do_cycle_check(uvm_object scope);
-#    uvm_object l = (m_uvm_cycle_scopes.size()==0) ? null : m_uvm_cycle_scopes[$];
-#
-#    // we have been in this scope before (but actually right before so assuming a super/derived context of the same object)
-#    if(l == scope)
-#    begin
-#       m_uvm_cycle_scopes.push_back(scope);
-#       return 0;
-#    end
-#    else
-#    begin
-#        // now check if we have already been in this scope before
-#        uvm_object m[$] = m_uvm_cycle_scopes.find_first(item) with (item == scope);
-#        if(m.size()!=0) begin
-#             return 1;   //   detected a cycle
-#        end
-#        else begin
-#            m_uvm_cycle_scopes.push_back(scope);
-#            return 0;
-#        end
-#    end
-#  endfunction
-#endclass
+    #
+    def get_full_scope_arg(self):
+        return self.scope.get();
+
+
+    #  //These are the policy objects currently in use. The policy object gets set
+    #  //when a function starts up. The macros use this.
+    #  uvm_comparer    comparer;
+    #  uvm_packer      packer;
+    #  uvm_recorder    recorder;
+    #  uvm_printer     printer;
+
+    #  // utility function used to perform a cycle check when config setting are pushed
+    #  // to uvm_objects. the function has to look at the current object stack representing
+    #  // the call stack of all __m_uvm_field_automation() invocations.
+    #  // it is a only a cycle if the previous __m_uvm_field_automation call scope
+    #  // is not identical with the current scope AND the scope is already present in the
+    #  // object stack
+    #  uvm_object m_uvm_cycle_scopes[$];
+
+    def m_do_cycle_check(self, scope):
+        ll = None
+        #if m_uvm_cycle_scopes.size() == 0 ? null : m_uvm_cycle_scopes[$];
+        if len(self.m_uvm_cycle_scopes) > 0:
+            ll = self.m_uvm_cycle_scopes
+
+        # we have been in this scope before (but actually right before so assuming a super/derived
+        # context of the same object)
+        if ll == scope:
+            self.m_uvm_cycle_scopes.append(scope)
+            return 0
+        else:
+            # now check if we have already been in this scope before
+            idx = -1
+            #uvm_object m[$] = m_uvm_cycle_scopes.find_first(item) with (item == scope);
+            for i in range(len(self.m_uvm_cycle_scopes)):
+                if self.m_uvm_cycle_scopes[i] == scope:
+                    idx = i
+                    break
+            if idx != -1:
+                return 1  # detected a cycle
+            else:
+                self.m_uvm_cycle_scopes.append(scope)
+                return 0
+
+        #  endfunction
+    #endclass
 
 
 def m_uvm_string_queue_join(i):

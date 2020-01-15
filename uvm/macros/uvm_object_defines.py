@@ -3,6 +3,7 @@ from ..base.uvm_registry import *
 from ..base.sv import sv
 
 from ..base.uvm_object_globals import *
+from ..base.uvm_globals import uvm_is_match
 
 
 def uvm_object_utils(T):
@@ -111,14 +112,23 @@ def uvm_field_utils_start(T):
         setattr(T, "_m_uvm_field_masks", {})
 
     def _m_uvm_field_automation(self, rhs, what__, str__):
+        from ..base.uvm_object import UVMObject
         bases = T.__bases__
         for Base in bases:
             if hasattr(Base, "_m_uvm_field_automation"):
                 Base._m_uvm_field_automation(self, rhs, what__, str__)
         vals = T._m_uvm_field_names
         masks = T._m_uvm_field_masks
+        _current_scopes = []  # uvm_object[$]
 
         T_cont = T._m_uvm_status_container
+        T_cont_obj = UVMObject._m_uvm_status_container
+
+        if what__ in [UVM_SETINT, UVM_SETSTR, UVM_SETOBJ]:
+            if T_cont.m_do_cycle_check(self):
+                return
+            else:
+                _current_scopes= T_cont.m_uvm_cycle_scopes
         # This part does the actual work
         if what__ == UVM_COPY:
             for v in vals:
@@ -155,11 +165,20 @@ def uvm_field_utils_start(T):
                 mask_v = masks[v]
                 if not(mask_v & UVM_NOPRINT) and (mask_v & UVM_PRINT != 0):
                     v_attr_self = getattr(self, v)
+                    if v_attr_self is None:
+                        continue
+
                     if isinstance(v_attr_self, int):
                         T_cont.printer.print_field(v, v_attr_self,
                             sv.bits(v_attr_self), (what__ & UVM_RADIX))
+                    elif isinstance(v_attr_self, UVMObject):
+                        if mask_v & UVM_REFERENCE:
+                            T_cont.printer.print_object_header(v, v_attr_self)
+                        else:
+                            T_cont.printer.print_object(v, v_attr_self)
                     else:
-                        raise Exception("Print not implemented yet with field macros")
+                        raise Exception(
+                        "Print not implemented yet with field macros. val: " + str(v_attr_self))
         elif what__ == UVM_SETINT:
             for v in vals:
                 mask_v = masks[v]
@@ -176,8 +195,52 @@ def uvm_field_utils_start(T):
                                 + str__ + " to field " + T_cont.get_full_scope_arg(), UVM_LOW)
                     val = UVMObject._m_uvm_status_container.bitstream
                     setattr(self, v, val)
-                    UVMObject.__m_uvm_status_container.status = 1
+                    T_cont.status = 1
                 T_cont.scope.unset_arg(v)
+        elif what__ == UVM_SETSTR:
+            for v in vals:
+                mask_v = masks[v]
+                raise Exception("UVM_SETSTR not done")
+        elif what__ == UVM_SETOBJ:
+            for v in vals:
+                print("UVM_SETOBJ v is now " + v)
+                mask_v = masks[v]
+                ARG = getattr(self, v)
+                T_cont.scope.set_arg(v)
+                print("Trying to match " + str__ + " and " + T_cont.scope.get())
+                if uvm_is_match(str__, T_cont.scope.get()):
+                    if mask_v & UVM_READONLY:
+                        uvm_report_warning("RDONLY", sv.sformatf("Readonly argument match %s is ignored",
+                            T_cont.get_full_scope_arg()), UVM_NONE)
+                    else:
+                        if T_cont.print_matches:
+                            uvm_report_info("STRMTC", "set_object()" + ": Matched string "
+                                + str__ + " to field " + T_cont.get_full_scope_arg(), UVM_LOW)
+                        #if sv.cast(ARG, T_cont_obj.object):
+                        if T_cont_obj.object is None:
+                            uvm_report_warning("UVM_SETOBJ NULL", sv.sformatf("Tried to set null obj to %s",
+                                T_cont.get_full_scope_arg()), UVM_NONE)
+                        setattr(self, v, T_cont_obj.object)
+                        T_cont_obj.status = 1
+                elif ARG is not None and (mask_v & UVM_READONLY == 0):
+                    cnt = 0
+                    # Only traverse if there is a possible match.
+                    while cnt < len(str__):
+                        if(str__[cnt] == "." or str__[cnt] == "*"):
+                            break
+                        cnt += 1
+                    if cnt != len(str__):
+                        T_cont.scope.down(v)
+                        ARG._m_uvm_field_automation(None, UVM_SETOBJ, str__)
+                        T_cont.scope.up()
+
+        elif what__ == UVM_CHECK_FIELDS:
+            for v in vals:
+                print("Doing field check for " + v)
+                T_cont.do_field_check(v, self)
+        if what__ in [UVM_SETINT, UVM_SETSTR, UVM_SETOBJ]:
+            _current_scopes.pop()
+            T_cont.uvm_cycle_scopes = _current_scopes
 
     setattr(T, "_m_uvm_field_automation", _m_uvm_field_automation)
 

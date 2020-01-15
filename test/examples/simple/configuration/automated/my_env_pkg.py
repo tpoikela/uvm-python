@@ -53,6 +53,10 @@ class my_env(UVMEnv):
         if self.inst1.u2.v != 5:
             uvm_error("CONF_VAL_ERR", "Value should 5 but got " +
                     str(self.inst1.u2.v))
+        if self.inst1.u1.my_conf_obj is None:
+            uvm_error("CONF_VAL_ERR", "Obj should've got value but was None")
+        if self.inst1.u2.my_conf_obj is not None:
+            uvm_error("CONF_VAL_ERR", "Obj should've got None but was something else")
 
     @cocotb.coroutine
     def run_phase(self, phase):

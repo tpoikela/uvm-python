@@ -32,6 +32,7 @@ class C(UVMComponent):
         self.v = 0  # type: int
         self.s = 0  # type: int
         self.myaa = {}  # type: str
+        self.my_conf_obj = None
 
 
     def build_phase(self, phase):
@@ -46,5 +47,6 @@ class C(UVMComponent):
 uvm_component_utils_begin(C)
 uvm_field_int('v', UVM_DEFAULT)
 uvm_field_int('s', UVM_DEFAULT)
+uvm_field_object('my_conf_obj', UVM_DEFAULT)
 #uvm_field_aa_string_string('myaa', UVM_DEFAULT)
 uvm_component_utils_end(C)

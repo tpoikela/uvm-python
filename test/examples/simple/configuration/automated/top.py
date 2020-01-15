@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from uvm import (UVMConfigDb, run_test)
+from uvm import (UVMConfigDb, run_test, UVMObject)
 from my_env_pkg import my_env
 
 #//Begindoc: Automated Configuration
@@ -34,10 +34,9 @@ from my_env_pkg import my_env
 #//Then a search is made to verify that those components full names match the field_name that had been set.
 
 
-
-
 @cocotb.test()
 def module_top(dut):
+    obj = UVMObject("my_conf_obj")
 
     # set configuration prior to creating the environment
     UVMConfigDb.set(None, "topenv.*.u1", "v", 30)
@@ -48,6 +47,7 @@ def module_top(dut):
     UVMConfigDb.set(None, "*", "myaa[foobar]", "howdy")
     UVMConfigDb.set(None, "topenv.inst1.u1", "myaa[foo]", "boo")
     UVMConfigDb.set(None, "topenv.inst1.u1", "myaa[foobar]", "boobah")
+    UVMConfigDb.set(None, "topenv.inst1.u1", "my_conf_obj", obj)
     topenv = my_env("topenv", None)
     yield run_test()
 

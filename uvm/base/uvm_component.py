@@ -2,15 +2,19 @@
 import cocotb
 from cocotb.triggers import Timer
 from .uvm_report_object import UVMReportObject
-from .uvm_object_globals import UVM_NONE, UVM_MEDIUM, UVM_PHASE_DONE, UVM_INFO
+from .uvm_object_globals import (UVM_NONE, UVM_MEDIUM, UVM_PHASE_DONE, UVM_INFO,
+    UVM_CHECK_FIELDS)
 from .uvm_common_phases import UVMBuildPhase
 from .uvm_domain import UVMDomain
 from .uvm_debug import uvm_debug
 from .uvm_object import UVMObject
+from .uvm_queue import UVMQueue
 from .uvm_pool import UVMEventPool
 from .sv import sv
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 from .uvm_recorder import UVMRecorder
+from .uvm_globals import uvm_is_match
+from .uvm_factory import UVMObjectWrapper
 
 
 class VerbositySetting:
@@ -916,6 +920,135 @@ class UVMComponent(UVMReportObject):
     #// apply_config_settings is automatically called with ~verbose~ = 1.
 
     #extern virtual function void apply_config_settings (bit verbose = 0)
+    def apply_config_settings(self, verbose=0):
+        from .uvm_resource import UVMResourcePool
+        rp = UVMResourcePool.get()  # uvm_resource_pool 
+        rq = UVMQueue()  # uvm_queue#(uvm_resource_base) rq
+        r = None  # uvm_resource_base r
+        name = ""
+        search_name = ""
+        i = 0
+        j = 0
+
+        # populate an internal 'field_array' with list of
+        # fields declared with `uvm_field macros (checking
+        # that there aren't any duplicates along the way)
+        self._m_uvm_field_automation(None, UVM_CHECK_FIELDS, "")
+
+        T_cont = UVMObject._m_uvm_status_container
+        # if no declared fields, nothing to do.
+        if len(T_cont.field_array) == 0:
+            return
+
+        if verbose:
+            uvm_info("CFGAPL","applying configuration settings", UVM_NONE)
+
+        #  // The following is VERY expensive. Needs refactoring. Should
+        #  // get config only for the specific field names in 'field_array'.
+        #  // That's because the resource pool is organized first by field name.
+        #  // Can further optimize by encoding the value for each 'field_array'
+        #  // entry to indicate string, uvm_bitstream_t, or object. That way,
+        #  // we call 'get' for specific fields of specific types rather than
+        #  // the search-and-cast approach here.
+        rq = rp.lookup_scope(self.get_full_name())
+        rq = UVMResourcePool.sort_by_precedence(rq)
+
+        print("KKK in apply_config_settings now")
+        # // rq is in precedence order now, so we have to go through in reverse
+        # // order to do the settings.
+        #  for(int i=rq.size()-1; i>=0; --i):
+        for i in range(len(rq)):
+
+            r = rq[i]
+            name = r.get_name()
+            print("KKK in queue location " + str(i) + ' name: ' + name)
+            # // does name have brackets [] in it?
+            while j < len(name):
+                if (name[j] == "[" or name[j] == "."):
+                    break
+                j += 1
+            print("KKK after for, j is  " + str(j) + ' name: ' + name)
+
+            # // If it does have brackets then we'll use the name
+            # // up to the brackets to search __m_uvm_status_container.field_array
+            if j < len(name):
+                search_name = name[0:j]
+            else:
+                search_name = name
+
+            print("KKK search name " + search_name + ' from field array')
+            if search_name not in T_cont.field_array and search_name != "recording_detail":
+                continue
+            print("KKK FOUND name " + search_name + ' from field array')
+
+            if verbose:
+                uvm_info("CFGAPL",sv.sformatf("applying configuration to field %s", name),UVM_NONE)
+
+            val = r.read(self)
+            print("KKK read val " + str(val) + ' from resource')
+            if isinstance(val, int):
+                self.set_int_local(name, val)
+            elif isinstance(val, UVMObject):
+                print("AKKK calling set_object_local now with " + str(val))
+                self.set_object_local(name, val, 0)
+            elif isinstance(val, UVMObjectWrapper):
+                self.set_object_local(name, val.obj, val.clone)
+            elif isinstance(val, str):
+                self.set_string_local(name, val)
+            elif verbose:
+                uvm_info("CFGAPL", sv.sformatf("field %s has an unsupported type", name), UVM_NONE)
+
+            #    begin
+            #       uvm_resource#(uvm_integral_t) rit
+            #       if ($cast(rit, r))
+            #         set_int_local(name, rit.read(this))
+            #       else begin
+            #          uvm_resource#(uvm_bitstream_t) rbs
+            #          if($cast(rbs, r))
+            #            set_int_local(name, rbs.read(this))
+            #          else begin
+            #             uvm_resource#(int) ri
+            #             if($cast(ri, r))
+            #               set_int_local(name, ri.read(this))
+            #             else begin
+            #                uvm_resource#(int unsigned) riu
+            #                if($cast(riu, r))
+            #                  set_int_local(name, riu.read(this))
+            #                else begin
+            #                   uvm_resource#(uvm_active_passive_enum) rap
+            #                   if ($cast(rap, r))
+            #                     set_int_local(name, rap.read(this))
+            #                   else begin
+            #                      uvm_resource#(string) rs
+            #                      if($cast(rs, r))
+            #                        set_string_local(name, rs.read(this))
+            #                      else begin
+            #                         uvm_resource#(uvm_config_object_wrapper) rcow
+            #                         if ($cast(rcow, r)):
+            #                         uvm_config_object_wrapper cow = rcow.read()
+            #                            set_object_local(name, cow.obj, cow.clone)
+            #                         end
+            #                         else begin
+            #                            uvm_resource#(uvm_object) ro
+            #                            if($cast(ro, r)):
+            #                               set_object_local(name, ro.read(this), 0)
+            #                            end
+            #                            else if (verbose):
+            #                               uvm_info("CFGAPL", $sformatf("field %s has an unsupported type", name), UVM_NONE)
+            #                            end
+            #                         end // else: !if($cast(rcow, r))
+            #                      end // else: !if($cast(rs, r))
+            #                   end // else: !if($cast(rap, r))
+            #                end // else: !if($cast(riu, r))
+            #             end // else: !if($cast(ri, r))
+            #          end // else: !if($cast(rbs, r))
+            #       end // else: !if($cast(rit, r))
+            #    end
+            #  end
+        #
+        T_cont.field_array.clear()
+        #endfunction
+
 
 
     #// Function: print_config_settings
@@ -1662,6 +1795,14 @@ class UVMComponent(UVMReportObject):
     #extern                   function void set_int_local(string field_name,
     #                                                     uvm_bitstream_t value,
     #                                                     bit recurse=1)
+    def set_int_local(self, field_name, value, recurse=1):
+        #  // call the super function to get child recursion and any registered fields
+        super().set_int_local(field_name, value, recurse)
+
+        # set the local properties
+        if uvm_is_match(field_name, "recording_detail"):
+            self.recording_detail = value
+
 
     #/*protected*/ uvm_component m_parent
     #protected     uvm_component m_children[string]
@@ -1891,9 +2032,6 @@ class UVMComponent(UVMReportObject):
 
     def has_next_child(self):
         return len(self.m_children_ordered) > (self.child_ptr + 1)
-
-    def apply_config_settings(self, verbose):
-        pass
 
     def m_apply_verbosity_settings(self, phase):
         pass
@@ -2405,21 +2543,6 @@ class UVMComponent(UVMReportObject):
 #// these are prototypes for the methods to be implemented in user components
 #// build_phase() has a default implementation, the others have an empty default
 #
-#function void uvm_component::build_phase(uvm_phase phase)
-#  m_build_done = 1
-#  build()
-#endfunction
-#
-#// Backward compatibility build function
-#
-#function void uvm_component::build()
-#  m_build_done = 1
-#  apply_config_settings(print_config_matches)
-#  if(m_phasing_active == 0):
-#    uvm_report_warning("UVM_DEPRECATED", "build()/build_phase() has been called explicitly, outside of the phasing system. This usage of build is deprecated and may lead to unexpected behavior.")
-#  end
-#endfunction
-#
 #// these phase methods are common to all components in UVM. For backward
 #// compatibility, they call the old style name (without the _phse)
 #
@@ -2770,118 +2893,6 @@ class UVMComponent(UVMReportObject):
 #  rp.print_resources(rq, 1)
 #endfunction
 
-#// apply_config_settings
-#// ---------------------
-#
-#function void uvm_component::apply_config_settings (bit verbose=0)
-#
-#  uvm_resource_pool rp = uvm_resource_pool::get()
-#  uvm_queue#(uvm_resource_base) rq
-#  uvm_resource_base r
-#  string name
-#  string search_name
-#  int unsigned i
-#  int unsigned j
-#
-#  // populate an internal 'field_array' with list of
-#  // fields declared with `uvm_field macros (checking
-#  // that there aren't any duplicates along the way)
-#  __m_uvm_field_automation (None, UVM_CHECK_FIELDS, "")
-#
-#  // if no declared fields, nothing to do.
-#  if (__m_uvm_status_container.field_array.size() == 0)
-#    return
-#
-#  if(verbose)
-#    uvm_info("CFGAPL","applying configuration settings", UVM_NONE)
-#
-#  // The following is VERY expensive. Needs refactoring. Should
-#  // get config only for the specific field names in 'field_array'.
-#  // That's because the resource pool is organized first by field name.
-#  // Can further optimize by encoding the value for each 'field_array'
-#  // entry to indicate string, uvm_bitstream_t, or object. That way,
-#  // we call 'get' for specific fields of specific types rather than
-#  // the search-and-cast approach here.
-#  rq = rp.lookup_scope(get_full_name())
-#  rq = UVMResourcePool.sort_by_precedence(rq)
-#
-#  // rq is in precedence order now, so we have to go through in reverse
-#  // order to do the settings.
-#  for(int i=rq.size()-1; i>=0; --i):
-#
-#    r = rq.get(i)
-#    name = r.get_name()
-#
-#    // does name have brackets [] in it?
-#    for(j = 0; j < name.len(); j++)
-#      if(name[j] == "[" || name[j] == ".")
-#        break
-#
-#    // If it does have brackets then we'll use the name
-#    // up to the brackets to search __m_uvm_status_container.field_array
-#    if(j < name.len())
-#      search_name = name.substr(0, j-1)
-#    else
-#      search_name = name
-#
-#    if(!__m_uvm_status_container.field_array.exists(search_name) &&
-#       search_name != "recording_detail")
-#      continue
-#
-#    if(verbose)
-#      uvm_info("CFGAPL",$sformatf("applying configuration to field %s", name),UVM_NONE)
-#
-#    begin
-#       uvm_resource#(uvm_integral_t) rit
-#       if ($cast(rit, r))
-#         set_int_local(name, rit.read(this))
-#       else begin
-#          uvm_resource#(uvm_bitstream_t) rbs
-#          if($cast(rbs, r))
-#            set_int_local(name, rbs.read(this))
-#          else begin
-#             uvm_resource#(int) ri
-#             if($cast(ri, r))
-#               set_int_local(name, ri.read(this))
-#             else begin
-#                uvm_resource#(int unsigned) riu
-#                if($cast(riu, r))
-#                  set_int_local(name, riu.read(this))
-#                else begin
-#                   uvm_resource#(uvm_active_passive_enum) rap
-#                   if ($cast(rap, r))
-#                     set_int_local(name, rap.read(this))
-#                   else begin
-#                      uvm_resource#(string) rs
-#                      if($cast(rs, r))
-#                        set_string_local(name, rs.read(this))
-#                      else begin
-#                         uvm_resource#(uvm_config_object_wrapper) rcow
-#                         if ($cast(rcow, r)):
-#                         uvm_config_object_wrapper cow = rcow.read()
-#                            set_object_local(name, cow.obj, cow.clone)
-#                         end
-#                         else begin
-#                            uvm_resource#(uvm_object) ro
-#                            if($cast(ro, r)):
-#                               set_object_local(name, ro.read(this), 0)
-#                            end
-#                            else if (verbose):
-#                               uvm_info("CFGAPL", $sformatf("field %s has an unsupported type", name), UVM_NONE)
-#                            end
-#                         end // else: !if($cast(rcow, r))
-#                      end // else: !if($cast(rs, r))
-#                   end // else: !if($cast(rap, r))
-#                end // else: !if($cast(riu, r))
-#             end // else: !if($cast(ri, r))
-#          end // else: !if($cast(rbs, r))
-#       end // else: !if($cast(rit, r))
-#    end
-#  end
-#
-#  __m_uvm_status_container.field_array.delete()
-#
-#endfunction
 #
 #
 #
@@ -2920,21 +2931,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#// set_int_local (override)
-#// -------------
-#
-#function void uvm_component::set_int_local (string field_name,
-#                             uvm_bitstream_t value,
-#                             bit recurse=1)
-#
-#  //call the super function to get child recursion and any registered fields
-#  super.set_int_local(field_name, value, recurse)
-#
-#  //set the local properties
-#  if(uvm_is_match(field_name, "recording_detail"))
-#    recording_detail = value
-#
-#endfunction
 #
 #
 #// Internal methods for setting messagin parameters from command line switches
