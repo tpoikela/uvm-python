@@ -2,7 +2,7 @@
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
 from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
-        UVM_RECORD, UVM_SETINT, UVM_SETOBJ)
+        UVM_RECORD, UVM_SETINT, UVM_SETOBJ, UVM_SETSTR)
 from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 
@@ -791,6 +791,22 @@ class UVMObject(sv_obj):
     #  extern virtual function void  set_string_local (string field_name,
     #                                                  string value,
     #                                                  bit    recurse=1)
+    def set_string_local(self, field_name, value, recurse=1):
+        UVMObject._m_uvm_status_container.cycle_check.clear()
+        UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
+
+        UVMObject._m_uvm_status_container.status = 0
+        UVMObject._m_uvm_status_container.stringv = value
+        self._m_uvm_field_automation(None, UVM_SETSTR, field_name)
+
+        if UVMObject._m_uvm_status_container.warning and not UVMObject._m_uvm_status_container.status:
+            uvm_report_error("NOMTC", sv.sformatf("did not find a match for field %s (@%0d)",
+                field_name, self.get_inst_id()), UVM_NONE)
+
+        UVMObject._m_uvm_status_container.cycle_check.clear()
+        #endfunction
+        #
+
     #
     #  // Function: set_object_local
     #  //
@@ -941,26 +957,6 @@ class UVMObject(sv_obj):
 #
 #
 #
-#
-#// set_string_local
-#// ----------------
-#function void  uvm_object::set_string_local (string field_name,
-#                                             string value,
-#                                             bit    recurse=1)
-#
-#  _m_uvm_status_container.cycle_check.delete()
-#  _m_uvm_status_container.m_uvm_cycle_scopes.delete()
-#
-#  self._m_uvm_status_container.status = 0
-#  self._m_uvm_status_container.stringv = value
-#
-#  _m_uvm_field_automation(None, UVM_SETSTR, field_name)
-#
-#  if(_m_uvm_status_container.warning and !self._m_uvm_status_container.status):
-#    uvm_report_error("NOMTC", $sformatf("did not find a match for field %s (@%0d)", field_name, self.get_inst_id()), UVM_NONE)
-#  end
-#  _m_uvm_status_container.cycle_check.delete()
-#endfunction
 #
 #
 #

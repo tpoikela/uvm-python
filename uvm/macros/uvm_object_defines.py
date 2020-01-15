@@ -176,9 +176,11 @@ def uvm_field_utils_start(T):
                             T_cont.printer.print_object_header(v, v_attr_self)
                         else:
                             T_cont.printer.print_object(v, v_attr_self)
+                    elif isinstance(v_attr_self, str):
+                        T_cont.printer.print_string(v, v_attr_self)
                     else:
                         raise Exception(
-                        "Print not implemented yet with field macros. val: " + str(v_attr_self))
+                            "Print not implemented yet with field macros. val: " + str(v_attr_self))
         elif what__ == UVM_SETINT:
             for v in vals:
                 mask_v = masks[v]
@@ -193,14 +195,26 @@ def uvm_field_utils_start(T):
                         if T_cont.print_matches:
                             uvm_report_info("STRMTC", "set_int()" + ": Matched string "
                                 + str__ + " to field " + T_cont.get_full_scope_arg(), UVM_LOW)
-                    val = UVMObject._m_uvm_status_container.bitstream
-                    setattr(self, v, val)
-                    T_cont.status = 1
+                        val = UVMObject._m_uvm_status_container.bitstream
+                        setattr(self, v, val)
+                        T_cont.status = 1
                 T_cont.scope.unset_arg(v)
         elif what__ == UVM_SETSTR:
             for v in vals:
                 mask_v = masks[v]
-                raise Exception("UVM_SETSTR not done")
+                T_cont.scope.set_arg(v)
+                matched = uvm_is_match(str__, T_cont.scope.get())
+                if matched:
+                    if mask_v & UVM_READONLY:
+                        uvm_report_warning("RDONLY", sv.sformatf("Readonly argument match %s is ignored",
+                         T_cont.get_full_scope_arg()), UVM_NONE)
+                    else:
+                        if T_cont.print_matches:
+                            uvm_report_info("STRMTC", "set_int()" + ": Matched string "
+                                + str__ + " to field " + T_cont.get_full_scope_arg(), UVM_LOW)
+                        val = UVMObject._m_uvm_status_container.stringv
+                        setattr(self, v, val)
+                        T_cont.status = 1
         elif what__ == UVM_SETOBJ:
             for v in vals:
                 print("UVM_SETOBJ v is now " + v)

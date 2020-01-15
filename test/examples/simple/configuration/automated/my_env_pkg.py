@@ -57,6 +57,9 @@ class my_env(UVMEnv):
             uvm_error("CONF_VAL_ERR", "Obj should've got value but was None")
         if self.inst1.u2.my_conf_obj is not None:
             uvm_error("CONF_VAL_ERR", "Obj should've got None but was something else")
+        if self.inst1.u1.tag != 'I am tagged':
+            uvm_error("STR_VAL_ERR", "Expected 'I am tagged'. Got: " +
+                self.inst1.u1.tag)
 
     @cocotb.coroutine
     def run_phase(self, phase):

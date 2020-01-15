@@ -21,6 +21,7 @@ test-tlm1:
 
 test-configuration:
 	make -C configuration/manual/
+	make -C configuration/automated/
 
 test-registers:
 	make -C registers/models/user-defined/
