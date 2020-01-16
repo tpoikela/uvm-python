@@ -217,6 +217,7 @@ class UVMCmdlineProcessor(UVMReportObject):
 
         chars = len(match)
         for i in range(len(self.m_argv)):
+            print("Processing arg " + self.m_argv[i])
             if len(self.m_argv[i]) >= chars:
                 argv_str = self.m_argv[i][0:chars]
                 if argv_str == match:

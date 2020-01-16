@@ -1,6 +1,7 @@
 
 import unittest
-from uvm.base import (UVMComponent)
+from uvm.base import (UVMComponent, UVM_LOW, UVM_HIGH)
+from uvm.base.uvm_cmdline_processor import UVMCmdlineProcessor
 
 #------------------------------------------------------------------------------
 # UNIT TESTS
@@ -40,6 +41,21 @@ class TestUVMComponent(unittest.TestCase):
         self.assertEqual(c1, child)
         self.assertEqual(sub_child, sc)
 
+    #def test_clp_args(self):
+    #    # "+uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>"
+    #    UVMCmdlineProcessor.m_test_mode = True
+    #    UVMCmdlineProcessor.m_test_plusargs = {
+    #        "uvm_set_verbosity": "*child1,_ALL_,UVM_LOW,,0",
+    #        "uvm_set_verbosity": "parent1,_ALL_,UVM_HIGH,,0",
+    #        "ABC": "123"
+    #    }
+    #    comp = UVMComponent("parent2", None)
+    #    child = UVMComponent("child1", comp)
+    #    child2 = UVMComponent("child2", comp)
+    #    self.assertEqual(child.get_report_verbosity_level(), UVM_LOW)
+    #    self.assertEqual(comp.get_report_verbosity_level(), UVM_HIGH)
+
+    #    UVMCmdlineProcessor.m_test_mode = False
 
 
 if __name__ == '__main__':

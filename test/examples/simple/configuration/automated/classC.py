@@ -43,8 +43,8 @@ class C(UVMComponent):
 
 
     #endclass
-#
-#`endif
+
+
 uvm_component_utils_begin(C)
 uvm_field_int('v', UVM_DEFAULT)
 uvm_field_int('s', UVM_DEFAULT)

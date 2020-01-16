@@ -42,6 +42,7 @@ from ..base.uvm_queue import UVMQueue
 # subtypes should contain only the monitor.
 #------------------------------------------------------------------------------
 
+
 class UVMAgent(UVMComponent):
 
     # Function: new

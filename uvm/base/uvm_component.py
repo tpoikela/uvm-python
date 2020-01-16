@@ -10,7 +10,7 @@ from .uvm_debug import uvm_debug
 from .uvm_object import UVMObject
 from .uvm_queue import UVMQueue
 from .uvm_pool import UVMEventPool
-from .sv import sv
+from .sv import sv, uvm_split_string
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 from .uvm_recorder import UVMRecorder
 from .uvm_globals import uvm_is_match
@@ -24,6 +24,17 @@ class VerbositySetting:
         self.id = ""
         self.offset = 0
         self.verbosity = UVM_MEDIUM
+
+CLONE_ERR = ("Attempting to clone '%s'.  Clone cannot be called on a uvm_component. "
+    + " The clone target variable will be set to None.")
+
+
+
+class uvm_cmdline_parsed_arg_t:
+    def __init__(self):
+        self.arg = ""
+        self.args = []
+        self.used = 0
 
 
 #------------------------------------------------------------------------------
@@ -61,6 +72,10 @@ class VerbositySetting:
 class UVMComponent(UVMReportObject):
     """ Base class for defining UVM components"""
 
+    #// Variable: print_config_matches
+    #//
+    #// Setting this static variable causes uvm_config_db::get() to print info about
+    #// matching configuration settings as they are being applied.
     print_config_matches = False
 
     #  Function: new
@@ -179,13 +194,13 @@ class UVMComponent(UVMReportObject):
 
         # Now that inst name is established, reseed (if use_uvm_seeding is set)
         self.reseed()
-        #
+
         # Do local configuration settings
         arr = []
         from .uvm_config_db import UVMConfigDb
         if (UVMConfigDb.get(self, "", "recording_detail", arr)):
             self.recording_detail = arr[0]
-       
+
         self.m_rh.set_name(self.get_full_name())
         self.set_report_verbosity_level(parent.get_report_verbosity_level())
         self.m_set_cl_msg_args()
@@ -922,7 +937,7 @@ class UVMComponent(UVMReportObject):
     #extern virtual function void apply_config_settings (bit verbose = 0)
     def apply_config_settings(self, verbose=0):
         from .uvm_resource import UVMResourcePool
-        rp = UVMResourcePool.get()  # uvm_resource_pool 
+        rp = UVMResourcePool.get()  # uvm_resource_pool
         rq = UVMQueue()  # uvm_queue#(uvm_resource_base) rq
         r = None  # uvm_resource_base r
         name = ""
@@ -997,55 +1012,6 @@ class UVMComponent(UVMReportObject):
                 self.set_string_local(name, val)
             elif verbose:
                 uvm_info("CFGAPL", sv.sformatf("field %s has an unsupported type", name), UVM_NONE)
-
-            #    begin
-            #       uvm_resource#(uvm_integral_t) rit
-            #       if ($cast(rit, r))
-            #         set_int_local(name, rit.read(this))
-            #       else begin
-            #          uvm_resource#(uvm_bitstream_t) rbs
-            #          if($cast(rbs, r))
-            #            set_int_local(name, rbs.read(this))
-            #          else begin
-            #             uvm_resource#(int) ri
-            #             if($cast(ri, r))
-            #               set_int_local(name, ri.read(this))
-            #             else begin
-            #                uvm_resource#(int unsigned) riu
-            #                if($cast(riu, r))
-            #                  set_int_local(name, riu.read(this))
-            #                else begin
-            #                   uvm_resource#(uvm_active_passive_enum) rap
-            #                   if ($cast(rap, r))
-            #                     set_int_local(name, rap.read(this))
-            #                   else begin
-            #                      uvm_resource#(string) rs
-            #                      if($cast(rs, r))
-            #                        set_string_local(name, rs.read(this))
-            #                      else begin
-            #                         uvm_resource#(uvm_config_object_wrapper) rcow
-            #                         if ($cast(rcow, r)):
-            #                         uvm_config_object_wrapper cow = rcow.read()
-            #                            set_object_local(name, cow.obj, cow.clone)
-            #                         end
-            #                         else begin
-            #                            uvm_resource#(uvm_object) ro
-            #                            if($cast(ro, r)):
-            #                               set_object_local(name, ro.read(this), 0)
-            #                            end
-            #                            else if (verbose):
-            #                               uvm_info("CFGAPL", $sformatf("field %s has an unsupported type", name), UVM_NONE)
-            #                            end
-            #                         end // else: !if($cast(rcow, r))
-            #                      end // else: !if($cast(rs, r))
-            #                   end // else: !if($cast(rap, r))
-            #                end // else: !if($cast(riu, r))
-            #             end // else: !if($cast(ri, r))
-            #          end // else: !if($cast(rbs, r))
-            #       end // else: !if($cast(rit, r))
-            #    end
-            #  end
-        #
         T_cont.field_array.clear()
         #endfunction
 
@@ -1099,11 +1065,9 @@ class UVMComponent(UVMReportObject):
         uvm_info("CFGPRT","visible resources:", UVM_INFO)
         rp.print_resources(rp.lookup_scope(self.get_full_name()), audit)
         if recurse:
-            pass  # TODO loop children
-            #    uvm_component c
-            #    foreach(m_children[name]):
-            #      c = m_children[name]
-            #      c.print_config(recurse, audit)
+            for key in self.m_children:
+                c = self.m_children[key]
+                c.print_config(recurse, audit)
 
 
     #// Function: print_config_with_audit
@@ -1117,12 +1081,6 @@ class UVMComponent(UVMReportObject):
 
     #extern function void print_config_with_audit(bit recurse = 0)
 
-    #// Variable: print_config_matches
-    #//
-    #// Setting this static variable causes uvm_config_db::get() to print info about
-    #// matching configuration settings as they are being applied.
-
-    #static bit print_config_matches
 
     #//----------------------------------------------------------------------------
     #// Group: Objection Interface
@@ -1872,6 +1830,9 @@ class UVMComponent(UVMReportObject):
 
 
     #extern virtual function uvm_object clone  ()
+    def clone(self):
+        uvm_error("ILLCLN", sv.sformatf(CLONE_ERR, self.get_full_name()))
+        return None
 
     #local uvm_tr_stream m_main_stream
 
@@ -1914,10 +1875,10 @@ class UVMComponent(UVMReportObject):
         else:
             link_handle = tr.begin_tr(begin_time)
 
-        if (link_handle != 0):
+        if link_handle != 0:
             link_recorder = UVMRecorder.get_recorder_from_handle(link_handle)
 
-        if (tr.get_name() != ""):
+        if tr.get_name() != "":
             name = tr.get_name()
         else:
             name = tr.get_type_name()
@@ -1979,36 +1940,99 @@ class UVMComponent(UVMReportObject):
     #// Internal methods for setting up command line messaging stuff
     #extern function void m_set_cl_msg_args
     def m_set_cl_msg_args(self):
-        pass  # TODO
-        #self.m_set_cl_verb()
+        self.m_set_cl_verb()
         #self.m_set_cl_action()
         #self.m_set_cl_sev()
         #endfunction
 
     #extern function void m_set_cl_verb
+    def m_set_cl_verb(self):
+        #  // _ALL_ can be used for ids
+        #  // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
+        #  // +uvm_set_verbosity=uvm_test_top.env0.agent1.*,_ALL_,UVM_FULL,time,800
+        from .uvm_coreservice import UVMCoreService
+        cs = UVMCoreService.get()
+        from .uvm_cmdline_processor import UVMCmdlineProcessor
+
+        values = []  # static string values[$]
+        first = 1  # static bit first = 1
+        args = []  # string args[$]
+        clp = UVMCmdlineProcessor.get_inst()
+        cs = UVMCoreService.get()
+        top = cs.get_root()
+
+        if len(values) == 0:
+            clp.get_arg_values("+uvm_set_verbosity=", values)
+
+        for i in range(len(values)):
+            setting = VerbositySetting()
+            args.clear()
+            uvm_split_string(values[i], ",", args)
+
+            # Warning is already issued in uvm_root, so just don't keep it
+            len_match = len(args) not in [4, 5]
+            if first and (len_match or (clp.m_convert_verb(args[2], setting.verbosity) == 0)):
+                values.delete(i)
+            else:
+                setting.comp = args[0]
+                setting.id = args[1]
+                clp.m_convert_verb(args[2],setting.verbosity)
+                setting.phase = args[3]
+                setting.offset = 0
+                if len(args) == 5:
+                    setting.offset = args[4].atoi()
+                if ((setting.phase == "time") and (self == top)):
+                    UVMComponent.m_time_settings.push_back(setting)
+
+                if uvm_is_match(setting.comp, self.get_full_name()):
+                    if((setting.phase == "" or setting.phase == "build" or
+                        setting.phase == "time") and setting.offset == 0):
+
+                        if(setting.id == "_ALL_"):
+                            self.set_report_verbosity_level(setting.verbosity)
+                        else:
+                            self.set_report_id_verbosity(setting.id, setting.verbosity)
+                    else:
+                        if(setting.phase != "time"):
+                            self.m_verbosity_settings.append(setting)
+
+        # TODO do time based settings
+        #  if(this == top):
+        #    fork begin
+        #      time last_time = 0
+        #      if (m_time_settings.size() > 0)
+        #        m_time_settings.sort() with ( item.offset )
+        #      foreach(m_time_settings[i]):
+        #        uvm_component comps[$]
+        #        top.find_all(m_time_settings[i].comp,comps)
+        #        #(m_time_settings[i].offset - last_time)
+        #        last_time = m_time_settings[i].offset
+        #        if(m_time_settings[i].id == "_ALL_"):
+        #           foreach(comps[j]):
+        #             comps[j].set_report_verbosity_level(m_time_settings[i].verbosity)
+        #           end
+        #        end
+        #        else begin
+        #          foreach(comps[j]):
+        #            comps[j].set_report_id_verbosity(m_time_settings[i].id, m_time_settings[i].verbosity)
+        #          end
+        #        end
+        #      end
+        #    end join_none // fork begin
+        #  end
+        #
+        #  first = 0
+        #endfunction
 
     #extern function void m_set_cl_action
 
     #extern function void m_set_cl_sev
-
-    #extern function void m_apply_verbosity_settings(uvm_phase phase)
-
-    #// The verbosity settings may have a specific phase to start at.
-    #// We will do this work in the phase_started callback.
-
 
     #m_verbosity_setting self.m_verbosity_settings[$]
     #static m_verbosity_setting m_time_settings[$]
 
     #// does the pre abort callback hierarchically
     #extern /*local*/ function void m_do_pre_abort
-
-
-    #typedef struct  {
-    #	string arg
-    #	string args[$]
-    #	int unsigned used
-    #} uvm_cmdline_parsed_arg_t
 
 
     #static uvm_cmdline_parsed_arg_t m_uvm_applied_cl_action[$]
@@ -2033,6 +2057,7 @@ class UVMComponent(UVMReportObject):
     def has_next_child(self):
         return len(self.m_children_ordered) > (self.child_ptr + 1)
 
+    #extern function void m_apply_verbosity_settings(uvm_phase phase)
     def m_apply_verbosity_settings(self, phase):
         pass
         for i in self.m_verbosity_settings:
@@ -2074,101 +2099,6 @@ class UVMComponent(UVMReportObject):
 #// CLASS- uvm_component
 #//
 #//------------------------------------------------------------------------------
-#
-#// new
-#// ---
-#
-#function uvm_component::new (string name, uvm_component parent)
-#  string error_str
-#  uvm_root top
-#  uvm_coreservice_t cs
-#
-#  super.new(name)
-#
-#  // If uvm_top, reset name to "" so it doesn't show in full paths then return
-#  if (parent==None && name == "__top__"):
-#    set_name(""); // *** VIRTUAL
-#    return
-#  end
-#
-#  cs = uvm_coreservice_t::get()
-#  top = cs.get_root()
-#
-#  // Check that we're not in or past end_of_elaboration
-#  begin
-#    uvm_phase bld
-#    uvm_domain common
-#    common = uvm_domain::get_common_domain()
-#    bld = common.find(uvm_build_phase::get())
-#    if (bld is None)
-#      uvm_fatal("COMP/INTERNAL",
-#                       "attempt to find build phase object failed",UVM_NONE)
-#    if (bld.get_state() == UVM_PHASE_DONE):
-#      uvm_fatal("ILLCRT", {"It is illegal to create a component ('",
-#                name,"' under '",
-#                (parent is None ? top.get_full_name() : parent.get_full_name()),
-#               "') after the build phase has ended."},
-#                       UVM_NONE)
-#    end
-#  end
-#
-#  if (name == ""):
-#    name.itoa(m_inst_count)
-#    name = {"COMP_", name}
-#  end
-#
-#  if(parent == this):
-#    `uvm_fatal("THISPARENT", "cannot set the parent of a component to itself")
-#  end
-#
-#  if (parent is None)
-#    parent = top
-#
-#  if(uvm_report_enabled(UVM_MEDIUM+1, UVM_INFO, "NEWCOMP"))
-#    `uvm_info("NEWCOMP", {"Creating ",
-#      (parent==top?"uvm_top":parent.get_full_name()),".",name},UVM_MEDIUM+1)
-#
-#  if (parent.has_child(name) && this != parent.get_child(name)):
-#    if (parent == top):
-#      error_str = {"Name '",name,"' is not unique to other top-level ",
-#      "instances. If parent is a module, build a unique name by combining the ",
-#      "the module name and component name: $sformatf(\"\%m.\%s\",\"",name,"\")."}
-#      `uvm_fatal("CLDEXT",error_str)
-#    end
-#    else
-#      `uvm_fatal("CLDEXT",
-#        $sformatf("Cannot set '%s' as a child of '%s', %s",
-#                  name, parent.get_full_name(),
-#                  "which already has a child by that name."))
-#    return
-#  end
-#
-#  m_parent = parent
-#
-#  set_name(name); // *** VIRTUAL
-#
-#  if (!m_parent.m_add_child(this))
-#    m_parent = None
-#
-#  TODO logic below this
-#  self.event_pool = new("self.event_pool")
-#
-#  m_domain = parent.m_domain;     // by default, inherit domains from parents
-#
-#  // Now that inst name is established, reseed (if use_uvm_seeding is set)
-#  reseed()
-#
-#  // Do local configuration settings
-#  if (!uvm_config_db #(uvm_bitstream_t)::get(this, "", "recording_detail", recording_detail))
-#        void'(uvm_config_db #(int)::get(this, "", "recording_detail", recording_detail))
-#
-#  m_rh.set_name(get_full_name())
-#  set_report_verbosity_level(parent.get_report_verbosity_level())
-#
-#  m_set_cl_msg_args()
-#
-#endfunction
-#
 #
 #// m_add_child
 #// -----------
@@ -2258,36 +2188,6 @@ class UVMComponent(UVMReportObject):
 #  return m_children.num()
 #endfunction
 #
-#
-#// get_full_name
-#// -------------
-#
-#function string uvm_component::get_full_name ()
-#  // Note- Implementation choice to construct full name once since the
-#  // full name may be used often for lookups.
-#  if(m_name == "")
-#    return get_name()
-#  else
-#    return m_name
-#endfunction
-#
-#
-#// get_parent
-#// ----------
-#
-#function uvm_component uvm_component::get_parent ()
-#  return  m_parent
-#endfunction
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 #// flush
 #// -----
 #
@@ -2314,14 +2214,6 @@ class UVMComponent(UVMReportObject):
 #//------------------------------------------------------------------------------
 #
 #
-#
-#// clone
-#// ------
-#
-#function uvm_object  uvm_component::clone ()
-#  `uvm_error("ILLCLN", $sformatf("Attempting to clone '%s'.  Clone cannot be called on a uvm_component.  The clone target variable will be set to None.", get_full_name()))
-#  return None
-#endfunction
 #
 #
 #// print_override_info
@@ -2931,100 +2823,7 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#
-#
-#// Internal methods for setting messagin parameters from command line switches
-#
-#typedef class uvm_cmdline_processor
-#
-#
-#
-#
-#// m_set_cl_verb
-#// -------------
-#function void uvm_component::m_set_cl_verb
-#  // _ALL_ can be used for ids
-#  // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
-#  // +uvm_set_verbosity=uvm_test_top.env0.agent1.*,_ALL_,UVM_FULL,time,800
-#
-#  static string values[$]
-#  static bit first = 1
-#  string args[$]
-#  uvm_cmdline_processor clp = uvm_cmdline_processor::get_inst()
-#  uvm_root top
-#  uvm_coreservice_t cs
-#  cs = uvm_coreservice_t::get()
-#  top = cs.get_root()
-#
-#  if(!values.size())
-#    void'(uvm_cmdline_proc.get_arg_values("+uvm_set_verbosity=",values))
-#
-#  foreach(values[i]):
-#    m_verbosity_setting setting
-#    args.delete()
-#    uvm_split_string(values[i], ",", args)
-#
-#    // Warning is already issued in uvm_root, so just don't keep it
-#    if(first && ( ((args.size() != 4) && (args.size() != 5)) ||
-#                  (clp.m_convert_verb(args[2], setting.verbosity) == 0))  )
-#    begin
-#      values.delete(i)
-#    end
-#    else begin
-#      setting.comp = args[0]
-#      setting.id = args[1]
-#      void'(clp.m_convert_verb(args[2],setting.verbosity))
-#      setting.phase = args[3]
-#      setting.offset = 0
-#      if(args.size() == 5) setting.offset = args[4].atoi()
-#      if((setting.phase == "time") && (this == top)):
-#        m_time_settings.push_back(setting)
-#      end
-#
-#      if (uvm_is_match(setting.comp, get_full_name()) ):
-#        if((setting.phase == "" || setting.phase == "build" || setting.phase == "time") &&
-#           (setting.offset == 0) )
-#        begin
-#          if(setting.id == "_ALL_")
-#            set_report_verbosity_level(setting.verbosity)
-#          else
-#            set_report_id_verbosity(setting.id, setting.verbosity)
-#        end
-#        else begin
-#          if(setting.phase != "time"):
-#            self.m_verbosity_settings.push_back(setting)
-#          end
-#        end
-#      end
-#    end
-#  end
-#  // do time based settings
-#  if(this == top):
-#    fork begin
-#      time last_time = 0
-#      if (m_time_settings.size() > 0)
-#        m_time_settings.sort() with ( item.offset )
-#      foreach(m_time_settings[i]):
-#        uvm_component comps[$]
-#        top.find_all(m_time_settings[i].comp,comps)
-#        #(m_time_settings[i].offset - last_time)
-#        last_time = m_time_settings[i].offset
-#        if(m_time_settings[i].id == "_ALL_"):
-#           foreach(comps[j]):
-#             comps[j].set_report_verbosity_level(m_time_settings[i].verbosity)
-#           end
-#        end
-#        else begin
-#          foreach(comps[j]):
-#            comps[j].set_report_id_verbosity(m_time_settings[i].id, m_time_settings[i].verbosity)
-#          end
-#        end
-#      end
-#    end join_none // fork begin
-#  end
-#
-#  first = 0
-#endfunction
+
 #
 #// m_set_cl_action
 #// ---------------

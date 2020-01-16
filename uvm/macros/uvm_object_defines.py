@@ -128,7 +128,7 @@ def uvm_field_utils_start(T):
             if T_cont.m_do_cycle_check(self):
                 return
             else:
-                _current_scopes= T_cont.m_uvm_cycle_scopes
+                _current_scopes = T_cont.m_uvm_cycle_scopes
         # This part does the actual work
         if what__ == UVM_COPY:
             for v in vals:
@@ -217,11 +217,9 @@ def uvm_field_utils_start(T):
                         T_cont.status = 1
         elif what__ == UVM_SETOBJ:
             for v in vals:
-                print("UVM_SETOBJ v is now " + v)
                 mask_v = masks[v]
                 ARG = getattr(self, v)
                 T_cont.scope.set_arg(v)
-                print("Trying to match " + str__ + " and " + T_cont.scope.get())
                 if uvm_is_match(str__, T_cont.scope.get()):
                     if mask_v & UVM_READONLY:
                         uvm_report_warning("RDONLY", sv.sformatf("Readonly argument match %s is ignored",
@@ -240,7 +238,7 @@ def uvm_field_utils_start(T):
                     cnt = 0
                     # Only traverse if there is a possible match.
                     while cnt < len(str__):
-                        if(str__[cnt] == "." or str__[cnt] == "*"):
+                        if (str__[cnt] == "." or str__[cnt] == "*"):
                             break
                         cnt += 1
                     if cnt != len(str__):
@@ -250,7 +248,6 @@ def uvm_field_utils_start(T):
 
         elif what__ == UVM_CHECK_FIELDS:
             for v in vals:
-                print("Doing field check for " + v)
                 T_cont.do_field_check(v, self)
         if what__ in [UVM_SETINT, UVM_SETSTR, UVM_SETOBJ]:
             _current_scopes.pop()

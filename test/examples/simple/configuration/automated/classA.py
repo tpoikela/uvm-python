@@ -26,6 +26,7 @@ from uvm.base.uvm_config_db import *
 
 from classC import C
 
+
 class A(UVMComponent):
     #
     def __init__(self, name, parent):
