@@ -764,11 +764,10 @@ class UVMTreePrinter(UVMPrinter):
                         continue
 
                 # Value (unconditional)
-                print("row.val is " + row.val)
                 s = s + row.val + " " + linefeed
 
                 # Scope handling...
-                if (i <= len(self.m_rows)-1):
+                if i <= len(self.m_rows)-1:
                     end_level = 0
                     if (i == len(self.m_rows)-1):
                         end_level = 0

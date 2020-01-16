@@ -41,7 +41,7 @@ class MyComponent(UVMComponent):
     def run_phase(self, phase):
         self.uvm_report_info("component", "before raising objection", UVM_MEDIUM)
         phase.raise_objection(self)
-        UVMDebug.DEBUG = True
+        UVMDebug.DEBUG = False
         self.uvm_report_info("component", "after raising objection", UVM_MEDIUM)
         yield Timer(1, 'ns')
         uvm_debug(self, 'run_phase', "Objection raised run_phase " +

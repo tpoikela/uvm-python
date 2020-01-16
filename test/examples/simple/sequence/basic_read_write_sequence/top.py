@@ -33,20 +33,9 @@ from uvm.comps import UVMDriver, UVMEnv
 
 NUM_SEQS = 1
 NUM_LOOPS = 10
-
-#// NOTE: a simple convenience shortcut to illustrate two different paths
-#// generating a string representatin for an object
-#`define toSTRING(X) \
-#`ifdef USE_FIELD_MACROS \
-#	X.sprint() \
-#`else \
-#    X.convert2string() \
-#`endif
-
 USE_FIELD_MACROS = 0
 
-UVMDebug.full_debug()
-
+#UVMDebug.full_debug()
 
 def toSTRING(X):
     if USE_FIELD_MACROS:
@@ -76,16 +65,6 @@ def toSTRING(X):
 #for UVM it is good practice since this macro will register the class in the UVM factory automatically. See the user
 #guide for more information regarding uvm factory use models
 
-#package user_pkg
-#
-#	import uvm_pkg::*
-#
-#	typedef enum { BUS_READ, BUS_WRITE } bus_op_t
-#	typedef enum { STATUS_OK, STATUS_NOT_OK } status_t
-#
-#	//--------------------------------------------------------------------
-#	// bus_trans
-#	//--------------------------------------------------------------------
 
 #bus_op_t = sv.enum(BUS_READ, BUS_WRITE)
 #status_t = sv.enum(STATUS_OK, STATUS_NOT_OK)
@@ -103,14 +82,7 @@ class bus_trans(UVMSequenceItem):
         self.data = 0
         self.op = 0
 
-    if USE_FIELD_MACROS:
-        uvm_object_utils_begin(bus_trans)
-        uvm_field_int(addr,UVM_DEFAULT)
-        uvm_field_int(data,UVM_DEFAULT)
-        uvm_field_enum(bus_op_t,op,UVM_DEFAULT)
-        uvm_field_utils_end()
-    else:
-
+    if USE_FIELD_MACROS == 0:
         def do_copy(self, rhs):
             #bus_trans rhs_
             rhs_ = rhs
@@ -134,7 +106,15 @@ class bus_trans(UVMSequenceItem):
 
         # NOTE: in contrast to the USE_FIELD_MACROS version this doesnt implement pack/unpack/print/record/...
         #`endif
-uvm_object_utils(bus_trans)
+
+if USE_FIELD_MACROS:
+    uvm_object_utils_begin(bus_trans)
+    uvm_field_int('addr',UVM_DEFAULT)
+    uvm_field_int('data',UVM_DEFAULT)
+    uvm_field_enum('op',UVM_DEFAULT)
+    uvm_field_utils_end(bus_trans)
+else:
+    uvm_object_utils(bus_trans)
 
 #//--------------------------------------------------------------------
 #// bus_req
@@ -154,9 +134,7 @@ class bus_rsp(bus_trans):
         self.status = 0
 
     if USE_FIELD_MACROS:
-        uvm_object_utils_begin(bus_rsp)
-        uvm_field_enum(status_t,status,UVM_DEFAULT)
-        uvm_object_utils_end
+        pass
     else:
 
         def do_copy(self, rhs):
@@ -173,7 +151,14 @@ class bus_rsp(bus_trans):
                     bus_trans.convert2string(self), str(self.status))
 
         # NOTE: in contrast to the USE_FIELD_MACROS version this doesnt implement pack/unpack/print/record/...
-uvm_object_utils(bus_rsp)
+
+
+if USE_FIELD_MACROS:
+    uvm_object_utils_begin(bus_rsp)
+    uvm_field_enum('status', UVM_DEFAULT)
+    uvm_object_utils_end(bus_rsp)
+else:
+    uvm_object_utils(bus_rsp)
 
 
 class my_driver(UVMDriver):
@@ -188,8 +173,9 @@ class my_driver(UVMDriver):
         req = None
         rsp = None
 
-        while (True):
-            print("my_driver getting the req now..")
+        while True:
+            uvm_info("DRIVER", "my_driver getting the req now..",
+                UVM_MEDIUM)
             qreq = []
             yield self.seq_item_port.get(qreq)
 
@@ -288,7 +274,7 @@ class env(UVMEnv):
         self.sqr = UVMSequencer("sequence_controller", self)
         # create and connect driver
         self.drv = my_driver("my_driver", self)
-        print("Connecting ports now here")
+        uvm_info("ENV", "Connecting ports now here", UVM_MEDIUM)
         self.drv.seq_item_port.connect(self.sqr.seq_item_export)
 
     @cocotb.coroutine
@@ -315,11 +301,12 @@ class env(UVMEnv):
 
 uvm_component_utils(env)
 
+
 @cocotb.test()
 def test_module_top(dut):
     UVMPhase.m_phase_trace = True
     e = env("env_name", parent=None)
-    uvm_info("top","In top initial block",UVM_MEDIUM)
+    uvm_info("top","In top initial block", UVM_MEDIUM)
     yield run_test()
     sim_time = sim_time = get_sim_time('ns')
 
