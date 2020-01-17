@@ -26,7 +26,9 @@ from ..dap.uvm_simple_lock_dap import uvm_simple_lock_dap
 from ..base.uvm_object import UVMObject
 from ..base.sv import sv
 from ..macros.uvm_object_defines import uvm_object_utils
-from .uvm_tr_stream import uvm_text_tr_stream
+from ..macros.uvm_message_defines import uvm_warning
+from .uvm_tr_stream import uvm_text_tr_stream, uvm_tr_stream
+from .uvm_recorder import UVMRecorder
 
 NO_FILE_OPEN = 0
 
@@ -192,7 +194,7 @@ class uvm_tr_database(UVMObject):
     #   endfunction : get_streams
     #
     #   // Group: Link API
-    #
+
     #   // Function: establish_link
     #   // Establishes a ~link~ between two elements in the database
     #   //
@@ -200,63 +202,68 @@ class uvm_tr_database(UVMObject):
     #   // within a single database.
     #   //
     #   // This method will trigger a <do_establish_link> call.
-    #   function void establish_link(uvm_link_base link)
-    #      uvm_tr_stream s_lhs, s_rhs
-    #      uvm_recorder r_lhs, r_rhs
-    #      uvm_object lhs = link.get_lhs()
-    #      uvm_object rhs = link.get_rhs()
-    #      uvm_tr_database db
-    #
-    #      if (lhs == null) begin
-    #         `uvm_warning("UVM/TR_DB/BAD_LINK",
-    #                      "left hand side '<null>' is not supported in links for 'uvm_tr_database'")
-    #         return
-    #      end
-    #      if (rhs == null) begin
-    #         `uvm_warning("UVM/TR_DB/BAD_LINK",
-    #                      "right hand side '<null>' is not supported in links for 'uvm_tr_database'")
-    #         return
-    #      end
-    #
-    #      if (!$cast(s_lhs, lhs) &&
-    #          !$cast(r_lhs, lhs)) begin
-    #         `uvm_warning("UVM/TR_DB/BAD_LINK",
-    #                      $sformatf("left hand side of type '%s' not supported in links for 'uvm_tr_database'",
-    #                                lhs.get_type_name()))
-    #         return
-    #      end
-    #      if (!$cast(s_rhs, rhs) &&
-    #          !$cast(r_rhs, rhs)) begin
-    #         `uvm_warning("UVM/TR_DB/BAD_LINK",
-    #                      $sformatf("right hand side of type '%s' not supported in links for 'uvm_record_datbasae'",
-    #                                rhs.get_type_name()))
-    #         return
-    #      end
-    #
-    #      if (r_lhs != null) begin
-    #         s_lhs = r_lhs.get_stream()
-    #      end
-    #      if (r_rhs != null) begin
-    #         s_rhs = r_rhs.get_stream()
-    #      end
-    #
-    #      if ((s_lhs != null) && (s_lhs.get_db() != this)) begin
-    #         db = s_lhs.get_db()
-    #         `uvm_warning("UVM/TR_DB/BAD_LINK",
-    #                      $sformatf("attempt to link stream from '%s' into '%s'",
-    #                                db.get_name(), this.get_name()))
-    #         return
-    #      end
-    #      if ((s_rhs != null) && (s_rhs.get_db() != this)) begin
-    #         db = s_rhs.get_db()
-    #         `uvm_warning("UVM/TR_DB/BAD_LINK",
-    #                      $sformatf("attempt to link stream from '%s' into '%s'",
-    #                                db.get_name(), this.get_name()))
-    #         return
-    #      end
-    #
-    #      do_establish_link(link)
-    #   endfunction : establish_link
+    def establish_link(self, link):
+        s_lhs = []  # uvm_tr_stream 
+        s_rhs = []  # uvm_tr_stream 
+        r_lhs = []  # uvm_recorder 
+        r_rhs = []  # uvm_recorder 
+        lhs = link.get_lhs()
+        rhs = link.get_rhs()
+        db = None  # uvm_tr_database 
+
+        if lhs is None:
+            uvm_warning("UVM/TR_DB/BAD_LINK",
+                "left hand side '<None>' is not supported in links for 'uvm_tr_database'")
+
+        if rhs is None:
+            uvm_warning("UVM/TR_DB/BAD_LINK",
+                "right hand side '<None>' is not supported in links for 'uvm_tr_database'")
+            return
+
+
+        if (not sv.cast(s_lhs, lhs, uvm_tr_stream)) or (not sv.cast(r_lhs, lhs,
+            UVMRecorder)):
+            uvm_warning("UVM/TR_DB/BAD_LINK",
+                sv.sformatf("left hand side of type '%s' not supported in links for 'uvm_tr_database'",
+                lhs.get_type_name()))
+            return
+        else:
+            s_lhs = s_lhs[0]
+            r_lhs = r_lhs[0]
+
+        if (not sv.cast(s_rhs, rhs, uvm_tr_stream)) or (not sv.cast(r_rhs, rhs, UVMRecorder)):
+            uvm_warning("UVM/TR_DB/BAD_LINK",
+                sv.sformatf("right hand side of type '%s' not supported in links for 'uvm_record_datbasae'",
+                rhs.get_type_name()))
+            return
+        else:
+            s_rhs = s_rhs[0]
+            r_rhs = r_rhs[0]
+
+        if r_lhs is not None:
+            s_lhs = r_lhs.get_stream()
+
+        if r_rhs is not None:
+            s_rhs = r_rhs.get_stream()
+
+
+        if ((s_lhs is not None) and (s_lhs.get_db() != self)):
+            db = s_lhs.get_db()
+            uvm_warning("UVM/TR_DB/BAD_LINK", sv.sformatf("attempt to link stream from '%s' into '%s'",
+                db.get_name(), self.get_name()))
+            return
+
+        if ((s_rhs is not None) and (s_rhs.get_db() != self)):
+            db = s_rhs.get_db()
+            uvm_warning("UVM/TR_DB/BAD_LINK",
+                sv.sformatf("attempt to link stream from '%s' into '%s'",
+                db.get_name(), self.get_name()))
+            return
+
+
+        self.do_establish_link(link)
+        #   endfunction : establish_link
+        
     #
     #   // Group: Implementation Agnostic API
     #   //
@@ -362,43 +369,36 @@ class uvm_text_tr_database(uvm_tr_database):
         m_stream = uvm_text_tr_stream.type_id.create(name)
         return m_stream
 
-    #
+
     #   // Function: do_establish_link
     #   // Establishes a ~link~ between two elements in the database
     #   //
     #   // Text-Backend implementation of <uvm_tr_database::establish_link>.
-    #   protected virtual function void do_establish_link(uvm_link_base link)
-    #      uvm_recorder r_lhs, r_rhs
-    #      uvm_object lhs = link.get_lhs()
-    #      uvm_object rhs = link.get_rhs()
-    #
-    #      void'($cast(r_lhs, lhs))
-    #      void'($cast(r_rhs, rhs))
-    #
-    #      if ((r_lhs == null) ||
-    #          (r_rhs == null))
-    #        return
-    #      else begin
-    #         uvm_parent_child_link pc_link
-    #         uvm_related_link re_link
-    #         if ($cast(pc_link, link)) begin
-    #            $fdisplay(m_file,"  LINK @%0t {TXH1:%0d TXH2:%0d RELATION=%0s}",
-    #                      $time,
-    #                      r_lhs.get_handle(),
-    #                      r_rhs.get_handle(),
-    #                      "child")
-    #
-    #         end
-    #         else if ($cast(re_link, link)) begin
-    #            $fdisplay(m_file,"  LINK @%0t {TXH1:%0d TXH2:%0d RELATION=%0s}",
-    #                      $time,
-    #                         r_lhs.get_handle(),
-    #                      r_rhs.get_handle(),
-    #                      "")
-    #
-    #         end
-    #      end
-    #   endfunction : do_establish_link
+    def do_establish_link(self, link):
+        r_lhs = None
+        r_rhs = None  # uvm_recorder 
+        lhs = link.get_lhs()
+        rhs = link.get_rhs()
+
+        sv.cast(r_lhs, lhs, uvm_recorder)
+        sv.cast(r_rhs, rhs, uvm_recorder)
+        r_lhs = r_lhs[0]
+        r_rhs = r_rhs[0]
+
+        if (r_lhs is None  or r_rhs is None):
+            return
+        else:
+            pc_link = None  # uvm_parent_child_link 
+            re_link = None  # uvm_related_link 
+            if sv.cast(pc_link, link, UVMParentChildLink):
+                sv.fdisplay(self.m_file, "  LINK @%0t {{TXH1:%0d TXH2:%0d RELATION=%0s}}",
+                    sv.time(), r_lhs.get_handle(), r_rhs.get_handle(), "child")
+
+            elif sv.cast(re_link, link, UVMRelatedLink):
+                sv.fdisplay(self.m_file, "  LINK @%0t {{TXH1:%0d TXH2:%0d RELATION=%0s}}",
+                    sv.time(), r_lhs.get_handle(), r_rhs.get_handle(), "")
+               
+        #   endfunction : do_establish_link
 
     #
     #   // Group: Implementation Specific API

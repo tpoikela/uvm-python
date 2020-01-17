@@ -1,6 +1,6 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
-#//   Copyright 2007-2010 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2013 Cisco Systems, Inc.
 #//   All Rights Reserved Worldwide
@@ -34,34 +34,36 @@ from ..macros.uvm_message_defines import uvm_fatal
 #//------------------------------------------------------------------------------
 #
 #virtual class uvm_sequence #(type REQ = uvm_sequence_item,
-#                             type RSP = REQ) extends uvm_sequence_base;
+#                             type RSP = REQ) extends uvm_sequence_base
 
 
 class UVMSequence(UVMSequenceBase):
-    #  typedef uvm_sequencer_param_base #(REQ, RSP) sequencer_t;
+    #  typedef uvm_sequencer_param_base #(REQ, RSP) sequencer_t
     #
-    #  sequencer_t        param_sequencer;
+    #  sequencer_t        param_sequencer
     #
     #  // Variable: req
     #  //
     #  // The sequence contains a field of the request type called req.  The user
     #  // can use this field, if desired, or create another field to use.  The
     #  // default ~do_print~ will print this field.
-    #  REQ                req;
+    #  REQ                req
     #
     #  // Variable: rsp
     #  //
     #  // The sequence contains a field of the response type called rsp.  The user
     #  // can use this field, if desired, or create another field to use.   The
     #  // default ~do_print~ will print this field.
-    #  RSP                rsp;
+    #  RSP                rsp
     #
     #  // Function: new
     #  //
     #  // Creates and initializes a new sequence object.
     #
-    def __init__(self, name = "uvm_sequence"):
+    def __init__(self, name="uvm_sequence"):
         UVMSequenceBase.__init__(self, name)
+        self.req = None
+        self.rsp = None
 
     #  // Function: send_request
     #  //
@@ -70,17 +72,18 @@ class UVMSequence(UVMSequenceBase):
     #  // randomized before being sent to the driver. The send_request function may
     #  // only be called after <uvm_sequence_base::wait_for_grant> returns.
     #
-    #  function void send_request(uvm_sequence_item request, bit rerandomize = 0);
-    #    REQ m_request;
-    #    
+    #  function void send_request(uvm_sequence_item request, bit rerandomize = 0)
+    #    REQ m_request
+    #
     #    if (m_sequencer == null) begin
-    #      uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", UVM_NONE);
+    #      uvm_report_fatal("SSENDREQ", "Null m_sequencer reference", UVM_NONE)
     #    end
     #    if (!$cast(m_request, request)) begin
-    #      uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", UVM_NONE);
+    #      uvm_report_fatal("SSENDREQ", "Failure to cast uvm_sequence_item to request", UVM_NONE)
     #    end
-    #    m_sequencer.send_request(this, m_request, rerandomize);
+    #    m_sequencer.send_request(this, m_request, rerandomize)
     #  endfunction
+
     #
     #
     #  // Function: get_current_item
@@ -94,10 +97,10 @@ class UVMSequence(UVMSequenceBase):
     #  // Note that a driver that only calls get will never show a current item,
     #  // since the item is completed at the same time as it is requested.
     #
-    #  function REQ get_current_item();
+    #  function REQ get_current_item()
     #    if (!$cast(param_sequencer, m_sequencer))
-    #      uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the parameterized sequencer", UVM_NONE);
-    #    return (param_sequencer.get_current_item());
+    #      uvm_report_fatal("SGTCURR", "Failure to cast m_sequencer to the parameterized sequencer", UVM_NONE)
+    #    return (param_sequencer.get_current_item())
     #  endfunction
 
 
@@ -118,7 +121,7 @@ class UVMSequence(UVMSequenceBase):
     #  // If a response is dropped in the response queue, an error will be reported
     #  // unless the error reporting is disabled via
     #  // set_response_queue_error_report_disabled.
-    #  virtual task get_response(output RSP response, input int transaction_id = -1);
+    #  virtual task get_response(output RSP response, input int transaction_id = -1)
     @cocotb.coroutine
     def get_response(self, response, transaction_id=-1):
         if response is None:
@@ -132,21 +135,19 @@ class UVMSequence(UVMSequenceBase):
     #  //
     #  // Internal method.
     #
-    # virtual function void put_response(uvm_sequence_item response_item);
+    # virtual function void put_response(uvm_sequence_item response_item)
     def put_response(self, response_item):
-      #response;
-      #if (!$cast(response, response_item)) begin
-      #    uvm_report_fatal("PUTRSP", "Failure to cast response in put_response", UVM_NONE);
-      self.put_base_response(response_item)
+        #response
+        #if (!$cast(response, response_item)) begin
+        #    uvm_report_fatal("PUTRSP", "Failure to cast response in put_response", UVM_NONE)
+        self.put_base_response(response_item)
 
-    #
-    #
+
     #  // Function- do_print
     #  //
-    #  function void do_print (uvm_printer printer);
-    #    super.do_print(printer);
-    #    printer.print_object("req", req);
-    #    printer.print_object("rsp", rsp);
-    #  endfunction
-    #
+    def do_print(self, printer):
+        super().do_print(printer)
+        printer.print_object("req", self.req)
+        printer.print_object("rsp", self.rsp)
+
     #endclass

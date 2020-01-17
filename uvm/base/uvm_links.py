@@ -31,7 +31,7 @@ from uvm.macros import *
 #// to allow for compile-time safety when trying to establish links between
 #// records within a <uvm_tr_database>.
 #//
-#// 
+#//
 
 #//------------------------------------------------------------------------------
 #//
@@ -178,36 +178,33 @@ class UVMParentChildLink(UVMLinkBase):
     #   // Function: do_set_lhs
     #   // Sets the left-hand-side (Parent)
     #   //
-    #   virtual def void do_set_lhs(self,UVMObject lhs):
-    #      m_lhs = lhs
-    #   endfunction : do_set_lhs
-
+    def do_set_lhs(self, lhs):
+        self.m_lhs = lhs
 
     #   // Function: do_get_lhs
     #   // Retrieves the left-hand-side (Parent)
     #   //
-    #   virtual def UVMObject do_get_lhs(self):
-    #      return m_lhs
-    #   endfunction : do_get_lhs
-
+    def do_get_lhs(self):
+        return self.m_lhs
 
     #   // Function: do_set_rhs
     #   // Sets the right-hand-side (Child)
     #   //
-    #   virtual def void do_set_rhs(self,UVMObject rhs):
-    #      m_rhs = rhs
-    #   endfunction : do_set_rhs
+    def do_set_rhs(self, rhs):
+        self.m_rhs = rhs
 
 
     #   // Function: do_get_rhs
     #   // Retrieves the right-hand-side (Child)
     #   //
-    #   virtual def UVMObject do_get_rhs(self):
-    #      return m_rhs
-    #   endfunction : do_get_rhs
+    def do_get_rhs(self):
+        return self.m_rhs
+
     #
     #endclass : UVMParentChildLink
-#
+
+
+
 #//------------------------------------------------------------------------------
 #//
 #// CLASS: UVMCauseEffectLink
@@ -215,8 +212,9 @@ class UVMParentChildLink(UVMLinkBase):
 #// The ~UVMCauseEffectLink~ is used to represent a Cause/Effect relationship
 #// between two objects.
 #//
-#
-#class UVMCauseEffectLink(UVMLinkBase):
+
+
+class UVMCauseEffectLink(UVMLinkBase):
     #
     #   // Variable- m_lhs,m_rhs
     #   // Implementation details
@@ -248,7 +246,7 @@ class UVMParentChildLink(UVMLinkBase):
     #   // name - Optional name for the link object
     #   //
     @classmethod
-    def get_link(cls,  lhs, rhs, name="ce_link"):
+    def get_link(cls, lhs, rhs, name="ce_link"):
         ce_link = UVMCauseEffectLink(name)
         ce_link.set(lhs, rhs)
         return ce_link
@@ -259,30 +257,30 @@ class UVMParentChildLink(UVMLinkBase):
     #   // Function: do_set_lhs
     #   // Sets the left-hand-side (Cause)
     #   //
-    #   virtual def void do_set_lhs(self,UVMObject lhs):
-    #      m_lhs = lhs
-    #   endfunction : do_set_lhs
+    def do_set_lhs(self, lhs):
+        self.m_lhs = lhs
+
     #
     #   // Function: do_get_lhs
     #   // Retrieves the left-hand-side (Cause)
     #   //
-    #   virtual def UVMObject do_get_lhs(self):
-    #      return m_lhs
-    #   endfunction : do_get_lhs
+    def do_get_lhs(self):
+        return self.m_lhs
+
     #
     #   // Function: do_set_rhs
     #   // Sets the right-hand-side (Effect)
     #   //
-    #   virtual def void do_set_rhs(self,UVMObject rhs):
-    #      m_rhs = rhs
-    #   endfunction : do_set_rhs
+    def do_set_rhs(self, rhs):
+        self.m_rhs = rhs
+
     #
     #   // Function: do_get_rhs
     #   // Retrieves the right-hand-side (Effect)
     #   //
-    #   virtual def UVMObject do_get_rhs(self):
-    #      return m_rhs
-    #   endfunction : do_get_rhs
+    def do_get_rhs(self):
+        return self.m_rhs
+
     #
     #endclass : UVMCauseEffectLink
 uvm_object_utils(UVMParentChildLink)

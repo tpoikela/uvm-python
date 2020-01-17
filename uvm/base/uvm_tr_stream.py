@@ -27,7 +27,7 @@ from .sv import sv
 from ..dap.uvm_set_before_get_dap import uvm_set_before_get_dap
 from .uvm_object import UVMObject
 from ..macros.uvm_object_defines import uvm_object_utils
-from ..macros.uvm_message_defines import uvm_error
+from ..macros.uvm_message_defines import uvm_error, uvm_warning
 from .uvm_globals import uvm_sim_time
 
 from .uvm_recorder import UVMTextRecorder
