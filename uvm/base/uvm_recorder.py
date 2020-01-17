@@ -27,8 +27,8 @@ from .uvm_object import UVMObject
 from .uvm_object_globals import *
 from .sv import sv
 from ..macros import uvm_object_utils
+from .uvm_scope_stack import UVMScopeStack
 
-#typedef class uvm_report_message;
 
 #// File: UVM Recorders
 #//
@@ -58,14 +58,14 @@ class UVMRecorder(UVMObject):
     #   // By default, neither ~m_ids_by_recorder~ or ~m_recorders_by_id~ are
     #   // used.  Recorders are only placed in the arrays when the user
     #   // attempts to determine the id for a recorder.
-    #   local static integer m_ids_by_recorder[uvm_recorder];
+    #   local static integer m_ids_by_recorder[uvm_recorder]
     m_ids_by_recorder = {}
 
     def __init__(self, name="uvm_recorder"):
         UVMObject.__init__(self, name)
         #  // Variable- m_stream_dap
         #  // Data access protected reference to the stream
-        #  uvm_set_before_get_dap#(uvm_tr_stream) m_stream_dap;
+        #  uvm_set_before_get_dap#(uvm_tr_stream) m_stream_dap
         self.m_stream_dap = uvm_set_before_get_dap("stream_dap")
         #  // Variable- m_warn_null_stream
         #  // Used to limit the number of warnings
@@ -140,7 +140,7 @@ class UVMRecorder(UVMObject):
         #  //
         #  // The default policy is deep (which means to recurse an object).
         ##  uvm_recursion_policy_enum
-        self.policy = UVM_DEFAULT_POLICY;
+        self.policy = UVM_DEFAULT_POLICY
         #
 
     #
@@ -153,17 +153,17 @@ class UVMRecorder(UVMObject):
     #   // A warning will be asserted if get_stream is called prior
     #   // to the record being initialized via <do_open>.
     #   //
-    #   function uvm_tr_stream get_stream();
-    #      if (!m_stream_dap.try_get(get_stream)) begin
-    #         if (m_warn_null_stream == 1)
-    #           `uvm_warning("UVM/REC/NO_CFG",
-    #                        $sformatf("attempt to retrieve STREAM from '%s' before it was set!",
-    #                                  get_name()))
-    #         m_warn_null_stream = 0;
-    #      end
-    #   endfunction : get_stream
+    def get_stream(self):
+        astr = []
+        if not self.m_stream_dap.try_get(astr):
+            if self.m_warn_null_stream == 1:
+               uvm_warning("UVM/REC/NO_CFG",
+                   sv.sformatf("attempt to retrieve STREAM from '%s' before it was set!",
+                       self.get_name()))
+            self.m_warn_null_stream = 0
+        return astr[0]
 
-    #
+
     #   // Group: Transaction Recorder API
     #   //
     #   // Once a recorder has been opened via <uvm_tr_stream::open_recorder>, the user
@@ -186,19 +186,18 @@ class UVMRecorder(UVMObject):
     #   // close_time - Optional time to record as the closing time of this transaction.
     #   //
     #   // This method will trigger a <do_close> call.
-    #   function void close(time close_time = 0);
-    #      if (close_time == 0)
-    #        close_time = $realtime;
-    #
-    #      if (!is_open())
-    #        return;
-    #
-    #      do_close(close_time);
-    #
-    #      m_is_opened = 0;
-    #      m_is_closed = 1;
-    #      m_close_time = close_time;
-    #   endfunction : close
+    def close(self, close_time=0):
+        if (close_time == 0):
+            close_time = sv.realtime()
+
+        if self.is_open() is False:
+            return
+
+        self.do_close(close_time)
+
+        self.m_is_opened = 0
+        self.m_is_closed = 1
+        self.m_close_time = close_time
 
 
     #   // Function: free
@@ -215,70 +214,67 @@ class UVMRecorder(UVMObject):
     #   // has already been closed, then the ~close_time~ will be ignored.
     #   //
     #   // This method will trigger a <do_free> call.
-    #   function void free(time close_time = 0);
-    #	   process p=process::self();
-    #	   string s;
-    #
-    #       uvm_tr_stream stream;
-    #
-    #      if (!is_open() && !is_closed())
-    #        return;
-    #
-    #      if (is_open()) begin
-    #         close(close_time);
-    #      end
-    #
-    #      do_free();
-    #
-    #      // Clear out internal state
-    #      stream = get_stream();
-    #
-    #      m_is_closed = 0;
-    #      if(p != null)
-    #      	s=p.get_randstate();
-    #      m_stream_dap = new("stream_dap");
-    #      if(p != null)
-    #      	p.set_randstate(s);
-    #      m_warn_null_stream = 1;
-    #      if (m_ids_by_recorder.exists(this))
-    #        m_free_id(m_ids_by_recorder[this]);
-    #
-    #      // Clear out stream state
-    #      if (stream != null)
-    #        stream.m_free_recorder(this);
-    #   endfunction : free
+    def free(self, close_time=0):
+        # process p=process::self()
+        p = None
+        s = ""
+        stream = None  # uvm_tr_stream
 
+        if not self.is_open() and not self.is_closed():
+            return
+
+        if self.is_open():
+            self.close(close_time)
+
+        self.do_free()
+
+        # Clear out internal state
+        stream = self.get_stream()
+
+        self.m_is_closed = 0
+        if p is not None:
+            s = p.get_randstate()
+        self.m_stream_dap = uvm_set_before_get_dap("stream_dap")
+        if p is not None:
+            p.set_randstate(s)
+        self.m_warn_null_stream = 1
+        if self in UVMRecorder.m_ids_by_recorder:
+            UVMRecorder.m_free_id(UVMRecorder.m_ids_by_recorder[self])
+
+        # Clear out stream state
+        if stream is not None:
+            stream.m_free_recorder(self)
 
     #   // Function: is_open
     #   // Returns true if this ~uvm_recorder~ was opened on its stream,
     #   // but has not yet been closed.
     #   //
-    #   function bit is_open();
-    #      return m_is_opened;
-    #   endfunction : is_open
+    def is_open(self):
+        return self.m_is_opened
+
+
     #
     #   // Function: get_open_time
     #   // Returns the ~open_time~
     #   //
-    #   function time get_open_time();
-    #      return m_open_time;
-    #   endfunction : get_open_time
-    #
+    def get_open_time(self):
+        return self.m_open_time
+
+
     #   // Function: is_closed
     #   // Returns true if this ~uvm_recorder~ was closed on its stream,
     #   // but has not yet been freed.
     #   //
-    #   function bit is_closed();
-    #      return m_is_closed;
-    #   endfunction : is_closed
-    #
+    def is_closed(self):
+        return self.m_is_closed
+
+
     #   // Function: get_close_time
     #   // Returns the ~close_time~
     #   //
-    #   function time get_close_time();
-    #      return m_close_time;
-    #   endfunction : get_close_time
-    #
+    def get_close_time(self):
+        return self.m_close_time
+
     #  // Function- m_do_open
     #  // Initializes the internal state of the recorder.
     #  //
@@ -291,58 +287,53 @@ class UVMRecorder(UVMObject):
     #  // - ~m_do_open~ is called more than once without the
     #  //  recorder being ~freed~ in between.
     #  // - ~stream~ is ~null~
-    #  function void m_do_open(uvm_tr_stream stream, time open_time, string type_name);
-    #     uvm_tr_stream m_stream;
-    #     if (stream == null) begin
-    #        `uvm_error("UVM/REC/NULL_STREAM",
-    #                   $sformatf("Illegal attempt to set STREAM for '%s' to '<null>'",
-    #                             this.get_name()))
-    #        return;
-    #     end
-    #
-    #     if (m_stream_dap.try_get(m_stream)) begin
-    #        `uvm_error("UVM/REC/RE_INIT",
-    #                   $sformatf("Illegal attempt to re-initialize '%s'",
-    #                             this.get_name()))
-    #        return;
-    #     end
-    #
-    #     m_stream_dap.set(stream);
-    #     m_open_time = open_time;
-    #     m_is_opened = 1;
-    #
-    #     do_open(stream, open_time, type_name);
-    #  endfunction : m_do_open
-    #
+    def m_do_open(self, stream, open_time, type_name):
+        m_stream = []
+        if stream is None:
+            uvm_error("UVM/REC/NULL_STREAM",
+               sv.sformatf("Illegal attempt to set STREAM for '%s' to '<null>'",
+                 self.get_name()))
+            return
+
+        if self.m_stream_dap.try_get(m_stream):
+            uvm_error("UVM/REC/RE_INIT",
+                sv.sformatf("Illegal attempt to re-initialize '%s'",
+                self.get_name()))
+            return
+
+        self.m_stream_dap.set(stream)
+        self.m_open_time = open_time
+        self.m_is_opened = 1
+
+        self.do_open(stream, open_time, type_name)
+        #  endfunction : m_do_open
+        #
+
     #   // Group: Handles
-    #
-    #
 
     #   // Variable- m_recorders_by_id
     #   // A corollary to ~m_ids_by_recorder~, this indexes the recorders by their
     #   // unique ids.
-    #   local static uvm_recorder m_recorders_by_id[integer];
+    #   local static uvm_recorder m_recorders_by_id[integer]
     m_recorders_by_id = {}
 
     #
     #   // Variable- m_id
     #   // Static int marking the last assigned id.
-    #   local static integer m_id;
+    #   local static integer m_id
     #
     #   // Function- m_free_id
     #   // Frees the id/recorder link (memory cleanup)
     #   //
-    #   static function void m_free_id(integer id);
-    #      uvm_recorder recorder;
-    #      if ((!$isunknown(id)) && (m_recorders_by_id.exists(id)))
-    #        recorder = m_recorders_by_id[id];
-    #
-    #      if (recorder != null) begin
-    #         m_recorders_by_id.delete(id);
-    #         m_ids_by_recorder.delete(recorder);
-    #      end
-    #   endfunction : m_free_id
-    #
+    @classmethod
+    def m_free_id(cls, id):
+        recorder = None  # uvm_recorder
+        if ((not sv.isunknown(id)) and (id in cls.m_recorders_by_id)):
+            recorder = cls.m_recorders_by_id[id]
+
+        if recorder is not None:
+            del cls.m_recorders_by_id[id]
+            del cls.m_ids_by_recorder[recorder]
 
     #   // Function: get_handle
     #   // Returns a unique ID for this recorder.
@@ -378,10 +369,10 @@ class UVMRecorder(UVMObject):
     #   // This method can be used to access the recorder associated with a
     #   // call to <uvm_transaction::begin_tr> or <uvm_component::begin_tr>.
     #   //
-    #   // | integer handle = tr.begin_tr();
-    #   // | uvm_recorder recorder = uvm_recorder::get_recorder_from_handle(handle);
-    #   // | if (recorder != null) begin
-    #   // |   recorder.record_string("begin_msg", "Started recording transaction!");
+    #   // | integer handle = tr.begin_tr()
+    #   // | uvm_recorder recorder = uvm_recorder::get_recorder_from_handle(handle)
+    #   // | if (recorder != null):
+    #   // |   recorder.record_string("begin_msg", "Started recording transaction!")
     #   // | end
     #   //
     @classmethod
@@ -409,11 +400,11 @@ class UVMRecorder(UVMObject):
     #   function void record_field(string name,
     #                              uvm_bitstream_t value,
     #                              int size,
-    #                              uvm_radix_enum radix=UVM_NORADIX);
-    #      if (get_stream() == null) begin
-    #         return;
+    #                              uvm_radix_enum radix=UVM_NORADIX)
+    #      if (get_stream() is None):
+    #         return
     #      end
-    #      do_record_field(name, value, size, radix);
+    #      do_record_field(name, value, size, radix)
     #   endfunction : record_field
     #
     #   // Function: record_field_int
@@ -432,11 +423,11 @@ class UVMRecorder(UVMObject):
     #   function void record_field_int(string name,
     #                                  uvm_integral_t value,
     #                                  int size,
-    #                                  uvm_radix_enum radix=UVM_NORADIX);
-    #        if (get_stream() == null) begin
-    #         return;
+    #                                  uvm_radix_enum radix=UVM_NORADIX)
+    #        if (get_stream() is None):
+    #         return
     #      end
-    #      do_record_field_int(name, value, size, radix);
+    #      do_record_field_int(name, value, size, radix)
     #   endfunction : record_field_int
     #
 
@@ -449,11 +440,11 @@ class UVMRecorder(UVMObject):
     #   //
     #   // This method will trigger a <do_record_field_real> call.
     #   function void record_field_real(string name,
-    #                                   real value);
-    #      if (get_stream() == null) begin
-    #         return;
+    #                                   real value)
+    #      if (get_stream() is None):
+    #         return
     #      end
-    #      do_record_field_real(name, value);
+    #      do_record_field_real(name, value)
     #   endfunction : record_field_real
 
     #
@@ -467,12 +458,12 @@ class UVMRecorder(UVMObject):
     #   // The implementation must use the <recursion_policy> and <identifier> to
     #   // determine exactly what should be recorded.
     #   function void record_object(string name,
-    #                               uvm_object value);
-    #      if (get_stream() == null) begin
-    #         return;
+    #                               uvm_object value)
+    #      if (get_stream() is None):
+    #         return
     #      end
     #
-    #      do_record_object(name, value);
+    #      do_record_object(name, value)
     #   endfunction : record_object
     #
     #   // Function: record_string
@@ -483,12 +474,12 @@ class UVMRecorder(UVMObject):
     #   // value - Value of the field
     #   //
     #   function void record_string(string name,
-    #                               string value);
-    #      if (get_stream() == null) begin
-    #         return;
+    #                               string value)
+    #      if (get_stream() is None):
+    #         return
     #      end
     #
-    #      do_record_string(name, value);
+    #      do_record_string(name, value)
     #   endfunction : record_string
     #
     #   // Function: record_time
@@ -499,19 +490,19 @@ class UVMRecorder(UVMObject):
     #   // value - Value of the field
     #   //
     #   function void record_time(string name,
-    #                             time value);
-    #      if (get_stream() == null) begin
-    #         return;
+    #                             time value)
+    #      if (get_stream() is None):
+    #         return
     #      end
     #
-    #      do_record_time(name, value);
+    #      do_record_time(name, value)
     #   endfunction : record_time
     #
     #   // Function: record_generic
     #   // Records a name/value pair, where ~value~ has been converted to a string.
     #   //
     #   // For example:
-    #   //| recorder.record_generic("myvar","var_type", $sformatf("%0d",myvar), 32);
+    #   //| recorder.record_generic("myvar","var_type", sv.sformatf("%0d",myvar), 32)
     #   //
     #   // Parameters:
     #   // name - Name of the field
@@ -519,12 +510,12 @@ class UVMRecorder(UVMObject):
     #   // type_name - ~optional~ Type name of the field
     #   function void record_generic(string name,
     #                                string value,
-    #                                string type_name="");
-    #      if (get_stream() == null) begin
-    #         return;
+    #                                string type_name="")
+    #      if (get_stream() is None):
+    #         return
     #      end
     #
-    #      do_record_generic(name, value, type_name);
+    #      do_record_generic(name, value, type_name)
     #   endfunction : record_generic
     #
     #  // Function: use_record_attribute
@@ -535,8 +526,8 @@ class UVMRecorder(UVMObject):
     #  // The default return value is ~0~ (not supported), developers can
     #  // optionally extend ~uvm_recorder~ and set the value to ~1~ if they
     #  // support the <`uvm_record_attribute> macro.
-    #  virtual function bit use_record_attribute();
-    #     return 0;
+    #  virtual function bit use_record_attribute()
+    #     return 0
     #  endfunction : use_record_attribute
     #
     #   // Function: get_record_attribute_handle
@@ -546,22 +537,22 @@ class UVMRecorder(UVMObject):
     #   // however tool vendors can override this method to provide tool-specific handles
     #   // which will be passed to the <`uvm_record_attribute> macro.
     #   //
-    #   virtual function integer get_record_attribute_handle();
-    #      return get_handle();
+    #   virtual function integer get_record_attribute_handle()
+    #      return get_handle()
     #   endfunction : get_record_attribute_handle
     #
     #   // Group: Implementation Agnostic API
     #
+
     #   // Function: do_open
     #   // Callback triggered via <uvm_tr_stream::open_recorder>.
     #   //
     #   // The ~do_open~ callback can be used to initialize any internal
     #   // state within the recorder, as well as providing a location to
     #   // record any initial information.
-    #   protected virtual function void do_open(uvm_tr_stream stream,
-    #                                             time open_time,
-    #                                             string type_name);
-    #   endfunction : do_open
+    def do_open(self, stream, open_time, type_name):
+        pass
+
     #
     #   // Function: do_close
     #   // Callback triggered via <close>.
@@ -569,7 +560,7 @@ class UVMRecorder(UVMObject):
     #   // The ~do_close~ callback can be used to set internal state
     #   // within the recorder, as well as providing a location to
     #   // record any closing information.
-    #   protected virtual function void do_close(time close_time);
+    #   protected virtual function void do_close(time close_time)
     #   endfunction : do_close
     #
     #   // Function: do_free
@@ -578,7 +569,7 @@ class UVMRecorder(UVMObject):
     #   // The ~do_free~ callback can be used to release the internal
     #   // state within the recorder, as well as providing a location
     #   // to record any "freeing" information.
-    #   protected virtual function void do_free();
+    #   protected virtual function void do_free()
     #   endfunction : do_free
     #
     #   // Function: do_record_field
@@ -588,7 +579,7 @@ class UVMRecorder(UVMObject):
     #   pure virtual protected function void do_record_field(string name,
     #                                                        uvm_bitstream_t value,
     #                                                        int size,
-    #                                                        uvm_radix_enum radix);
+    #                                                        uvm_radix_enum radix)
     #
     #   // Function: do_record_field_int
     #   // Records an integral field (less than or equal to 64 bits).
@@ -597,35 +588,35 @@ class UVMRecorder(UVMObject):
     #   pure virtual protected function void do_record_field_int(string name,
     #                                                            uvm_integral_t value,
     #                                                            int          size,
-    #                                                            uvm_radix_enum radix);
+    #                                                            uvm_radix_enum radix)
     #
     #   // Function: do_record_field_real
     #   // Records a real field.
     #   //
     #   // ~Mandatory~ Backend implementation of <record_field_real>
     #   pure virtual protected function void do_record_field_real(string name,
-    #                                                             real value);
+    #                                                             real value)
     #
     #   // Function: do_record_object
     #   // Records an object field.
     #   //
     #   // ~Mandatory~ Backend implementation of <record_object>
     #   pure virtual protected function void do_record_object(string name,
-    #                                                         uvm_object value);
+    #                                                         uvm_object value)
     #
     #   // Function: do_record_string
     #   // Records a string field.
     #   //
     #   // ~Mandatory~ Backend implementation of <record_string>
     #   pure virtual protected function void do_record_string(string name,
-    #                                                         string value);
+    #                                                         string value)
     #
     #   // Function: do_record_time
     #   // Records a time field.
     #   //
     #   // ~Mandatory~ Backend implementation of <record_time>
     #   pure virtual protected function void do_record_time(string name,
-    #                                                       time value);
+    #                                                       time value)
     #
     #   // Function: do_record_generic
     #   // Records a name/value pair, where ~value~ has been converted to a string.
@@ -633,7 +624,7 @@ class UVMRecorder(UVMObject):
     #   // ~Mandatory~ Backend implementation of <record_generic>
     #   pure virtual protected function void do_record_generic(string name,
     #                                                          string value,
-    #                                                          string type_name);
+    #                                                          string type_name)
     #
     #
     #   // The following code is primarily for backwards compat. purposes.  "Transaction
@@ -656,8 +647,8 @@ class UVMRecorder(UVMObject):
     #  // Opens the file in the <filename> property and assigns to the
     #  // file descriptor <file>.
     #  //
-    #  virtual function bit open_file();
-    #     return 0;
+    #  virtual function bit open_file()
+    #     return 0
     #  endfunction
     #
     #  // Function- create_stream
@@ -665,8 +656,8 @@ class UVMRecorder(UVMObject):
     #  //
     #  virtual function integer create_stream (string name,
     #                                          string t,
-    #                                          string scope);
-    #     return -1;
+    #                                          string scope)
+    #     return -1
     #  endfunction
     #
     #
@@ -675,7 +666,7 @@ class UVMRecorder(UVMObject):
     #  //
     #  virtual function void m_set_attribute (integer txh,
     #                                 string nm,
-    #                                 string value);
+    #                                 string value)
     #  endfunction
     #
     #
@@ -685,15 +676,15 @@ class UVMRecorder(UVMObject):
     #                               string nm,
     #                               logic [1023:0] value,
     #                               uvm_radix_enum radix,
-    #                               integer numbits=1024);
+    #                               integer numbits=1024)
     #  endfunction
     #
     #
     #  // Function- check_handle_kind
     #  //
     #  //
-    #  virtual function integer check_handle_kind (string htype, integer handle);
-    #     return 0;
+    #  virtual function integer check_handle_kind (string htype, integer handle)
+    #     return 0
     #  endfunction
     #
     #
@@ -705,15 +696,15 @@ class UVMRecorder(UVMObject):
     #                                     string nm,
     #                                     string label="",
     #                                     string desc="",
-    #                                     time begin_time=0);
-    #    return -1;
+    #                                     time begin_time=0)
+    #    return -1
     #  endfunction
     #
     #
     #  // Function- end_tr
     #  //
     #  //
-    #  virtual function void end_tr (integer handle, time end_time=0);
+    #  virtual function void end_tr (integer handle, time end_time=0)
     #  endfunction
     #
     #
@@ -722,7 +713,7 @@ class UVMRecorder(UVMObject):
     #  //
     #  virtual function void link_tr(integer h1,
     #                                 integer h2,
-    #                                 string relation="");
+    #                                 string relation="")
     #  endfunction
     #
     #
@@ -730,7 +721,7 @@ class UVMRecorder(UVMObject):
     #  // Function- free_tr
     #  //
     #  //
-    #  virtual function void free_tr(integer handle);
+    #  virtual function void free_tr(integer handle)
     #  endfunction
     #
     #endclass // uvm_recorder
@@ -754,7 +745,7 @@ class UVMTextRecorder(UVMRecorder):
         super().__init__(name)
         # Variable- m_text_db
         # Reference to the text database backend
-        self.m_text_db = None  # #   uvm_text_tr_database 
+        self.m_text_db = None  # #   uvm_text_tr_database
 
         # Variable- scope
         # Imeplementation detail
@@ -768,51 +759,39 @@ class UVMTextRecorder(UVMRecorder):
     #   // Callback triggered via <uvm_tr_stream::open_recorder>.
     #   //
     #   // Text-backend specific implementation.
-    #   protected virtual function void do_open(uvm_tr_stream stream,
-    #                                             time open_time,
-    #                                             string type_name);
-    #      $cast(m_text_db, stream.get_db());
-    #      if (m_text_db.open_db())
-    #        $fdisplay(m_text_db.m_file,
-    #                  "    OPEN_RECORDER @%0t {TXH:%0d STREAM:%0d NAME:%s TIME:%0t TYPE=\"%0s\"}",
-    #                  $realtime,
-    #                  this.get_handle(),
-    #                  stream.get_handle(),
-    #                  this.get_name(),
-    #                  open_time,
-    #                  type_name);
-    #   endfunction : do_open
+    def do_open(self, stream, open_time, type_name):
+        self. m_text_db = stream.get_db()
+        if self.m_text_db.open_db():
+            sv.fdisplay(self.m_text_db.m_file,
+                "    OPEN_RECORDER @%0t {{TXH:%0d STREAM:%0d NAME:%s TIME:%0t TYPE=\"%0s\"}}",
+                sv.realtime(), self.get_handle(), stream.get_handle(),
+                self.get_name(), open_time, type_name)
 
-    #
+
     #   // Function: do_close
     #   // Callback triggered via <uvm_recorder::close>.
     #   //
     #   // Text-backend specific implementation.
-    #   protected virtual function void do_close(time close_time);
-    #      if (m_text_db.open_db()) begin
-    #         $fdisplay(m_text_db.m_file,
-    #                   "    CLOSE_RECORDER @%0t {TXH:%0d TIME=%0t}",
-    #                   $realtime,
-    #                   this.get_handle(),
-    #                   close_time);
-    #
-    #      end
-    #   endfunction : do_close
+    def do_close(self, close_time):
+        if self.m_text_db.open_db():
+            sv.fdisplay(self.m_text_db.m_file,
+                 "    CLOSE_RECORDER @%0t {{TXH:%0d TIME=%0t}}",
+                 sv.realtime(),
+                 self.get_handle(),
+                 close_time)
 
     #
     #   // Function: do_free
     #   // Callback triggered via <uvm_recorder::free>.
     #   //
     #   // Text-backend specific implementation.
-    #   protected virtual function void do_free();
-    #      if (m_text_db.open_db()) begin
-    #         $fdisplay(m_text_db.m_file,
-    #                   "    FREE_RECORDER @%0t {TXH:%0d}",
-    #                   $realtime,
-    #                   this.get_handle());
-    #      end
-    #      m_text_db = null;
-    #   endfunction : do_free
+    def do_free(self):
+        if self.m_text_db.open_db():
+            sv.fdisplay(self.m_text_db.m_file,
+                "    FREE_RECORDER @%0t {{TXH:%0d}}",
+                sv.realtime(), self.get_handle())
+
+        self.m_text_db = None
 
     #
     #   // Function: do_record_field
@@ -822,15 +801,15 @@ class UVMTextRecorder(UVMRecorder):
     #   protected virtual function void do_record_field(string name,
     #                                                   uvm_bitstream_t value,
     #                                                   int size,
-    #                                                   uvm_radix_enum radix);
-    #      scope.set_arg(name);
+    #                                                   uvm_radix_enum radix)
+    #      scope.set_arg(name)
     #      if (!radix)
-    #        radix = default_radix;
+    #        radix = default_radix
     #
     #      write_attribute(scope.get(),
     #                      value,
     #                      radix,
-    #                      size);
+    #                      size)
     #
     #   endfunction : do_record_field
 
@@ -843,15 +822,15 @@ class UVMTextRecorder(UVMRecorder):
     #   protected virtual function void do_record_field_int(string name,
     #                                                       uvm_integral_t value,
     #                                                       int          size,
-    #                                                       uvm_radix_enum radix);
-    #      scope.set_arg(name);
+    #                                                       uvm_radix_enum radix)
+    #      scope.set_arg(name)
     #      if (!radix)
-    #        radix = default_radix;
+    #        radix = default_radix
     #
     #      write_attribute_int(scope.get(),
     #                          value,
     #                          radix,
-    #                          size);
+    #                          size)
     #
     #   endfunction : do_record_field_int
     #
@@ -861,14 +840,14 @@ class UVMTextRecorder(UVMRecorder):
     #   //
     #   // Text-backened specific implementation.
     #   protected virtual function void do_record_field_real(string name,
-    #                                                        real value);
-    #      bit [63:0] ival = $realtobits(value);
-    #      scope.set_arg(name);
+    #                                                        real value)
+    #      bit [63:0] ival = $realtobits(value)
+    #      scope.set_arg(name)
     #
     #      write_attribute_int(scope.get(),
     #                          ival,
     #                          UVM_REAL,
-    #                          64);
+    #                          64)
     #   endfunction : do_record_field_real
     #
     #   // Function: do_record_object
@@ -880,30 +859,30 @@ class UVMTextRecorder(UVMRecorder):
     #   // record the object instance id, and ~recursion_policy~ to
     #   // determine whether or not to recurse into the object.
     #   protected virtual function void do_record_object(string name,
-    #                                                    uvm_object value);
-    #      int            v;
-    #      string         str;
+    #                                                    uvm_object value)
+    #      int            v
+    #      string         str
     #
-    #      if(identifier) begin
-    #         if(value != null) begin
-    #            $swrite(str, "%0d", value.get_inst_id());
-    #            v = str.atoi();
+    #      if(identifier):
+    #         if(value != null):
+    #            $swrite(str, "%0d", value.get_inst_id())
+    #            v = str.atoi()
     #         end
-    #         scope.set_arg(name);
+    #         scope.set_arg(name)
     #         write_attribute_int(scope.get(),
     #                             v,
     #                             UVM_DEC,
-    #                             32);
+    #                             32)
     #      end
     #
-    #      if(policy != UVM_REFERENCE) begin
-    #         if(value!=null) begin
-    #            if(value.__m_uvm_status_container.cycle_check.exists(value)) return;
-    #            value.__m_uvm_status_container.cycle_check[value] = 1;
-    #            scope.down(name);
-    #            value.record(this);
-    #            scope.up();
-    #            value.__m_uvm_status_container.cycle_check.delete(value);
+    #      if(policy != UVM_REFERENCE):
+    #         if(value!=null):
+    #            if(value.__m_uvm_status_container.cycle_check.exists(value)) return
+    #            value.__m_uvm_status_container.cycle_check[value] = 1
+    #            scope.down(name)
+    #            value.record(this)
+    #            scope.up()
+    #            value.__m_uvm_status_container.cycle_check.delete(value)
     #         end
     #      end
     #   endfunction : do_record_object
@@ -913,9 +892,9 @@ class UVMTextRecorder(UVMRecorder):
     #   //
     #   // Text-backend specific implementation.
     #   protected virtual function void do_record_string(string name,
-    #                                                    string value);
-    #      scope.set_arg(name);
-    #      if (m_text_db.open_db()) begin
+    #                                                    string value)
+    #      scope.set_arg(name)
+    #      if (m_text_db.open_db()):
     #         $fdisplay(m_text_db.m_file,
     #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
     #                   $realtime,
@@ -923,7 +902,7 @@ class UVMTextRecorder(UVMRecorder):
     #                   scope.get(),
     #                   value,
     #                   "UVM_STRING",
-    #                   8+value.len());
+    #                   8+value.len())
     #      end
     #   endfunction : do_record_string
     #
@@ -932,12 +911,12 @@ class UVMTextRecorder(UVMRecorder):
     #   //
     #   // Text-backend specific implementation.
     #   protected virtual function void do_record_time(string name,
-    #                                                    time value);
-    #      scope.set_arg(name);
+    #                                                    time value)
+    #      scope.set_arg(name)
     #      write_attribute_int(scope.get(),
     #                          value,
     #                          UVM_TIME,
-    #                          64);
+    #                          64)
     #   endfunction : do_record_time
     #
     #   // Function: do_record_generic
@@ -946,12 +925,12 @@ class UVMTextRecorder(UVMRecorder):
     #   // Text-backend specific implementation.
     #   protected virtual function void do_record_generic(string name,
     #                                                     string value,
-    #                                                     string type_name);
-    #      scope.set_arg(name);
+    #                                                     string type_name)
+    #      scope.set_arg(name)
     #      write_attribute(scope.get(),
     #                      uvm_string_to_bits(value),
     #                      UVM_STRING,
-    #                      8+value.len());
+    #                      8+value.len())
     #   endfunction : do_record_generic
     #
 
@@ -969,8 +948,8 @@ class UVMTextRecorder(UVMRecorder):
     #   function void write_attribute(string nm,
     #                                 uvm_bitstream_t value,
     #                                 uvm_radix_enum radix,
-    #                                 integer numbits=$bits(uvm_bitstream_t));
-    #      if (m_text_db.open_db()) begin
+    #                                 integer numbits=$bits(uvm_bitstream_t))
+    #      if (m_text_db.open_db()):
     #         $fdisplay(m_text_db.m_file,
     #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
     #                   $realtime,
@@ -978,7 +957,7 @@ class UVMTextRecorder(UVMRecorder):
     #                   nm,
     #                   uvm_bitstream_to_string(value, numbits, radix),
     #                    radix.name(),
-    #                   numbits);
+    #                   numbits)
     #      end
     #   endfunction : write_attribute
 
@@ -994,8 +973,8 @@ class UVMTextRecorder(UVMRecorder):
     #   function void write_attribute_int(string  nm,
     #                                     uvm_integral_t value,
     #                                     uvm_radix_enum radix,
-    #                                     integer numbits=$bits(uvm_bitstream_t));
-    #      if (m_text_db.open_db()) begin
+    #                                     integer numbits=$bits(uvm_bitstream_t))
+    #      if (m_text_db.open_db()):
     #         $fdisplay(m_text_db.m_file,
     #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
     #                   $realtime,
@@ -1003,7 +982,7 @@ class UVMTextRecorder(UVMRecorder):
     #                   nm,
     #                   uvm_integral_to_string(value, numbits, radix),
     #                   radix.name(),
-    #                   numbits);
+    #                   numbits)
     #      end
     #   endfunction : write_attribute_int
 
@@ -1019,19 +998,19 @@ class UVMTextRecorder(UVMRecorder):
     #  // Vendors provide subtype implementations and overwrite the
     #  // <uvm_default_recorder> handle.
     #
-    #   string                                                   filename;
-    #   bit                                                      filename_set;
+    #   string                                                   filename
+    #   bit                                                      filename_set
     #
     #  // Function- open_file
     #  //
     #  // Opens the file in the <filename> property and assigns to the
     #  // file descriptor <file>.
     #  //
-    #  virtual function bit open_file();
-    #     if (!filename_set) begin
-    #        m_text_db.set_file_name(filename);
+    #  virtual function bit open_file()
+    #     if (!filename_set):
+    #        m_text_db.set_file_name(filename)
     #     end
-    #     return m_text_db.open_db();
+    #     return m_text_db.open_db()
     #  endfunction
     #
     #
@@ -1041,13 +1020,13 @@ class UVMTextRecorder(UVMRecorder):
     #  //
     #  virtual function integer create_stream (string name,
     #                                          string t,
-    #                                          string scope);
-    #     uvm_text_tr_stream stream;
-    #     if (open_file()) begin
-    #        $cast(stream,m_text_db.open_stream(name, scope, t));
-    #        return stream.get_handle();
+    #                                          string scope)
+    #     uvm_text_tr_stream stream
+    #     if (open_file()):
+    #        $cast(stream,m_text_db.open_stream(name, scope, t))
+    #        return stream.get_handle()
     #     end
-    #     return 0;
+    #     return 0
     #  endfunction
 
     #
@@ -1057,10 +1036,10 @@ class UVMTextRecorder(UVMRecorder):
     #  //
     #  virtual function void m_set_attribute (integer txh,
     #                                 string nm,
-    #                                 string value);
-    #     if (open_file()) begin
-    #        UVM_FILE file = m_text_db.m_file;
-    #        $fdisplay(file,"      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s}", $realtime,txh,nm,value);
+    #                                 string value)
+    #     if (open_file()):
+    #        UVM_FILE file = m_text_db.m_file
+    #        $fdisplay(file,"      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s}", $realtime,txh,nm,value)
     #     end
     #  endfunction
 
@@ -1073,9 +1052,9 @@ class UVMTextRecorder(UVMRecorder):
     #                               string nm,
     #                               logic [1023:0] value,
     #                               uvm_radix_enum radix,
-    #                               integer numbits=1024);
-    #     if (open_file()) begin
-    #        UVM_FILE file = m_text_db.m_file;
+    #                               integer numbits=1024)
+    #     if (open_file()):
+    #        UVM_FILE file = m_text_db.m_file
     #         $fdisplay(file,
     #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
     #                   $realtime,
@@ -1083,7 +1062,7 @@ class UVMTextRecorder(UVMRecorder):
     #                   nm,
     #                   uvm_bitstream_to_string(value, numbits, radix),
     #                   radix.name(),
-    #                   numbits);
+    #                   numbits)
     #
     #     end
     #  endfunction
@@ -1093,9 +1072,9 @@ class UVMTextRecorder(UVMRecorder):
     #  // Function- check_handle_kind
     #  //
     #  //
-    #  virtual function integer check_handle_kind (string htype, integer handle);
+    #  virtual function integer check_handle_kind (string htype, integer handle)
     #     return ((uvm_recorder::get_recorder_from_handle(handle) != null) ||
-    #             (uvm_tr_stream::get_stream_from_handle(handle) != null));
+    #             (uvm_tr_stream::get_stream_from_handle(handle) != null))
     #  endfunction
 
     #
@@ -1108,19 +1087,19 @@ class UVMTextRecorder(UVMRecorder):
     #                                     string nm,
     #                                     string label="",
     #                                     string desc="",
-    #                                     time begin_time=0);
-    #     if (open_file()) begin
-    #        uvm_tr_stream stream_obj = uvm_tr_stream::get_stream_from_handle(stream);
-    #        uvm_recorder recorder;
+    #                                     time begin_time=0)
+    #     if (open_file()):
+    #        uvm_tr_stream stream_obj = uvm_tr_stream::get_stream_from_handle(stream)
+    #        uvm_recorder recorder
     #
-    #        if (stream_obj == null)
-    #          return -1;
+    #        if (stream_obj is None)
+    #          return -1
     #
-    #        recorder = stream_obj.open_recorder(nm, begin_time, txtype);
+    #        recorder = stream_obj.open_recorder(nm, begin_time, txtype)
     #
-    #        return recorder.get_handle();
+    #        return recorder.get_handle()
     #     end
-    #     return -1;
+    #     return -1
     #  endfunction
 
     #
@@ -1128,11 +1107,11 @@ class UVMTextRecorder(UVMRecorder):
     #  // Function- end_tr
     #  //
     #  //
-    #  virtual function void end_tr (integer handle, time end_time=0);
-    #     if (open_file()) begin
-    #        uvm_recorder record = uvm_recorder::get_recorder_from_handle(handle);
-    #        if (record != null) begin
-    #           record.close(end_time);
+    #  virtual function void end_tr (integer handle, time end_time=0)
+    #     if (open_file()):
+    #        uvm_recorder record = uvm_recorder::get_recorder_from_handle(handle)
+    #        if (record != null):
+    #           record.close(end_time)
     #        end
     #     end
     #  endfunction
@@ -1144,21 +1123,21 @@ class UVMTextRecorder(UVMRecorder):
     #  //
     #  virtual function void link_tr(integer h1,
     #                                 integer h2,
-    #                                 string relation="");
+    #                                 string relation="")
     #    if (open_file())
     #      $fdisplay(m_text_db.m_file,"  LINK @%0t {TXH1:%0d TXH2:%0d RELATION=%0s}", $realtime,h1,
-    #          h2,relation);
+    #          h2,relation)
     #  endfunction
 
 
     #  // Function- free_tr
     #  //
     #  //
-    #  virtual function void free_tr(integer handle);
-    #     if (open_file()) begin
-    #        uvm_recorder record = uvm_recorder::get_recorder_from_handle(handle);
-    #        if (record != null) begin
-    #           record.free();
+    #  virtual function void free_tr(integer handle)
+    #     if (open_file()):
+    #        uvm_recorder record = uvm_recorder::get_recorder_from_handle(handle)
+    #        if (record != null):
+    #           record.free()
     #        end
     #     end
     #  endfunction // free_tr

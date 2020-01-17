@@ -15,6 +15,7 @@ from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 from .uvm_recorder import UVMRecorder
 from .uvm_globals import uvm_is_match
 from .uvm_factory import UVMObjectWrapper
+from .uvm_links import (UVMRelatedLink, UVMParentChildLink)
 
 
 class VerbositySetting:
@@ -113,6 +114,7 @@ class UVMComponent(UVMReportObject):
         self.recording_detail = UVM_NONE
         self.m_name = ""
         self.m_verbosity_settings = []
+        self.m_main_stream = None
 
         # functors to override uvm_root defaults
         self.m_phase_imps = {}  # uvm_phase[uvm_phase]
@@ -1564,7 +1566,8 @@ class UVMComponent(UVMReportObject):
     #  function void do_begin_tr (uvm_transaction tr,
     #                             string stream_name,
     #                             integer tr_handle)
-
+    def do_begin_tr(self, tr, stream_name, tr_handle):
+        return
 
     #// Function: end_tr
     #//
@@ -1601,7 +1604,7 @@ class UVMComponent(UVMReportObject):
         if tr is None:
             return
 
-        tr.end_tr(end_time,free_handle)
+        tr.end_tr(end_time, free_handle)
 
         if self.recording_detail != UVM_NONE:
             if tr in self.m_tr_h:
@@ -1693,9 +1696,9 @@ class UVMComponent(UVMReportObject):
     #                                                    string stream_type_name="")
     def get_tr_stream(self, name, stream_type_name=""):
         db = self.m_get_tr_database()  # uvm_tr_database
-        if not (name in self.m_streams):
+        if name not in self.m_streams:
             self.m_streams[name] = {}
-        if not(stream_type_name in self.m_streams[name]):
+        if stream_type_name not in self.m_streams[name]:
             self.m_streams[name][stream_type_name] = db.open_stream(name,
                     self.get_full_name(), stream_type_name)
         return self.m_streams[name][stream_type_name]
@@ -1858,10 +1861,10 @@ class UVMComponent(UVMReportObject):
             return 0
 
         db = self.m_get_tr_database()
-        if (parent_handle != 0):
+        if parent_handle != 0:
             parent_recorder = UVMRecorder.get_recorder_from_handle(parent_handle)
 
-        if (parent_recorder is None):
+        if parent_recorder is None:
             seq = []  # uvm_sequence_item
             from ..seq.uvm_sequence_item import UVMSequenceItem
             if (sv.cast(seq,tr, UVMSequenceItem)):
@@ -1870,7 +1873,7 @@ class UVMComponent(UVMReportObject):
                 if (parent_seq is not None):
                     parent_recorder = parent_seq.m_tr_recorder
 
-        if (parent_recorder is not None):
+        if parent_recorder is not None:
             link_handle = tr.begin_child_tr(begin_time, parent_recorder.get_handle())
         else:
             link_handle = tr.begin_tr(begin_time)
@@ -1884,43 +1887,40 @@ class UVMComponent(UVMReportObject):
             name = tr.get_type_name()
 
         # TODO needed for recording only
-        #   if (uvm_verbosity'(recording_detail) != UVM_NONE):
-        #      if ((stream_name == "") || (stream_name == "main")):
-        #        if (m_main_stream is None)
-        #           m_main_stream = db.open_stream("main", this.get_full_name(), "TVM")
-        #         stream = m_main_stream
-        #      end
-        #      else
-        #        stream = get_tr_stream(stream_name)
-        #
-        #      if (stream is not None ):
-        #         kind = (parent_recorder is None) ? "Begin_No_Parent, Link" : "Begin_End, Link"
-        #
-        #         recorder = stream.open_recorder(name, begin_time, kind)
-        #
-        #         if (recorder is not None):
-        #            if (label != "")
-        #              recorder.record_string("label", label)
-        #            if (desc != "")
-        #              recorder.record_string("desc", desc)
-        #
-        #            if (parent_recorder is not None):
-        #               self.tr_database.establish_link(uvm_parent_child_link::get_link(parent_recorder,
-        #                                                                          recorder))
-        #            end
-        #
-        #            if (link_recorder is not None):
-        #               self.tr_database.establish_link(uvm_related_link::get_link(recorder,
-        #                                                                     link_recorder))
-        #            end
-        #            m_tr_h[tr] = recorder
-        #         end
-        #      end
-        #
-        #      handle = (recorder is None) ? 0 : recorder.get_handle()
-        #      do_begin_tr(tr, stream_name, handle)
-        #
-        #   end
+        if self.recording_detail != UVM_NONE:
+            if (stream_name == "") or (stream_name == "main"):
+                if self.m_main_stream is None:
+                    print("LLL Opening stream now")
+                    self.m_main_stream = db.open_stream("main", self.get_full_name(), "TVM")
+                    stream = self.m_main_stream
+            else:
+                stream = self.get_tr_stream(stream_name)
+        
+            if stream is not None:
+                print("LLL stream is not None")
+                kind = "Begin_End, Link"
+                if parent_recorder is None:
+                    kind = "Begin_No_Parent, Link"
+                recorder = stream.open_recorder(name, begin_time, kind)
+        
+                if recorder is not None:
+                    if label != "":
+                        recorder.record_string("label", label)
+                    if desc != "":
+                        recorder.record_string("desc", desc)
+        
+                    if parent_recorder is not None:
+                        self.tr_database.establish_link(UVMParentChildLink.get_link(parent_recorder,
+                                                                                  recorder))
+                    if link_recorder is not None:
+                        self.tr_database.establish_link(UVMRelatedLink.get_link(recorder,
+                                                                             link_recorder))
+                    self.m_tr_h[tr] = recorder
+        
+            handle = 0
+            if recorder is not None:
+                handle = recorder.get_handle()
+            self.do_begin_tr(tr, stream_name, handle)
 
         e = self.event_pool.get("begin_tr")
         if e is not None:
@@ -2722,15 +2722,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#
-#// do_begin_tr
-#// -----------
-#
-#function void uvm_component::do_begin_tr (uvm_transaction tr,
-#                                          string stream_name,
-#                                          integer tr_handle)
-#  return
-#endfunction
 #
 #
 #

@@ -167,6 +167,7 @@ class my_driver(UVMDriver):
         UVMDriver.__init__(self, name, parent)
         self.data_array = [0] * 512  # int data_array[511:0]
         self.nitems = 0
+        self.recording_detail = UVM_HIGH
 
     @cocotb.coroutine
     def run_phase(self, phase):
@@ -181,6 +182,7 @@ class my_driver(UVMDriver):
 
             self.nitems += 1
             req = qreq[0]
+            self.begin_tr(req)
             rsp = bus_rsp("bus_rsp")
             rsp.set_id_info(req)
 
@@ -193,6 +195,7 @@ class my_driver(UVMDriver):
                 self.data_array[req.addr] = req.data
                 uvm_info("sending", toSTRING(req), UVM_MEDIUM)
             yield self.seq_item_port.put(rsp)
+            self.end_tr(req)
 
 uvm_component_utils(my_driver)
 
@@ -214,7 +217,6 @@ class sequenceA(UVMSequence):
         uvm_info("sequenceA", "Starting sequence", UVM_MEDIUM)
 
         for i in range(NUM_LOOPS):
-        #for(int unsigned i = 0; i < `NUM_LOOPS; i++) begin
             #req = uvm_create(req, self.m_sequencer)
             uvm_info("sequenceA", "Starting item " + str(i), UVM_MEDIUM)
             req = bus_req("my_req")

@@ -30,6 +30,8 @@ from ..macros.uvm_object_defines import uvm_object_utils
 from ..macros.uvm_message_defines import uvm_error
 from .uvm_globals import uvm_sim_time
 
+from .uvm_recorder import UVMTextRecorder
+
 #//------------------------------------------------------------------------------
 #// File: Transaction Recording Streams
 #//
@@ -71,9 +73,6 @@ class uvm_tr_stream(UVMObject):
     #   // Data access protected reference to the DB
     #   local uvm_set_before_get_dap#(m_uvm_tr_stream_cfg) m_cfg_dap
     #
-    #   // Variable- m_records
-    #   // Active records in the stream (active == open or closed)
-    #   local bit m_records[uvm_recorder]
     #
     #   // Variable- m_warn_null_cfg
     #   // Used to limit the number of warnings
@@ -98,6 +97,10 @@ class uvm_tr_stream(UVMObject):
     def __init__(self, name="unnamed-uvm_tr_stream"):
         UVMObject.__init__(self, name)
         self.m_cfg_dap = uvm_set_before_get_dap("cfg_dap")
+        #   // Variable- m_records
+        #   // Active records in the stream (active == open or closed)
+        self.m_records = {}  # bit [uvm_recorder]
+        self.m_warn_null_cfg = 0
         #   endfunction : new
 
     #
@@ -121,18 +124,18 @@ class uvm_tr_stream(UVMObject):
     #   //
     #   // A warning will be asserted if get_db is called prior to
     #   // the stream being initialized via <do_open>.
-    #   function uvm_tr_database get_db()
-    #      m_uvm_tr_stream_cfg m_cfg
-    #      if (!m_cfg_dap.try_get(m_cfg)) begin
-    #         if (m_warn_null_cfg == 1)
-    #           `uvm_warning("UVM/REC_STR/NO_CFG",
-    #                        $sformatf("attempt to retrieve DB from '%s' before it was set!",
-    #                                  get_name()))
-    #         m_warn_null_cfg = 0
-    #         return null
-    #      end
-    #      return m_cfg.db
+    def get_db(self):
+        m_cfg = []  # m_uvm_tr_stream_cfg m_cfg
+        if not self.m_cfg_dap.try_get(m_cfg):
+            if self.m_warn_null_cfg == 1:
+                uvm_warning("UVM/REC_STR/NO_CFG",
+                    sv.sformatf("attempt to retrieve DB from '%s' before it was set!",
+                        self.get_name()))
+            self.m_warn_null_cfg = 0
+            return None
+        return m_cfg[0].db
     #   endfunction : get_db
+
     #
     #   // Function: get_scope
     #   // Returns the ~scope~ supplied when opening this stream.
@@ -183,6 +186,7 @@ class uvm_tr_stream(UVMObject):
     #   // "Free", however it is illegal to establish a link after "Freeing" the stream.
     #   //
     #
+
     #   // Function: close
     #   // Closes this stream.
     #   //
@@ -205,6 +209,7 @@ class uvm_tr_stream(UVMObject):
     #      m_is_closed = 1
     #   endfunction : close
     #
+
     #   // Function: free
     #   // Frees this stream.
     #   //
@@ -233,17 +238,17 @@ class uvm_tr_stream(UVMObject):
     #      db = get_db()
     #      m_is_closed = 0
     #      p = process::self()
-    #      if(p != null)
+    #      if(p != None)
     #      	s = p.get_randstate()
     #      m_cfg_dap = new("cfg_dap")
-    #      if(p != null)
+    #      if(p != None)
     #      	p.set_randstate(s)
     #      m_warn_null_cfg = 1
     #      if (m_ids_by_stream.exists(this))
     #        m_free_id(m_ids_by_stream[this])
     #
     #      // Clear out DB state
-    #      if (db != null)
+    #      if (db != None)
     #        db.m_free_stream(this)
     #   endfunction : free
 
@@ -260,16 +265,16 @@ class uvm_tr_stream(UVMObject):
     #   // An error will be asserted if-
     #   // - m_do_open is called more than once without the stream
     #   //   being ~freed~ between.
-    #   // - m_do_open is passed a ~null~ db
+    #   // - m_do_open is passed a ~None~ db
     #   function void m_do_open(uvm_tr_database db,
     #                           string scope="",
     #                           string stream_type_name="")
     def m_do_open(self, db, scope="", stream_type_name=""):
-        m_cfg = None # m_uvm_tr_stream_cfg
+        m_cfg = []  # m_uvm_tr_stream_cfg
         m_db = None  # uvm_tr_database
         if db is None:
             uvm_error("UVM/REC_STR/NULL_DB",
-                       sv.sformatf("Illegal attempt to set DB for '%s' to '<null>'",
+                       sv.sformatf("Illegal attempt to set DB for '%s' to '<None>'",
                                  self.get_full_name()))
             return
 
@@ -309,9 +314,10 @@ class uvm_tr_stream(UVMObject):
     #   // New recorders can be opened prior to the stream being ~closed~.
     #   //
     #   // Once a stream has been closed, requests to open a new recorder
-    #   // will be ignored (<open_recorder> will return ~null~).
+    #   // will be ignored (<open_recorder> will return ~None~).
     #   //
     #
+
     #   // Function: open_recorder
     #   // Marks the opening of a new transaction recorder on the stream.
     #   //
@@ -324,48 +330,44 @@ class uvm_tr_stream(UVMObject):
     #   // the current time.
     #   //
     #   // This method will trigger a <do_open_recorder> call.  If ~do_open_recorder~
-    #   // returns a non-~null~ value, then the <uvm_recorder::do_open> method will
+    #   // returns a non-~None~ value, then the <uvm_recorder::do_open> method will
     #   // be called in the recorder.
     #   //
     #   // Transaction recorders can only be opened if the stream is
     #   // ~open~ on the database (per <is_open>).  Otherwise the
-    #   // request will be ignored, and ~null~ will be returned.
-    #   function uvm_recorder open_recorder(string name,
-    #                                      time   open_time = 0,
-    #                                      string type_name="")
-    #      time m_time = (open_time == 0) ? $time : open_time
-    #
-    #      // Check to make sure we're open
-    #      if (!is_open())
-    #        return null
-    #      else begin
-    #         process p = process::self()
-    #         string s
-    #
-    #         if (p != null)
-    #           s = p.get_randstate()
-    #
-    #         open_recorder = do_open_recorder(name,
-    #                                          m_time,
-    #                                          type_name)
-    #
-    #
-    #
-    #         if (open_recorder != null) begin
-    #            m_records[open_recorder] = 1
-    #            open_recorder.m_do_open(this, m_time, type_name)
-    #         end
-    #         if (p != null)
-    #           p.set_randstate(s)
-    #      end
-    #   endfunction : open_recorder
-    #
+    #   // request will be ignored, and ~None~ will be returned.
+    def open_recorder(self, name, open_time=0, type_name=""):
+        m_time = open_time
+        if open_time == 0:
+            m_time = sv.time()
+
+        # Check to make sure we're open
+        if not self.is_open():
+            return None
+        else:
+            #process p = process::self()
+            p = None
+            s = ""
+            if p is not None:
+                s = p.get_randstate()
+            open_recorder = self.do_open_recorder(name, m_time, type_name)
+        
+            if open_recorder is not None:
+                self.m_records[open_recorder] = 1
+                open_recorder.m_do_open(self, m_time, type_name)
+
+            if p is not None:
+                p.set_randstate(s)
+            return open_recorder
+        #   endfunction : open_recorder
+
+
     #   // Function- m_free_recorder
     #   // Removes recorder from the internal array
-    #   function void m_free_recorder(uvm_recorder recorder)
-    #      if (m_records.exists(recorder))
-    #        m_records.delete(recorder)
-    #   endfunction : m_free_recorder
+    def m_free_recorder(self, recorder):
+        if recorder in self.m_records:
+            del self.m_records[recorder]
+
     #
     #   // Function: get_recorders
     #   // Provides a queue of all transactions within the stream.
@@ -438,23 +440,25 @@ class uvm_tr_stream(UVMObject):
     #      return get_handle()
     #   endfunction : m_get_handle
     #
+
     #   // Function: get_stream_from_handle
     #   // Static accessor, returns a stream reference for a given unique id.
     #   //
     #   // If no stream exists with the given ~id~, or if the
-    #   // stream with that ~id~ has been freed, then ~null~ is
+    #   // stream with that ~id~ has been freed, then ~None~ is
     #   // returned.
     #   //
     #   static function uvm_tr_stream get_stream_from_handle(integer id)
     #      if (id == 0)
-    #        return null
+    #        return None
     #
     #      if ($isunknown(id) || !m_streams_by_id.exists(id))
-    #        return null
+    #        return None
     #
     #      return m_streams_by_id[id]
     #   endfunction : get_stream_from_handle
     #
+
     #   // Function- m_free_id
     #   // Frees the id/stream link (memory cleanup)
     #   //
@@ -463,7 +467,7 @@ class uvm_tr_stream(UVMObject):
     #      if (!$isunknown(id) && m_streams_by_id.exists(id))
     #        stream = m_streams_by_id[id]
     #
-    #      if (stream != null) begin
+    #      if (stream != None) begin
     #         m_streams_by_id.delete(id)
     #         m_ids_by_stream.delete(stream)
     #      end
@@ -499,6 +503,7 @@ class uvm_tr_stream(UVMObject):
     #   protected virtual function void do_close()
     #   endfunction : do_close
     #
+
     #   // Function: do_free
     #   // Callback triggered via <free>.
     #   //
@@ -508,6 +513,7 @@ class uvm_tr_stream(UVMObject):
     #   protected virtual function void do_free()
     #   endfunction : do_free
     #
+
     #   // Function: do_open_recorder
     #   // Marks the beginning of a new record in the stream.
     #   //
@@ -515,7 +521,7 @@ class uvm_tr_stream(UVMObject):
     #   protected virtual function uvm_recorder do_open_recorder(string name,
     #                                                            time   open_time,
     #                                                            string type_name)
-    #      return null
+    #      return None
     #   endfunction : do_open_recorder
     #
     #endclass : uvm_tr_stream
@@ -532,25 +538,16 @@ class uvm_tr_stream(UVMObject):
 #
 #class uvm_text_tr_stream extends uvm_tr_stream
 class uvm_text_tr_stream(uvm_tr_stream):
-    #
-    #   // Variable- m_text_db
-    #   // Internal reference to the text-based backend
-    #   local uvm_text_tr_database m_text_db
-    #
-    #
 
-    #   // Function: new
-    #   // Constructor
-    #   //
-    #   // Parameters:
-    #   // name - Instance name
     def __init__(self, name="unnamed-uvm_text_tr_stream"):
         uvm_tr_stream.__init__(self, name)
+        #   // Variable- m_text_db
+        #   // Internal reference to the text-based backend
         self.m_text_db = None
 
-    #
+
     #   // Group: Implementation Agnostic API
-    #
+
     #   // Function: do_open
     #   // Callback triggered via <uvm_tr_database::open_stream>.
     #   //
@@ -560,7 +557,7 @@ class uvm_text_tr_stream(uvm_tr_stream):
     def do_open(self, db, scope, stream_type_name):
         # $cast(m_text_db, db)
         self.m_text_db = db
-        if (self.m_text_db.open_db()):
+        if self.m_text_db.open_db():
             sv.fdisplay(self.m_text_db.m_file,
                       "  CREATE_STREAM @%0t [NAME:%s T:%s SCOPE:%s STREAM:%0d]",
                       uvm_sim_time(),
@@ -595,7 +592,7 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #                  this.get_stream_type_name(),
     #                  this.get_scope(),
     #                  this.get_handle())
-    #      m_text_db = null
+    #      m_text_db = None
     #      return
     #   endfunction : do_free
     #
@@ -604,15 +601,11 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #   // Marks the beginning of a new record in the stream
     #   //
     #   // Text-backend specific implementation.
-    #   protected virtual function uvm_recorder do_open_recorder(string name,
-    #                                                           time   open_time,
-    #                                                           string type_name)
-    #      if (m_text_db.open_db()) begin
-    #         return uvm_text_recorder::type_id::create(name)
-    #      end
-    #
-    #      return null
-    #   endfunction : do_open_recorder
-    #
+    def do_open_recorder(self, name, open_time, type_name):
+        if self.m_text_db.open_db():
+            return UVMTextRecorder.type_id.create(name)
+        return None
+
+
     #endclass : uvm_text_tr_stream
 uvm_object_utils(uvm_text_tr_stream)

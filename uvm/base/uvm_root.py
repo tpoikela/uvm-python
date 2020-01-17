@@ -163,6 +163,13 @@ class UVMRoot(UVMComponent):
     def get_type_name(self):
         return "uvm_root"
 
+    def final_phase(self, phase):
+        from .uvm_coreservice import UVMCoreService
+        cs = UVMCoreService.get()
+        tr_db = cs.get_default_tr_database()
+        if tr_db.is_open():
+            tr_db.close_db()
+
     #----------------------------------------------------------------------------
     # Group: Simulation Control
     #----------------------------------------------------------------------------

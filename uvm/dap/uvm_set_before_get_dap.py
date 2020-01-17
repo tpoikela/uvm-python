@@ -27,6 +27,7 @@ from .uvm_set_get_dap_base import uvm_set_get_dap_base
 from ..macros.uvm_object_defines import uvm_object_utils
 from ..macros.uvm_message_defines import *
 from ..base.sv import sv
+from ..base.uvm_globals import uvm_check_output_args
 
 ERR_MSG1 = "Attempt to get value on '%s', but the data access policy forbits calling 'get' prior to calling 'set' or 'try_set'!"
 
@@ -124,6 +125,7 @@ class uvm_set_before_get_dap(uvm_set_get_dap_base):
     #   // otherwise it will return a 1, and set ~value~ to the current
     #   // value stored within the DAP.
     def try_get(self, value):
+        uvm_check_output_args([value])
         if self.m_set is False:
             return 0
         else:

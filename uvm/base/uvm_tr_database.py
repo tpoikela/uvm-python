@@ -4,6 +4,7 @@
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2013 NVIDIA Corporation
+#//   Copyright 2020 Tuomas Poikela
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -37,12 +38,6 @@ NO_FILE_OPEN = 0
 #// tool would be dumping information such that it can be viewed with the ~waves~
 #// of the DUT.
 #//
-#
-#typedef class uvm_recorder
-#typedef class uvm_tr_stream
-#typedef class uvm_link_base
-#typedef class uvm_simple_lock_dap
-#typedef class uvm_text_tr_stream
 
 
 #//------------------------------------------------------------------------------
@@ -100,24 +95,22 @@ class uvm_tr_database(UVMObject):
     #   //
     #   // Otherwise, this method will trigger a <do_close_db>
     #   // call, and return the result.
-    #   function bit close_db()
-    #      if (m_is_opened) begin
-    #         if (do_close_db())
-    #           m_is_opened = 0
-    #      end
-    #      return (m_is_opened == 0)
-    #   endfunction : close_db
-    #
+    def close_db(self):
+        if self.m_is_opened:
+            if self.do_close_db():
+                self.m_is_opened = 0
+        return self.m_is_opened == 0
+
     #   // Function: is_open
     #   // Returns the open/closed status of the database.
     #   //
     #   // This method returns 1 if the database has been
     #   // successfully opened, but not yet closed.
     #   //
-    #   function bit is_open()
-    #      return m_is_opened
-    #   endfunction : is_open
-    #
+    def is_open(self):
+        return self.m_is_opened
+
+
     #   // Group: Stream API
     #
 
@@ -164,14 +157,16 @@ class uvm_tr_database(UVMObject):
 
             if p is not None:
                 p.set_randstate(s)
+            return open_stream
 
-    #
+
     #   // Function- m_free_stream
     #   // Removes stream from the internal array
-    #   function void m_free_stream(uvm_tr_stream stream)
-    #      if (m_streams.exists(stream))
-    #        m_streams.delete(stream)
+    def m_free_stream(self, stream):
+        if stream in self.m_streams:
+            del self.m_streams[stream]
     #   endfunction : m_free_stream
+
     #
     #   // Function: get_streams
     #   // Provides a queue of all streams within the database.
@@ -330,7 +325,7 @@ class uvm_text_tr_database(uvm_tr_database):
     #   // modified while the connection is open.
     def do_open_db(self):
         if self.m_file == NO_FILE_OPEN:
-            self.m_file = sv.fopen(self.m_filename_dap.get(), "a+")
+            self.m_file = sv.fopen(self.m_filename_dap.get(), "a")
             if self.m_file != NO_FILE_OPEN:
                 self.m_filename_dap.lock()
         return (self.m_file != NO_FILE_OPEN)
@@ -345,16 +340,14 @@ class uvm_text_tr_database(uvm_tr_database):
     #   // if it is currently opened.
     #   //
     #   // This unlocks the ~file_name~, allowing it to be modified again.
-    #   protected virtual function bit do_close_db()
-    #      if (m_file != 0) begin
-    #         fork // Needed because $fclose is a task
-    #            $fclose(m_file)
-    #         join_none
-    #         m_filename_dap.unlock()
-    #      end
-    #      return 1
-    #   endfunction : do_close_db
-    #
+    def do_close_db(self):
+        if self.m_file != NO_FILE_OPEN:
+            #fork // Needed because $fclose is a task
+            print("Closing the file now XXX")
+            sv.fclose(self.m_file)
+            #join_none
+            self.m_filename_dap.unlock()
+        return 1
 
     #   // Function: do_open_stream
     #   // Provides a reference to a ~stream~ within the
@@ -406,6 +399,7 @@ class uvm_text_tr_database(uvm_tr_database):
     #         end
     #      end
     #   endfunction : do_establish_link
+
     #
     #   // Group: Implementation Specific API
     #
@@ -428,6 +422,7 @@ class uvm_text_tr_database(uvm_tr_database):
     #         return
     #      end
     #   endfunction : set_file_name
+
     #
     #
     #endclass : uvm_text_tr_database

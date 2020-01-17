@@ -100,11 +100,20 @@ class sv:
             return get_sim_time(unit)
 
     @classmethod
+    def time(cls, unit=None):
+        return cls.realtime(unit)
+
+    @classmethod
     def fwrite(cls, fhandle, msg):
         if hasattr(fhandle, 'write'):
             fhandle.write(msg)
         else:
             print(msg)
+
+    @classmethod
+    def isunknown(cls, value):
+        # TODO implement this properly
+        return False
 
     @classmethod
     def bits(cls, var):
@@ -117,12 +126,13 @@ class sv:
         return open(name, mode)
 
     @classmethod
-    def fclose(handle):
+    def fclose(cls, handle):
         handle.close()
 
     @classmethod
     def fdisplay(cls, fhandle, msg, *args):
         form_msg = sv.sformatf(msg, *args)
+        form_msg += "\n"  # SV fdisplay behavior
         if fhandle != 0:
             if fhandle != 1:
                 fhandle.write(form_msg)
