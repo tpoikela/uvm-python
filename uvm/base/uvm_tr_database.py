@@ -29,6 +29,7 @@ from ..macros.uvm_object_defines import uvm_object_utils
 from ..macros.uvm_message_defines import uvm_warning
 from .uvm_tr_stream import uvm_text_tr_stream, uvm_tr_stream
 from .uvm_recorder import UVMRecorder
+from .uvm_links import (UVMParentChildLink, UVMRelatedLink)
 
 NO_FILE_OPEN = 0
 
@@ -380,8 +381,8 @@ class uvm_text_tr_database(uvm_tr_database):
         lhs = link.get_lhs()
         rhs = link.get_rhs()
 
-        sv.cast(r_lhs, lhs, uvm_recorder)
-        sv.cast(r_rhs, rhs, uvm_recorder)
+        sv.cast(r_lhs, lhs, UVMRecorder)
+        sv.cast(r_rhs, rhs, UVMRecorder)
         r_lhs = r_lhs[0]
         r_rhs = r_rhs[0]
 
