@@ -1376,7 +1376,10 @@ class UVMComponent(UVMReportObject):
     #extern function void set_report_severity_id_action_hier(uvm_severity severity,
     #                                                        string id,
     #                                                        uvm_action action)
-
+    def set_report_id_action_hier(self, id, action):
+        self.set_report_id_action(id, action)
+        for c in self.m_children:
+            self.m_children[c].set_report_id_action_hier(id, action)
 
 
     #// Function: set_report_default_file_hier
