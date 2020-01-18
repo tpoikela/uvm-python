@@ -39,6 +39,7 @@ lint:
 
 test:
   script:
+    - export SIM=icarus
     - make test || exit 1
     - find -name results.xml -exec cat {} \; > results.log
     - bash ci/check_errors.sh
