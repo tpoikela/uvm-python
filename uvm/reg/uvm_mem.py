@@ -110,7 +110,7 @@ class UVMMem(UVMObject):
         self.m_size      = size
         self.m_n_bits    = n_bits
         self.m_backdoor  = None
-        self.m_access    = access.toupper()
+        self.m_access    = access.upper()
         self.m_has_cover = has_coverage
         self.m_hdl_paths_pool = UVMObjectStringPool("hdl_paths")
         self.m_read_in_progress = False
