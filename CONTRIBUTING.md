@@ -143,9 +143,8 @@ and ensure all tests pass.
 
 ### Squash Your Commits
 
-When you make a pull request, all of your changes need to be in one commit.
-
-If you have made more than one commit, then you will need to _squash_ your commits.
+When you make a pull request, all of your changes can be squashed to one commit.
+If you have made more than one commit, then you can _squash_ your commits.
 
 To do this, see [Squashing Your Commits](http://forum.freecodecamp.com/t/how-to-squash-multiple-commits-into-one-with-git/13231).
 
