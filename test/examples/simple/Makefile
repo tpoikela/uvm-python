@@ -19,6 +19,7 @@ test-tlm1:
 	make -C tlm1/producer_consumer/
 	make -C tlm1/hierarchy/
 	make -C tlm1/fifo/
+	make -C tlm1/bidir/
 
 test-configuration:
 	make -C configuration/manual/
