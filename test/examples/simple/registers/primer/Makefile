@@ -41,19 +41,18 @@ PWD=$(shell pwd)
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
 UVM_PYTHON := $(WPWD)/../../../../..
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../py
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
 UVM_PYTHON := $(WPWD)/../../../../..
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../py
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
 ifeq ($(TOPLEVEL_LANG),verilog)
-    #VERILOG_SOURCES ?= $(WPWD)/../../common_stub.v
     VERILOG_SOURCES ?= $(WPWD)/dut.sv
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
@@ -68,11 +67,9 @@ endif
 PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_MEDIUM
 ifneq ($(UVM_TEST),)
     PLUSARGS += +UVM_TESTNAME=$(UVM_TEST)
-else
-    PLUSARGS += +UVM_TESTNAME=test_read_modify_write 
 endif
 TOPLEVEL := slave
-MODULE   ?= tb_top
+MODULE   ?= test
 
 include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

@@ -52,7 +52,7 @@ reg[1023:0][31:0] DMA;
 wire[9:0] paddr;
 assign paddr = apb_paddr[11:2];
 
-assign chosen_sock = SESSION[paddr];
+socket_t chosen_sock;
 
 always @ (posedge apb_pclk)
   begin
@@ -76,10 +76,10 @@ always @ (posedge apb_pclk)
                  TABLES[INDEX] <= apb_pwdata;
               end
               //16'h1??0: chosen_sock.SRC[63:32] <= apb_pwdata;
-              16'h1000: chosen_sock.SRC <= apb_pwdata[63:32];
-              16'h1XX4: SESSION[paddr].SRC[32: 0] <= apb_pwdata;
-              16'h1XX8: SESSION[paddr].DST[63:32] <= apb_pwdata;
-              16'h1XXC: SESSION[paddr].DST[32: 0] <= apb_pwdata;
+              16'h1000: chosen_sock.SRC[63:32] <= apb_pwdata;
+              16'h1XX4: chosen_sock.SRC[32: 0] <= apb_pwdata;
+              16'h1XX8: chosen_sock.DST[63:32] <= apb_pwdata;
+              16'h1XXC: chosen_sock.DST[32: 0] <= apb_pwdata;
               16'h2XXX: DMA[paddr] <= apb_pwdata;
             endcase
          end

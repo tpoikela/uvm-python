@@ -49,7 +49,7 @@ class apb_agent(UVMAgent):
 
 
 uvm_component_utils_begin(apb_agent)
-uvm_field_object(sqr, UVM_ALL_ON)
-uvm_field_object(drv, UVM_ALL_ON)
-uvm_field_object(mon, UVM_ALL_ON)
-uvm_component_utils_end
+uvm_field_object('sqr', UVM_ALL_ON)
+uvm_field_object('drv', UVM_ALL_ON)
+uvm_field_object('mon', UVM_ALL_ON)
+uvm_component_utils_end(apb_agent)
