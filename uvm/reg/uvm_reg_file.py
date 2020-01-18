@@ -60,9 +60,9 @@ class UVMRegFile(UVMObject):
     def __init__(self, name=""):
         super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
-        self.parent = None  # type: uvm_reg_block
-        self.m_rf = None  # type: uvm_reg_file
-        self.default_hdl_path =  "RTL"  # type: string
+        self.parent = None  # uvm_reg_block
+        self.m_rf = None  # uvm_reg_file
+        self.default_hdl_path = "RTL"  # type: str
         #    self.l = None  # type: hdl_paths_poo
 
 
