@@ -20,11 +20,11 @@ class MyTest(UVMTest):
 
     def build_phase(self, phase):
         UVMTest.build_phase(self, phase)
-        print "Called build_phase() with " + str(phase)
+        print("Called build_phase() with", str(phase))
 
     def connect_phase(self, phase):
         UVMTest.connect_phase(self, phase)
-        print "Called connect_phase() with " + str(phase)
+        print("Called connect_phase() with", str(phase))
 
 uvm_component_utils(MyTest)
 
@@ -35,7 +35,7 @@ def mailbox_test(dut):
     #yield write_packets(fifo, 10)
     write_proc = cocotb.fork(write_packets(fifo, npackets))
     read_proc = cocotb.fork(read_packets(fifo, npackets))
-    print "Waiting to join() the forked procs"
+    print("Waiting to join() the forked procs")
     #yield Timer(10)
     yield [write_proc.join(), read_proc.join()]
     yield Timer(10000)
@@ -109,16 +109,16 @@ def read_packets(fifo, n):
     while nread < n:
         q = []
         yield fifo.get(q)
-        print "Read packet {} into FIFO".format(nread)
+        print("Read packet {} into FIFO".format(nread))
         nread += 1
         if len(q) == 1:
             if q[0] != (n + 100):
-                print "Error in n{}: Got: {}, Exp: {}".format(nread, q[0], n + 100)
+                print("Error in n{}: Got: {}, Exp: {}".format(nread, q[0], n + 100))
         else:
             raise Exception('q.len must be 1 after get()')
         rand_delay = random.randint(1, 15)
         yield Timer(rand_delay)
-    print "read_packets completed"
+    print("read_packets completed")
 
 class UVMPhaseCaller:
     """ Starts from a top comp, and calls given phases of all comps"""
@@ -133,7 +133,7 @@ class UVMPhaseCaller:
 
     def call_topdown_phase(self, comp, name):
         if hasattr(comp, name):
-            print "topdown OK for {}, {}".format(comp.get_name(), name)
+            print("topdown OK for {}, {}".format(comp.get_name(), name))
             func = getattr(comp, name)
             func(self.top_phase)
             self.call_order.append(comp.get_name())
