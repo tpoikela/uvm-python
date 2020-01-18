@@ -124,7 +124,7 @@ sub process_file {
     my $is_py = $suffix eq '.py' ? 1 : 0;
 
     if (length($suffix) == 0) {
-        print STDERR "Parsing file with without suffix not supported. File: $fname\n";
+        print STDERR "Parsing file without suffix not supported. File: $fname\n";
     }
 
     my @outfile = ();
@@ -388,7 +388,7 @@ sub build_pkg_map {
                 $found = 1;
             }
             else {
-                print "$p not matcing yet\n" if $DEBUG;
+                print "$p not matching yet\n" if $DEBUG;
             }
         }
         $pkg_path =~ s/\.$//g;  # Trim trailing dot
