@@ -32,4 +32,5 @@ jobs:
         flake8 ./uvm --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
+        export SIM=icarus
         make test
