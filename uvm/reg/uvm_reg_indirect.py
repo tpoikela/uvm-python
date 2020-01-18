@@ -23,8 +23,9 @@
 #
 
 from .uvm_reg import UVMReg
+from ..base.uvm_resource_db import UVMResourceDb
 
-#typedef class uvm_reg_indirect_ftdr_seq;
+#typedef class uvm_reg_indirect_ftdr_seq
 
 #//-----------------------------------------------------------------
 #// CLASS: uvm_reg_indirect_data
@@ -38,13 +39,11 @@ from .uvm_reg import UVMReg
 #// provide a factory-enabled constructor and specify the
 #// ~n_bits~ and coverage models.
 #//-----------------------------------------------------------------
-#class uvm_reg_indirect_data extends uvm_reg;
+
 
 class UVMRegIndirectData(UVMReg):
 
-    #   protected uvm_reg m_idx;
-    #   protected uvm_reg m_tbl[];
-    #
+
     #   // Function: new
     #   // Create an instance of this class
     #   //
@@ -54,16 +53,17 @@ class UVMRegIndirectData(UVMReg):
     #   // in the indirect register array.
     #   function new(string name = "uvm_reg_indirect",
     #                int unsigned n_bits,
-    #                int has_cover);
-    def __init__(self,  name="uvm_reg_indirect", n_bits=0, has_cover=False):
-        UVMReg.__init__(self, name,n_bits,has_cover);
+    #                int has_cover)
+    def __init__(self, name="uvm_reg_indirect", n_bits=0, has_cover=False):
+        UVMReg.__init__(self, name,n_bits,has_cover)
         self.m_idx = None
         self.m_tbl = []
         #endfunction: new
 
-    #   virtual function void build();
-    #   endfunction: build
-    #
+    def build(self):
+        pass
+
+
     #   // Function: configure
     #   // Configure the indirect data register.
     #   //
@@ -80,101 +80,101 @@ class UVMRegIndirectData(UVMReg):
     #   function void configure (uvm_reg idx,
     #                            uvm_reg reg_a[],
     #                            uvm_reg_block blk_parent,
-    #                            uvm_reg_file regfile_parent = null);
-    #      super.configure(blk_parent, regfile_parent, "");
-    #      m_idx = idx;
-    #      m_tbl = reg_a;
-    #
-    #      // Not testable using pre-defined sequences
-    #      uvm_resource_db#(bit)::set({"REG::", get_full_name()},
-    #                                 "NO_REG_TESTS", 1);
-    #
-    #      // Add a frontdoor to each indirectly-accessed register
-    #      // for every address map this register is in.
-    #      foreach (m_maps[map]) begin
-    #         add_frontdoors(map);
-    #      end
-    #   endfunction
+    #                            uvm_reg_file regfile_parent = null)
+    def configure(self, idx, reg_a, blk_parent, regfile_parent=None):
+        super().configure(blk_parent, regfile_parent, "")
+        self.m_idx = idx
+        self.m_tbl = reg_a
+
+        # Not testable using pre-defined sequences
+        UVMResourceDb.set("REG::" + self.get_full_name(), "NO_REG_TESTS", 1)
+
+        # Add a frontdoor to each indirectly-accessed register
+        # for every address map this register is in.
+        # foreach (m_maps[map]) begin
+        for _map in self.maps:
+            self.add_frontdoors(_map)
+
 
     #
-    #   /*local*/ virtual function void add_map(uvm_reg_map map);
-    #      super.add_map(map);
-    #      add_frontdoors(map);
+    #   /*local*/ virtual function void add_map(uvm_reg_map map)
+    #      super.add_map(map)
+    #      add_frontdoors(map)
     #   endfunction
 
-    #
-    #
-    #   local function void add_frontdoors(uvm_reg_map map);
+
+
+    #   local function void add_frontdoors(uvm_reg_map map)
     #      foreach (m_tbl[i]) begin
-    #         uvm_reg_indirect_ftdr_seq fd;
+    #         uvm_reg_indirect_ftdr_seq fd
     #         if (m_tbl[i] == null) begin
     #            `uvm_error(get_full_name(),
-    #                       $sformatf("Indirect register #%0d is NULL", i));
-    #            continue;
+    #                       $sformatf("Indirect register #%0d is NULL", i))
+    #            continue
     #         end
-    #         fd = new(m_idx, i, this);
+    #         fd = new(m_idx, i, this)
     #         if (m_tbl[i].is_in_map(map))
-    #            m_tbl[i].set_frontdoor(fd, map);
+    #            m_tbl[i].set_frontdoor(fd, map)
     #         else
-    #            map.add_reg(m_tbl[i], -1, "RW", 1, fd);
+    #            map.add_reg(m_tbl[i], -1, "RW", 1, fd)
     #      end
     #   endfunction
-    #
+
 
     #   virtual function void do_predict (uvm_reg_item      rw,
     #                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-    #                                     uvm_reg_byte_en_t be = -1);
+    #                                     uvm_reg_byte_en_t be = -1)
     #      if (m_idx.get() >= m_tbl.size()) begin
-    #         `uvm_error(get_full_name(), $sformatf("Address register %s has a value (%0d) greater than the maximum indirect register array size (%0d)", m_idx.get_full_name(), m_idx.get(), m_tbl.size()));
-    #         rw.status = UVM_NOT_OK;
-    #         return;
+    #         `uvm_error(get_full_name(), $sformatf("Address register %s has a value (%0d) greater than the maximum indirect register array size (%0d)", m_idx.get_full_name(), m_idx.get(), m_tbl.size()))
+    #         rw.status = UVM_NOT_OK
+    #         return
     #      end
     #
     #      //NOTE limit to 2**32 registers
     #      begin
-    #         int unsigned idx = m_idx.get();
-    #         m_tbl[idx].do_predict(rw, kind, be);
+    #         int unsigned idx = m_idx.get()
+    #         m_tbl[idx].do_predict(rw, kind, be)
     #      end
     #   endfunction
 
     #
     #
-    #   virtual function uvm_reg_map get_local_map(uvm_reg_map map, string caller="");
-    #      return  m_idx.get_local_map(map,caller);
+    #   virtual function uvm_reg_map get_local_map(uvm_reg_map map, string caller="")
+    #      return  m_idx.get_local_map(map,caller)
     #   endfunction
 
     #
     #   //
     #   // Just for good measure, to catch and short-circuit non-sensical uses
     #   //
-    #   virtual function void add_field  (uvm_reg_field field);
-    #      `uvm_error(get_full_name(), "Cannot add field to an indirect data access register");
+    #   virtual function void add_field  (uvm_reg_field field)
+    #      `uvm_error(get_full_name(), "Cannot add field to an indirect data access register")
     #   endfunction
 
     #
     #   virtual function void set (uvm_reg_data_t  value,
     #                              string          fname = "",
-    #                              int             lineno = 0);
-    #      `uvm_error(get_full_name(), "Cannot set() an indirect data access register");
+    #                              int             lineno = 0)
+    #      `uvm_error(get_full_name(), "Cannot set() an indirect data access register")
     #   endfunction
 
     #
     #   virtual function uvm_reg_data_t  get(string  fname = "",
-    #                                        int     lineno = 0);
-    #      `uvm_error(get_full_name(), "Cannot get() an indirect data access register");
-    #      return 0;
+    #                                        int     lineno = 0)
+    #      `uvm_error(get_full_name(), "Cannot get() an indirect data access register")
+    #      return 0
     #   endfunction
 
     #
     #   virtual function uvm_reg get_indirect_reg(string  fname = "",
-    #                                        int     lineno = 0);
-    #      int unsigned idx = m_idx.get_mirrored_value();
-    #      return(m_tbl[idx]);
+    #                                        int     lineno = 0)
+    #      int unsigned idx = m_idx.get_mirrored_value()
+    #      return(m_tbl[idx])
     #   endfunction
 
     #
-    #   virtual function bit needs_update();
-    #      return 0;
+    #   virtual function bit needs_update()
+    #      return 0
     #   endfunction
 
     #
@@ -186,42 +186,42 @@ class UVMRegIndirectData(UVMReg):
     #                      input  int               prior = -1,
     #                      input  uvm_object        extension = null,
     #                      input  string            fname = "",
-    #                      input  int               lineno = 0);
+    #                      input  int               lineno = 0)
     #
     #      if (path == UVM_DEFAULT_PATH) begin
-    #         uvm_reg_block blk = get_parent();
-    #         path = blk.get_default_path();
+    #         uvm_reg_block blk = get_parent()
+    #         path = blk.get_default_path()
     #      end
     #
     #      if (path == UVM_BACKDOOR) begin
-    #         `uvm_warning(get_full_name(), "Cannot backdoor-write an indirect data access register. Switching to frontdoor.");
-    #         path = UVM_FRONTDOOR;
+    #         `uvm_warning(get_full_name(), "Cannot backdoor-write an indirect data access register. Switching to frontdoor.")
+    #         path = UVM_FRONTDOOR
     #      end
     #
     #      // Can't simply call super.write() because it'll call set()
     #      begin
-    #         uvm_reg_item rw;
+    #         uvm_reg_item rw
     #
-    #         XatomicX(1);
+    #         XatomicX(1)
     #
-    #         rw = uvm_reg_item::type_id::create("write_item",,get_full_name());
-    #         rw.element      = this;
-    #         rw.element_kind = UVM_REG;
-    #         rw.kind         = UVM_WRITE;
-    #         rw.value[0]     = value;
-    #         rw.path         = path;
-    #         rw.map          = map;
-    #         rw.parent       = parent;
-    #         rw.prior        = prior;
-    #         rw.extension    = extension;
-    #         rw.fname        = fname;
-    #         rw.lineno       = lineno;
+    #         rw = uvm_reg_item::type_id::create("write_item",,get_full_name())
+    #         rw.element      = this
+    #         rw.element_kind = UVM_REG
+    #         rw.kind         = UVM_WRITE
+    #         rw.value[0]     = value
+    #         rw.path         = path
+    #         rw.map          = map
+    #         rw.parent       = parent
+    #         rw.prior        = prior
+    #         rw.extension    = extension
+    #         rw.fname        = fname
+    #         rw.lineno       = lineno
     #
-    #         do_write(rw);
+    #         do_write(rw)
     #
-    #         status = rw.status;
+    #         status = rw.status
     #
-    #         XatomicX(0);
+    #         XatomicX(0)
     #      end
     #   endtask
 
@@ -234,19 +234,19 @@ class UVMRegIndirectData(UVMReg):
     #                     input  int               prior = -1,
     #                     input  uvm_object        extension = null,
     #                     input  string            fname = "",
-    #                     input  int               lineno = 0);
+    #                     input  int               lineno = 0)
     #
     #      if (path == UVM_DEFAULT_PATH) begin
-    #         uvm_reg_block blk = get_parent();
-    #         path = blk.get_default_path();
+    #         uvm_reg_block blk = get_parent()
+    #         path = blk.get_default_path()
     #      end
     #
     #      if (path == UVM_BACKDOOR) begin
-    #         `uvm_warning(get_full_name(), "Cannot backdoor-read an indirect data access register. Switching to frontdoor.");
-    #         path = UVM_FRONTDOOR;
+    #         `uvm_warning(get_full_name(), "Cannot backdoor-read an indirect data access register. Switching to frontdoor.")
+    #         path = UVM_FRONTDOOR
     #      end
     #
-    #      super.read(status, value, path, map, parent, prior, extension, fname, lineno);
+    #      super.read(status, value, path, map, parent, prior, extension, fname, lineno)
     #   endtask
 
     #
@@ -256,9 +256,9 @@ class UVMRegIndirectData(UVMReg):
     #                     input  uvm_sequence_base parent = null,
     #                     input  uvm_object        extension = null,
     #                     input  string            fname = "",
-    #                     input  int               lineno = 0);
-    #      `uvm_error(get_full_name(), "Cannot poke() an indirect data access register");
-    #      status = UVM_NOT_OK;
+    #                     input  int               lineno = 0)
+    #      `uvm_error(get_full_name(), "Cannot poke() an indirect data access register")
+    #      status = UVM_NOT_OK
     #   endtask
 
     #
@@ -268,9 +268,9 @@ class UVMRegIndirectData(UVMReg):
     #                     input  uvm_sequence_base parent = null,
     #                     input  uvm_object        extension = null,
     #                     input  string            fname = "",
-    #                     input  int               lineno = 0);
-    #      `uvm_error(get_full_name(), "Cannot peek() an indirect data access register");
-    #      status = UVM_NOT_OK;
+    #                     input  int               lineno = 0)
+    #      `uvm_error(get_full_name(), "Cannot peek() an indirect data access register")
+    #      status = UVM_NOT_OK
     #   endtask
 
     #
@@ -281,8 +281,8 @@ class UVMRegIndirectData(UVMReg):
     #                       input  int               prior = -1,
     #                       input  uvm_object        extension = null,
     #                       input  string            fname = "",
-    #                       input  int               lineno = 0);
-    #      status = UVM_IS_OK;
+    #                       input  int               lineno = 0)
+    #      status = UVM_IS_OK
     #   endtask
 
     #
@@ -294,59 +294,59 @@ class UVMRegIndirectData(UVMReg):
     #                       input int                prior = -1,
     #                       input  uvm_object        extension = null,
     #                       input string             fname = "",
-    #                       input int                lineno = 0);
-    #      status = UVM_IS_OK;
+    #                       input int                lineno = 0)
+    #      status = UVM_IS_OK
 
     #   endtask
     #
     #endclass : uvm_reg_indirect_data
 
 
-#class uvm_reg_indirect_ftdr_seq extends uvm_reg_frontdoor;
-#   local uvm_reg m_addr_reg;
-#   local uvm_reg m_data_reg;
-#   local int     m_idx;
+#class uvm_reg_indirect_ftdr_seq extends uvm_reg_frontdoor
+#   local uvm_reg m_addr_reg
+#   local uvm_reg m_data_reg
+#   local int     m_idx
 #
 #   function new(uvm_reg addr_reg,
 #                int idx,
-#                uvm_reg data_reg);
-#      super.new("uvm_reg_indirect_ftdr_seq");
-#      m_addr_reg = addr_reg;
-#      m_idx      = idx;
-#      m_data_reg = data_reg;
+#                uvm_reg data_reg)
+#      super.new("uvm_reg_indirect_ftdr_seq")
+#      m_addr_reg = addr_reg
+#      m_idx      = idx
+#      m_data_reg = data_reg
 #   endfunction: new
 #
-#   virtual task body();
+#   virtual task body()
 #
-#      uvm_reg_item rw;
+#      uvm_reg_item rw
 #
-#      $cast(rw,rw_info.clone());
-#      rw.element = m_addr_reg;
-#      rw.kind    = UVM_WRITE;
-#      rw.value[0]= m_idx;
+#      $cast(rw,rw_info.clone())
+#      rw.element = m_addr_reg
+#      rw.kind    = UVM_WRITE
+#      rw.value[0]= m_idx
 #
-#      m_addr_reg.XatomicX(1);
-#      m_data_reg.XatomicX(1);
+#      m_addr_reg.XatomicX(1)
+#      m_data_reg.XatomicX(1)
 #
-#      m_addr_reg.do_write(rw);
+#      m_addr_reg.do_write(rw)
 #
 #      if (rw.status == UVM_NOT_OK)
-#        return;
+#        return
 #
-#      $cast(rw,rw_info.clone());
-#      rw.element = m_data_reg;
+#      $cast(rw,rw_info.clone())
+#      rw.element = m_data_reg
 #
 #      if (rw_info.kind == UVM_WRITE)
-#        m_data_reg.do_write(rw);
+#        m_data_reg.do_write(rw)
 #      else begin
-#        m_data_reg.do_read(rw);
-#        rw_info.value[0] = rw.value[0];
+#        m_data_reg.do_read(rw)
+#        rw_info.value[0] = rw.value[0]
 #      end
 #
-#      m_addr_reg.XatomicX(0);
-#      m_data_reg.XatomicX(0);
+#      m_addr_reg.XatomicX(0)
+#      m_data_reg.XatomicX(0)
 #
-#      rw_info.status = rw.status;
+#      rw_info.status = rw.status
 #   endtask
 #
 #endclass
