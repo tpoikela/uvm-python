@@ -351,7 +351,6 @@ class uvm_text_tr_database(uvm_tr_database):
     def do_close_db(self):
         if self.m_file != NO_FILE_OPEN:
             #fork // Needed because $fclose is a task
-            print("Closing the file now XXX")
             sv.fclose(self.m_file)
             #join_none
             self.m_filename_dap.unlock()

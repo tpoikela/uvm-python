@@ -275,7 +275,7 @@ class UVMObject(sv_obj):
             return ""
         self._m_uvm_status_container = UVMObject._m_uvm_status_container
         printer.print_object(self.get_name(), self)
-        if (printer.m_string != ""):
+        if printer.m_string != "":
             return printer.m_string
         return printer.emit()
 
@@ -777,7 +777,6 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.status = 0
         UVMObject._m_uvm_status_container.bitstream = value
 
-        print(self.get_name() + " calling UVM_SETINT field autom now with " + field_name)
         self._m_uvm_field_automation(None, UVM_SETINT, field_name)
         
         if UVMObject._m_uvm_status_container.warning and not self._m_uvm_status_container.status:
@@ -888,7 +887,6 @@ class UVMObject(sv_obj):
 
         UVMObject._m_uvm_status_container.status = 0
         UVMObject._m_uvm_status_container.object = value
-        print("AZYK obj value was set to " + str(value))
         UVMObject._m_uvm_status_container.clone = clone
 
         self._m_uvm_field_automation(None, UVM_SETOBJ, field_name)

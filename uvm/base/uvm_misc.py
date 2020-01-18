@@ -122,7 +122,7 @@ def uvm_object_value_str(v):
 # Function- uvm_leaf_scope
 #
 #
-def uvm_leaf_scope (full_name, scope_separator = "."):
+def uvm_leaf_scope(full_name, scope_separator="."):
     bmatches = 0
 
     bracket_match = ""

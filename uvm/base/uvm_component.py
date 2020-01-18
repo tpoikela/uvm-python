@@ -970,7 +970,6 @@ class UVMComponent(UVMReportObject):
         rq = rp.lookup_scope(self.get_full_name())
         rq = UVMResourcePool.sort_by_precedence(rq)
 
-        print("KKK in apply_config_settings now")
         # // rq is in precedence order now, so we have to go through in reverse
         # // order to do the settings.
         #  for(int i=rq.size()-1; i>=0; --i):
@@ -978,13 +977,11 @@ class UVMComponent(UVMReportObject):
 
             r = rq[i]
             name = r.get_name()
-            print("KKK in queue location " + str(i) + ' name: ' + name)
             # // does name have brackets [] in it?
             while j < len(name):
                 if (name[j] == "[" or name[j] == "."):
                     break
                 j += 1
-            print("KKK after for, j is  " + str(j) + ' name: ' + name)
 
             # // If it does have brackets then we'll use the name
             # // up to the brackets to search __m_uvm_status_container.field_array
@@ -993,20 +990,16 @@ class UVMComponent(UVMReportObject):
             else:
                 search_name = name
 
-            print("KKK search name " + search_name + ' from field array')
             if search_name not in T_cont.field_array and search_name != "recording_detail":
                 continue
-            print("KKK FOUND name " + search_name + ' from field array')
 
             if verbose:
                 uvm_info("CFGAPL",sv.sformatf("applying configuration to field %s", name),UVM_NONE)
 
             val = r.read(self)
-            print("KKK read val " + str(val) + ' from resource')
             if isinstance(val, int):
                 self.set_int_local(name, val)
             elif isinstance(val, UVMObject):
-                print("AKKK calling set_object_local now with " + str(val))
                 self.set_object_local(name, val, 0)
             elif isinstance(val, UVMObjectWrapper):
                 self.set_object_local(name, val.obj, val.clone)
@@ -1890,14 +1883,12 @@ class UVMComponent(UVMReportObject):
         if self.recording_detail != UVM_NONE:
             if (stream_name == "") or (stream_name == "main"):
                 if self.m_main_stream is None:
-                    print("LLL Opening stream now")
                     self.m_main_stream = db.open_stream("main", self.get_full_name(), "TVM")
                     stream = self.m_main_stream
             else:
                 stream = self.get_tr_stream(stream_name)
         
             if stream is not None:
-                print("LLL stream is not None")
                 kind = "Begin_End, Link"
                 if parent_recorder is None:
                     kind = "Begin_No_Parent, Link"

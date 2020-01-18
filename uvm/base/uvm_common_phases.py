@@ -2,6 +2,7 @@
 #   Copyright 2007-2011 Mentor Graphics Corporation
 #   Copyright 2007-2010 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
+#   Copyright 2019 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -24,7 +25,7 @@ from cocotb.triggers import Timer
 
 from .uvm_topdown_phase import UVMTopdownPhase
 from .uvm_bottomup_phase import UVMBottomupPhase
-from .uvm_debug import *
+from .uvm_debug import uvm_debug
 from .uvm_common_phases import *
 
 # Title: UVM Common Phases
@@ -41,8 +42,8 @@ from .uvm_common_phases import *
 # the following can be used to call foo() at the end of the build phase
 # (after all lower levels have finished build):
 #
-# | function void phase_ended(uvm_phase phase) ;
-# |    if (phase.get_name()=="build") foo() ;
+# | function void phase_ended(uvm_phase phase)
+# |    if (phase.get_name()=="build") foo()
 # | endfunction
 #
 # The common phases are executed in the sequence they are specified below.
@@ -76,7 +77,7 @@ class UVMBuildPhase(UVMTopdownPhase):
     def exec_func(self, comp, phase):
         comp.build_phase(phase)
 
-    #local static uvm_build_phase m_inst;
+    #local static uvm_build_phase m_inst
     m_inst = None
     type_name = "uvm_build_phase"
 
@@ -92,7 +93,7 @@ class UVMBuildPhase(UVMTopdownPhase):
         return UVMBuildPhase.m_inst
 
     def get_type_name(self):
-       return UVMBuildPhase.type_name
+        return UVMBuildPhase.type_name
 
 ## Class: uvm_connect_phase
 ##
@@ -119,7 +120,7 @@ class UVMBuildPhase(UVMTopdownPhase):
 
 class UVMConnectPhase(UVMBottomupPhase):
     def exec_func(self, comp, phase):
-        comp.connect_phase(phase);
+        comp.connect_phase(phase)
 
     m_inst = None
     type_name = "uvm_connect_phase"
@@ -175,10 +176,10 @@ class UVMEndOfElaborationPhase(UVMBottomupPhase):
         return UVMEndOfElaborationPhase.m_inst
 
     def __init__(self, name="end_of_elaboration"):
-         UVMBottomupPhase.__init__(self, name)
+        UVMBottomupPhase.__init__(self, name)
 
     def get_type_name(self):
-       return UVMEndOfElaborationPhase.type_name
+        return UVMEndOfElaborationPhase.type_name
     #endclass
 
 ## Class: uvm_start_of_simulation_phase
@@ -207,11 +208,12 @@ class UVMEndOfElaborationPhase(UVMBottomupPhase):
 class UVMStartofSimulationPhase(UVMBottomupPhase):
     def __init__(self, name="start_of_simulation"):
          UVMBottomupPhase.__init__(self, name)
+
     def exec_func(self, comp, phase):
         comp.start_of_simulation_phase(phase)
 
-    m_inst  = None #   local static uvm_start_of_simulation_phase m_inst;
-    type_name = "uvm_start_of_simulation_phase";
+    m_inst  = None  # static uvm_start_of_simulation_phase m_inst
+    type_name = "uvm_start_of_simulation_phase"
 
     # Function: get
     # Returns the singleton phase handle
@@ -222,7 +224,7 @@ class UVMStartofSimulationPhase(UVMBottomupPhase):
         return UVMStartofSimulationPhase.m_inst
 
     def get_type_name(self):
-        return UVMStartofSimulationPhase.type_name;
+        return UVMStartofSimulationPhase.type_name
     #endclass
 
 ## Class: uvm_run_phase
@@ -288,11 +290,9 @@ class UVMRunPhase(UVMTaskPhase):
         #parent = comp.get_parent()
         #if parent is not None and parent.get_name() == '__top__':
         #    for i in range(10):
-        #        print("HHH yielding timer 0 for test_top")
         #        yield Timer(0, "NS")
         #else:
         #    if parent is not None:
-        #        print("HHH Parent was " + parent.get_name() + " for " +
         #            comp.get_name())
         uvm_debug(self, 'exec_task', comp.get_name() + ' returned from comp.run_phase()')
 

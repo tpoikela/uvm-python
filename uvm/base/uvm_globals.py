@@ -177,7 +177,7 @@ def uvm_wait_for_nba_region():
     s = ""
     nba = 0
     next_nba = 0
-    
+
     #If `included directly in a program block, can't use a non-blocking assign,
     #but it isn't needed since program blocks are in a separate region.
     if UVM_NO_WAIT_FOR_NBA is False:
@@ -188,20 +188,19 @@ def uvm_wait_for_nba_region():
         yield Timer(0)
     else:
         for i in range(0, UVM_POUND_ZERO_COUNT):
-            # print("ABC yield UVM_POUND_ZERO_COUNT " + str(i))
             yield Timer(0)
 
 # Function: uvm_report_enabled
 #
-# Returns 1 if the configured verbosity in ~uvm_top~ for this 
+# Returns 1 if the configured verbosity in ~uvm_top~ for this
 # severity/id is greater than or equal to ~verbosity~ else returns 0.
-# 
+#
 # See also <uvm_report_object::uvm_report_enabled>.
 #
 # Static methods of an extension of uvm_report_object, e.g. uvm_component-based
 # objects, cannot call ~uvm_report_enabled~ because the call will resolve to
 # the <uvm_report_object::uvm_report_enabled>, which is non-static.
-# Static methods cannot call non-static methods of the same class. 
+# Static methods cannot call non-static methods of the same class.
 
 def uvm_report_enabled(verbosity, severity=UVM_INFO, id=""):
     cs = get_cs()
