@@ -9,3 +9,5 @@ tags
 vimproject
 
 *.vcd
+
+[xi]run.history
