@@ -262,7 +262,7 @@ class UVMCmdlineProcessor(UVMReportObject):
             uvm_debug(self, '__init__', "name is %s, val %s" % (name, plusarg_dict[name]))
             arg_val = plusarg_dict[name]
             s = name
-            full_plus_arg = "+" + s + "=" + arg_val
+            full_plus_arg = "+" + s + "=" + str(arg_val)
             if s != "":
                 if name not in self.m_plus_arg_map:
                     self.m_plus_arg_map[name] = []
