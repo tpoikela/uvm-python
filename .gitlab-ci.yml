@@ -41,8 +41,6 @@ test:
   script:
     - export SIM=icarus
     - make test || exit 1
-    - find -name results.xml -exec cat {} \; > results.log
-    - bash ci/check_errors.sh
     # - RET_VAL=`grep failure results.log`
     # - python setup.py test
     # - pip install tox flake8  # you can also use tox
