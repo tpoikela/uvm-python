@@ -23,60 +23,76 @@
 
 `timescale 1ns/1ns
 
-module slave(apb_if    apb,
-             input bit rst);
+module slave(
+   // apb_if    apb,
+   input bit rst,
+   input apb_pclk,
+   input wire [31:0] apb_paddr,
+   input        apb_psel,
+   input        apb_penable,
+   input        apb_pwrite,
+   output [31:0] apb_prdata,
+   input [31:0] apb_pwdata
+);
 
 reg [31:0] pr_data;
-assign apb.prdata = (apb.psel && apb.penable && !apb.pwrite) ? pr_data : 'z;
+assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite) ? pr_data : 'z;
 
-typedef struct {
+typedef struct packed {
    reg [63:0] SRC;
    reg [63:0] DST;
 } socket_t;
 
 reg [ 7:0] INDEX;
-socket_t   SESSION[256];
-reg [63:0] DST[256];
-reg [31:0] TABLES[256];
-reg [31:0] DMA[1024];
+socket_t[255:0] SESSION;
+reg[255:0][63:0] DST;
+reg[255:0][31:0] TABLES;
+reg[1023:0][31:0] DMA;
 
-always @ (posedge apb.pclk)
+wire[9:0] paddr;
+assign paddr = apb_paddr[11:2];
+
+assign chosen_sock = SESSION[paddr];
+
+always @ (posedge apb_pclk)
   begin
    if (rst) begin
       INDEX <= 'h00;
-      foreach (TABLES[i]) begin
+      for (int i = 0; i < 256; i += 1) begin
          TABLES[i] <= 32'h0000_0000;
       end
       pr_data <= 32'h0;
    end
    else begin
+       chosen_sock = SESSION[paddr];
 
       // Wait for a SETUP+READ or ENABLE+WRITE cycle
-      if (apb.psel == 1'b1 && apb.penable == apb.pwrite) begin
+      if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
          pr_data <= 32'h0;
-         if (apb.pwrite) begin
-            casex (apb.paddr)
-              16'h0020: INDEX <= apb.pwdata;
+         if (apb_pwrite) begin
+            casex (apb_paddr)
+              16'h0020: INDEX <= apb_pwdata;
               16'h0024: begin
-                 TABLES[INDEX] <= apb.pwdata;
+                 TABLES[INDEX] <= apb_pwdata;
               end
-              16'h1XX0: SESSION[apb.paddr[11:2]].SRC[63:32] <= apb.pwdata;
-              16'h1XX4: SESSION[apb.paddr[11:2]].SRC[32: 0] <= apb.pwdata;
-              16'h1XX8: SESSION[apb.paddr[11:2]].DST[63:32] <= apb.pwdata;
-              16'h1XXC: SESSION[apb.paddr[11:2]].DST[32: 0] <= apb.pwdata;
-              16'h2XXX: DMA[apb.paddr[11:2]] <= apb.pwdata;
+              //16'h1??0: chosen_sock.SRC[63:32] <= apb_pwdata;
+              16'h1000: chosen_sock.SRC <= apb_pwdata[63:32];
+              16'h1XX4: SESSION[paddr].SRC[32: 0] <= apb_pwdata;
+              16'h1XX8: SESSION[paddr].DST[63:32] <= apb_pwdata;
+              16'h1XXC: SESSION[paddr].DST[32: 0] <= apb_pwdata;
+              16'h2XXX: DMA[paddr] <= apb_pwdata;
             endcase
          end
          else begin
-            casex (apb.paddr)
+            casex (apb_paddr)
               16'h0000: pr_data <= {4'h0, 10'h176, 8'h5A, 8'h03};
               16'h0020: pr_data <= {24'h0000, INDEX};
               16'h0024: pr_data <= TABLES[INDEX];
-              16'h1XX0: pr_data <= SESSION[apb.paddr[11:2]].SRC[63:32];
-              16'h1XX4: pr_data <= SESSION[apb.paddr[11:2]].SRC[32: 0];
-              16'h1XX8: pr_data <= SESSION[apb.paddr[11:2]].DST[63:32];
-              16'h1XXC: pr_data <= SESSION[apb.paddr[11:2]].DST[32: 0];
-              16'h2XXX: pr_data <= DMA[apb.paddr[11:2]];
+              16'h1XX0: pr_data <= SESSION[apb_paddr[11:2]].SRC[63:32];
+              16'h1XX4: pr_data <= SESSION[apb_paddr[11:2]].SRC[32: 0];
+              16'h1XX8: pr_data <= SESSION[apb_paddr[11:2]].DST[63:32];
+              16'h1XXC: pr_data <= SESSION[apb_paddr[11:2]].DST[32: 0];
+              16'h2XXX: pr_data <= DMA[apb_paddr[11:2]];
             endcase
          end
       end
