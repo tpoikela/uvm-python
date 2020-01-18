@@ -319,7 +319,7 @@ def add_base_class(T, new_base, args={}):
 #  UVM_TLM_GET_TYPE_NAME(TYPE_NAME)
 def UVM_MS_IMP_COMMON(T, MASK, TYPE_NAME):
     from ..base.uvm_port_base import UVMPortBase
-    def __init__(self, name, imp, req_imp=None, rsp_imp = None):
+    def __init__(self, name, imp, req_imp=None, rsp_imp=None):
         UVMPortBase.__init__(self, name, imp, UVM_IMPLEMENTATION, 1, 1)
         self.m_req_imp = req_imp
         self.m_rsp_imp = rsp_imp
@@ -327,26 +327,4 @@ def UVM_MS_IMP_COMMON(T, MASK, TYPE_NAME):
     setattr(T, '__init__', __init__)
     UVM_TLM_GET_TYPE_NAME(T)
     return add_base_class(T, UVMPortBase)
-
-#------------
-# Unit tests
-#------------
-
-import unittest
-
-class TestUVMTLMImps(unittest.TestCase):
-
-    def test_uvm_imp_common(self):
-        from ..base.uvm_port_base import UVMPortBase
-        from ..base.uvm_component import UVMComponent
-        class MyTest():
-            pass
-        MyTest = UVM_IMP_COMMON(MyTest, UVM_TLM_NONBLOCKING_PUT_MASK, 'MyTest')
-        obj = MyTest('MyPort', UVMComponent('xxx', None))
-        self.assertEqual(obj.get_type_name(), 'MyTest')
-        self.assertEqual(obj.is_imp(), True)
-        self.assertEqual(isinstance(obj, UVMPortBase), True)
-
-if __name__ == '__main__':
-    unittest.main()
 
