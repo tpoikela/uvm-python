@@ -18,6 +18,7 @@ test-hello_world:
 test-tlm1:
 	make -C tlm1/producer_consumer/
 	make -C tlm1/hierarchy/
+	make -C tlm1/fifo/
 
 test-configuration:
 	make -C configuration/manual/
