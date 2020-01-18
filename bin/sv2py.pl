@@ -231,7 +231,7 @@ sub process_file {
 
         }
 
-        if ($line =~ /function\s+new\s*\(/) {
+        if ($line =~ /function\s+(\w+::)?new\s*\(/) {
             $st = $st | $IN_NEW;
         }
         elsif (($st & $IN_NEW) && $line =~ /endfunction/) {
@@ -331,13 +331,13 @@ sub process_file {
             push(@outfile, "$ws#$line");
         }
 
-        if ($line =~ /^class\s+(\w+)/) {
+        if ($line =~ /^\s*(virtual\s+)?class\s+(\w+)/) {
             ++$ind;
             $st = $IN_CLASS;
-            $classes->{$1} = {
+            $classes->{$2} = {
                 func => {}, var => {}
             };
-            $curr_class = $1;
+            $curr_class = $2;
         }
         elsif ($line =~ /^endclass/) {
             --$ind;
