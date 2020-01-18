@@ -24,7 +24,7 @@ class Packet(sv_obj):
 class TestSV(unittest.TestCase):
 
     def test_sv_obj(self):
-        """ Test that basic object randomisation works """
+        """ Test that basic object randomization works """
         pp = Packet("ethss")
         pp.tx_id = 888
         pp.data = 1234
