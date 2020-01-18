@@ -89,7 +89,11 @@ else
     MODULE   ?= sys_run
 endif
 
-EXTRA_ARGS="-PBASE_ADDR='h100"
+ifeq ($(SIM),$(filter $(SIM),ius xcelium))
+    EXTRA_ARGS=-gpg "PBASE_ADDR => 'h100"
+else
+    EXTRA_ARGS="-PBASE_ADDR='h100"
+endif
 
 include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim
