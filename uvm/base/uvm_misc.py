@@ -142,7 +142,7 @@ def uvm_leaf_scope(full_name, scope_separator="."):
     if bracket_match == "":
         regex = re.compile(scope_separator)
         if scope_separator == ".":
-            regex = re.compile("\.")
+            regex = re.compile(r"\.")
         if not regex.search(full_name):
             return full_name
 

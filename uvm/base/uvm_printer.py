@@ -816,4 +816,3 @@ class UVMLinePrinter(UVMTreePrinter):
 # TODO: Print object info in JSON format
 class UVMJSONPrinter(UVMPrinter):
     pass
-

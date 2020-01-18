@@ -38,7 +38,8 @@ module dut_dummy(
   inout wire [7:0] ubus_data,
   input wire ubus_wait,
   input wire ubus_error);
-  bit[2:0]   st;
+
+  reg [2:0]   st;
 
   // Basic arbiter, supports two masters, 0 has priority over 1
 
