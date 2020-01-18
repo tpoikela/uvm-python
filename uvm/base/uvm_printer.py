@@ -835,7 +835,7 @@ class TestUVMTablePrinter(unittest.TestCase):
         result = tprinter.emit()
         self.assertRegex(result, 'number.*1234')
         self.assertRegex(result, 'my_string.*xxx yyy')
-        self.assertRegex(result, 'my_real.*real.*1\.2345')
+        self.assertRegex(result, r'my_real.*real.*1\.2345')
 
 
 class TestUVMLinePrinter(unittest.TestCase):
