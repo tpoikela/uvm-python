@@ -373,11 +373,13 @@ class UVMPhase(UVMObject):
         self.m_parent = parent
 
         clp = UVMCmdlineProcessor.get_inst()
-        val = ""
+
+        val = []
         if clp.get_arg_value("+UVM_PHASE_TRACE", val):
             UVMPhase.m_phase_trace = 1
         else:
             UVMPhase.m_phase_trace = 0
+        val = []
         if clp.get_arg_value("+UVM_USE_OVM_RUN_SEMANTIC", val):
             UVMPhase.m_use_ovm_run_semantic = 1
         else:
