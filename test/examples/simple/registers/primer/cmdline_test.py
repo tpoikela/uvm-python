@@ -23,9 +23,11 @@
 #//
 
 import cocotb
+from cocotb.triggers import RisingEdge
 
 from uvm.comps.uvm_test import UVMTest
-from uvm import (UVMCoreService, sv, uvm_top, UVMCmdlineProcessor, UVMSequence)
+from uvm import (UVMCoreService, sv, uvm_top, UVMCmdlineProcessor, UVMSequence,
+        UVMConfigDb)
 from uvm.reg import (uvm_reg_sequence)
 from uvm.macros import *
 from tb_env import tb_env
@@ -35,14 +37,14 @@ class dut_reset_seq(UVMSequence):
 
     def __init__(self, name="dut_reset_seq"):
         super().__init__(name)
-        self.tb_top = None
+        self.vif = None
 
     @cocotb.coroutine
     def body(self):
-        self.tb_top.rst = 1
+        self.vif.rst <= 1
         for i in range(5):
-            yield RisingEdge(self.tb_top.clk)
-        self.tb_top.rst = 0
+            yield RisingEdge(self.vif.clk)
+        self.vif.rst <= 0
 
 
 uvm_object_utils(dut_reset_seq)
@@ -64,9 +66,16 @@ class cmdline_test(UVMTest):
         if sv.cast(arr, uvm_top.find("env$"), tb_env):
             env = arr[0]
 
+        arr = []
+        vif = None
+        if UVMConfigDb.get(env, "apb", "vif", arr):
+            vif = arr[0]
+        else:
+            uvm_fatal("NO_VIF", "Could not find apb_vif from config_db")
         # dut_reset_seq rst_seq
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)
-        rst_seq.start(None)
+        rst_seq.vif = vif
+        yield rst_seq.start(None)
         env.model.reset()
 
         # uvm_cmdline_processor
