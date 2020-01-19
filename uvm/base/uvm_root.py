@@ -598,8 +598,8 @@ class UVMRoot(UVMComponent):
         dump_args = []
         all_args = []
         out_string = ""
-        if (self.clp.get_arg_matches("+UVM_DUMP_CMDLINE_ARGS", dump_args)):
-            self.clp.get_args(all_args)
+        if self.clp.get_arg_matches("+UVM_DUMP_CMDLINE_ARGS", dump_args):
+            all_args = self.clp.get_args()
             for i in range(len(all_args)):
                 if (all_args[i] == "__-f__"):
                     continue
