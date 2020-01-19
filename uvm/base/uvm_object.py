@@ -7,6 +7,13 @@ from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 
 class UVMObject(sv_obj):
+    """
+    The :class:`UVMObject` class is the base class for all UVM data and hierarchical classes.
+    Its primary role is to define a set of methods for such common operations as :meth:`create`,
+    :meth:`copy`, :meth:`compare`, :meth:`print`, and :meth:`record`.
+    Classes deriving from :class:`UVMObject` must implement methods such as
+    :meth:`create` and :meth:`get_type_name`.
+    """
 
     inst_id_count = 0
 
@@ -778,7 +785,7 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.bitstream = value
 
         self._m_uvm_field_automation(None, UVM_SETINT, field_name)
-        
+
         if UVMObject._m_uvm_status_container.warning and not self._m_uvm_status_container.status:
             uvm_report_error("NOMTC", sv.sformatf("did not find a match for field %s", field_name),UVM_NONE)
         UVMObject._m_uvm_status_container.cycle_check.clear()

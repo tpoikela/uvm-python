@@ -31,8 +31,10 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.inheritance_diagram',
+    # 'sphinx_automodapi.automodapi',
+    # 'sphinx_automodapi.smart_resolver',
     ]
-
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'cocotb': ('https://cocotb.readthedocs.io/en/latest', None),
@@ -270,3 +272,12 @@ texinfo_documents = [
 
 # For now show the todos
 todo_include_todos = True
+
+# -- Setup for inheritance_diagram directive which uses graphviz ---------------
+
+graphviz_output_format = 'svg'
+
+# -- Setup for sphinx-automodapi-------------------------------- ---------------
+
+# numpydoc_show_class_members = False
+
