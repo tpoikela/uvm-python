@@ -1,7 +1,7 @@
 
-/* Mock module for testing py-uvm with cocotb and iverilog */
-module uvm_test#(
-    parameter int DW = 16
+/* Mock module for testing uvm-python with cocotb and iverilog */
+module uvm_test #(
+    parameter DW = 16
 )
 (
     input clk,
