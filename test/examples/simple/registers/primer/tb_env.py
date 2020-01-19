@@ -27,6 +27,7 @@ from uvm.macros import *
 
 from apb.apb_agent import apb_agent
 from reg_model import reg_block_slave
+from apb.apb_rw import reg2apb_adapter
 
 
 class tb_env(UVMComponent):
@@ -41,12 +42,10 @@ class tb_env(UVMComponent):
 
 
     def build_phase(self, phase):
-        if (self.model is None):
-            model = reg_block_slave.type_id.create("model",self)
-            model.build()
-            model.lock_model()
-            self.model = model
-
+        if self.model is None:
+            self.model = reg_block_slave.type_id.create("model", self)
+            self.model.build()
+            self.model.lock_model()
 
         self.apb = apb_agent.type_id.create("apb", self)
 

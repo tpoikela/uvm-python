@@ -24,39 +24,23 @@
 
 import cocotb
 from cocotb.triggers import RisingEdge
+from cocotb.clock import Clock
 
 from uvm.seq.uvm_sequence import UVMSequence
 from uvm.macros import *
 from uvm import (UVMConfigDb, run_test, uvm_object_utils)
 
 from tb_env import tb_env
+from apb.apb_if import apb_if
+from testlib import *
 
-#import apb_pkg::*
-
-#`include "reg_model.sv"
-#`include "tb_env.sv"
-#`include "testlib.sv"
-
-
-class dut_reset_seq(UVMSequence):
-
-    def __init__(self, name="dut_reset_seq"):
-        super().__init__(name)
-        self.tb_top = None
-
-    @cocotb.coroutine
-    def body(self):
-        self.tb_top.rst = 1
-        for i in range(5):
-            yield RisingEdge(self.tb_top.clk)
-        self.tb_top.rst = 0
-
-
-uvm_object_utils(dut_reset_seq)
 
 
 @cocotb.test()
 def initial(dut):
-    env = tb_env("env")
+    env = tb_env("env", None)
+    vif = apb_if(dut)
+    UVMConfigDb.set(env, "apb", "vif", vif)
     #UVMConfigDb.set(env, "apb", "vif", tb_top.apb0)
+    cocotb.fork(Clock(vif.clk, 1000).start())
     yield run_test()
