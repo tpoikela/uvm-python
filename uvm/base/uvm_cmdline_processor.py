@@ -79,7 +79,7 @@ class UVMCmdlineProcessor(UVMReportObject):
     m_inst = None
     uvm_cmdline_proc = None
 
-    # Used in unit tests
+    # Used in unit tests only (not part of original UVM)
     m_test_mode = False
     m_test_plusargs = {}
 
@@ -92,7 +92,7 @@ class UVMCmdlineProcessor(UVMReportObject):
     @classmethod
     def get_inst(cls):
         if UVMCmdlineProcessor.m_inst is None:
-           UVMCmdlineProcessor.m_inst = UVMCmdlineProcessor("uvm_cmdline_proc")
+            UVMCmdlineProcessor.m_inst = UVMCmdlineProcessor("uvm_cmdline_proc")
         return UVMCmdlineProcessor.m_inst
 
     # Group: Basic Arguments
