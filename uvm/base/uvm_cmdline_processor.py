@@ -23,13 +23,14 @@
 #------------------------------------------------------------------------------
 
 
-import os
 import regex
+import cocotb
+
 from .uvm_report_object import UVMReportObject
 from .uvm_debug import *
 from ..macros import uvm_error
 from .uvm_object_globals import *
-import cocotb
+from .uvm_globals import uvm_check_output_args
 
 
 class UVMCmdLineVerb:
@@ -176,14 +177,17 @@ class UVMCmdlineProcessor(UVMReportObject):
     # the number of command line arguments that match the ~match~ string, and
     # ~value~ is the value of the first match.
     def get_arg_value(self, match, value):
+        uvm_check_output_args([value])
         chars = len(match)
         get_arg_value = 0
         for i in range(0, len(self.m_argv)):
             if len(self.m_argv[i]) >= chars:
-                if self.m_argv[i][0:chars-1] == match:
+                arg_to_try = self.m_argv[i][0:chars]
+
+                if arg_to_try == match:
                     get_arg_value += 1
                     if get_arg_value == 1:
-                        value = self.m_argv[i][chars:len(self.m_argv[i])-1]
+                        value.append(self.m_argv[i][chars:len(self.m_argv[i])])
         return get_arg_value
 
     # Function: get_arg_values
