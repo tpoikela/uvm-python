@@ -23,17 +23,14 @@
 #//
 
 import cocotb
-from cocotb.triggers import RisingEdge
 from cocotb.clock import Clock
 
-from uvm.seq.uvm_sequence import UVMSequence
 from uvm.macros import *
-from uvm import (UVMConfigDb, run_test, uvm_object_utils)
+from uvm import (UVMConfigDb, run_test)
 
 from tb_env import tb_env
 from apb.apb_if import apb_if
 from testlib import *
-
 
 
 @cocotb.test()
@@ -42,5 +39,5 @@ def initial(dut):
     vif = apb_if(dut)
     UVMConfigDb.set(env, "apb", "vif", vif)
     #UVMConfigDb.set(env, "apb", "vif", tb_top.apb0)
-    cocotb.fork(Clock(vif.clk, 1000).start())
+    cocotb.fork(Clock(vif.clk, 10).start())
     yield run_test()
