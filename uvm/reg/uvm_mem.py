@@ -26,6 +26,7 @@ from ..base.uvm_pool import UVMPool, UVMObjectStringPool
 from ..base.uvm_globals import *
 from ..macros import *
 from .uvm_reg_model import *
+from .uvm_mem_mam import *
 
 
 #//------------------------------------------------------------------------------
@@ -120,7 +121,18 @@ class UVMMem(UVMObject):
         self.m_maps = UVMPool()  # bit[uvm_reg_map]
         if (n_bits > UVMMem.m_max_size):
             UVMMem.m_max_size = n_bits
-        #
+
+        #   // variable: mam
+        #   //
+        #   // Memory allocation manager
+        #   //
+        #   // Memory allocation manager for the memory corresponding to this
+        #   // abstraction class instance.
+        #   // Can be used to allocate regions of consecutive addresses of
+        #   // specific sizes, such as DMA buffers,
+        #   // or to locate virtual register array.
+        #   //
+        self.mam = None  # uvm_mem_mam
     #endfunction: new
 
     #
@@ -140,6 +152,30 @@ class UVMMem(UVMObject):
     #   //
     #   extern function void configure (uvm_reg_block parent,
     #                                   string        hdl_path = "")
+    def configure(self, parent, hdl_path=""):
+
+        if parent is None:
+            uvm_fatal("REG/None_PARENT","configure: parent argument is None")
+        self.m_parent = parent
+
+        if (self.m_access != "RW" and self.m_access != "RO"):
+            uvm_error("RegModel", "Memory '" + self.get_full_name() + "' can only be RW or RO")
+            self.m_access = "RW"
+
+        cfg = UVMMemMamCfg()  # uvm_mem_mam_cfg
+        cfg.n_bytes      = ((self.m_n_bits-1) / 8) + 1
+        cfg.start_offset = 0
+        cfg.end_offset   = self.m_size-1
+        cfg.mode     = UVMMemMam.GREEDY
+        cfg.locality = UVMMemMam.BROAD
+
+        self.mam = UVMMemMam(self.get_full_name(), cfg, self)
+        self.m_parent.add_mem(self)
+
+        if hdl_path != "":
+            self.add_hdl_path_slice(hdl_path, -1, -1)
+        #endfunction: configure
+
 
     #
     #
@@ -168,17 +204,6 @@ class UVMMem(UVMObject):
     #
     #
 
-    #   // variable: mam
-    #   //
-    #   // Memory allocation manager
-    #   //
-    #   // Memory allocation manager for the memory corresponding to this
-    #   // abstraction class instance.
-    #   // Can be used to allocate regions of consecutive addresses of
-    #   // specific sizes, such as DMA buffers,
-    #   // or to locate virtual register array.
-    #   //
-    #   uvm_mem_mam mam
 
 
     #   //---------------------
@@ -979,38 +1004,6 @@ class UVMMem(UVMObject):
 #
 #
 #
-#// configure
-#
-#function void uvm_mem::configure(uvm_reg_block  parent,
-#                                 string         hdl_path="")
-#
-#   if (parent == None)
-#     `uvm_fatal("REG/None_PARENT","configure: parent argument is None")
-#
-#   m_parent = parent
-#
-#   if (m_access != "RW" && m_access != "RO"):
-#      `uvm_error("RegModel", {"Memory '",get_full_name(),"' can only be RW or RO"})
-#      m_access = "RW"
-#   end
-#
-#   begin
-#      uvm_mem_mam_cfg cfg = new
-#
-#      cfg.n_bytes      = ((m_n_bits-1) / 8) + 1
-#      cfg.start_offset = 0
-#      cfg.end_offset   = m_size-1
-#
-#      cfg.mode     = uvm_mem_mam::GREEDY
-#      cfg.locality = uvm_mem_mam::BROAD
-#
-#      mam = new(get_full_name(), cfg, this)
-#   end
-#
-#   m_parent.add_mem(this)
-#
-#   if (hdl_path != "") add_hdl_path_slice(hdl_path, -1, -1)
-#endfunction: configure
 #
 #
 #// set_offset
@@ -1021,7 +1014,7 @@ class UVMMem(UVMObject):
 #
 #   uvm_reg_map orig_map = map
 #
-#   if (m_maps.num() > 1 && map == None):
+#   if (m_maps.num() > 1 && map is None):
 #      `uvm_error("RegModel",{"set_offset requires a non-None map when memory '",
 #                 get_full_name(),"' belongs to more than one map."})
 #      return
@@ -1029,7 +1022,7 @@ class UVMMem(UVMObject):
 #
 #   map = get_local_map(map,"set_offset()")
 #
-#   if (map == None)
+#   if (map is None)
 #     return
 #
 #   map.m_set_mem_offset(this, offset, unmapped)
@@ -1053,7 +1046,7 @@ class UVMMem(UVMObject):
 #// get_full_name
 #
 #function string uvm_mem::get_full_name()
-#   if (m_parent == None)
+#   if (m_parent is None)
 #      return get_name()
 #
 #   return {m_parent.get_full_name(), ".", get_name()}
@@ -1105,7 +1098,7 @@ class UVMMem(UVMObject):
 #// get_local_map
 #
 #function uvm_reg_map uvm_mem::get_local_map(uvm_reg_map map, string caller="")
-#   if (map == None)
+#   if (map is None)
 #     return get_default_map()
 #   if (m_maps.exists(map))
 #     return map;
@@ -1169,7 +1162,7 @@ class UVMMem(UVMObject):
 #   if (get_n_maps() == 1) return get_access
 #
 #   map = get_local_map(map, "get_access()")
-#   if (map == None) return get_access
+#   if (map is None) return get_access
 #
 #   // Is the memory restricted in this map?
 #   case (get_rights(map))
@@ -1218,7 +1211,7 @@ class UVMMem(UVMObject):
 #
 #   map = get_local_map(map,"get_rights()")
 #
-#   if (map == None)
+#   if (map is None)
 #     return "RW"
 #
 #   info = map.get_mem_map_info(this)
@@ -1237,7 +1230,7 @@ class UVMMem(UVMObject):
 #
 #   map = get_local_map(map,"get_offset()")
 #
-#   if (map == None)
+#   if (map is None)
 #     return -1
 #
 #   map_info = map.get_mem_map_info(this)
@@ -1245,7 +1238,7 @@ class UVMMem(UVMObject):
 #   if (map_info.unmapped):
 #      `uvm_warning("RegModel", {"Memory '",get_name(),
 #                   "' is unmapped in map '",
-#                   ((orig_map == None) ? map.get_full_name() : orig_map.get_full_name()),"'"})
+#                   ((orig_map is None) ? map.get_full_name() : orig_map.get_full_name()),"'"})
 #      return -1
 #   end
 #
@@ -1333,7 +1326,7 @@ class UVMMem(UVMObject):
 #
 #   map = get_local_map(map,"get_addresses()")
 #
-#   if (map == None)
+#   if (map is None)
 #     return 0
 #
 #   map_info = map.get_mem_map_info(this)
@@ -1341,7 +1334,7 @@ class UVMMem(UVMObject):
 #   if (map_info.unmapped):
 #      `uvm_warning("RegModel", {"Memory '",get_name(),
 #                   "' is unmapped in map '",
-#                   ((orig_map == None) ? map.get_full_name() : orig_map.get_full_name()),"'"})
+#                   ((orig_map is None) ? map.get_full_name() : orig_map.get_full_name()),"'"})
 #      return 0
 #   end
 #
@@ -1627,7 +1620,7 @@ class UVMMem(UVMObject):
 #      if (map_info.frontdoor != None):
 #         uvm_reg_frontdoor fd = map_info.frontdoor
 #         fd.rw_info = rw
-#         if (fd.sequencer == None)
+#         if (fd.sequencer is None)
 #           fd.sequencer = system_map.get_sequencer()
 #         fd.start(fd.sequencer, rw.parent)
 #      end
@@ -1734,7 +1727,7 @@ class UVMMem(UVMObject):
 #      if (map_info.frontdoor != None):
 #         uvm_reg_frontdoor fd = map_info.frontdoor
 #         fd.rw_info = rw
-#         if (fd.sequencer == None)
+#         if (fd.sequencer is None)
 #           fd.sequencer = system_map.get_sequencer()
 #         fd.start(fd.sequencer, rw.parent)
 #      end
@@ -1816,7 +1809,7 @@ class UVMMem(UVMObject):
 #     rw.path = m_parent.get_default_path()
 #
 #   if (rw.path == UVM_BACKDOOR):
-#      if (get_backdoor() == None && !has_hdl_path()):
+#      if (get_backdoor() is None && !has_hdl_path()):
 #         `uvm_warning("RegModel",
 #            {"No backdoor access available for memory '",get_full_name(),
 #            "' . Using frontdoor instead."})
@@ -1830,7 +1823,7 @@ class UVMMem(UVMObject):
 #
 #     rw.local_map = get_local_map(rw.map,caller)
 #
-#     if (rw.local_map == None):
+#     if (rw.local_map is None):
 #        `uvm_error(get_type_name(),
 #           {"No transactor available to physically access memory from map '",
 #            rw.map.get_full_name(),"'"})
@@ -1840,7 +1833,7 @@ class UVMMem(UVMObject):
 #
 #     map_info = rw.local_map.get_mem_map_info(this)
 #
-#     if (map_info.frontdoor == None):
+#     if (map_info.frontdoor is None):
 #
 #        if (map_info.unmapped):
 #           `uvm_error("RegModel", {"Memory '",get_full_name(),
@@ -1867,7 +1860,7 @@ class UVMMem(UVMObject):
 #        end
 #     end
 #
-#     if (rw.map == None)
+#     if (rw.map is None)
 #       rw.map = rw.local_map
 #   end
 #
@@ -1895,7 +1888,7 @@ class UVMMem(UVMObject):
 #   m_fname = fname
 #   m_lineno = lineno
 #
-#   if (bkdr == None && !has_hdl_path(kind)):
+#   if (bkdr is None && !has_hdl_path(kind)):
 #      `uvm_error("RegModel", {"No backdoor access available in memory '",
 #                             get_full_name(),"'"})
 #      status = UVM_NOT_OK
@@ -1945,7 +1938,7 @@ class UVMMem(UVMObject):
 #   m_fname = fname
 #   m_lineno = lineno
 #
-#   if (bkdr == None && !has_hdl_path(kind)):
+#   if (bkdr is None && !has_hdl_path(kind)):
 #      `uvm_error("RegModel", {"No backdoor access available in memory '",
 #                 get_full_name(),"'"})
 #      status = UVM_NOT_OK
@@ -1994,7 +1987,7 @@ class UVMMem(UVMObject):
 #
 #   map = get_local_map(map, "set_frontdoor()")
 #
-#   if (map == None):
+#   if (map is None):
 #      `uvm_error("RegModel", {"Memory '",get_full_name(),
 #                 "' not found in map '", map.get_full_name(),"'"})
 #      return
@@ -2013,7 +2006,7 @@ class UVMMem(UVMObject):
 #
 #   map = get_local_map(map, "set_frontdoor()")
 #
-#   if (map == None):
+#   if (map is None):
 #      `uvm_error("RegModel", {"Memory '",get_full_name(),
 #                 "' not found in map '", map.get_full_name(),"'"})
 #      return None
@@ -2044,7 +2037,7 @@ class UVMMem(UVMObject):
 #
 #function uvm_reg_backdoor uvm_mem::get_backdoor(bit inherited = 1)
 #
-#   if (m_backdoor == None && inherited):
+#   if (m_backdoor is None && inherited):
 #     uvm_reg_block blk = get_parent()
 #     uvm_reg_backdoor bkdr
 #     while (blk != None):
@@ -2340,7 +2333,7 @@ class UVMMem(UVMObject):
 #       parent_map = this_map.get_parent_map()
 #       endian_name=this_map.get_endian()
 #
-#       offset = parent_map == None ? this_map.get_base_addr(UVM_NO_HIER) :
+#       offset = parent_map is None ? this_map.get_base_addr(UVM_NO_HIER) :
 #                                     parent_map.get_submap_offset(this_map)
 #       prefix = {prefix, "  "}
 #       $sformat(convert2string, "%sMapped in '%s' -- buswidth %0d bytes, %s, offset 'h%0h, size 'h%0h, %s\n", prefix,
