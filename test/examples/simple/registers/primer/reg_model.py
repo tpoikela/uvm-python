@@ -108,10 +108,10 @@ class reg_slave_SESSION(UVMRegFile):
     def build(self):
         self.SRC = reg_slave_SOCKET.type_id.create("SRC")
         self.DST = reg_slave_SOCKET.type_id.create("DST")
-    
+
         self.SRC.configure(self.get_block(), self, "SRC")
         self.DST.configure(self.get_block(), self, "DST")
-    
+
         self.SRC.build()
         self.DST.build()
 
@@ -132,7 +132,7 @@ uvm_object_utils(reg_slave_SESSION)
 class reg_slave_TABLES(UVMReg):
     #
     #   rand UVMRegField value
-    #   
+    #
     def __init__(self, name="slave_TABLES"):
         super().__init__(name,32, UVM_NO_COVERAGE)
         self.valeu = None
@@ -214,20 +214,20 @@ class reg_block_slave(UVMRegBlock):
         for i in range(len(self.TABLES)):
             self.TABLES[i].configure(self,None,sv.sformatf("TABLES[%0d]",i))
             self.TABLES[i].build()
-        
+
         self.DATA.configure(self.INDEX, self.TABLES, self, None)
         self.DATA.build()
         self.DMA_RAM.configure(self,"")
 
         # define default map
-        self.default_map = self.create_map("default_map",  0x0, 4, UVM_LITTLE_ENDIAN)
-        self.default_map.add_reg(self.ID,     0x0,  "RW")
-        self.default_map.add_reg(self.INDEX,  0x20, "RW")
-        self.default_map.add_reg(self.DATA,   0x24, "RW")
+        self.default_map = self.create_map("default_map", 0x0, 4, UVM_LITTLE_ENDIAN)
+        self.default_map.add_reg(self.ID, 0x0, "RW")
+        self.default_map.add_reg(self.INDEX, 0x20, "RW")
+        self.default_map.add_reg(self.DATA, 0x24, "RW")
         for i in range(len(self.SESSION)):
-            self.SESSION[i].map(self.default_map,  0x1000 + 16 * i)
+            self.SESSION[i].map(self.default_map, 0x1000 + 16 * i)
 
-        self.default_map.add_mem(DMA_RAM,  0x2000, "RW")
+        self.default_map.add_mem(self.DMA_RAM, 0x2000, "RW")
 
         # field handle aliases
         self.REVISION_ID = self.ID.REVISION_ID
