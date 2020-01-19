@@ -17,3 +17,4 @@ from .uvm_reg_predictor import *
 from .uvm_reg_sequence import *
 from .uvm_vreg import *
 from .uvm_vreg_field import *
+from .sequences import *
