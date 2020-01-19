@@ -364,11 +364,13 @@ def uvm_hdl_concat2string(concat):
     image = image + "}"
     return image
 
+
 class uvm_reg_map_addr_range:
-    def __init__(self):
-        self.min = 0
-        self.max = 0
-        self.stride = 0
+    def __init__(self, _min=0, _max=0, stride=0):
+        self.min = _min
+        self.max = _max
+        self.stride = stride
+
 
 #`include "reg/uvm_reg_item.svh"
 #`include "reg/uvm_reg_adapter.svh"
@@ -397,20 +399,3 @@ class uvm_reg_map_addr_range:
 #`include "reg/sequences/uvm_reg_mem_built_in_seq.svh"
 #`include "reg/sequences/uvm_reg_mem_hdl_paths_seq.svh"
 
-import unittest
-
-class TestUVMRegModel(unittest.TestCase):
-
-    def test_concat2string(self):
-        concat = uvm_hdl_path_concat()
-        path_sli = uvm_hdl_path_slice()
-        path_sli.path = "dut"
-        concat.add_path(path_sli.path)
-        str_path = uvm_hdl_concat2string(concat)
-        self.assertEqual(str_path, "dut")
-        concat.add_path("test_reg")
-        str_path = uvm_hdl_concat2string(concat)
-        self.assertEqual(str_path, "{dut, test_reg}")
-
-if __name__ == '__main__':
-    unittest.main()

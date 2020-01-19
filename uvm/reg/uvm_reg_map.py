@@ -43,12 +43,12 @@ class UVMRegMapInfo:
         self.frontdoor = None  # uvm_reg_frontdoor
         self.mem_range = uvm_reg_map_addr_range()
 
-        # if set marks the uvm_reg_map_info as initialized,
+        # if set marks the UVMRegMapInfo as initialized,
         # prevents using an uninitialized map (for instance if the model
         # has not been locked accidently and the maps have not been computed before)
         self.is_initialized = False
 
-# Class: uvm_reg_transaction_order_policy
+
 class UVMRegTransactionOrderPolicy(UVMObject):
     def __init__(self, name='policy'):
         UVMObject.__init__(self, name)
@@ -154,24 +154,25 @@ class UVMRegMap(UVMObject):
                 addrs = []
                 addrs_max = []
                 min1 = 0
-                max2 = 0
+                max1 = 0
                 min2 = 0
                 max2 = 0  # uvm_reg_addr_t
                 stride = 0
+
                 mem_offset = self.m_mems_info[mem].offset
                 bus_width = self.get_physical_addresses(mem_offset,0,mem.get_n_bytes(),addrs)
-                if (addrs[0] < addrs[addrs.size()-1]):
+                if addrs[0] < addrs[len(addrs)-1]:
                     min1 = addrs[0]
                 else:
-                    min1 = addrs[addrs.size()-1]
+                    min1 = addrs[len(addrs)-1]
                 min2 = addrs[0]
 
                 mem_offset = self.m_mems_info[mem].offset
                 self.get_physical_addresses(mem_offset,(mem.get_size()-1),mem.get_n_bytes(),addrs_max)
-                if (addrs_max[0] > addrs_max[addrs_max.size()-1]):
+                if addrs_max[0] > addrs_max[len(addrs_max)-1]:
                     max1 = addrs_max[0]
                 else:
-                    max1 = addrs_max[addrs_max.size()-1]
+                    max1 = addrs_max[len(addrs_max)-1]
                 max2 = addrs_max[0]
                 # address interval between consecutive mem offsets
                 stride = (max2 - min2)/(mem.get_size()-1)
@@ -195,20 +196,20 @@ class UVMRegMap(UVMObject):
                             + top_map.m_mems_by_offset[rr].get_full_name()
                             + "': 'h" + a))
 
-                addr_range = [min1, max1, stride]
+                addr_range = uvm_reg_map_addr_range(min1, max1, stride)
                 top_map.m_mems_by_offset[addr_range] = mem
                 self.m_mems_info[mem].addr  = addrs
                 self.m_mems_info[mem].mem_range = addr_range
 
         # If the block has no registers or memories,
         # bus_width won't be set
-        if (bus_width == 0):
+        if bus_width == 0:
             bus_width = self.m_n_bytes
         self.m_system_n_bytes = bus_width
         #endfunction
 
-    #
-    m_backdoor = None # uvm_reg_map
+    # static local uvm_reg_map   m_backdoor;
+    m_backdoor = None  # uvm_reg_map
 
     #   // Function: backdoor
     #   // Return the backdoor pseudo-map singleton
@@ -253,8 +254,8 @@ class UVMRegMap(UVMObject):
         self.m_submaps = {}  # uvm_reg_addr_t[uvm_reg_map] value=offset of submap at this level
         self.m_submap_rights = {}  # string[uvm_reg_map] # value=rights of submap at this level
 
-        self.m_regs_info = {}  # uvm_reg_map_info[uvm_reg]
-        self.m_mems_info = {}  # uvm_reg_map_info[uvm_mem]
+        self.m_regs_info = {}  # UVMRegMapInfo[uvm_reg]
+        self.m_mems_info = {}  # UVMRegMapInfo[uvm_mem]
         self.m_regs_by_offset = {}  # uvm_reg[uvm_reg_addr_t]
         # Use only in addition to above if a RO and a WO
         # register share the same address.
@@ -365,6 +366,26 @@ class UVMRegMap(UVMObject):
     #                                         string         rights = "RW",
     #                                         bit            unmapped=0,
     #                                         uvm_reg_frontdoor frontdoor=None)
+    def add_mem(self, mem, offset, rights="RW", unmapped=0, frontdoor=None):
+        if mem in self.m_mems_info:
+            uvm_error("RegModel", "Memory '" + mem.get_name() +
+                      "' has already been added to map '" + self.get_name() + "'")
+            return
+
+        if mem.get_parent() != self.get_parent():
+            uvm_error("RegModel", "Memory '" + mem.get_full_name() + "' may not be added to address map '"
+                + self.get_full_name() + "' : they are not in the same block")
+            return
+        
+        mem.add_map(self)
+
+        info = UVMRegMapInfo()
+        info.offset   = offset
+        info.rights   = rights
+        info.unmapped = unmapped
+        info.frontdoor = frontdoor
+        self.m_mems_info[mem] = info
+        #endfunction: add_mem
 
     #   // Function: add_submap
     #   //
@@ -881,7 +902,7 @@ class UVMRegMap(UVMObject):
                 + "check that the top register model is locked()"))
         return result
 
-    #   extern virtual function uvm_reg_map_info get_mem_map_info(uvm_mem mem, bit error=1)
+    #   extern virtual function UVMRegMapInfo get_mem_map_info(uvm_mem mem, bit error=1)
     #   extern virtual function int unsigned get_size()
 
     #
@@ -1507,7 +1528,7 @@ class UVMRegMap(UVMObject):
 
     #
     #   extern function void Xget_bus_infoX (uvm_reg_item rw,
-    #                                        output uvm_reg_map_info map_info,
+    #                                        output UVMRegMapInfo map_info,
     #                                        output int size,
     #                                        output int lsb,
     #                                        output int addr_skip)
@@ -1579,37 +1600,6 @@ uvm_object_utils(UVMRegMap)
 #
 #
 #
-# add_mem
-#
-#function void uvm_reg_map::add_mem(uvm_mem mem,
-#                                   uvm_reg_addr_t offset,
-#                                   string rights = "RW",
-#                                   bit unmapped=0,
-#                                   uvm_reg_frontdoor frontdoor=None)
-#   if (self.m_mems_info.exists(mem)):
-#      `uvm_error("RegModel", {"Memory '",mem.get_name(),
-#                 "' has already been added to map '",get_name(),"'"})
-#      return
-#   end
-#
-#   if (mem.get_parent() != get_parent()):
-#      `uvm_error("RegModel",
-#         {"Memory '",mem.get_full_name(),"' may not be added to address map '",
-#          get_full_name(),"' : they are not in the same block"})
-#      return
-#   end
-#
-#   mem.add_map(this)
-#
-#   begin
-#   uvm_reg_map_info info = new
-#   info.offset   = offset
-#   info.rights   = rights
-#   info.unmapped = unmapped
-#   info.frontdoor = frontdoor
-#   self.m_mems_info[mem] = info
-#   end
-#endfunction: add_mem
 #
 #
 #
@@ -1628,7 +1618,7 @@ uvm_object_utils(UVMRegMap)
 #   end
 #
 #   begin
-#      uvm_reg_map_info info    = self.m_mems_info[mem]
+#      UVMRegMapInfo info    = self.m_mems_info[mem]
 #      uvm_reg_block    blk     = get_parent()
 #      uvm_reg_map      top_map = get_root_map()
 #      uvm_reg_addr_t   addrs[]
@@ -1841,7 +1831,7 @@ uvm_object_utils(UVMRegMap)
 #
 # get_mem_map_info
 #
-#function uvm_reg_map_info uvm_reg_map::get_mem_map_info(uvm_mem mem, bit error=1)
+#function UVMRegMapInfo uvm_reg_map::get_mem_map_info(uvm_mem mem, bit error=1)
 #  if (!self.m_mems_info.exists(mem)):
 #    if (error)
 #      `uvm_error("REG_NO_MAP",{"Memory '",mem.get_name(),"' not in map '",get_name(),"'"})

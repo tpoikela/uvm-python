@@ -64,6 +64,7 @@ UPSTREAM = 1
 #//------------------------------------------------------------------------------
 #class uvm_reg_sequence #(type BASE=uvm_sequence #(uvm_reg_item)) extends BASE;
 
+
 class uvm_reg_sequence(UVMSequence):
     #
     #
@@ -486,6 +487,7 @@ class uvm_reg_sequence(UVMSequence):
     #
     #endclass
 uvm_object_utils(uvm_reg_sequence)
+UVMRegSequence = uvm_reg_sequence
 
 
 #//------------------------------------------------------------------------------

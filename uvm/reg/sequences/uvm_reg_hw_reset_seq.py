@@ -55,19 +55,18 @@ from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 #//
 #// This is usually the first test executed on any DUT.
 #//
-#
+
 
 class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
-    #
-    def __init__(self, name="uvm_reg_hw_reset_seq"):
-        uvm_reg_sequence.__init__(self, name)
-        self.model = None
 
-    #   // Variable: model
-    #   //
-    #   // The block to be tested. Declared in the base class.
-    #   //
-    #   //| uvm_reg_block model
+    def __init__(self, name="uvm_reg_hw_reset_seq"):
+        super().__init__(name)
+        #   // Variable: model
+        #   //
+        #   // The block to be tested. Declared in the base class.
+        #   //
+        self.model = None  # uvm_reg_block
+
 
     #   // Variable: body
     #   //

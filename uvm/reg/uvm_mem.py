@@ -197,13 +197,17 @@ class UVMMem(UVMObject):
 
     #
     #   /*local*/ extern virtual function void set_parent(uvm_reg_block parent)
+
     #   /*local*/ extern function void add_map(uvm_reg_map map)
+    def add_map(self, _map):
+        self.m_maps[_map] = 1
+
     #   /*local*/ extern function void Xlock_modelX()
+    def Xlock_modelX(self):
+        self.m_locked = 1
+
     #   /*local*/ extern function void Xadd_vregX(uvm_vreg vreg)
     #   /*local*/ extern function void Xdelete_vregX(uvm_vreg vreg)
-    #
-    #
-
 
 
     #   //---------------------
@@ -233,10 +237,13 @@ class UVMMem(UVMObject):
     #   // Get the parent block
     #   //
     #   extern virtual function uvm_reg_block get_parent ()
+    def get_parent(self):
+        return self.get_block()
 
     #   extern virtual function uvm_reg_block get_block  ()
+    def get_block(self):
+        return self.m_parent
 
-    #
     #
     #   // Function: get_n_maps
     #   //
@@ -304,20 +311,24 @@ class UVMMem(UVMObject):
     #   extern virtual function string get_access(uvm_reg_map map = None)
     #
     #
+
     #   // Function: get_size
     #   //
     #   // Returns the number of unique memory locations in this memory.
     #   //
     #   extern function longint unsigned get_size()
-    #
-    #
+    def get_size(self):
+        return self.m_size
+
     #   // Function: get_n_bytes
     #   //
     #   // Return the width, in number of bytes, of each memory location
     #   //
     #   extern function int unsigned get_n_bytes()
-    #
-    #
+    def get_n_bytes(self):
+        return int((self.m_n_bits - 1) / 8) + 1
+
+
     #   // Function: get_n_bits
     #   //
     #   // Returns the width, in number of bits, of each memory location
@@ -1029,18 +1040,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// add_map
-#
-#function void uvm_mem::add_map(uvm_reg_map map)
-#  m_maps[map] = 1
-#endfunction
-#
-#
-#// Xlock_modelX
-#
-#function void uvm_mem::Xlock_modelX()
-#   m_locked = 1
-#endfunction: Xlock_modelX
 #
 #
 #// get_full_name
@@ -1053,12 +1052,6 @@ class UVMMem(UVMObject):
 #
 #endfunction: get_full_name
 #
-#
-#// get_block
-#
-#function uvm_reg_block uvm_mem::get_block()
-#   return m_parent
-#endfunction: get_block
 #
 #
 #// get_n_maps
@@ -1358,12 +1351,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// get_size
-#
-#function longint unsigned uvm_mem::get_size()
-#   return m_size
-#endfunction: get_size
-#
 #
 #// get_n_bits
 #
@@ -1374,11 +1361,6 @@ class UVMMem(UVMObject):
 #
 #
 #
-#// get_n_bytes
-#
-#function int unsigned uvm_mem::get_n_bytes()
-#   return (m_n_bits - 1) / 8 + 1
-#endfunction: get_n_bytes
 #
 #
 #
@@ -2303,11 +2285,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// get_parent
-#
-#function uvm_reg_block uvm_mem::get_parent()
-#   return get_block()
-#endfunction
 #
 #
 #// convert2string

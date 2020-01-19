@@ -265,6 +265,21 @@ class UVMRegBlock(UVMObject):
     #   /*local*/ extern function void add_vreg  (uvm_vreg vreg)
 
     #   /*local*/ extern function void add_mem   (uvm_mem  mem)
+    def add_mem(self, mem):
+        if self.is_locked():
+            uvm_error("RegModel", "Cannot add memory to locked block model")
+            return
+
+        if mem in self.mems:
+            uvm_error("RegModel", "Memory '" + mem.get_name()
+                + "' has already been registered with block '" + self.get_name()
+                + "'")
+            return
+
+        self.mems[mem] = UVMRegBlock.id
+        UVMRegBlock.id += 1
+    #endfunction: add_mem
+
 
     #   // Function: lock_model
     #   //
@@ -1228,27 +1243,6 @@ class UVMRegBlock(UVMObject):
 #   vregs[vreg] = UVMRegBlock.id
 #   UVMRegBlock.id += 1
 #endfunction: add_vreg
-#
-#
-# add_mem
-#
-#function void uvm_reg_block::add_mem(uvm_mem mem)
-#   if (self.is_locked()):
-#      `uvm_error("RegModel", "Cannot add memory to locked block model")
-#      return
-#   end
-#
-#   if (self.mems.exists(mem)):
-#      `uvm_error("RegModel", {"Memory '",mem.get_name(),
-#         "' has already been registered with block '",get_name(),"'"})
-#       return
-#   end
-#   mems[mem] = UVMRegBlock.id
-#   UVMRegBlock.id += 1
-#endfunction: add_mem
-#
-#
-#
 #
 #
 #
