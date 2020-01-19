@@ -41,12 +41,12 @@ PWD=$(shell pwd)
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
 PYTHONPATH := $(WPWD)/model;$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../uvm:$(PYTHONPATH)
+PYTHONPATH := $(WPWD)/../src:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../uvm:$(PYTHONPATH)
+PYTHONPATH := $(WPWD)/../src:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/..:$(PYTHONPATH)
 endif
 
