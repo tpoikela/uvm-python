@@ -3,6 +3,7 @@
 //    Copyright 2004-2011 Synopsys, Inc.
 //    Copyright 2010 Mentor Graphics Corporation
 //    Copyright 2010 Cadence Design Systems, Inc.
+//    Copyright 2020 Tuomas Poikela (tpoikela)
 //    All Rights Reserved Worldwide
 // 
 //    Licensed under the Apache License, Version 2.0 (the
@@ -75,8 +76,7 @@ always @ (posedge apb_pclk)
               16'h0024: begin
                  TABLES[INDEX] <= apb_pwdata;
               end
-              //16'h1??0: chosen_sock.SRC[63:32] <= apb_pwdata;
-              16'h1000: chosen_sock.SRC[63:32] <= apb_pwdata;
+              16'h1XX0: chosen_sock.SRC[63:32] <= apb_pwdata;
               16'h1XX4: chosen_sock.SRC[32: 0] <= apb_pwdata;
               16'h1XX8: chosen_sock.DST[63:32] <= apb_pwdata;
               16'h1XXC: chosen_sock.DST[32: 0] <= apb_pwdata;
@@ -98,6 +98,14 @@ always @ (posedge apb_pclk)
       end
    end
 end
+
+`ifdef COCOTB_SIM
+initial begin
+ $dumpfile ("slave_dut.vcd");
+ $dumpvars (0, slave);
+ #2;
+end
+`endif
 
 endmodule
 
