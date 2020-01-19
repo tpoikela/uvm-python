@@ -92,7 +92,7 @@ class UVMRegIndirectData(UVMReg):
         # Add a frontdoor to each indirectly-accessed register
         # for every address map this register is in.
         # foreach (m_maps[map]) begin
-        for _map in self.maps:
+        for _map in self.m_maps:
             self.add_frontdoors(_map)
 
 
