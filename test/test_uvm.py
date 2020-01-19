@@ -85,6 +85,8 @@ def uvm_basic_top_test(dut):
 def uvm_phase_test(dut):
     uvm_root = UVMRoot.get()
     test_comp = CompPhaseTest('comp_phase_test', uvm_root)
+    clp = UVMCmdlineProcessor.get_inst()
+    print("tool=" + clp.get_tool_name() + " version=" + clp.get_tool_version())
     yield run_test()
     yield test_comp.m_done_event.wait()
     if not test_comp.all_done:
