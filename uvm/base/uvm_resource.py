@@ -1123,31 +1123,29 @@ class UVMResourcePool:
     #// precedence will be the one that is returned.
     #
     #function uvm_resource_base get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
-    #
-    #  uvm_resource_base rsrc
-    #  uvm_resource_base r
-    #  int unsigned i
-    #  int unsigned prec
-    #
-    #  if(q.size() == 0)
-    #    return None
-    #
-    #  // get the first resources in the queue
-    #  rsrc = q.get(0)
-    #  prec = rsrc.precedence
-    #
-    #  // start searching from the second resource
-    #  for(int i = 1; i < q.size(); ++i):
-    #    r = q.get(i)
-    #    if(r.precedence > prec):
-    #      rsrc = r
-    #      prec = r.precedence
-    #    end
-    #  end
-    #
-    #  return rsrc
-    #
-    #endfunction
+    def get_highest_precedence(self, q):
+
+        rsrc = None  # uvm_resource_base
+        r = None  # uvm_resource_base
+        i = 0
+        prec = 0
+
+        if (len(q) == 0):
+            return None
+
+        # get the first resources in the queue
+        rsrc = q[0]
+        prec = rsrc.precedence
+
+        # start searching from the second resource
+        for i in range(1, len(q)):
+            r = q[i]
+            if r.precedence > prec:
+                rsrc = r
+                prec = r.precedence
+        return rsrc
+        #
+        #endfunction
 
     #// Function: sort_by_precedence
     #//
@@ -1354,7 +1352,7 @@ class UVMResourcePool:
     #                                       ref uvm_resource_types::rsrc_q_t q,
     #                                       uvm_resource_types::priority_e pri)
     def set_priority_queue(self, rsrc, q, pri):
-        r = None  ##  uvm_resource_base 
+        r = None  # uvm_resource_base
         i = 0
 
         msg = ""
