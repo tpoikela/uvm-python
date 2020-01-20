@@ -117,13 +117,13 @@ class reg_slave_SESSION(UVMRegFile):
 
 
     def map(self, mp, offset):
-        mp.add_reg(self.SRC, offset+ 0x00)
-        mp.add_reg(self.DST, offset+ 0x08)
+        mp.add_reg(self.SRC, offset + 0x00)
+        mp.add_reg(self.DST, offset + 0x08)
 
 
     def set_offset(self, mp, offset):
-        self.SRC.set_offset(mp, offset+ 0x00)
-        self.DST.set_offset(mp, offset+ 0x08)
+        self.SRC.set_offset(mp, offset + 0x00)
+        self.DST.set_offset(mp, offset + 0x08)
 
 
 uvm_object_utils(reg_slave_SESSION)
@@ -201,7 +201,7 @@ class reg_block_slave(UVMRegBlock):
             self.TABLES.append(rslave_tables)
 
         self.DMA_RAM   = mem_slave_DMA_RAM.type_id.create("DMA_RAM")
-        UVMResourceDb.set("REG::" + self.DMA_RAM.get_full_name() + ".*", "NO_REG_TESTS", 1, self)
+        #UVMResourceDb.set("REG::" + self.DMA_RAM.get_full_name() + ".*", "NO_REG_TESTS", 1, self)
 
         # configure
         self.ID.configure(self,None,"ID")
@@ -211,7 +211,6 @@ class reg_block_slave(UVMRegBlock):
         for i in range(len(self.SESSION)):
             self.SESSION[i].configure(self,None,sv.sformatf("SESSION[%0d]",i))
             self.SESSION[i].build()
-            UVMResourceDb.set("REG::" + self.SESSION[i].get_full_name() + ".*", "NO_REG_TESTS", 1, self)
 
         for i in range(len(self.TABLES)):
             self.TABLES[i].configure(self,None,sv.sformatf("TABLES[%0d]",i))

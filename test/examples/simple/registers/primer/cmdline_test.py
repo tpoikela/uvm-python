@@ -27,7 +27,7 @@ from cocotb.triggers import RisingEdge
 
 from uvm.comps.uvm_test import UVMTest
 from uvm import (UVMCoreService, sv, uvm_top, UVMCmdlineProcessor, UVMSequence,
-        UVMConfigDb)
+        UVMConfigDb, UVMResourceDb)
 from uvm.reg import (uvm_reg_sequence)
 from uvm.macros import *
 from tb_env import tb_env
@@ -92,6 +92,10 @@ class cmdline_test(UVMTest):
         #if not sv.cast(seq, created_obj, uvm_reg_sequence) or seq is None:
         #    uvm_fatal("TEST/CMD/BADSEQ", "Sequence " + seq_name + " is not a known sequence " + str(seq))
         seq.model = env.model
+
+        UVMResourceDb.set("REG::" + env.model.DMA_RAM.get_full_name() + ".*", "NO_REG_TESTS", 1, self)
+        for i in range(len(env.model.SESSION)):
+            UVMResourceDb.set("REG::" + env.model.SESSION[i].get_full_name() + ".*", "NO_REG_TESTS", 1, self)
         yield seq.start(None)
         phase.drop_objection(self)
 
