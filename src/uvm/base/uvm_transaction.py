@@ -123,6 +123,103 @@ from .uvm_pool import UVMEventPool
 
 #------------------------------------------------------------------------------
 class UVMTransaction(UVMObject):
+    """
+    The :class:`UVMTransaction` class is the root base class for UVM transactions.
+    Inheriting all the methods of :class:`UVMObject`, :class:`UVMTransaction` adds a timing and
+    recording interface.
+   
+    This class provides timestamp properties, notification events, and transaction
+    recording support.
+   
+    Use of this class as a base for user-defined transactions
+    is deprecated. Its subtype, :any:`uvm_sequence_item`, shall be used as the
+    base class for all user-defined transaction types.
+   
+    The intended use of this API is via a :any:`uvm_driver` to call :any:`accept_tr`,
+    :any:`begin_tr`, and :any:`end_tr` during the course of
+    sequence item execution. These methods in the component base class will
+    call into the corresponding methods in this class to set the corresponding
+    timestamps (:any:`accept_time`, :any:`begin_time`, and :any:`end_time`), trigger the
+    corresponding event (:any:`begin_event` and :any:`end_event`, and, if enabled,
+    record the transaction contents to a vendor-specific transaction database.
+   
+    Note that get_next_item/item_done when called on a :any:`uvm_seq_item_pull_port`
+    will automatically trigger the :any:`begin_event` and :any:`end_event` via calls to :any:`begin_tr` and :any:`end_tr`.
+    While convenient, it is generally the responsibility of drivers to mark a
+    transaction's progress during execution.  To allow the driver or layering sequence
+    to control sequence item timestamps, events, and recording, you must call
+    :any:`disable_auto_item_recording` at the beginning
+    of the driver's :any:`run_phase` task.
+   
+    Users may also use the transaction's event pool, :any:`events`,
+    to define custom events for the driver to trigger and the sequences to wait on. Any
+    in-between events such as marking the beginning of the address and data
+    phases of transaction execution could be implemented via the
+    :any:`events` pool.
+   
+    In pipelined protocols, the driver may release a sequence (return from
+    :any:`finish_item` or it's :any:`uvm_do` macro) before the item has been completed.
+    If the driver uses the :any:`begin_tr`/:any:`end_tr` API in :mod:`uvm_component`, the sequence can
+    wait on the item's :any:`end_event` to block until the item was fully executed,
+    as in the following example.
+
+    .. code-block:: systemverilog
+
+        task uvm_execute(item, ...)
+            // can use the `uvm_do macros as well
+            start_item(item)
+            item.randomize()
+            finish_item(item)
+            item.self.end_event.wait_on()
+            // get_response(rsp, item.get_transaction_id()); //if needed
+        endtask
+   
+   
+    A simple two-stage pipeline driver that can execute address and
+    data phases concurrently might be implemented as follows:
+   
+    .. code-block:: systemverilog
+
+        task run()
+
+            // this driver supports a two-deep pipeline
+            fork
+              do_item()
+              do_item()
+            join
+        endtask
+        
+        
+        task do_item()
+        
+          forever begin
+            mbus_item req
+        
+            lock.get()
+        
+            seq_item_port.get(req); // Completes the sequencer-driver handshake
+        
+            accept_tr(req)
+        
+              // request bus, wait for grant, etc.
+        
+            begin_tr(req)
+        
+              // execute address phase
+        
+            // allows next transaction to begin address phase
+            lock.put()
+        
+              // execute data phase
+              // (may trigger custom "data_phase" event here)
+        
+            end_tr(req)
+        
+          end
+        
+        endtask: do_item
+    """
+    
     #  // Variable: events
     #  //
     #  // The event pool instance for this transaction. This pool is used to track
