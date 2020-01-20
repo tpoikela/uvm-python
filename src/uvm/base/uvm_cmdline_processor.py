@@ -57,7 +57,12 @@ class UVMCmdLineVerb:
 #
 
 def uvm_dpi_get_tool_name():
-    return "cocotb + iverilog"
+    # Return the simulator name, as reported by VPI
+    return cocotb.SIM_NAME
+
+def uvm_dpi_get_tool_version():
+    # Return the simulator version, as reported by VPI
+    return cocotb.SIM_VERSION
 
 def uvm_dpi_regcomp(match):
     rr = None
