@@ -170,6 +170,10 @@ class sv:
     def urandom(cls):
         return random.randint(0, SV_MAX_INT_VALUE)
 
+    @classmethod
+    def urandom_range(cls, start, stop):
+        return random.randint(start, stop)
+
 
 random.seed(0)
 
