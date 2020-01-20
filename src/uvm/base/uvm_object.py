@@ -8,11 +8,11 @@ from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 class UVMObject(sv_obj):
     """
-    The :class:`UVMObject` class is the base class for all UVM data and hierarchical classes.
-    Its primary role is to define a set of methods for such common operations as :meth:`create`,
-    :meth:`copy`, :meth:`compare`, :meth:`print`, and :meth:`record`.
-    Classes deriving from :class:`UVMObject` must implement methods such as
-    :meth:`create` and :meth:`get_type_name`.
+    The `UVMObject` class is the base class for all UVM data and hierarchical classes.
+    Its primary role is to define a set of methods for such common operations as `create`,
+    `copy`, `compare`, `print`, and `record`.
+    Classes deriving from `UVMObject` must implement methods such as
+    `create` and `get_type_name`.
     """
 
     inst_id_count = 0
