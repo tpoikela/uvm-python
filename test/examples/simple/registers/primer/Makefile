@@ -35,18 +35,17 @@
 #
 
 TOPLEVEL_LANG ?= verilog
+UVM_PYTHON ?= $(WPWD)/../../../../../src
 
 PWD=$(shell pwd)
 
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
-UVM_PYTHON := $(WPWD)/../../../../..
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
-UVM_PYTHON := $(WPWD)/../../../../..
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
@@ -67,7 +66,7 @@ endif
 PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_MEDIUM +UVM_DUMP_CMDLINE_ARGS
 PLUSARGS += +UVM_REG_SEQ=uvm_reg_hw_reset_seq
 ifneq ($(UVM_TEST),)
-    PLUSARGS += +UVM_TESTNAME=$(UVM_TEST)
+    PLUSARGS += +UVM_TESTNAME=$(UVM_TEST) +UVM_RESOURCE_DB_TRACE
 endif
 TOPLEVEL := slave
 MODULE   ?= test
