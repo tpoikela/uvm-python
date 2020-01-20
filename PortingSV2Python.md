@@ -14,11 +14,11 @@ associative array is expected, we can replaced them with list/dict in Python.
 
 ```systemverilog
 function void get_maps(ref uvm_reg_map maps[$]);
-function void get_blocks (ref uvm_reg_block  blks[$], ...)
+function void get_blocks (ref uvm_reg_block blks[string], ...)
 ```
 
 ```python
-def get_maps(maps: dict)
+def get_maps(maps: list)
 def get_blocks (blks: list, ...)
 ```
 
@@ -62,7 +62,16 @@ be done:
     else:
         args.extend(matched_args)
         return len(args)  # Or whatever must be returned
+
+  # Usage
+  args = get_arg_matches("+UVM_TEST_NAME=")
+  # OR
+  args = []
+  num_args = get_arg_matches("+UVM_TEST_NAME=", args)
 ```
+
+However, caller must be aware of this overloading and different return values
+based on input argument.
 
 TLM 1.0
 -------
@@ -76,7 +85,10 @@ this:
 ```
 
 ```python
-  def get():  # Python
+  def get(self):  # Python
+    ...
+
+  # Usage
   arg = yield tlm_port.get()  # Usage
 ```
 
@@ -99,8 +111,8 @@ Nonblocking TLM 1.0 functions are ported like this:
 
 
 
-Pass-by-reference
------------------
+Pass-by-reference and output arguments
+--------------------------------------
 
 In the rare case, that pass-by-reference is really needed, a following helper
 class can be used (proposed by eric-wieser):
@@ -113,4 +125,27 @@ class ref:
 t = ref()
 yield tlm_port.get(t)
 print(t.value)
+```
+
+What about several output arguments like in the task below:
+
+```systemverilog
+   extern virtual task read_reg_by_name(
+          output uvm_status_e       status,
+          input  string             name,
+          output uvm_reg_data_t     data,
+          input  uvm_path_e    path = UVM_DEFAULT_PATH,
+          ...
+   )
+```
+
+```python
+    def read_reg_by_name(status, name, data, path=UVM_DEFAULT_PATH ...)
+
+    # Usage
+    # Return output args as a list
+    [status, data] = yield read_reg_by_name(status, "reg_name", data)
+    # OR as a dict
+    my_dict = yield read_reg_by_name(status, "reg_name", data)
+    # my_dict.status and my_dict.data should exist now
 ```
