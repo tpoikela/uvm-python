@@ -99,6 +99,8 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
         no_rr1 = UVMResourceDb.get_by_name("REG::" + blk.get_full_name(), "NO_REG_TESTS", 0)
         no_rr2 = UVMResourceDb.get_by_name("REG::" + blk.get_full_name(), "NO_REG_HW_RESET_TEST", 0)
 
+        print("reg_hw_reset Do block started " + str(no_rr1) + ' ' + str(no_rr2))
+        print("blk_name is " + blk.get_full_name())
         if no_rr1 is not None or no_rr2 is not None:
             return
 
@@ -123,6 +125,8 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
                 #uvm_status_e status
                 status = 0
 
+                reg_name = regs[i].get_full_name()
+                print("Iterating now over reset " + reg_name)
                 # Registers with certain attributes are not to be tested
                 dont_test1 = UVMResourceDb.get_by_name("REG::" + regs[i].get_full_name(), "NO_REG_HW_RESET_TEST", 0)
                 dont_test2 = UVMResourceDb.get_by_name("REG::" + regs[i].get_full_name(), "NO_REG_TESTS", 0)

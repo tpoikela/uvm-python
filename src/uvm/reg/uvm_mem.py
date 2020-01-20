@@ -229,6 +229,13 @@ class UVMMem(UVMObject):
     #   // The base of the hierarchical name is the root block.
     #   //
     #   extern virtual function string get_full_name()
+    def get_full_name(self):
+        if self.m_parent is None:
+            return self.get_name()
+        
+        return self.m_parent.get_full_name() + "." + self.get_name()
+        #
+        #endfunction: get_full_name
 
     #
     #
@@ -1042,15 +1049,6 @@ class UVMMem(UVMObject):
 #
 #
 #
-#// get_full_name
-#
-#function string uvm_mem::get_full_name()
-#   if (m_parent is None)
-#      return get_name()
-#
-#   return {m_parent.get_full_name(), ".", get_name()}
-#
-#endfunction: get_full_name
 #
 #
 #

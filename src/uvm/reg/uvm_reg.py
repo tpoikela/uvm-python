@@ -244,6 +244,15 @@ class UVMReg(UVMObject):
     #   // The base of the hierarchical name is the root block.
     #   //
     #   extern virtual function string get_full_name()
+    def get_full_name(self):
+        if (self.m_regfile_parent is not None):
+            return self.m_regfile_parent.get_full_name() + "." + self.get_name()
+        if (self.m_parent is not None):
+            return self.m_parent.get_full_name() + "." + self.get_name()
+     
+        return self.get_name()
+    #endfunction: get_full_name
+
 
     #   // Function: get_parent
     #   //
@@ -2220,18 +2229,6 @@ class UVMReg(UVMObject):
 #endfunction
 #
 #
-#// get_full_name
-#
-#function string uvm_reg::get_full_name()
-#
-#   if (self.m_regfile_parent is not None)
-#      return {self.m_regfile_parent.get_full_name(), ".", get_name()}
-#
-#   if (self.m_parent is not None)
-#      return {self.m_parent.get_full_name(), ".", get_name()}
-#
-#   return get_name()
-#endfunction: get_full_name
 #
 #
 #// get_maps
