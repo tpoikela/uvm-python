@@ -33,4 +33,5 @@ jobs:
     - name: Test with pytest
       run: |
         export SIM=icarus
+        ln -s src/uvm uvm
         make test
