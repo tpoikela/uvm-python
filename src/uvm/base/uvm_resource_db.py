@@ -90,7 +90,11 @@ class UVMResourceDb:
     #                                     bit rpterr=1)
     @classmethod
     def get_by_name(cls, scope, name, rpterr=True):
-        return UVMResource.get_by_name(scope, name, rpterr)
+        rsrc = UVMResource.get_by_name(scope, name, rpterr)
+        if UVMResourceDbOptions.is_tracing():
+            cls.m_show_msg("RSRCDB/GET_BY_NAME", "Resource","get", scope, name,
+                    None, rsrc)
+        return rsrc
 
     #  // function: set_default
     #  //

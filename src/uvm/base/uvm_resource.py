@@ -667,11 +667,11 @@ class UVMResource(UVMResourceBase):
     @classmethod
     def get_by_name(cls, scope, name, rpterr=True):
         rp = UVMResourcePool.get()
-        rsrc = None
+        #rsrc = None
         rsrc_base = rp.get_by_name(scope, name, cls.get_type(), rpterr)
         if rsrc_base is None:
             return None
-        return rsrc
+        return rsrc_base
 
     #// Function: get_by_type
     #//
@@ -886,6 +886,8 @@ class UVMResource(UVMResourceBase):
 #// located (i.e. the wrong resource is located).
 #//
 #//----------------------------------------------------------------------
+
+
 class UVMResourcePool:
 
     rp = None
