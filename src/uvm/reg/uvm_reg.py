@@ -304,7 +304,7 @@ class UVMReg(UVMObject):
                 if parent_map == reg_map:
                     return local_map
                 parent_map = parent_map.get_parent_map()
-        cname = self.__get_cname(caller)
+        cname = self._get_cname(caller)
         uvm_report_warning("RegModel", ("Register '" + self.get_full_name()
             + "' is not contained within reg_map '" + reg_map.get_full_name() + "'"
             + cname))
@@ -314,7 +314,7 @@ class UVMReg(UVMObject):
     def get_default_map(self, caller=""):
         # if reg is not associated with any map, return ~None~
         if self.m_maps.num() == 0:
-            cname = self.__get_cname(caller)
+            cname = self._get_cname(caller)
             uvm_report_warning("RegModel", ("Register '" + self.get_full_name()
                 + "' is not registered with any map" + cname))
             return None
@@ -335,7 +335,7 @@ class UVMReg(UVMObject):
         # if that fails, choose the first in this reg's maps
         return self.m_maps.first()
 
-    def __get_cname(self, caller):
+    def _get_cname(self, caller):
         cname = ""
         if caller != "":
             cname = " (called from " + caller + ")"
@@ -1058,7 +1058,7 @@ class UVMReg(UVMObject):
         if (rw.path != UVM_BACKDOOR):
             rw.local_map = self.get_local_map(rw.map,caller)
 
-            if (rw.local_map is None):
+            if rw.local_map is None:
                 uvm_error(self.get_type_name(),
                    "No transactor available to physically access register on map '" +
                     rw.map.get_full_name() + "'")
