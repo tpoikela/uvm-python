@@ -34,8 +34,8 @@
 # >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIM_ARGS='-aaa +bbb'
 #
 
-UVM_PYTHON := $(WPWD)/../../../../uvm
 TOPLEVEL_LANG ?= verilog
+UVM_PYTHON ?= $(WPWD)/../../../../src
 
 PWD=$(shell pwd)
 

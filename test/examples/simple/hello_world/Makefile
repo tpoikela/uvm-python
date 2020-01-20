@@ -35,20 +35,19 @@
 #
 
 TOPLEVEL_LANG ?= verilog
+UVM_PYTHON ?= $(WPWD)/../../../../src
 
 PWD=$(shell pwd)
 
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
-UVM_PYTHON := $(WPWD)/../../../..
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
-UVM_PYTHON := $(WPWD)/../../../..
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.
-PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
+PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
