@@ -31,6 +31,7 @@ from uvm import (UVMCoreService, sv, uvm_top, UVMCmdlineProcessor, UVMSequence,
 from uvm.reg import (uvm_reg_sequence)
 from uvm.macros import *
 from tb_env import tb_env
+from user_test import user_test_seq
 
 
 class dut_reset_seq(UVMSequence):
