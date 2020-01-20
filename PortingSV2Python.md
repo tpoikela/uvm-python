@@ -12,11 +12,13 @@ SV Queue and Assoc. Array as ref args
 As lists and dicts can be freely mutated in Python, in cases where queue or
 associative array is expected, we can replaced them with list/dict in Python.
 
-```
+```systemverilog
 function void get_maps(ref uvm_reg_map maps[$]);
-def get_maps(maps: dict)
-
 function void get_blocks (ref uvm_reg_block  blks[$], ...)
+```
+
+```python
+def get_maps(maps: dict)
 def get_blocks (blks: list, ...)
 ```
 
@@ -27,11 +29,13 @@ is of required type, and raise an exception (?) if there is a type error.
 One possibility is to overload the function to behave differently depending on
 the argument given:
 
-```
+```systemverilog
   function void get_args (output string args[$]);  // SV
     args = m_argv;
   endfunction
+```
 
+```python
   def get_args(self, args=None):  # Python
       if args is None:
         return self.m_arg.copy()
@@ -44,9 +48,12 @@ the argument given:
 
 In cases where both return value and ref/output args are needed, following can
 be done:
-```
-  function int get_arg_matches (string match, ref string args[$]);
 
+```systemverilog
+  function int get_arg_matches (string match, ref string args[$]);
+```
+
+```python
   def get_arg_matches(match, args=None):
     matched_args = []
     ...
@@ -64,9 +71,11 @@ SystemVerilog cannot return any values from tasks, but Python does not have this
 limitations. Porting blocking TLM tasks with ref/output argument is done like
 this:
 
-```
+```systemverilog
   task get (output TYPE arg);  // SV
+```
 
+```python
   def get():  # Python
   arg = yield tlm_port.get()  # Usage
 ```
@@ -74,9 +83,11 @@ this:
 
 Nonblocking TLM 1.0 functions are ported like this:
 
-```
+```systemverilog
   function bit try_get (output TYPE arg);  // SV
+```
 
+```python
   TLM_CALL_FAILED = [False, None]
   def try_get():
       ...
@@ -94,7 +105,7 @@ Pass-by-reference
 In the rare case, that pass-by-reference is really needed, a following helper
 class can be used (proposed by eric-wieser):
 
-```
+```python
 class ref:
     def __bool__(self):
         return hasattr(self, 'value')
