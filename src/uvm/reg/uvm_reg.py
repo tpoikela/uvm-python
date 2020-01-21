@@ -203,14 +203,14 @@ class UVMReg(UVMObject):
         # Check if there are overlapping fields
         if idx > 0:
             if (self.m_fields[idx-1].get_lsb_pos() +
-                self.m_fields[idx-1].get_n_bits() > offset):
+                    self.m_fields[idx-1].get_n_bits() > offset):
                 uvm_report_error("RegModel",
                     "Field {} overlaps field {} in register \"{}\"".format(
                         self.m_fields[idx-1].get_name(), field.get_name(), self.get_name()))
 
         if idx < len(self.m_fields)-1:
             if (offset + field.get_n_bits() >
-                self.m_fields[idx+1].get_lsb_pos()):
+                    self.m_fields[idx+1].get_lsb_pos()):
                 uvm_report_error("RegModel", "Field {} overlaps field {} in register \"{}\"".format(
                     field.get_name(), self.m_fields[idx+1].get_name(), get_name()))
     #endfunction: add_field
@@ -249,7 +249,7 @@ class UVMReg(UVMObject):
             return self.m_regfile_parent.get_full_name() + "." + self.get_name()
         if (self.m_parent is not None):
             return self.m_parent.get_full_name() + "." + self.get_name()
-     
+
         return self.get_name()
     #endfunction: get_full_name
 
@@ -283,6 +283,19 @@ class UVMReg(UVMObject):
     #   // Returns 1 if this register is in the specified address ~map~
     #   //
     #   extern function bit is_in_map (uvm_reg_map map)
+    def is_in_map(self, _map):
+        if _map in self.m_maps:
+            return True
+        for key in self.m_maps.key_list():
+            local_map = key  # uvm_reg_map
+            parent_map = local_map.get_parent_map()
+
+            while parent_map is not None:
+                if (parent_map == _map):
+                    return True
+                parent_map = parent_map.get_parent_map()
+        return False
+        #endfunction
 
     #   // Function: get_maps
     #   //
@@ -297,7 +310,7 @@ class UVMReg(UVMObject):
         if reg_map in self.m_maps:
             return reg_map
         for l in self.m_maps.keys():
-            local_map=l
+            local_map = l
             parent_map = local_map.get_parent_map()
 
             while parent_map is not None:
@@ -760,7 +773,9 @@ class UVMReg(UVMObject):
 
         yield self.do_write(rw)
         status.append(rw.status)
+        print("RRR in write() before self.XatomicX()")
         yield self.XatomicX(0)
+        print("RRR in write() after self.XatomicX()")
         #endtask
 
 
@@ -793,7 +808,16 @@ class UVMReg(UVMObject):
     #                            input  string            fname = "",
     #                            input  int               lineno = 0)
     #
-    #
+    @cocotb.coroutine
+    def read(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
+            parent=None, prior=-1, extension=None, fname="", lineno=0):
+        uvm_check_output_args([status, value])
+        rw = UVMRegItem.type_id.create("pseudo-read_item", None, self.get_full_name())
+        yield self.XatomicX(1, rw)
+        yield self.XreadX(status, value, path, _map, parent, prior, extension, fname, lineno)
+        yield self.XatomicX(0)
+        #endtask: read
+
 
     #   // Task: poke
     #   //
@@ -922,7 +946,7 @@ class UVMReg(UVMObject):
             return
 
         # Remember what we think the value is before it gets updated
-        if (check == UVM_CHECK):
+        if check == UVM_CHECK:
             exp = self.get_mirrored_value()
 
         v = []
@@ -1150,7 +1174,7 @@ class UVMReg(UVMObject):
             return
         map_info = map_info[0]
 
-        yield self.XatomicX(1, rw)
+        #yield self.XatomicX(1, rw)
 
         self.m_write_in_progress = True
 
@@ -1270,7 +1294,7 @@ class UVMReg(UVMObject):
             f = self.m_fields[i]  # uvm_reg_field
             rw.element = f
             rw.element_kind = UVM_FIELD
-            rw.value[0] = (value >> f.get_lsb_pos()) & ((1<<f.get_n_bits())-1)
+            rw.value[0] = (value >> f.get_lsb_pos()) & ((1 << f.get_n_bits())-1)
 
             cb = cbs.first()
             while cb is not None:
@@ -1300,7 +1324,7 @@ class UVMReg(UVMObject):
                     + self.get_full_name() + value_s, UVM_HIGH)
 
         self.m_write_in_progress = False
-        yield self.XatomicX(0)
+        #yield self.XatomicX(0)
         #endtask: do_write
 
 
@@ -1424,7 +1448,7 @@ class UVMReg(UVMObject):
             if (map_info.frontdoor is not None):
                 fd = map_info.frontdoor  # uvm_reg_frontdoor
                 fd.rw_info = rw
-                if (fd.sequencer is None):
+                if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
                 yield fd.start(fd.sequencer, rw.parent)
             # ...VIA BUILT-IN FRONTDOOR
@@ -2246,23 +2270,6 @@ class UVMReg(UVMObject):
 #endfunction
 #
 #
-#// is_in_map
-#
-#function bit uvm_reg::is_in_map(uvm_reg_map map)
-#   if (self.m_maps.exists(map))
-#     return True
-#   foreach (self.m_maps[l]):
-#     uvm_reg_map local_map = l
-#     uvm_reg_map parent_map = local_map.get_parent_map()
-#
-#     while (parent_map is not None):
-#       if (parent_map == map)
-#         return True
-#       parent_map = parent_map.get_parent_map()
-#     end
-#   end
-#   return False
-#endfunction
 #
 #
 #
@@ -2439,22 +2446,6 @@ class UVMReg(UVMObject):
 #
 #
 #
-#// read
-#
-#task uvm_reg::read(output uvm_status_e      status,
-#                   output uvm_reg_data_t    value,
-#                   input  uvm_path_e        path = UVM_DEFAULT_PATH,
-#                   input  uvm_reg_map       map = None,
-#                   input  uvm_sequence_base parent = None,
-#                   input  int               prior = -1,
-#                   input  uvm_object        extension = None,
-#                   input  string            fname = "",
-#                   input  int               lineno = 0)
-#   TODO create pseudo-rw
-#   yield self.XatomicX(1, rw)
-#   XreadX(status, value, path, map, parent, prior, extension, fname, lineno)
-#   yield self.XatomicX(0)
-#endtask: read
 #
 #
 #
