@@ -31,7 +31,7 @@ from uvm.base import (uvm_top, UVMCoreService, run_test, UVM_FINISHED, UVM_LOW,
         sv, UVMDebug, UVMConfigDb)
 from uvm.comps import UVMTest
 from uvm.macros import uvm_fatal, uvm_info
-from uvm.reg.sequences import uvm_reg_hw_reset_seq
+from uvm.reg.sequences import UVMRegHWResetSeq
 from uvm.reg.uvm_reg_model import *
 
 from tb_env import tb_env
@@ -80,7 +80,7 @@ class tb_test(UVMTest):
         clk_fork = cocotb.fork(MyClock(self.dut).start(2000))
 
         #uvm_reg_sequence seq;
-        seq = uvm_reg_hw_reset_seq.type_id.create("reg_hw_rst_seq")
+        seq = UVMRegHWResetSeq.type_id.create("reg_hw_rst_seq")
         seq.model = env.regmodel
         print("Before seq.start. Wait for seq state")
         yield seq.start(None)
