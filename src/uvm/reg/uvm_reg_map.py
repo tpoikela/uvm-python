@@ -2061,22 +2061,3 @@ uvm_object_utils(UVMRegMap)
 #  //rhs_.blks = blks
 #  //... and so on
 #endfunction
-
-
-import unittest
-
-class TestUVMRegMap(unittest.TestCase):
-
-    def test_map_base(self):
-        from uvm_reg import UVMRegMap
-        from uvm_reg_block import UVMRegBlock
-        reg_map = UVMRegMap()
-        reg_blk = UVMRegBlock('my_blk')
-        reg_map.configure(reg_blk, base_addr=0, n_bytes=32, endian=0,
-                byte_addressing=1)
-        r1 = UVMReg('r1', 32, False)
-        r1.configure(reg_blk)
-        reg_map.add_reg(r1, 4)
-        self.assertEqual(r1.get_offset(), 4)
-        r1.set_offset(reg_map, 16)
-        self.assertEqual(r1.get_offset(), 16)
