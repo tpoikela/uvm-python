@@ -515,7 +515,7 @@ class UVMRegFrontdoor(UVMRegSequence):  # (uvm_sequence #(uvm_sequence_item));
     #   //
     #   // Constructor, new object given optional ~name~.
     #   //
-    def __init__(self, name="frontdoor"):
+    def __init__(self, name="reg_frontdoor_seq"):
         super().__init__(name)
         #
         #   // Variable: rw_info
