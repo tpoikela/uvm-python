@@ -34,7 +34,7 @@ class reg_slave_ID(UVMReg):
 
 
     def __init__(self, name="slave_ID"):
-        super().__init__(name,32,UVM_NO_COVERAGE)
+        super().__init__(name,32, UVM_NO_COVERAGE)
         self.REVISION_ID = None
         self.CHIP_ID = None
         self.PRODUCT_ID = None
@@ -44,8 +44,8 @@ class reg_slave_ID(UVMReg):
         self.REVISION_ID = UVMRegField.type_id.create("REVISION_ID")
         self.CHIP_ID = UVMRegField.type_id.create("CHIP_ID")
         self.PRODUCT_ID = UVMRegField.type_id.create("PRODUCT_ID")
-        self.REVISION_ID.configure(self, 8,  0, "RO",   0, 0x03, 1, 0, 1)
-        self.CHIP_ID.configure(self, 8,  8, "RO",   0, 0x5A, 1, 0, 1)
+        self.REVISION_ID.configure(self, 8, 0, "RO", 0, 0x03, 1, 0, 1)
+        self.CHIP_ID.configure(self, 8, 8, "RO", 0, 0x5A, 1, 0, 1)
         self.PRODUCT_ID.configure(self, 10, 16,"RO", 0, 0x176, 1, 0, 1)
 
 
@@ -135,7 +135,7 @@ class reg_slave_TABLES(UVMReg):
     #
     def __init__(self, name="slave_TABLES"):
         super().__init__(name,32, UVM_NO_COVERAGE)
-        self.valeu = None
+        self.value = None
 
 
     def build(self):
@@ -144,8 +144,6 @@ class reg_slave_TABLES(UVMReg):
 
 
 uvm_object_utils(reg_slave_TABLES)
-
-
 
 
 class mem_slave_DMA_RAM(UVMMem):
@@ -197,7 +195,7 @@ class reg_block_slave(UVMRegBlock):
         for i in range(self.nsession):
             rslave_sess = reg_slave_SESSION.type_id.create(sv.sformatf("SESSION[%0d]",i))
             self.SESSION.append(rslave_sess)
-            rslave_tables =  reg_slave_TABLES.type_id.create(sv.sformatf("TABLES[%0d]",i))
+            rslave_tables = reg_slave_TABLES.type_id.create(sv.sformatf("TABLES[%0d]",i))
             self.TABLES.append(rslave_tables)
 
         self.DMA_RAM   = mem_slave_DMA_RAM.type_id.create("DMA_RAM")
