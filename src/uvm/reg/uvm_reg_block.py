@@ -247,6 +247,20 @@ class UVMRegBlock(UVMObject):
         #
 
     #   /*local*/ extern function void add_map   (UVMRegMap map)
+    def add_map(self, _map):
+        if (self.locked):
+            uvm_error("RegModel", "Cannot add map to locked model")
+            return
+
+        if self.maps.exists(_map):
+            uvm_error("RegModel", "Map '" + _map.get_name()
+                      + "' already exists in '" + self.get_full_name() + "'")
+            return
+        self.maps[_map] = 1
+        if self.maps.num() == 1:
+            self.default_map = _map
+        #
+        #endfunction: add_map
 
     # add_reg
     def add_reg(self, rg):
@@ -1845,26 +1859,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# add_map
-#
-#function void uvm_reg_block::add_map(UVMRegMap map)
-#
-#   if (self.locked):
-#      `uvm_error("RegModel", "Cannot add map to locked model")
-#      return
-#   end
-#
-#   if (self.maps.exists(map)):
-#      `uvm_error("RegModel", {"Map '",map.get_name(),
-#                 "' already exists in '",get_full_name(),"'"})
-#      return
-#   end
-#
-#   self.maps[map] = 1
-#   if (maps.num() == 1)
-#     default_map = map
-#
-#endfunction: add_map
 #
 #
 #
