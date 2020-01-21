@@ -124,43 +124,43 @@ from .uvm_pool import UVMEventPool
 #------------------------------------------------------------------------------
 class UVMTransaction(UVMObject):
     """
-    The :class:`UVMTransaction` class is the root base class for UVM transactions.
-    Inheriting all the methods of :class:`UVMObject`, :class:`UVMTransaction` adds a timing and
+    The `UVMTransaction` class is the root base class for UVM transactions.
+    Inheriting all the methods of `UVMObject`, `UVMTransaction` adds a timing and
     recording interface.
    
     This class provides timestamp properties, notification events, and transaction
     recording support.
    
     Use of this class as a base for user-defined transactions
-    is deprecated. Its subtype, :any:`uvm_sequence_item`, shall be used as the
+    is deprecated. Its subtype, `uvm_sequence_item`, shall be used as the
     base class for all user-defined transaction types.
    
-    The intended use of this API is via a :any:`uvm_driver` to call :any:`accept_tr`,
-    :any:`begin_tr`, and :any:`end_tr` during the course of
+    The intended use of this API is via a `uvm_driver` to call `accept_tr`,
+    `begin_tr`, and `end_tr` during the course of
     sequence item execution. These methods in the component base class will
     call into the corresponding methods in this class to set the corresponding
-    timestamps (:any:`accept_time`, :any:`begin_time`, and :any:`end_time`), trigger the
-    corresponding event (:any:`begin_event` and :any:`end_event`, and, if enabled,
+    timestamps (`accept_time`, `begin_time`, and `end_time`), trigger the
+    corresponding event (`begin_event` and `end_event`, and, if enabled,
     record the transaction contents to a vendor-specific transaction database.
    
-    Note that get_next_item/item_done when called on a :any:`uvm_seq_item_pull_port`
-    will automatically trigger the :any:`begin_event` and :any:`end_event` via calls to :any:`begin_tr` and :any:`end_tr`.
+    Note that get_next_item/item_done when called on a `uvm_seq_item_pull_port`
+    will automatically trigger the `begin_event` and `end_event` via calls to `begin_tr` and `end_tr`.
     While convenient, it is generally the responsibility of drivers to mark a
     transaction's progress during execution.  To allow the driver or layering sequence
     to control sequence item timestamps, events, and recording, you must call
-    :any:`disable_auto_item_recording` at the beginning
-    of the driver's :any:`run_phase` task.
+    `UVM_SEQ_ITEM_PULL_IMP.disable_auto_item_recording` at the beginning
+    of the driver's `run_phase` task.
    
-    Users may also use the transaction's event pool, :any:`events`,
+    Users may also use the transaction's event pool, `events`,
     to define custom events for the driver to trigger and the sequences to wait on. Any
     in-between events such as marking the beginning of the address and data
     phases of transaction execution could be implemented via the
-    :any:`events` pool.
+    `events` pool.
    
     In pipelined protocols, the driver may release a sequence (return from
-    :any:`finish_item` or it's :any:`uvm_do` macro) before the item has been completed.
-    If the driver uses the :any:`begin_tr`/:any:`end_tr` API in :mod:`uvm_component`, the sequence can
-    wait on the item's :any:`end_event` to block until the item was fully executed,
+    `finish_item` or it's `uvm_do` macro) before the item has been completed.
+    If the driver uses the `begin_tr`/`end_tr` API in `UVMComponent`, the sequence can
+    wait on the item's `end_event` to block until the item was fully executed,
     as in the following example.
 
     .. code-block:: systemverilog
