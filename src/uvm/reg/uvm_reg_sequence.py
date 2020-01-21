@@ -41,7 +41,7 @@ UPSTREAM = 1
 
 #//------------------------------------------------------------------------------
 #//
-#// CLASS: uvm_reg_sequence
+#// CLASS: UVMRegSequence
 #//
 #// This class provides base functionality for both user-defined RegModel test
 #// sequences and "register translation sequences".
@@ -62,10 +62,10 @@ UPSTREAM = 1
 #//
 #// Note- The convenience API not yet implemented.
 #//------------------------------------------------------------------------------
-#class uvm_reg_sequence #(type BASE=uvm_sequence #(uvm_reg_item)) extends BASE;
+#class UVMRegSequence #(type BASE=uvm_sequence #(uvm_reg_item)) extends BASE;
 
 
-class uvm_reg_sequence(UVMSequence):
+class UVMRegSequence(UVMSequence):
     #
     #
     #  // Parameter: BASE
@@ -85,7 +85,7 @@ class uvm_reg_sequence(UVMSequence):
     #  // "promote" the BASE parameter.
     #  //
     #  // | class my_reg_sequence #(type BASE=uvm_sequence #(uvm_reg_item))
-    #  // |                               extends uvm_reg_sequence #(BASE);
+    #  // |                               extends UVMRegSequence #(BASE);
     #  //
     #  // This way, the RegModel sequence can be extended from
     #  // user-defined base sequences.
@@ -123,7 +123,7 @@ class uvm_reg_sequence(UVMSequence):
     #  // Create a new instance, giving it the optional ~name~.
     #  //
     def __init__(self, name="uvm_reg_sequence_inst"):
-        UVMSequence.__init__(self, name)
+        super().__init__(name)
         self.reg_seqr = None
         self.adapter = None
         self.model = None
@@ -486,12 +486,11 @@ class uvm_reg_sequence(UVMSequence):
     #  endfunction
     #
     #endclass
-uvm_object_utils(uvm_reg_sequence)
-UVMRegSequence = uvm_reg_sequence
+uvm_object_utils(UVMRegSequence)
 
 
 #//------------------------------------------------------------------------------
-#// Class: uvm_reg_frontdoor
+#// Class: UVMRegFrontdoor
 #//
 #// Facade class for register and memory frontdoor access.
 #//------------------------------------------------------------------------------
@@ -508,34 +507,29 @@ UVMRegSequence = uvm_reg_sequence
 #// The frontdoor allows access using a non-linear and/or non-mapped mechanism.
 #// Users can extend this class to provide the physical access to these registers.
 #//
-#virtual class uvm_reg_frontdoor extends uvm_reg_sequence #(uvm_sequence #(uvm_sequence_item));
-#
-#   // Variable: rw_info
-#   //
-#   // Holds information about the register being read or written
-#   //
-#   uvm_reg_item rw_info;
-#
-#   // Variable: sequencer
-#   //
-#   // Sequencer executing the operation
-#   //
-#   uvm_sequencer_base sequencer;
-#
-#   // Function: new
-#   //
-#   // Constructor, new object given optional ~name~.
-#   //
-#   function new(string name="");
-#      super.new(name);
-#   endfunction
-#
-#   string fname;
-#   int lineno;
-#
-#endclass: uvm_reg_frontdoor
-#
-#
-#
-#
-#
+
+
+class UVMRegFrontdoor(UVMRegSequence):  # (uvm_sequence #(uvm_sequence_item));
+
+    #   // Function: new
+    #   //
+    #   // Constructor, new object given optional ~name~.
+    #   //
+    def __init__(self, name="frontdoor"):
+        super().__init__(name)
+        #
+        #   // Variable: rw_info
+        #   //
+        #   // Holds information about the register being read or written
+        #   //
+        #   uvm_reg_item rw_info;
+        self.rw_info = None
+        self.fname = ""
+        self.lineno = 0
+        #
+        #   // Variable: sequencer
+        #   //
+        #   // Sequencer executing the operation
+        #   //
+        #   uvm_sequencer_base sequencer;
+        self.sequencer = None
