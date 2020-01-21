@@ -23,6 +23,7 @@
 #    Original SV code has been adapter to Python.
 # -------------------------------------------------------------
 
+import cocotb
 from ..base.sv import sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import *
@@ -481,6 +482,7 @@ class UVMRegBlock(UVMObject):
     #                                               input uvm_hier_e hier=UVM_HIER)
     #
     #
+
     #   // Function: get_fields
     #   //
     #   // Get the fields
@@ -491,6 +493,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_fields (ref uvm_reg_field  fields[$],
     #                                            input uvm_hier_e hier=UVM_HIER)
+
     #
     #
     #   // Function: get_memories
@@ -507,6 +510,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_memories (ref uvm_mem mems[$],
     #                                              input uvm_hier_e hier=UVM_HIER)
+
     #
     #
     #   // Function: get_virtual_registers
@@ -519,8 +523,6 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_virtual_registers(ref uvm_vreg regs[$],
     #                                                input uvm_hier_e hier=UVM_HIER)
-    #
-    #
 
     #   // Function: get_virtual_fields
     #   //
@@ -928,6 +930,30 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
+    @cocotb.coroutine
+    def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, parent=None, prior=-1,
+            extension=None, fname="", lineno=0):
+        final_status = UVM_IS_OK
+
+        for rg_ in self.regs.key_list():
+            rg = rg_
+            curr_stat = []
+            yield rg.mirror(curr_stat, check, path, None, parent, prior, extension, fname, lineno)
+            if (curr_stat[0] != UVM_IS_OK and curr_stat[0] != UVM_HAS_X):
+                final_status = curr_stat[0]
+
+
+        for blk_ in self.blks.key_list():
+            blk = blk_  # uvm_reg_block 
+
+            curr_stat = []
+            yield blk.mirror(curr_stat, check, path, parent, prior, extension, fname, lineno)
+            if (curr_stat[0] != UVM_IS_OK and curr_stat[0] != UVM_HAS_X):
+                final_status = curr_stat[0]
+        status.append(final_status)
+    #endtask: mirror
+
+
     #
     #
     #   // Task: write_reg_by_name
@@ -1702,37 +1728,6 @@ class UVMRegBlock(UVMObject):
 #endtask: update
 #
 #
-# mirror
-#
-#task uvm_reg_block::mirror(output uvm_status_e       status,
-#                           input  uvm_check_e        check = UVM_NO_CHECK,
-#                           input  uvm_path_e         path = UVM_DEFAULT_PATH,
-#                           input  uvm_sequence_base  parent = None,
-#                           input  int                prior = -1,
-#                           input  uvm_object         extension = None,
-#                           input  string             fname = "",
-#                           input  int                lineno = 0)
-#   uvm_status_e final_status = UVM_IS_OK
-#
-#   foreach (regs[rg_]):
-#      uvm_reg rg = rg_
-#      rg.mirror(status, check, path, None,
-#                parent, prior, extension, fname, lineno)
-#      if (status != UVM_IS_OK && status != UVM_HAS_X):
-#         final_status = status
-#      end
-#   end
-#
-#   foreach (blks[blk_]):
-#      uvm_reg_block blk = blk_
-#
-#      blk.mirror(status, check, path, parent, prior, extension, fname, lineno)
-#      if (status != UVM_IS_OK && status != UVM_HAS_X):
-#         final_status = status
-#      end
-#   end
-#
-#endtask: mirror
 #
 #
 # write_reg_by_name
