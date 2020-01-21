@@ -136,6 +136,7 @@ class apb_master(UVMDriver):  #(apb_rw)
         yield self.drive_delay()
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
+        uvm_info(self.tag, "Finished APB write to addr " + str(addr), UVM_MEDIUM)
         #   endtask: write
 
 
