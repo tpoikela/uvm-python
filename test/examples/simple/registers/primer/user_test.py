@@ -24,11 +24,11 @@
 
 import cocotb
 from uvm.macros import *
-from uvm.reg import uvm_reg_sequence
+from uvm.reg import UVMRegSequence
 from uvm.base import sv
 
 
-class user_test_seq(uvm_reg_sequence):
+class user_test_seq(UVMRegSequence):
 
     def __init__(self, name="user_test_seq"):
         super().__init__(name)
@@ -51,16 +51,19 @@ class user_test_seq(uvm_reg_sequence):
             data = sv.urandom()
             status = []
             default_map = model.TABLES[idx].get_default_map()
+            print("Writing to TABLES idx " + str(idx))
             yield model.TABLES[idx].write(status, data, _map=default_map, parent=self)
+            print("AFTER Writing to TABLES idx " + str(idx))
 
         # Find which indexed registers are non-zero
         for i in range(len(model.TABLES)):
-            data = 0
+            data = []
             status = []
 
+            print("Reading from TABLES idx " + str(i))
             yield model.TABLES[i].read(status, data)
-            if data != 0:
-                print(sv.sformatf("TABLES[%0d] is 0x%h...", i, data))
+            if data[0] != 0:
+                print(sv.sformatf("TABLES[%0d] is 0x%h...", i, data[0]))
 
 
 uvm_object_utils(user_test_seq)
