@@ -85,7 +85,6 @@ class cmdline_test(UVMTest):
         factory = cs_.get_factory()
         seq_name = []
         opts.get_arg_value("+UVM_REG_SEQ=", seq_name)
-        print("+UVM_REG_SEQ plusarg is now " + seq_name[0])
         seq_name = seq_name[0]
 
         seq = factory.create_object_by_name(seq_name, self.get_full_name(), "seq")
