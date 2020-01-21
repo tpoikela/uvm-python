@@ -24,7 +24,7 @@
 import cocotb
 
 from ...macros import uvm_object_utils, uvm_info, uvm_error
-from .. import uvm_reg_sequence
+from .. import UVMRegSequence
 from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base import UVM_LOW, UVM_HIGH
@@ -32,7 +32,7 @@ from ...base.uvm_globals import uvm_empty_delay
 from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 
 #//
-#// class: uvm_reg_hw_reset_seq
+#// class: UVMRegHWResetSeq
 #// Test the hard reset values of registers
 #//
 #// The test sequence performs the following steps
@@ -57,9 +57,9 @@ from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 #//
 
 
-class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
+class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
-    def __init__(self, name="uvm_reg_hw_reset_seq"):
+    def __init__(self, name="UVMRegHWResetSeq"):
         super().__init__(name)
         #   // Variable: model
         #   //
@@ -76,9 +76,9 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
     @cocotb.coroutine
     def body(self):
         if self.model is None:
-            uvm_error("uvm_reg_hw_reset_seq", "Not block or system specified to run sequence on")
+            uvm_error("UVMRegHWResetSeq", "Not block or system specified to run sequence on")
             return
-        uvm_info("STARTING_SEQ", "|uvm_reg_hw_reset_seq| Starting " + self.get_name() +
+        uvm_info("STARTING_SEQ", "|UVMRegHWResetSeq| Starting " + self.get_name() +
                 " sequence...",UVM_LOW)
 
         yield self.reset_blk(self.model)
@@ -99,8 +99,6 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
         no_rr1 = UVMResourceDb.get_by_name("REG::" + blk.get_full_name(), "NO_REG_TESTS", 0)
         no_rr2 = UVMResourceDb.get_by_name("REG::" + blk.get_full_name(), "NO_REG_HW_RESET_TEST", 0)
 
-        print("reg_hw_reset Do block started " + str(no_rr1) + ' ' + str(no_rr2))
-        print("blk_name is " + blk.get_full_name())
         if no_rr1 is not None or no_rr2 is not None:
             return
 
@@ -169,5 +167,5 @@ class uvm_reg_hw_reset_seq(uvm_reg_sequence):  # (uvm_sequence #(uvm_reg_item))
     def reset_blk(self, blk):
         yield uvm_empty_delay()
 
-    #endclass: uvm_reg_hw_reset_seq
-uvm_object_utils(uvm_reg_hw_reset_seq)
+    #endclass: UVMRegHWResetSeq
+uvm_object_utils(UVMRegHWResetSeq)
