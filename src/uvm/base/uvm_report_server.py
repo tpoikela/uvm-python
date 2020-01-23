@@ -7,10 +7,9 @@ from .uvm_globals import *
 from .uvm_pool import UVMPool
 from .uvm_report_catcher import UVMReportCatcher
 from .uvm_global_vars import uvm_default_printer
+from .sv import sv
 
 
-def bits(num):
-    return 32
 
 # TODO
 def ename(sever):
@@ -44,7 +43,7 @@ def ename(sever):
 #------------------------------------------------------------------------------
 class UVMReportServer(UVMObject):
 
-    def __init__(self, name = "base"):
+    def __init__(self, name="base"):
         UVMObject.__init__(self, name)
         self.m_quit_count = 0
         self.m_max_quit_count = 0
@@ -57,7 +56,7 @@ class UVMReportServer(UVMObject):
         self.show_verbosity = False
         self.show_terminator = False
 
-        self.m_message_db = {} # uvm_tr_database
+        self.m_message_db = {}  # uvm_tr_database
         self.m_streams = {}
 
     def get_type_name(self):
@@ -82,16 +81,16 @@ class UVMReportServer(UVMObject):
     #
 
     # Print to show report server state
-    def do_print (self, printer):
+    def do_print(self, printer):
         l_severity_count_index = 0
         l_id_count_index = ""
 
-        printer.print_int("quit_count", self.m_quit_count, bits(self.m_quit_count), UVM_DEC,
+        printer.print_int("quit_count", self.m_quit_count, sv.bits(self.m_quit_count), UVM_DEC,
             ".", "int")
         printer.print_int("max_quit_count", self.m_max_quit_count,
-            bits(self.m_max_quit_count), UVM_DEC, ".", "int")
+            sv.bits(self.m_max_quit_count), UVM_DEC, ".", "int")
         printer.print_int("max_quit_overridable", self.max_quit_overridable,
-            bits(self.max_quit_overridable), UVM_BIN, ".", "bit")
+            sv.bits(self.max_quit_overridable), UVM_BIN, ".", "bit")
 
         if self.m_severity_count.has_first():
             l_severity_count_index = self.m_severity_count.first()
@@ -119,13 +118,13 @@ class UVMReportServer(UVMObject):
             printer.print_array_footer()
 
         printer.print_int("enable_report_id_count_summary", self.enable_report_id_count_summary,
-            bits(self.enable_report_id_count_summary), UVM_BIN, ".", "bit")
+            sv.bits(self.enable_report_id_count_summary), UVM_BIN, ".", "bit")
         printer.print_int("record_all_messages", self.record_all_messages,
-            bits(self.record_all_messages), UVM_BIN, ".", "bit")
+            sv.bits(self.record_all_messages), UVM_BIN, ".", "bit")
         printer.print_int("show_verbosity", self.show_verbosity,
-            bits(self.show_verbosity), UVM_BIN, ".", "bit")
+            sv.bits(self.show_verbosity), UVM_BIN, ".", "bit")
         printer.print_int("show_terminator", self.show_terminator,
-            bits(self.show_terminator), UVM_BIN, ".", "bit")
+            sv.bits(self.show_terminator), UVM_BIN, ".", "bit")
 
     #----------------------------------------------------------------------------
     # Group: Quit Count
@@ -280,13 +279,13 @@ class UVMReportServer(UVMObject):
     #
     # This method sends string severity to the command line if file is 0 and to
     # the file(s) specified by file if it is not 0.
-    def f_display(self, file, str):
+    def f_display(self, file, _str):
         if file == 0:
             #import logging
             #logging.info("%s", str)
-            print("%s", str)
+            print("%s\n", _str)
         else:
-            file.write(str)
+            file.write(_str + "\n")
 
     def process_report_message(self, report_message):
         l_report_handler = report_message.get_report_handler()
@@ -309,7 +308,7 @@ class UVMReportServer(UVMObject):
             svr = cs.get_report_server()
 
             # no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-            if report_message.get_action() & (UVM_LOG|UVM_DISPLAY):
+            if report_message.get_action() & (UVM_LOG | UVM_DISPLAY):
                 m = svr.compose_report_message(report_message)
             svr.execute_report_message(report_message, m)
 
@@ -335,35 +334,34 @@ class UVMReportServer(UVMObject):
 
         # UVM_RM_RECORD action
         if report_message.get_action() & UVM_RM_RECORD:
-             stream = None #uvm_tr_stream stream
-             ro = report_message.get_report_object()
-             rh = report_message.get_report_handler()
+            stream = None  # uvm_tr_stream stream
+            ro = report_message.get_report_object()
+            rh = report_message.get_report_handler()
 
-             # Check for pre-existing stream TODO
-             #if (m_streams.exists(ro.get_name()) && (m_streams[ro.get_name()].exists(rh.get_name())))
-                 #stream = m_streams[ro.get_name()][rh.get_name()]
+            # Check for pre-existing stream TODO
+            #if (m_streams.exists(ro.get_name()) && (m_streams[ro.get_name()].exists(rh.get_name())))
+            #stream = m_streams[ro.get_name()][rh.get_name()]
 
-             # If no pre-existing stream (or for some reason pre-existing stream was ~null~)
-             if stream is None:
+            # If no pre-existing stream (or for some reason pre-existing stream was ~null~)
+            if stream is None:
+                # Grab the database
+                db = self.get_message_database()
 
-                    # Grab the database
-                    db = get_message_database()
+                # If database is ~null~, use the default database
+                if db is None:
+                    cs = get_cs()
+                    db = cs.get_default_tr_database()
 
-                    # If database is ~null~, use the default database
-                    if db is None:
-                        cs = get_cs()
-                        db = cs.get_default_tr_database()
-
-                    if db is not None:
-                         # Open the stream.    Name=report object name, scope=report handler name, type=MESSAGES
-                         stream = db.open_stream(ro.get_name(), rh.get_name(), "MESSAGES")
-                         # Save off the openned stream
-                         m_streams[ro.get_name()][rh.get_name()] = stream
-             if stream is not None:
-                 recorder = stream.open_recorder(report_message.get_name(), None,report_message.get_type_name())
-                 if recorder is not None:
-                     report_message.record(recorder)
-                     recorder.free()
+                if db is not None:
+                    # Open the stream.    Name=report object name, scope=report handler name, type=MESSAGES
+                    stream = db.open_stream(ro.get_name(), rh.get_name(), "MESSAGES")
+                    # Save off the openned stream
+                    self.m_streams[ro.get_name()][rh.get_name()] = stream
+            if stream is not None:
+                recorder = stream.open_recorder(report_message.get_name(), None,report_message.get_type_name())
+                if recorder is not None:
+                    report_message.record(recorder)
+                    recorder.free()
 
         # DISPLAY action
         if report_message.get_action() & UVM_DISPLAY:
@@ -376,9 +374,9 @@ class UVMReportServer(UVMObject):
         if report_message.get_action() & UVM_LOG:
             if report_message.get_file() == 0 or report_message.get_file() != 0x80000001: #ignore stdout handle
                 tmp_file = report_message.get_file()
-                if report_message.get_file() & 0x80000000 == 0: #is an mcd so mask off stdout
-                    tmp_file = report_message.get_file() & 0xfffffffe
-            self.f_display(tmp_file, composed_message)
+                #if report_message.get_file() & 0x80000000 == 0: # is an mcd so mask off stdout
+                #    tmp_file = report_message.get_file() & 0xfffffffe
+                self.f_display(tmp_file, composed_message)
 
         # Process the UVM_COUNT action
         if report_message.get_action() & UVM_COUNT:
@@ -396,7 +394,8 @@ class UVMReportServer(UVMObject):
 
         # Process the UVM_STOP action
         if report_message.get_action() & UVM_STOP:
-            raise Exception("$stop")
+            raise Exception("$stop from uvm_report_server, msg: " +
+                    report_message.sprint())
 
     # Function: compose_report_message
     #
