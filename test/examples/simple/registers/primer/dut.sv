@@ -23,6 +23,9 @@
 // 
 
 `timescale 1ns/1ns
+/* verilator lint_off CASEX */
+/* verilator lint_off CASEINCOMPLETE */
+
 
 module slave(
    // apb_if    apb,
@@ -65,33 +68,33 @@ always @ (posedge apb_pclk)
       pr_data <= 32'h0;
    end
    else begin
-       chosen_sock = SESSION[paddr];
+       // chosen_sock = SESSION[paddr];
 
       // Wait for a SETUP+READ or ENABLE+WRITE cycle
       if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
          pr_data <= 32'h0;
          if (apb_pwrite) begin
-            casex (apb_paddr)
-              16'h0020: INDEX <= apb_pwdata;
+            casex (apb_paddr[15:0])
+              16'h0020: INDEX <= apb_pwdata[7:0];
               16'h0024: begin
                  TABLES[INDEX] <= apb_pwdata;
               end
               16'h1XX0: chosen_sock.SRC[63:32] <= apb_pwdata;
-              16'h1XX4: chosen_sock.SRC[32: 0] <= apb_pwdata;
+              16'h1XX4: chosen_sock.SRC[31: 0] <= apb_pwdata;
               16'h1XX8: chosen_sock.DST[63:32] <= apb_pwdata;
-              16'h1XXC: chosen_sock.DST[32: 0] <= apb_pwdata;
+              16'h1XXC: chosen_sock.DST[31: 0] <= apb_pwdata;
               16'h2XXX: DMA[paddr] <= apb_pwdata;
             endcase
          end
          else begin
-            casex (apb_paddr)
-              16'h0000: pr_data <= {4'h0, 10'h176, 8'h5A, 8'h03};
+            casex (apb_paddr[15:0])
+              16'h0000: pr_data <= {2'b00, 4'h0, 10'h176, 8'h5A, 8'h03};
               16'h0020: pr_data <= {24'h0000, INDEX};
               16'h0024: pr_data <= TABLES[INDEX];
               16'h1XX0: pr_data <= SESSION[apb_paddr[11:2]].SRC[63:32];
-              16'h1XX4: pr_data <= SESSION[apb_paddr[11:2]].SRC[32: 0];
+              16'h1XX4: pr_data <= SESSION[apb_paddr[11:2]].SRC[31: 0];
               16'h1XX8: pr_data <= SESSION[apb_paddr[11:2]].DST[63:32];
-              16'h1XXC: pr_data <= SESSION[apb_paddr[11:2]].DST[32: 0];
+              16'h1XXC: pr_data <= SESSION[apb_paddr[11:2]].DST[31: 0];
               16'h2XXX: pr_data <= DMA[apb_paddr[11:2]];
             endcase
          end
@@ -99,13 +102,15 @@ always @ (posedge apb_pclk)
    end
 end
 
+/*
 `ifdef COCOTB_SIM
 initial begin
  $dumpfile ("slave_dut.vcd");
  $dumpvars (0, slave);
- #2;
+ #2ns;
 end
 `endif
+*/
 
 endmodule
 
