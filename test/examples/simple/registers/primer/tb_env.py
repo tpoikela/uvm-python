@@ -24,6 +24,7 @@
 
 from uvm.base.uvm_component import *
 from uvm.macros import *
+from uvm import *
 
 from apb.apb_agent import apb_agent
 from reg_model import reg_block_slave
@@ -51,6 +52,9 @@ class tb_env(UVMComponent):
 
 
     def connect_phase(self, phase):
+        fname = open('uvm_logfile.txt', 'w+')
+        self.set_report_default_file_hier(fname)
+        self.set_report_severity_action_hier(UVM_INFO, UVM_LOG | UVM_DISPLAY)
         if self.model.get_parent() is None:
             reg2apb = reg2apb_adapter()
             self.model.default_map.set_sequencer(self.apb.sqr, reg2apb)
