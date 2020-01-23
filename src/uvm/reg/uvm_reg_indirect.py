@@ -24,7 +24,7 @@
 import cocotb
 
 from .uvm_reg import UVMReg
-from .uvm_reg_model import (UVM_WRITE, UVM_NOT_OK)
+from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegItem
 from .uvm_reg_sequence import UVMRegFrontdoor
 from ..base.uvm_resource_db import UVMResourceDb
@@ -86,7 +86,7 @@ class UVMRegIndirectData(UVMReg):
     #   function void configure (uvm_reg idx,
     #                            uvm_reg reg_a[],
     #                            uvm_reg_block blk_parent,
-    #                            uvm_reg_file regfile_parent = null)
+    #                            uvm_reg_file regfile_parent = None)
     def configure(self, idx, reg_a, blk_parent, regfile_parent=None):
         super().configure(blk_parent, regfile_parent, "")
         self.m_idx = idx
@@ -115,7 +115,7 @@ class UVMRegIndirectData(UVMReg):
             fd = None  # uvm_reg_indirect_ftdr_seq
             if self.m_tbl[i] is None:
                 uvm_error(self.get_full_name(),
-                         sv.sformatf("Indirect register #%0d is NULL", i))
+                         sv.sformatf("Indirect register #%0d is None", i))
                 continue
             fd = uvm_reg_indirect_ftdr_seq(self.m_idx, i, self)
             if self.m_tbl[i].is_in_map(_map):
@@ -127,20 +127,18 @@ class UVMRegIndirectData(UVMReg):
     #   virtual function void do_predict (uvm_reg_item      rw,
     #                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
     #                                     uvm_reg_byte_en_t be = -1)
-    #      if (m_idx.get() >= m_tbl.size()):
-    #         `uvm_error(get_full_name(), sv.sformatf("Address register %s has a value (%0d) greater than the maximum indirect register array size (%0d)", m_idx.get_full_name(), m_idx.get(), m_tbl.size()))
-    #         rw.status = UVM_NOT_OK
-    #         return
-    #      end
-    #
-    #      //NOTE limit to 2**32 registers
-    #      begin
-    #         int unsigned idx = m_idx.get()
-    #         m_tbl[idx].do_predict(rw, kind, be)
-    #      end
-    #   endfunction
+    def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
+        if self.m_idx.get() >= self.m_tbl.size():
+            uvm_error(self.get_full_name(), sv.sformatf(
+                "Address register %s has a value (%0d) greater than the maximum indirect register array size (%0d)",
+                self.m_idx.get_full_name(), self.m_idx.get(), self.m_tbl.size()))
+            rw.status = UVM_NOT_OK
+            return
 
-    #
+        # NOTE limit to 2**32 registers
+        idx = self.m_idx.get()
+        self.m_tbl[idx].do_predict(rw, kind, be)
+
     #
     #   virtual function uvm_reg_map get_local_map(uvm_reg_map map, string caller="")
     def get_local_map(self, _map, caller=""):
@@ -184,58 +182,59 @@ class UVMRegIndirectData(UVMReg):
     #   virtual task write(output uvm_status_e      status,
     #                      input  uvm_reg_data_t    value,
     #                      input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                      input  uvm_reg_map       map = null,
-    #                      input  uvm_sequence_base parent = null,
+    #                      input  uvm_reg_map       map = None,
+    #                      input  uvm_sequence_base parent = None,
     #                      input  int               prior = -1,
-    #                      input  uvm_object        extension = null,
+    #                      input  uvm_object        extension = None,
     #                      input  string            fname = "",
     #                      input  int               lineno = 0)
-    #
-    #      if (path == UVM_DEFAULT_PATH):
-    #         uvm_reg_block blk = get_parent()
-    #         path = blk.get_default_path()
-    #      end
-    #
-    #      if (path == UVM_BACKDOOR):
-    #         `uvm_warning(get_full_name(), "Cannot backdoor-write an indirect data access register. Switching to frontdoor.")
-    #         path = UVM_FRONTDOOR
-    #      end
-    #
-    #      // Can't simply call super.write() because it'll call set()
-    #      begin
-    #         uvm_reg_item rw
-    #
-    #         XatomicX(1)
-    #
-    #         rw = uvm_reg_item::type_id::create("write_item",,get_full_name())
-    #         rw.element      = this
-    #         rw.element_kind = UVM_REG
-    #         rw.kind         = UVM_WRITE
-    #         rw.value[0]     = value
-    #         rw.path         = path
-    #         rw.map          = map
-    #         rw.parent       = parent
-    #         rw.prior        = prior
-    #         rw.extension    = extension
-    #         rw.fname        = fname
-    #         rw.lineno       = lineno
-    #
-    #         do_write(rw)
-    #
-    #         status = rw.status
-    #
-    #         XatomicX(0)
-    #      end
-    #   endtask
+    @cocotb.coroutine
+    def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
+            parent=None, prior=-1, extension=None, fname="", lineno=0):
+        uvm_check_output_args([status])
+
+        if path == UVM_DEFAULT_PATH:
+           blk = self.get_parent()  # uvm_reg_block
+           path = blk.get_default_path()
+
+        if path == UVM_BACKDOOR:
+            uvm_warning(self.get_full_name(),
+                "Cannot backdoor-write an indirect data access register. Switching to frontdoor.")
+            path = UVM_FRONTDOOR
+
+
+        # Can't simply call super.write() because it'll call set()
+        # uvm_reg_item rw
+
+
+        rw = UVMRegItem.type_id.create("write_item", None, self.get_full_name())
+        yield self.XatomicX(1, rw)
+        rw.element      = self
+        rw.element_kind = UVM_REG
+        rw.kind         = UVM_WRITE
+        rw.value[0]     = value
+        rw.path         = path
+        rw.map          = _map
+        rw.parent       = parent
+        rw.prior        = prior
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+
+        yield self.do_write(rw)
+        status.append(rw.status)
+
+        yield self.XatomicX(0)
+        #   endtask
 
 
     #   virtual task read(output uvm_status_e      status,
     #                     output uvm_reg_data_t    value,
     #                     input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                     input  uvm_reg_map       map = null,
-    #                     input  uvm_sequence_base parent = null,
+    #                     input  uvm_reg_map       map = None,
+    #                     input  uvm_sequence_base parent = None,
     #                     input  int               prior = -1,
-    #                     input  uvm_object        extension = null,
+    #                     input  uvm_object        extension = None,
     #                     input  string            fname = "",
     #                     input  int               lineno = 0)
     #
@@ -256,8 +255,8 @@ class UVMRegIndirectData(UVMReg):
     #   virtual task poke(output uvm_status_e      status,
     #                     input  uvm_reg_data_t    value,
     #                     input  string            kind = "",
-    #                     input  uvm_sequence_base parent = null,
-    #                     input  uvm_object        extension = null,
+    #                     input  uvm_sequence_base parent = None,
+    #                     input  uvm_object        extension = None,
     #                     input  string            fname = "",
     #                     input  int               lineno = 0)
     #      `uvm_error(get_full_name(), "Cannot poke() an indirect data access register")
@@ -268,8 +267,8 @@ class UVMRegIndirectData(UVMReg):
     #   virtual task peek(output uvm_status_e      status,
     #                     output uvm_reg_data_t    value,
     #                     input  string            kind = "",
-    #                     input  uvm_sequence_base parent = null,
-    #                     input  uvm_object        extension = null,
+    #                     input  uvm_sequence_base parent = None,
+    #                     input  uvm_object        extension = None,
     #                     input  string            fname = "",
     #                     input  int               lineno = 0)
     #      `uvm_error(get_full_name(), "Cannot peek() an indirect data access register")
@@ -279,10 +278,10 @@ class UVMRegIndirectData(UVMReg):
     #
     #   virtual task update(output uvm_status_e      status,
     #                       input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                       input  uvm_reg_map       map = null,
-    #                       input  uvm_sequence_base parent = null,
+    #                       input  uvm_reg_map       map = None,
+    #                       input  uvm_sequence_base parent = None,
     #                       input  int               prior = -1,
-    #                       input  uvm_object        extension = null,
+    #                       input  uvm_object        extension = None,
     #                       input  string            fname = "",
     #                       input  int               lineno = 0)
     #      status = UVM_IS_OK
@@ -292,10 +291,10 @@ class UVMRegIndirectData(UVMReg):
     #   virtual task mirror(output uvm_status_e      status,
     #                       input uvm_check_e        check  = UVM_NO_CHECK,
     #                       input uvm_path_e         path = UVM_DEFAULT_PATH,
-    #                       input uvm_reg_map        map = null,
-    #                       input uvm_sequence_base  parent = null,
+    #                       input uvm_reg_map        map = None,
+    #                       input uvm_sequence_base  parent = None,
     #                       input int                prior = -1,
-    #                       input  uvm_object        extension = null,
+    #                       input  uvm_object        extension = None,
     #                       input string             fname = "",
     #                       input int                lineno = 0)
     #      status = UVM_IS_OK
