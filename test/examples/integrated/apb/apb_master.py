@@ -84,6 +84,7 @@ class apb_master(UVMDriver):  #(apb_rw)
             tr = []
             yield self.seq_item_port.get_next_item(tr)
             tr = tr[0]
+            uvm_info("APB_MASTER", "Driving trans into DUT: " + tr.convert2string(), UVM_DEBUG)
 
             #if (not self.sigs.clk.triggered):
             #yield Edge(self.sigs.clk)
