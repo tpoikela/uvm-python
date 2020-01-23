@@ -226,6 +226,8 @@ class UVMCmdlineProcessor(UVMReportObject):
 
         chars = len(match)
         for i in range(len(self.m_argv)):
+            uvm_debug(self, 'get_arg_values', 'Checking ' + self.m_argv[i] + ' - '
+                + match)
             if len(self.m_argv[i]) >= chars:
                 argv_str = self.m_argv[i][0:chars]
                 if argv_str == match:
