@@ -1,3 +1,26 @@
+#//
+#//------------------------------------------------------------------------------
+#//   Copyright 2007-2011 Mentor Graphics Corporation
+#//   Copyright 2007-2011 Cadence Design Systems, Inc.
+#//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2013 NVIDIA Corporation
+#//   Copyright 20190-2020 Tuomas Poikela
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//------------------------------------------------------------------------------
 
 from .uvm_object import UVMObject
 from .uvm_pool import UVMPool
@@ -5,25 +28,74 @@ from .uvm_object_globals import *
 from .uvm_globals import uvm_report_enabled
 from ..macros.uvm_object_defines import uvm_object_utils
 
+#//------------------------------------------------------------------------------
+#//
+#// CLASS: uvm_report_handler
+#//
+#// The uvm_report_handler is the class to which most methods in
+#// <uvm_report_object> delegate. It stores the maximum verbosity, actions,
+#// and files that affect the way reports are handled.
+#//
+#// The report handler is not intended for direct use. See <uvm_report_object>
+#// for information on the UVM reporting mechanism.
+#//
+#// The relationship between <uvm_report_object> (a base class for uvm_component)
+#// and uvm_report_handler is typically one to one, but it can be many to one
+#// if several uvm_report_objects are configured to use the same
+#// uvm_report_handler_object. See <uvm_report_object::set_report_handler>.
+#//
+#// The relationship between uvm_report_handler and <uvm_report_server> is many
+#// to one.
+#//
+#//------------------------------------------------------------------------------
+
+
 class UVMReportHandler(UVMObject):
 
     def __init__(self, name=""):
         UVMObject.__init__(self, name)
         self.m_max_verbosity_level = 0
+
+        # id verbosity settings : default and severity
         self.id_verbosities = UVMPool()
         self.severity_id_verbosities = {}  # string -> UVMPool()
+
+        # actions
         self.id_actions = UVMPool()
         self.severity_actions = UVMPool()
         self.severity_id_actions = {}  # string -> UVMPool
+
+        # severity overrides
         self.sev_overrides = UVMPool()
         self.sev_id_overrides = {}  # string -> UVMPool
 
+        # file handles : default, severity, action, (severity,id)
         self.default_file_handle = 1
         self.id_file_handles = UVMPool()
         self.severity_file_handles = {}  # severity -> UVM_FILE
         self.severity_id_file_handles = {}  # severity -> UVMPool
         self.initialize()
 
+    #// Function: print
+    #//
+    #// The uvm_report_handler implements the <uvm_object::do_print()> such that
+    #// ~print~ method provides UVM printer formatted output
+    #// of the current configuration.  A snippet of example output is shown here:
+    #//
+    #// |uvm_test_top                uvm_report_handler  -     @555
+    #// |  max_verbosity_level       uvm_verbosity       32    UVM_FULL
+    #// |  id_verbosities            uvm_pool            3     -
+    #// |    [ID1]                   uvm_verbosity       32    UVM_LOW
+    #// |  severity_id_verbosities   array               4     -
+    #// |    [UVM_INFO:ID4]          int                 32    501
+    #// |  id_actions                uvm_pool            2     -
+    #// |    [ACT_ID]                uvm_action          32    DISPLAY LOG COUNT
+    #// |  severity_actions          array               4     -
+    #// |    [UVM_INFO]              uvm_action          32    DISPLAY
+    #// |    [UVM_WARNING]           uvm_action          32    DISPLAY RM_RECORD COUNT
+    #// |    [UVM_ERROR]             uvm_action          32    DISPLAY COUNT
+    #// |    [UVM_FATAL]             uvm_action          32    DISPLAY EXIT
+    #// |  default_file_handle       int                 32    'h1
     def do_print(self, printer):
         print("UVMReportHandler do_print() TODO")
         #  virtual def void do_print (self,uvm_printer printer):
@@ -215,8 +287,8 @@ class UVMReportHandler(UVMObject):
     #  //----------------------------------------------------------------------------
     #  // Group: Message Processing
     #  //----------------------------------------------------------------------------
-    #
-    #
+
+
     #  // Function: process_report_message
     #  //
     #  // This is the common handler method used by the four core reporting methods
@@ -451,9 +523,18 @@ class UVMReportHandler(UVMObject):
         l_report_message.set_report_message(severity, id, message,
                                             verbosity_level, filename, line, name)
         l_report_message.set_report_object(client)
-        l_report_message.set_action(self.get_action(severity,id))
+        l_report_message.set_action(self.get_action(severity, id))
         self.process_report_message(l_report_message)
 
     # tpoikela: Removed ifndef UVM_NO_DEPRECATED
+
+    def _close_files(self):
+        if self.default_file_handle != 0:
+            self.default_file_handle.close()
+        for sev in self.severity_file_handles:
+            if self.severity_file_handles[sev] != 0:
+                self.severity_file_handles[sev].close()
+
+        #for id in self.severity_id_file_handles[severity].add(id, file)
 
 uvm_object_utils(UVMReportHandler)
