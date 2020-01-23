@@ -676,7 +676,7 @@ class UVMRoot(UVMComponent):
 
         # Retrieve the verbosities provided on the command line.
         verb_count = self.clp.get_arg_values("+UVM_VERBOSITY=", verb_settings)
-        if (verb_count):
+        if verb_count:
             verb_settings.append(verb_string)
 
         # If none provided, provide message about the default being used.
@@ -685,7 +685,7 @@ class UVMRoot(UVMComponent):
                 "No verbosity specified on the command line.  Using the default: UVM_MEDIUM", UVM_NONE)
         #
         # If at least one, use the first.
-        if (verb_count > 0):
+        if verb_count > 0:
             verb_string = verb_settings[0]
             plusarg = 1
 
