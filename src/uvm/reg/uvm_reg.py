@@ -773,9 +773,7 @@ class UVMReg(UVMObject):
 
         yield self.do_write(rw)
         status.append(rw.status)
-        print("RRR in write() before self.XatomicX()")
         yield self.XatomicX(0)
-        print("RRR in write() after self.XatomicX()")
         #endtask
 
 
@@ -1173,9 +1171,6 @@ class UVMReg(UVMObject):
             yield uvm_empty_delay()
             return
         map_info = map_info[0]
-
-        #yield self.XatomicX(1, rw)
-
         self.m_write_in_progress = True
 
         rw.value[0] &= ((1 << self.m_n_bits)-1)
