@@ -88,9 +88,10 @@ def get_verbosity(severity):
 #
 #------------------------------------------------------------------------------
 
+
 class UVMReportObject(UVMObject):
 
-    def __init__(self, name = ""):
+    def __init__(self, name=""):
         UVMObject.__init__(self, name)
         from .uvm_report_handler import UVMReportHandler
         self.m_rh = UVMReportHandler(name)
@@ -139,15 +140,15 @@ class UVMReportObject(UVMObject):
         self.uvm_process_report_message(l_report_message)
 
     # Function: uvm_report_info
-    def uvm_report_info(self, id, message, verbosity = UVM_MEDIUM, filename = "", line =
-            0, context_name = "", report_enabled_checked = False):
-        self.uvm_report (UVM_INFO, id, message, verbosity,
+    def uvm_report_info(self, id, message, verbosity=UVM_MEDIUM, filename="",
+            line=0, context_name="", report_enabled_checked=False):
+        self.uvm_report(UVM_INFO, id, message, verbosity,
                   filename, line, context_name, report_enabled_checked)
 
     # Function: uvm_report_warning
-    def uvm_report_warning(self, id, message, verbosity = UVM_MEDIUM, filename = "",
-            line = 0, context_name = "", report_enabled_checked = False):
-        self.uvm_report (UVM_WARNING, id, message, verbosity,
+    def uvm_report_warning(self, id, message, verbosity=UVM_MEDIUM, filename="",
+            line=0, context_name="", report_enabled_checked=False):
+        self.uvm_report(UVM_WARNING, id, message, verbosity,
                 filename, line, context_name, report_enabled_checked)
 
     # Function: uvm_report_error
