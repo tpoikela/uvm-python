@@ -733,7 +733,7 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should never be called directly.
     def final_phase(self, phase):
-        pass
+        self.m_rh._close_files()
 
     #// Function: phase_started
     #//
@@ -1355,6 +1355,11 @@ class UVMComponent(UVMReportObject):
 
     #extern function void set_report_severity_action_hier (uvm_severity severity,
     #                                                      uvm_action action)
+    def set_report_severity_action_hier(self, severity, action):
+        self.set_report_severity_action(severity, action)
+        for c in self.m_children:
+            self.m_children[c].set_report_severity_action_hier(severity, action)
+    #endfunction
 
 
     #// Function: set_report_id_action_hier
@@ -1385,6 +1390,11 @@ class UVMComponent(UVMReportObject):
     #// Function: set_report_default_file_hier
 
     #extern function void set_report_default_file_hier (UVM_FILE file)
+    def set_report_default_file_hier(self, file):
+        self.set_report_default_file(file)
+        for c in self.m_children:
+            self.m_children[c].set_report_default_file_hier(file)
+    #endfunction
 
     #// Function: set_report_severity_file_hier
 
@@ -2340,15 +2350,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#// set_report_severity_action_hier
-#// -------------------------
-#
-#function void uvm_component::set_report_severity_action_hier( uvm_severity severity,
-#                                                           uvm_action action)
-#  set_report_severity_action(severity, action)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_severity_action_hier(severity, action)
-#endfunction
 #
 #
 #// set_report_id_action_hier
@@ -2384,14 +2385,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#// set_report_default_file_hier
-#// ----------------------------
-#
-#function void uvm_component::set_report_default_file_hier( UVM_FILE file)
-#  set_report_default_file(file)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_default_file_hier(file)
-#endfunction
 #
 #
 #// set_report_id_file_hier
