@@ -46,7 +46,8 @@ class user_test_seq(UVMRegSequence):
         model = self.model
 
         # Randomize the content of 10 random indexed registers
-        for i in range(10):
+        #for i in range(10):
+        for i in range(1):
             idx = sv.urandom_range(0, 255)
             data = sv.urandom()
             status = []
@@ -56,7 +57,8 @@ class user_test_seq(UVMRegSequence):
             print("AFTER Writing to TABLES idx " + str(idx))
 
         # Find which indexed registers are non-zero
-        for i in range(len(model.TABLES)):
+        #for i in range(len(model.TABLES)):
+        for i in range(1):
             data = []
             status = []
 
