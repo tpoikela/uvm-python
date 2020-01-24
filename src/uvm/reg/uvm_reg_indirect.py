@@ -128,10 +128,10 @@ class UVMRegIndirectData(UVMReg):
     #                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
     #                                     uvm_reg_byte_en_t be = -1)
     def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
-        if self.m_idx.get() >= self.m_tbl.size():
+        if self.m_idx.get() >= len(self.m_tbl):
             uvm_error(self.get_full_name(), sv.sformatf(
                 "Address register %s has a value (%0d) greater than the maximum indirect register array size (%0d)",
-                self.m_idx.get_full_name(), self.m_idx.get(), self.m_tbl.size()))
+                self.m_idx.get_full_name(), self.m_idx.get(), len(self.m_tbl)))
             rw.status = UVM_NOT_OK
             return
 
@@ -311,9 +311,9 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
     #
     def __init__(self, addr_reg, idx, data_reg):
         super().__init__("uvm_reg_indirect_ftdr_seq")
-        self.m_addr_reg = addr_reg
-        self.m_idx      = idx
-        self.m_data_reg = data_reg
+        self.m_addr_reg = addr_reg  # uvm_reg
+        self.m_data_reg = data_reg  # uvm_reg
+        self.m_idx      = idx       # int
         #   endfunction: new
 
     @cocotb.coroutine
@@ -334,6 +334,7 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
         yield self.m_addr_reg.XatomicX(1, rw)
         yield self.m_data_reg.XatomicX(1, rw)
 
+        # This write selects the address to write/read
         yield self.m_addr_reg.do_write(rw)
 
         if rw.status == UVM_NOT_OK:
@@ -344,6 +345,7 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
             rw = arr[0]
         rw.element = self.m_data_reg
 
+        # This fetches the actual data
         if self.rw_info.kind == UVM_WRITE:
             yield self.m_data_reg.do_write(rw)
         else:
