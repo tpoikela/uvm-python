@@ -24,3 +24,4 @@
 
 from cmdline_test import *
 from user_test import *
+from mem_test import *

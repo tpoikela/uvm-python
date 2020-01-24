@@ -24,8 +24,10 @@
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import UVMPool, UVMObjectStringPool
 from ..base.uvm_globals import *
+from ..base.sv import sv
 from ..macros import *
 from .uvm_reg_model import *
+from .uvm_reg_item import UVMRegItem
 from .uvm_mem_mam import *
 
 
@@ -232,7 +234,7 @@ class UVMMem(UVMObject):
     def get_full_name(self):
         if self.m_parent is None:
             return self.get_name()
-        
+
         return self.m_parent.get_full_name() + "." + self.get_name()
         #
         #endfunction: get_full_name
@@ -509,6 +511,32 @@ class UVMMem(UVMObject):
     #                             input  int                lineno = 0)
     #
     #
+    @cocotb.coroutine
+    def write(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None, parent=None,
+            prior = -1, extension = None, fname = "", lineno = 0):
+        uvm_check_output_args([status])
+
+        # create an abstract transaction for this operation
+        rw = UVMRegItem.type_id.create("mem_write",None,self.get_full_name())
+        rw.element      = self
+        rw.element_kind = UVM_MEM
+        rw.kind         = UVM_WRITE
+        rw.offset       = offset
+        rw.value[0]     = value
+        rw.path         = path
+        rw.map          = _map
+        rw.parent       = parent
+        rw.prior        = prior
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+
+        yield self.do_write(rw)
+
+        status.append(rw.status)
+        #
+        #endtask: write
+
     #   // Task: read
     #   //
     #   // Read the current value from a memory location
@@ -530,6 +558,33 @@ class UVMMem(UVMObject):
     #                            input  uvm_object          extension = None,
     #                            input  string              fname = "",
     #                            input  int                 lineno = 0)
+    @cocotb.coroutine
+    def read(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None,
+            parent = None, prior = -1, extension = None, fname = "", lineno = 0):
+        uvm_check_output_args([status])
+
+        rw = UVMRegItem.type_id.create("mem_read",None,self.get_full_name())
+        rw.element      = self
+        rw.element_kind = UVM_MEM
+        rw.kind         = UVM_READ
+        rw.value[0]     = 0
+        rw.offset       = offset
+        rw.path         = path
+        rw.map          = _map
+        rw.parent       = parent
+        rw.prior        = prior
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+        
+        yield self.do_read(rw)
+        
+        status.append(rw.status)
+        value.append(rw.value[0])
+    #
+    #endtask: read
+
+
     #
     #
     #   // Task: burst_write
@@ -554,6 +609,7 @@ class UVMMem(UVMObject):
     #                                   input  uvm_object        extension = None,
     #                                   input  string            fname = "",
     #                                   input  int               lineno = 0)
+
     #
     #
     #   // Task: burst_read
@@ -579,6 +635,7 @@ class UVMMem(UVMObject):
     #                                  input  string            fname = "",
     #                                  input  int               lineno = 0)
     #
+
     #
     #   // Task: poke
     #   //
@@ -622,230 +679,508 @@ class UVMMem(UVMObject):
     #
     #
     #
+
     #   extern protected function bit Xcheck_accessX (input uvm_reg_item rw,
     #                                                 output uvm_reg_map_info map_info,
     #                                                 input string caller)
     #
     #
+    def Xcheck_accessX(self, rw, map_info, caller):
+
+        if rw.offset >= self.m_size:
+            uvm_error(self.get_type_name(), 
+               sv.sformatf("Offset 'h%0h exceeds size of memory, 'h%0h",
+                 rw.offset, self.m_size))
+            rw.status = UVM_NOT_OK
+            return 0
+
+        if rw.path == UVM_DEFAULT_PATH:
+            rw.path = m_parent.get_default_path()
+
+        # TODO finish this
+        #   if (rw.path == UVM_BACKDOOR):
+        #      if (get_backdoor() is None  and  !has_hdl_path()):
+        #         `uvm_warning("RegModel",
+        #            {"No backdoor access available for memory '",get_full_name(),
+        #            "' . Using frontdoor instead."})
+        #         rw.path = UVM_FRONTDOOR
+        #      end
+        #      else
+        #        rw.map = uvm_reg_map::backdoor()
+        #   end
+        #
+        #   if (rw.path != UVM_BACKDOOR):
+        #
+        #     rw.local_map = get_local_map(rw.map,caller)
+        #
+        #     if (rw.local_map is None):
+        #        `uvm_error(get_type_name(), 
+        #           {"No transactor available to physically access memory from map '",
+        #            rw.map.get_full_name(),"'"})
+        #        rw.status = UVM_NOT_OK
+        #        return 0
+        #     end
+        #
+        #     map_info = rw.local_map.get_mem_map_info(self)
+        #
+        #     if (map_info.frontdoor is None):
+        #
+        #        if (map_info.unmapped):
+        #           `uvm_error("RegModel", {"Memory '",get_full_name(),
+        #                      "' unmapped in map '", rw.map.get_full_name(),
+        #                      "' and does not have a user-defined frontdoor"})
+        #           rw.status = UVM_NOT_OK
+        #           return 0
+        #        end
+        #
+        #        if ((rw.value.size() > 1)):
+        #           if (get_n_bits() > rw.local_map.get_n_bytes()*8):
+        #              `uvm_error("RegModel",
+        #                    sv.sformatf("Cannot burst a %0d-bit memory through a narrower data path (%0d bytes)",
+        #                    get_n_bits(), rw.local_map.get_n_bytes()*8))
+        #              rw.status = UVM_NOT_OK
+        #              return 0
+        #           end
+        #           if (rw.offset + rw.value.size() > m_size):
+        #              `uvm_error("RegModel",
+        #                  sv.sformatf("Burst of size 'd%0d starting at offset 'd%0d exceeds size of memory, 'd%0d",
+        #                      rw.value.size(), rw.offset, m_size))
+        #              return 0
+        #           end
+        #        end
+        #     end
+        #
+        #     if (rw.map is None)
+        #       rw.map = rw.local_map
+        #   end
+        #
+        #   return 1
+        #endfunction
+
     #   extern virtual task do_write (uvm_reg_item rw)
+    #@cocotb.coroutine
+    def do_write(self, rw):  # task
+        cbs = uvm_mem_cb_iter(self)
+        map_info = None  # uvm_reg_map_info
+
+        self.m_fname  = rw.fname
+        self.m_lineno = rw.lineno
+
+        if self.Xcheck_accessX(rw, map_info, "burst_write()") is False:
+            yield uvm_empty_delay()
+            return
+
+        self.m_write_in_progress = True
+        rw.status = UVM_IS_OK
+
+        # PRE-WRITE CBS
+        yield self.pre_write(rw)
+        #   for (uvm_reg_cbs cb=cbs.first(); cb is not None; cb=cbs.next())
+        #      cb.pre_write(rw)
+        cb = cbs.first()
+        while cb is not None:
+            yield cb.pre_write(rw)
+            cb = cbs.next()
+
+        if rw.status != UVM_IS_OK:
+           self.m_write_in_progress = False
+           return
+
+
+        rw.status = UVM_NOT_OK
+
+        # FRONTDOOR
+        if rw.path == UVM_FRONTDOOR:
+
+            system_map = rw.local_map.get_root_map()
+            if map_info.frontdoor is not None:
+                fd = map_info.frontdoor  # uvm_reg_frontdoor
+                fd.rw_info = rw
+                if fd.sequencer is None:
+                    fd.sequencer = system_map.get_sequencer()
+                yield fd.start(fd.sequencer, rw.parent)
+            else:
+                yield rw.local_map.do_write(rw)
+
+            if rw.status != UVM_NOT_OK:
+                _min = rw.offset
+                _max = rw.offset + len(rw.value) + 1
+                for idx in range(_min, _max):
+                    self.XsampleX(map_info.mem_range.stride * idx, 0, rw.map)
+                    self.m_parent.XsampleX(map_info.offset +
+                            (map_info.mem_range.stride * idx), 0, rw.map)
+
+        else:
+            raise Exception("Backdoor access not implemented yet for UVMMem!")
+        #   // BACKDOOR TODO
+        #   else begin
+        #      // Mimick front door access, i.e. do not write read-only memories
+        #      if (get_access(rw.map) == "RW"):
+        #         uvm_reg_backdoor bkdr = get_backdoor()
+        #         if (bkdr is not None)
+        #            bkdr.write(rw)
+        #         else
+        #            backdoor_write(rw)
+        #      end
+        #      else
+        #         rw.status = UVM_IS_OK
+        #   end
+
+        #   // POST-WRITE CBS
+        yield self.post_write(rw)
+        cb = cbs.first()
+        while cb is not None:
+            yield cb.post_write(rw)
+            cb = cbs.next()
+
+        # REPORT
+        if uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel"):
+            path_s = ""
+            value_s = ""
+            pre_s = ""
+            range_s = ""
+            if rw.path == UVM_FRONTDOOR:
+                path_s = "map " + rw.map.get_full_name()
+                if map_info.frontdoor is not None:
+                    path_s = "user frontdoor"
+            else:
+                path_s = "DPI backdoor"
+                if self.get_backdoor() is not None:
+                    path_s = "user backdoor"
+            
+            if len(rw.value) > 1:
+                value_s = "='{"
+                pre_s = "Burst "
+                for i in range(len(rw.value)):
+                    value_s = value_s + sv.sformatf("%0h,",rw.value[i])
+                value_s[len(value_s)-1] = "}"
+                range_s = sv.sformatf("[%0d:%0d]",rw.offset,rw.offset+len(rw.value))
+            else:
+                value_s = sv.sformatf("=%0h",rw.value[0])
+                range_s = sv.sformatf("[%0d]",rw.offset)
+            uvm_report_info("RegModel", pre_s + "Wrote memory via " + path_s + ": ",
+                    self.get_full_name() + range_s + value_s, UVM_HIGH)
+        self.m_write_in_progress = False
+        #
+        #endtask: do_write
+
     #   extern virtual task do_read  (uvm_reg_item rw)
-    #
-    #
-    #   //-----------------
-    #   // Group: Frontdoor
-    #   //-----------------
-    #
-    #   // Function: set_frontdoor
-    #   //
-    #   // Set a user-defined frontdoor for this memory
-    #   //
-    #   // By default, memories are mapped linearly into the address space
-    #   // of the address maps that instantiate them.
-    #   // If memories are accessed using a different mechanism,
-    #   // a user-defined access
-    #   // mechanism must be defined and associated with
-    #   // the corresponding memory abstraction class
-    #   //
-    #   // If the memory is mapped in multiple address maps, an address ~map~
-    #   // must be specified.
-    #   //
-    #   extern function void set_frontdoor(uvm_reg_frontdoor ftdr,
-    #                                      uvm_reg_map map = None,
-    #                                      string fname = "",
-    #                                      int lineno = 0)
-    #
-    #
-    #   // Function: get_frontdoor
-    #   //
-    #   // Returns the user-defined frontdoor for this memory
-    #   //
-    #   // If ~None~, no user-defined frontdoor has been defined.
-    #   // A user-defined frontdoor is defined
-    #   // by using the <uvm_mem::set_frontdoor()> method.
-    #   //
-    #   // If the memory is mapped in multiple address maps, an address ~map~
-    #   // must be specified.
-    #   //
-    #   extern function uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = None)
-    #
-    #
-    #   //----------------
-    #   // Group: Backdoor
-    #   //----------------
-    #
-    #   // Function: set_backdoor
-    #   //
-    #   // Set a user-defined backdoor for this memory
-    #   //
-    #   // By default, memories are accessed via the built-in string-based
-    #   // DPI routines if an HDL path has been specified using the
-    #   // <uvm_mem::configure()> or <uvm_mem::add_hdl_path()> method.
-    #   // If this default mechanism is not suitable (e.g. because
-    #   // the memory is not implemented in pure SystemVerilog)
-    #   // a user-defined access
-    #   // mechanism must be defined and associated with
-    #   // the corresponding memory abstraction class
-    #   //
-    #   extern function void set_backdoor (uvm_reg_backdoor bkdr,
-    #                                      string fname = "",
-    #                                      int lineno = 0)
-    #
-    #
-    #   // Function: get_backdoor
-    #   //
-    #   // Returns the user-defined backdoor for this memory
-    #   //
-    #   // If ~None~, no user-defined backdoor has been defined.
-    #   // A user-defined backdoor is defined
-    #   // by using the <uvm_reg::set_backdoor()> method.
-    #   //
-    #   // If ~inherit~ is TRUE, returns the backdoor of the parent block
-    #   // if none have been specified for this memory.
-    #   //
-    #   extern function uvm_reg_backdoor get_backdoor(bit inherited = 1)
-    #
-    #
-    #   // Function: clear_hdl_path
-    #   //
-    #   // Delete HDL paths
-    #   //
-    #   // Remove any previously specified HDL path to the memory instance
-    #   // for the specified design abstraction.
-    #   //
-    #   extern function void clear_hdl_path (string kind = "RTL")
-    #
-    #
-    #   // Function: add_hdl_path
-    #   //
-    #   // Add an HDL path
-    #   //
-    #   // Add the specified HDL path to the memory instance for the specified
-    #   // design abstraction. This method may be called more than once for the
-    #   // same design abstraction if the memory is physically duplicated
-    #   // in the design abstraction
-    #   //
-    #   extern function void add_hdl_path (uvm_hdl_path_slice slices[],
-    #                                      string kind = "RTL")
-    #
-    #
-    #   // Function: add_hdl_path_slice
-    #   //
-    #   // Add the specified HDL slice to the HDL path for the specified
-    #   // design abstraction.
-    #   // If ~first~ is TRUE, starts the specification of a duplicate
-    #   // HDL implementation of the memory.
-    #   //
-    #   extern function void add_hdl_path_slice(string name,
-    #                                           int offset,
-    #                                           int size,
-    #                                           bit first = 0,
-    #                                           string kind = "RTL")
-    #
-    #
-    #   // Function: has_hdl_path
-    #   //
-    #   // Check if a HDL path is specified
-    #   //
-    #   // Returns TRUE if the memory instance has a HDL path defined for the
-    #   // specified design abstraction. If no design abstraction is specified,
-    #   // uses the default design abstraction specified for the parent block.
-    #   //
-    #   extern function bit  has_hdl_path (string kind = "")
-    #
-    #
-    #   // Function: get_hdl_path
-    #   //
-    #   // Get the incremental HDL path(s)
-    #   //
-    #   // Returns the HDL path(s) defined for the specified design abstraction
-    #   // in the memory instance.
-    #   // Returns only the component of the HDL paths that corresponds to
-    #   // the memory, not a full hierarchical path
-    #   //
-    #   // If no design abstraction is specified, the default design abstraction
-    #   // for the parent block is used.
-    #   //
-    #   extern function void get_hdl_path (ref uvm_hdl_path_concat paths[$],
-    #                                      input string kind = "")
-    #
-    #
-    #   // Function: get_full_hdl_path
-    #   //
-    #   // Get the full hierarchical HDL path(s)
-    #   //
-    #   // Returns the full hierarchical HDL path(s) defined for the specified
-    #   // design abstraction in the memory instance.
-    #   // There may be more than one path returned even
-    #   // if only one path was defined for the memory instance, if any of the
-    #   // parent components have more than one path defined for the same design
-    #   // abstraction
-    #   //
-    #   // If no design abstraction is specified, the default design abstraction
-    #   // for each ancestor block is used to get each incremental path.
-    #   //
-    #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
-    #                                           input string kind = "",
-    #                                           input string separator = ".")
-    #
-    #   // Function: get_hdl_path_kinds
-    #   //
-    #   // Get design abstractions for which HDL paths have been defined
-    #   //
-    #   extern function void get_hdl_path_kinds (ref string kinds[$])
-    #
-    #   // Function: backdoor_read
-    #   //
-    #   // User-define backdoor read access
-    #   //
-    #   // Override the default string-based DPI backdoor access read
-    #   // for this memory type.
-    #   // By default calls <uvm_mem::backdoor_read_func()>.
-    #   //
-    #   extern virtual protected task backdoor_read(uvm_reg_item rw)
-    #
-    #
-    #   // Function: backdoor_write
-    #   //
-    #   // User-defined backdoor read access
-    #   //
-    #   // Override the default string-based DPI backdoor access write
-    #   // for this memory type.
-    #   //
-    #   extern virtual task backdoor_write(uvm_reg_item rw)
-    #
-    #
-    #   // Function: backdoor_read_func
-    #   //
-    #   // User-defined backdoor read access
-    #   //
-    #   // Override the default string-based DPI backdoor access read
-    #   // for this memory type.
-    #   //
-    #   extern virtual function uvm_status_e backdoor_read_func(uvm_reg_item rw)
-    #
-    #
-    #   //-----------------
-    #   // Group: Callbacks
-    #   //-----------------
-    #   `uvm_register_cb(uvm_mem, uvm_reg_cbs)
-    #
-    #
-    #   // Task: pre_write
-    #   //
-    #   // Called before memory write.
-    #   //
-    #   // If the ~offset~, ~value~, access ~path~,
-    #   // or address ~map~ are modified, the updated offset, data value,
-    #   // access path or address map will be used to perform the memory operation.
-    #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-    #   // the operation is aborted.
-    #   //
-    #   // The registered callback methods are invoked after the invocation
-    #   // of this method.
-    #   //
-    #   virtual task pre_write(uvm_reg_item rw); endtask
-    #
-    #
+    @cocotb.coroutine
+    def do_read(self, rw):  # task
+        cbs = uvm_mem_cb_iter(self)
+        map_info = None  # uvm_reg_map_info 
+
+        self.m_fname = rw.fname
+        self.m_lineno = rw.lineno
+
+        if self.Xcheck_accessX(rw, map_info, "burst_read()") is False:
+            return
+
+        self.m_read_in_progress = True
+        rw.status = UVM_IS_OK
+        #   
+        # PRE-READ CBS
+        yield self.pre_read(rw)
+        cb = cbs.first()
+        while cb is not None:
+            cb.pre_read(rw)
+            cb = cbs.next()
+
+        if rw.status != UVM_IS_OK:
+           self.m_read_in_progress = False
+           return
+
+        rw.status = UVM_NOT_OK
+
+        # FRONTDOOR
+        if rw.path == UVM_FRONTDOOR:
+            system_map = rw.local_map.get_root_map()
+               
+            if (map_info.frontdoor is not None):
+                fd = map_info.frontdoor  # uvm_reg_frontdoor 
+                fd.rw_info = rw
+                if fd.sequencer is None:
+                    fd.sequencer = system_map.get_sequencer()
+                yield fd.start(fd.sequencer, rw.parent)
+            else:
+                yield rw.local_map.do_read(rw)
+
+            if rw.status != UVM_NOT_OK:
+                _min = rw.offset
+                _max = rw.offset + len(rw.value) + 1
+                for idx in range(_min, _max):
+                    self.XsampleX(map_info.mem_range.stride * idx, 1, rw.map)
+                    self.m_parent.XsampleX(map_info.offset +
+                            (map_info.mem_range.stride * idx), 1, rw.map)
+        
+        #
+        #   // BACKDOOR TODO
+        #   else begin
+        #      uvm_reg_backdoor bkdr = get_backdoor()
+        #      if (bkdr is not None)
+        #         bkdr.read(rw)
+        #      else
+        #         backdoor_read(rw)
+        #   end
+
+        # POST-READ CBS
+        yield self.post_read(rw)
+        cb = cbs.first()
+        while cb is not None:
+            yield cb.post_read(rw)
+            cb = cbs.next()
+
+        # REPORT
+        if uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel"):
+            path_s = ""
+            value_s = ""
+            pre_s = ""
+            range_s = ""
+            if rw.path == UVM_FRONTDOOR:
+                path_s = "map " + rw.map.get_full_name()
+                if map_info.frontdoor is not None:
+                    path_s = "user frontdoor"
+            else:
+                path_s = "DPI backdoor"
+                if self.get_backdoor() is not None:
+                    path_s = "user backdoor"
+
+            if len(rw.value) > 1:
+                value_s = "='{"
+                pre_s = "Burst "
+                for i in range(len(rw.value)):
+                    value_s = value_s + sv.sformatf("%0h,",rw.value[i])
+                value_s[len(value_s)-1] = "}"
+                range_s = sv.sformatf("[%0d:%0d]",rw.offset,rw.offset+len(rw.value))
+            else:
+                value_s = sv.sformatf("=%0h",rw.value[0])
+                range_s = sv.sformatf("[%0d]",rw.offset)
+
+            uvm_report_info("RegModel", pre_s + "Read memory via " + path_s + ": ",
+                    self.get_full_name() + range_s + value_s, UVM_HIGH)
+
+        self.m_read_in_progress = False
+        #
+        #endtask: do_read
+        
+        #
+        #
+        #   //-----------------
+        #   // Group: Frontdoor
+        #   //-----------------
+        #
+        #   // Function: set_frontdoor
+        #   //
+        #   // Set a user-defined frontdoor for this memory
+        #   //
+        #   // By default, memories are mapped linearly into the address space
+        #   // of the address maps that instantiate them.
+        #   // If memories are accessed using a different mechanism,
+        #   // a user-defined access
+        #   // mechanism must be defined and associated with
+        #   // the corresponding memory abstraction class
+        #   //
+        #   // If the memory is mapped in multiple address maps, an address ~map~
+        #   // must be specified.
+        #   //
+        #   extern function void set_frontdoor(uvm_reg_frontdoor ftdr,
+        #                                      uvm_reg_map map = None,
+        #                                      string fname = "",
+        #                                      int lineno = 0)
+        #
+        #
+        #   // Function: get_frontdoor
+        #   //
+        #   // Returns the user-defined frontdoor for this memory
+        #   //
+        #   // If ~None~, no user-defined frontdoor has been defined.
+        #   // A user-defined frontdoor is defined
+        #   // by using the <uvm_mem::set_frontdoor()> method.
+        #   //
+        #   // If the memory is mapped in multiple address maps, an address ~map~
+        #   // must be specified.
+        #   //
+        #   extern function uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = None)
+        #
+        #
+        #   //----------------
+        #   // Group: Backdoor
+        #   //----------------
+        #
+        #   // Function: set_backdoor
+        #   //
+        #   // Set a user-defined backdoor for this memory
+        #   //
+        #   // By default, memories are accessed via the built-in string-based
+        #   // DPI routines if an HDL path has been specified using the
+        #   // <uvm_mem::configure()> or <uvm_mem::add_hdl_path()> method.
+        #   // If this default mechanism is not suitable (e.g. because
+        #   // the memory is not implemented in pure SystemVerilog)
+        #   // a user-defined access
+        #   // mechanism must be defined and associated with
+        #   // the corresponding memory abstraction class
+        #   //
+        #   extern function void set_backdoor (uvm_reg_backdoor bkdr,
+        #                                      string fname = "",
+        #                                      int lineno = 0)
+        #
+        #
+        #   // Function: get_backdoor
+        #   //
+        #   // Returns the user-defined backdoor for this memory
+        #   //
+        #   // If ~None~, no user-defined backdoor has been defined.
+        #   // A user-defined backdoor is defined
+        #   // by using the <uvm_reg::set_backdoor()> method.
+        #   //
+        #   // If ~inherit~ is TRUE, returns the backdoor of the parent block
+        #   // if none have been specified for this memory.
+        #   //
+        #   extern function uvm_reg_backdoor get_backdoor(bit inherited = 1)
+        #
+        #
+        #   // Function: clear_hdl_path
+        #   //
+        #   // Delete HDL paths
+        #   //
+        #   // Remove any previously specified HDL path to the memory instance
+        #   // for the specified design abstraction.
+        #   //
+        #   extern function void clear_hdl_path (string kind = "RTL")
+        #
+        #
+        #   // Function: add_hdl_path
+        #   //
+        #   // Add an HDL path
+        #   //
+        #   // Add the specified HDL path to the memory instance for the specified
+        #   // design abstraction. This method may be called more than once for the
+        #   // same design abstraction if the memory is physically duplicated
+        #   // in the design abstraction
+        #   //
+        #   extern function void add_hdl_path (uvm_hdl_path_slice slices[],
+        #                                      string kind = "RTL")
+        #
+        #
+        #   // Function: add_hdl_path_slice
+        #   //
+        #   // Add the specified HDL slice to the HDL path for the specified
+        #   // design abstraction.
+        #   // If ~first~ is TRUE, starts the specification of a duplicate
+        #   // HDL implementation of the memory.
+        #   //
+        #   extern function void add_hdl_path_slice(string name,
+        #                                           int offset,
+        #                                           int size,
+        #                                           bit first = 0,
+        #                                           string kind = "RTL")
+        #
+        #
+        #   // Function: has_hdl_path
+        #   //
+        #   // Check if a HDL path is specified
+        #   //
+        #   // Returns TRUE if the memory instance has a HDL path defined for the
+        #   // specified design abstraction. If no design abstraction is specified,
+        #   // uses the default design abstraction specified for the parent block.
+        #   //
+        #   extern function bit  has_hdl_path (string kind = "")
+        #
+        #
+        #   // Function: get_hdl_path
+        #   //
+        #   // Get the incremental HDL path(s)
+        #   //
+        #   // Returns the HDL path(s) defined for the specified design abstraction
+        #   // in the memory instance.
+        #   // Returns only the component of the HDL paths that corresponds to
+        #   // the memory, not a full hierarchical path
+        #   //
+        #   // If no design abstraction is specified, the default design abstraction
+        #   // for the parent block is used.
+        #   //
+        #   extern function void get_hdl_path (ref uvm_hdl_path_concat paths[$],
+        #                                      input string kind = "")
+        #
+        #
+        #   // Function: get_full_hdl_path
+        #   //
+        #   // Get the full hierarchical HDL path(s)
+        #   //
+        #   // Returns the full hierarchical HDL path(s) defined for the specified
+        #   // design abstraction in the memory instance.
+        #   // There may be more than one path returned even
+        #   // if only one path was defined for the memory instance, if any of the
+        #   // parent components have more than one path defined for the same design
+        #   // abstraction
+        #   //
+        #   // If no design abstraction is specified, the default design abstraction
+        #   // for each ancestor block is used to get each incremental path.
+        #   //
+        #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
+        #                                           input string kind = "",
+        #                                           input string separator = ".")
+        #
+        #   // Function: get_hdl_path_kinds
+        #   //
+        #   // Get design abstractions for which HDL paths have been defined
+        #   //
+        #   extern function void get_hdl_path_kinds (ref string kinds[$])
+        #
+        #   // Function: backdoor_read
+        #   //
+        #   // User-define backdoor read access
+        #   //
+        #   // Override the default string-based DPI backdoor access read
+        #   // for this memory type.
+        #   // By default calls <uvm_mem::backdoor_read_func()>.
+        #   //
+        #   extern virtual protected task backdoor_read(uvm_reg_item rw)
+        #
+        #
+        #   // Function: backdoor_write
+        #   //
+        #   // User-defined backdoor read access
+        #   //
+        #   // Override the default string-based DPI backdoor access write
+        #   // for this memory type.
+        #   //
+        #   extern virtual task backdoor_write(uvm_reg_item rw)
+        #
+        #
+        #   // Function: backdoor_read_func
+        #   //
+        #   // User-defined backdoor read access
+        #   //
+        #   // Override the default string-based DPI backdoor access read
+        #   // for this memory type.
+        #   //
+        #   extern virtual function uvm_status_e backdoor_read_func(uvm_reg_item rw)
+        #
+        #
+        #   //-----------------
+        #   // Group: Callbacks
+        #   //-----------------
+        #   `uvm_register_cb(uvm_mem, uvm_reg_cbs)
+        #
+        #
+        #   // Task: pre_write
+        #   //
+        #   // Called before memory write.
+        #   //
+        #   // If the ~offset~, ~value~, access ~path~,
+        #   // or address ~map~ are modified, the updated offset, data value,
+        #   // access path or address map will be used to perform the memory operation.
+        #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
+        #   // the operation is aborted.
+        #   //
+        #   // The registered callback methods are invoked after the invocation
+        #   // of this method.
+        #   //
+        #   virtual task pre_write(uvm_reg_item rw); endtask
+        #
+        #
+
     #   // Task: post_write
     #   //
     #   // Called after memory write.
@@ -857,6 +1192,7 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
+
     #
     #
     #   // Task: pre_read
@@ -1422,73 +1758,10 @@ class UVMMem(UVMObject):
 #// write
 #//------
 #
-#task uvm_mem::write(output uvm_status_e      status,
-#                    input  uvm_reg_addr_t    offset,
-#                    input  uvm_reg_data_t    value,
-#                    input  uvm_path_e        path = UVM_DEFAULT_PATH,
-#                    input  uvm_reg_map       map = None,
-#                    input  uvm_sequence_base parent = None,
-#                    input  int               prior = -1,
-#                    input  uvm_object        extension = None,
-#                    input  string            fname = "",
-#                    input  int               lineno = 0)
-#
-#   // create an abstract transaction for this operation
-#   uvm_reg_item rw = uvm_reg_item::type_id::create("mem_write",,get_full_name())
-#   rw.element      = this
-#   rw.element_kind = UVM_MEM
-#   rw.kind         = UVM_WRITE
-#   rw.offset       = offset
-#   rw.value[0]     = value
-#   rw.path         = path
-#   rw.map          = map
-#   rw.parent       = parent
-#   rw.prior        = prior
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   do_write(rw)
-#
-#   status = rw.status
-#
-#endtask: write
 #
 #
 #// read
 #
-#task uvm_mem::read(output uvm_status_e       status,
-#                   input  uvm_reg_addr_t     offset,
-#                   output uvm_reg_data_t     value,
-#                   input  uvm_path_e         path = UVM_DEFAULT_PATH,
-#                   input  uvm_reg_map        map = None,
-#                   input  uvm_sequence_base  parent = None,
-#                   input  int                prior = -1,
-#                   input  uvm_object         extension = None,
-#                   input  string             fname = "",
-#                   input  int                lineno = 0)
-#
-#   uvm_reg_item rw
-#   rw = uvm_reg_item::type_id::create("mem_read",,get_full_name())
-#   rw.element      = this
-#   rw.element_kind = UVM_MEM
-#   rw.kind         = UVM_READ
-#   rw.value[0]     = 0
-#   rw.offset       = offset
-#   rw.path         = path
-#   rw.map          = map
-#   rw.parent       = parent
-#   rw.prior        = prior
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   do_read(rw)
-#
-#   status = rw.status
-#   value = rw.value[0]
-#
-#endtask: read
 #
 #
 #// burst_write
@@ -1560,292 +1833,6 @@ class UVMMem(UVMObject):
 #   value  = rw.value
 #
 #endtask: burst_read
-#
-#
-#// do_write
-#
-#task uvm_mem::do_write(uvm_reg_item rw)
-#
-#   uvm_mem_cb_iter  cbs = new(this)
-#   uvm_reg_map_info map_info
-#
-#   m_fname  = rw.fname
-#   m_lineno = rw.lineno
-#
-#   if (!Xcheck_accessX(rw, map_info, "burst_write()"))
-#     return
-#
-#   m_write_in_progress = 1'b1
-#
-#   rw.status = UVM_IS_OK
-#
-#   // PRE-WRITE CBS
-#   pre_write(rw)
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-#      cb.pre_write(rw)
-#
-#   if (rw.status != UVM_IS_OK):
-#      m_write_in_progress = 1'b0
-#
-#      return
-#   end
-#
-#   rw.status = UVM_NOT_OK
-#
-#   // FRONTDOOR
-#   if (rw.path == UVM_FRONTDOOR):
-#
-#      uvm_reg_map system_map = rw.local_map.get_root_map()
-#
-#      if (map_info.frontdoor != None):
-#         uvm_reg_frontdoor fd = map_info.frontdoor
-#         fd.rw_info = rw
-#         if (fd.sequencer is None)
-#           fd.sequencer = system_map.get_sequencer()
-#         fd.start(fd.sequencer, rw.parent)
-#      end
-#      else begin
-#         rw.local_map.do_write(rw)
-#      end
-#
-#      if (rw.status != UVM_NOT_OK)
-#         for (uvm_reg_addr_t idx = rw.offset
-#              idx <= rw.offset + rw.value.size()
-#              idx++):
-#            XsampleX(map_info.mem_range.stride * idx, 0, rw.map)
-#            m_parent.XsampleX(map_info.offset +
-#                             (map_info.mem_range.stride * idx),
-#                              0, rw.map)
-#         end
-#   end
-#
-#   // BACKDOOR
-#   else begin
-#      // Mimick front door access, i.e. do not write read-only memories
-#      if (get_access(rw.map) == "RW"):
-#         uvm_reg_backdoor bkdr = get_backdoor()
-#         if (bkdr != None)
-#            bkdr.write(rw)
-#         else
-#            backdoor_write(rw)
-#      end
-#      else
-#         rw.status = UVM_IS_OK
-#   end
-#
-#   // POST-WRITE CBS
-#   post_write(rw)
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-#      cb.post_write(rw)
-#
-#   // REPORT
-#   if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
-#     string path_s,value_s,pre_s,range_s
-#     if (rw.path == UVM_FRONTDOOR)
-#       path_s = (map_info.frontdoor != None) ? "user frontdoor" :
-#                                               {"map ",rw.map.get_full_name()}
-#     else
-#       path_s = (get_backdoor() != None) ? "user backdoor" : "DPI backdoor"
-#
-#     if (rw.value.size() > 1):
-#       value_s = "='{"
-#       pre_s = "Burst "
-#       foreach (rw.value[i])
-#         value_s = {value_s,$sformatf("%0h,",rw.value[i])}
-#       value_s[value_s.len()-1]="}"
-#       range_s = $sformatf("[%0d:%0d]",rw.offset,rw.offset+rw.value.size())
-#     end
-#     else begin
-#       value_s = $sformatf("=%0h",rw.value[0])
-#       range_s = $sformatf("[%0d]",rw.offset)
-#     end
-#
-#     uvm_report_info("RegModel", {pre_s,"Wrote memory via ",path_s,": ",
-#                                  get_full_name(),range_s,value_s}, UVM_HIGH)
-#   end
-#
-#   m_write_in_progress = 1'b0
-#
-#endtask: do_write
-#
-#
-#// do_read
-#
-#task uvm_mem::do_read(uvm_reg_item rw)
-#
-#   uvm_mem_cb_iter cbs = new(this)
-#   uvm_reg_map_info map_info
-#
-#   m_fname = rw.fname
-#   m_lineno = rw.lineno
-#
-#   if (!Xcheck_accessX(rw, map_info, "burst_read()"))
-#     return
-#
-#   m_read_in_progress = 1'b1
-#
-#   rw.status = UVM_IS_OK
-#
-#   // PRE-READ CBS
-#   pre_read(rw)
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-#      cb.pre_read(rw)
-#
-#   if (rw.status != UVM_IS_OK):
-#      m_read_in_progress = 1'b0
-#
-#      return
-#   end
-#
-#   rw.status = UVM_NOT_OK
-#
-#   // FRONTDOOR
-#   if (rw.path == UVM_FRONTDOOR):
-#
-#      uvm_reg_map system_map = rw.local_map.get_root_map()
-#
-#      if (map_info.frontdoor != None):
-#         uvm_reg_frontdoor fd = map_info.frontdoor
-#         fd.rw_info = rw
-#         if (fd.sequencer is None)
-#           fd.sequencer = system_map.get_sequencer()
-#         fd.start(fd.sequencer, rw.parent)
-#      end
-#      else begin
-#         rw.local_map.do_read(rw)
-#      end
-#
-#      if (rw.status != UVM_NOT_OK)
-#         for (uvm_reg_addr_t idx = rw.offset
-#              idx <= rw.offset + rw.value.size()
-#              idx++):
-#            XsampleX(map_info.mem_range.stride * idx, 1, rw.map)
-#            m_parent.XsampleX(map_info.offset +
-#                             (map_info.mem_range.stride * idx),
-#                              1, rw.map)
-#         end
-#   end
-#
-#   // BACKDOOR
-#   else begin
-#      uvm_reg_backdoor bkdr = get_backdoor()
-#      if (bkdr != None)
-#         bkdr.read(rw)
-#      else
-#         backdoor_read(rw)
-#   end
-#
-#   // POST-READ CBS
-#   post_read(rw)
-#   for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-#      cb.post_read(rw)
-#
-#   // REPORT
-#   if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
-#     string path_s,value_s,pre_s,range_s
-#     if (rw.path == UVM_FRONTDOOR)
-#       path_s = (map_info.frontdoor != None) ? "user frontdoor" :
-#                                               {"map ",rw.map.get_full_name()}
-#     else
-#       path_s = (get_backdoor() != None) ? "user backdoor" : "DPI backdoor"
-#
-#     if (rw.value.size() > 1):
-#       value_s = "='{"
-#       pre_s = "Burst "
-#       foreach (rw.value[i])
-#         value_s = {value_s,$sformatf("%0h,",rw.value[i])}
-#       value_s[value_s.len()-1]="}"
-#       range_s = $sformatf("[%0d:%0d]",rw.offset,(rw.offset+rw.value.size()))
-#     end
-#     else begin
-#       value_s = $sformatf("=%0h",rw.value[0])
-#       range_s = $sformatf("[%0d]",rw.offset)
-#     end
-#
-#      uvm_report_info("RegModel", {pre_s,"Read memory via ",path_s,": ",
-#                                   get_full_name(),range_s,value_s}, UVM_HIGH)
-#   end
-#
-#   m_read_in_progress = 1'b0
-#
-#endtask: do_read
-#
-#
-#// Xcheck_accessX
-#
-#function bit uvm_mem::Xcheck_accessX(input uvm_reg_item rw,
-#                                     output uvm_reg_map_info map_info,
-#                                     input string caller)
-#
-#   if (rw.offset >= m_size):
-#      `uvm_error(get_type_name(),
-#         $sformatf("Offset 'h%0h exceeds size of memory, 'h%0h",
-#           rw.offset, m_size))
-#      rw.status = UVM_NOT_OK
-#      return 0
-#   end
-#
-#   if (rw.path == UVM_DEFAULT_PATH)
-#     rw.path = m_parent.get_default_path()
-#
-#   if (rw.path == UVM_BACKDOOR):
-#      if (get_backdoor() is None && !has_hdl_path()):
-#         `uvm_warning("RegModel",
-#            {"No backdoor access available for memory '",get_full_name(),
-#            "' . Using frontdoor instead."})
-#         rw.path = UVM_FRONTDOOR
-#      end
-#      else
-#        rw.map = uvm_reg_map::backdoor()
-#   end
-#
-#   if (rw.path != UVM_BACKDOOR):
-#
-#     rw.local_map = get_local_map(rw.map,caller)
-#
-#     if (rw.local_map is None):
-#        `uvm_error(get_type_name(),
-#           {"No transactor available to physically access memory from map '",
-#            rw.map.get_full_name(),"'"})
-#        rw.status = UVM_NOT_OK
-#        return 0
-#     end
-#
-#     map_info = rw.local_map.get_mem_map_info(this)
-#
-#     if (map_info.frontdoor is None):
-#
-#        if (map_info.unmapped):
-#           `uvm_error("RegModel", {"Memory '",get_full_name(),
-#                      "' unmapped in map '", rw.map.get_full_name(),
-#                      "' and does not have a user-defined frontdoor"})
-#           rw.status = UVM_NOT_OK
-#           return 0
-#        end
-#
-#        if ((rw.value.size() > 1)):
-#           if (get_n_bits() > rw.local_map.get_n_bytes()*8):
-#              `uvm_error("RegModel",
-#                    $sformatf("Cannot burst a %0d-bit memory through a narrower data path (%0d bytes)",
-#                    get_n_bits(), rw.local_map.get_n_bytes()*8))
-#              rw.status = UVM_NOT_OK
-#              return 0
-#           end
-#           if (rw.offset + rw.value.size() > m_size):
-#              `uvm_error("RegModel",
-#                  $sformatf("Burst of size 'd%0d starting at offset 'd%0d exceeds size of memory, 'd%0d",
-#                      rw.value.size(), rw.offset, m_size))
-#              return 0
-#           end
-#        end
-#     end
-#
-#     if (rw.map is None)
-#       rw.map = rw.local_map
-#   end
-#
-#   return 1
-#endfunction
 #
 #
 #//-------
