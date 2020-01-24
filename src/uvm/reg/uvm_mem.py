@@ -165,7 +165,7 @@ class UVMMem(UVMObject):
             self.m_access = "RW"
 
         cfg = UVMMemMamCfg()  # uvm_mem_mam_cfg
-        cfg.n_bytes      = ((self.m_n_bits-1) / 8) + 1
+        cfg.n_bytes      = int((self.m_n_bits-1) / 8) + 1
         cfg.start_offset = 0
         cfg.end_offset   = self.m_size-1
         cfg.mode     = UVMMemMam.GREEDY
@@ -403,8 +403,8 @@ class UVMMem(UVMObject):
     #   // Returns the width, in number of bits, of each memory location
     #   //
     #   extern function int unsigned get_n_bits()
-    #
-    #
+    def get_n_bits(self):
+        return self.m_n_bits
 
     #   // Function: get_max_size
     #   //
@@ -839,9 +839,8 @@ class UVMMem(UVMObject):
             cb = cbs.next()
 
         if rw.status != UVM_IS_OK:
-           self.m_write_in_progress = False
-           return
-
+            self.m_write_in_progress = False
+            return
 
         rw.status = UVM_NOT_OK
 
@@ -914,7 +913,7 @@ class UVMMem(UVMObject):
             else:
                 value_s = sv.sformatf("=%0h",rw.value[0])
                 range_s = sv.sformatf("[%0d]",rw.offset)
-            uvm_report_info("RegModel", pre_s + "Wrote memory via " + path_s + ": ",
+            uvm_report_info("RegModel", pre_s + "Wrote memory via " + path_s + ": " +
                     self.get_full_name() + range_s + value_s, UVM_HIGH)
         self.m_write_in_progress = False
         #
@@ -1014,230 +1013,243 @@ class UVMMem(UVMObject):
                 value_s = sv.sformatf("=%0h",rw.value[0])
                 range_s = sv.sformatf("[%0d]",rw.offset)
 
-            uvm_report_info("RegModel", pre_s + "Read memory via " + path_s + ": ",
-                    self.get_full_name() + range_s + value_s, UVM_HIGH)
+            uvm_report_info("RegModel", pre_s + "Read memory via " + path_s + ": "
+                    + self.get_full_name() + range_s + value_s, UVM_HIGH)
 
         self.m_read_in_progress = False
         #
         #endtask: do_read
 
-        #
-        #
-        #   //-----------------
-        #   // Group: Frontdoor
-        #   //-----------------
-        #
-        #   // Function: set_frontdoor
-        #   //
-        #   // Set a user-defined frontdoor for this memory
-        #   //
-        #   // By default, memories are mapped linearly into the address space
-        #   // of the address maps that instantiate them.
-        #   // If memories are accessed using a different mechanism,
-        #   // a user-defined access
-        #   // mechanism must be defined and associated with
-        #   // the corresponding memory abstraction class
-        #   //
-        #   // If the memory is mapped in multiple address maps, an address ~map~
-        #   // must be specified.
-        #   //
-        #   extern function void set_frontdoor(uvm_reg_frontdoor ftdr,
-        #                                      uvm_reg_map map = None,
-        #                                      string fname = "",
-        #                                      int lineno = 0)
-        #
-        #
-        #   // Function: get_frontdoor
-        #   //
-        #   // Returns the user-defined frontdoor for this memory
-        #   //
-        #   // If ~None~, no user-defined frontdoor has been defined.
-        #   // A user-defined frontdoor is defined
-        #   // by using the <uvm_mem::set_frontdoor()> method.
-        #   //
-        #   // If the memory is mapped in multiple address maps, an address ~map~
-        #   // must be specified.
-        #   //
-        #   extern function uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = None)
-        #
-        #
-        #   //----------------
-        #   // Group: Backdoor
-        #   //----------------
-        #
-        #   // Function: set_backdoor
-        #   //
-        #   // Set a user-defined backdoor for this memory
-        #   //
-        #   // By default, memories are accessed via the built-in string-based
-        #   // DPI routines if an HDL path has been specified using the
-        #   // <uvm_mem::configure()> or <uvm_mem::add_hdl_path()> method.
-        #   // If this default mechanism is not suitable (e.g. because
-        #   // the memory is not implemented in pure SystemVerilog)
-        #   // a user-defined access
-        #   // mechanism must be defined and associated with
-        #   // the corresponding memory abstraction class
-        #   //
-        #   extern function void set_backdoor (uvm_reg_backdoor bkdr,
-        #                                      string fname = "",
-        #                                      int lineno = 0)
-        #
-        #
-        #   // Function: get_backdoor
-        #   //
-        #   // Returns the user-defined backdoor for this memory
-        #   //
-        #   // If ~None~, no user-defined backdoor has been defined.
-        #   // A user-defined backdoor is defined
-        #   // by using the <uvm_reg::set_backdoor()> method.
-        #   //
-        #   // If ~inherit~ is TRUE, returns the backdoor of the parent block
-        #   // if none have been specified for this memory.
-        #   //
-        #   extern function uvm_reg_backdoor get_backdoor(bit inherited = 1)
-        #
-        #
-        #   // Function: clear_hdl_path
-        #   //
-        #   // Delete HDL paths
-        #   //
-        #   // Remove any previously specified HDL path to the memory instance
-        #   // for the specified design abstraction.
-        #   //
-        #   extern function void clear_hdl_path (string kind = "RTL")
-        #
-        #
-        #   // Function: add_hdl_path
-        #   //
-        #   // Add an HDL path
-        #   //
-        #   // Add the specified HDL path to the memory instance for the specified
-        #   // design abstraction. This method may be called more than once for the
-        #   // same design abstraction if the memory is physically duplicated
-        #   // in the design abstraction
-        #   //
-        #   extern function void add_hdl_path (uvm_hdl_path_slice slices[],
-        #                                      string kind = "RTL")
-        #
-        #
-        #   // Function: add_hdl_path_slice
-        #   //
-        #   // Add the specified HDL slice to the HDL path for the specified
-        #   // design abstraction.
-        #   // If ~first~ is TRUE, starts the specification of a duplicate
-        #   // HDL implementation of the memory.
-        #   //
-        #   extern function void add_hdl_path_slice(string name,
-        #                                           int offset,
-        #                                           int size,
-        #                                           bit first = 0,
-        #                                           string kind = "RTL")
-        #
-        #
-        #   // Function: has_hdl_path
-        #   //
-        #   // Check if a HDL path is specified
-        #   //
-        #   // Returns TRUE if the memory instance has a HDL path defined for the
-        #   // specified design abstraction. If no design abstraction is specified,
-        #   // uses the default design abstraction specified for the parent block.
-        #   //
-        #   extern function bit  has_hdl_path (string kind = "")
-        #
-        #
-        #   // Function: get_hdl_path
-        #   //
-        #   // Get the incremental HDL path(s)
-        #   //
-        #   // Returns the HDL path(s) defined for the specified design abstraction
-        #   // in the memory instance.
-        #   // Returns only the component of the HDL paths that corresponds to
-        #   // the memory, not a full hierarchical path
-        #   //
-        #   // If no design abstraction is specified, the default design abstraction
-        #   // for the parent block is used.
-        #   //
-        #   extern function void get_hdl_path (ref uvm_hdl_path_concat paths[$],
-        #                                      input string kind = "")
-        #
-        #
-        #   // Function: get_full_hdl_path
-        #   //
-        #   // Get the full hierarchical HDL path(s)
-        #   //
-        #   // Returns the full hierarchical HDL path(s) defined for the specified
-        #   // design abstraction in the memory instance.
-        #   // There may be more than one path returned even
-        #   // if only one path was defined for the memory instance, if any of the
-        #   // parent components have more than one path defined for the same design
-        #   // abstraction
-        #   //
-        #   // If no design abstraction is specified, the default design abstraction
-        #   // for each ancestor block is used to get each incremental path.
-        #   //
-        #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
-        #                                           input string kind = "",
-        #                                           input string separator = ".")
-        #
-        #   // Function: get_hdl_path_kinds
-        #   //
-        #   // Get design abstractions for which HDL paths have been defined
-        #   //
-        #   extern function void get_hdl_path_kinds (ref string kinds[$])
-        #
-        #   // Function: backdoor_read
-        #   //
-        #   // User-define backdoor read access
-        #   //
-        #   // Override the default string-based DPI backdoor access read
-        #   // for this memory type.
-        #   // By default calls <uvm_mem::backdoor_read_func()>.
-        #   //
-        #   extern virtual protected task backdoor_read(uvm_reg_item rw)
-        #
-        #
-        #   // Function: backdoor_write
-        #   //
-        #   // User-defined backdoor read access
-        #   //
-        #   // Override the default string-based DPI backdoor access write
-        #   // for this memory type.
-        #   //
-        #   extern virtual task backdoor_write(uvm_reg_item rw)
-        #
-        #
-        #   // Function: backdoor_read_func
-        #   //
-        #   // User-defined backdoor read access
-        #   //
-        #   // Override the default string-based DPI backdoor access read
-        #   // for this memory type.
-        #   //
-        #   extern virtual function uvm_status_e backdoor_read_func(uvm_reg_item rw)
-        #
-        #
-        #   //-----------------
-        #   // Group: Callbacks
-        #   //-----------------
-        #   `uvm_register_cb(uvm_mem, uvm_reg_cbs)
-        #
-        #
-        #   // Task: pre_write
-        #   //
-        #   // Called before memory write.
-        #   //
-        #   // If the ~offset~, ~value~, access ~path~,
-        #   // or address ~map~ are modified, the updated offset, data value,
-        #   // access path or address map will be used to perform the memory operation.
-        #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-        #   // the operation is aborted.
-        #   //
-        #   // The registered callback methods are invoked after the invocation
-        #   // of this method.
-        #   //
-        #   virtual task pre_write(uvm_reg_item rw); endtask
-        #
-        #
+    #
+    #
+    #   //-----------------
+    #   // Group: Frontdoor
+    #   //-----------------
+    #
+
+    #   // Function: set_frontdoor
+    #   //
+    #   // Set a user-defined frontdoor for this memory
+    #   //
+    #   // By default, memories are mapped linearly into the address space
+    #   // of the address maps that instantiate them.
+    #   // If memories are accessed using a different mechanism,
+    #   // a user-defined access
+    #   // mechanism must be defined and associated with
+    #   // the corresponding memory abstraction class
+    #   //
+    #   // If the memory is mapped in multiple address maps, an address ~map~
+    #   // must be specified.
+    #   //
+    #   extern function void set_frontdoor(uvm_reg_frontdoor ftdr,
+    #                                      uvm_reg_map map = None,
+    #                                      string fname = "",
+    #                                      int lineno = 0)
+
+    #
+    #
+    #   // Function: get_frontdoor
+    #   //
+    #   // Returns the user-defined frontdoor for this memory
+    #   //
+    #   // If ~None~, no user-defined frontdoor has been defined.
+    #   // A user-defined frontdoor is defined
+    #   // by using the <uvm_mem::set_frontdoor()> method.
+    #   //
+    #   // If the memory is mapped in multiple address maps, an address ~map~
+    #   // must be specified.
+    #   //
+    #   extern function uvm_reg_frontdoor get_frontdoor(uvm_reg_map map = None)
+
+    #
+    #
+    #   //----------------
+    #   // Group: Backdoor
+    #   //----------------
+
+    #
+    #   // Function: set_backdoor
+    #   //
+    #   // Set a user-defined backdoor for this memory
+    #   //
+    #   // By default, memories are accessed via the built-in string-based
+    #   // DPI routines if an HDL path has been specified using the
+    #   // <uvm_mem::configure()> or <uvm_mem::add_hdl_path()> method.
+    #   // If this default mechanism is not suitable (e.g. because
+    #   // the memory is not implemented in pure SystemVerilog)
+    #   // a user-defined access
+    #   // mechanism must be defined and associated with
+    #   // the corresponding memory abstraction class
+    #   //
+    #   extern function void set_backdoor (uvm_reg_backdoor bkdr,
+    #                                      string fname = "",
+    #                                      int lineno = 0)
+
+    #
+    #
+    #   // Function: get_backdoor
+    #   //
+    #   // Returns the user-defined backdoor for this memory
+    #   //
+    #   // If ~None~, no user-defined backdoor has been defined.
+    #   // A user-defined backdoor is defined
+    #   // by using the <uvm_reg::set_backdoor()> method.
+    #   //
+    #   // If ~inherit~ is TRUE, returns the backdoor of the parent block
+    #   // if none have been specified for this memory.
+    #   //
+    #   extern function uvm_reg_backdoor get_backdoor(bit inherited = 1)
+
+    #
+    #
+    #   // Function: clear_hdl_path
+    #   //
+    #   // Delete HDL paths
+    #   //
+    #   // Remove any previously specified HDL path to the memory instance
+    #   // for the specified design abstraction.
+    #   //
+    #   extern function void clear_hdl_path (string kind = "RTL")
+
+    #
+    #
+    #   // Function: add_hdl_path
+    #   //
+    #   // Add an HDL path
+    #   //
+    #   // Add the specified HDL path to the memory instance for the specified
+    #   // design abstraction. This method may be called more than once for the
+    #   // same design abstraction if the memory is physically duplicated
+    #   // in the design abstraction
+    #   //
+    #   extern function void add_hdl_path (uvm_hdl_path_slice slices[],
+    #                                      string kind = "RTL")
+    #
+    #
+
+    #   // Function: add_hdl_path_slice
+    #   //
+    #   // Add the specified HDL slice to the HDL path for the specified
+    #   // design abstraction.
+    #   // If ~first~ is TRUE, starts the specification of a duplicate
+    #   // HDL implementation of the memory.
+    #   //
+    #   extern function void add_hdl_path_slice(string name,
+    #                                           int offset,
+    #                                           int size,
+    #                                           bit first = 0,
+    #                                           string kind = "RTL")
+
+    #
+    #
+    #   // Function: has_hdl_path
+    #   //
+    #   // Check if a HDL path is specified
+    #   //
+    #   // Returns TRUE if the memory instance has a HDL path defined for the
+    #   // specified design abstraction. If no design abstraction is specified,
+    #   // uses the default design abstraction specified for the parent block.
+    #   //
+    #   extern function bit  has_hdl_path (string kind = "")
+
+    #
+    #
+    #   // Function: get_hdl_path
+    #   //
+    #   // Get the incremental HDL path(s)
+    #   //
+    #   // Returns the HDL path(s) defined for the specified design abstraction
+    #   // in the memory instance.
+    #   // Returns only the component of the HDL paths that corresponds to
+    #   // the memory, not a full hierarchical path
+    #   //
+    #   // If no design abstraction is specified, the default design abstraction
+    #   // for the parent block is used.
+    #   //
+    #   extern function void get_hdl_path (ref uvm_hdl_path_concat paths[$],
+    #                                      input string kind = "")
+
+    #
+    #
+    #   // Function: get_full_hdl_path
+    #   //
+    #   // Get the full hierarchical HDL path(s)
+    #   //
+    #   // Returns the full hierarchical HDL path(s) defined for the specified
+    #   // design abstraction in the memory instance.
+    #   // There may be more than one path returned even
+    #   // if only one path was defined for the memory instance, if any of the
+    #   // parent components have more than one path defined for the same design
+    #   // abstraction
+    #   //
+    #   // If no design abstraction is specified, the default design abstraction
+    #   // for each ancestor block is used to get each incremental path.
+    #   //
+    #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
+    #                                           input string kind = "",
+    #                                           input string separator = ".")
+    #
+    #   // Function: get_hdl_path_kinds
+    #   //
+    #   // Get design abstractions for which HDL paths have been defined
+    #   //
+    #   extern function void get_hdl_path_kinds (ref string kinds[$])
+    #
+    #   // Function: backdoor_read
+    #   //
+    #   // User-define backdoor read access
+    #   //
+    #   // Override the default string-based DPI backdoor access read
+    #   // for this memory type.
+    #   // By default calls <uvm_mem::backdoor_read_func()>.
+    #   //
+    #   extern virtual protected task backdoor_read(uvm_reg_item rw)
+    #
+    #
+    #   // Function: backdoor_write
+    #   //
+    #   // User-defined backdoor read access
+    #   //
+    #   // Override the default string-based DPI backdoor access write
+    #   // for this memory type.
+    #   //
+    #   extern virtual task backdoor_write(uvm_reg_item rw)
+    #
+    #
+    #   // Function: backdoor_read_func
+    #   //
+    #   // User-defined backdoor read access
+    #   //
+    #   // Override the default string-based DPI backdoor access read
+    #   // for this memory type.
+    #   //
+    #   extern virtual function uvm_status_e backdoor_read_func(uvm_reg_item rw)
+    #
+    #
+
+    #   //-----------------
+    #   // Group: Callbacks
+    #   //-----------------
+    #   `uvm_register_cb(uvm_mem, uvm_reg_cbs)
+    #
+    #
+    #   // Task: pre_write
+    #   //
+    #   // Called before memory write.
+    #   //
+    #   // If the ~offset~, ~value~, access ~path~,
+    #   // or address ~map~ are modified, the updated offset, data value,
+    #   // access path or address map will be used to perform the memory operation.
+    #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
+    #   // the operation is aborted.
+    #   //
+    #   // The registered callback methods are invoked after the invocation
+    #   // of this method.
+    #   //
+    #   virtual task pre_write(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def pre_write(self, rw):
+        yield uvm_empty_delay()
 
     #   // Task: post_write
     #   //
@@ -1250,6 +1262,9 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def post_write(self, rw):
+        yield uvm_empty_delay()
 
     #
     #
@@ -1267,6 +1282,9 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def pre_read(self, rw):
+        yield uvm_empty_delay()
     #
     #
     #   // Task: post_read
@@ -1281,6 +1299,11 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_read(uvm_reg_item rw); endtask
+    @cocotb.coroutine
+    def post_read(self, rw):
+        yield uvm_empty_delay()
+
+
     #
     #
     #   //----------------
@@ -1367,6 +1390,7 @@ class UVMMem(UVMObject):
     #   //
     #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on)
     #
+
     #
     #   // Function: sample
     #   //
@@ -1385,13 +1409,14 @@ class UVMMem(UVMObject):
     #   protected virtual function void  sample(uvm_reg_addr_t offset,
     #                                           bit            is_read,
     #                                           uvm_reg_map    map)
+    def  sample(self, offset, is_read, _map):
+        pass
+
+
+    def XsampleX(self, addr, is_read, _map):
+        self.sample(addr, is_read, _map)
     #   endfunction
-    #
-    #   /*local*/ function void XsampleX(uvm_reg_addr_t addr,
-    #                                    bit            is_read,
-    #                                    uvm_reg_map    map)
-    #      sample(addr, is_read, map)
-    #   endfunction
+
     #
     #   // Core ovm_object operations
     #
@@ -1717,19 +1742,6 @@ class UVMMem(UVMObject):
 #   void'(get_addresses(offset, map, addr))
 #   return addr[0]
 #endfunction
-#
-#
-#
-#// get_n_bits
-#
-#function int unsigned uvm_mem::get_n_bits()
-#   return m_n_bits
-#endfunction: get_n_bits
-#
-#
-#
-#
-#
 #
 #
 #
