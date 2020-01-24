@@ -51,7 +51,7 @@ class dut_reset_seq(UVMSequence):
 uvm_object_utils(dut_reset_seq)
 
 
-class blk_R_test_seq(uvm_reg_sequence):
+class blk_R_test_seq(UVMRegSequence):
 
 
     def __init__(self, name="blk_R_test_seq"):
