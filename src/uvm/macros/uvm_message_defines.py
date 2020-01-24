@@ -138,8 +138,14 @@ def uvm_warning(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        parent_self = inspect.currentframe().f_back.f_locals['self']
-        parent_self.uvm_report_warning(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+        if 'self' in inspect.currentframe().f_back.f_locals:
+            parent_self = inspect.currentframe().f_back.f_locals['self']
+            if hasattr(parent_self, 'uvm_report_warning'):
+                parent_self.uvm_report_warning(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+            else:
+                uvm_report_warning(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+        else:
+            uvm_report_warning(ID, MSG, UVM_NONE, fname, lineno, "", 1)
 
 #// MACRO: `uvm_error
 #//
