@@ -79,15 +79,15 @@ class UVMRegTransactionOrderPolicy(UVMObject):
 # method.
 #------------------------------------------------------------------------------
 
+
 class UVMRegMap(UVMObject):
-    #
 
     #   extern /*local*/ function void Xinit_address_mapX()
     def Xinit_address_mapX(self):
         bus_width = 0
         top_map = self.get_root_map()
 
-        if (self == top_map):
+        if self == top_map:
             top_map.m_regs_by_offset = {}
             top_map.m_regs_by_offset_wo = {}
             top_map.m_mems_by_offset = {}
@@ -104,7 +104,7 @@ class UVMRegMap(UVMObject):
                 rg_acc = rg.Xget_fields_accessX(self)
                 addrs = []
                 rg_offset = self.m_regs_info[rg].offset
-                bus_width = self.get_physical_addresses(rg_offset,0,rg.get_n_bytes(),addrs)
+                bus_width = self.get_physical_addresses(rg_offset, 0, rg.get_n_bytes(), addrs)
 
                 for i in range(len(addrs)):
                     addr = addrs[i]
@@ -175,7 +175,7 @@ class UVMRegMap(UVMObject):
                     max1 = addrs_max[len(addrs_max)-1]
                 max2 = addrs_max[0]
                 # address interval between consecutive mem offsets
-                stride = (max2 - min2)/(mem.get_size()-1)
+                stride = int((max2 - min2)/mem.get_size()) - 1
 
                 for reg_addr in top_map.m_regs_by_offset:
                     if (reg_addr >= min1 and reg_addr <= max1):
@@ -376,7 +376,7 @@ class UVMRegMap(UVMObject):
             uvm_error("RegModel", "Memory '" + mem.get_full_name() + "' may not be added to address map '"
                 + self.get_full_name() + "' : they are not in the same block")
             return
-        
+
         mem.add_map(self)
 
         info = UVMRegMapInfo()
@@ -518,7 +518,7 @@ class UVMRegMap(UVMObject):
             return -1
         return self.m_submaps[submap]
         #endfunction
-        
+
     #
     #
     #   // Function: set_base_addr
@@ -679,6 +679,7 @@ class UVMRegMap(UVMObject):
     #   // Return the simple object name of this address map.
     #   //
     #
+
     #   // Function: get_full_name
     #   //
     #   // Get the hierarchical name
@@ -687,6 +688,12 @@ class UVMRegMap(UVMObject):
     #   // The base of the hierarchical name is the root block.
     #   //
     #   extern virtual function string get_full_name()
+    def get_full_name(self):
+        get_full_name = self.get_name()
+        if self.m_parent is None:
+            return get_full_name
+        return self.m_parent.get_full_name() + "." + get_full_name
+
     #
     #
     #   // Function: get_root_map
@@ -903,6 +910,15 @@ class UVMRegMap(UVMObject):
         return result
 
     #   extern virtual function UVMRegMapInfo get_mem_map_info(uvm_mem mem, bit error=1)
+    def get_mem_map_info(self, mem, error=1):
+        if mem not in self.m_mems_info:
+            if error:
+                uvm_error("REG_NO_MAP", "Memory '" + mem.get_name() + "' not in map '"
+                        + self.get_name() + "'")
+            return None
+        return self.m_mems_info[mem]
+
+
     #   extern virtual function int unsigned get_size()
 
     #
@@ -1165,11 +1181,14 @@ class UVMRegMap(UVMObject):
 
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         addrs = map_info.addr
+        print("RRR addrs are now " + str(addrs))
 
         # if a memory, adjust addresses based on offset
         if (rw.element_kind == UVM_MEM):
             for i in range(len(addrs)):
+                print("RRR stride is " +  str(map_info.mem_range.stride))
                 addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
+                print("RRR set addr[{}] to {}".format(i, addrs[i]))
 
         for val_idx in range(len(rw.value)):
             value = rw.value[val_idx]
@@ -1195,7 +1214,7 @@ class UVMRegMap(UVMObject):
                 byte_en &= (1 << idx)-1
                 for i in range(skip):
                     addrs.pop_front()
-                while (addrs.size() > (n_bits_init/(bus_width*8) + 1)):
+                while len(addrs) > (int(n_bits_init/(bus_width*8)) + 1):
                     addrs.pop_back()
             curr_byte = 0
             n_bits = n_bits_init
@@ -1346,7 +1365,7 @@ class UVMRegMap(UVMObject):
                 byte_en &= (1<<ii)-1
                 for i in range(skip):
                     addrs.pop_front()
-                while (addrs.size() > (n_bits/(bus_width*8) + 1)):
+                while addrs.size() > (int(n_bits/(bus_width*8)) + 1):
                     addrs.pop_back()
             #end
             curr_byte = 0
@@ -1558,7 +1577,7 @@ class UVMRegMap(UVMObject):
             map_info = self.get_reg_map_info(field.get_parent())
             size = field.get_n_bits()
             lsb = field.get_lsb_pos()
-            addr_skip = lsb/(self.get_n_bytes()*8)
+            addr_skip = (int(lsb/(self.get_n_bytes())*8))
         else:
             raise Exception("rw.element_kind value illegal: " +
                     str(rw.element_kind))
@@ -1812,34 +1831,6 @@ uvm_object_utils(UVMRegMap)
 #       regs[i].get_fields(fields)
 #
 #endfunction
-#
-#
-#
-# get_full_name
-#
-#function string uvm_reg_map::get_full_name()
-#
-#   get_full_name = get_name()
-#
-#   if (self.m_parent is None)
-#     return get_full_name
-#
-#   return {self.m_parent.get_full_name(), ".", get_full_name}
-#
-#endfunction: get_full_name
-#
-#
-# get_mem_map_info
-#
-#function UVMRegMapInfo uvm_reg_map::get_mem_map_info(uvm_mem mem, bit error=1)
-#  if (!self.m_mems_info.exists(mem)):
-#    if (error)
-#      `uvm_error("REG_NO_MAP",{"Memory '",mem.get_name(),"' not in map '",get_name(),"'"})
-#    return None
-#  end
-#  return self.m_mems_info[mem]
-#endfunction
-#
 #
 #
 #----------
