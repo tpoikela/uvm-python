@@ -21,6 +21,8 @@
 #   permissions and limitations under the License.
 #-------------------------------------------------------------
 
+from ..macros import uvm_fatal
+
 #------------------------------------------------------------------------------
 # TITLE: Global Declarations for the Register Layer
 #------------------------------------------------------------------------------
@@ -369,7 +371,10 @@ class uvm_reg_map_addr_range:
     def __init__(self, _min=0, _max=0, stride=0):
         self.min = _min
         self.max = _max
-        self.stride = stride
+        if isinstance(stride, int):
+            self.stride = stride
+        else:
+            uvm_fatal("FLOAT_ERR", "stride must be integer. Got: " + str(stride))
 
 
 #`include "reg/uvm_reg_item.svh"
