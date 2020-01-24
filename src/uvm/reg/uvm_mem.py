@@ -29,7 +29,7 @@ from ..macros import *
 from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegItem
 from .uvm_mem_mam import *
-
+from .uvm_reg_cbs import UVMMemCbIter
 
 #//------------------------------------------------------------------------------
 #// CLASS: uvm_mem
@@ -276,10 +276,70 @@ class UVMMem(UVMObject):
     #   extern virtual function void get_maps (ref uvm_reg_map maps[$])
     #
     #
+
     #   /*local*/ extern function uvm_reg_map get_local_map   (uvm_reg_map map,
     #                                                          string caller = "")
-    #
+    def get_local_map(self, _map, caller=""):
+        if (_map is None):
+            return self.get_default_map()
+        if _map in self.m_maps:
+            return _map
+
+        for l in self.m_maps:
+            local_map = l  # uvm_reg_map
+            parent_map = local_map.get_parent_map()
+
+            while parent_map is not None:
+                if (parent_map == _map):
+                    return local_map
+                parent_map = parent_map.get_parent_map()
+
+        cname = ""
+        if caller != "":
+            cname = " (called from " + caller + ")"
+        uvm_warning("RegModel",
+            "Memory '" + self.get_full_name() + "' is not contained within map '"
+            + _map.get_full_name() + "'" + cname)
+        return None
+        #endfunction
+
+
     #   /*local*/ extern function uvm_reg_map get_default_map (string caller = "")
+    def get_default_map(self, caller=""):
+
+        # if mem is not associated with any may, return ~None~
+        if self.m_maps.num() == 0:
+            cname = ""
+            if caller != "":
+                cname = " (called from " + caller + ")"
+            uvm_warning("RegModel",
+                    "Memory '" + self.get_full_name() + "' is not registered with any map"
+                    + cname)
+            return None
+
+
+        # if only one map, choose that
+        default_map = None
+        if self.m_maps.num() == 1:
+            get_default_map = self.m_maps.first()
+
+        # try to choose one based on default_map in parent blocks.
+        for l in self.m_maps:
+            _map = l  # uvm_reg_map
+            blk = _map.get_parent()  # uvm_reg_block
+            default_map = blk.get_default_map()  # uvm_reg_map
+            if default_map is not None:
+                local_map = self.get_local_map(default_map)
+                if local_map is not None:
+                    return local_map
+
+        # if that fails, choose the first in self mem's maps
+        get_default_map = self.m_maps.first()
+        return get_default_map
+
+        #
+        #endfunction
+
     #
     #
     #   // Function: get_rights
@@ -576,9 +636,9 @@ class UVMMem(UVMObject):
         rw.extension    = extension
         rw.fname        = fname
         rw.lineno       = lineno
-        
+
         yield self.do_read(rw)
-        
+
         status.append(rw.status)
         value.append(rw.value[0])
     #
@@ -686,16 +746,17 @@ class UVMMem(UVMObject):
     #
     #
     def Xcheck_accessX(self, rw, map_info, caller):
+        uvm_check_output_args([map_info])
 
         if rw.offset >= self.m_size:
-            uvm_error(self.get_type_name(), 
+            uvm_error(self.get_type_name(),
                sv.sformatf("Offset 'h%0h exceeds size of memory, 'h%0h",
                  rw.offset, self.m_size))
             rw.status = UVM_NOT_OK
             return 0
 
         if rw.path == UVM_DEFAULT_PATH:
-            rw.path = m_parent.get_default_path()
+            rw.path = self.m_parent.get_default_path()
 
         # TODO finish this
         #   if (rw.path == UVM_BACKDOOR):
@@ -709,59 +770,53 @@ class UVMMem(UVMObject):
         #        rw.map = uvm_reg_map::backdoor()
         #   end
         #
-        #   if (rw.path != UVM_BACKDOOR):
-        #
-        #     rw.local_map = get_local_map(rw.map,caller)
-        #
-        #     if (rw.local_map is None):
-        #        `uvm_error(get_type_name(), 
-        #           {"No transactor available to physically access memory from map '",
-        #            rw.map.get_full_name(),"'"})
-        #        rw.status = UVM_NOT_OK
-        #        return 0
-        #     end
-        #
-        #     map_info = rw.local_map.get_mem_map_info(self)
-        #
-        #     if (map_info.frontdoor is None):
-        #
-        #        if (map_info.unmapped):
-        #           `uvm_error("RegModel", {"Memory '",get_full_name(),
-        #                      "' unmapped in map '", rw.map.get_full_name(),
-        #                      "' and does not have a user-defined frontdoor"})
-        #           rw.status = UVM_NOT_OK
-        #           return 0
-        #        end
-        #
-        #        if ((rw.value.size() > 1)):
-        #           if (get_n_bits() > rw.local_map.get_n_bytes()*8):
-        #              `uvm_error("RegModel",
-        #                    sv.sformatf("Cannot burst a %0d-bit memory through a narrower data path (%0d bytes)",
-        #                    get_n_bits(), rw.local_map.get_n_bytes()*8))
-        #              rw.status = UVM_NOT_OK
-        #              return 0
-        #           end
-        #           if (rw.offset + rw.value.size() > m_size):
-        #              `uvm_error("RegModel",
-        #                  sv.sformatf("Burst of size 'd%0d starting at offset 'd%0d exceeds size of memory, 'd%0d",
-        #                      rw.value.size(), rw.offset, m_size))
-        #              return 0
-        #           end
-        #        end
-        #     end
-        #
-        #     if (rw.map is None)
-        #       rw.map = rw.local_map
-        #   end
-        #
-        #   return 1
+        if rw.path != UVM_BACKDOOR:
+            rw.local_map = self.get_local_map(rw.map,caller)
+
+            if rw.local_map is None:
+                uvm_error(self.get_type_name(),
+                    "No transactor available to physically access memory from map '"
+                    + rw.map.get_full_name() + "'")
+                rw.status = UVM_NOT_OK
+                return 0
+
+            _map_info = rw.local_map.get_mem_map_info(self)
+            map_info.append(_map_info)
+
+            if _map_info.frontdoor is None:
+
+                if (_map_info.unmapped):
+                    uvm_error("RegModel", "Memory '" + self.get_full_name()
+                              + "' unmapped in map '" + rw.map.get_full_name()
+                              + "' and does not have a user-defined frontdoor")
+                    rw.status = UVM_NOT_OK
+                    return 0
+
+                if len(rw.value) > 1:
+                    if self.get_n_bits() > rw.local_map.get_n_bytes()*8:
+                        uvm_error("RegModel",
+                             sv.sformatf("Cannot burst a %0d-bit memory through a narrower data path (%0d bytes)",
+                             self.get_n_bits(), rw.local_map.get_n_bytes()*8))
+                        rw.status = UVM_NOT_OK
+                        return 0
+
+                    if rw.offset + len(rw.value) > self.m_size:
+                        uvm_error("RegModel",
+                           sv.sformatf("Burst of size 'd%0d starting at offset 'd%0d exceeds size of memory, 'd%0d",
+                               len(rw.value), rw.offset, self.m_size))
+                        return 0
+
+            if rw.map is None:
+                rw.map = rw.local_map
+
+        return 1
         #endfunction
 
     #   extern virtual task do_write (uvm_reg_item rw)
-    #@cocotb.coroutine
+    @cocotb.coroutine
     def do_write(self, rw):  # task
-        cbs = uvm_mem_cb_iter(self)
-        map_info = None  # uvm_reg_map_info
+        cbs = UVMMemCbIter(self)
+        map_info = []  # uvm_reg_map_info
 
         self.m_fname  = rw.fname
         self.m_lineno = rw.lineno
@@ -769,6 +824,7 @@ class UVMMem(UVMObject):
         if self.Xcheck_accessX(rw, map_info, "burst_write()") is False:
             yield uvm_empty_delay()
             return
+        map_info = map_info[0]
 
         self.m_write_in_progress = True
         rw.status = UVM_IS_OK
@@ -847,7 +903,7 @@ class UVMMem(UVMObject):
                 path_s = "DPI backdoor"
                 if self.get_backdoor() is not None:
                     path_s = "user backdoor"
-            
+
             if len(rw.value) > 1:
                 value_s = "='{"
                 pre_s = "Burst "
@@ -867,18 +923,20 @@ class UVMMem(UVMObject):
     #   extern virtual task do_read  (uvm_reg_item rw)
     @cocotb.coroutine
     def do_read(self, rw):  # task
-        cbs = uvm_mem_cb_iter(self)
-        map_info = None  # uvm_reg_map_info 
+        cbs = UVMMemCbIter(self)
+        map_info = []  # uvm_reg_map_info
 
         self.m_fname = rw.fname
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, map_info, "burst_read()") is False:
+            yield uvm_empty_delay()
             return
+        map_info = map_info[0]
 
         self.m_read_in_progress = True
         rw.status = UVM_IS_OK
-        #   
+        #
         # PRE-READ CBS
         yield self.pre_read(rw)
         cb = cbs.first()
@@ -887,17 +945,17 @@ class UVMMem(UVMObject):
             cb = cbs.next()
 
         if rw.status != UVM_IS_OK:
-           self.m_read_in_progress = False
-           return
+            self.m_read_in_progress = False
+            return
 
         rw.status = UVM_NOT_OK
 
         # FRONTDOOR
         if rw.path == UVM_FRONTDOOR:
             system_map = rw.local_map.get_root_map()
-               
+
             if (map_info.frontdoor is not None):
-                fd = map_info.frontdoor  # uvm_reg_frontdoor 
+                fd = map_info.frontdoor  # uvm_reg_frontdoor
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
@@ -912,7 +970,7 @@ class UVMMem(UVMObject):
                     self.XsampleX(map_info.mem_range.stride * idx, 1, rw.map)
                     self.m_parent.XsampleX(map_info.offset +
                             (map_info.mem_range.stride * idx), 1, rw.map)
-        
+
         #
         #   // BACKDOOR TODO
         #   else begin
@@ -962,7 +1020,7 @@ class UVMMem(UVMObject):
         self.m_read_in_progress = False
         #
         #endtask: do_read
-        
+
         #
         #
         #   //-----------------
@@ -1419,30 +1477,6 @@ class UVMMem(UVMObject):
 #     end
 #   end
 #   return 0
-#endfunction
-#
-#
-#// get_local_map
-#
-#function uvm_reg_map uvm_mem::get_local_map(uvm_reg_map map, string caller="")
-#   if (map is None)
-#     return get_default_map()
-#   if (m_maps.exists(map))
-#     return map;
-#   foreach (m_maps[l]):
-#     uvm_reg_map local_map = l
-#     uvm_reg_map parent_map = local_map.get_parent_map()
-#
-#     while (parent_map != None):
-#       if (parent_map == map)
-#         return local_map
-#       parent_map = parent_map.get_parent_map()
-#     end
-#   end
-#   `uvm_warning("RegModel",
-#       {"Memory '",get_full_name(),"' is not contained within map '",map.get_full_name(),"'",
-#        (caller == "" ? "": {" (called from ",caller,")"})})
-#   return None
 #endfunction
 #
 #
