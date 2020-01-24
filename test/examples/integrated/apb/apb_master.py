@@ -89,8 +89,10 @@ class apb_master(UVMDriver):  #(apb_rw)
             #if (not self.sigs.clk.triggered):
             #yield Edge(self.sigs.clk)
             yield self.drive_delay()
+            #yield RisingEdge(self.sigs.clk)
+            #yield Timer(1, "NS")
 
-            self.trans_received(tr)
+            yield self.trans_received(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
 
             if tr.kind == apb_rw.READ:
@@ -100,7 +102,7 @@ class apb_master(UVMDriver):  #(apb_rw)
             elif tr.kind == apb_rw.WRITE:
                 yield self.write(tr.addr, tr.data)
 
-            self.trans_executed(tr)
+            yield self.trans_executed(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_executed(self,tr))
 
             self.seq_item_port.item_done()
@@ -143,7 +145,7 @@ class apb_master(UVMDriver):  #(apb_rw)
 
     @cocotb.coroutine
     def drive_delay(self):
-        yield Edge(self.sigs.clk)
+        yield RisingEdge(self.sigs.clk)
         yield Timer(1, "NS")
 
     @cocotb.coroutine

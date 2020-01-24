@@ -69,7 +69,7 @@ class apb_monitor(UVMMonitor):
 
             # Wait for a SETUP cycle
             while True:
-                yield Edge(self.sigs.clk)
+                yield self.sample_delay()
                 if (self.sigs.psel == 1 and
                    self.sigs.penable == 0):
                     break
@@ -81,7 +81,7 @@ class apb_monitor(UVMMonitor):
                 tr.kind = apb_rw.WRITE
             tr.addr = self.sigs.paddr
 
-            yield Edge(self.sigs.clk)
+            yield self.sample_delay()
             if int(self.sigs.penable) != 1:
                 val = int(self.sigs.penable)
                 uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle"
@@ -101,5 +101,10 @@ class apb_monitor(UVMMonitor):
     def trans_observed(self, tr):
         pass
 
+
+    @cocotb.coroutine
+    def sample_delay(self):
+        yield RisingEdge(self.sigs.clk)
+        yield Timer(1, "NS")
 
 uvm_component_utils(apb_monitor)
