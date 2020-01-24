@@ -344,6 +344,7 @@ UVMRegCbIter = UVMCallbackIter
 #// rather than the more verbose parameterized class
 #//
 #typedef uvm_callback_iter#(uvm_mem, uvm_reg_cbs) uvm_mem_cb_iter
+UVMMemCbIter = UVMCallbackIter
     
 #
 #// Type: uvm_reg_field_cb
