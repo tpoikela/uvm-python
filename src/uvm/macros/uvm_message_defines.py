@@ -113,8 +113,9 @@ def uvm_info(ID, MSG, VERBOSITY):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        if 'self' in inspect.currentframe().f_back.f_locals:
-            parent_self = inspect.currentframe().f_back.f_locals['self']
+        f_locals = inspect.currentframe().f_back.f_locals
+        if 'self' in f_locals:
+            parent_self = f_locals['self']
             if hasattr(parent_self, 'uvm_report_info'):
                 parent_self.uvm_report_info(ID, MSG, VERBOSITY, fname, lineno, "", 1)
             else:
@@ -138,8 +139,9 @@ def uvm_warning(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        if 'self' in inspect.currentframe().f_back.f_locals:
-            parent_self = inspect.currentframe().f_back.f_locals['self']
+        f_locals = inspect.currentframe().f_back.f_locals
+        if 'self' in f_locals:
+            parent_self = f_locals['self']
             if hasattr(parent_self, 'uvm_report_warning'):
                 parent_self.uvm_report_warning(ID, MSG, UVM_NONE, fname, lineno, "", 1)
             else:
@@ -162,8 +164,15 @@ def uvm_error(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        parent_self = inspect.currentframe().f_back.f_locals['self']
-        parent_self.uvm_report_error(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+        f_locals = inspect.currentframe().f_back.f_locals
+        if 'self' in f_locals:
+            parent_self = f_locals['self']
+            if hasattr(parent_self, 'uvm_report_error'):
+                parent_self.uvm_report_error(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+            else:
+                uvm_report_error(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+        else:
+            uvm_report_error(ID, MSG, UVM_NONE, fname, lineno, "", 1)
 
 #// MACRO: `uvm_fatal
 #//
@@ -181,7 +190,15 @@ def uvm_fatal(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+        f_locals = inspect.currentframe().f_back.f_locals
+        if 'self' in f_locals:
+            parent_self = f_locals['self']
+            if hasattr(parent_self, 'uvm_report_fatal'):
+                parent_self.uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+            else:
+                uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+        else:
+            uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
 
 #// MACRO: `uvm_info_context
 #//
