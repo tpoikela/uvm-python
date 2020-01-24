@@ -39,7 +39,7 @@ class mem_test_seq(UVMRegSequence):
 
         for i in range(10):
             status = []
-            data = [0x1]
+            data = 0x1234
             offset = i * 1 << 4
             yield dma_ram.write(status, offset, data)
             status = []
