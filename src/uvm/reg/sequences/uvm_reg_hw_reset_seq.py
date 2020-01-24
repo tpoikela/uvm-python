@@ -103,11 +103,10 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             return
 
         blk.get_maps(maps)
+
         # Iterate over all maps defined for the RegModel block
-        #
         for d in range(len(maps)):
-            #uvm_reg regs[$]
-            regs = []
+            regs = []  # uvm_reg[]
             maps[d].get_submaps(sub_maps)
             if len(sub_maps) != 0:
                 continue
@@ -120,14 +119,12 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             maps[d].get_registers(regs)
 
             for i in range(len(regs)):
-                #uvm_status_e status
                 status = 0
-
                 reg_name = regs[i].get_full_name()
-                print("Iterating now over reset " + reg_name)
+
                 # Registers with certain attributes are not to be tested
-                dont_test1 = UVMResourceDb.get_by_name("REG::" + regs[i].get_full_name(), "NO_REG_HW_RESET_TEST", 0)
-                dont_test2 = UVMResourceDb.get_by_name("REG::" + regs[i].get_full_name(), "NO_REG_TESTS", 0)
+                dont_test1 = UVMResourceDb.get_by_name("REG::" + reg_name, "NO_REG_HW_RESET_TEST", 0)
+                dont_test2 = UVMResourceDb.get_by_name("REG::" + reg_name, "NO_REG_TESTS", 0)
                 if (dont_test1 is not None or dont_test2 is not None):
                     continue
 
