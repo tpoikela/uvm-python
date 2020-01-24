@@ -27,7 +27,7 @@ from cocotb.triggers import RisingEdge
 
 from uvm.comps.uvm_test import UVMTest
 from uvm import (UVMCoreService, sv, uvm_top, UVMCmdlineProcessor, UVMSequence,
-        UVMConfigDb, UVMResourceDb)
+        UVMConfigDb, UVMResourceDb, UVMReportServer)
 from uvm.reg import (uvm_reg_sequence)
 from uvm.macros import *
 from tb_env import tb_env
@@ -96,8 +96,18 @@ class cmdline_test(UVMTest):
         UVMResourceDb.set("REG::" + env.model.DMA_RAM.get_full_name() + ".*", "NO_REG_TESTS", 1, self)
         for i in range(len(env.model.SESSION)):
             UVMResourceDb.set("REG::" + env.model.SESSION[i].get_full_name() + ".*", "NO_REG_TESTS", 1, self)
+        for i in range(len(env.model.TABLES)):
+            UVMResourceDb.set("REG::" + env.model.TABLES[i].get_full_name() + ".*", "NO_REG_TESTS", 1, self)
         yield seq.start(None)
         phase.drop_objection(self)
+
+    def check_phase(self, phase):
+        super().check_phase(phase)
+        server = UVMCoreService.get().get_report_server()
+        errors = server.get_severity_count(UVM_ERROR)
+        if errors > 0:
+            uvm_fatal("FOUND ERRORS", "There were " + str(errors)
+            + " UVM_ERRORs in the test")
 
 
 uvm_component_utils(cmdline_test)

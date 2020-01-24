@@ -56,6 +56,7 @@ reg[1023:0][31:0] DMA;
 wire[9:0] paddr;
 assign paddr = apb_paddr[11:2];
 
+reg write_socket;
 socket_t chosen_sock;
 
 always @ (posedge apb_pclk)
@@ -66,9 +67,13 @@ always @ (posedge apb_pclk)
          TABLES[i] <= 32'h0000_0000;
       end
       pr_data <= 32'h0;
+      write_socket <= 1'b0;
    end
    else begin
-       // chosen_sock = SESSION[paddr];
+       if (write_socket) begin
+           SESSION[paddr] <= chosen_sock;
+           write_socket <= 1'b0;
+       end
 
       // Wait for a SETUP+READ or ENABLE+WRITE cycle
       if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
@@ -79,10 +84,22 @@ always @ (posedge apb_pclk)
               16'h0024: begin
                  TABLES[INDEX] <= apb_pwdata;
               end
-              16'h1XX0: chosen_sock.SRC[63:32] <= apb_pwdata;
-              16'h1XX4: chosen_sock.SRC[31: 0] <= apb_pwdata;
-              16'h1XX8: chosen_sock.DST[63:32] <= apb_pwdata;
-              16'h1XXC: chosen_sock.DST[31: 0] <= apb_pwdata;
+              16'h1XX0: begin
+                  chosen_sock.SRC[63:32] <= apb_pwdata;
+                  write_socket <= 1'b1;
+              end
+              16'h1XX4: begin
+                  chosen_sock.SRC[31: 0] <= apb_pwdata;
+                  write_socket <= 1'b1;
+              end
+              16'h1XX8: begin
+                  chosen_sock.DST[63:32] <= apb_pwdata;
+                  write_socket <= 1'b1;
+              end
+              16'h1XXC: begin
+                  chosen_sock.DST[31: 0] <= apb_pwdata;
+                  write_socket <= 1'b1;
+              end
               16'h2XXX: DMA[paddr] <= apb_pwdata;
             endcase
          end
@@ -102,15 +119,15 @@ always @ (posedge apb_pclk)
    end
 end
 
-/*
 `ifdef COCOTB_SIM
+`ifdef VCD
 initial begin
  $dumpfile ("slave_dut.vcd");
  $dumpvars (0, slave);
  #2ns;
 end
 `endif
-*/
+`endif
 
 endmodule
 

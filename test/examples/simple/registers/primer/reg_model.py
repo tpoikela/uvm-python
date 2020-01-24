@@ -211,7 +211,7 @@ class reg_block_slave(UVMRegBlock):
             self.SESSION[i].build()
 
         for i in range(len(self.TABLES)):
-            self.TABLES[i].configure(self,None,sv.sformatf("TABLES[%0d]",i))
+            self.TABLES[i].configure(self, None, sv.sformatf("TABLES[%0d]",i))
             self.TABLES[i].build()
 
         self.DATA.configure(self.INDEX, self.TABLES, self, None)

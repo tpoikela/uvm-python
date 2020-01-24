@@ -26,6 +26,7 @@ import cocotb
 from uvm.macros import *
 from uvm.reg import UVMRegSequence
 from uvm.base import sv
+from uvm.reg.uvm_reg_model import *
 
 
 class user_test_seq(UVMRegSequence):
@@ -44,6 +45,27 @@ class user_test_seq(UVMRegSequence):
 
         #sv.cast(model, self.model)
         model = self.model
+
+        for i in range(1):
+            default_map = model.INDEX.get_default_map()
+            status = []
+            idx = sv.urandom_range(0, 255)
+            yield model.INDEX.write(status, idx, _map=default_map, parent=self)
+
+            status = []
+            yield model.INDEX.mirror(status, UVM_CHECK, UVM_FRONTDOOR,
+                    default_map, self)
+            got = model.INDEX.get()
+            if idx != got:
+                uvm_error("IDX_ERR", "exp: " + str(idx) + ' got: ' + str(got))
+
+            for i in range(5):
+                status = []
+                idx = sv.urandom_range(0, (1 << 64) - 1)
+                yield model.SESSION[i].SRC.write(status, idx, _map=default_map, parent=self)
+                status = []
+                yield model.SESSION[i].SRC.mirror(status, UVM_CHECK, UVM_FRONTDOOR,
+                        default_map, self)
 
         # Randomize the content of 10 random indexed registers
         #for i in range(10):
