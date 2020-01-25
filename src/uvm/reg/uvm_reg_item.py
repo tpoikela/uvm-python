@@ -22,7 +22,8 @@
 
 from ..seq.uvm_sequence_item import *
 from ..macros.uvm_object_defines import *
-from .uvm_reg_model import UVM_READ, UVM_NOT_OK, UVM_MEM, UVM_FRONTDOOR
+from .uvm_reg_model import (UVM_READ, UVM_NOT_OK, UVM_MEM, UVM_FRONTDOOR,
+    UVM_ACCESS_NAMES)
 
 #//------------------------------------------------------------------------------
 #// Title: Generic Register Operation Descriptors
@@ -179,7 +180,8 @@ class UVMRegItem(UVMSequenceItem):
         ele_name = "null"
         if self.element is not None:
             ele_name = self.element.get_full_name()
-        s = ("kind=" + str(self.kind) +
+        kind_str = UVM_ACCESS_NAMES[self.kind]
+        s = ("kind=" + kind_str +
              " ele_kind=" + str(self.element_kind) +
              " ele_name=" + ele_name)
         
