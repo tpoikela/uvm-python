@@ -42,8 +42,11 @@ class apb_rw(UVMSequenceItem):
 
 
     def convert2string(self):
+        kind = "READ"
+        if self.kind == 1:
+            kind = "WRITE"
         return sv.sformatf("kind=%s addr=%0h data=%0h",
-                self.kind, self.addr, self.data)
+                kind, self.addr, self.data)
 
     #endclass: apb_rw
 uvm_object_utils_begin(apb_rw)

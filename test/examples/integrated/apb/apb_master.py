@@ -72,7 +72,6 @@ class apb_master(UVMDriver):  #(apb_rw)
 
     @cocotb.coroutine
     def run_phase(self, phase):
-        #super.run_phase(phase)
         uvm_info("APB_MASTER", "apb_master run_phase started", UVM_MEDIUM)
 
         self.sigs.psel    <= 0
@@ -107,7 +106,7 @@ class apb_master(UVMDriver):  #(apb_rw)
 
             self.seq_item_port.item_done()
             self.trig.set()
-    	    #->trig
+            #->trig
         #   endtask: run_phase
 
 
