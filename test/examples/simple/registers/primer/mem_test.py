@@ -21,6 +21,7 @@
 
 
 import cocotb
+from cocotb.triggers import Timer
 from uvm.macros import *
 from uvm.reg import UVMRegSequence
 
@@ -38,13 +39,19 @@ class mem_test_seq(UVMRegSequence):
         dma_ram = model.DMA_RAM
 
         for i in range(10):
+
             status = []
             data = 0x1234
-            offset = i * 1 << 4
+            offset = i * 4
             yield dma_ram.write(status, offset, data)
+            yield Timer(100, "NS")
+
             status = []
             data = []
+            offset = i * 4
             yield dma_ram.read(status, offset, data)
+            yield Timer(100, "NS")
+        yield Timer(100, "NS")
 
 
 uvm_object_utils(mem_test_seq)
