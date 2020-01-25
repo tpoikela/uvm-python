@@ -620,7 +620,7 @@ class UVMMem(UVMObject):
     #                            input  int                 lineno = 0)
     @cocotb.coroutine
     def read(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None,
-            parent = None, prior = -1, extension = None, fname = "", lineno = 0):
+            parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
 
         rw = UVMRegItem.type_id.create("mem_read",None,self.get_full_name())
