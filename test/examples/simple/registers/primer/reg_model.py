@@ -149,7 +149,7 @@ uvm_object_utils(reg_slave_TABLES)
 class mem_slave_DMA_RAM(UVMMem):
     #
     def __init__(self, name="slave_DMA_RAM"):
-        super().__init__(name, 0x400,32,"RW", UVM_NO_COVERAGE)
+        super().__init__(name, 0x400, 32,"RW", UVM_NO_COVERAGE)
 
 
 uvm_object_utils(mem_slave_DMA_RAM)
