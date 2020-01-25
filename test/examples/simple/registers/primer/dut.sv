@@ -51,7 +51,7 @@ reg [ 7:0] INDEX;
 socket_t[255:0] SESSION;
 reg[255:0][63:0] DST;
 reg[255:0][31:0] TABLES;
-reg[1023:0][31:0] DMA;
+reg[31:0] DMA[1023:0];
 
 wire[9:0] paddr;
 assign paddr = apb_paddr[11:2];
@@ -124,6 +124,7 @@ end
 initial begin
  $dumpfile ("slave_dut.vcd");
  $dumpvars (0, slave);
+ for (int i = 0; i < 16; i++) $dumpvars(0, DMA[i]);
  #2ns;
 end
 `endif
