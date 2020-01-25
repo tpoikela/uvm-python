@@ -128,6 +128,7 @@ class uvm_hdl_path_slice:
 UVM_IS_OK = 0
 UVM_NOT_OK = 1
 UVM_HAS_X = 2
+UVM_STATUS_NAMES = ["UVM_IS_OK", "UVM_NOT_OK", "UVM_HAS_X"]
 #   } uvm_status_e
 
 # Enum: uvm_path_e
@@ -203,6 +204,7 @@ UVM_READ = 0
 UVM_WRITE = 1
 UVM_BURST_READ = 2
 UVM_BURST_WRITE = 3
+UVM_ACCESS_NAMES = ["UVM_READ", "UVM_WRITE", "UVM_BURST_READ", "UVM_BURST_WRITE"]
 #   } uvm_access_e
 
 # Enum: uvm_hier_e
@@ -367,7 +369,7 @@ def uvm_hdl_concat2string(concat):
     return image
 
 
-class uvm_reg_map_addr_range:
+class UVMRegMapAddrRange:
     def __init__(self, _min=0, _max=0, stride=0):
         self.min = _min
         self.max = _max
@@ -376,31 +378,7 @@ class uvm_reg_map_addr_range:
         else:
             uvm_fatal("FLOAT_ERR", "stride must be integer. Got: " + str(stride))
 
-
-#`include "reg/uvm_reg_item.svh"
-#`include "reg/uvm_reg_adapter.svh"
-#`include "reg/uvm_reg_predictor.svh"
-#`include "reg/uvm_reg_sequence.svh"
-#`include "reg/uvm_reg_cbs.svh"
-#`include "reg/uvm_reg_backdoor.svh"
-#`include "reg/uvm_reg_field.svh"
-#`include "reg/uvm_vreg_field.svh"
-#`include "reg/uvm_reg.svh"
-#`include "reg/uvm_reg_indirect.svh"
-#`include "reg/uvm_reg_fifo.svh"
-#`include "reg/uvm_reg_file.svh"
-#`include "reg/uvm_mem_mam.svh"
-#`include "reg/uvm_vreg.svh"
-#`include "reg/uvm_mem.svh"
-#`include "reg/uvm_reg_map.svh"
-#`include "reg/uvm_reg_block.svh"
-#
-#`include "reg/sequences/uvm_reg_hw_reset_seq.svh"
-#`include "reg/sequences/uvm_reg_bit_bash_seq.svh"
-#`include "reg/sequences/uvm_mem_walk_seq.svh"
-#`include "reg/sequences/uvm_mem_access_seq.svh"
-#`include "reg/sequences/uvm_reg_access_seq.svh"
-#`include "reg/sequences/uvm_reg_mem_shared_access_seq.svh"
-#`include "reg/sequences/uvm_reg_mem_built_in_seq.svh"
-#`include "reg/sequences/uvm_reg_mem_hdl_paths_seq.svh"
-
+    def convert2string(self):
+        res = ("min: " + str(self.min) + ', max: ' + str(self.max) +
+                ', stride: ' + str(self.stride))
+        return res
