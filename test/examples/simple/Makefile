@@ -32,3 +32,4 @@ test-registers:
 	make -C registers/vertical_reuse/ SIMARGS="+UVM_TESTNAME=sys_R_test"
 	make -C registers/primer/ UVM_TEST=cmdline_test UVM_REG_SEQ=UVMRegHWResetSeq
 	make -C registers/primer/ UVM_TEST=cmdline_test UVM_REG_SEQ=user_test_seq
+	make -C registers/primer/ UVM_TEST=cmdline_test UVM_REG_SEQ=mem_test_seq
