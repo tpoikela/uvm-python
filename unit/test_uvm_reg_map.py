@@ -1,6 +1,7 @@
 
 import unittest
-from uvm.reg import (UVMRegMap, UVMRegBlock, UVMReg)
+from uvm.reg import (UVMRegMap, UVMRegBlock, UVMReg, UVMMem)
+from uvm.reg.uvm_reg_model import *
 
 
 class TestUVMRegMap(unittest.TestCase):
@@ -22,3 +23,29 @@ class TestUVMRegMap(unittest.TestCase):
 
     def test_add_parent_map(self):
         pass
+
+    def test_get_physical_addresses(self):
+        # reg_map = UVMRegMap()
+        reg_blk = UVMRegBlock('my_blk2')
+        reg_map = reg_blk.default_map = reg_blk.create_map("default_map", 0x0, 4,
+                UVM_LITTLE_ENDIAN)
+
+        #reg_blk.add_map(reg_map)
+        mem = UVMMem("my_mem_inst", 1024, 32, "RW")
+        mem.configure(reg_blk, "")
+        reg_blk.add_map(reg_map)
+
+        reg_map.m_system_n_bytes = 4
+        reg_map.m_n_bytes = 4
+        reg_map.add_mem(mem, 0x2000, "RW")
+        reg_map.Xinit_address_mapX()
+
+        mem_offset = 8192
+        nbytes = 4
+        addrs = []
+        bus_width = reg_map.get_physical_addresses(mem_offset, 0, nbytes, addrs)
+        self.assertEqual(addrs[0], mem_offset)
+
+        mem_offset += 4
+        bus_width = reg_map.get_physical_addresses(mem_offset, 0, nbytes, addrs)
+        self.assertEqual(addrs[0], mem_offset)
