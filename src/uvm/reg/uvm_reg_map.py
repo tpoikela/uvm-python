@@ -41,18 +41,24 @@ class UVMRegMapInfo:
         self.unmapped = False
         self.addr = []  # uvm_reg_addr_t[]
         self.frontdoor = None  # uvm_reg_frontdoor
-        self.mem_range = uvm_reg_map_addr_range()
+        self.mem_range = UVMRegMapAddrRange()
 
         # if set marks the UVMRegMapInfo as initialized,
         # prevents using an uninitialized map (for instance if the model
         # has not been locked accidently and the maps have not been computed before)
         self.is_initialized = False
 
+    def convert2string(self):
+        res = ("offset: " + str(self.offset) + ', rights: ' + self.rights
+            + ', unmapped: ' + str(self.unmapped) + ', addr: ' + str(self.addr)
+            + ', range: ' + self.mem_range.convert2string())
+        return res
+
 
 class UVMRegTransactionOrderPolicy(UVMObject):
     def __init__(self, name='policy'):
         UVMObject.__init__(self, name)
-    #
+
     #    // Function: order
     #    // the order() function may reorder the sequence of bus transactions
     #    // produced by a single uvm_reg transaction (read/write).
@@ -160,6 +166,7 @@ class UVMRegMap(UVMObject):
                 stride = 0
 
                 mem_offset = self.m_mems_info[mem].offset
+
                 bus_width = self.get_physical_addresses(mem_offset,0,mem.get_n_bytes(),addrs)
                 if addrs[0] < addrs[len(addrs)-1]:
                     min1 = addrs[0]
@@ -168,14 +175,14 @@ class UVMRegMap(UVMObject):
                 min2 = addrs[0]
 
                 mem_offset = self.m_mems_info[mem].offset
-                self.get_physical_addresses(mem_offset,(mem.get_size()-1),mem.get_n_bytes(),addrs_max)
+                self.get_physical_addresses(mem_offset, (mem.get_size()-1), mem.get_n_bytes(), addrs_max)
                 if addrs_max[0] > addrs_max[len(addrs_max)-1]:
                     max1 = addrs_max[0]
                 else:
                     max1 = addrs_max[len(addrs_max)-1]
                 max2 = addrs_max[0]
                 # address interval between consecutive mem offsets
-                stride = int((max2 - min2)/mem.get_size()) - 1
+                stride = int((max2 - min2)/(mem.get_size() - 1))
 
                 for reg_addr in top_map.m_regs_by_offset:
                     if (reg_addr >= min1 and reg_addr <= max1):
@@ -196,7 +203,7 @@ class UVMRegMap(UVMObject):
                             + top_map.m_mems_by_offset[rr].get_full_name()
                             + "': 'h" + a))
 
-                addr_range = uvm_reg_map_addr_range(min1, max1, stride)
+                addr_range = UVMRegMapAddrRange(min1, max1, stride)
                 top_map.m_mems_by_offset[addr_range] = mem
                 self.m_mems_info[mem].addr  = addrs
                 self.m_mems_info[mem].mem_range = addr_range
@@ -260,7 +267,7 @@ class UVMRegMap(UVMObject):
         # Use only in addition to above if a RO and a WO
         # register share the same address.
         self.m_regs_by_offset_wo = {}  # uvm_reg[uvm_reg_addr_t]
-        self.m_mems_by_offset = {}  # uvm_mem[uvm_reg_map_addr_range]
+        self.m_mems_by_offset = {}  # uvm_mem[UVMRegMapAddrRange]
         self.policy = None  # local uvm_reg_transaction_order_policy
 
     #   // Function: configure
@@ -752,7 +759,7 @@ class UVMRegMap(UVMObject):
     #   //
     #   extern virtual function int unsigned get_n_bytes (uvm_hier_e hier=UVM_HIER)
     def get_n_bytes(self, hier=UVM_HIER):
-        if (hier == UVM_NO_HIER):
+        if hier == UVM_NO_HIER:
             return self.m_n_bytes
         return self.m_system_n_bytes
 
@@ -958,7 +965,7 @@ class UVMRegMap(UVMObject):
            return 0
 
         # First, identify the addresses within the block/system
-        if (n_bytes <= bus_width):
+        if n_bytes <= bus_width:
             local_addr.append(base_addr + (mem_offset * multiplier))
         else:
             n = 0
@@ -1179,22 +1186,21 @@ class UVMRegMap(UVMObject):
         n_bits_init = 0
         accesses = []
 
+        print("do_bus_write Given rw was " + rw.convert2string())
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
-        addrs = map_info.addr
-        print("RRR addrs are now " + str(addrs))
+        #addrs = map_info.addr
+        addrs = map_info.addr.copy()
 
         # if a memory, adjust addresses based on offset
-        if (rw.element_kind == UVM_MEM):
+        if rw.element_kind == UVM_MEM:
             for i in range(len(addrs)):
-                print("RRR stride is " +  str(map_info.mem_range.stride))
                 addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
-                print("RRR set addr[{}] to {}".format(i, addrs[i]))
 
         for val_idx in range(len(rw.value)):
             value = rw.value[val_idx]
 
             # /* calculate byte_enables */
-            if (rw.element_kind == UVM_FIELD):
+            if rw.element_kind == UVM_FIELD:
                 temp_be = 0
                 idx = 0
                 n_access_extra = lsb % (bus_width*8)
@@ -1333,9 +1339,11 @@ class UVMRegMap(UVMObject):
         n_bits_init = 0
         accesses = []  # uvm_reg_bus_op[$]
 
+        print("do_bus_read Given rw was " + rw.convert2string())
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits, lsb, skip)
-        addrs = map_info.addr
-        size = n_bits
+        #addrs = map_info.addr
+        addrs = map_info.addr.copy()
+        #size = n_bits
 
         # if a memory, adjust addresses based on offset
         if (rw.element_kind == UVM_MEM):
@@ -1614,14 +1622,6 @@ uvm_object_utils(UVMRegMap)
 #---------------
 #
 #
-#
-#
-#
-#
-#
-#
-#
-#
 # m_set_mem_offset
 #
 #function void uvm_reg_map::m_set_mem_offset(uvm_mem mem,
@@ -1699,7 +1699,7 @@ uvm_object_utils(UVMRegMap)
 #            end
 #
 #            begin
-#              uvm_reg_map_addr_range range = '{ min, max, stride }
+#              UVMRegMapAddrRange range = '{ min, max, stride }
 #              top_map.m_mems_by_offset[range] = mem
 #              info.addr  = addrs
 #              info.mem_range = range
