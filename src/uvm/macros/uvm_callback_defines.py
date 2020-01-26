@@ -167,7 +167,7 @@ def uvm_do_obj_callbacks(OBJ,METHOD, *args):
             "Executing callback method 'METHOD' for callback {} (CB) from {} (T)"
             .format(cb.get_name(), OBJ.get_full_name())))
         m_to_call = getattr(cb, METHOD)
-        m_to_call()
+        m_to_call(*args)
         cb = cb_iter.next()
 
 #//-----------------------------------------------------------------------------
