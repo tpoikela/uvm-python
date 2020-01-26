@@ -28,6 +28,7 @@ from ..base.sv import sv
 from ..macros import *
 from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegItem
+from .uvm_reg_map import UVMRegMap
 from .uvm_mem_mam import *
 from .uvm_reg_cbs import UVMMemCbIter
 
@@ -61,9 +62,6 @@ DECR = 6
 class UVMMem(UVMObject):
     #
     #
-    #   local int               m_has_cover
-    #   local int               m_cover_on
-    #   local string            m_fname
     #   local int               m_lineno
     #   local bit               m_vregs[uvm_vreg]
     #   local uvm_object_string_pool
@@ -109,6 +107,7 @@ class UVMMem(UVMObject):
             uvm_error("RegModel", "Memory '" + self.get_full_name() + "' cannot have 0 bits")
             n_bits = 1
 
+        self.m_fname = ""
         self.m_parent = None
         self.m_size      = size
         self.m_n_bits    = n_bits
@@ -119,6 +118,7 @@ class UVMMem(UVMObject):
         self.m_read_in_progress = False
         self.m_write_in_progress = False
         self.m_is_powered_down = False
+        self.m_cover_on = 0
 
         self.m_maps = UVMPool()  # bit[uvm_reg_map]
         if (n_bits > UVMMem.m_max_size):
@@ -259,6 +259,8 @@ class UVMMem(UVMObject):
     #   // Returns the number of address maps this memory is mapped in
     #   //
     #   extern virtual function int get_n_maps ()
+    def get_n_maps(self):
+        return self.m_maps.num()
 
     #
     #
@@ -362,8 +364,24 @@ class UVMMem(UVMObject):
     #   // and "RW" is returned.
     #   //
     #   extern virtual function string get_rights (uvm_reg_map map = None)
-    #
-    #
+    def get_rights(self, _map=None):
+        #
+        info = None  # uvm_reg_map_info
+
+        # No right restrictions if not shared
+        if (self.m_maps.num() <= 1):
+            return "RW"
+
+        _map = self.get_local_map(_map,"get_rights()")
+        if map is None:
+            return "RW"
+
+        info = _map.get_mem_map_info(self)
+        return info.rights
+        #endfunction: get_rights
+
+
+
     #   // Function: get_access
     #   //
     #   // Returns the access policy of the memory when written and read
@@ -378,8 +396,41 @@ class UVMMem(UVMObject):
     #   // through a domain with read-only restrictions would return "RO".
     #   //
     #   extern virtual function string get_access(uvm_reg_map map = None)
-    #
-    #
+    def get_access(self, _map=None):
+        get_access = self.m_access
+        if (self.get_n_maps() == 1):
+            return get_access
+        _map = self.get_local_map(_map, "get_access()")
+        if (map is None):
+            return get_access
+
+        # // Is the memory restricted in this map?
+        rights = self.get_rights(_map)
+        if rights == "RW":
+            # // No restrictions
+            return get_access
+        elif rights == "RO":
+            if get_access in ["RW", "RO"]:
+                get_access = "RO"
+            elif get_access == "WO":
+                uvm_error("RegModel", "WO memory '" + self.get_full_name()
+                    + "' restricted to RO in map '" + _map.get_full_name() + "'")
+            else:
+                uvm_error("RegModel", "Memory '" + self.get_full_name()
+                    + "' has invalid access mode, '" + get_access + "'")
+
+        elif rights == "WO":
+            if get_access in ["RW", "WO"]:
+                get_access = "WO"
+            elif get_access == "RO":
+                uvm_error("RegModel", "RO memory '" + self.get_full_name()
+                    + "' restricted to WO in map '" + _map.get_full_name() + "'")
+            else:
+                uvm_error("RegModel", "Memory '" + self.get_full_name()
+                    + "' has invalid access mode, '" + get_access + "'")
+        else:
+            uvm_error("RegModel", "Shared memory '" + self.get_full_name()
+                + "' is not shared in map '" + _map.get_full_name() + "'")
 
     #   // Function: get_size
     #   //
@@ -758,18 +809,15 @@ class UVMMem(UVMObject):
         if rw.path == UVM_DEFAULT_PATH:
             rw.path = self.m_parent.get_default_path()
 
-        # TODO finish this
-        #   if (rw.path == UVM_BACKDOOR):
-        #      if (get_backdoor() is None  and  !has_hdl_path()):
-        #         `uvm_warning("RegModel",
-        #            {"No backdoor access available for memory '",get_full_name(),
-        #            "' . Using frontdoor instead."})
-        #         rw.path = UVM_FRONTDOOR
-        #      end
-        #      else
-        #        rw.map = uvm_reg_map::backdoor()
-        #   end
-        #
+        if rw.path == UVM_BACKDOOR:
+           if self.get_backdoor() is None and  self.has_hdl_path() is False:
+               uvm_warning("RegModel",
+                 "No backdoor access available for memory '" + self.get_full_name()
+                 + "' . Using frontdoor instead.")
+               rw.path = UVM_FRONTDOOR
+           else:
+               rw.map = UVMRegMap.backdoor()
+
         if rw.path != UVM_BACKDOOR:
             rw.local_map = self.get_local_map(rw.map,caller)
 
@@ -780,12 +828,12 @@ class UVMMem(UVMObject):
                 rw.status = UVM_NOT_OK
                 return 0
 
-            _map_info = rw.local_map.get_mem_map_info(self)
-            map_info.append(_map_info)
+            _map_info_data = rw.local_map.get_mem_map_info(self)
+            map_info.append(_map_info_data)
 
-            if _map_info.frontdoor is None:
+            if _map_info_data.frontdoor is None:
 
-                if (_map_info.unmapped):
+                if (_map_info_data.unmapped):
                     uvm_error("RegModel", "Memory '" + self.get_full_name()
                               + "' unmapped in map '" + rw.map.get_full_name()
                               + "' and does not have a user-defined frontdoor")
@@ -824,7 +872,6 @@ class UVMMem(UVMObject):
         if self.Xcheck_accessX(rw, map_info, "burst_write()") is False:
             yield uvm_empty_delay()
             return
-        map_info = map_info[0]
 
         self.m_write_in_progress = True
         rw.status = UVM_IS_OK
@@ -846,6 +893,7 @@ class UVMMem(UVMObject):
 
         # FRONTDOOR
         if rw.path == UVM_FRONTDOOR:
+            map_info = map_info[0]
 
             system_map = rw.local_map.get_root_map()
             if map_info.frontdoor is not None:
@@ -866,20 +914,17 @@ class UVMMem(UVMObject):
                             (map_info.mem_range.stride * idx), 0, rw.map)
 
         else:
-            raise Exception("Backdoor access not implemented yet for UVMMem!")
-        #   // BACKDOOR TODO
-        #   else begin
-        #      // Mimick front door access, i.e. do not write read-only memories
-        #      if (get_access(rw.map) == "RW"):
-        #         uvm_reg_backdoor bkdr = get_backdoor()
-        #         if (bkdr is not None)
-        #            bkdr.write(rw)
-        #         else
-        #            backdoor_write(rw)
-        #      end
-        #      else
-        #         rw.status = UVM_IS_OK
-        #   end
+            #raise Exception("Backdoor access not implemented yet for UVMMem!")
+            # // BACKDOOR TODO
+            # // Mimick front door access, i.e. do not write read-only memories
+            if self.get_access(rw.map) == "RW":
+                bkdr = self.get_backdoor()  # uvm_reg_backdoor
+                if (bkdr is not None):
+                    yield bkdr.write(rw)
+                else:
+                    yield self.backdoor_write(rw)
+            else:
+                rw.status = UVM_IS_OK
 
         #   // POST-WRITE CBS
         yield self.post_write(rw)
@@ -931,7 +976,6 @@ class UVMMem(UVMObject):
         if self.Xcheck_accessX(rw, map_info, "burst_read()") is False:
             yield uvm_empty_delay()
             return
-        map_info = map_info[0]
 
         self.m_read_in_progress = True
         rw.status = UVM_IS_OK
@@ -951,6 +995,7 @@ class UVMMem(UVMObject):
 
         # FRONTDOOR
         if rw.path == UVM_FRONTDOOR:
+            map_info = map_info[0]
             system_map = rw.local_map.get_root_map()
 
             if (map_info.frontdoor is not None):
@@ -969,16 +1014,13 @@ class UVMMem(UVMObject):
                     self.XsampleX(map_info.mem_range.stride * idx, 1, rw.map)
                     self.m_parent.XsampleX(map_info.offset +
                             (map_info.mem_range.stride * idx), 1, rw.map)
-
-        #
-        #   // BACKDOOR TODO
-        #   else begin
-        #      uvm_reg_backdoor bkdr = get_backdoor()
-        #      if (bkdr is not None)
-        #         bkdr.read(rw)
-        #      else
-        #         backdoor_read(rw)
-        #   end
+        # // BACKDOOR
+        else:
+            bkdr = self.get_backdoor()  # uvm_reg_backdoor
+            if bkdr is not None:
+                yield bkdr.read(rw)
+            else:
+                yield self.backdoor_read(rw)
 
         # POST-READ CBS
         yield self.post_read(rw)
@@ -1084,8 +1126,13 @@ class UVMMem(UVMObject):
     #   extern function void set_backdoor (uvm_reg_backdoor bkdr,
     #                                      string fname = "",
     #                                      int lineno = 0)
+    def set_backdoor(self, bkdr, fname="", lineno=0):
+        self.m_fname = fname
+        self.m_lineno = lineno
+        self.m_backdoor = bkdr
+        #endfunction: set_backdoor
 
-    #
+
     #
     #   // Function: get_backdoor
     #   //
@@ -1099,6 +1146,20 @@ class UVMMem(UVMObject):
     #   // if none have been specified for this memory.
     #   //
     #   extern function uvm_reg_backdoor get_backdoor(bit inherited = 1)
+    def get_backdoor(self, inherited=1):
+        #
+        if self.m_backdoor is None and inherited:
+            blk = self.get_parent()  # uvm_reg_block
+            bkdr = None  # uvm_reg_backdoor
+            while blk is not None:
+                bkdr = blk.get_backdoor()
+                if bkdr is not None:
+                    self.m_backdoor = bkdr
+                    break
+                blk = blk.get_parent()
+        #
+        return self.m_backdoor
+        #endfunction: get_backdoor
 
     #
     #
@@ -1151,6 +1212,11 @@ class UVMMem(UVMObject):
     #   // uses the default design abstraction specified for the parent block.
     #   //
     #   extern function bit  has_hdl_path (string kind = "")
+    def has_hdl_path(self, kind=""):
+        if kind == "":
+            kind = self.m_parent.get_default_hdl_path()
+        return self.m_hdl_paths_pool.exists(kind)
+        #endfunction
 
     #
     #
@@ -1471,12 +1537,6 @@ class UVMMem(UVMObject):
 #
 #
 #
-#// get_n_maps
-#
-#function int uvm_mem::get_n_maps()
-#   return m_maps.num()
-#endfunction: get_n_maps
-#
 #
 #// get_maps
 #
@@ -1541,69 +1601,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// get_access
-#
-#function string uvm_mem::get_access(uvm_reg_map map = None)
-#   get_access = m_access
-#   if (get_n_maps() == 1) return get_access
-#
-#   map = get_local_map(map, "get_access()")
-#   if (map is None) return get_access
-#
-#   // Is the memory restricted in this map?
-#   case (get_rights(map))
-#     "RW":
-#       // No restrictions
-#       return get_access
-#
-#     "RO":
-#       case (get_access)
-#         "RW", "RO": get_access = "RO"
-#
-#         "WO":    `uvm_error("RegModel", {"WO memory '",get_full_name(),
-#                       "' restricted to RO in map '",map.get_full_name(),"'"})
-#
-#         default: `uvm_error("RegModel", {"Memory '",get_full_name(),
-#                       "' has invalid access mode, '",get_access,"'"})
-#       endcase
-#
-#     "WO":
-#       case (get_access)
-#         "RW", "WO": get_access = "WO"
-#
-#         "RO":    `uvm_error("RegModel", {"RO memory '",get_full_name(),
-#                       "' restricted to WO in map '",map.get_full_name(),"'"})
-#
-#         default: `uvm_error("RegModel", {"Memory '",get_full_name(),
-#                       "' has invalid access mode, '",get_access,"'"})
-#       endcase
-#
-#     default: `uvm_error("RegModel", {"Shared memory '",get_full_name(),
-#                  "' is not shared in map '",map.get_full_name(),"'"})
-#   endcase
-#endfunction: get_access
-#
-#
-#// get_rights
-#
-#function string uvm_mem::get_rights(uvm_reg_map map = None)
-#
-#   uvm_reg_map_info info
-#
-#   // No right restrictions if not shared
-#   if (m_maps.num() <= 1):
-#      return "RW"
-#   end
-#
-#   map = get_local_map(map,"get_rights()")
-#
-#   if (map is None)
-#     return "RW"
-#
-#   info = map.get_mem_map_info(this)
-#   return info.rights
-#
-#endfunction: get_rights
 #
 #
 #// get_offset
@@ -2035,37 +2032,6 @@ class UVMMem(UVMObject):
 #// Group- Backdoor
 #//----------------
 #
-#// set_backdoor
-#
-#function void uvm_mem::set_backdoor(uvm_reg_backdoor bkdr,
-#                                    string fname = "",
-#                                    int lineno = 0)
-#   m_fname = fname
-#   m_lineno = lineno
-#   m_backdoor = bkdr
-#endfunction: set_backdoor
-#
-#
-#// get_backdoor
-#
-#function uvm_reg_backdoor uvm_mem::get_backdoor(bit inherited = 1)
-#
-#   if (m_backdoor is None && inherited):
-#     uvm_reg_block blk = get_parent()
-#     uvm_reg_backdoor bkdr
-#     while (blk != None):
-#       bkdr = blk.get_backdoor()
-#       if (bkdr != None):
-#         m_backdoor = bkdr
-#         break
-#       end
-#       blk = blk.get_parent()
-#     end
-#   end
-#
-#   return m_backdoor
-#endfunction: get_backdoor
-#
 #
 #// backdoor_read_func
 #
@@ -2219,14 +2185,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// has_hdl_path
-#
-#function bit  uvm_mem::has_hdl_path(string kind = "")
-#  if (kind == "")
-#    kind = m_parent.get_default_hdl_path()
-#
-#  return m_hdl_paths_pool.exists(kind)
-#endfunction
 #
 #
 #// get_hdl_path
