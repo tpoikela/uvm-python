@@ -1493,9 +1493,9 @@ class UVMRegMap(UVMObject):
             tmp_parent_seq = seq
 
         if rw.parent is None:
-             #rw.parent = new("default_parent_seq")
-             rw.parent = UVMSequenceBase("default_parent_seq")
-             tmp_parent_seq = rw.parent
+            #rw.parent = new("default_parent_seq")
+            rw.parent = UVMSequenceBase("default_parent_seq")
+            tmp_parent_seq = rw.parent
 
         if adapter is None:
             uvm_debug(self, 'do_write', 'Start seq because adapter is None')
@@ -1507,7 +1507,7 @@ class UVMRegMap(UVMObject):
             uvm_debug(self, 'do_write', 'do_bus_write because adapter exists')
             yield self.do_bus_write(rw, sequencer, adapter)
 
-        #
+        # TODO
         #  if (tmp_parent_seq is not None)
         #    sequencer.m_sequence_exiting(tmp_parent_seq)
         #
