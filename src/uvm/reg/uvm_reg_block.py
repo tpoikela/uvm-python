@@ -1192,7 +1192,12 @@ class UVMRegBlock(UVMObject):
     #   // Returns "" if no default design abstraction has been specified.
     #   //
     #   extern function string get_default_hdl_path ()
-    #
+    def get_default_hdl_path(self):
+        if (self.default_hdl_path == "" and parent is not None):
+            return parent.get_default_hdl_path()
+        return self.default_hdl_path
+        #endfunction
+
 
     #   // Function: set_hdl_path_root
     #   //
@@ -1989,13 +1994,6 @@ class UVMRegBlock(UVMObject):
 #endfunction
 #
 #
-# get_default_hdl_path
-#
-#function string uvm_reg_block::get_default_hdl_path()
-#  if (default_hdl_path == "" && parent is not None)
-#    return parent.get_default_hdl_path()
-#  return default_hdl_path
-#endfunction
 #
 #
 # set_default_hdl_path
