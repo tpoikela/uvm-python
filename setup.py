@@ -1,5 +1,5 @@
 from os import path
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read_file(fname):
@@ -16,7 +16,7 @@ setup(
     long_description_content_type="text/markdown",
     license="Apache 2.0",
     keywords=["UVM", "SystemVerilog", "Verilog", "RTL", "Coverage"],
-    packages=["uvm"],
+    packages=find_packages(),
     package_dir={"": "src"},
     setup_requires=["setuptools_scm",],
     python_requires=">=3.5",
