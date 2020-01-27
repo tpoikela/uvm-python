@@ -4,7 +4,7 @@ UVM library for Python
 This is a port of SystemVerilog (SV) Universal Verification Methodology (UVM)
 1.2 to Python and cocotb. Only Icarus Verilog (iverilog) has been used for
 testing the code so
-far, but the plan is to include verilator in ther regressions as well.
+far, but the plan is to include verilator in the regressions as well.
 
 Why bother?
 -----------
@@ -28,14 +28,41 @@ missing lot of functionality. But please try it out, and let me know if
 something you require should be added, or even better, add it yourself, test it
 and create a pull request!
 
-Running and examples
---------------------
+Installation
+------------
+
+You can install uvm-python as a normal Python package:
+
+```shell
+git clone https://github.com/tpoikela/uvm-python.git
+cd uvm-python
+pip install --user .  # Omit --user for global installation
+```
+
+See `Makefile` for working examples. You can use Makefiles in `test/examples` as a
+template for your project.
+
+Development and Running the examples
+------------------------------------
 
 See `Makefile` for working examples. More features/examples will be added
 incrementally.
 
 To run all tests:
-```
-    make test
+```shell
+    SIM=icarus make test  # Use iverilog as a simulator
 ```
 
+To run unit tests only:
+```
+    make test-unit  # Does not require simulator
+```
+
+HDL Simulators
+--------------
+
+Icarus Verilog (iverilog) and verilator (v4.20+) are free simulators, which can
+be used with cocotb. uvm-python uses cocotb to interface with these simulators.
+
+Commercial simulators that work with cocotb can of course be used with
+uvm-python as well.
