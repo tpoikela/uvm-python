@@ -1,6 +1,6 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2007-2010 Mentor Graphics Corporation
-#//   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2013-2014 NVIDIA Corporation
 #//   Copyright 2019 Tuomas Poikela
@@ -26,7 +26,7 @@ uvm_cdn_copyright  = "(C) 2007-2014 Cadence Design Systems, Inc."
 uvm_snps_copyright = "(C) 2006-2014 Synopsys, Inc."
 uvm_cy_copyright   = "(C) 2011-2013 Cypress Semiconductor Corp."
 uvm_nv_copyright   = "(C) 2013-2014 NVIDIA Corporation"
-uvm_revision = "uvm-python 0.1.0 (Ported from UVM 1.2)"
+uvm_revision = "uvm-python 0.0.0 (Ported from UVM 1.2)"
 uvm_tpoikela_copyright = "(C) 2019-2020 Tuomas Poikela (tpoikela)"
 
 def uvm_revision_string():
