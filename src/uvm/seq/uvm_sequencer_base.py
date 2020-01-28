@@ -849,11 +849,10 @@ class UVMSequencerBase(UVMComponent):
             if self.arb_completed.exists(request_id):
                 self.arb_completed.delete(request_id)
                 return
-            self.m_event_value_changed.clear()
-            evt = self.m_event_value_changed.wait()
-            yield evt
-            if lock_arb_size != self.m_lock_arb_size:
-                break
+
+            while lock_arb_size == self.m_lock_arb_size:
+                yield self.m_event_value_changed.wait()
+                self.m_event_value_changed.clear()
         #endtask
         #
 
