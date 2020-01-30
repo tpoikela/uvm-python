@@ -42,11 +42,13 @@
 #//------------------------------------------------------------------------------
 
 import cocotb
+from cocotb.triggers import Timer
 
 from uvm.base.uvm_transaction import UVMTransaction
 from uvm.base.uvm_callback import UVMCallback
 from uvm.base.uvm_component import *
 from uvm.base.sv import sv
+from uvm.macros import *
 from uvm.tlm1 import *
 
 #//------------------------------------------------------------------------------
@@ -137,24 +139,23 @@ class bus_driver(UVMComponent):
         return type_name
 
     def trans_received(self, tr):
-        uvm_do_callbacks_exit_on(bus_driver,bus_driver_cb,trans_received(self,tr),1)
+        uvm_do_callbacks_exit_on(bus_driver,bus_driver_cb, trans_received(self,tr) ,1)
 
 
     @cocotb.coroutine
     def trans_executed(self, tr):
-        uvm_do_callbacks(bus_driver,bus_driver_cb,trans_executed(self,tr))
+        uvm_do_callbacks(bus_driver,bus_driver_cb, trans_executed(self,tr))
 
     @cocotb.coroutine
     def put(self, t):
         uvm_report_info("bus_tr received",t.convert2string())
         if self.trans_received(t) is False:
-            uvm_report_info("bus_tr dropped", "user callback indicated DROPPED\n")
+            uvm_info("bus_tr dropped", "user callback indicated DROPPED\n")
             return
 
         yield Timer(100, "NS")
         yield self.trans_executed(t)
-        uvm_report_info("bus_tr executed", t.convert2string() + "\n")
-
+        uvm_info("bus_tr executed", t.convert2string() + "\n")
 
 
 uvm_register_cb(bus_driver, bus_driver_cb)
