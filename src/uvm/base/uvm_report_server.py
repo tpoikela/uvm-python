@@ -265,7 +265,7 @@ class UVMReportServer(UVMObject):
     # returns the <uvm_tr_database> used for recording messages
     #
     def get_message_database(self):
-         return self.m_message_db
+        return self.m_message_db
 
     def get_severity_set(self, q):
         while self.m_severity_count.has_next():
@@ -471,8 +471,6 @@ class UVMReportServer(UVMObject):
 
     def report_summarize(self, file=0):
         id = ""
-        name = ""
-        output_str = ""
         q = []
 
         UVMReportCatcher.summarize()
