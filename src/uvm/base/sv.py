@@ -277,3 +277,16 @@ class sv_if(Bus):
             optional_signals=[], bus_separator="_", array_idx=None):
         Bus.__init__(self, entity, name, signals, optional_signals,
                 bus_separator, array_idx)
+
+@cocotb.coroutine
+def wait(cond, ev):
+    if not callable(cond):
+        raise Exception("wait expects the first arguments to be callable")
+    
+    while True:
+        if cond():
+            break
+        else:
+            yield ev.wait()
+            ev.clear()
+

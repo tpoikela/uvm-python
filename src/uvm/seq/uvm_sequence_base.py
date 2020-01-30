@@ -32,6 +32,7 @@ from ..macros import uvm_fatal, uvm_warning
 from ..base.uvm_pool import UVMPool
 from ..dap import uvm_get_to_lock_dap
 from ..base.uvm_recorder import UVMRecorder
+from uvm.base.sv import wait
 
 SEQ_ERR1_MSG = "neither the item's sequencer nor dedicated sequencer has been supplied to start item in "
 
@@ -1142,18 +1143,12 @@ class UVMSequenceBase(UVMSequenceItem):
         i = 0
 
         if self.response_queue.size() == 0:
-            while True:
-                yield self.m_resp_queue_event.wait()
-                self.m_resp_queue_event.clear()
-                if self.response_queue.size() != 0:
-                    break
-                else:
-                    yield Timer(0)
+            yield wait(lambda : self.response_queue.size() == 0,
+                 self.m_resp_queue_event)
 
         if transaction_id == -1:
             resp_item = self.response_queue.pop_front()
             response.append(resp_item)
-            yield Timer(0)
             return
 
         while True:
@@ -1165,11 +1160,8 @@ class UVMSequenceBase(UVMSequenceItem):
                     self.m_resp_queue_event.set()
                     return
             #wait (self.response_queue.size() != queue_size)
-            while True:
-                yield self.m_resp_queue_event.wait()
-                self.m_resp_queue_event.clear()
-                if (self.response_queue.size() != queue_size):
-                    break
+            yield wait(lambda : self.response_queue.size() != queue_size,
+                       self.m_resp_queue_event)
         #  endtask
 
 

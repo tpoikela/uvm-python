@@ -1595,8 +1595,7 @@ class UVMPhase(UVMObject):
         for phase in self.m_sync:
             if (phase.m_state < UVM_PHASE_SYNCING):
                 events.append(phase.get_phase_synced_event())
-        # TODO yield Combine(*events)
-        yield Timer(0)
+        yield Combine(*events)
 
     def has_predecessors(self):
         return len(self.m_predecessors) > 0
