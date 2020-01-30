@@ -45,9 +45,10 @@ import cocotb
 from cocotb.triggers import Timer
 
 from uvm.base.uvm_transaction import UVMTransaction
-from uvm.base.uvm_callback import UVMCallback
+from uvm.base.uvm_callback import (UVMCallback, UVMCallbacks)
 from uvm.base.uvm_component import *
 from uvm.base.sv import sv
+from uvm.base.uvm_report_server import UVMReportServer
 from uvm.macros import *
 from uvm.tlm1 import *
 
@@ -92,9 +93,9 @@ class bus_driver_cb(UVMCallback):
     def trans_received(self, driver, tr):
         return 0
 
-    @cocotb.coroutine
+    #@cocotb.coroutine TODO fix this
     def trans_executed(self, driver, tr):
-        pass
+        yield Timer(0, "NS")
 
     def __init__(self, name="bus_driver_cb_inst"):
         super().__init__(name)
@@ -136,15 +137,16 @@ class bus_driver(UVMComponent):
     type_name = "bus_driver"
 
     def get_type_name(self):
-        return type_name
+        return bus_driver.type_name
 
     def trans_received(self, tr):
-        uvm_do_callbacks_exit_on(bus_driver,bus_driver_cb, trans_received(self,tr) ,1)
+        uvm_do_callbacks_exit_on(self,bus_driver_cb, 'trans_received', 1, self, tr)
 
 
     @cocotb.coroutine
     def trans_executed(self, tr):
-        uvm_do_callbacks(bus_driver,bus_driver_cb, trans_executed(self,tr))
+        yield Timer(0, "NS")
+        return uvm_do_callbacks(self, bus_driver_cb, 'trans_executed', self, tr)
 
     @cocotb.coroutine
     def put(self, t):
@@ -155,7 +157,7 @@ class bus_driver(UVMComponent):
 
         yield Timer(100, "NS")
         yield self.trans_executed(t)
-        uvm_info("bus_tr executed", t.convert2string() + "\n")
+        uvm_info("bus_tr executed", t.convert2string() + "\n", UVM_LOW)
 
 
 uvm_register_cb(bus_driver, bus_driver_cb)
@@ -200,7 +202,8 @@ class my_bus_driver_cb(bus_driver_cb):
         my_bus_driver_cb.drop = 1 - my_bus_driver_cb.drop
         return my_bus_driver_cb.drop
 
-    @cocotb.coroutine
+    #@cocotb.coroutine
+    #@cocotb.coroutine TODO fix this
     def trans_executed(self, driver, tr):
         driver.uvm_report_info("trans_executed_cb",
             "  bus_driver=" + driver.get_full_name() + " tr=" + tr.convert2string())
@@ -224,7 +227,7 @@ class my_bus_driver_cb2(bus_driver_cb):
         super().__init__(name)
 
 
-    @cocotb.coroutine
+    #@cocotb.coroutine TODO fix this
     def trans_executed(self, driver, tr):
         driver.uvm_report_info("trans_executed_cb2",
             "  bus_driver=" + driver.get_full_name() + " tr=" + tr.convert2string())
@@ -256,9 +259,9 @@ def module_top(dut):
     cb1    = my_bus_driver_cb("cb1")
     cb2    = my_bus_driver_cb2("cb2")
 
-    bus_driver_cbs_t.add(driver,cb1)
-    bus_driver_cbs_t.add(driver,cb2)
-    bus_driver_cbs_t.display()
+    UVMCallbacks.add(driver,cb1)
+    UVMCallbacks.add(driver,cb2)
+    UVMCallbacks.display()
 
     for i in range(5):
         tr.addr = i
@@ -266,4 +269,4 @@ def module_top(dut):
         yield driver.in_port.put(tr)
 
     svr = UVMReportServer.get_server()
-    svr.summarize()
+    svr.report_summarize()
