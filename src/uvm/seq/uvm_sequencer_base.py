@@ -34,6 +34,8 @@ from ..base.uvm_object_globals import *
 from ..base.uvm_pool import UVMPool
 from ..base.uvm_queue import UVMQueue
 from ..base.uvm_globals import uvm_wait_for_nba_region
+from uvm.base.sv import sv_if, wait
+from setuptools.dist import sequence
 
 SEQ_ERR1_MSG = ("The task responsible for requesting a lock on sequencer '%s' "
     + " for sequence '%s' has been killed, to avoid a deadlock the sequence will "
@@ -438,20 +440,14 @@ class UVMSequencerBase(UVMComponent):
 
         if (transaction_id == -1):
             #wait (m_wait_for_item_sequence_id == sequence_id)
-            while True:
-                self.m_event_value_changed.clear()
-                yield self.m_event_value_changed.wait()
-                if self.m_wait_for_item_sequence_id == sequence_id:
-                    break
+            yield wait(lambda : self.m_wait_for_item_sequence_id == sequence_id,
+                 self.m_event_value_changed)
         else:
             # wait ((m_wait_for_item_sequence_id == sequence_id &&
             #        m_wait_for_item_transaction_id == transaction_id))
-            while True:
-                self.m_event_value_changed.clear()
-                yield self.m_event_value_changed.wait()
-                if ((self.m_wait_for_item_sequence_id == sequence_id and
-                    self.m_wait_for_item_transaction_id == transaction_id)):
-                    break
+            yield wait(lambda : self.m_wait_for_item_sequence_id == sequence_id and
+                 self.m_wait_for_item_transaction_id == transaction_id,
+                 self.m_event_value_changed)
 
     #  // Function: is_blocked
     #  //
@@ -849,10 +845,10 @@ class UVMSequencerBase(UVMComponent):
             if self.arb_completed.exists(request_id):
                 self.arb_completed.delete(request_id)
                 return
+            
+            yield wait(lambda : lock_arb_size != self.m_lock_arb_size,
+                self.m_event_value_changed)
 
-            while lock_arb_size == self.m_lock_arb_size:
-                yield self.m_event_value_changed.wait()
-                self.m_event_value_changed.clear()
         #endtask
         #
 
@@ -979,11 +975,8 @@ class UVMSequencerBase(UVMComponent):
     #  extern protected task            m_wait_arb_not_equal()
     @cocotb.coroutine
     def m_wait_arb_not_equal(self):
-        while (True):
-            self.m_event_value_changed.clear()
-            yield self.m_event_value_changed.wait()
-            if self.m_arb_size != self.m_lock_arb_size:
-                break
+        yield wait(lambda : self.m_arb_size != self.m_lock_arb_size, 
+             self.m_event_value_changed)
 
     #  extern protected task            m_wait_for_available_sequence()
     @cocotb.coroutine
@@ -1049,17 +1042,8 @@ class UVMSequencerBase(UVMComponent):
             forked_proc = cocotb.fork(self._rel_entry_fork_proc(i, is_relevant_entries))
             fork_procs_join_none.append(forked_proc)
             #join_none
-        yield self.wait_is_relevant_completed()
-
-    @cocotb.coroutine
-    def wait_is_relevant_completed(self):
-        yield Timer(0)
-        # TODO
-        while True:
-            self.m_event_value_changed.clear()
-            yield self.m_event_value_changed.wait()
-            if self.m_is_relevant_completed > 0:
-                break
+        yield wait(lambda : self.m_is_relevant_completed > 0,
+                   self.m_event_value_changed)
 
     #  extern protected function int    m_get_seq_item_priority(uvm_sequence_request seq_q_entry)
     #

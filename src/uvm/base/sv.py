@@ -16,6 +16,7 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
+import traceback
 
 """ Some SystemVerilog system functions mocked here """
 
@@ -277,3 +278,16 @@ class sv_if(Bus):
             optional_signals=[], bus_separator="_", array_idx=None):
         Bus.__init__(self, entity, name, signals, optional_signals,
                 bus_separator, array_idx)
+
+@cocotb.coroutine
+def wait(cond, ev):
+    if not callable(cond):
+        raise Exception("wait expects the first arguments to be callable")
+    
+    while True:
+        if cond():
+            break
+        else:
+            yield ev.wait()
+            ev.clear()
+
