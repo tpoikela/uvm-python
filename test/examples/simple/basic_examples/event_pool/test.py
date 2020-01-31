@@ -39,6 +39,7 @@ from uvm.base.uvm_pool import UVMEventPool
 from uvm.base.uvm_globals import UVM_FATAL, UVM_ERROR
 from uvm.base.sv import sv
 
+from uvm.macros import uvm_error
 from uvm.base.uvm_global_vars import uvm_default_table_printer
 
 
@@ -86,5 +87,10 @@ def test_test(dut):
             svr.get_severity_count(UVM_ERROR) == 0):
         print("** UVM TEST PASSED **\n")
     else:
+        if data_ok is False:
+            uvm_error("DATA_ERROR", "Exp: {}, Got: {}".format(0x1234,
+                e_data.get_trigger_data()))
+        if time_ok is False:
+            uvm_error("TIME_ERROR", "Exp: {}, Got: {}".format(202,
+                sv.realtime("NS")))
         raise Exception("!! UVM TEST FAILED !!\n")
-    yield Timer(0)
