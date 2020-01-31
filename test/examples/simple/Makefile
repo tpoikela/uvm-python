@@ -1,5 +1,6 @@
 
-test: test-trivial test-basic_examples test-sequence test-hello_world test-registers test-tlm1 test-configuration test-callbacks
+test: test-trivial test-basic_examples test-sequence test-hello_world\
+    test-registers test-tlm1 test-configuration test-callbacks test-factory
 
 test-trivial:
 	make -C trivial/
@@ -23,6 +24,9 @@ test-tlm1:
 
 test-callbacks:
 	make -C callbacks/
+
+test-factory:
+	make -C factory/
 
 test-configuration:
 	make -C configuration/manual/
