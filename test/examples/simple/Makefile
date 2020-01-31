@@ -1,5 +1,5 @@
 
-test: test-trivial test-basic_examples test-sequence test-hello_world\
+test: test-trivial test-basic_examples test-sequence test-interfaces test-hello_world\
     test-registers test-tlm1 test-configuration test-callbacks test-factory
 
 test-trivial:
@@ -9,6 +9,9 @@ test-basic_examples:
 	make -C basic_examples/pkg/
 	make -C basic_examples/event_pool/
 	make -C basic_examples/module/
+
+test-interfaces:
+	make -C interfaces/
 
 test-sequence:
 	make -C sequence/basic_read_write_sequence/
