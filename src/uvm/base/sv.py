@@ -27,6 +27,7 @@ from cocotb_coverage import crv
 from cocotb.triggers import Lock, Timer
 from cocotb.utils import get_sim_time
 from cocotb.bus import Bus
+from inspect import getframeinfo, stack
 
 # from constraint import Problem
 
@@ -174,6 +175,13 @@ class sv:
     def urandom_range(cls, start, stop):
         return random.randint(start, stop)
 
+    @classmethod
+    def sv_assert(cls, val):
+        if not val:
+            caller = getframeinfo(stack()[1][0])
+            filename = caller.filename
+            line = caller.lineno
+            print("$error: {},{} Assertion failed.".format(filename, line))
 
 random.seed(0)
 
