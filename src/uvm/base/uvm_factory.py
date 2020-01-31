@@ -28,7 +28,7 @@ from .uvm_queue import UVMQueue
 from .uvm_pool import UVMPool
 from .uvm_globals import (uvm_report_error, uvm_report_fatal, uvm_report_warning,
     uvm_is_match, uvm_report_info)
-from .uvm_object_globals import UVM_NONE, UVM_MEDIUM
+from .uvm_object_globals import UVM_NONE, UVM_MEDIUM, UVM_HIGH
 from ..macros import uvm_info
 from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 
@@ -101,7 +101,7 @@ class UVMFactory:
     #//
     @classmethod
     def get(cls):
-        from uvm_coreservice import UVMCoreService
+        from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         return cs.get_factory()
 
@@ -169,69 +169,71 @@ class UVMDefaultFactory(UVMFactory):
                     if uvm_is_match(self.m_wildcard_inst_overrides[i].orig_type_name, obj.get_type_name()):
                         self.m_inst_override_queues[obj].push_back(self.m_wildcard_inst_overrides[i])
 
-    # set_type_override_by_type
-    # -------------------------
-    # TODO
-    # def set_type_override_by_type (self, original_type, override_type, bit replace=1)
-    #  bit replaced
+    #// set_type_override_by_type
+    #// -------------------------
     #
-    #  // check that old and new are not the same
-    #  if (original_type == override_type) begin
-    #    if (original_type.get_type_name() == "" || original_type.get_type_name() == "<unknown>")
-    #      uvm_report_warning("TYPDUP", {"Original and override type ",
-    #                                    "arguments are identical"}, UVM_NONE)
-    #    else
-    #      uvm_report_warning("TYPDUP", {"Original and override type ",
-    #                                    "arguments are identical: ",
-    #                                    original_type.get_type_name()}, UVM_NONE)
-    #  end
-    #
-    #  // register the types if not already done so, for the benefit of string-based lookup
-    #  if (!self.m_types.exists(original_type))
-    #    register(original_type)
-    #
-    #  if (!self.m_types.exists(override_type))
-    #    register(override_type)
-    #
-    #
-    #  // check for existing type override
-    #  foreach (self.m_type_overrides[index]) begin
-    #    if (self.m_type_overrides[index].orig_type == original_type ||
-    #        (self.m_type_overrides[index].orig_type_name != "<unknown>" &&
-    #         self.m_type_overrides[index].orig_type_name != "" &&
-    #         self.m_type_overrides[index].orig_type_name == original_type.get_type_name())) begin
-    #      string msg
-    #      msg = {"Original object type '",original_type.get_type_name(),
-    #             "' already registered to produce '",
-    #             self.m_type_overrides[index].ovrd_type_name,"'"}
-    #      if (!replace) begin
-    #        msg = {msg, ".  Set 'replace' argument to replace the existing entry."}
-    #        uvm_report_info("TPREGD", msg, UVM_MEDIUM)
-    #        return
-    #      end
-    #      msg = {msg, ".  Replacing with override to produce type '",
-    #                  override_type.get_type_name(),"'."}
-    #      uvm_report_info("TPREGR", msg, UVM_MEDIUM)
-    #      replaced = 1
-    #      self.m_type_overrides[index].orig_type = original_type
-    #      self.m_type_overrides[index].orig_type_name = original_type.get_type_name()
-    #      self.m_type_overrides[index].ovrd_type = override_type
-    #      self.m_type_overrides[index].ovrd_type_name = override_type.get_type_name()
-    #    end
-    #  end
-    #
-    #  // make a new entry
-    #  if (!replaced) begin
-    #    uvm_factory_override override
-    #    override = new(.orig_type(original_type),
-    #                   .orig_type_name(original_type.get_type_name()),
-    #                   .full_inst_path("*"),
-    #                   .ovrd_type(override_type))
-    #
-    #    self.m_type_overrides.push_back(override)
-    #  end
-    #
-    #endfunction
+    #function void uvm_default_factory::set_type_override_by_type (uvm_object_wrapper original_type,
+    #                                                      uvm_object_wrapper override_type,
+    #                                                      bit replace=1)
+    def set_type_override_by_type(self, original_type, override_type,
+            replace=True):
+        replaced = False
+
+        # check that old and new are not the same
+        if original_type == override_type:
+            if (original_type.get_type_name() == "" or original_type.get_type_name() == "<unknown>"):
+                uvm_report_warning("TYPDUP", "Original and override type "
+                        + "arguments are identical", UVM_NONE)
+            else:
+                uvm_report_warning("TYPDUP", "Original and override type "
+                        + "arguments are identical: "
+                        + original_type.get_type_name(), UVM_NONE)
+
+        # register the types if not already done so, for the benefit of string-based lookup
+        if not self.m_types.exists(original_type):
+            self.register(original_type)
+
+        if not self.m_types.exists(override_type):
+            self.register(override_type)
+
+        # check for existing type override
+        for index in range(len(self.m_type_overrides)):
+            idx_orig_type = self.m_type_overrides[index].orig_type
+            idx_type_name = self.m_type_overrides[index].orig_type_name
+            if (idx_orig_type == original_type or
+                    (idx_type_name != "<unknown>" and
+                        idx_type_name != "" and
+                        idx_type_name == original_type.get_type_name())):
+
+                msg = ("Original object type '" + original_type.get_type_name()
+                       + "' already registered to produce '"
+                       + self.m_type_overrides[index].ovrd_type_name + "'")
+                if replace is False:
+                    msg = msg + ".  Set 'replace' argument to replace the existing entry."
+                    uvm_report_info("TPREGD", msg, UVM_MEDIUM)
+                    return
+
+                msg = (msg + ".  Replacing with override to produce type '"
+                    + override_type.get_type_name() + "'.")
+                uvm_report_info("TPREGR", msg, UVM_MEDIUM)
+                replaced = True
+                self.m_type_overrides[index].orig_type = original_type
+                self.m_type_overrides[index].orig_type_name = original_type.get_type_name()
+                self.m_type_overrides[index].ovrd_type = override_type
+                self.m_type_overrides[index].ovrd_type_name = override_type.get_type_name()
+
+
+
+        #  make a new entry
+        if replaced is False:
+            # uvm_factory_override override
+            override = UVMFactoryOverride(orig_type=original_type,
+                           orig_type_name=original_type.get_type_name(),
+                           full_inst_path="*",
+                           ovrd_type=override_type)
+
+            self.m_type_overrides.push_back(override)
+
 
     # set_type_override_by_name
     # -------------------------
@@ -290,70 +292,67 @@ class UVMDefaultFactory(UVMFactory):
             self.m_type_overrides.push_back(override)
             self.m_type_names.add(original_type_name, override.ovrd_type)
 
-    # check_inst_override_exists
-    # --------------------------
-    # TODO
-    #function bit uvm_default_factory::check_inst_override_exists (
-    #    uvm_object_wrapper original_type,
+    #// check_inst_override_exists
+    #// --------------------------
+    #function bit uvm_default_factory::check_inst_override_exists (uvm_object_wrapper original_type,
     #                                      uvm_object_wrapper override_type,
     #                                      string full_inst_path)
-    #  uvm_factory_override override
-    #  uvm_factory_queue_class qc
-    #
-    #  if (m_inst_override_queues.exists(original_type))
-    #    qc = m_inst_override_queues[original_type]
-    #  else
-    #    return 0
-    #
-    #  for (int index=0; index<qc.queue.size(); ++index) begin
-    #
-    #    override = qc.queue[index]
-    #    if (override.full_inst_path == full_inst_path &&
-    #        override.orig_type == original_type &&
-    #        override.ovrd_type == override_type &&
-    #        override.orig_type_name == original_type.get_type_name()) begin
-    #    uvm_report_info("DUPOVRD",{"Instance override for '",
-    #       original_type.get_type_name(),"' already exists: override type '",
-    #       override_type.get_type_name(),"' with full_inst_path '",
-    #       full_inst_path,"'"},UVM_HIGH)
-    #      return 1
-    #    end
-    #  end
-    #  return 0
-    #endfunction
+    def check_inst_override_exists(self, original_type, override_type,
+            full_inst_path):
+        override = None  # uvm_factory_override
+        qc = None  # uvm_factory_queue_class
 
-    # set_inst_override_by_type
-    # -------------------------
-    # TODO
-    #function void uvm_default_factory::set_inst_override_by_type (
-    #   uvm_object_wrapper original_type,
+        if original_type in self.m_inst_override_queues:
+            qc = self.m_inst_override_queues[original_type]
+        else:
+            return 0
+
+        for index in range(len(qc.queue)):
+            override = qc.queue[index]
+            if (override.full_inst_path == full_inst_path and
+                    override.orig_type == original_type and
+                    override.ovrd_type == override_type and
+                    override.orig_type_name == original_type.get_type_name()):
+                uvm_report_info("DUPOVRD", "Instance override for '"
+                    + original_type.get_type_name() + "' already exists: override type '"
+                    + override_type.get_type_name() + "' with full_inst_path '"
+                    + full_inst_path + "'", UVM_HIGH)
+                return 1
+        return 0
+
+
+    #// set_inst_override_by_type
+    #// -------------------------
+    #
+    #function void uvm_default_factory::set_inst_override_by_type (uvm_object_wrapper original_type,
     #                                                      uvm_object_wrapper override_type,
     #                                                      string full_inst_path)
-    #
-    #  uvm_factory_override override
-    #
-    #  // register the types if not already done so
-    #  if (!self.m_types.exists(original_type))
-    #    register(original_type)
-    #
-    #  if (!self.m_types.exists(override_type))
-    #    register(override_type)
-    #
-    #  if (check_inst_override_exists(original_type,override_type,full_inst_path))
-    #    return
-    #
-    #  if(!m_inst_override_queues.exists(original_type))
-    #    m_inst_override_queues[original_type] = new
-    #
-    #  override = new(.full_inst_path(full_inst_path),
-    #                 .orig_type(original_type),
-    #                 .orig_type_name(original_type.get_type_name()),
-    #                 .ovrd_type(override_type))
-    #
-    #
-    #  m_inst_override_queues[original_type].queue.push_back(override)
-    #
-    #endfunction
+    def set_inst_override_by_type(self, original_type, override_type,
+            full_inst_path):
+
+        override = None  # uvm_factory_override
+
+        # register the types if not already done so
+        if not self.m_types.exists(original_type):
+            self.register(original_type)
+
+        if not self.m_types.exists(override_type):
+            self.register(override_type)
+
+        if self.check_inst_override_exists(original_type,override_type,full_inst_path):
+            return
+
+        if original_type not in self.m_inst_override_queues:
+            self.m_inst_override_queues[original_type] = UVMQueue()
+
+        override = UVMFactoryOverride(full_inst_path=full_inst_path,
+                orig_type=original_type,
+                orig_type_name=original_type.get_type_name(),
+                ovrd_type=override_type)
+
+
+        self.m_inst_override_queues[original_type].push_back(override)
+
 
     # set_inst_override_by_name
     # -------------------------
@@ -470,7 +469,7 @@ class UVMDefaultFactory(UVMFactory):
         if parent_inst_path == "":
             inst_path = name
         elif name != "":
-          inst_path = parent_inst_path + "." + name
+            inst_path = parent_inst_path + "." + name
         else:
             inst_path = parent_inst_path
 
@@ -481,8 +480,8 @@ class UVMDefaultFactory(UVMFactory):
         if wrapper is None:
             if not self.m_type_names.exists(requested_type_name):
                 uvm_report_warning("BDTYP", ("Cannot create a component of type '"
-                    + requested_type_name + "' because it is not registered with the factory."
-                    ), UVM_NONE)
+                    + requested_type_name + "' because it is not registered with the factory.")
+                    , UVM_NONE)
                 return None
             wrapper = self.m_type_names.get(requested_type_name)
 
@@ -490,7 +489,7 @@ class UVMDefaultFactory(UVMFactory):
 
     # create_component_by_type
     # ------------------------
-    def create_component_by_type (self, requested_type, parent_inst_path, name,
+    def create_component_by_type(self, requested_type, parent_inst_path, name,
             parent):
         full_inst_path = ""
         if parent_inst_path == "":
@@ -554,16 +553,16 @@ class UVMDefaultFactory(UVMFactory):
                             else:
                                 return self.find_override_by_type(qc[index].ovrd_type,full_inst_path)
 
-        ovrd_ok = not rtype in self.m_inst_override_queues and self.m_wildcard_inst_overrides.size() > 0
+        ovrd_ok = rtype not in self.m_inst_override_queues and self.m_wildcard_inst_overrides.size() > 0
         if rtype is not None and ovrd_ok:
-           self.m_inst_override_queues[rtype] = UVMQueue()
-           for i in range(0, self.m_wildcard_inst_overrides.size()):
-               if uvm_is_match(self.m_wildcard_inst_overrides.get(i).orig_type_name,
-                       requested_type_name):
-                   self.m_inst_override_queues[rtype].push_back(self.m_wildcard_inst_overrides.get(i))
+            self.m_inst_override_queues[rtype] = UVMQueue()
+            for i in range(0, self.m_wildcard_inst_overrides.size()):
+                if uvm_is_match(self.m_wildcard_inst_overrides.get(i).orig_type_name,
+                        requested_type_name):
+                    self.m_inst_override_queues[rtype].push_back(self.m_wildcard_inst_overrides.get(i))
 
         # type override - exact match
-        for i in range(0, self.m_type_overrides.size()):
+        for index in range(0, self.m_type_overrides.size()):
             if self.m_type_overrides[index].orig_type_name == requested_type_name:
                 self.m_override_info.push_back(self.m_type_overrides[index])
                 if UVMDefaultFactory.m_debug_pass:
@@ -644,9 +643,8 @@ class UVMDefaultFactory(UVMFactory):
         return requested_type
         #endfunction
 
-    # print
-    # -----
-    def print(self, all_types=True):
+    # tpoikela: Added to access factory string without print()
+    def convert2string(self, all_types=True):
         key = ""
         sorted_override_queues = {}  # uvm_factory_queue_class s[string]
         qs = UVMQueue()
@@ -681,22 +679,23 @@ class UVMDefaultFactory(UVMFactory):
             if len(sorted_override_queues) == 0:
                 qs.push_back("No instance overrides are registered with this factory\n")
             else:
-                for qc in sorted_override_queues:
-                    # qc = sorted_override_queues[j]
-                    #for (int i=0; i<qc.queue.size(); ++i) begin
+                for key, qc in sorted_override_queues.items():
                     for i in range(len(qc.queue)):
-                        if (qc.queue[i].orig_type_name.len() > max1):
-                            max1 = len(qc.queue[i].orig_type_name)
-                        if (qc.queue[i].full_inst_path.len() > max2):
-                            max2 = len(qc.queue[i].full_inst_path)
-                        if (qc.queue[i].ovrd_type_name.len() > max3):
-                            max3 = len(qc.queue[i].ovrd_type_name)
+                        orig_type_name = qc.queue[i].orig_type_name
+                        full_inst_path = qc.queue[i].full_inst_path
+                        ovrd_type_name = qc.queue[i].ovrd_type_name
+                        if len(orig_type_name) > max1:
+                            max1 = len(orig_type_name)
+                        if len(full_inst_path) > max2:
+                            max2 = len(full_inst_path)
+                        if len(ovrd_type_name) > max3:
+                            max3 = len(ovrd_type_name)
 
-                if (max1 < 14):
+                if max1 < 14:
                     max1 = 14
-                if (max2 < 13):
+                if max2 < 13:
                     max2 = 13
-                if (max3 < 13):
+                if max3 < 13:
                     max3 = 13
 
                 qs.push_back("Instance Overrides:\n\n")
@@ -706,7 +705,7 @@ class UVMDefaultFactory(UVMFactory):
                 qs.push_back(sv.sformatf("  %0s  %0s  %0s\n",dash[1:max1],
                     dash[1:max2], dash[1:max3]))
 
-                for qc in sorted_override_queues:
+                for key, qc in sorted_override_queues.items():
                     # qc = sorted_override_queues[j]
                     for i in range(len(qc.queue)):
                         qs.push_back(sv.sformatf("  %0s%0s  %0s%0s",qc.queue[i].orig_type_name,
@@ -769,7 +768,13 @@ class UVMDefaultFactory(UVMFactory):
             # end while(self.m_type_names.next(key))
 
         qs.push_back("(*) Types with no associated type name will be printed as <unknown>\n\n####\n\n")
-        uvm_info("UVM/FACTORY/PRINT", UVM_STRING_QUEUE_STREAMING_PACK(qs), UVM_NONE)
+        return UVM_STRING_QUEUE_STREAMING_PACK(qs)
+
+    # print
+    # -----
+    def print(self, all_types=True):
+        fact_str = self.convert2string(all_types)
+        uvm_info("UVM/FACTORY/PRINT", fact_str, UVM_NONE)
 
     # debug_create_by_name
     # --------------------
@@ -935,6 +940,8 @@ class UVMDefaultFactory(UVMFactory):
 # request to the appropriate proxy.
 #
 #------------------------------------------------------------------------------
+
+
 class UVMObjectWrapper:
 
     # Function: create_object
@@ -942,7 +949,7 @@ class UVMObjectWrapper:
     # Creates a new object with the optional ~name~.
     # An object proxy (e.g., <uvm_object_registry #(T,Tname)>) implements this
     # method to create an object of a specific type, T.
-    def create_object (self, name=""):
+    def create_object(self, name=""):
         return None
 
     # Function: create_component
@@ -950,7 +957,7 @@ class UVMObjectWrapper:
     # Creates a new component, passing to its constructor the given ~name~ and
     # ~parent~. A component proxy (e.g. <uvm_component_registry #(T,Tname)>)
     # implements this method to create a component of a specific type, T.
-    def create_component(self,  name, parent):
+    def create_component(self, name, parent):
         return None
 
     # Function: get_type_name
@@ -967,14 +974,16 @@ class UVMObjectWrapper:
 #
 # Internal class.
 #------------------------------------------------------------------------------
+
+
 class UVMFactoryOverride:
-    #uvm_object_wrapper orig_type
-    #uvm_object_wrapper ovrd_type
+
     def __init__(self, full_inst_path="", orig_type_name="", orig_type=None,
-            ovrd_type = None):
+            ovrd_type=None):
         if ovrd_type is None:
-            uvm_report_fatal ("NULLWR", "Attempting to register a null override object with the factory", UVM_NONE)
-        self.full_inst_path= full_inst_path
+            uvm_report_fatal("NULLWR",
+                "Attempting to register a null override object with the factory", UVM_NONE)
+        self.full_inst_path = full_inst_path
 
         if orig_type is None:
             self.orig_type_name = orig_type_name
@@ -986,41 +995,3 @@ class UVMFactoryOverride:
         self.ovrd_type      = ovrd_type
         self.selected = False
         self.used = 0
-
-import unittest
-
-class TestUVMDefaultFactory(unittest.TestCase):
-
-    def test_override(self):
-        fact = UVMDefaultFactory()
-        fact.set_type_override_by_name('XXX', 'YYY')
-        ovrd = fact.find_override_by_type(requested_type='XXX', full_inst_path='')
-
-    def test_create_component_by_name(self):
-        from ..comps.uvm_test import UVMTest
-        from ..macros.uvm_object_defines import uvm_component_utils
-        class MyTest123(UVMTest):
-            def __init__(self, name, parent):
-                UVMTest.__init__(self, name, parent)
-        uvm_component_utils(MyTest123)
-        factory = UVMFactory.get()
-        test_name = 'MyTest123'
-        uvm_test_top = factory.create_component_by_name(test_name,
-            "", "uvm_test_top", None)
-        self.assertEqual(uvm_test_top.get_full_name(), "uvm_test_top")
-
-    def test_create_object_by_name(self):
-        from ..macros.uvm_object_defines import uvm_object_utils
-        from uvm_object import UVMObject
-        class MyObj(UVMObject):
-            def __init__(self, name):
-                UVMObject.__init__(self, name)
-        uvm_object_utils(MyObj)
-        factory = UVMFactory.get()
-        new_obj = factory.create_object_by_name('MyObj', "", "my_obj_name")
-        self.assertEqual(new_obj.get_name(), 'my_obj_name')
-
-if __name__ == '__main__':
-    unittest.main()
-
-
