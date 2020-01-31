@@ -20,8 +20,11 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+import cocotb
+from cocotb.triggers import Event
+
 from .uvm_object import UVMObject
-from .sv import sv, uvm_re_match, uvm_glob_to_re
+from .sv import sv, uvm_re_match, uvm_glob_to_re, wait
 from ..uvm_macros import uvm_typename
 from ..macros import uvm_info
 from .uvm_globals import (uvm_report_error, uvm_report_warning)
@@ -252,11 +255,10 @@ class UVMResourceBase(UVMObject):
     def get_type_handle(self):
         raise Exception('get_type_handle: pure virtual method')
 
-
     #//---------------------------
     #// Group: Read-only Interface
     #//---------------------------
-    #
+
     #// Function: set_read_only
     #//
     #// Establishes this resource as a read-only resource.  An attempt
@@ -296,10 +298,10 @@ class UVMResourceBase(UVMObject):
     #// releases the block.  Wait_modified() then clears the modified bit so
     #// it can be called repeatedly.
 
-    #task wait_modified()
-    #  wait (modified == 1)
-    #  modified = 0
-    #endtask
+    @cocotb.coroutine
+    def wait_modified(self):
+        yield wait(lambda: self.modified is True, self.event_modified)
+        self.modified = False
 
     #//-----------------------
     #// Group: Scope Interface
@@ -585,6 +587,7 @@ class UVMResource(UVMResourceBase):
         self.val = None   # Resource value
         self.m_r2s = None  # Res2string converter
         self.modified = False
+        self.event_modified = Event(name + '_' + 'event_modified')
 
     def convert2string(self):
         if UVM_USE_RESOURCE_CONVERTER:
@@ -755,6 +758,7 @@ class UVMResource(UVMResourceBase):
         # set the value and set the dirty bit
         self.val = t
         self.modified = True
+        self.event_modified.set()
 
     #//----------------
     #// Group: Priority
@@ -1528,19 +1532,12 @@ class UVMResourcePool:
     #// is used to initiate the printing. If the ~audit~ bit is set then
     #// the audit trail is dumped for each resource.
 
-    #function void dump(bit audit = 0)
-
-    #  uvm_resource_types::rsrc_q_t rq
-    #  string name
-
-    #  `uvm_info("UVM/RESOURCE/DUMP","\n=== resource pool ===",UVM_NONE)
-
-    #  foreach (rtab[name]):
-    #    rq = rtab[name]
-    #    print_resources(rq, audit)
-    #  end
-
-    #  `uvm_info("UVM/RESOURCE/DUMP","=== end of resource pool ===",UVM_NONE)
+    def dump(self, audit=False):
+        uvm_info("UVM/RESOURCE/DUMP","\n=== resource pool ===",UVM_NONE)
+        for name in self.rtab:
+            rq = self.rtab[name]
+            self.print_resources(rq, audit)
+        uvm_info("UVM/RESOURCE/DUMP","=== end of resource pool ===",UVM_NONE)
 
     #endfunction
 
