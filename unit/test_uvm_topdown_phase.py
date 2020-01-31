@@ -10,7 +10,7 @@ class TestUVMTopdownPhase(unittest.TestCase):
 
 
     def test_traverse(self):
-        c1 = UVMComponent('uvm_test_top', None)
+        c1 = UVMComponent('uvm_test_top__test_uvm_topdown_phase', None)
         c2 = UVMComponent('sub_c1', c1)
         c3 = UVMComponent('sub_c2', c1)
         c4 = UVMComponent('sub_c2_c4', c2)
