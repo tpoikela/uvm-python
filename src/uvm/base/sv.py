@@ -277,3 +277,6 @@ class sv_if(Bus):
             optional_signals=[], bus_separator="_", array_idx=None):
         Bus.__init__(self, entity, name, signals, optional_signals,
                 bus_separator, array_idx)
+
+def sformatf(fmt, *args):
+    return fmt % args
