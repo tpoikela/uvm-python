@@ -18,6 +18,7 @@ should occur (unless the purpose of example is to cause uvm_fatal).
 [DONE] sequence/basic_read_write_sequence/
 
 [DONE] registers/models/user-defined
+[DONE] registers/primer/
 [DONE] registers/vertical_reuse
 [DONE] configuration/automated
 [DONE] configuration/manual
@@ -34,15 +35,6 @@ WIP
 Files in this section are Work in Progress (WIP). This means the example is
 being converted into working Python code.
 
-[WIP2] registers/primer/cmdline_test.sv
-[WIP2] registers/primer/dut.sv
-[WIP2] registers/primer/primer.pdf
-[WIP2] registers/primer/reg_model.sv
-[WIP2] registers/primer/tb_env.sv
-[WIP2] registers/primer/tb_top.sv
-[WIP2] registers/primer/testlib.sv
-[WIP2] registers/primer/test.sv
-[WIP2] registers/primer/user_test.sv
 
 TODO (NOT STARTED)
 ------------------

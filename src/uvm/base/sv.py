@@ -280,3 +280,16 @@ class sv_if(Bus):
 
 def sformatf(fmt, *args):
     return fmt % args
+
+@cocotb.coroutine
+def wait(cond, ev):
+    if not callable(cond):
+        raise Exception("wait expects the first arguments to be callable")
+    
+    while True:
+        if cond():
+            break
+        else:
+            yield ev.wait()
+            ev.clear()
+

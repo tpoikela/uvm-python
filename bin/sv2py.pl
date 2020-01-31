@@ -8,7 +8,7 @@
 #  DESCRIPTION: Convert some SV structs into Python. Does not do full
 #               conversion.
 #
-#      OPTIONS: ---
+#      OPTIONS: -f <FILE>, -all, -d|debug, --author <NAME>, -p, -f
 # REQUIREMENTS: ---
 #         BUGS: ---
 #        NOTES: ---
@@ -26,6 +26,44 @@ use utf8;
 use Getopt::Long;
 use File::Basename;
 use File::Spec;
+use Data::Dumper;
+
+package ClassInfo;
+
+sub new {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $href = shift;
+
+    my $self = {
+        name => '',
+        start_line => 0,
+        end_line => 0,
+        base => 0,
+        new_start => 0,
+        new_end => 0,
+        var => {},
+        func => {}
+    };
+    bless($self, $class);
+
+    if (defined $href) {
+        for my $key (keys %{$href}) {
+            $self->{$key} = $href->{$key};
+        }
+    }
+    return $self;
+}
+
+sub add_var {
+    my ($self, $name, $type) = @_;
+    $self->{var}->{$name} = $type;
+}
+
+
+1;
+
+package main;
 
 my $DEBUG = 0;
 
@@ -40,6 +78,10 @@ GetOptions(
 );
 
 my $AUTHOR = $opt{author} || "Tuomas Poikela (tpoikela)";
+
+#---------------------------------------------------------------------------
+# REGULAR EXPRESSIONS
+#---------------------------------------------------------------------------
 
 my $re_qual = qr/(protected|local)/; # $1
 my $re_type = qr/(\w+(#\(\w+\))?)/;  # $2, $3, $4
@@ -62,8 +104,12 @@ my $IN_NEW = 1 << 2;
 my $IN_TASK = 1 << 3;
 my $IN_FUNC = 1 << 4;
 
+#---------------------------------------------------------------------------
+# GLOBAL VARS
+#---------------------------------------------------------------------------
+
 # Store info about classes
-my $classes = {};
+my $all_classes = {};
 
 my $st = $GLOBAL;
 
@@ -72,6 +118,9 @@ my @suffixlist = ('.py', '.sv', '.svh');
 my @files = ();
 my $pkg_map = build_pkg_map();
 
+#---------------------------------------------------------------------------
+# MAIN SCRIPT
+#---------------------------------------------------------------------------
 
 # Find files to process first, and put them into array
 if (defined $opt{f} and -e $opt{f}) {
@@ -109,6 +158,10 @@ for my $file (@files) {
     }
 }
 
+if ($DEBUG != 0) {
+    print Dumper($all_classes);
+}
+
 #---------------------------------------------------------------------------
 # HELPERS
 #---------------------------------------------------------------------------
@@ -132,7 +185,7 @@ sub process_file {
     my $def_conn_phase = "def connect_phase(self, phase):";
     my $def_build_phase = "def build_phase(self, phase):";
 
-    my $new_endfunction = -1;
+    my $new_endfunction = {}; # For each class
     my $import_line = -1;
     my $include_line = -1;
     my $ifndef_line = -1;
@@ -140,8 +193,9 @@ sub process_file {
     my $curr_class = '';
     my @imports = ();
 
-    my @found_vars = ();
+    my $found_vars = {};
     my $has_author = $is_py;  # Do not re-insert to py files
+    my @classes_file = ();
 
     while (<$IFILE>) {
         my $line = $_;
@@ -162,7 +216,8 @@ sub process_file {
             next;
         }
 
-        # Look for line in which imports start
+        # Look for line in which imports start, alternatively find 1st include
+        # or ifndef
         if ($import_line == -1 && $line =~ /^\s*import /) {
             $import_line = $lineno;
         }
@@ -207,7 +262,7 @@ sub process_file {
                 my $unpacked = $8;
                 my $var_init = $9;
 
-                $classes->{$curr_class}->{var}->{$var_name} = $var_type;
+                $all_classes->{$curr_class}->add_var($var_name, $var_type);
 
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bstring\b/ ) {$value = "";}
@@ -216,14 +271,32 @@ sub process_file {
                     $value =~ s/=//;
                 }
                 my $self_var = "${ws}#    self.$var_name = $value  # type: $var_type\n";
-                push(@found_vars, $self_var);
+                push(@{$found_vars->{$curr_class}}, $self_var);
             }
+        }
+
+        # Finds if we're inside a class, or getting out of it
+        if ($line =~ /^\s*(virtual\s+)?class\s+(\w+)/) {
+            ++$ind;
+            $st = $IN_CLASS;
+            $curr_class = $2;
+            $found_vars->{$curr_class} = [];
+            my $class_info = ClassInfo->new({
+                name => $2,
+                start_line => $lineno
+            });
+            $all_classes->{$2} = $class_info;
+        }
+        elsif ($line =~ /^endclass/) {
+            --$ind;
+            if ($ind < 0) {$ind = 0;}
+            $st = $GLOBAL;
         }
 
         # Finds new call like 'a = new()' and changes it to 'self.a = MyClass()'
         if ($line =~ $re_new_call) {
             my $var_name = $1;
-            my $var_data = $classes->{$curr_class}->{var};
+            my $var_data = $all_classes->{$curr_class}->{var};
             if (exists $var_data->{$var_name}) {
                 my $var_type = $var_data->{$var_name};
                 $line =~ s/$re_new_call/self.$var_name = $var_type(/;
@@ -231,11 +304,14 @@ sub process_file {
 
         }
 
+        # Finds where new declaration starts
         if ($line =~ /function\s+(\w+::)?new\s*\(/) {
             $st = $st | $IN_NEW;
+            $all_classes->{$curr_class}->{new_start} = $lineno;
         }
         elsif (($st & $IN_NEW) && $line =~ /endfunction/) {
-            $new_endfunction = $lineno;
+            $new_endfunction->{$curr_class} = $lineno;
+            $all_classes->{$curr_class}->{new_end} = $lineno;
             $st = $st & ~$IN_NEW;
         }
 
@@ -256,6 +332,7 @@ sub process_file {
         $line =~ s/!==/!=/g;
         $line =~ s/\|\|/ or /g;
         $line =~ s/forever\s+begin/while True:/g;
+        $line =~ s/self file except/this file except/g;
 
         if ($line =~ $edge_re) {
             my $edge = $2;
@@ -283,6 +360,7 @@ sub process_file {
             if (exists $pkg_map->{"uvm_$1"}) {
                 $imp_name = $pkg_map->{"uvm_$1"};
             }
+            $all_classes->{$curr_class}->{base} = "uvm_$1";
             add_import(\@imports, "from $imp_name import *\n");
         }
 
@@ -298,6 +376,7 @@ sub process_file {
         # SystemVerilog functions
         $line =~ s/\$(urandom|random|sformatf|cast|display)\b/sv.$1/g;
 
+        # Config/Resource Db replacements
         if ($line =~ $conf_db_re) {
             $line =~ s/$conf_db_re/UVMConfigDb.$1/g;
             add_import(\@imports, "from uvm.base.uvm_config_db import *\n");
@@ -331,22 +410,13 @@ sub process_file {
             push(@outfile, "$ws#$line");
         }
 
-        if ($line =~ /^\s*(virtual\s+)?class\s+(\w+)/) {
-            ++$ind;
-            $st = $IN_CLASS;
-            $classes->{$2} = {
-                func => {}, var => {}
-            };
-            $curr_class = $2;
-        }
-        elsif ($line =~ /^endclass/) {
-            --$ind;
-            if ($ind < 0) {$ind = 0;}
-            $st = $GLOBAL;
-        }
     }
 
-    splice(@outfile, $new_endfunction, 0, @found_vars);
+    foreach my $cls (@classes_file) {
+        splice(@outfile, $new_endfunction->{$cls}, 0,
+            $found_vars->{$cls});
+    }
+
     # Add imports to the import line
 
     my $chosen_line = $import_line == -1 ? $include_line : $import_line;

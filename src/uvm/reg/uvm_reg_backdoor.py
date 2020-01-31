@@ -28,6 +28,7 @@ from uvm.base.uvm_callback import UVMCallbackIter
 from uvm.macros import (uvm_object_utils, uvm_fatal, uvm_do_obj_callbacks)
 from uvm.reg.uvm_reg_model import UVM_NOT_OK
 from uvm.base.uvm_globals import uvm_empty_delay
+from .uvm_reg_cbs import UVMRegCbs
 
 #//------------------------------------------------------------------------------
 #// Class: UVMRegBackdoor
@@ -65,7 +66,7 @@ class UVMRegBackdoor(UVMObject):
     @cocotb.coroutine
     def do_pre_read(self, rw):
         yield self.pre_read(rw)
-        uvm_do_obj_callbacks(self, 'pre_read', self, rw)
+        uvm_do_obj_callbacks(self, UVMRegCbs, 'pre_read', self, rw)
 
     #
     #   // Task: do_post_read
@@ -84,7 +85,7 @@ class UVMRegBackdoor(UVMObject):
         while cb is not None:
             cb.decode(rw.value)
             cb = iter.next()
-        uvm_do_obj_callbacks(self,'post_read',self,rw)
+        uvm_do_obj_callbacks(self, UVMRegCbs,'post_read',self,rw)
         yield self.post_read(rw)
     #   endtask
 
@@ -102,7 +103,7 @@ class UVMRegBackdoor(UVMObject):
         #uvm_callback_iter#(UVMRegBackdoor, uvm_reg_cbs) iter = new(self)
         iter = UVMCallbackIter(self)
         yield self.pre_write(rw)
-        uvm_do_obj_callbacks(self,'pre_write',self,rw)
+        uvm_do_obj_callbacks(self, UVMRegCbs,'pre_write',self,rw)
         #      for(uvm_reg_cbs cb = iter.first(); cb is not None; cb = iter.next())
         #         cb.encode(rw.value)
         cb = iter.first()
@@ -122,7 +123,7 @@ class UVMRegBackdoor(UVMObject):
     #   //
     @cocotb.coroutine
     def do_post_write(self, rw):
-        uvm_do_obj_callbacks(self, 'post_write', self, rw)
+        uvm_do_obj_callbacks(self, UVMRegCbs, 'post_write', self, rw)
         yield self.post_write(rw)
         #   endtask
 

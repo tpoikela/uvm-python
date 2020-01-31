@@ -1,7 +1,8 @@
 #-----------------------------------------------------------------------------
 #   Copyright 2007-2011 Mentor Graphics Corporation
-#   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#   Copyright 2007-2011 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
+#   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -21,6 +22,7 @@
 
 from ..base.uvm_debug import *
 from ..base.uvm_globals import *
+from ..base.sv import sv
 
 #//-----------------------------------------------------------------------------
 #// Title: Callback Macros
@@ -28,7 +30,8 @@ from ..base.uvm_globals import *
 #// These macros are used to register and execute callbacks extending
 #// from ~uvm_callbacks~.
 #//-----------------------------------------------------------------------------
-#
+
+
 #//-----------------------------------------------------------------------------
 #// MACRO: `uvm_register_cb
 #//
@@ -54,11 +57,17 @@ from ..base.uvm_globals import *
 #//|   endtask
 #//| endclass
 #//-----------------------------------------------------------------------------
-#
+
 #`define uvm_register_cb(T,CB) \
 #  static local bit m_register_cb_``CB = uvm_callbacks#(T,CB)::m_register_pair(`"T`",`"CB`");
-#
-#
+def uvm_register_cb(T, CB):
+    from ..base.uvm_callback import UVMCallbacks
+    Ts = T.__name__
+    cb_name = "_m_register_cb_" + CB.__name__
+    ok = UVMCallbacks.m_register_pair(Ts, CB.__name__, T)
+    setattr(T, cb_name, ok)
+
+
 #//-----------------------------------------------------------------------------
 #// MACRO: `uvm_set_super_type
 #//
@@ -93,11 +102,11 @@ from ..base.uvm_globals import *
 #//|   endtask
 #//| endclass
 #//-----------------------------------------------------------------------------
-#
+
 #`define uvm_set_super_type(T,ST) \
-#  static local bit m_register_``T``ST = uvm_derived_callbacks#(T,ST)::register_super_type(`"T`",`"ST`"); 
-#
-#
+#  static local bit m_register_``T``ST = uvm_derived_callbacks#(T,ST)::register_super_type(`"T`",`"ST`");
+
+
 #-----------------------------------------------------------------------------
 # MACRO: `uvm_do_callbacks
 #
@@ -126,7 +135,7 @@ from ..base.uvm_globals import *
 #
 # A component would invoke the macro as
 #
-#| task mycomp::run_phase(uvm_phase phase); 
+#| task mycomp::run_phase(uvm_phase phase);
 #|    int curr_addr, curr_data;
 #|    ...
 #|    `uvm_do_callbacks(mycb, mycomp, my_function(this, curr_addr, curr_data))
@@ -134,9 +143,9 @@ from ..base.uvm_globals import *
 #| endtask
 #-----------------------------------------------------------------------------
 
-def uvm_do_callbacks(self,METHOD, *args):
+def uvm_do_callbacks(self, CB, METHOD, *args):
     uvm_debug(self, 'uvm_do_callbacks', 'Exec CBs with ' + METHOD)
-    uvm_do_obj_callbacks(self,METHOD, *args)
+    uvm_do_obj_callbacks(self, CB, METHOD, *args)
 
 #-----------------------------------------------------------------------------
 # MACRO: `uvm_do_obj_callbacks
@@ -157,15 +166,16 @@ def uvm_do_callbacks(self,METHOD, *args):
 #|    ...
 #-----------------------------------------------------------------------------
 
-def uvm_do_obj_callbacks(OBJ,METHOD, *args):
+
+def uvm_do_obj_callbacks(OBJ, CB, METHOD, *args):
     from ..base.uvm_callback import UVMCallbackIter
-    cb_iter = UVMCallbackIter(OBJ)
+    cb_iter = UVMCallbackIter(OBJ, CB)
     cb = cb_iter.first()
 
     while cb is not None:
         uvm_cb_trace_noobj(cb, (
-            "Executing callback method 'METHOD' for callback {} (CB) from {} (T)"
-            .format(cb.get_name(), OBJ.get_full_name())))
+            "Executing callback method '{}' for callback {} (CB) from {} (T)"
+            .format(METHOD, cb.get_name(), OBJ.get_full_name())))
         m_to_call = getattr(cb, METHOD)
         m_to_call(*args)
         cb = cb_iter.next()
@@ -203,7 +213,7 @@ def uvm_do_obj_callbacks(OBJ,METHOD, *args):
 #//
 #// A component would invoke the macro as
 #//
-#//| task mycomp::run_phase(uvm_phase phase); 
+#//| task mycomp::run_phase(uvm_phase phase);
 #//|    my_trans trans;
 #//|    forever begin
 #//|      get_port.get(trans);
@@ -222,12 +232,14 @@ def uvm_do_obj_callbacks(OBJ,METHOD, *args):
 #// of functions that return a ~bit~ value, as in the above example.
 #//
 #//-----------------------------------------------------------------------------
-#
-#
+
+
 #`define uvm_do_callbacks_exit_on(T,CB,METHOD,VAL) \
 #  `uvm_do_obj_callbacks_exit_on(T,CB,this,METHOD,VAL) \
-#
-#
+def uvm_do_callbacks_exit_on(self,CB,METHOD,VAL, *args):
+    uvm_do_obj_callbacks_exit_on(self, CB, METHOD, VAL, *args)
+
+
 #//-----------------------------------------------------------------------------
 #// MACRO: `uvm_do_obj_callbacks_exit_on
 #//
@@ -248,7 +260,7 @@ def uvm_do_obj_callbacks(OBJ,METHOD, *args):
 #// Because this macro calls ~return~, its use is restricted to implementations
 #// of functions that return a ~bit~ value, as in the above example.
 #//-----------------------------------------------------------------------------
-#
+
 #`define uvm_do_obj_callbacks_exit_on(T,CB,OBJ,METHOD,VAL) \
 #   begin \
 #     uvm_callback_iter#(T,CB) iter = new(OBJ); \
@@ -263,10 +275,28 @@ def uvm_do_obj_callbacks(OBJ,METHOD, *args):
 #     end \
 #     return 1-VAL; \
 #   end
-#
-#
-#// The +define+UVM_CB_TRACE_ON setting will instrument the uvm library to emit 
-#// messages with message id UVMCB_TRC and UVM_NONE verbosity 
+def uvm_do_obj_callbacks_exit_on(OBJ, CB, METHOD, VAL, *args):
+    from ..base.uvm_callback import UVMCallbackIter
+    cb_iter = UVMCallbackIter(OBJ, CB)
+    cb = cb_iter.first()
+
+    while cb is not None:
+        m_to_call = getattr(cb, METHOD)
+        ret_val = m_to_call(*args)
+        if ret_val == VAL:
+            uvm_cb_trace_noobj(cb, sv.sformatf("Executed callback method "
+                + "'METHOD' for callback %s (CB) from %s (T) : returned value VAL"
+                + "(other callbacks will be ignored)l", cb.get_name(), OBJ.get_full_name()))
+            return VAL
+        uvm_cb_trace_noobj(cb, (
+            "Executed callback method '{}' for callback {} (CB) from {} (T)"
+            .format(METHOD, cb.get_name(), OBJ.get_full_name())))
+        cb = cb_iter.next()
+    return 1-VAL
+
+
+#// The +define+UVM_CB_TRACE_ON setting will instrument the uvm library to emit
+#// messages with message id UVMCB_TRC and UVM_NONE verbosity
 #// notifing add,delete and execution of uvm callbacks. The instrumentation is off by default.
 #
 

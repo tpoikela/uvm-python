@@ -22,17 +22,15 @@
 #//
 
 import cocotb
-from cocotb.triggers import *
+#from cocotb.triggers import *
 from cocotb.clock import Clock
 
-from uvm.macros import *
-from uvm.base.uvm_config_db import UVMConfigDb
-from uvm import run_test
+from uvm import (uvm_fatal, uvm_info, UVMConfigDb, run_test,
+    UVM_NONE)
 
 from apb.apb_if import apb_if
 from sys_env import sys_env
 from sys_testlib import *
-
 
 
 @cocotb.test()
@@ -43,8 +41,7 @@ def initial(dut):
     UVMConfigDb.set(env, "apb", "vif", vif)
     c = Clock(dut.apb_pclk, 10, 'ns')
     cocotb.fork(c.start())
-    cocotb.fork(run_test())
-    yield Timer(1000, "NS")
+    yield run_test()
 
     if env.all_ok is False:
         uvm_fatal("ALL_NOT_OK", "env.all_ok == False, something went wrong!")

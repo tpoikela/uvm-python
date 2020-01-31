@@ -24,6 +24,7 @@
 
 from uvm.comps.uvm_env import UVMEnv
 from uvm.base.uvm_config_db import UVMConfigDb
+from uvm.base.sv import sv
 from uvm.macros import *
 
 from blk_env import blk_env
@@ -82,6 +83,9 @@ class sys_env(UVMEnv):
     def extract_phase(self, phase):
         if self.apb.mon.num_items > 0 and self.apb.mon.errors == 0:
             self.all_ok = True
+        else:
+            uvm_error("SYS_ENV_ERR", sv.sformatf("num_items: %0d, mon.errors: %0d",
+                self.apb.mon.num_items, self.apb.mon.errors))
 
     #endclass: sys_env
 

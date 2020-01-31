@@ -673,7 +673,7 @@ class UVMPhase(UVMObject):
         state_chg.m_jump_to = None
         state_chg.m_prev_state = tmp_node.m_state
         tmp_node.m_state = UVM_PHASE_DORMANT
-        uvm_do_callbacks(self, 'phase_state_change', tmp_node, state_chg)
+        uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', tmp_node, state_chg)
 
     #  // Function: get_parent
     #  //
@@ -1345,7 +1345,7 @@ class UVMPhase(UVMObject):
         # this additional state avoids deadlock.
         state_chg.m_prev_state = self.m_state
         self.set_state(UVM_PHASE_SYNCING)
-        uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+        uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
         yield Timer(0)
         uvm_debug(self, 'execute_phase', 'Checking for wait_phases_synced')
 
@@ -1361,13 +1361,13 @@ class UVMPhase(UVMObject):
             uvm_debug(self, 'execute_phase', 'schedule/domain, faking execution')
             state_chg.m_prev_state = self.m_state
             self.set_state(UVM_PHASE_STARTED)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
 
             yield Timer(0)
 
             state_chg.m_prev_state = self.m_state
             self.set_state(UVM_PHASE_EXECUTING)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
 
             yield Timer(0)
         else:  # PHASE NODE
@@ -1378,7 +1378,7 @@ class UVMPhase(UVMObject):
             state_chg.m_prev_state = self.m_state
 
             self.set_state(UVM_PHASE_STARTED)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
 
             # Task-phases must use yield here
             if not self.m_imp.is_task_phase():
@@ -1396,7 +1396,7 @@ class UVMPhase(UVMObject):
                 uvm_debug(self, 'execute_phase', 'Exec non-task (function) phase now')
                 state_chg.m_prev_state = self.m_state
                 self.set_state(UVM_PHASE_EXECUTING)
-                uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+                uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
                 yield Timer(0) # LET ANY WAITERS WAKE UP
                 uvm_debug(self, 'execute_phase', 'Will traverse something now')
                 self.m_imp.traverse(top,self,UVM_PHASE_EXECUTING)
@@ -1407,7 +1407,7 @@ class UVMPhase(UVMObject):
                 state_chg.m_prev_state = self.m_state
                 self.set_state(UVM_PHASE_EXECUTING)
 
-                uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+                uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
                 #fork : master_phase_process
                 #self.m_phase_proc = process::self()
                 #-----------
@@ -1479,7 +1479,7 @@ class UVMPhase(UVMObject):
                 UVM_PH_TRACE("PH_END","ENDING PHASE",self,UVM_MEDIUM)
             state_chg.m_prev_state = self.m_state
             self.set_state(UVM_PHASE_ENDED)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             if self.m_imp is not None:
                 if self.m_imp.is_task_phase():
                     yield self.m_imp.traverse(top,self, UVM_PHASE_ENDED)
@@ -1501,7 +1501,7 @@ class UVMPhase(UVMObject):
                 self.set_state(UVM_PHASE_JUMPING)
             else:
                 self.set_state(UVM_PHASE_CLEANUP)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             if self.m_phase_proc is not None:
                 self.m_phase_proc.kill()
                 self.m_phase_proc = None
@@ -1527,7 +1527,7 @@ class UVMPhase(UVMObject):
                 UVM_PH_TRACE("PH/TRC/DONE","Completed phase",self,UVM_LOW)
             state_chg.m_prev_state = self.m_state
             self.set_state(UVM_PHASE_DONE)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             uvm_debug(self, 'exec_phase', 'DONE after uvm_callbacks done')
             self.m_phase_proc = None
             yield Timer(0)  # 0; // LET ANY WAITERS WAKE UP
@@ -1558,7 +1558,7 @@ class UVMPhase(UVMObject):
                     state_chg.m_prev_state = succ.m_state
                     state_chg.m_phase = succ
                     succ.set_state(UVM_PHASE_SCHEDULED)
-                    uvm_do_callbacks(self, 'phase_state_change', succ, state_chg)
+                    uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', succ, state_chg)
                     yield Timer(0)  #0; // LET ANY WAITERS WAKE UP
                     if not UVMPhase.m_phase_hopper.try_put(succ):
                         raise Exception('Failed try_put(succ). Should not ever fail')
@@ -1595,8 +1595,7 @@ class UVMPhase(UVMObject):
         for phase in self.m_sync:
             if (phase.m_state < UVM_PHASE_SYNCING):
                 events.append(phase.get_phase_synced_event())
-        # TODO yield Combine(*events)
-        yield Timer(0)
+        yield Combine(*events)
 
     def has_predecessors(self):
         return len(self.m_predecessors) > 0
@@ -1799,7 +1798,7 @@ class UVMPhase(UVMObject):
                 UVM_PH_TRACE("PH_READY_TO_END_CB","CALLING READY_TO_END CB",self,UVM_MEDIUM)
             state_chg.m_prev_state = self.m_state
             self.set_state(UVM_PHASE_READY_TO_END)
-            uvm_do_callbacks(self, 'phase_state_change', self, state_chg)
+            uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             if self.m_imp is not None:
                 self.m_imp.traverse(top,self,UVM_PHASE_READY_TO_END)
 
@@ -1819,7 +1818,7 @@ class UVMPhase(UVMObject):
 # during the execution of a specific node in the phase graph or all phase nodes.
 # User-defined callback extensions can be used to integrate data types that
 # are not natively phase-aware with the UVM phasing.
-#
+
 class UVMPhaseCb(UVMCallback):
 
     # Function: new

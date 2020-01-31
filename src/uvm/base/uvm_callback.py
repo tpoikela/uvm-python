@@ -30,11 +30,13 @@ from .uvm_report_object import UVMReportObject
 from .uvm_pool import UVMPool
 from .uvm_queue import UVMQueue
 from .uvm_misc import UVM_APPEND
-from ..macros import uvm_cb_trace_noobj
+from ..macros import (uvm_cb_trace_noobj, uvm_warning, uvm_info)
+from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 from .uvm_object_globals import UVM_NONE
 from .uvm_globals import (uvm_report_warning, uvm_report_error,
     uvm_report_fatal)
 
+ALL_TYPES = None
 
 #------------------------------------------------------------------------------
 # Title: Callbacks Classes
@@ -108,7 +110,7 @@ class UVMCallbacksBase(UVMObject):
     m_tracing = True
 
     def __init__(self, name):
-        UVMObject.__init__(self, name)
+        super().__init__(name)
         #Type checking interface
         self.m_this_type = []     # one to many T->T/CB
         self.m_super_type = None       # one to one relation
@@ -130,7 +132,7 @@ class UVMCallbacksBase(UVMObject):
     def m_is_registered(self, obj, cb):
         return True
 
-    def m_get_tw_cb_q(self, obj):
+    def m_get_tw_cb_q(self, obj, CB=None):
         return None
 
     def m_add_tw_cbs(self, cb, ordering):
@@ -175,13 +177,14 @@ class UVMCallbacksBase(UVMObject):
     # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
     # iterator interface.
     @classmethod
-    def get_first(cls, itr, obj):
+    def get_first(cls, itr, obj, CB=None):
         cb = None
         cls.get()
-        q = cls.m_get_q(obj)
+        q = cls.m_get_q(obj, CB)
         if q is not None:
-            for itr in range(len(q)):
-                cb = q[itr]
+            for i in range(len(q)):
+                itr.m_i = i
+                cb = q[i]
                 if cb is not None and cb.callback_mode():
                     return cb
         return None
@@ -202,14 +205,14 @@ class UVMCallbacksBase(UVMObject):
 # The <add>, <delete>, and <display> methods are implemented in this class.
 
 
-class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_callbacks_base
+class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_callbacks_base
 
-    #
     #  static uvm_queue#(uvm_callback) m_tw_cb_q
     m_tw_cb_q = []
 
     #  static string m_typename
-    #
+    m_typename = ""
+
     #  typedef uvm_typed_callbacks#(T) this_type
     #  typedef uvm_callbacks_base      super_type
 
@@ -217,6 +220,10 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
     #  #just a reference to the object that is generated in the derived class.
     #  static this_type m_t_inst
     m_t_inst = None
+
+    def __init__(self, name, T=ALL_TYPES):
+        super().__init__(name)
+        self.T = T
 
     @classmethod
     def m_initialize(cls):
@@ -229,37 +236,34 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
 
     #
     #  #Type checking interface: is given ~obj~ of type T?
-    #  virtual function bit m_am_i_a(uvm_object obj)
-    #    T this_type
-    #    if (obj is None)
-    #      return 1
-    #    return($cast(this_type,obj))
+    def m_am_i_a(self, obj):
+        if obj is None:
+            return True
+        arr = []
+        if self.T is not ALL_TYPES:
+            return sv.cast(arr, obj, self.T)
+        return True
     #  endfunction
-    #
+
 
     #  #Getting the typewide queue
-    #  virtual function uvm_queue#(uvm_callback) m_get_tw_cb_q(uvm_object obj)
-    #    if(m_am_i_a(obj)):
-    #      foreach(m_derived_types[i]):
-    #        super_type dt
-    #        dt = UVMTypeIDBase::typeid_map[m_derived_types[i] ]
-    #        if(dt is not None && dt != this):
-    #          m_get_tw_cb_q = dt.m_get_tw_cb_q(obj)
-    #          if(m_get_tw_cb_q is not None)
-    #            return m_get_tw_cb_q
-    #        end
-    #      end
-    #      return m_t_inst.m_tw_cb_q
-    #    end
-    #    else
-    #      return None
-    #  endfunction
-    #
+    def m_get_tw_cb_q(self, obj, CB=None):
+        if self.m_am_i_a(obj):
+            for i in range(len(self.m_derived_types)):
+                #super_type dt
+                dt = UVMTypeIDBase.typeid_map[self.m_derived_types[i]]
+                if dt is not None and dt != self:
+                    m_get_tw_cb_q = dt.m_get_tw_cb_q(obj, CB)
+                    if m_get_tw_cb_q is not None:
+                        return m_get_tw_cb_q
+            return self.m_t_inst.m_tw_cb_q
+        else:
+            return None
 
     @classmethod
     def m_cb_find(cls, q, cb):
         for i in range(len(q)):
-            if (q[i] == cb):
+            if q[i] == cb:
                 return i
         return -1
         #  endfunction
@@ -277,7 +281,7 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
                 return 1
         return 0
         #  endfunction
-        #
+
 
     #  #For a typewide callback, need to add to derivative types as well.
     #  virtual function void m_add_tw_cbs(uvm_callback cb, uvm_apprepend ordering)
@@ -319,8 +323,7 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
     #        cb_pair.m_add_tw_cbs(cb,ordering)
     #    end
     #  endfunction
-    #
-    #
+
 
     #  #For a typewide callback, need to remove from derivative types as well.
     #  virtual function bit m_delete_tw_cbs(uvm_callback cb)
@@ -354,120 +357,131 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
     #        m_delete_tw_cbs |= cb_pair.m_delete_tw_cbs(cb)
     #    end
     #  endfunction
-    #
-    #
+
 
     #  static function void display(T obj=None)
-    #    T me
-    #    super_type ib = m_t_inst
-    #    string cbq[$]
-    #    string inst_q[$]
-    #    string mode_q[$]
-    #    uvm_callback cb
-    #    string blanks = "                             "
-    #    uvm_object bobj = obj
-    #    string qs[$]
-    #
-    #    uvm_queue#(uvm_callback) q
-    #    string tname, str
-    #
-    #    int max_cb_name=0, max_inst_name=0
-    #
-    #    m_tracing = 0; #don't allow tracing during display
-    #
-    #    if(m_typename != "") tname = m_typename
-    #    elif(obj is not None) tname = obj.get_type_name()
-    #    else tname = "*"
-    #
-    #    q = m_t_inst.m_tw_cb_q
-    #    for(int i=0; i<q.size(); ++i):
-    #      cb = q.get(i)
-    #      cbq.push_back(cb.get_name())
-    #      inst_q.push_back("(*)")
-    #      if(cb.is_enabled()) mode_q.push_back("ON")
-    #      else mode_q.push_back("OFF")
-    #
-    #      str = cb.get_name()
-    #      max_cb_name = max_cb_name > str.len() ? max_cb_name : str.len()
-    #      str = "(*)"
-    #      max_inst_name = max_inst_name > str.len() ? max_inst_name : str.len()
-    #    end
-    #
-    #    if(obj is None):
-    #      if(m_t_inst.m_pool.first(bobj)):
-    #        do
-    #          if($cast(me,bobj)) break
-    #        while(m_t_inst.m_pool.next(bobj))
-    #      end
-    #      if(me is not None || m_t_inst.m_tw_cb_q.size()):
-    #        qs.push_back($sformatf("Registered callbacks for all instances of %s\n", tname))
-    #        qs.push_back("---------------------------------------------------------------\n")
-    #      end
-    #      if(me is not None):
-    #        do begin
-    #          if($cast(me,bobj)):
-    #            q = m_t_inst.m_pool.get(bobj)
-    #            if (qis None):
-    #              q=new
-    #              m_t_inst.m_pool.add(bobj,q)
-    #            end
-    #            for(int i=0; i<q.size(); ++i):
-    #              cb = q.get(i)
-    #              cbq.push_back(cb.get_name())
-    #              inst_q.push_back(bobj.get_full_name())
-    #              if(cb.is_enabled()) mode_q.push_back("ON")
-    #              else mode_q.push_back("OFF")
-    #
-    #              str = cb.get_name()
-    #              max_cb_name = max_cb_name > str.len() ? max_cb_name : str.len()
-    #              str = bobj.get_full_name()
-    #              max_inst_name = max_inst_name > str.len() ? max_inst_name : str.len()
-    #            end
-    #          end
-    #        end while (m_t_inst.m_pool.next(bobj))
-    #      end
-    #      else begin
-    #        qs.push_back($sformatf("No callbacks registered for any instances of type %s\n", tname))
-    #      end
-    #    end
-    #    else begin
-    #      if(m_t_inst.m_pool.exists(bobj) || m_t_inst.m_tw_cb_q.size()):
-    #       qs.push_back($sformatf("Registered callbacks for instance %s of %s\n", obj.get_full_name(), tname))
-    #       qs.push_back("---------------------------------------------------------------\n")
-    #      end
-    #      if(m_t_inst.m_pool.exists(bobj)):
-    #        q = m_t_inst.m_pool.get(bobj)
-    #        if(qis None):
-    #          q=new
-    #          m_t_inst.m_pool.add(bobj,q)
-    #        end
-    #        for(int i=0; i<q.size(); ++i):
-    #          cb = q.get(i)
-    #          cbq.push_back(cb.get_name())
-    #          inst_q.push_back(bobj.get_full_name())
-    #          if(cb.is_enabled()) mode_q.push_back("ON")
-    #          else mode_q.push_back("OFF")
-    #
-    #          str = cb.get_name()
-    #          max_cb_name = max_cb_name > str.len() ? max_cb_name : str.len()
-    #          str = bobj.get_full_name()
-    #          max_inst_name = max_inst_name > str.len() ? max_inst_name : str.len()
-    #        end
-    #      end
-    #    end
-    #    if(!cbq.size()):
-    #      if(obj is None) str = "*"
-    #      else str = obj.get_full_name()
-    #      qs.push_back($sformatf("No callbacks registered for instance %s of type %s\n", str, tname))
-    #    end
-    #
-    #    foreach (cbq[i]):
-    #      qs.push_back($sformatf("%s  %s %s on %s  %s\n", cbq[i], blanks.substr(0,max_cb_name-cbq[i].len()-1), inst_q[i], blanks.substr(0,max_inst_name - inst_q[i].len()-1), mode_q[i]))
-    #    end
-    #    `uvm_info("UVM/CB/DISPLAY",`UVM_STRING_QUEUE_STREAMING_PACK(qs),UVM_NONE)
-    #
-    #    m_tracing = 1; #allow tracing to be resumed
-    #  endfunction
+    @classmethod
+    def display(cls, obj=None):
+        #    T me
+        #    super_type ib = m_t_inst
+        cbq = []  # string [$]
+        inst_q = []  # string [$]
+        mode_q = []  # string  [$]
+        cb = None  # uvm_callback
+        blanks = "                             "
+        bobj = obj
+        qs = []  # string[$]
+
+        q = None  # uvm_queue#(uvm_callback)
+        tname = ""
+        strr = ""
+        max_cb_name = 0
+        max_inst_name= 0
+
+        prev_trace = cls.m_tracing
+        cls.m_tracing = False  # don't allow tracing during display
+
+        if cls.m_typename != "":
+            tname = cls.m_typename
+        elif (obj is not None):
+            tname = obj.get_type_name()
+        else:
+            tname = "*"
+
+        q = cls.m_t_inst.m_tw_cb_q
+        for i in range(len(q)):
+            cb = q[i]
+            cbq.append(cb.get_name())
+            inst_q.append("(*)")
+            if (cb.is_enabled()):
+                mode_q.append("ON")
+            else:
+                mode_q.append("OFF")
+
+            strr = cb.get_name()
+            if max_cb_name <= strr.len():
+                max_cb_name = strr.len()
+            strr = "(*)"
+            if max_inst_name <= strr.len():
+                max_inst_name = strr.len()
+
+        # tpoikela: TODO finalize this
+        #    if(obj is None):
+        #      if(m_t_inst.m_pool.first(bobj)):
+        #        do
+        #          if($cast(me,bobj)) break
+        #        while(m_t_inst.m_pool.next(bobj))
+        #      end
+        #      if(me is not None || m_t_inst.m_tw_cb_q.size()):
+        #        qs.push_back($sformatf("Registered callbacks for all instances of %s\n", tname))
+        #        qs.push_back("---------------------------------------------------------------\n")
+        #      end
+        #      if(me is not None):
+        #        do begin
+        #          if($cast(me,bobj)):
+        #            q = m_t_inst.m_pool.get(bobj)
+        #            if (qis None):
+        #              q=new
+        #              m_t_inst.m_pool.add(bobj,q)
+        #            end
+        #            for(int i=0; i<q.size(); ++i):
+        #              cb = q.get(i)
+        #              cbq.push_back(cb.get_name())
+        #              inst_q.push_back(bobj.get_full_name())
+        #              if(cb.is_enabled()) mode_q.push_back("ON")
+        #              else mode_q.push_back("OFF")
+        #
+        #              strr = cb.get_name()
+        #              max_cb_name = max_cb_name > strr.len() ? max_cb_name : strr.len()
+        #              strr = bobj.get_full_name()
+        #              max_inst_name = max_inst_name > strr.len() ? max_inst_name : strr.len()
+        #            end
+        #          end
+        #        end while (m_t_inst.m_pool.next(bobj))
+        #      end
+        #      else begin
+        #        qs.push_back($sformatf("No callbacks registered for any instances of type %s\n", tname))
+        #      end
+        #    end
+        #    else begin
+        #      if(m_t_inst.m_pool.exists(bobj) || m_t_inst.m_tw_cb_q.size()):
+        #       qs.push_back($sformatf("Registered callbacks for instance %s of %s\n", obj.get_full_name(), tname))
+        #       qs.push_back("---------------------------------------------------------------\n")
+        #      end
+        #      if(m_t_inst.m_pool.exists(bobj)):
+        #        q = m_t_inst.m_pool.get(bobj)
+        #        if(qis None):
+        #          q=new
+        #          m_t_inst.m_pool.add(bobj,q)
+        #        end
+        #        for(int i=0; i<q.size(); ++i):
+        #          cb = q.get(i)
+        #          cbq.push_back(cb.get_name())
+        #          inst_q.push_back(bobj.get_full_name())
+        #          if(cb.is_enabled()) mode_q.push_back("ON")
+        #          else mode_q.push_back("OFF")
+        #
+        #          str = cb.get_name()
+        #          max_cb_name = max_cb_name > str.len() ? max_cb_name : str.len()
+        #          str = bobj.get_full_name()
+        #          max_inst_name = max_inst_name > str.len() ? max_inst_name : str.len()
+        #        end
+        #      end
+        #    end
+        #    if(!cbq.size()):
+        #      if(obj is None) str = "*"
+        #      else str = obj.get_full_name()
+        #      qs.push_back($sformatf("No callbacks registered for instance %s of type %s\n", str, tname))
+        #    end
+        #
+        for i in range(len(cbq)):
+            padding = blanks[0:max_cb_name - len(cbq[i])]
+            qs.append(sv.sformatf("%s  %s %s on %s  %s\n",
+                cbq[i], padding, inst_q[i], blanks[0:max_inst_name - len(inst_q[i])-1],
+                mode_q[i]))
+        uvm_info("UVM/CB/DISPLAY", UVM_STRING_QUEUE_STREAMING_PACK(qs), UVM_NONE)
+        cls.m_tracing = prev_trace  # allow tracing to be resumed
+        #  endfunction
     #
     #endclass
 
@@ -504,84 +518,109 @@ class UVMTypedCallbacks(UVMCallbacksBase): #(type T=uvm_object) extends uvm_call
 # provided in an example included in the kit.
 #------------------------------------------------------------------------------
 
-class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callback)
-    #    extends uvm_typed_callbacks#(T)
+class UVMCallbacks(UVMTypedCallbacks):
+    #(type T=uvm_object, type CB=uvm_callback) extends uvm_typed_callbacks#(T)
 
     # Singleton instance is used for type checking
     m_inst = None
     # typeinfo
-    m_typeid = None # UVMTypeIDBase
-    m_cb_typeid = None # UVMTypeIDBase
+    m_typeid = None  # UVMTypeIDBase
+    m_cb_typeid = None  # UVMTypeIDBase
 
     m_typename = ''
     m_cb_typename = ''
     reporter = UVMReportObject("cb_tracer")
-    m_base_inst = None # uvm_callbacks#(T,uvm_callback)
+    m_base_inst = None  # uvm_callbacks#(T,uvm_callback)
 
-    def __init__(self, name = 'uvm_callbacks'):
-        UVMTypedCallbacks.__init__(self, name)
+    def __init__(self, name='uvm_callbacks', T=ALL_TYPES):
+        super().__init__(name)
         self.m_registered = False
-    #
+        self.T = T
+
     #  # get
     #  # ---
     #
     @classmethod
     def get(cls):
 
-        if UVMCallbacks.m_inst is None:
+        if cls.m_inst is None:
             cb_base_type = UVMTypeIDBase()
 
             #void'(super_typ.:m_initialize())
 
             cb_base_type = UVMTypeID.get()
-            UVMCallbacks.m_cb_typeid  = UVMTypeID.get()
-            UVMCallbacks.m_typeid     = UVMTypeID.get()
+            cls.m_cb_typeid  = UVMTypeID.get()
+            cls.m_typeid     = UVMTypeID.get()
 
-            UVMCallbacks.m_inst = UVMCallbacks()
+            cls.m_inst = UVMCallbacks()
 
             if cb_base_type == UVMCallbacks.m_cb_typeid:
                 #cast(m_base_inst, m_inst)
-                UVMCallbacks.m_base_inst = UVMCallbacks.m_inst
+                cls.m_base_inst = UVMCallbacks.m_inst
                 # The base inst in the super class gets set to this base inst
-                UVMCallbacks.m_t_inst = UVMCallbacks.m_base_inst
+                cls.m_t_inst = UVMCallbacks.m_base_inst
                 UVMTypeIDBase.typeid_map[UVMCallbacks.m_typeid] = UVMCallbacks.m_inst
                 UVMTypeIDBase.type_map[UVMCallbacks.m_b_inst] = UVMCallbacks.m_typeid
             else:
-                UVMCallbacks.m_base_inst = UVMCallbacks.get()
-                UVMCallbacks.m_base_inst.m_this_type.append(UVMCallbacks.m_inst)
+                cls.m_base_inst = UVMCallbacks.get()
+                cls.m_base_inst.m_this_type.append(UVMCallbacks.m_inst)
 
-            if UVMCallbacks.m_inst is None:
+            if cls.m_inst is None:
                 uvm_report_fatal("CB/INTERNAL","get(): m_inst is None")
 
-        return UVMCallbacks.m_inst
+        return cls.m_inst
 
 
     #  # m_register_pair
     #  # -------------
     #  # Register valid callback type
     #
-    #  static function bit m_register_pair(string tname="", cbname="")
-    #    this_type inst = get()
-    #
-    #    m_typename = tname
-    #    super_type::m_typename = tname
-    #    m_typeid.typename = tname
-    #
-    #    m_cb_typename = cbname
-    #    m_cb_typeid.typename = cbname
-    #
-    #    inst.m_registered = 1
-    #
-    #    return 1
-    #  endfunction
+    @classmethod
+    def m_register_pair(cls, tname="", cbname="", T=ALL_TYPES):
+        inst = cls.get()
+        # tpoikela: mimics typed callbacks by creating one cbs-object
+        # per registered pair
+        cbs = UVMCallbacks(tname + "__" + cbname, T)
 
-    #
+        cbs.m_typename = tname
+        # TODO super_type.m_typename = tname
+        cbs.m_typeid.typename = tname
+
+        cbs.m_cb_typename = cbname
+        cbs.m_cb_typeid.typename = cbname
+
+        cbs.m_registered = True
+        if cbs.get_name() not in inst._m_cb_table:
+            inst._m_cb_table[cbs.get_name()] = cbs
+        else:
+            uvm_warning("CB_EXISTS", "Callback for " + cbs.get_name() + " already register")
+        return True
+
+    # tpoikela: Added for containig callbacks for each class
+    _m_cb_table = {}
+    @classmethod
+    def _get_typed(cls, obj, CB):
+        cb_table_key = cls._get_cb_table_key(obj, CB)
+        if cb_table_key in cls._m_cb_table:
+            return cls._m_cb_table[cb_table_key]
+        return cls
+
+    @classmethod
+    def _get_cb_table_key(cls, obj, CB):
+        if obj is not None:
+            if CB is not None:
+                return type(obj).__name__ + '__' + CB.__name__
+            else:
+                return type(obj).__name__
+        return '__' + CB.__name__
+
+
     #  virtual function bit m_is_registered(uvm_object obj, uvm_callback cb)
     #    if(m_is_for_me(cb) && m_am_i_a(obj)):
     #      return m_registered
     #    end
     #  endfunction
-    #
+
     #  #Does type check to see if the callback is valid for this type
     #  virtual function bit m_is_for_me(uvm_callback cb)
     #    CB this_cb
@@ -616,17 +655,7 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
         cls.get()
 
         if cb is None:
-            if obj is None:
-                nm = "(*)"
-            else:
-                nm = obj.get_full_name()
-
-            if cls.m_base_inst.m_typename != "":
-                tnm = cls.m_base_inst.m_typename
-            elif (obj is not None):
-                tnm = obj.get_type_name()
-            else:
-                tnm = "uvm_object"
+            nm, tnm = cls.get_obj_and_typename(obj)
 
             uvm_report_error("CBUNREG",
                 "None callback object cannot be registered with object "
@@ -635,18 +664,7 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
 
 
         if not cls.m_base_inst.check_registration(obj,cb):
-
-            if obj is None:
-                nm = "(*)"
-            else:
-                nm = obj.get_full_name()
-
-            if cls.m_base_inst.m_typename != "":
-                tnm = cls.m_base_inst.m_typename
-            elif (obj is not None):
-                tnm = obj.get_type_name()
-            else:
-                tnm = "uvm_object"
+            nm, tnm = cls.get_obj_and_typename(obj)
 
             uvm_report_warning("CBUNREG",
                 "Callback " + cb.get_name() + " cannot be registered with object "
@@ -655,10 +673,9 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
 
 
         if obj is None:
-
             if cls.m_cb_find(cls.m_t_inst.m_tw_cb_q, cb) != -1:
 
-                if (cls.m_base_inst.m_typename != ""):
+                if cls.m_base_inst.m_typename != "":
                     tnm = cls.m_base_inst.m_typename
                 else:
                     tnm = "uvm_object"
@@ -669,7 +686,7 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
             else:
                 uvm_cb_trace_noobj(cb,sv.sformatf("Add (%s) typewide callback %0s for type %s",
                     o2str(ordering), cb.get_name(), cls.m_base_inst.m_typename))
-                cls.m_t_inst.m_add_tw_cbs(cb,ordering)
+                cls.m_t_inst.m_add_tw_cbs(cb, ordering)
 
         else:
 
@@ -678,7 +695,7 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
 
             q = cls.m_base_inst.m_pool.get(obj)
 
-            if (q is None):
+            if q is None:
                 q = []
                 cls.m_base_inst.m_pool.add(obj,q)
 
@@ -700,7 +717,7 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
 
 
             #check if already exists in the queue
-            if (cls.m_cb_find(q,cb) != -1):
+            if cls.m_cb_find(q,cb) != -1:
                 uvm_report_warning("CBPREG", "Callback object " + cb.get_name()
                     + " is already registered with object " + obj.get_full_name(), UVM_NONE)
             else:
@@ -711,6 +728,24 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
                     q.insert(0, cb)
 
         #  endfunction
+
+    @classmethod
+    def get_obj_and_typename(cls, obj):
+        nm = ""
+        tnm = ""
+
+        if obj is None:
+            nm = "(*)"
+        else:
+            nm = obj.get_full_name()
+
+        if cls.m_base_inst.m_typename != "":
+            tnm = cls.m_base_inst.m_typename
+        elif obj is not None:
+            tnm = obj.get_type_name()
+        else:
+            tnm = "uvm_object"
+        return nm, tnm
 
 
     #  # Function: add_by_name
@@ -839,18 +874,18 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     # A facade class, <uvm_callback_iter> is also available, and is the generally
     # preferred way to iterate over callback queues.
     @classmethod
-    def m_get_q(cls, obj):
+    def m_get_q(cls, obj, CB=None):
         q = None
-        if not UVMCallbacks.m_base_inst.m_pool.exists(obj): #no instance specific
+        if not cls.m_base_inst.m_pool.exists(obj):  # no instance specific
             if obj is None:
-                q = UVMCallbacks.m_t_inst.m_tw_cb_q
+                q = cls.m_t_inst.m_tw_cb_q
             else:
-                q =  UVMCallbacks.m_t_inst.m_get_tw_cb_q(obj)
+                q = cls.m_t_inst.m_get_tw_cb_q(obj, CB)
         else:
-            q = UVMCallbacks.m_base_inst.m_pool.get(obj)
+            q = cls.m_base_inst.m_pool.get(obj)
             if q is None:
                 q = UVMQueue()
-                UVMCallbacks.m_base_inst.m_pool.add(obj,q)
+                cls.m_base_inst.m_pool.add(obj, q)
         return q
 
     #  # Function: get_first
@@ -865,18 +900,25 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #  # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
     #  # iterator interface.
     #
-    #  static function CB get_first (ref int itr, input T obj)
-    #    uvm_queue#(uvm_callback) q
-    #    CB cb
-    #    void'(get())
-    #    q = m_get_q(obj)
-    #    for(itr = 0; itr<q.size(); ++itr)
-    #      if($cast(cb, q.get(itr)) && cb.callback_mode())
-    #         return cb
-    #    return None
-    #  endfunction
+    @classmethod
+    def get_first(cls, itr, obj, CB=None):
+        cls.get()
+        # tpoikela: added to mimic typed cbs
+        typed_cls = cls._get_typed(obj, CB)
+        cls = typed_cls
+        q = cls.m_get_q(obj, CB)
+        for i in range(len(q)):
+            itr.m_i = i
+            cb = []
+            if CB is not None:
+                if sv.cast(cb, q[itr.m_i], CB) and cb[0].callback_mode():
+                    return cb[0]
+            else:
+                return q[itr.m_i]  # Just return 1st index without type match
+        return None
+        #  endfunction
 
-    #
+
     #  # Function: get_last
     #  #
     #  # Returns the last enabled callback of type CB which resides in the queue for ~obj~.
@@ -893,14 +935,30 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #    uvm_queue#(uvm_callback) q
     #    CB cb
     #    void'(get())
+    #    # tpoikela: added to mimic typed cbs
+    #    typed_cls = cls._get_typed(obj, CB)
+    #    cls = typed_cls
     #    q = m_get_q(obj)
     #    for(itr = q.size()-1; itr>=0; --itr)
     #      if ($cast(cb, q.get(itr)) && cb.callback_mode())
     #         return cb
     #    return None
-    #  endfunction
-    #
-    #
+    @classmethod
+    def get_last(cls, itr, obj, CB=None):
+        cls.get()
+        # tpoikela: added to mimic typed cbs
+        typed_cls = cls._get_typed(obj, CB)
+        cls = typed_cls
+        q = cls.m_get_q(obj, CB)
+        for i in range(len(q)-1, -1, -1):
+            itr.m_i = i
+            cb = []
+            if CB is not None:
+                if sv.cast(cb, q[itr.m_i], CB) and cb[0].callback_mode():
+                    return cb[0]
+            else:
+                return q[itr.m_i]  # Just return 1st index without type match
+        return None
 
     #  # Function: get_next
     #  #
@@ -918,15 +976,20 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #
     #  static function CB get_next (ref int itr, input T obj)
     @classmethod
-    def get_next(cls, itr, obj):
-        q = []  # uvm_queue#(uvm_callback)
+    def get_next(cls, itr, obj, CB=None):
         cls.get()
+        # tpoikela: added to mimic typed cbs
+        typed_cls = cls._get_typed(obj, CB)
+        cls = typed_cls
         q = cls.m_get_q(obj)
         for i in range(itr.m_i + 1, len(q)):
             itr.m_i = i
             cb = []
-            if sv.cast(cb, q[itr], UVMCallback) and cb[0].callback_mode():
-                return cb[0]
+            if CB is not None:
+                if sv.cast(cb, q[itr.m_i], CB) and cb[0].callback_mode():
+                    return cb[0]
+            else:
+                return q[itr.m_i]
         return None
         #  endfunction
 
@@ -947,17 +1010,25 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #  # iterator interface.
     #
     #  static function CB get_prev (ref int itr, input T obj)
-    #    uvm_queue#(uvm_callback) q
-    #    CB cb
-    #    void'(get())
-    #    q = m_get_q(obj)
-    #    for(itr = itr-1; itr>= 0; --itr)
-    #      if($cast(cb, q.get(itr)) && cb.callback_mode())
-    #         return cb
-    #    return None
-    #  endfunction
-    #
-    #
+    @classmethod
+    def get_prev(cls, itr, obj, CB=None):
+        cls.get()
+        # tpoikela: added to mimic typed cbs
+        typed_cls = cls._get_typed(obj, CB)
+        cls = typed_cls
+        q = cls.m_get_q(obj)
+        # for(itr = itr-1; itr>= 0; --itr)
+        for i in range(itr.m_i - 1, -1, -1):
+            itr.m_i = i
+            cb = []
+            if CB is not None:
+                if sv.cast(cb, q[itr.m_i], CB) and cb[0].callback_mode():
+                    return cb[0]
+            else:
+                return q[itr.m_i]
+        return None
+
+
     #  #-------------
     #  # Group: Debug
     #  #-------------
@@ -969,11 +1040,12 @@ class UVMCallbacks(UVMTypedCallbacks):  #(type T=uvm_object, type CB=uvm_callbac
     #  # of type ~T~, including typewide callbacks.
     #
     #  static function void display(T obj=None)
-    #    # For documentation purposes, need a function wrapper here.
-    #    void'(get())
-    #    super_type::display(obj)
-    #  endfunction
-    #
+    @classmethod
+    def display(cls, obj=None):
+        # For documentation purposes, need a function wrapper here.
+        cls.get()
+        super().display(obj)
+
     #endclass
 
 
@@ -1063,10 +1135,11 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # Creates a new callback iterator object. It is required that the object
     # context be provided.
 
-    def __init__(self, obj):
+    def __init__(self, obj, CB=None):
         self.m_i = 0
         self.m_cb = None  # UVMCallback
         self.m_obj = obj
+        self.CB = CB
 
     # Function: first
     #
@@ -1075,7 +1148,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # queue is empty then ~None~ is returned.
 
     def first(self):
-        self.m_cb = UVMCallbacks.get_first(self.m_i, self.m_obj)
+        self.m_cb = UVMCallbacks.get_first(self, self.m_obj, self.CB)
         return self.m_cb
 
     # Function: last
@@ -1084,7 +1157,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # a derivative) that is in the queue of the context object. If the
     # queue is empty then ~None~ is returned.
     def last(self):
-        self.m_cb = UVMCallbacks.get_last(self.m_i, self.m_obj)
+        self.m_cb = UVMCallbacks.get_last(self, self.m_obj, self.CB)
         return self.m_cb
 
     # Function: next
@@ -1093,7 +1166,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # a derivative) that is in the queue of the context object. If there
     # are no more valid callbacks in the queue, then ~None~ is returned.
     def next(self):
-        self.m_cb = UVMCallbacks.get_next(self, self.m_obj)
+        self.m_cb = UVMCallbacks.get_next(self, self.m_obj, self.CB)
         return self.m_cb
 
     # Function: prev
@@ -1102,7 +1175,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # a derivative) that is in the queue of the context object. If there
     # are no more valid callbacks in the queue, then ~None~ is returned.
     def prev(self):
-        self.m_cb = UVMCallbacks.get_prev(self.m_i, self.m_obj)
+        self.m_cb = UVMCallbacks.get_prev(self, self.m_obj, self.CB)
         return self.m_cb
 
     # Function: get_cb
@@ -1142,7 +1215,6 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
 # The prototypes for each hook method are completely application specific with
 # no restrictions.
 #------------------------------------------------------------------------------
-
 
 
 class UVMCallback(UVMObject):
