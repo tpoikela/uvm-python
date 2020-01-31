@@ -21,16 +21,17 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-from uvm.base.uvm_resource_db import UVMResourceDb
-from uvm.base.sv import sv_if
-
-from uvm.base.uvm_component import *
 import cocotb
 from cocotb.triggers import *
+
+from uvm.base.uvm_resource_db import UVMResourceDb
+from uvm.base.sv import sv_if, sv
+
+from uvm.base.uvm_component import *
 from uvm.comps.uvm_env import *
 from uvm.base.uvm_resource_db import *
-#from uvm_pkg import *
-#
+from uvm import run_test
+
 
 
 # About: uvm_exmples/mechanism/interfaces
@@ -97,8 +98,6 @@ class pin_if(sv_if):
         #   input  err )
 
 
-#from top_pkg import *
-
 #//---------------------------------------------------------------------
 #// component driver
 #//----------------------------------------------------------------------
@@ -110,22 +109,17 @@ class driver(UVMComponent):
         super().__init__(name, parent)
         self.pif = None
 
-    #  def void connect_phase(self,uvm_phase phase):
-    #     assert(uvm_resource_db#(pin_vif)::read_by_name(get_full_name(),
-    #                                                    "pif", pif))
-    #  endfunction
-    #
+    def connect_phase(self, phase):
+        arr = []
+        sv.sv_assert(UVMResourceDb.read_by_name(self.get_full_name(), 'pif', arr))
+        self.pif = arr[0]
 
-    #@cocotb.coroutine
-    #  def run_phase(self, phase):
-    #    while True:
-    #      yield FallingEdge(pif.clk)
-    #      `uvm_info("driver", "posedge clk", UVM_NONE)
-    #      //...
-    #    end
-    #  endtask
-    #
-    #endclass
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        while True:
+            yield FallingEdge(self.pif.clk)
+            uvm_info("driver", "posedge clk", UVM_NONE)
+
 
 #//----------------------------------------------------------------------
 #// environment env
@@ -139,6 +133,7 @@ class env(UVMEnv):
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
         self.d = driver("driver", self)
+        self.pif = None
 
 
     @cocotb.coroutine
@@ -173,7 +168,7 @@ def module_top(dut):
     ck_proc = cocotb.fork(module_clkgen(pif.clk))
     #ck = clkgen(pif.clk) #  clkgen ck(clk)
 
-    d = dut(pif.slave_mp)
+    #d = dut(pif.slave_mp)
 
     e = env("e_env")
     UVMResourceDb.set("env.driver", "pif", pif)

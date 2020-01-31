@@ -7,6 +7,8 @@
 // Description:
 //---------------------------------------------------------------------------
 
+`timescale 1ns/1ns
+
 interface pin_if (input clk);
   bit [15:0] address;
   bit [7:0]  wr_data;
@@ -71,8 +73,11 @@ module master_dut#(
   input err
 );
 
+reg[15:0] count = 16'h0;
+
   always_ff@(posedge clk) begin
-      $display({"dut: ", "posedge clk"});
+      count <= count + 1;
+      $display({"dut: ", "posedge clk: %0d"}, count);
       //...
   end
 endmodule
