@@ -48,6 +48,12 @@ def trig_event(e):
     e.trigger()
     yield Timer(1, "NS")
 
+@cocotb.coroutine
+def trig_data_event(e):
+    yield Timer(50, "NS")
+    e.trigger(0x1234)
+    yield Timer(1, "NS")
+
 
 @cocotb.test()
 def test_test(dut):
@@ -58,10 +64,13 @@ def test_test(dut):
     e = None
     e = ep.get("fred")
     e = ep.get("george")
+    e_data = ep.get('evt_data')
     uvm_default_table_printer.knobs.reference = 0
     ep.print()
 
     trig_proc = cocotb.fork(trig_event(e))
+    cocotb.fork(trig_data_event(e_data))
+    yield e_data.wait_trigger()
     yield e.wait_on()
     e.reset()
     yield Timer(1, "NS")
@@ -72,7 +81,8 @@ def test_test(dut):
     svr = cs_.get_report_server()
     svr.report_summarize()
     time_ok = sv.realtime("NS") == 202
-    if time_ok and (svr.get_severity_count(UVM_FATAL) +
+    data_ok = e_data.get_trigger_data() == 0x1234
+    if data_ok and time_ok and (svr.get_severity_count(UVM_FATAL) +
             svr.get_severity_count(UVM_ERROR) == 0):
         print("** UVM TEST PASSED **\n")
     else:
