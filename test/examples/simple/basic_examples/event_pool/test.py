@@ -37,15 +37,22 @@ from cocotb.triggers import Timer
 from uvm.base.uvm_coreservice import UVMCoreService
 from uvm.base.uvm_pool import UVMEventPool
 from uvm.base.uvm_globals import UVM_FATAL, UVM_ERROR
+from uvm.base.sv import sv
 
 from uvm.base.uvm_global_vars import uvm_default_table_printer
+
+
+@cocotb.coroutine
+def trig_event(e):
+    yield Timer(100, "NS")
+    e.trigger()
+    yield Timer(1, "NS")
+
 
 @cocotb.test()
 def test_test(dut):
 
     ep = UVMEventPool("ep")
-    #uvm_event_pool ep=new("ep");
-
     cs_ = UVMCoreService.get()
 
     e = None
@@ -54,10 +61,18 @@ def test_test(dut):
     uvm_default_table_printer.knobs.reference = 0
     ep.print()
 
+    trig_proc = cocotb.fork(trig_event(e))
+    yield e.wait_on()
+    e.reset()
+    yield Timer(1, "NS")
+    trig_proc = cocotb.fork(trig_event(e))
+    yield [trig_proc.join(), e.wait_on().join()]
+
     svr = None  # uvm_report_server
     svr = cs_.get_report_server()
     svr.report_summarize()
-    if (svr.get_severity_count(UVM_FATAL) +
+    time_ok = sv.realtime("NS") == 202
+    if time_ok and (svr.get_severity_count(UVM_FATAL) +
             svr.get_severity_count(UVM_ERROR) == 0):
         print("** UVM TEST PASSED **\n")
     else:
