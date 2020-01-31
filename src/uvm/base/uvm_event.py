@@ -25,7 +25,7 @@
 import cocotb
 from cocotb.triggers import Event, Timer
 
-from .sv import sv
+from .sv import sv, wait
 from .uvm_object import UVMObject
 from .uvm_queue import UVMQueue
 from .uvm_debug import *
@@ -95,7 +95,7 @@ class UVMEventBase(UVMObject):
     #    // is <reset>.
     #    virtual task wait_on (bit delta = 0)
     @cocotb.coroutine
-    def wait_on(self, delta=0):
+    def wait_on(self, delta=False):
         if self.on is True:
             if delta is True:
                 #0
@@ -103,11 +103,12 @@ class UVMEventBase(UVMObject):
             yield Timer(0)
             return
         self.num_waiters += 1
-        while True:
-            yield self.m_value_changed_event.wait()
-            self.m_value_changed_event.clear()
-            if self.on is True:
-                break
+        yield wait(lambda: self.on is True, self.m_value_changed_event)
+        #while True:
+        #    yield self.m_value_changed_event.wait()
+        #    self.m_value_changed_event.clear()
+        #    if self.on is True:
+        #        break
         # endtask
 
     #    // Task: wait_off
@@ -121,14 +122,15 @@ class UVMEventBase(UVMObject):
     #    // previously waiting processes have had a chance to resume.
     #
     #    virtual task wait_off (bit delta = 0)
-    #        if (!self.on) begin
-    #            if (delta)
-    #                #0
-    #            return
-    #        end
-    #        self.num_waiters++
-    #        @self.on
-    #    endtask
+    @cocotb.coroutine
+    def wait_off(self, delta=False):
+        if self.on is False:
+            if delta is True:
+                yield Timer(0)  #0
+            return
+        self.num_waiters += 1
+        yield wait(lambda: self.on is False, self.m_value_changed_event)
+        #    endtask
 
     #    // Task: wait_trigger
     #    //
@@ -153,51 +155,45 @@ class UVMEventBase(UVMObject):
     #    // views the trigger as persistent within a given time-slice and thus avoids
     #    // certain race conditions. If this method is called after the trigger but
     #    // within the same time-slice, the caller returns immediately.
-    #
-    #    virtual task wait_ptrigger ()
-    #        if (self.m_event.triggered)
-    #            return
-    #        self.num_waiters++
-    #        @self.m_event
-    #    endtask
-    #
-    #
+
+    @cocotb.coroutine
+    def wait_ptrigger(self):
+        if self.m_event.fired:
+            return
+        self.num_waiters += 1
+        yield self.m_event.wait()
+        self.m_event.clear()
+
     #    // Function: get_trigger_time
     #    //
-    #    // Gets the time that this event was last triggered. If the event has not been
+    #    // Gets the time that this event was last triggered. If the event has not bee
     #    // triggered, or the event has been reset, then the trigger time will be 0.
     #
-    #    virtual function time get_trigger_time ()
-    #        return self.trigger_time
-    #    endfunction
-    #
-    #
+    def get_trigger_time(self):
+        return self.trigger_time
+
     #    //-------//
     #    // state //
     #    //-------//
-    #
+
     #    // Function: is_on
     #    //
     #    // Indicates whether the event has been triggered since it was last reset.
     #    //
     #    // A return of 1 indicates that the event has triggered.
     #
-    #    virtual function bit is_on ()
-    #        return (self.on == 1)
-    #    endfunction
-    #
-    #
+    def is_on(self):
+        return self.on
+
     #    // Function: is_off
     #    //
     #    // Indicates whether the event has been triggered or been reset.
     #    //
     #    // A return of 1 indicates that the event has not been triggered.
     #
-    #    virtual function bit is_off ()
-    #        return (self.on == 0)
-    #    endfunction
-    #
-    #
+    def is_off(self):
+        return self.on is False
+
     #    // Function: reset
     #    //
     #    // Resets the event to its off state. If ~wakeup~ is set, then all processes
@@ -205,18 +201,15 @@ class UVMEventBase(UVMObject):
     #    //
     #    // No self.callbacks are called during a reset.
     #
-    #    virtual function void reset (bit wakeup = 0)
-    #        event e
-    #        if (wakeup)
-    #            ->self.m_event
-    #        self.m_event = e
-    #        self.num_waiters = 0
-    #        self.set_value("on", False)
-    #        self.trigger_time = 0
-    #    endfunction
-    #
-    #
-    #
+    def reset(self, wakeup=False):
+        if wakeup is True:
+            self.m_event.set()
+        self.m_event = Event()
+        self.num_waiters = 0
+        self.set_value("on", False)
+        self.trigger_time = 0
+
+
     #    //--------------//
     #    // waiters list //
     #    //--------------//
@@ -232,8 +225,7 @@ class UVMEventBase(UVMObject):
     #        if (self.num_waiters > 0)
     #            self.num_waiters--
     #    endfunction
-    #
-    #
+
     #    // Function: get_num_waiters
     #    //
     #    // Returns the number of processes waiting on the event.
@@ -241,13 +233,13 @@ class UVMEventBase(UVMObject):
     #    virtual function int get_num_waiters ()
     #        return self.num_waiters
     #    endfunction
-    #
-    #
+
+
     #    virtual function string get_type_name()
     #        return type_name
     #    endfunction
-    #
-    #
+
+
     #    virtual function void do_print (uvm_printer printer)
     #        printer.print_field_int("self.num_waiters", self.num_waiters, $bits(self.num_waiters), UVM_DEC, ".", "int")
     #        printer.print_field_int("on", self.on, $bits(self.on), UVM_BIN, ".", "bit")
@@ -258,8 +250,8 @@ class UVMEventBase(UVMObject):
     #        end
     #        printer.m_scope.up()
     #    endfunction
-    #
-    #
+
+
     #    virtual function void do_copy (uvm_object rhs)
     #        uvm_event_base e
     #        super.do_copy(rhs)
@@ -273,7 +265,7 @@ class UVMEventBase(UVMObject):
     #        self.callbacks = e.self.callbacks
     #
     #    endfunction
-    #
+
     #endclass
 
 #------------------------------------------------------------------------------
@@ -289,14 +281,14 @@ class UVMEventBase(UVMObject):
 
 class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     type_name = "uvm_event"
-    # local T self.trigger_data
 
-    # Function: new
+    # Function: __init__
     #
     # Creates a new event object.
-    def __init__(self, name=""):
+    def __init__(self, name="", T=None):
         UVMEventBase.__init__(self, name)
         self.trigger_data = None
+        self.T = None
 
     #endfunction
 
@@ -304,25 +296,27 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #
     # This method calls <uvm_event_base::wait_trigger> followed by <get_trigger_data>.
     @cocotb.coroutine
-    def wait_trigger_data(self):  #, output T data)
+    def wait_trigger_data(self):  # output T data)
         yield self.wait_trigger()
-    #    data = get_trigger_data()
-    #    endtask
+        return self.get_trigger_data()
+
 
     #    // Task: wait_ptrigger_data
     #    //
     #    // This method calls <uvm_event_base::wait_ptrigger> followed by <get_trigger_data>.
     #
     #    virtual task wait_ptrigger_data (output T data)
-    #        wait_ptrigger()
-    #        data = get_trigger_data()
-    #    endtask
-    #
-    #
+    @cocotb.coroutine
+    def wait_ptrigger_data(self, data):
+        yield self.wait_ptrigger()
+        trig_data = self.get_trigger_data()
+        data.append(trig_data)
+        return trig_data
+
     #    //------------//
     #    // triggering //
     #    //------------//
-    #
+
     #    // Function: trigger
     #    //
     #    // Triggers the event, resuming all waiting processes.
@@ -359,7 +353,6 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
 
     def get_type_name(self):
         return UVMEvent.type_name
-    #    endfunction
 
     #     //-----------//
     #    // callbacks //
@@ -372,19 +365,15 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #    // to 1, the default, ~cb~ is added to the back of the callback list. Otherwise,
     #    // ~cb~ is placed at the front of the callback list.
     #
-    #    virtual function void add_callback (uvm_event_callback#(T) cb, bit append=1)
-    #        for (int i=0;i<self.callbacks.size();i++) begin
-    #            if (cb == self.callbacks[i]) begin
-    #                uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE)
-    #                return
-    #            end
-    #        end
-    #        if (append)
-    #            self.callbacks.push_back(cb)
-    #        else
-    #            self.callbacks.push_front(cb)
-    #    endfunction
-    #
+    def add_callback(self, cb, append=True):
+        if cb in self.callbacks:
+            uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE)
+            return
+
+        if append is True:
+            self.callbacks.append(cb)
+        else:
+            self.callbacks.insert(0, cb)
 
     #    // Function: delete_callback
     #    //
