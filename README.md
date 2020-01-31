@@ -24,7 +24,7 @@ layer supports already read/write to registers (via frontdoor), and to
 memories (frontdoor and backdoor). TLM 1.0 is fully implemented.
 
 NOTE: Despite the working state, the project is under development, and still
-missing lot of functionality. But please try it out, and let me know if
+missing a lot of functionality. Please try it out, and let me know if
 something you require should be added, or even better, add it yourself, test it
 and create a pull request!
 
@@ -36,7 +36,7 @@ You can install uvm-python as a normal Python package:
 ```shell
 git clone https://github.com/tpoikela/uvm-python.git
 cd uvm-python
-pip install --user .  # Omit --user for global installation
+python -m pip install --user .  # Omit --user for global installation
 ```
 
 See `Makefile` for working examples. You can use Makefiles in `test/examples` as a
@@ -61,7 +61,7 @@ To run unit tests only:
 HDL Simulators
 --------------
 
-Icarus Verilog (iverilog) and verilator (v4.20+) are free simulators, which can
+Icarus Verilog (iverilog v11.0) and verilator (v4.020+) are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.
 
 Commercial simulators that work with cocotb can of course be used with
