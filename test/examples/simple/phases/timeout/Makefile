@@ -61,7 +61,7 @@ ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
 endif
 
-SIM_ARGS = ""
+PLUSARGS = "+UVM_VERBOSITY=UVM_DEBUG"
 TOPLEVEL := common_stub
 MODULE   ?= test
 
