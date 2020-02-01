@@ -602,10 +602,10 @@ class UVMCallbacks(UVMTypedCallbacks):
             uvm_warning("CB_EXISTS", "Callback for " + cbs.get_name() + " already register")
         return True
 
-    # tpoikela: Added for containig callbacks for each class
+    # tpoikela: Added for containing callbacks for each class
     _m_cb_table = {}
     @classmethod
-    def _get_typed(cls, obj, CB):
+    def _get_typed_cbs(cls, obj, CB):
         cb_table_key = cls._get_cb_table_key(obj, CB)
         if cb_table_key in cls._m_cb_table:
             return cls._m_cb_table[cb_table_key]
@@ -618,7 +618,10 @@ class UVMCallbacks(UVMTypedCallbacks):
                 return type(obj).__name__ + '__' + CB.__name__
             else:
                 return type(obj).__name__
-        return '__' + CB.__name__
+        elif CB is not None:
+            return '__' + CB.__name__
+        else:
+            return '__<unknown_key>__'
 
 
     #  virtual function bit m_is_registered(uvm_object obj, uvm_callback cb)
@@ -910,7 +913,7 @@ class UVMCallbacks(UVMTypedCallbacks):
     def get_first(cls, itr, obj, CB=None):
         cls.get()
         # tpoikela: added to mimic typed cbs
-        typed_cls = cls._get_typed(obj, CB)
+        typed_cls = cls._get_typed_cbs(obj, CB)
         cls = typed_cls
         q = cls.m_get_q(obj, CB)
         for i in range(len(q)):
@@ -942,7 +945,7 @@ class UVMCallbacks(UVMTypedCallbacks):
     def get_last(cls, itr, obj, CB=None):
         cls.get()
         # tpoikela: added to mimic typed cbs
-        typed_cls = cls._get_typed(obj, CB)
+        typed_cls = cls._get_typed_cbs(obj, CB)
         cls = typed_cls
         q = cls.m_get_q(obj, CB)
         for i in range(len(q)-1, -1, -1):
@@ -974,7 +977,7 @@ class UVMCallbacks(UVMTypedCallbacks):
     def get_next(cls, itr, obj, CB=None):
         cls.get()
         # tpoikela: added to mimic typed cbs
-        typed_cls = cls._get_typed(obj, CB)
+        typed_cls = cls._get_typed_cbs(obj, CB)
         cls = typed_cls
         q = cls.m_get_q(obj)
         for i in range(itr.m_i + 1, len(q)):
@@ -1009,7 +1012,7 @@ class UVMCallbacks(UVMTypedCallbacks):
     def get_prev(cls, itr, obj, CB=None):
         cls.get()
         # tpoikela: added to mimic typed cbs
-        typed_cls = cls._get_typed(obj, CB)
+        typed_cls = cls._get_typed_cbs(obj, CB)
         cls = typed_cls
         q = cls.m_get_q(obj)
         # for(itr = itr-1; itr>= 0; --itr)
