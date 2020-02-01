@@ -27,7 +27,11 @@ from .uvm_globals import *
 from .uvm_debug import *
 from ..macros import uvm_error
 
-from .uvm_runtime_phases import (UVMMainPhase)
+
+from .uvm_runtime_phases import (UVMMainPhase, UVMPreResetPhase,
+    UVMResetPhase, UVMPostResetPhase, UVMConfigurePhase,
+    UVMPreMainPhase, UVMShutdownPhase)
+
 
 # UVMPhases
 build_ph = None
@@ -97,7 +101,7 @@ class UVMDomain(UVMPhase):
         domain.add(UVMBuildPhase.get())
         domain.add(UVMConnectPhase.get())
         domain.add(UVMEndOfElaborationPhase.get())
-        domain.add(UVMStartofSimulationPhase.get());
+        domain.add(UVMStartofSimulationPhase.get())
         domain.add(UVMRunPhase.get())
         domain.add(UVMExtractPhase.get())
         domain.add(UVMCheckPhase.get())
@@ -140,17 +144,17 @@ class UVMDomain(UVMPhase):
     #
     @classmethod
     def add_uvm_phases(cls, schedule):
-        #  schedule.add(uvm_pre_reset_phase::get());
-        #  schedule.add(uvm_reset_phase::get());
-        #  schedule.add(uvm_post_reset_phase::get());
-        #  schedule.add(uvm_pre_configure_phase::get());
-        #  schedule.add(uvm_configure_phase::get());
+        schedule.add(UVMPreResetPhase.get())
+        schedule.add(UVMResetPhase.get())
+        schedule.add(UVMPostResetPhase.get())
+        #schedule.add(uvm_pre_configure_phase::get());
+        schedule.add(UVMConfigurePhase.get())
         #  schedule.add(uvm_post_configure_phase::get());
-        #  schedule.add(uvm_pre_main_phase::get());
+        schedule.add(UVMPreMainPhase.get())
         schedule.add(UVMMainPhase.get())
         #  schedule.add(uvm_post_main_phase::get());
         #  schedule.add(uvm_pre_shutdown_phase::get());
-        #  schedule.add(uvm_shutdown_phase::get());
+        schedule.add(UVMShutdownPhase.get())
         #  schedule.add(uvm_post_shutdown_phase::get());
 
     # Function: get_uvm_domain
