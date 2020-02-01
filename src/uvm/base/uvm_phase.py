@@ -1204,7 +1204,9 @@ class UVMPhase(UVMObject):
         done = False
         while (not done):
             done = True
-            for pred in pred_of_succ:
+            # tpoikela: Make a copy of keys because dict can be modified in loop
+            items = list(pred_of_succ.keys())
+            for pred in items:
                 if pred.get_phase_type() != UVM_PHASE_NODE:
                     del pred_of_succ[pred]
                     for next_pred in pred.m_predecessors:
@@ -1297,7 +1299,6 @@ class UVMPhase(UVMObject):
 
         while True:
             qphase = []
-            uvm_debug(cls, 'm_run_phases', 'Calling blocking get()')
             yield UVMPhase.m_phase_hopper.get(qphase)  # Should block?
             #fork
             uvm_debug(cls, 'm_run_phases', 'Calling execute phase with |' +
@@ -1317,7 +1318,8 @@ class UVMPhase(UVMObject):
 
         cs = get_cs()
         top = cs.get_root()  # UVMRoot
-        uvm_debug(self, 'execute_phase', 'Waiting predecessors to finish')
+        uvm_debug(self, 'execute_phase', 'Waiting predecessors to finish ' +
+            self.get_name())
 
         # If we got here by jumping forward, we must wait for
         # all its predecessor nodes to be marked DONE.
@@ -1350,6 +1352,8 @@ class UVMPhase(UVMObject):
         uvm_debug(self, 'execute_phase', 'Checking for wait_phases_synced')
 
         if len(self.m_sync) > 0:
+            uvm_debug(self, 'execute_phase', 'Waiting for wait_phases_synced ' +
+                self.get_name())
             yield self._wait_phases_synced()
 
         self.m_run_count += 1
@@ -1553,6 +1557,8 @@ class UVMPhase(UVMObject):
         else:
             # execute all the successors
             for key in self.m_successors.keys():
+                uvm_debug(self, 'execute_phase', self.get_name() +
+                    ' has more successors')
                 succ = key
                 if succ.m_state < UVM_PHASE_SCHEDULED:
                     state_chg.m_prev_state = succ.m_state
