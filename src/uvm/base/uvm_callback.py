@@ -120,7 +120,7 @@ class UVMCallbacksBase(UVMObject):
     def m_initialize(cls):
         if cls.m_b_inst is None:
             cls.m_b_inst = UVMCallbacksBase("callbacks_base")
-            UVMCallbacksBase.m_pool = UVMPool()
+            cls.m_pool = UVMPool()
         return UVMCallbacksBase.m_b_inst
 
     def m_am_i_a(self, obj):
@@ -227,15 +227,14 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
 
     @classmethod
     def m_initialize(cls):
-        if cls.m_t_inst is None:
+        if UVMTypedCallbacks.m_t_inst is None:
             super().m_initialize()
-            cls.m_t_inst = UVMTypedCallbacks("typed_callbacks")
-            cls.m_t_inst.m_tw_cb_q = []
-        return cls.m_t_inst
-        #  endfunction
+            UVMTypedCallbacks.m_t_inst = UVMTypedCallbacks("typed_callbacks")
+            UVMTypedCallbacks.m_t_inst.m_tw_cb_q = []
+        return UVMTypedCallbacks.m_t_inst
 
-    #
-    #  #Type checking interface: is given ~obj~ of type T?
+
+    # Type checking interface: is given ~obj~ of type T?
     def m_am_i_a(self, obj):
         if obj is None:
             return True
@@ -243,10 +242,9 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         if self.T is not ALL_TYPES:
             return sv.cast(arr, obj, self.T)
         return True
-    #  endfunction
 
 
-    #  #Getting the typewide queue
+    # Getting the typewide queue
     def m_get_tw_cb_q(self, obj, CB=None):
         if self.m_am_i_a(obj):
             for i in range(len(self.m_derived_types)):
@@ -256,9 +254,10 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
                     m_get_tw_cb_q = dt.m_get_tw_cb_q(obj, CB)
                     if m_get_tw_cb_q is not None:
                         return m_get_tw_cb_q
-            return self.m_t_inst.m_tw_cb_q
+            return UVMTypedCallbacks.m_t_inst.m_tw_cb_q
         else:
             return None
+
 
     @classmethod
     def m_cb_find(cls, q, cb):
@@ -266,7 +265,6 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
             if q[i] == cb:
                 return i
         return -1
-        #  endfunction
 
 
     #  static function int m_cb_find_name(uvm_queue#(uvm_callback) q, string name, string where)
@@ -290,7 +288,11 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         obj = None  # uvm_object
         me = None  # T
         warned = False
-        cls = UVMCallbacks
+
+        # tpoikela: Which one is correct?
+        #cls = UVMCallbacks
+        cls = UVMTypedCallbacks
+
         q = []  # uvm_queue#(uvm_callback)
         if self.m_cb_find(cls.m_t_inst.m_tw_cb_q, cb) == -1:
             warned = cls.m_cb_find_name(cls.m_t_inst.m_tw_cb_q, cb.get_name(), "type")
@@ -394,7 +396,7 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         else:
             tname = "*"
 
-        q = cls.m_t_inst.m_tw_cb_q
+        q = UVMTypedCallbacks.m_t_inst.m_tw_cb_q
         for i in range(len(q)):
             cb = q[i]
             cbq.append(cb.get_name())
@@ -538,10 +540,16 @@ class UVMCallbacks(UVMTypedCallbacks):
     reporter = UVMReportObject("cb_tracer")
     m_base_inst = None  # uvm_callbacks#(T,uvm_callback)
 
-    def __init__(self, name='uvm_callbacks', T=ALL_TYPES):
+    # tpoikela: Added for containing callbacks for each class
+    _m_cb_table = {}  # UVMCallbacks[str]
+
+    def __init__(self, name='uvm_callbacks', T=ALL_TYPES, CB=ALL_TYPES):
         super().__init__(name)
         self.m_registered = False
+        # These are type parameters
         self.T = T
+        self.CB = CB
+
 
     #  # get
     #  # ---
@@ -551,8 +559,7 @@ class UVMCallbacks(UVMTypedCallbacks):
 
         if cls.m_inst is None:
             cb_base_type = UVMTypeIDBase()
-
-            #void'(super_typ.:m_initialize())
+            super().m_initialize()
 
             cb_base_type = UVMTypeID.get()
             cls.m_cb_typeid  = UVMTypeID.get()
@@ -560,16 +567,16 @@ class UVMCallbacks(UVMTypedCallbacks):
 
             cls.m_inst = UVMCallbacks()
 
-            if cb_base_type == UVMCallbacks.m_cb_typeid:
+            if cb_base_type == cls.m_cb_typeid:
                 #cast(m_base_inst, m_inst)
-                cls.m_base_inst = UVMCallbacks.m_inst
+                cls.m_base_inst = cls.m_inst
                 # The base inst in the super class gets set to this base inst
-                cls.m_t_inst = UVMCallbacks.m_base_inst
-                UVMTypeIDBase.typeid_map[UVMCallbacks.m_typeid] = UVMCallbacks.m_inst
-                UVMTypeIDBase.type_map[UVMCallbacks.m_b_inst] = UVMCallbacks.m_typeid
+                cls.m_t_inst = cls.m_base_inst
+                UVMTypeIDBase.typeid_map[cls.m_typeid] = cls.m_inst
+                UVMTypeIDBase.type_map[cls.m_b_inst] = cls.m_typeid
             else:
-                cls.m_base_inst = UVMCallbacks.get()
-                cls.m_base_inst.m_this_type.append(UVMCallbacks.m_inst)
+                cls.m_base_inst = cls.get()
+                cls.m_base_inst.m_this_type.append(cls.m_inst)
 
             if cls.m_inst is None:
                 uvm_report_fatal("CB/INTERNAL","get(): m_inst is None")
@@ -602,8 +609,6 @@ class UVMCallbacks(UVMTypedCallbacks):
             uvm_warning("CB_EXISTS", "Callback for " + cbs.get_name() + " already register")
         return True
 
-    # tpoikela: Added for containing callbacks for each class
-    _m_cb_table = {}
     @classmethod
     def _get_typed_cbs(cls, obj, CB):
         cb_table_key = cls._get_cb_table_key(obj, CB)
