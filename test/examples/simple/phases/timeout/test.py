@@ -25,11 +25,13 @@ from cocotb.triggers import Timer
 
 from uvm.comps.uvm_test import UVMTest
 from uvm.macros import *
-from uvm import (run_test)
+from uvm import (run_test, uvm_debug, UVMDebug, UVMPhase)
 
 from tb_timer import *
 from tb_env import tb_env
 
+UVMDebug.DEBUG = True
+UVMPhase.m_phase_trace = True
 
 class test_comp(UVMTest):
 
