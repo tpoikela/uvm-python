@@ -136,7 +136,7 @@ class UVMCallbacksBase(UVMObject):
         return None
 
     def m_add_tw_cbs(self, cb, ordering):
-        pass
+        raise Exception('m_add_tw_cbs is pure virtual function!')
 
     def m_delete_tw_cbs(self, cb):
         return 0
@@ -285,43 +285,49 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
 
     #  #For a typewide callback, need to add to derivative types as well.
     #  virtual function void m_add_tw_cbs(uvm_callback cb, uvm_apprepend ordering)
-    #    super_type cb_pair
-    #    uvm_object obj
-    #    T me
-    #    bit warned
-    #    uvm_queue#(uvm_callback) q
-    #    if(m_cb_find(m_t_inst.m_tw_cb_q,cb) == -1):
-    #       warned = m_cb_find_name(m_t_inst.m_tw_cb_q, cb.get_name(), "type")
-    #       if(ordering == UVM_APPEND)
-    #          m_t_inst.m_tw_cb_q.push_back(cb)
-    #       else
-    #          m_t_inst.m_tw_cb_q.push_front(cb)
-    #    end
-    #    if(m_t_inst.m_pool.first(obj)):
-    #      do begin
-    #        if($cast(me,obj)):
-    #          q = m_t_inst.m_pool.get(obj)
-    #          if(qis None):
-    #            q=new
-    #            m_t_inst.m_pool.add(obj,q)
-    #          end
-    #          if(m_cb_find(q,cb) == -1):
-    #            if (!warned):
-    #               void'(m_cb_find_name(q, cb.get_name(), {"object instance ", me.get_full_name()}))
-    #            end
-    #            if(ordering == UVM_APPEND)
-    #              q.push_back(cb)
-    #            else
-    #              q.push_front(cb)
-    #          end
-    #        end
-    #      end while(m_t_inst.m_pool.next(obj))
-    #    end
-    #    foreach(m_derived_types[i]):
-    #      cb_pair = UVMTypeIDBase::typeid_map[m_derived_types[i] ]
-    #      if(cb_pair != this)
-    #        cb_pair.m_add_tw_cbs(cb,ordering)
-    #    end
+    def m_add_tw_cbs(self, cb, ordering):
+        cb_pair = None  # super_type
+        obj = None  # uvm_object
+        me = None  # T
+        warned = False
+        cls = UVMCallbacks
+        q = []  # uvm_queue#(uvm_callback)
+        if self.m_cb_find(cls.m_t_inst.m_tw_cb_q, cb) == -1:
+            warned = cls.m_cb_find_name(cls.m_t_inst.m_tw_cb_q, cb.get_name(), "type")
+            if ordering == UVM_APPEND:
+                cls.m_t_inst.m_tw_cb_q.append(cb)
+            else:
+                cls.m_t_inst.m_tw_cb_q.insert(0, cb)
+
+        if cls.m_t_inst.m_pool.has_first():
+            obj = cls.m_t_inst.m_pool.get_first()
+            while True:
+                #if($cast(me,obj)):
+                me = obj
+                q = cls.m_t_inst.m_pool.get(obj)
+                if q is None:
+                    q = []
+                    cls.m_t_inst.m_pool.add(obj,q)
+
+                if self.m_cb_find(q,cb) == -1:
+                    if not warned:
+                        cls.m_cb_find_name(q, cb.get_name(), "object instance "
+                                + me.get_full_name())
+
+                    if ordering == UVM_APPEND:
+                        q.push_back(cb)
+                    else:
+                        q.push_front(cb)
+
+                if cls.m_t_inst.m_pool.has_next() is False:
+                    break
+                #end while(m_t_inst.m_pool.next(obj))
+
+        for i in range(len(self.m_derived_types)):
+            cb_pair = UVMTypeIDBase.typeid_map[self.m_derived_types[i]]
+            if cb_pair != self:
+                cb_pair.m_add_tw_cbs(cb,ordering)
+
     #  endfunction
 
 
@@ -699,7 +705,7 @@ class UVMCallbacks(UVMTypedCallbacks):
                 q = []
                 cls.m_base_inst.m_pool.add(obj,q)
 
-            if (len(q) == 0):
+            if len(q) == 0:
                 # Need to make sure that registered report catchers are added. This
                 # way users don't need to set up uvm_report_object as a super type.
                 o = []  # uvm_report_object
@@ -932,17 +938,6 @@ class UVMCallbacks(UVMTypedCallbacks):
     #  # iterator interface.
     #
     #  static function CB get_last (ref int itr, input T obj)
-    #    uvm_queue#(uvm_callback) q
-    #    CB cb
-    #    void'(get())
-    #    # tpoikela: added to mimic typed cbs
-    #    typed_cls = cls._get_typed(obj, CB)
-    #    cls = typed_cls
-    #    q = m_get_q(obj)
-    #    for(itr = q.size()-1; itr>=0; --itr)
-    #      if ($cast(cb, q.get(itr)) && cb.callback_mode())
-    #         return cb
-    #    return None
     @classmethod
     def get_last(cls, itr, obj, CB=None):
         cls.get()
@@ -1225,7 +1220,7 @@ class UVMCallback(UVMObject):
     #
     # Creates a new uvm_callback object, giving it an optional ~name~.
     def __init__(self, name="uvm_callback"):
-        UVMObject.__init__(self, name)
+        super().__init__(name)
         self.m_enabled = True
 
     # Function: callback_mode
