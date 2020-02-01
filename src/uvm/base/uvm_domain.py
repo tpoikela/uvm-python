@@ -29,8 +29,10 @@ from ..macros import uvm_error
 
 
 from .uvm_runtime_phases import (UVMMainPhase, UVMPreResetPhase,
-    UVMResetPhase, UVMPostResetPhase, UVMConfigurePhase,
-    UVMPreMainPhase, UVMShutdownPhase)
+    UVMResetPhase, UVMPostResetPhase, UVMPreConfigurePhase, UVMConfigurePhase,
+    UVMPostConfigurePhase,
+    UVMPreMainPhase, UVMPostMainPhase, UVMPreShutdownPhase, UVMShutdownPhase,
+    UVMPostShutdownPhase)
 
 
 # UVMPhases
@@ -147,15 +149,15 @@ class UVMDomain(UVMPhase):
         schedule.add(UVMPreResetPhase.get())
         schedule.add(UVMResetPhase.get())
         schedule.add(UVMPostResetPhase.get())
-        #schedule.add(uvm_pre_configure_phase::get());
+        schedule.add(UVMPreConfigurePhase.get())
         schedule.add(UVMConfigurePhase.get())
-        #  schedule.add(uvm_post_configure_phase::get());
+        schedule.add(UVMPostConfigurePhase.get())
         schedule.add(UVMPreMainPhase.get())
         schedule.add(UVMMainPhase.get())
-        #  schedule.add(uvm_post_main_phase::get());
-        #  schedule.add(uvm_pre_shutdown_phase::get());
+        schedule.add(UVMPostMainPhase.get())
+        schedule.add(UVMPreShutdownPhase.get())
         schedule.add(UVMShutdownPhase.get())
-        #  schedule.add(uvm_post_shutdown_phase::get());
+        schedule.add(UVMPostShutdownPhase.get())
 
     # Function: get_uvm_domain
     #
