@@ -69,7 +69,12 @@ class simple_test(UVMTest):
         p1 = cocotb.fork(self.doit(25, phase))
         p2 = cocotb.fork(self.doit(self.largest_delay, phase))
         p3 = cocotb.fork(self.doit(15, phase))
-        yield [p0.join(), p1.join(), p2.join(), p3.join()]
+        p4 = cocotb.fork(self.do_without_object(self.largest_delay + 5))
+
+        # p4 runs longest, but does not raise objection, so simulation should
+        # terminate at largest delay, not when p4 finishes
+        yield p4
+        #yield [p0.join(), p1.join(), p2.join(), p3.join(), ]
         #join
 
     s_inst = 0
@@ -97,6 +102,26 @@ class simple_test(UVMTest):
         self.proc_finished[inst] = True
         self.sem.put(1)
 
+    @cocotb.coroutine
+    def do_without_object(self, delay):
+        yield Timer(1, "NS")
+        arr = []
+        self.sem.get(arr)
+        inst = simple_test.s_inst
+        simple_test.s_inst += 1
+        self.sem.put(1)
+
+        uvm_info("doit", sv.sformatf("Starting doit (%0d) with delay %0t",
+            inst, delay), UVM_NONE)
+        yield Timer(delay, "NS")
+        uvm_info("doit", sv.sformatf("Ending doit (%0d)", inst), UVM_NONE)
+
+        # Drop the objection when done
+        arr = []
+        self.sem.get(arr)
+        self.proc_finished[inst] = True
+        self.sem.put(1)
+
     # Use an objection callback do something when objections are raised or
     # dropped (or all dropped). This example prints some information on each
     # drop.
@@ -106,6 +131,9 @@ class simple_test(UVMTest):
             count, source_obj.get_full_name, objection.get_objection_total(self)),
             UVM_NONE)
 
+
+    # Check various conditions such as processses finishes and simulation time
+    # to verify that objections are working correctly
     def check_phase(self, phase):
         ids = [0, 1, 2, 3]
         for _id, i in enumerate(ids):
@@ -114,6 +142,9 @@ class simple_test(UVMTest):
                 "Inst {} not found from finished procs".format(_id))
             else:
                 uvm_info("PROC_OK", "Proc {} finished OK".format(_id), UVM_NONE)
+
+        if 5 in self.proc_finished:
+            uvm_fatal("WRONG_PROC_FINISHED", "Proc 5 must not finish")
         finish_time = sv.realtime("NS")
         if finish_time != self.largest_delay:
             uvm_fatal("WRONG_FINISH_TIME", "Exp: {}, Got: {}".format(
@@ -128,4 +159,3 @@ uvm_component_utils(simple_test)
 def initial(dut):
     # Run the test
     yield run_test("simple_test")
-
