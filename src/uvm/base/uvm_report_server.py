@@ -13,6 +13,8 @@ from .sv import sv
 
 # TODO
 def ename(sever):
+    if isinstance(sever, str):
+        raise Exception("str was given to ename(). Expected int. Got: " + sever)
     if sever == UVM_INFO:
         return "UVM_INFO"
     if sever == UVM_ERROR:
@@ -21,8 +23,7 @@ def ename(sever):
         return "UVM_FATAL"
     if sever == UVM_WARNING:
         return "UVM_WARNING"
-    print("Unknown severity %d" % (sever))
-    return "UNKNOWN_SEVERITY"
+    return "UNKNOWN_SEVERITY: {}".format(sever)
 
 #------------------------------------------------------------------------------
 # Title: UVM Report Server
@@ -41,6 +42,8 @@ def ename(sever):
 # as ~pure virtual~.  The UVM uses the <uvm_default_report_server> class
 # as its default report server implementation.
 #------------------------------------------------------------------------------
+
+
 class UVMReportServer(UVMObject):
 
     def __init__(self, name="base"):
@@ -58,6 +61,9 @@ class UVMReportServer(UVMObject):
 
         self.m_message_db = {}  # uvm_tr_database
         self.m_streams = {}
+        self.reset_quit_count()
+        self.reset_severity_counts()
+        self.set_max_quit_count(0)
 
     def get_type_name(self):
         return "uvm_report_server"
@@ -140,7 +146,7 @@ class UVMReportServer(UVMObject):
     # before a UVM_EXIT action is taken. The default is 0, which specifies
     # no maximum.
 
-    def set_max_quit_count(self, count, overridable = True):
+    def set_max_quit_count(self, count, overridable=True):
         if self.max_quit_overridable is False:
             uvm_report_info("NOMAXQUITOVR",
                 "".format("The max quit count setting of {} is not overridable to {} due to a previous setting.",
@@ -214,7 +220,7 @@ class UVMReportServer(UVMObject):
     # all severity counters to 0.
 
     def reset_severity_counts(self):
-        for s in UVM_SEVERITY_NAMES:
+        for s in UVM_SEVERITY_LEVELS:
             self.m_severity_count.add(s, 0)
 
     #----------------------------------------------------------------------------
@@ -470,6 +476,14 @@ class UVMReportServer(UVMObject):
     # The <run_test> method in uvm_top calls this method.
 
     def report_summarize(self, file=0):
+        rpt = self.get_summary_string()
+        uvm_info("UVM/REPORT/SERVER", rpt, UVM_LOW)
+
+    # Function: get_summary_string
+    #
+    # Returns the statistical information on the reports issued by this central report
+    # server as multi-line string.
+    def get_summary_string(self):
         id = ""
         q = []
 
@@ -490,8 +504,7 @@ class UVMReportServer(UVMObject):
             q.append("** Report counts by id\n")
             for id in self.m_id_count.keys():
                 q.append("[{}] {}\n".format(id, self.m_id_count.get(id)))
-        uvm_info("UVM/REPORT/SERVER", "".join(q), UVM_LOW)
-
+        return "".join(q)
 
 def get_cs():
     from .uvm_coreservice import UVMCoreService
