@@ -5,7 +5,6 @@ from .uvm_object import UVMObject
 from .uvm_object_globals import *
 from .uvm_globals import *
 from .uvm_pool import UVMPool
-from .uvm_report_catcher import UVMReportCatcher
 from .uvm_global_vars import uvm_default_printer
 from .sv import sv
 
@@ -301,12 +300,13 @@ class UVMReportServer(UVMObject):
         report_message.set_report_server(self)
 
         if report_ok is True:
+            from .uvm_report_catcher import UVMReportCatcher
             report_ok = UVMReportCatcher.process_all_report_catchers(report_message)
 
         if report_message.get_action() == UVM_NO_ACTION:
             report_ok = False
 
-        if report_ok is True:
+        if report_ok:
             m = ""
             cs = get_cs()
             # give the global server a chance to intercept the calls
@@ -486,6 +486,7 @@ class UVMReportServer(UVMObject):
         id = ""
         q = []
 
+        from .uvm_report_catcher import UVMReportCatcher
         UVMReportCatcher.summarize()
         q.append("\n--- UVM Report Summary ---\n\n")
 
