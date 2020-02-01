@@ -33,6 +33,9 @@ from tb_env import tb_env
 UVMDebug.DEBUG = True
 UVMPhase.m_phase_trace = True
 
+class timeout_catcher():
+    pass
+
 class test_comp(UVMTest):
 
     def __init__(self, name, parent=None):
@@ -66,5 +69,5 @@ uvm_component_utils(test_comp)
 
 @cocotb.test()
 def initial_begin(dut):
-    #env = tb_env("env")
+    env = tb_env("env")
     yield run_test("test_comp")
