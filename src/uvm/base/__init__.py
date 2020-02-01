@@ -31,6 +31,7 @@ from .uvm_report_server import *
 from .uvm_resource import *
 from .uvm_resource_db import *
 from .uvm_root import *
+from .uvm_runtime_phases import *
 from .uvm_scope_stack import *
 from .uvm_server import *
 from .uvm_spell_chkr import *
