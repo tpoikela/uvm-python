@@ -30,7 +30,11 @@ from uvm import (UVMComponent, sv, UVMEnv, run_test, uvm_info, uvm_fatal,
     UVM_NONE, uvm_error, UVMCoreService, UVM_ERROR)
 
 CORRECT_PHASES = ['build', 'connect', 'end_of_elaboration',
-    'start_of_simulation', 'run', 'extract', 'check', 'report', 'final']
+    'start_of_simulation',
+    'run', 'pre_reset', 'reset', 'post_reset', 'pre_configure', 'configure',
+    'post_configure', 'pre_main', 'main', 'post_main', 'pre_shutdown',
+    'shutdown', 'post_shutdown',
+    'extract', 'check', 'report', 'final']
 
 #  //Create a topology
 #  //            top
@@ -42,6 +46,7 @@ CORRECT_PHASES = ['build', 'connect', 'end_of_elaboration',
 # Define new base class with phase_started/ended callbacks.
 
 test_duration = 500
+
 
 class VerifComp(UVMComponent):
 
@@ -56,11 +61,11 @@ class VerifComp(UVMComponent):
 
     def phase_ended(self, phase):
         self.phases_ended.append(phase.get_name())
-        
+
     def final_phase(self, phase):
         if self.phases_started != CORRECT_PHASES:
-            uvm_error("PHASES_STARTED_FAIL", self.get_name() + ": " + str(self.phases_started),
-                UVM_NONE)
+            uvm_error("PHASES_STARTED_FAIL", self.get_name() + ": " +
+                    str(self.phases_started))
         else:
             self.correct = True
             uvm_info("PHASES_STARTED_OK", self.get_name() + ": " + str(self.phases_started),
