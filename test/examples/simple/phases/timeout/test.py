@@ -39,11 +39,11 @@ class test_comp(UVMTest):
         super().__init__(name, parent)
         #self.timer = tb_timer("global_timer", None)
 
-    #@cocotb.coroutine
-    #def pre_main_phase(self, phase):
-    #    phase.raise_objection(self)
-    #    yield Timer(100, "NS")
-    #    phase.drop_objection(self)
+    @cocotb.coroutine
+    def pre_main_phase(self, phase):
+        phase.raise_objection(self)
+        yield Timer(100, "NS")
+        phase.drop_objection(self)
 
     @cocotb.coroutine
     def main_phase(self, phase):
@@ -54,11 +54,11 @@ class test_comp(UVMTest):
         phase.drop_objection(self)
 
 
-    #@cocotb.coroutine
-    #def shutdown_phase(self, phase):
-    #    phase.raise_objection(self)
-    #    yield Timer(100, "NS")
-    #    phase.drop_objection(self)
+    @cocotb.coroutine
+    def shutdown_phase(self, phase):
+        phase.raise_objection(self)
+        yield Timer(100, "NS")
+        phase.drop_objection(self)
 
 
 uvm_component_utils(test_comp)
