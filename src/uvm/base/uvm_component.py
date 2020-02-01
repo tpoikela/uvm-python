@@ -3,7 +3,7 @@ import cocotb
 from cocotb.triggers import Timer
 from .uvm_report_object import UVMReportObject
 from .uvm_object_globals import (UVM_NONE, UVM_MEDIUM, UVM_PHASE_DONE, UVM_INFO,
-    UVM_CHECK_FIELDS)
+    UVM_CHECK_FIELDS, UVM_PHASE_SCHEDULE)
 from .uvm_common_phases import UVMBuildPhase
 from .uvm_domain import UVMDomain
 from .uvm_debug import uvm_debug
@@ -614,8 +614,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task main_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def main_phase(self, phase):
+        yield Timer(0)
 
     #// Task: post_main_phase
     #//
@@ -792,6 +794,20 @@ class UVMComponent(UVMReportObject):
     #// override to augment or replace the domain definition of its base class.
     #//
     #extern function void set_domain(uvm_domain domain, int hier=1)
+    #// set_domain
+    #// ----------
+    #// assigns this component [tree] to a domain. adds required schedules into graph
+    #// If called from build, ~hier~ won't recurse into all chilren (which don't exist yet)
+    #// If we have components inherit their parent's domain by default, then ~hier~
+    #// isn't needed and we need a way to prevent children from inheriting this component's domain
+    #
+    def set_domain(self, domain, hier=True):
+        # build and store the custom domain
+        self.m_domain = domain
+        self.define_domain(domain)
+        if hier is True:
+            for c in self.m_children:
+                self.m_children[c].set_domain(domain)
 
     # Function: get_domain
     #
@@ -828,6 +844,22 @@ class UVMComponent(UVMReportObject):
     #// Alternatively, the integrator may define the graph in a new domain externally,
     #// then call <set_domain> to apply it to a component.
     #extern virtual protected function void define_domain(uvm_domain domain)
+    def define_domain(self, domain):
+        from .uvm_phase import UVMPhase
+        from .uvm_common_phases import UVMRunPhase
+        schedule = None  # uvm_phase 
+        #  //schedule = domain.find(uvm_domain::get_uvm_schedule())
+        schedule = domain.find_by_name("uvm_sched")
+        if schedule is None:
+            # uvm_domain common
+            schedule = UVMPhase("uvm_sched", UVM_PHASE_SCHEDULE)
+            UVMDomain.add_uvm_phases(schedule)
+            domain.add(schedule)
+            common = UVMDomain.get_common_domain()
+            if common.find(domain,0) is None:
+                common.add(domain, with_phase=UVMRunPhase.get())
+        #
+        #endfunction
 
     #// Function: set_phase_imp
     #//
@@ -2466,7 +2498,6 @@ class UVMComponent(UVMReportObject):
 #task uvm_component::configure_phase(uvm_phase phase);      return; endtask
 #task uvm_component::post_configure_phase(uvm_phase phase); return; endtask
 #task uvm_component::pre_main_phase(uvm_phase phase);       return; endtask
-#task uvm_component::main_phase(uvm_phase phase);           return; endtask
 #task uvm_component::post_main_phase(uvm_phase phase);      return; endtask
 #task uvm_component::pre_shutdown_phase(uvm_phase phase);   return; endtask
 #task uvm_component::shutdown_phase(uvm_phase phase);       return; endtask
@@ -2498,42 +2529,8 @@ class UVMComponent(UVMReportObject):
 #// - a domain is a named instance of a schedule in the master phasing schedule
 #
 #
-#// define_domain
-#// -------------
-#
-#function void uvm_component::define_domain(uvm_domain domain)
-#  uvm_phase schedule
-#  //schedule = domain.find(uvm_domain::get_uvm_schedule())
-#  schedule = domain.find_by_name("uvm_sched")
-#  if (schedule is None):
-#    uvm_domain common
-#    schedule = new("uvm_sched", UVM_PHASE_SCHEDULE)
-#    uvm_domain::add_uvm_phases(schedule)
-#    domain.add(schedule)
-#    common = uvm_domain::get_common_domain()
-#    if (common.find(domain,0) is None)
-#      common.add(domain,.with_phase(uvm_run_phase::get()))
-#  end
-#
-#endfunction
 #
 #
-#// set_domain
-#// ----------
-#// assigns this component [tree] to a domain. adds required schedules into graph
-#// If called from build, ~hier~ won't recurse into all chilren (which don't exist yet)
-#// If we have components inherit their parent's domain by default, then ~hier~
-#// isn't needed and we need a way to prevent children from inheriting this component's domain
-#
-#function void uvm_component::set_domain(uvm_domain domain, int hier=1)
-#
-#  // build and store the custom domain
-#  m_domain = domain
-#  define_domain(domain)
-#  if (hier)
-#    foreach (m_children[c])
-#      m_children[c].set_domain(domain)
-#endfunction
 #
 #
 #
