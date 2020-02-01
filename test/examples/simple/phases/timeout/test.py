@@ -25,22 +25,37 @@ from cocotb.triggers import Timer
 
 from uvm.comps.uvm_test import UVMTest
 from uvm.macros import *
-from uvm import (run_test, uvm_debug, UVMDebug, UVMPhase)
+from uvm import (run_test, uvm_debug, UVMDebug, UVMPhase, UVMReportCatcher,
+    THROW, UVM_FATAL, UVM_INFO, UVMReportCb, UVMCallbacksBase)
 
 from tb_timer import *
 from tb_env import tb_env
 
-UVMDebug.DEBUG = True
-UVMPhase.m_phase_trace = True
+UVMDebug.DEBUG = False
+UVMPhase.m_phase_trace = False
+UVMCallbacksBase.m_tracing = True
 
-class timeout_catcher():
-    pass
+
+class timeout_catcher(UVMReportCatcher):
+    def __init__(self, name="timeout_catcher"):
+        super().__init__(name)
+        self.num_fatals = 0
+
+    def catch(self):
+        uvm_info("CATCHER_ACTIVE", "Catcher was activated", UVM_LOW)
+        if self.get_severity() == UVM_FATAL and self.get_id() == "TIMEOUT":
+            self.set_severity(UVM_INFO)
+            self.num_fatals += 1
+        return THROW
+
 
 class test_comp(UVMTest):
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
-        #self.timer = tb_timer("global_timer", None)
+        self.timer = tb_timer("global_timer", None)
+        self.catcher = timeout_catcher()
+        UVMReportCb.add(None, self.catcher)
 
     @cocotb.coroutine
     def pre_main_phase(self, phase):
