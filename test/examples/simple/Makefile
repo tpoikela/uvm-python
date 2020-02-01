@@ -25,6 +25,7 @@ test-objections:
 
 test-phases:
 	make -C phases/basic/
+	make -C phases/timeout/
 
 test-tlm1:
 	make -C tlm1/producer_consumer/
