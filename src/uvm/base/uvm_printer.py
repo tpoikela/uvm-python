@@ -580,6 +580,8 @@ class UVMPrinterKnobs:
 #|  ---------------------------------------------------
 #
 #------------------------------------------------------------------------------
+
+
 class UVMTablePrinter(UVMPrinter):
 
     def __init__(self):
@@ -590,10 +592,10 @@ class UVMTablePrinter(UVMPrinter):
         self.m_max_value = 0
 
     def calculate_max_widths(self):
-        self.m_max_name=4
-        self.m_max_type=4
+        self.m_max_name = 4
+        self.m_max_type = 4
         self.m_max_size = 4
-        self.m_max_value= 5
+        self.m_max_value = 5
         for j in range(0, len(self.m_rows)):
             name_len = 0
             row = self.m_rows[j]
@@ -656,16 +658,14 @@ class UVMTablePrinter(UVMPrinter):
         for i in range(0, len(self.m_rows)):
             row = self.m_rows[i]
             user_format = self.format_row(row)
-            if  user_format == "":
+            if user_format == "":
                 row_str = ""
                 if self.knobs.identifier:
                     row_str = (space[1:row.level * self.knobs.indent] + row.name
-                        + space[1:self.m_max_name-len(row.name)-(row.level*self.knobs.indent)+2]
-                    )
+                        + space[1:self.m_max_name-len(row.name)-(row.level*self.knobs.indent)+2])
                 if self.knobs.type_name:
                     row_str = (row_str + row.type_name
-                        + space[1:(self.m_max_type-len(row.type_name)+2)]
-                    )
+                        + space[1:(self.m_max_type-len(row.type_name)+2)])
                 if self.knobs.size:
                     row_str = row_str + row.size + space[1:self.m_max_size-len(row.size)+2]
                 s = s + row_str + row.val + space[1:self.m_max_value-len(row.val)] + linefeed
@@ -674,7 +674,7 @@ class UVMTablePrinter(UVMPrinter):
 
         if self.knobs.footer:
             user_format = self.format_footer()
-            if  user_format == "":
+            if user_format == "":
                 s = s + dashes
             else:
                 s = s + user_format + linefeed
