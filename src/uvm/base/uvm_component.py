@@ -474,8 +474,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task pre_reset_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def pre_reset_phase(self, phase):
+        yield Timer(0)
 
     #// Task: reset_phase
     #//
@@ -494,8 +496,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task reset_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def reset_phase(self, phase):
+        yield Timer(0)
 
     #// Task: post_reset_phase
     #//
@@ -514,8 +518,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task post_reset_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def post_reset_phase(self, phase):
+        yield Timer(0)
 
     #// Task: pre_configure_phase
     #//
@@ -534,8 +540,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task pre_configure_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def pre_configure_phase(self, phase):
+        yield Timer(0)
 
     #// Task: configure_phase
     #//
@@ -554,8 +562,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task configure_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def configure_phase(self, phase):
+        yield Timer(0)
 
     #// Task: post_configure_phase
     #//
@@ -574,8 +584,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task post_configure_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def post_configure_phase(self, phase):
+        yield Timer(0)
 
     #// Task: pre_main_phase
     #//
@@ -594,8 +606,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task pre_main_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def pre_main_phase(self, phase):
+        yield Timer(0)
 
     #// Task: main_phase
     #//
@@ -636,8 +650,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task post_main_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def post_main_phase(self, phase):
+        yield Timer(0)
 
     #// Task: pre_shutdown_phase
     #//
@@ -656,8 +672,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task pre_shutdown_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def pre_shutdown_phase(self, phase):
+        yield Timer(0)
 
     #// Task: shutdown_phase
     #//
@@ -676,8 +694,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task shutdown_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def shutdown_phase(self, phase):
+        yield Timer(0)
 
     #// Task: post_shutdown_phase
     #//
@@ -696,8 +716,10 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-
     #extern virtual task post_shutdown_phase(uvm_phase phase)
+    @cocotb.coroutine
+    def post_shutdown_phase(self, phase):
+        yield Timer(0)
 
     #// Function: extract_phase
     #//
@@ -1962,14 +1984,11 @@ class UVMComponent(UVMReportObject):
         if e is not None:
             e.trigger(tr)
         return handle
-        #
-        #endfunction
 
 
-    #const static string type_name = "uvm_component"
-    #virtual function string get_type_name()
-    #  return type_name
-    #endfunction
+    #type_name = "uvm_component"
+    #def get_type_name(self):
+    #    return UVMComponent.type_name
 
     #extern         function void   do_print(uvm_printer printer)
 
@@ -1977,8 +1996,8 @@ class UVMComponent(UVMReportObject):
     #extern function void m_set_cl_msg_args
     def m_set_cl_msg_args(self):
         self.m_set_cl_verb()
-        #self.m_set_cl_action()
-        #self.m_set_cl_sev()
+        #self.m_set_cl_action() # TODO
+        #self.m_set_cl_sev() # TODO
         #endfunction
 
     #extern function void m_set_cl_verb
@@ -2491,17 +2510,6 @@ class UVMComponent(UVMReportObject):
 #
 #// these runtime phase methods are only called if a set_domain() is done
 #
-#task uvm_component::pre_reset_phase(uvm_phase phase);      return; endtask
-#task uvm_component::reset_phase(uvm_phase phase);          return; endtask
-#task uvm_component::post_reset_phase(uvm_phase phase);     return; endtask
-#task uvm_component::pre_configure_phase(uvm_phase phase);  return; endtask
-#task uvm_component::configure_phase(uvm_phase phase);      return; endtask
-#task uvm_component::post_configure_phase(uvm_phase phase); return; endtask
-#task uvm_component::pre_main_phase(uvm_phase phase);       return; endtask
-#task uvm_component::post_main_phase(uvm_phase phase);      return; endtask
-#task uvm_component::pre_shutdown_phase(uvm_phase phase);   return; endtask
-#task uvm_component::shutdown_phase(uvm_phase phase);       return; endtask
-#task uvm_component::post_shutdown_phase(uvm_phase phase);  return; endtask
 #
 #
 #//------------------------------
