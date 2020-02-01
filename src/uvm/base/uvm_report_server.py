@@ -100,11 +100,10 @@ class UVMReportServer(UVMObject):
 
         if self.m_severity_count.has_first():
             l_severity_count_index = self.m_severity_count.first()
-            printer.print_array_header("severity_count",self.m_severity_count.size(),"severity counts")
+            printer.print_array_header("severity_count",self.m_severity_count.num(),"severity counts")
             ok = True
             while ok:
-                printer.print_int("".formatf("[{}]",
-                    ename(l_severity_count_index)),
+                printer.print_int("[{}]".format(ename(l_severity_count_index)),
                     self.m_severity_count[l_severity_count_index], 32, UVM_DEC)
                 ok = self.m_severity_count.has_next()
                 if ok:
