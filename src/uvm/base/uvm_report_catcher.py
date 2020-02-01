@@ -34,7 +34,18 @@ class sev_id_struct:
         self.is_on = False
 
 
-UVMReportCb = UVMCallbacks
+# tpoikela: Not typedef like in SV-UVM, but special class with
+# CB=UVMReportCatcher
+class UVMReportCb(UVMCallbacks):
+
+    def __init__(self, name='uvm_report_cb'):
+        super().__init__(name, T=None, CB=UVMReportCatcher)
+
+    @classmethod
+    def get_first(cls, itr, obj):
+        return super().get_first(itr, obj, UVMReportCatcher)
+
+
 UVMReportCbIter = UVMCallbackIter
 
 #------------------------------------------------------------------------------
