@@ -216,28 +216,29 @@ class UVMPostResetPhase(UVMTaskPhase):
 #// Exit Criteria:
 #// - DUT configuration information is defined.
 #//
-#class uvm_pre_configure_phase(UVMTaskPhase):
-    #@cocotb.coroutine
-    #   def exec_task(self,comp, phase)
-    #      comp.pre_configure_phase(phase)
-    #   endtask
-    #   local static uvm_pre_configure_phase m_inst
-    #   static const string type_name = "uvm_pre_configure_phase"
+
+
+class UVMPreConfigurePhase(UVMTaskPhase):
+    @cocotb.coroutine
+    def exec_task(self,comp, phase):
+        yield comp.pre_configure_phase(phase)
+
+    m_inst = None
+    type_name = "uvm_pre_configure_phase"
     #
     #   // Function: get
     #   // Returns the singleton phase handle
-    #   static def uvm_pre_configure_phase get(self):
-    #      if(cls.m_inst is None)
-    #         m_inst = new
-    #      return cls.m_inst
-    #   endfunction
-    #   def __init__(self, name="pre_configure")
-    #      super().__init__(name)
-    #   endfunction
-    #   def get_type_name(self):
-    #      return type_name
-    #   endfunction
-    #endclass
+    @classmethod
+    def get(cls):
+        if(cls.m_inst is None):
+            cls.m_inst = UVMPreConfigurePhase()
+            return cls.m_inst
+
+    def __init__(self, name="pre_configure"):
+        super().__init__(name)
+
+    def get_type_name(self):
+        return UVMPreConfigurePhase.type_name
 #
 #
 #// Class: uvm_configure_phase
@@ -303,28 +304,27 @@ class UVMConfigurePhase(UVMTaskPhase):
 #// - The DUT has been fully configured and enabled
 #//   and is ready to start operating normally.
 #//
-#class uvm_post_configure_phase(UVMTaskPhase):
-    #@cocotb.coroutine
-    #   def exec_task(self,comp, phase)
-    #      comp.post_configure_phase(phase)
-    #   endtask
-    #   local static uvm_post_configure_phase m_inst
-    #   static const string type_name = "uvm_post_configure_phase"
+class UVMPostConfigurePhase(UVMTaskPhase):
+    @cocotb.coroutine
+    def exec_task(self,comp, phase):
+        yield comp.post_configure_phase(phase)
+
+    m_inst = None
+    type_name = "uvm_post_configure_phase"
     #
     #   // Function: get
     #   // Returns the singleton phase handle
-    #   static def uvm_post_configure_phase get(self):
-    #      if(cls.m_inst is None)
-    #         m_inst = new
-    #      return cls.m_inst
-    #   endfunction
-    #   def __init__(self, name="post_configure")
-    #      super().__init__(name)
-    #   endfunction
-    #   def get_type_name(self):
-    #      return type_name
-    #   endfunction
-    #endclass
+    @classmethod
+    def get(cls):
+        if(cls.m_inst is None):
+            cls.m_inst = UVMPostConfigurePhase()
+            return cls.m_inst
+
+    def __init__(self, name="post_configure"):
+        super().__init__(name)
+
+    def get_type_name(self):
+        return UVMPostConfigurePhase.type_name
 #
 #// Class: uvm_pre_main_phase
 #//
@@ -431,28 +431,29 @@ class UVMMainPhase(UVMTaskPhase):
 #// Exit Criteria:
 #// - None.
 #//
-#class uvm_post_main_phase(UVMTaskPhase):
-    #@cocotb.coroutine
-    #   def exec_task(self,comp, phase)
-    #      comp.post_main_phase(phase)
-    #   endtask
-    #   local static uvm_post_main_phase m_inst
-    #   static const string type_name = "uvm_post_main_phase"
+
+
+class UVMPostMainPhase(UVMTaskPhase):
+    @cocotb.coroutine
+    def exec_task(self,comp, phase):
+        yield comp.post_main_phase(phase)
+
+    m_inst = None
+    type_name = "uvm_post_main_phase"
     #
     #   // Function: get
     #   // Returns the singleton phase handle
-    #   static def uvm_post_main_phase get(self):
-    #      if(cls.m_inst is None)
-    #         m_inst = new
-    #      return cls.m_inst
-    #   endfunction
-    #   def __init__(self, name="post_main")
-    #      super().__init__(name)
-    #   endfunction
-    #   def get_type_name(self):
-    #      return type_name
-    #   endfunction
-    #endclass
+    @classmethod
+    def get(cls):
+        if(cls.m_inst is None):
+            cls.m_inst = UVMPostMainPhase()
+            return cls.m_inst
+
+    def __init__(self, name="post_main"):
+        super().__init__(name)
+
+    def get_type_name(self):
+        return UVMPostMainPhase.type_name
 #
 #
 #// Class: uvm_pre_shutdown_phase
@@ -471,28 +472,27 @@ class UVMMainPhase(UVMTaskPhase):
 #// Exit Criteria:
 #// - None.
 #//
-#class uvm_pre_shutdown_phase(UVMTaskPhase):
-    #@cocotb.coroutine
-    #   def exec_task(self,comp, phase)
-    #      comp.pre_shutdown_phase(phase)
-    #   endtask
-    #   local static uvm_pre_shutdown_phase m_inst
-    #   static const string type_name = "uvm_pre_shutdown_phase"
-    #
+class UVMPreShutdownPhase(UVMTaskPhase):
+    @cocotb.coroutine
+    def exec_task(self,comp, phase):
+        yield comp.pre_shutdown_phase(phase)
+
+    m_inst = None
+    type_name = "uvm_pre_shutdown_phase"
+
     #   // Function: get
     #   // Returns the singleton phase handle
-    #   static def uvm_pre_shutdown_phase get(self):
-    #      if(cls.m_inst is None)
-    #         m_inst = new
-    #      return cls.m_inst
-    #   endfunction
-    #   def __init__(self, name="pre_shutdown")
-    #      super().__init__(name)
-    #   endfunction
-    #   def get_type_name(self):
-    #      return type_name
-    #   endfunction
-    #endclass
+    @classmethod
+    def get(cls):
+        if(cls.m_inst is None):
+            cls.m_inst = UVMPreShutdownPhase()
+            return cls.m_inst
+
+    def __init__(self, name="pre_shutdown"):
+        super().__init__(name)
+
+    def get_type_name(self):
+        return UVMPreShutdownPhase.type_name
 #
 #
 #// Class: uvm_shutdown_phase
@@ -558,24 +558,24 @@ class UVMShutdownPhase(UVMTaskPhase):
 #// - All run-time checks have been satisfied.
 #// - The <uvm_run_phase> phase is ready to end.
 #//
-#class uvm_post_shutdown_phase(UVMTaskPhase):
-    #@cocotb.coroutine
-    #   def exec_task(self,comp, phase)
-    #      comp.post_shutdown_phase(phase)
-    #   endtask
-    #   local static uvm_post_shutdown_phase m_inst
-    #   static const string type_name = "uvm_post_shutdown_phase"
+class UVMPostShutdownPhase(UVMTaskPhase):
+    @cocotb.coroutine
+    def exec_task(self,comp, phase):
+        yield comp.post_shutdown_phase(phase)
+
+    m_inst = None
+    type_name = "uvm_post_shutdown_phase"
     #
     #   // Function: get
     #   // Returns the singleton phase handle
-    #   static def uvm_post_shutdown_phase get(self):
-    #      if(cls.m_inst is None)
-    #         m_inst = new
-    #      return cls.m_inst
-    #   endfunction
-    #   def __init__(self, name="post_shutdown")
-    #      super().__init__(name)
-    #   endfunction
-    #   def get_type_name(self):
-    #      return type_name
-    #   endfunction
+    @classmethod
+    def get(cls):
+        if cls.m_inst is None:
+            cls.m_inst = UVMPostShutdownPhase()
+            return cls.m_inst
+
+    def __init__(self, name="post_shutdown"):
+        super().__init__(name)
+
+    def get_type_name(self):
+        return UVMPostShutdownPhase.type_name
