@@ -41,6 +41,13 @@ class TestUVMReportServer(unittest.TestCase):
         from uvm.base.uvm_printer import UVMTablePrinter
         printer = UVMTablePrinter()
         srv.do_print(printer)
+        srv_as_str = printer.emit()
+        self.assertRegex(srv_as_str, r'quit_count')
+        self.assertRegex(srv_as_str, r'UVM_INFO')
+        self.assertRegex(srv_as_str, r'UVM_ERROR')
+        self.assertRegex(srv_as_str, r'UVM_FATAL')
+        self.assertRegex(srv_as_str, r'UVM_WARNING')
+
 
     def test_process_report_message(self):
         srv = UVMReportServer()
