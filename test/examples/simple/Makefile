@@ -1,7 +1,7 @@
 
 test: test-trivial test-basic_examples test-sequence test-interfaces test-hello_world\
     test-registers test-tlm1 test-configuration test-callbacks test-factory\
-    test-objections
+    test-objections test-phases
 
 test-trivial:
 	make -C trivial/
@@ -22,6 +22,9 @@ test-hello_world:
 
 test-objections:
 	make -C objections/
+
+test-phases:
+	make -C phases/basic/
 
 test-tlm1:
 	make -C tlm1/producer_consumer/
