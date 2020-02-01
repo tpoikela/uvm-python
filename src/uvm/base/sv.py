@@ -205,7 +205,7 @@ class sv_obj(crv.Randomized):
 
 
     def rand(self, key, val_list=None):
-        if (hasattr(key, "randomize")):
+        if hasattr(key, "randomize"):
             if val_list is None:
                 self._sv_rand_obj.append(key)
         elif hasattr(self, key) and val_list is None:
