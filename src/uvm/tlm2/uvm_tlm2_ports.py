@@ -30,13 +30,19 @@
 #// Class providing the blocking transport port.
 #// The port can be bound to one export.
 #// There is no backward path for the blocking transport.
-#
-#class uvm_tlm_b_transport_port #(type T=uvm_tlm_generic_payload)
-#  extends uvm_port_base #(uvm_tlm_if #(T));
-#  `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
-#  `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
-#endclass
-#
+from uvm.base.uvm_port_base import UVMPortBase
+from uvm.tlm1.uvm_tlm_imps import UVM_PORT_COMMON
+from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK, UVM_TLM_NB_FW_MASK,\
+    UVM_TLM_NB_BW_MASK
+from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
+    UVM_TLM_NB_TRANSPORT_FW_IMP, UVM_TLM_NB_TRANSPORT_BW_IMP
+
+class UVMTlmBTransportPort(UVMPortBase):
+    pass
+
+UVM_PORT_COMMON(UVMTlmBTransportPort, UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
+UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBTransportPort)
+
 #
 #// class: uvm_tlm_nb_transport_fw_port
 #//
@@ -46,14 +52,13 @@
 #// non-blocking transport port.
 #// The port can be bound to one export.
 #//
-#  
-#class uvm_tlm_nb_transport_fw_port #(type T=uvm_tlm_generic_payload,
-#                                 type P=uvm_tlm_phase_e)
-#  extends uvm_port_base #(uvm_tlm_if #(T,P));
-#  `UVM_PORT_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
-#  `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
-#endclass
-#
+  
+class UVMTlmNbTransportFwPort(UVMPortBase):
+    pass
+
+UVM_PORT_COMMON(UVMTlmNbTransportFwPort, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbTransportFwPort)
+
 #// class: uvm_tlm_nb_transport_bw_port
 #//
 #// Class providing the non-blocking backward transport port.
@@ -62,13 +67,10 @@
 #// non-blocking transport port
 #// The port can be bound to one export.
 #//
-#  
-#class uvm_tlm_nb_transport_bw_port #(type T=uvm_tlm_generic_payload,
-#                                 type P=uvm_tlm_phase_e)
-#  extends uvm_port_base #(uvm_tlm_if #(T,P));
-#
-#   // Function: new
-#  `UVM_PORT_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
-#  `UVM_TLM_NB_TRANSPORT_BW_IMP(this.m_if, T, P, t, p, delay)
-#endclass
-#
+  
+class UVMTlmNbTransportBwPort(UVMPortBase):
+    pass
+
+UVM_PORT_COMMON(UVMTlmNbTransportBwPort, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
+UVM_TLM_NB_TRANSPORT_BW_IMP('m_if', UVMTlmNbTransportBwPort)
+

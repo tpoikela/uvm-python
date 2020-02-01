@@ -281,6 +281,13 @@ class sv_if(Bus):
 def sformatf(fmt, *args):
     return fmt % args
 
+def cat(*args):
+    ret = ""
+    for a in args:
+        ret += a
+        
+    return ret
+
 @cocotb.coroutine
 def wait(cond, ev):
     if not callable(cond):

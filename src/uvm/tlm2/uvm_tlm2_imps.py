@@ -54,16 +54,16 @@
 #// for more details on the semantics and rules of the nonblocking
 #// transport interface.
 #   
-#`define UVM_TLM_NB_TRANSPORT_FW_IMP(imp, T, P, t, p, delay)              \
-#  function uvm_tlm_sync_e nb_transport_fw(T t, ref P p, input uvm_tlm_time delay);  \
-#    if (delay == null) begin \
-#       `uvm_error("UVM/TLM/NULLDELAY", \
-#                  {get_full_name(), \
-#                   ".nb_transport_fw() called with 'null' delay"}) \
-#       return UVM_TLM_COMPLETED; \
-#    end \
-#    return imp.nb_transport_fw(t, p, delay);                          \
-#  endfunction
+def UVM_TLM_NB_TRANSPORT_FW_IMP(imp, T):
+    def nb_transport_fw(self, t, p, delay):
+        if (delay == None):
+            uvm_error("UVM/TLM/NULLDELAY", 
+                cat(self.get_full_name(), 
+                   ".nb_transport_fw() called with 'null' delay"))
+            return UVM_TLM_COMPLETED
+
+        return getattr(self, imp).nb_transport_fw(t, p, delay)
+    setattr(T, "nb_transport_fw", nb_transport_fw)
 #
 #
 #// Macro: `UVM_TLM_NB_TRANSPORT_BW_IMP
@@ -106,16 +106,16 @@
 #//|    ...
 #//| endclass
 #
-#`define UVM_TLM_NB_TRANSPORT_BW_IMP(imp, T, P, t, p, delay) \
-#  function uvm_tlm_sync_e nb_transport_bw(T t, ref P p, input uvm_tlm_time delay);  \
-#    if (delay == null) begin \
-#       `uvm_error("UVM/TLM/NULLDELAY", \
-#                  {get_full_name(), \
-#                   ".nb_transport_bw() called with 'null' delay"}) \
-#       return UVM_TLM_COMPLETED; \
-#    end \
-#    return imp.nb_transport_bw(t, p, delay); \
-#  endfunction
+def UVM_TLM_NB_TRANSPORT_BW_IMP(imp, T):
+    def nb_transport_bw(self, t, p, delay):
+        if (delay == None):
+            uvm_error("UVM/TLM/NULLDELAY", 
+                cat(self.get_full_name(), 
+                   ".nb_transport_bw() called with 'null' delay"))
+            return UVM_TLM_COMPLETED
+        return getattr(self, imp).nb_transport_bw(t, p, delay)
+    
+    setattr(T, "nb_transport_bw", nb_transport_bw)
 #
 #
 #// Macro: `UVM_TLM_B_TRANSPORT_IMP
@@ -147,7 +147,18 @@
 #    end \
 #    imp.b_transport(t, delay);                                        \
 #  endtask
-#
+from uvm.macros.uvm_message_defines import uvm_error
+from uvm.base.sv import cat
+def UVM_TLM_B_TRANSPORT_IMP(imp, T):
+    def b_transport(self, t, delay):
+        if delay == None:
+            uvm_error("UVM/TLM/NULLDELAY", 
+                  cat(self.get_full_name(), 
+                   ".b_transport() called with 'null' delay"))
+            return
+        getattr(self, imp).b_transport(t, delay)
+    setattr(T, "b_transport", b_transport)
+
 #
 #
 #//---------------------------
