@@ -7,6 +7,7 @@ from .uvm_globals import *
 from .uvm_pool import UVMPool
 from .uvm_global_vars import uvm_default_printer
 from .sv import sv
+from ..macros.uvm_message_defines import uvm_info
 
 
 
