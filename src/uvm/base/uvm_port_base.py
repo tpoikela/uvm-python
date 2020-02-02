@@ -689,16 +689,3 @@ class UVMPortBase():
             if index == 0:
                 return self.m_imp_list[nm]
             index -= 1
-
-
-import unittest
-
-class TestUVMPortBase(unittest.TestCase):
-
-    def test_name(self):
-        parent = UVMComponent("port_parent", None)
-        port_base = UVMPortBase("port_base", parent, UVM_PORT)
-        self.assertEqual(port_base.get_type_name(), "port")
-
-if __name__ == '__main__':
-    unittest.main()
