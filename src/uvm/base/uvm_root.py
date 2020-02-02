@@ -36,6 +36,7 @@ from .uvm_report_server import UVMReportServer
 from .uvm_domain import end_of_elaboration_ph
 from .uvm_common_phases import UVMEndOfElaborationPhase
 from ..macros import *
+from ..uvm_macros import *
 
 MULTI_TESTS = ("Multiple ({}) +UVM_TESTNAME arguments provided on the command"
         + "line. '{}' will be used.  Provided list: {}.")
