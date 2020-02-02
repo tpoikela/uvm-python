@@ -30,6 +30,7 @@ import cocotb
 
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
+from ..base.uvm_resource_db import UVMResourceDb
 from ..macros.uvm_object_defines import uvm_object_utils
 from .uvm_reg_model import *
 from .uvm_reg_cbs import UVMRegFieldCbIter
@@ -71,18 +72,18 @@ class UVMRegField(UVMObject):
     # This method should not be used directly.
     # The ~uvm_reg_field::type_id::create()~ factory method
     # should be used instead.
-    def __init__(self, name = 'uvm_reg_field'):
+    def __init__(self, name='uvm_reg_field'):
         """ Create a new field instance """
         UVMObject.__init__(self, name)
-        value = 0 # Mirrored after randomize()
-        self.m_mirrored = 0 # What we think is in the HW
-        self.m_desired = 0 # Mirrored after set()
+        self.value = 0  # Mirrored after randomize()
+        self.m_mirrored = 0  # What we think is in the HW
+        self.m_desired = 0  # Mirrored after set()
         self.m_access = ""
-        self.m_parent = None # uvm_reg
+        self.m_parent = None  # uvm_reg
         self.m_lsb = 0
         self.m_size = 0
         self.m_volatile = False
-        self.m_reset = {} # string -> uvm_reg_data_t
+        self.m_reset = {}  # string -> uvm_reg_data_t
         self.m_written = False
         self.m_read_in_progress = False
         self.m_write_in_progress = False
@@ -90,7 +91,7 @@ class UVMRegField(UVMObject):
         self.m_lineno = 0
         self.m_cover_on = 0
         self.m_individually_accessible = False
-        self.m_check = 0 # uvm_check_e
+        self.m_check = 0  # uvm_check_e
         if UVMRegField.m_predefined is False:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
 
@@ -102,7 +103,7 @@ class UVMRegField(UVMObject):
     # ~size~ in bits, the position of its least-significant bit
     # within the register relative to the least-significant bit
     # of the register, its ~access~ policy, volatility,
-    # "HARD" ~reset~ value, 
+    # "HARD" ~reset~ value,
     # whether the field value is actually reset
     # (the ~reset~ value is ignored if ~FALSE~),
     # whether the field value may be randomized and
@@ -123,7 +124,7 @@ class UVMRegField(UVMObject):
             uvm_report_error("RegModel",
                "Field \"{}\" cannot have 0 bits".format(self.get_full_name()))
             size = 1
-     
+
         self.m_size      = size
         self.m_volatile  = volatile
         self.m_access    = access.upper()
@@ -135,30 +136,30 @@ class UVMRegField(UVMObject):
         else:
             self.m_check = self.m_check
         self.m_individually_accessible = individually_accessible
-     
+
         if has_reset:
-             self.set_reset(reset)
+            self.set_reset(reset)
         else:
-           uvm_resource_db.set("REG::" + self.get_full_name(),
+            UVMResourceDb.set("REG::" + self.get_full_name(),
                    "NO_REG_HW_RESET_TEST", 1)
-     
+
         self.m_parent.add_field(self)
-     
+
         if not (self.m_access in UVMRegField.m_policy_names):
             uvm_report_error("RegModel", ("Access policy '" + access
              + "' for field '" + self.get_full_name() + "' is not defined.  Setting to RW"))
             self.m_access = "RW"
-     
+
         if size > UVMRegField.m_max_size:
             UVMRegField.m_max_size = size
-        
+
         # Ignore is_rand if the field is known not to be writeable
         # i.e. not "RW", "WRC", "WRS", "WO", "W1", "WO1"
         if access in NO_RAND_SET:
             self.is_rand = False
         #if not is_rand:
         #    self.value.rand_mode(0)
-     
+
     #endfunction: configure
 
     #---------------------
@@ -191,28 +192,27 @@ class UVMRegField(UVMObject):
     # Returns the index of the least significant bit of the field
     # in the register that instantiates it.
     # An offset of 0 indicates a field that is aligned with the
-    # least-significant bit of the register. 
+    # least-significant bit of the register.
     def get_lsb_pos(self):
         return self.m_lsb
 
     #   // Function: get_n_bits
     #   //
-    #   // Returns the width, in number of bits, of the field. 
+    #   // Returns the width, in number of bits, of the field.
     #   //
     def get_n_bits(self):
         return self.m_size
 
     #   //
     #   // Function: get_max_size
-    #   // Returns the width, in number of bits, of the largest field. 
+    #   // Returns the width, in number of bits, of the largest field.
     #   //
     #   extern static function int unsigned get_max_size()
     @classmethod
     def get_max_size(cls):
         return UVMRegField.m_max_size
 
-    #
-    #
+
     #   // Function: set_access
     #   //
     #   // Modify the access policy of the field
@@ -258,16 +258,14 @@ class UVMRegField(UVMObject):
     #   // that was used to create it.
     #   //
     #   extern virtual function string set_access(string mode)
-
-    #function string uvm_reg_field::set_access(string mode)
-    #   set_access = self.m_access
-    #   self.m_access = mode.upper()
-    #   if (!UVMRegField.m_policy_names.exists(self.m_access)) begin
-    #      `uvm_error("RegModel", {"Access policy '",self.m_access,
-    #                              "' is not a defined field access policy"})
-    #      self.m_access = set_access
-    #   end
-    #endfunction: set_access
+    def set_access(self, mode):
+        set_access = self.m_access
+        self.m_access = mode.upper()
+        if self.m_access not in UVMRegField.m_policy_names:
+            uvm_error("RegModel", "Access policy '" + self.m_access
+                + "' is not a defined field access policy")
+            self.m_access = set_access
+        return set_access
 
 
     #   // Function: define_access
@@ -292,11 +290,11 @@ class UVMRegField(UVMObject):
     def define_access(cls, name):
         if not UVMRegField.m_predefined:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
-     
+
         name = name.upper()
         if name in UVMRegField.m_policy_names:
             return 0
-     
+
         UVMRegField.m_policy_names[name] = 1
         return True
 
@@ -351,7 +349,7 @@ class UVMRegField(UVMObject):
     #   // (field access of WO, and map access value of RO, etc), the
     #   // method's return value is NOACCESS.
 
-    def get_access(self, reg_map = None):
+    def get_access(self, reg_map=None):
         field_access = self.m_access
         from .uvm_reg_map import UVMRegMap
         if reg_map == UVMRegMap.backdoor():
@@ -470,7 +468,7 @@ class UVMRegField(UVMObject):
     #   // Function: set
     #   //
 
-    def set(self, value, fname = "", lineno = 0):
+    def set(self, value, fname="", lineno=0):
         mask = (1 << self.m_size)-1
         self.m_fname = fname
         self.m_lineno = lineno
@@ -558,7 +556,7 @@ class UVMRegField(UVMObject):
     #   // and the mirrored value are identical.
     #   //
     #   // Use the <uvm_reg_field::read()> or <uvm_reg_field::peek()>
-    #   // method to get the actual field value. 
+    #   // method to get the actual field value.
     #   //
     #   // If the field is write-only, the desired/mirrored
     #   // value is the value last written and assumed
@@ -576,7 +574,7 @@ class UVMRegField(UVMObject):
     #   // Return the mirrored value of the field
     #   //
     #   // It does not actually read the value of the field in the design, only the mirrored value
-    #   // in the abstraction class. 
+    #   // in the abstraction class.
     #   //
     #   // If the field is write-only, the desired/mirrored
     #   // value is the value last written and assumed
@@ -664,7 +662,7 @@ class UVMRegField(UVMObject):
     #   // the state of the DUT (more specifically what the abstraction class
     #   // ~thinks~ the state of the DUT is) is outdated.
     #   // This method returns TRUE
-    #   // if the state of the field in the DUT needs to be updated 
+    #   // if the state of the field in the DUT needs to be updated
     #   // to match the desired value.
     #   // The mirror values or actual content of DUT field are not modified.
     #   // Use the <uvm_reg::update()> to actually update the DUT field.
@@ -679,9 +677,9 @@ class UVMRegField(UVMObject):
     #   //
     #   // Write ~value~ in the DUT field that corresponds to this
     #   // abstraction class instance using the specified access
-    #   // ~path~. 
+    #   // ~path~.
     #   // If the register containing this field is mapped in more
-    #   //  than one address map, 
+    #   //  than one address map,
     #   // an address ~map~ must be
     #   // specified if a physical access is used (front-door access).
     #   // If a back-door access path is used, the effect of writing
@@ -722,7 +720,7 @@ class UVMRegField(UVMObject):
     #   //
     #   // Read and return ~value~ from the DUT field that corresponds to this
     #   // abstraction class instance using the specified access
-    #   // ~path~. 
+    #   // ~path~.
     #   // If the register containing this field is mapped in more
     #   // than one address map, an address ~map~ must be
     #   // specified if a physical access is used (front-door access).
@@ -754,7 +752,7 @@ class UVMRegField(UVMObject):
     #                              input  uvm_object         extension = null,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    #               
+    #
     #
 
     #   // Task: poke
@@ -802,7 +800,7 @@ class UVMRegField(UVMObject):
     #                              input  uvm_object         extension = null,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    #               
+    #
     #
 
     #   // Task: mirror
@@ -814,8 +812,8 @@ class UVMRegField(UVMObject):
     #   // The mirrored value will be updated using the <predict()>
     #   // method based on the readback value.
     #   //
-    #   // The ~path~ argument specifies whether to mirror using 
-    #   // the  <UVM_FRONTDOOR> (<read>) or 
+    #   // The ~path~ argument specifies whether to mirror using
+    #   // the  <UVM_FRONTDOOR> (<read>) or
     #   // <UVM_BACKDOOR> (<peek()>).
     #   //
     #   // If ~check~ is specified as <UVself.m_check>,
@@ -827,7 +825,7 @@ class UVMRegField(UVMObject):
     #   // access is used (front-door access), an address ~map~ must be specified.
     #   // For write-only fields, their content is mirrored and optionally
     #   // checked only if a UVM_BACKDOOR
-    #   // access path is used to read the field. 
+    #   // access path is used to read the field.
     #   //
     #   extern virtual task mirror(output uvm_status_e      status,
     #                              input  uvm_check_e       check = UVM_NO_CHECK,
@@ -843,7 +841,7 @@ class UVMRegField(UVMObject):
 
     #   // Function: set_compare
     #   //
-    #   // Sets the compare policy during a mirror update. 
+    #   // Sets the compare policy during a mirror update.
     #   // The field value is checked against its mirror only when both the
     #   // ~check~ argument in <uvm_reg_block::mirror>, <uvm_reg::mirror>,
     #   // or <uvm_reg_field::mirror> and the compare policy for the
@@ -890,7 +888,7 @@ class UVMRegField(UVMObject):
     #                    get_name(), "' because register '", self.m_parent.get_full_name(), "' has a user-defined front-door. Accessing complete register instead."})
     #      return 0
     #   end
-    #   
+    #
     #   begin
     #     uvm_reg_map system_map = local_map.get_root_map()
     #     uvm_reg_adapter adapter = system_map.get_adapter()
@@ -910,8 +908,8 @@ class UVMRegField(UVMObject):
     #        sole_field = 1
     #     end
     #     else begin
-    #        int prev_lsb,this_lsb,next_lsb; 
-    #        int prev_sz,this_sz,next_sz; 
+    #        int prev_lsb,this_lsb,next_lsb;
+    #        int prev_sz,this_sz,next_sz;
     #        int bus_sz = bus_width*8
     #
     #        foreach (fields[i]) begin
@@ -952,7 +950,7 @@ class UVMRegField(UVMObject):
     #              if ((next_lsb % bus_sz) == 0 ||
     #                  (next_lsb - (this_lsb + this_sz)) >= (next_lsb % bus_sz))
     #                 return 1
-    #           end 
+    #           end
     #           else begin
     #              if ( (next_lsb - (this_lsb + this_sz)) >= (next_lsb % bus_sz) &&
     #                  ((this_lsb - (prev_lsb + prev_sz)) >= (this_lsb % bus_sz)) )
@@ -961,8 +959,8 @@ class UVMRegField(UVMObject):
     #        end
     #     end
     #   end
-    #   
-    #   `uvm_warning("RegModel", 
+    #
+    #   `uvm_warning("RegModel",
     #       {"Target bus does not support byte enabling, and the field '",
     #       get_full_name(),"' is not the only field within the entire bus width. ",
     #       "Individual field access will not be available. ",
@@ -1016,6 +1014,8 @@ class UVMRegField(UVMObject):
     #  predict = (rw.status == UVM_NOT_OK) ? 0 : 1
     #endfunction: predict
 
+    def _get_mask(self):
+        return ((1 << self.m_size)-1)
     #
     #
     #
@@ -1023,8 +1023,8 @@ class UVMRegField(UVMObject):
     #   extern virtual function uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
     #                                                     uvm_reg_data_t wr_val,
     #                                                     uvm_reg_map    map)
-    def XpredictX (self, cur_val, wr_val, _map):
-        mask = (1 << self.m_size)-1
+    def XpredictX(self, cur_val, wr_val, _map):
+        mask = self._get_mask()
         acc = self.get_access(_map)
         #   case (get_access(map))
         if acc == "RO":
@@ -1097,38 +1097,38 @@ class UVMRegField(UVMObject):
     def XupdateX(self):
         #   Figure out which value must be written to get the desired value
         #   given what we think is the current value in the hardware
-        XupdateX = self.m_desired # default action
-        if self.m_access == "W1C":   
+        XupdateX = self.m_desired  # default action
+        if self.m_access == "W1C":
             XupdateX = ~self.m_desired
-        if self.m_access == "W1S":   
+        if self.m_access == "W1S":
             XupdateX = self.m_desired
-        if self.m_access == "W1T":   
+        if self.m_access == "W1T":
             XupdateX = self.m_desired ^ self.m_mirrored
-        if self.m_access == "W0C":   
+        if self.m_access == "W0C":
             XupdateX = self.m_desired
-        if self.m_access == "W0S":   
+        if self.m_access == "W0S":
             XupdateX = ~self.m_desired
-        if self.m_access == "W0T":   
+        if self.m_access == "W0T":
             XupdateX = ~(self.m_desired ^ self.m_mirrored)
-        if self.m_access == "W1SRC": 
+        if self.m_access == "W1SRC":
             XupdateX = self.m_desired
-        if self.m_access == "W1CRS": 
+        if self.m_access == "W1CRS":
             XupdateX = ~self.m_desired
-        if self.m_access == "W0SRC": 
+        if self.m_access == "W0SRC":
             XupdateX = ~self.m_desired
-        if self.m_access == "W0CRS": 
+        if self.m_access == "W0CRS":
             XupdateX = self.m_desired
-        if self.m_access == "WO":    
+        if self.m_access == "WO":
             XupdateX = self.m_desired
-        if self.m_access == "WOC":   
+        if self.m_access == "WOC":
             XupdateX = self.m_desired
-        if self.m_access == "WOS":   
+        if self.m_access == "WOS":
             XupdateX = self.m_desired
-        if self.m_access == "W1":    
+        if self.m_access == "W1":
             XupdateX = self.m_desired
-        if self.m_access == "WO1":   
+        if self.m_access == "WO1":
             XupdateX = self.m_desired
-        XupdateX = XupdateX & (1 << self.m_size) - 1
+        XupdateX = XupdateX & self._get_mask()
         return XupdateX
     #endfunction: XupdateX
 
@@ -1141,8 +1141,8 @@ class UVMRegField(UVMObject):
     #   extern virtual task do_read(uvm_reg_item rw)
 
     #// do_predict
-    def do_predict(self, rw, kind = UVM_PREDICT_DIRECT, be = -1):
-        field_val = rw.value[0] & ((1 << self.m_size)-1)
+    def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
+        field_val = rw.value[0] & self._get_mask()
         if rw.status != UVM_NOT_OK:
             rw.status = UVM_IS_OK
 
@@ -1160,13 +1160,13 @@ class UVMRegField(UVMObject):
             if rw.path == UVM_FRONTDOOR or rw.path == UVM_PREDICT:
                 field_val = self.XpredictX(self.m_mirrored, field_val, rw.map)
             self.m_written = True
-    
+
             cb = cbs.first()
             while cb is not None:
-                cb.post_predict(self, self.m_mirrored, field_val, 
+                cb.post_predict(self, self.m_mirrored, field_val,
                         UVM_PREDICT_WRITE, rw.path, rw.map)
                 cb = cbs.next()
-            field_val &= (1 << self.m_size)-1
+            field_val &= self._get_mask()
 
         elif kind == UVM_PREDICT_READ:
             cbs = UVMRegFieldCbIter(self)
@@ -1175,7 +1175,7 @@ class UVMRegField(UVMObject):
                 if acc in ["RC", "WRC", "WSRC", "W1SRC", "W0SRC"]:
                     field_val = 0  # (clear)
                 elif acc in ["RS", "WRS", "WCRS", "W1CRS", "W0CRS"]:
-                    field_val = (1 << self.m_size)-1  # all 1's (set)
+                    field_val = self._get_mask()  # all 1's (set)
                 elif acc in ["WO", "WOC", "WOS", "WO1", "NOACCESS"]:
                     return
             # TODO callbacks
@@ -1185,7 +1185,7 @@ class UVMRegField(UVMObject):
                 cb.post_predict(self, self.m_mirrored, field_val,
                         UVM_PREDICT_READ, rw.path, rw.map)
                 cb = cbs.next()
-            field_val &= (1 << self.m_size)-1
+            field_val &= self._get_mask()
 
         elif UVM_PREDICT_DIRECT:
             if self.m_parent.is_busy():
@@ -1306,19 +1306,19 @@ class UVMRegField(UVMObject):
             mirrored = (" (Mirror: " + fmt + ")").format(self.m_mirrored)
 
         convert2string = ("{} {} {}[{}:{}]=" + fmt + "{}").format(prefix,
-                    self.get_access(),
-                    reg_.get_name(),
-                    self.get_lsb_pos() + self.get_n_bits() - 1,
-                    self.get_lsb_pos(), self.m_desired,
-                    mirrored)
-        
+            self.get_access(),
+            reg_.get_name(),
+            self.get_lsb_pos() + self.get_n_bits() - 1,
+            self.get_lsb_pos(), self.m_desired,
+            mirrored)
+
         if self.m_read_in_progress == 1:
             if self.m_fname != "" and self.m_lineno != 0:
                 res_str = " from {}:{}".format(self.m_fname, self.m_lineno)
             convert2string = convert2string + "\n" + "currently being read" + res_str
         if self.m_write_in_progress == 1:
             if self.m_fname != "" and self.m_lineno != 0:
-                 res_str += " from {}:{}".format(self.m_fname, self.m_lineno)
+                res_str += " from {}:{}".format(self.m_fname, self.m_lineno)
             convert2string = convert2string + "\n" + res_str + "currently being written"
         return convert2string
     #endfunction: convert2string
@@ -1350,7 +1350,7 @@ uvm_object_utils(UVMRegField)
 #                                           output uvm_reg_map_info map_info,
 #                                           input string caller)
 #
-#                        
+#
 #   if (rw.path == UVM_DEFAULT_PATH) begin
 #     uvm_reg_block blk = self.m_parent.get_block()
 #     rw.path = blk.get_default_path()
@@ -1372,7 +1372,7 @@ uvm_object_utils(UVMRegField)
 #     rw.local_map = self.m_parent.get_local_map(rw.map,caller)
 #
 #     if (rw.local_map == null) begin
-#        `uvm_error(get_type_name(), 
+#        `uvm_error(get_type_name(),
 #           {"No transactor available to physically access memory from map '",
 #            rw.map.get_full_name(),"'"})
 #        rw.status = UVM_NOT_OK
@@ -1490,8 +1490,8 @@ uvm_object_utils(UVMRegField)
 #   rw.element_kind = UVM_REG
 #   rw.element = self.m_parent
 #   rw.value[0] = value_adjust
-#   self.m_parent.do_write(rw);   
-#`else        
+#   self.m_parent.do_write(rw);
+#`else
 #
 #   if (!is_indv_accessible(rw.path,rw.local_map)) begin
 #      rw.element_kind = UVM_REG
@@ -1511,7 +1511,7 @@ uvm_object_utils(UVMRegField)
 #     self.m_parent.Xset_busyX(1)
 #
 #     rw.status = UVM_IS_OK
-#      
+#
 #     pre_write(rw)
 #     for (uvm_reg_cbs cb=cbs.first(); cb!=null; cb=cbs.next())
 #        cb.pre_write(rw)
@@ -1520,10 +1520,10 @@ uvm_object_utils(UVMRegField)
 #        self.m_write_in_progress = 1'b0
 #        self.m_parent.Xset_busyX(0)
 #        self.m_parent.XatomicX(0)
-#        
+#
 #        return
 #     end
-#            
+#
 #     rw.local_map.do_write(rw)
 #
 #     if (system_map.get_auto_predict())
@@ -1535,7 +1535,7 @@ uvm_object_utils(UVMRegField)
 #        cb.post_write(rw)
 #
 #     self.m_parent.Xset_busyX(0)
-#      
+#
 #   end
 #
 #`endif
@@ -1591,7 +1591,7 @@ uvm_object_utils(UVMRegField)
 #   self.m_fname  = rw.fname
 #   self.m_lineno = rw.lineno
 #   self.m_read_in_progress = 1'b1
-#  
+#
 #   if (!Xcheck_accessX(rw,map_info,"read()"))
 #     return
 #
@@ -1618,7 +1618,7 @@ uvm_object_utils(UVMRegField)
 #     self.m_parent.Xset_busyX(1)
 #
 #     rw.status = UVM_IS_OK
-#      
+#
 #     pre_read(rw)
 #     for (uvm_reg_cbs cb = cbs.first(); cb != null; cb = cbs.next())
 #        cb.pre_read(rw)
@@ -1630,7 +1630,7 @@ uvm_object_utils(UVMRegField)
 #
 #        return
 #     end
-#            
+#
 #     rw.local_map.do_read(rw)
 #
 #
@@ -1643,7 +1643,7 @@ uvm_object_utils(UVMRegField)
 #        cb.post_read(rw)
 #
 #     self.m_parent.Xset_busyX(0)
-#      
+#
 #   end
 #
 #`endif
@@ -1677,7 +1677,7 @@ uvm_object_utils(UVMRegField)
 #   end
 #
 #endtask: do_read
-#               
+#
 #
 #// is_indv_accessible
 #
@@ -1749,7 +1749,7 @@ uvm_object_utils(UVMRegField)
 #   value = (reg_value >> self.m_lsb) & ((1<<self.m_size))-1
 #
 #endtask: peek
-#               
+#
 #
 #// mirror
 #
@@ -1832,30 +1832,3 @@ uvm_object_utils(UVMRegField)
 #  `uvm_warning("RegModel","RegModel field cannot be unpacked")
 #endfunction
 #
-
-import unittest
-
-class TestUVMRegField(unittest.TestCase):
-
-    def create_field(self, name, reg):
-        field = UVMRegField(name)
-        field.configure(parent=reg, size=16, lsb_pos=0, access='RW',
-                volatile=False, reset=0xABCD, has_reset=True, is_rand=False,
-            individually_accessible=False)
-        return field
-
-    def test_configure(self):
-        from .uvm_reg import UVMReg
-        reg = UVMReg('my_reg', 16, False)
-        field = self.create_field('f1', reg)
-        self.assertEqual(field.get_reset(), 0xABCD)
-
-    def test_string_conv(self):
-        from .uvm_reg import UVMReg
-        reg = UVMReg('r0_test', 16, False)
-        field = self.create_field('f1', reg)
-        ss = field.convert2string()
-        self.assertRegexpMatches(ss, '\[15:0\]={}'.format(16))
-
-if __name__ == '__main__':
-    unittest.main()
