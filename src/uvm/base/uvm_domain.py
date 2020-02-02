@@ -205,33 +205,12 @@ class UVMDomain(UVMPhase):
         #  uvm_domain domains[string];
         domains = UVMDomain.get_domains() # string -> uvm_domain
         for idx in domains:
-            domains[idx].jump(phase);
+            domains[idx].jump(phase)
 
     #endclass UVMDomain
 
+# tpoikela: Added for additional verification
 def check_phase_exists(name, phase):
     if phase is None:
         msg = 'Phase ' + name + ' is None! in UVMDomain.get_common_domain()'
         raise Exception(msg)
-
-import unittest
-
-class TestUVMDomain(unittest.TestCase):
-
-    def test_common(self):
-        common = UVMDomain.get_common_domain()
-        self.assertNotEqual(common, None)
-        bld = common.find(UVMBuildPhase.get())
-        self.assertNotEqual(bld, None)
-
-    def test_add_and_find(self):
-        my_ph = UVMPhase('my_ph')
-        dm = UVMDomain('my domain')
-        dm.add(my_ph)
-        my_ph2 = dm.find(my_ph)
-        self.assertNotEqual(my_ph2, None)
-        self.assertEqual(my_ph2.get_name(), 'my_ph')
-
-
-if __name__ == '__main__':
-    unittest.main()
