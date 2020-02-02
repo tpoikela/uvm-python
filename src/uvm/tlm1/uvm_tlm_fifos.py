@@ -3,6 +3,7 @@
 #   Copyright 2007-2011 Mentor Graphics Corporation
 #   Copyright 2007-2010 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
+#   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -23,14 +24,13 @@
 import cocotb
 
 from .uvm_tlm_fifo_base import *
-
-from ..base.uvm_mailbox import *
+from ..base.uvm_mailbox import UVMMailbox
 
 #------------------------------------------------------------------------------
 #
 # Title: TLM FIFO Classes
 #
-# This section defines TLM-based FIFO classes. 
+# This section defines TLM-based FIFO classes.
 #
 #------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ from ..base.uvm_mailbox import *
 # Class: uvm_tlm_fifo#(T)
 #
 # This class provides storage of transactions between two independently running
-# processes. Transactions are put into the FIFO via the ~put_export~. 
+# processes. Transactions are put into the FIFO via the ~put_export~.
 # transactions are fetched from the FIFO in the order they arrived via the
 # ~get_peek_export~. The ~put_export~ and ~get_peek_export~ are inherited from
 # the <uvm_tlm_fifo_base #(T)> super class, and the interface methods provided by
@@ -47,24 +47,25 @@ from ..base.uvm_mailbox import *
 #
 #------------------------------------------------------------------------------
 
+
 class UVMTLMFIFO(UVMTLMFIFOBase):
     type_name = "uvm_tlm_fifo #(T)"
 
     #  // Function: new
     #  //
-    #  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments. 
+    #  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
     #  // The ~parent~ should be ~null~ if the <uvm_tlm_fifo#(T)> is going to be used in a
     #  // statically elaborated construct (e.g., a module). The ~size~ indicates the
     #  // maximum size of the FIFO; a value of zero indicates no upper bound.
     #
-    def __init__(self, name, parent = None, size = 1):
+    def __init__(self, name, parent=None, size=1):
         UVMTLMFIFOBase.__init__(self, name, parent)
         self.m = UVMMailbox(size)
         self.m_size = size
         self.m_pending_blocked_gets = 0
 
     def get_type_name(self):
-        return UVMTLMFIFO.type_name;
+        return UVMTLMFIFO.type_name
 
     #  // Function: size
     #  //
@@ -72,13 +73,13 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
     #  // the FIFO is capable of holding. A return value of 0 indicates the
     #  // FIFO capacity has no limit.
     def size(self):
-        return self.m_size;
+        return self.m_size
 
     #  // Function: used
     #  //
     #  // Returns the number of entries put into the FIFO.
     def used(self):
-        return self.m.num();
+        return self.m.num()
 
     #  // Function: is_empty
     #  //
@@ -132,7 +133,7 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
         return self.m.num() > 0 and self.m_pending_blocked_gets == 0
 
     def can_peek(self):
-        return self.m.num() > 0;
+        return self.m.num() > 0
 
     #  // Function: flush
     #  //
@@ -141,14 +142,14 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
     #
     def flush(self):
         t = []
-        r = 1; 
+        r = 1
         while r:
             r = self.try_get(t)
 
         if self.m.num() > 0 and self.m_pending_blocked_gets != 0:
             uvm_report_error("flush failed" ,
-                "there are blocked gets preventing the flush", UVM_NONE);
-    #endclass 
+                "there are blocked gets preventing the flush", UVM_NONE)
+    #endclass
 
 
 #------------------------------------------------------------------------------
@@ -173,10 +174,10 @@ class UVMTLMAnalysisFIFO(UVMTLMFIFO):
     #  //|  function void write (T t)
     #  //
     #  // Access via ports bound to this export is the normal mechanism for writing
-    #  // to an analysis FIFO. 
+    #  // to an analysis FIFO.
     #  // See write method of <uvm_tlm_if_base #(T1,T2)> for more information.
     #
-    #  uvm_analysis_imp #(T, uvm_tlm_analysis_fifo #(T)) analysis_export;
+    #  uvm_analysis_imp #(T, uvm_tlm_analysis_fifo #(T)) analysis_export
     #
     #
     #  // Function: new
@@ -186,32 +187,13 @@ class UVMTLMAnalysisFIFO(UVMTLMFIFO):
     #  // component is instantiated in statically elaborated constructs and must be
     #  // specified when this component is a child of another UVM component.
     #
-    def __init__(self, name, parent = None):
-        UVMTLMFIFO.__init__(self, name, parent, 0) # // analysis fifo must be unbounded
+    def __init__(self, name, parent=None):
+        UVMTLMFIFO.__init__(self, name, parent, 0)  # // analysis fifo must be unbounded
         self.analysis_export = UVMAnalysisImp("analysis_export", self)
 
     def get_type_name(self):
         return UVMTLMAnalysisFIFO.type_name
 
     def write(self, t):
-        self.try_put(t) # unbounded => must succeed
+        self.try_put(t)  # unbounded => must succeed
     #endclass
-
-import unittest
-
-class TestUVMTLMFIFO(unittest.TestCase):
-
-    def test_tlm_fifo(self):
-        fifo = UVMTLMAnalysisFIFO('fifo', None)
-        fifo.write(12345);
-        arr = []
-        self.assertEqual(fifo.try_get(arr), True)
-        self.assertEqual(arr[0], 12345)
-        self.assertEqual(fifo.can_get(), False)
-        self.assertEqual(fifo.try_put('xxx'), True)
-        self.assertEqual(fifo.can_get(), True)
-        arr = []
-        self.assertEqual(fifo.try_get(arr), True)
-        self.assertEqual(arr[0], 'xxx')
-        
-
