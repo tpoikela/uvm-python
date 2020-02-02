@@ -21,7 +21,8 @@ Current status: Testbenches can already be written with all the typical UVM
 components. UVM Phasing is in place, and working. Stimulus can be generated
 using hierarchical sequences. Register
 layer supports already read/write to registers (via frontdoor), and to 
-memories (frontdoor and backdoor). TLM 1.0 is fully implemented.
+memories (frontdoor and backdoor). TLM 1.0 is partially implemented,
+put/get/analysis interfaces are done, and master/slave interfaces work.
 
 NOTE: Despite the working state, the project is under development, and still
 missing a lot of functionality. Please try it out, and let me know if
