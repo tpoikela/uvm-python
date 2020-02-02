@@ -58,6 +58,7 @@ ERR_MSG3 = ("Cannot connect exports to ports Try calling port.connect(export)"
 # ~get_type_name~ methods inherited from <uvm_component>.
 #------------------------------------------------------------------------------
 
+
 class UVMPortComponentBase(UVMComponent):
 
     def __init__(self, name, parent):
@@ -70,7 +71,7 @@ class UVMPortComponentBase(UVMComponent):
     # connected to.
 
     def get_connected_to(self, port_list):
-        pass # pure virtual
+        pass  # pure virtual
 
     # Function: get_provided_to
     #
@@ -79,17 +80,17 @@ class UVMPortComponentBase(UVMComponent):
     # provides its implementation to.
 
     def get_provided_to(self, port_list):
-        pass # pure virtual
+        pass  # pure virtual
 
     # Function: is_port
     #
     def is_port(self):
-        pass # pure virtual
+        pass  # pure virtual
 
     # Function: is_export
     #
     def is_export(self):
-        pass # pure virtual
+        pass  # pure virtual
 
     # Function: is_imp
     #
@@ -98,11 +99,11 @@ class UVMPortComponentBase(UVMComponent):
     # return 0.
 
     def is_imp(self):
-        pass # pure virtual
+        pass  # pure virtual
 
     # Turn off auto config by not calling build_phase()
     def build_phase(self, phase):
-        self.build() #for backward compat
+        self.build()  # for backward compat
         return
 
     def do_task_phase(self, phase):
@@ -115,11 +116,12 @@ class UVMPortComponentBase(UVMComponent):
 #------------------------------------------------------------------------------
 # See description of <uvm_port_component_base> for information about this class
 #------------------------------------------------------------------------------
-
 #class uvm_port_component #(type PORT=uvm_object) extends uvm_port_component_base
+
+
 class UVMPortComponent(UVMPortComponentBase):
 
-    def __init__ (self, name, parent, port):
+    def __init__(self, name, parent, port):
         UVMPortComponentBase.__init__(self, name, parent)
         if port is None:
             uvm_report_fatal("Bad usage", "Null handle to port", UVM_NONE)
@@ -191,6 +193,7 @@ class UVMPortComponent(UVMPortComponentBase):
 #------------------------------------------------------------------------------
 
 ## virtual class uvm_port_base #(type IF=uvm_void) extends IF
+
 
 class UVMPortBase():
 
@@ -656,14 +659,14 @@ class UVMPortBase():
         self.m_resolved = 1
 
         if self.size() < self.min_size():
-           self.m_comp.uvm_report_error(s_connection_error_id,
+            self.m_comp.uvm_report_error(s_connection_error_id,
                 "connection count of {} does not meet required minimum of {}"
                 .format(self.size(), self.min_size()), UVM_NONE)
 
         if self.max_size() != UVM_UNBOUNDED_CONNECTIONS and self.size() > self.max_size():
-           self.m_comp.uvm_report_error(s_connection_error_id,
+            self.m_comp.uvm_report_error(s_connection_error_id,
                 "connection count of {} exceeds maximum of {}".format(
-                self.size(), self.max_size()), UVM_NONE)
+                    self.size(), self.max_size()), UVM_NONE)
 
         if self.size() > 0:
             self.set_if(0)
