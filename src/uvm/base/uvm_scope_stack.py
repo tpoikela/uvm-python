@@ -1,5 +1,24 @@
-
-import unittest
+# ------------------------------------------------------------------------------
+#   Copyright 2019 Tuomas Poikela
+#   All Rights Reserved Worldwide
+#
+#   Licensed under the Apache License, Version 2.0 (the
+#   "License"); you may not use this file except in
+#   compliance with the License.  You may obtain a copy of
+#   the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in
+#   writing, software distributed under the License is
+#   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#   CONDITIONS OF ANY KIND, either express or implied.  See
+#   the License for the specific language governing
+#   permissions and limitations under the License.
+#   uvm-python NOTE: All code ported from SystemVerilog UVM 1.2 to
+#   python. Original code structures (including comments)
+#   preserved where possible.
+# ------------------------------------------------------------------------------
 
 
 class UVMScopeStack:
@@ -43,8 +62,8 @@ class UVMScopeStack:
         self.m_arg = ""
 
     def down_element(self, element):
-        str = "[{}]".format(element)
-        self.m_stack.append(str)
+        _str = "[{}]".format(element)
+        self.m_stack.append(_str)
         self.m_arg = ""
 
     def up_element(self):
@@ -82,22 +101,3 @@ class UVMScopeStack:
     def unset_arg(self, arg):
         if arg == self.m_arg:
             self.m_arg = ""
-
-
-class TestUVMScopeStack(unittest.TestCase):
-
-    def test_name(self):
-        stack = UVMScopeStack()
-        self.assertEqual(stack.depth(), 0)
-
-    def test_down(self):
-        stack = UVMScopeStack()
-        stack.down('xxx')
-        stack.down('yyy')
-        stack.down('zzz')
-        self.assertEqual(stack.get(), 'xxx.yyy.zzz')
-        stack.up_element()
-        self.assertEqual(stack.get(), 'xxx.yyy')
-
-if __name__ == '__main__':
-    unittest.main()
