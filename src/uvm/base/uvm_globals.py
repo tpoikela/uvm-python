@@ -250,8 +250,8 @@ def uvm_is_match(expr, _str):
     return uvm_re_match(s, _str) == 0
 
 
-UVM_LINE_WIDTH = 80
-UVM_NUM_LINES = UVM_NUM_LINES
+UVM_LINE_WIDTH = 120
+UVM_NUM_LINES = 120
 UVM_SMALL_STRING = UVM_LINE_WIDTH*8-1
 UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 
