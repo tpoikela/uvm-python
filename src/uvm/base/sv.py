@@ -52,6 +52,7 @@ def uvm_glob_to_re(_str):
     res = res.replace('*', '.*')
     res = res.replace('[', '\\[')
     res = res.replace(']', '\\]')
+    res = res.replace('?', '.')
     # TODO add more substitutions
     return res
 
