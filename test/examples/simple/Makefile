@@ -32,6 +32,7 @@ test-tlm1:
 	make -C tlm1/hierarchy/
 	make -C tlm1/fifo/
 	make -C tlm1/bidir/
+	make -C tlm1/master_slave/
 
 test-callbacks:
 	make -C callbacks/
