@@ -154,8 +154,7 @@ class UVMComponent(UVMReportObject):
             if parent is not None:
                 parent_name = parent.get_full_name()
             uvm_fatal("ILLCRT", ("It is illegal to create a component ('" +
-                name + "' under '" + parent_name + "') after the build phase has ended."),
-                UVM_NONE)
+                name + "' under '" + parent_name + "') after the build phase has ended."))
 
         if name == "":
             name = "COMP_" + UVMObject.inst_count
