@@ -69,8 +69,8 @@ from ..base.uvm_port_base import UVMPortBase
 #// interface calls to this component.
 #//
 #//------------------------------------------------------------------------------
-#
-#
+
+
 #// Function: new
 #//
 #// Creates a new unidirectional imp port with the given ~name~ and ~parent~.
@@ -107,7 +107,7 @@ UVM_NONBLOCKING_PUT_IMP('m_imp', UVMNonBlockingPutImp)
 class UVMPutImp():
     pass
 UVMPutImp = UVM_IMP_COMMON(UVMPutImp, UVM_TLM_PUT_MASK,"uvm_put_imp")
-UVM_PUT_IMP ('m_imp', UVMPutImp)
+UVM_PUT_IMP('m_imp', UVMPutImp)
 
 #class uvm_blocking_get_imp #(type T=int, type IMP=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
@@ -127,7 +127,7 @@ UVM_BLOCKING_GET_IMP('m_imp', UVMBlockingGetImp)
 class UVMNonBlockingGetImp():
     pass
 UVMNonBlockingGetImp = UVM_IMP_COMMON(UVMNonBlockingGetImp, UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_imp")
-UVM_NONBLOCKING_GET_IMP ('m_imp', UVMNonBlockingGetImp)
+UVM_NONBLOCKING_GET_IMP('m_imp', UVMNonBlockingGetImp)
 
 #class uvm_get_imp #(type T=int, type IMP=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
@@ -137,7 +137,7 @@ UVM_NONBLOCKING_GET_IMP ('m_imp', UVMNonBlockingGetImp)
 class UVMGetImp():
     pass
 UVMGetImp = UVM_IMP_COMMON(UVMGetImp, UVM_TLM_GET_MASK,"uvm_get_imp")
-UVM_GET_IMP ('m_imp', UVMGetImp)
+UVM_GET_IMP('m_imp', UVMGetImp)
 
 #class uvm_blocking_peek_imp #(type T=int, type IMP=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
@@ -283,6 +283,11 @@ UVM_GET_PEEK_IMP('m_imp', UVMGetPeekImp)
 #  `UVM_BLOCKING_PUT_IMP (m_req_imp, REQ, t)
 #  `UVM_BLOCKING_GET_PEEK_IMP (m_rsp_imp, RSP, t)
 #endclass
+class UVMBlockingMasterImp():  #(type REQ=int, type RSP=REQ, type IMP=int,
+    pass
+UVMBlockingMasterImp =  UVM_MS_IMP_COMMON(UVMBlockingMasterImp, UVM_TLM_BLOCKING_MASTER_MASK,"uvm_blocking_master_imp")
+UVM_BLOCKING_PUT_IMP('m_req_imp', UVMBlockingMasterImp)
+UVM_BLOCKING_GET_PEEK_IMP('m_rsp_imp', UVMBlockingMasterImp)
 
 
 #class uvm_nonblocking_master_imp #(type REQ=int, type RSP=REQ, type IMP=int,
@@ -295,6 +300,11 @@ UVM_GET_PEEK_IMP('m_imp', UVMGetPeekImp)
 #  `UVM_NONBLOCKING_PUT_IMP (m_req_imp, REQ, t)
 #  `UVM_NONBLOCKING_GET_PEEK_IMP (m_rsp_imp, RSP, t)
 #endclass
+class UVMNonBlockingMasterImp():  # (type REQ=int, type RSP=REQ, type IMP=int,
+    pass
+UVMNonBlockingMasterImp =  UVM_MS_IMP_COMMON(UVMNonBlockingMasterImp, UVM_TLM_NONBLOCKING_MASTER_MASK,"uvm_nonblocking_master_imp")
+UVM_NONBLOCKING_PUT_IMP ('m_req_imp', UVMNonBlockingMasterImp)
+UVM_NONBLOCKING_GET_PEEK_IMP ('m_rsp_imp', UVMNonBlockingMasterImp)
 
 
 #class uvm_master_imp #(type REQ=int, type RSP=REQ, type IMP=int,
@@ -310,8 +320,8 @@ UVM_GET_PEEK_IMP('m_imp', UVMGetPeekImp)
 class UVMMasterImp:
     pass
 UVMMasterImp = UVM_MS_IMP_COMMON(UVMMasterImp, UVM_TLM_MASTER_MASK, "uvm_master_imp")
-UVM_PUT_IMP ('m_imp', UVMMasterImp)
-UVM_GET_PEEK_IMP('m_imp', UVMMasterImp)
+UVM_PUT_IMP('m_req_imp', UVMMasterImp)
+UVM_GET_PEEK_IMP('m_rsp_imp', UVMMasterImp)
 
 
 #class uvm_blocking_slave_imp #(type REQ=int, type RSP=REQ, type IMP=int,
@@ -324,6 +334,12 @@ UVM_GET_PEEK_IMP('m_imp', UVMMasterImp)
 #  `UVM_BLOCKING_PUT_IMP (m_rsp_imp, RSP, t)
 #  `UVM_BLOCKING_GET_PEEK_IMP (m_req_imp, REQ, t)
 #endclass
+class UVMBlockingSlaveImp():
+    pass
+UVMBlockingSlaveImp = UVM_MS_IMP_COMMON(UVMBlockingSlaveImp, 
+    UVM_TLM_BLOCKING_SLAVE_MASK,"uvm_blocking_slave_imp")
+UVM_BLOCKING_PUT_IMP('m_rsp_imp', UVMBlockingSlaveImp)
+UVM_BLOCKING_GET_PEEK_IMP ('m_req_imp', UVMBlockingSlaveImp)
 
 #class uvm_nonblocking_slave_imp #(type REQ=int, type RSP=REQ, type IMP=int,
 #                                  type REQ_IMP=IMP, type RSP_IMP=IMP)
@@ -335,6 +351,12 @@ UVM_GET_PEEK_IMP('m_imp', UVMMasterImp)
 #  `UVM_NONBLOCKING_PUT_IMP (m_rsp_imp, RSP, t)
 #  `UVM_NONBLOCKING_GET_PEEK_IMP (m_req_imp, REQ, t)
 #endclass
+class UVMNonBlockingSlaveImp():   # (type REQ=int, type RSP=REQ, type IMP=int,
+    pass
+UVMNonBlockingSlaveImp = UVM_MS_IMP_COMMON(UVMNonBlockingSlaveImp,
+    UVM_TLM_NONBLOCKING_SLAVE_MASK,"uvm_nonblocking_slave_imp")
+UVM_NONBLOCKING_PUT_IMP('m_rsp_imp', UVMNonBlockingSlaveImp)
+UVM_NONBLOCKING_GET_PEEK_IMP('m_req_imp', UVMNonBlockingSlaveImp)
 
 #class uvm_slave_imp #(type REQ=int, type RSP=REQ, type IMP=int,
 #                      type REQ_IMP=IMP, type RSP_IMP=IMP)
@@ -349,8 +371,9 @@ UVM_GET_PEEK_IMP('m_imp', UVMMasterImp)
 class UVMSlaveImp:
     pass
 UVMSlaveImp = UVM_MS_IMP_COMMON(UVMSlaveImp, UVM_TLM_SLAVE_MASK, "uvm_slave_imp")
-UVM_PUT_IMP ('m_imp', UVMSlaveImp)
-UVM_GET_PEEK_IMP('m_imp', UVMSlaveImp)
+UVM_PUT_IMP ('m_rsp_imp', UVMSlaveImp)
+UVM_GET_PEEK_IMP('m_req_imp', UVMSlaveImp)
+
 
 #class uvm_blocking_transport_imp #(type REQ=int, type RSP=REQ, type IMP=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
