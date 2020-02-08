@@ -1,6 +1,8 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2010-2017 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,7 +21,7 @@
 #//----------------------------------------------------------------------
 #
 #  `include "tlm2/uvm_tlm2_defines.svh"
-#  `include "tlm2/uvm_tlm2_time.svh"
+#  `include "tlm2/uvm_tlm_time.svh"
 #  `include "tlm2/uvm_tlm2_generic_payload.svh"
 #  `include "tlm2/uvm_tlm2_ifs.svh"
 #  `include "tlm2/uvm_tlm2_imps.svh"

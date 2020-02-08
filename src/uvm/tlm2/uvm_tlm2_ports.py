@@ -1,6 +1,10 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#// Copyright 2015 NVIDIA Corporation
+#// Copyright 2014 Cisco Systems, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,26 +23,27 @@
 #//----------------------------------------------------------------------
 #
 #//----------------------------------------------------------------------
-#// Title: TLM2 ports
+#// Title -- NODOCS -- TLM2 ports
 #//
 #// The following defines TLM2 port classes.
 #//
 #//----------------------------------------------------------------------
 #
-#// class: uvm_tlm_b_transport_port
+#// class -- NODOCS -- uvm_tlm_b_transport_port
 #//
 #// Class providing the blocking transport port.
 #// The port can be bound to one export.
 #// There is no backward path for the blocking transport.
 #
+#// @uvm-ieee 1800.2-2017 auto 12.3.6.1
 #class uvm_tlm_b_transport_port #(type T=uvm_tlm_generic_payload)
-#  extends uvm_port_base #(uvm_tlm_if #(T));
-#  `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
-#  `UVM_TLM_B_TRANSPORT_IMP(this.m_if, T, t, delay)
-#endclass
+    #  extends uvm_port_base #(uvm_tlm_if #(T))
+    #  `UVM_PORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
+    #  `UVM_TLM_B_TRANSPORT_IMP(self.m_if, T, t, delay)
+    #endclass
 #
 #
-#// class: uvm_tlm_nb_transport_fw_port
+#// class -- NODOCS -- uvm_tlm_nb_transport_fw_port
 #//
 #// Class providing the non-blocking backward transport port.
 #// Transactions received from the producer, on the forward path, are
@@ -47,14 +52,15 @@
 #// The port can be bound to one export.
 #//
 #  
+#// @uvm-ieee 1800.2-2017 auto 12.3.6.2
 #class uvm_tlm_nb_transport_fw_port #(type T=uvm_tlm_generic_payload,
-#                                 type P=uvm_tlm_phase_e)
-#  extends uvm_port_base #(uvm_tlm_if #(T,P));
-#  `UVM_PORT_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
-#  `UVM_TLM_NB_TRANSPORT_FW_IMP(this.m_if, T, P, t, p, delay)
-#endclass
+    #                                 type P=uvm_tlm_phase_e)
+    #  extends uvm_port_base #(uvm_tlm_if #(T,P))
+    #  `UVM_PORT_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
+    #  `UVM_TLM_NB_TRANSPORT_FW_IMP(self.m_if, T, P, t, p, delay)
+    #endclass
 #
-#// class: uvm_tlm_nb_transport_bw_port
+#// class -- NODOCS -- uvm_tlm_nb_transport_bw_port
 #//
 #// Class providing the non-blocking backward transport port.
 #// Transactions received from the producer, on the forward path, are
@@ -63,12 +69,13 @@
 #// The port can be bound to one export.
 #//
 #  
+#// @uvm-ieee 1800.2-2017 auto 12.3.6.3
 #class uvm_tlm_nb_transport_bw_port #(type T=uvm_tlm_generic_payload,
-#                                 type P=uvm_tlm_phase_e)
-#  extends uvm_port_base #(uvm_tlm_if #(T,P));
-#
-#   // Function: new
-#  `UVM_PORT_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
-#  `UVM_TLM_NB_TRANSPORT_BW_IMP(this.m_if, T, P, t, p, delay)
-#endclass
-#
+    #                                 type P=uvm_tlm_phase_e)
+    #  extends uvm_port_base #(uvm_tlm_if #(T,P))
+    #
+    #   // Function -- NODOCS -- new
+    #  `UVM_PORT_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
+    #  `UVM_TLM_NB_TRANSPORT_BW_IMP(self.m_if, T, P, t, p, delay)
+from uvm.base.uvm_port_base import *
+    #endclass

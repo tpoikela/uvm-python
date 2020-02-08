@@ -1,6 +1,9 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#// Copyright 2014-2015 NVIDIA Corporation
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,7 +22,7 @@
 #//----------------------------------------------------------------------
 #
 #//----------------------------------------------------------------------
-#// Title: Interface Masks
+#// Title -- NODOCS -- Interface Masks
 #//
 #// Each of the following macros is a mask that identifies which
 #// interfaces a particular port requires or export provides.  The
@@ -28,17 +31,17 @@
 #// interface type checking of port/export connections.
 #//----------------------------------------------------------------------
 #
-#// MACRO: `UVM_TLM_NB_FW_MASK
+#// MACRO -- NODOCS -- `UVM_TLM_NB_FW_MASK
 #//
 #// Define Non blocking Forward mask onehot assignment = 'b001
 #`define UVM_TLM_NB_FW_MASK  (1<<0)
 #
-#// MACRO: `UVM_TLM_NB_BW_MASK
+#// MACRO -- NODOCS -- `UVM_TLM_NB_BW_MASK
 #//
 #// Define Non blocking backward mask onehot assignment = 'b010
 #`define UVM_TLM_NB_BW_MASK  (1<<1)
 #
-#// MACRO: `UVM_TLM_B_MASK
+#// MACRO -- NODOCS -- `UVM_TLM_B_MASK
 #//
 #// Define blocking mask onehot assignment = 'b100
 #`define UVM_TLM_B_MASK      (1<<2)
