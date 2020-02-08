@@ -116,8 +116,9 @@ def UVM_NONBLOCKING_PUT_IMP(imp, T):
     def try_put(self, arg):
         return getattr(self, imp).try_put(arg)
     setattr(T, 'try_put', try_put)
+
     def can_put(self):
-        return getattr(self, imp).try_put(arg)
+        return getattr(self, imp).can_put()
     setattr(T, 'can_put', can_put)
 
 #`define UVM_BLOCKING_GET_IMP(imp, TYPE, arg) \
@@ -126,7 +127,7 @@ def UVM_NONBLOCKING_PUT_IMP(imp, T):
 #  endtask
 def UVM_BLOCKING_GET_IMP(imp, T):
     @cocotb.coroutine
-    def get (self, arg):
+    def get(self, arg):
         yield getattr(self, imp).get(arg)
     setattr(T, 'get', get)
 
@@ -141,6 +142,7 @@ def UVM_NONBLOCKING_GET_IMP(imp, T):
     def try_get(self, arg):
         return getattr(self, imp).try_get(arg)
     setattr(T, 'try_get', try_get)
+
     def can_get(self):
         return getattr(self, imp).can_get()
     setattr(T, 'can_get', can_get)
@@ -180,7 +182,7 @@ def UVM_BLOCKING_TRANSPORT_IMP(imp, T):
 #  function bit nb_transport (REQ req_arg, output RSP rsp_arg); \
 #    return imp.nb_transport(req_arg, rsp_arg); \
 def UVM_NONBLOCKING_TRANSPORT_IMP(imp, T):
-    def nb_transport (self, req_arg, rsp_arg):
+    def nb_transport(self, req_arg, rsp_arg):
         return getattr(self, imp).nb_transport(req_arg, rsp_arg)
     setattr(T, 'nb_transport', nb_transport)
 
@@ -321,6 +323,10 @@ def UVM_MS_IMP_COMMON(T, MASK, TYPE_NAME):
     from ..base.uvm_port_base import UVMPortBase
     def __init__(self, name, imp, req_imp=None, rsp_imp=None):
         UVMPortBase.__init__(self, name, imp, UVM_IMPLEMENTATION, 1, 1)
+        if req_imp is None:
+            req_imp = imp
+        if rsp_imp is None:
+            rsp_imp = imp
         self.m_req_imp = req_imp
         self.m_rsp_imp = rsp_imp
         self.m_if_mask = MASK
