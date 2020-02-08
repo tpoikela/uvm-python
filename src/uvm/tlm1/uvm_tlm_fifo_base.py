@@ -40,7 +40,7 @@ class UVMTLMEvent:
 #
 # CLASS: uvm_tlm_fifo_base #(T)
 #
-# This class is the base for <uvm_tlm_fifo#(T)>. It defines the TLM exports 
+# This class is the base for <uvm_tlm_fifo#(T)>. It defines the TLM exports
 # through which all transaction-based FIFO operations occur. It also defines
 # default implementations for each interface method provided by these exports.
 #
@@ -54,8 +54,8 @@ class UVMTLMEvent:
 #
 #------------------------------------------------------------------------------
 
+
 class UVMTLMFIFOBase(UVMComponent):
-    #  typedef uvm_tlm_fifo_base #(T) this_type;
 
     #  // Port: put_export
     #  //
@@ -89,7 +89,7 @@ class UVMTLMFIFOBase(UVMComponent):
     #  // <uvm_tlm_if_base #(T1,T2)> for more information on each of the above interface
     #  // methods.
     #
-    #  uvm_get_peek_imp #(T, this_type) get_peek_export;  
+    #  uvm_get_peek_imp #(T, this_type) get_peek_export;
     #
     #
     #  // Port: put_ap
@@ -131,27 +131,27 @@ class UVMTLMFIFOBase(UVMComponent):
     #  uvm_get_peek_imp #(T, this_type) blocking_get_export;
     #  uvm_get_peek_imp #(T, this_type) nonblocking_get_export;
     #  uvm_get_peek_imp #(T, this_type) get_export;
-    #  
+    #
     #  uvm_get_peek_imp #(T, this_type) blocking_peek_export;
     #  uvm_get_peek_imp #(T, this_type) nonblocking_peek_export;
     #  uvm_get_peek_imp #(T, this_type) peek_export;
-    #  
+    #
     #  uvm_get_peek_imp #(T, this_type) blocking_get_peek_export;
     #  uvm_get_peek_imp #(T, this_type) nonblocking_get_peek_export;
 
-    #  // Function: new
+    #  // Function: __init__
     #  //
-    #  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments. 
+    #  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
     #  // The ~parent~ should be ~null~ if the uvm_tlm_fifo is going to be used in a
     #  // statically elaborated construct (e.g., a module). The ~size~ indicates the
     #  // maximum size of the FIFO. A value of zero indicates no upper bound.
     #
-    def __init__(self, name, parent = None):
+    def __init__(self, name, parent=None):
         UVMComponent.__init__(self, name, parent)
         self.put_export = UVMPutImp("put_export", self)
         self.blocking_put_export     = self.put_export
         self.nonblocking_put_export  = self.put_export
-    
+
         get_peek_export = UVMGetPeekImp("get_peek_export", self)
         self.get_peek_export = get_peek_export
         self.blocking_get_peek_export    = get_peek_export
@@ -164,11 +164,10 @@ class UVMTLMFIFOBase(UVMComponent):
         self.peek_export                 = get_peek_export
         self.put_ap = UVMAnalysisPort("put_ap", self)
         self.get_ap = UVMAnalysisPort("get_ap", self)
-    # endfunction
 
     #  //turn off auto config
     def build_phase(self, phase):
-        self.build() # for backward compat, won't cause auto-config
+        self.build()  # for backward compat, won't cause auto-config
         return
 
     def flush(self):
@@ -192,7 +191,7 @@ class UVMTLMFIFOBase(UVMComponent):
 
     def try_put(self, t):
         uvm_report_error("try_put", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE)
-        return 0;
+        return 0
 
     def try_get(self, t):
         uvm_report_error("try_get", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE)
@@ -231,7 +230,7 @@ class UVMTLMFIFOBase(UVMComponent):
         return 0
 
     def is_full(self):
-        uvm_report_error("is_full", UVM_TLM_FIFO_FUNCTION_ERROR);
+        uvm_report_error("is_full", UVM_TLM_FIFO_FUNCTION_ERROR)
         return 0
 
     def used(self):
