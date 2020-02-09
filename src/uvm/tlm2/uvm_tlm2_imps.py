@@ -62,6 +62,7 @@ from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_NB_FW_MASK, UVM_TLM_B_MASK,\
     UVM_TLM_NB_BW_MASK
 from uvm.macros.uvm_message_defines import uvm_error
 from uvm.base.sv import cat
+import cocotb
 
 def UVM_TLM_NB_TRANSPORT_FW_IMP(imp, T):
     def nb_transport_fw(self, t, p, delay):
@@ -157,13 +158,14 @@ def UVM_TLM_NB_TRANSPORT_BW_IMP(imp, T):
 #    imp.b_transport(t, delay);                                        \
 #  endtask
 def UVM_TLM_B_TRANSPORT_IMP(imp, T):
+    @cocotb.coroutine
     def b_transport(self, t, delay):
         if delay == None:
             uvm_error("UVM/TLM/NULLDELAY", 
                   cat(self.get_full_name(), 
                    ".b_transport() called with 'null' delay"))
             return
-        getattr(self, imp).b_transport(t, delay)
+        yield getattr(self, imp).b_transport(t, delay)
     setattr(T, "b_transport", b_transport)
 
 #

@@ -49,7 +49,7 @@ from uvm.base.uvm_port_base import UVMPortBase
 from uvm.base.uvm_object_globals import UVM_IMPLEMENTATION, UVM_PORT, UVM_EXPORT
 from uvm.tlm1.uvm_tlm_imps import UVM_TLM_GET_TYPE_NAME, UVM_PORT_COMMON,\
     UVM_EXPORT_COMMON
-from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK
+from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK, UVM_TLM_NB_FW_MASK
 from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
     UVM_TLM_NB_TRANSPORT_BW_IMP, UVM_TLM_NB_TRANSPORT_FW_IMP
 from uvm.tlm2.uvm_tlm2_ports import UVMTlmNbTransportBwPort
@@ -59,7 +59,7 @@ class UVMTlmBTargetSocketBase(UVMPortBase):
 
     def __init__(self, name, parent):
         super().__init__(name, parent, UVM_IMPLEMENTATION, 1, 1)
-        self.m_if_mask = 0 # TODO: `UVM_TLM_B_MASK;
+        self.m_if_mask = UVM_TLM_B_MASK
 
 UVM_TLM_GET_TYPE_NAME(UVMTlmBTargetSocketBase)
     
@@ -86,8 +86,8 @@ class UVMTlmNbTargetSocketBase(UVMPortBase):
 
     def __init__(self, name, parent):
         super().__init__(name, parent, UVM_IMPLEMENTATION, 1, 1)
-        self.m_if_mask = 0; # TODO: `UVM_TLM_NB_FW_MASK;
-        self.bw_port = None # TODO: uvm_tlm_nb_transport_bw_port
+        self.m_if_mask = UVM_TLM_NB_FW_MASK
+#        self.bw_port = UVMTlmNbTransportBwPort(name, parent, port_type, min_size, max_size)None # TODO: uvm_tlm_nb_transport_bw_port
 
 UVM_TLM_GET_TYPE_NAME(UVMTlmNbTargetSocketBase)
 UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTlmNbTargetSocketBase)
@@ -102,7 +102,7 @@ class UVMTlmNbInitiatorSocketBase(UVMPortBase):
     
     def __init__(self, name, parent):
         super().__init__(name, parent, UVM_PORT, 1, 1)
-        m_if_mask = 0 # TODO: `UVM_TLM_NB_FW_MASK;
+        self.m_if_mask = UVM_TLM_NB_FW_MASK
 
 UVM_TLM_GET_TYPE_NAME(UVMTlmNbInitiatorSocketBase)
 UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbInitiatorSocketBase)
@@ -119,7 +119,7 @@ class UVMTlmNbPassthroughInitiatorSocketBase(UVMPortBase):
 
     def __init__(self, name, parent, min_size=1, max_size=1):
         super().__init__(name, parent, UVM_PORT, min_size, max_size)
-        self.m_if_mask = 0 # TODO: `UVM_TLM_NB_FW_MASK;
+        self.m_if_mask = UVM_TLM_NB_FW_MASK
         self.bw_export = UVMTlmNbTransportBwExport("bw_export", self.get_comp())
 
 UVM_TLM_GET_TYPE_NAME(UVMTlmNbPassthroughInitiatorSocketBase)
@@ -135,7 +135,7 @@ class UVMTlmNbPassthroughTargetSocketBase(UVMPortBase):
 
     def __init__(self, name, parent, min_size=1, max_size=1):
         super().__init__(name, parent, UVM_EXPORT, min_size, max_size)
-        self.m_if_mask = 0 # TODO: `UVM_TLM_NB_FW_MASK;
+        self.m_if_mask = UVM_TLM_NB_FW_MASK
         self.bw_port = UVMTlmNbTransportBwPort("bw_port", self.get_comp())
 
 UVM_TLM_GET_TYPE_NAME(UVMTlmNbPassthroughTargetSocketBase)
