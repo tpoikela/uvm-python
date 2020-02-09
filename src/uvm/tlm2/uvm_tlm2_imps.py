@@ -1,6 +1,7 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2010-2011 Mentor Graphics Corporation
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2020 Matthew Ballance
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -54,13 +55,21 @@
 #// for more details on the semantics and rules of the nonblocking
 #// transport interface.
 #   
+from uvm.tlm2.uvm_tlm2_ifs import uvm_tlm_sync_e
+from uvm.base.uvm_port_base import UVMPortBase
+from uvm.tlm1.uvm_tlm_imps import UVM_IMP_COMMON
+from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_NB_FW_MASK, UVM_TLM_B_MASK,\
+    UVM_TLM_NB_BW_MASK
+from uvm.macros.uvm_message_defines import uvm_error
+from uvm.base.sv import cat
+
 def UVM_TLM_NB_TRANSPORT_FW_IMP(imp, T):
     def nb_transport_fw(self, t, p, delay):
         if (delay == None):
             uvm_error("UVM/TLM/NULLDELAY", 
                 cat(self.get_full_name(), 
                    ".nb_transport_fw() called with 'null' delay"))
-            return UVM_TLM_COMPLETED
+            return uvm_tlm_sync_e.UVM_TLM_COMPLETED
 
         return getattr(self, imp).nb_transport_fw(t, p, delay)
     setattr(T, "nb_transport_fw", nb_transport_fw)
@@ -112,7 +121,7 @@ def UVM_TLM_NB_TRANSPORT_BW_IMP(imp, T):
             uvm_error("UVM/TLM/NULLDELAY", 
                 cat(self.get_full_name(), 
                    ".nb_transport_bw() called with 'null' delay"))
-            return UVM_TLM_COMPLETED
+            return uvm_tlm_sync_e.UVM_TLM_COMPLETED
         return getattr(self, imp).nb_transport_bw(t, p, delay)
     
     setattr(T, "nb_transport_bw", nb_transport_bw)
@@ -147,8 +156,6 @@ def UVM_TLM_NB_TRANSPORT_BW_IMP(imp, T):
 #    end \
 #    imp.b_transport(t, delay);                                        \
 #  endtask
-from uvm.macros.uvm_message_defines import uvm_error
-from uvm.base.sv import cat
 def UVM_TLM_B_TRANSPORT_IMP(imp, T):
     def b_transport(self, t, delay):
         if delay == None:
@@ -172,14 +179,13 @@ def UVM_TLM_B_TRANSPORT_IMP(imp, T):
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
-#
-#class uvm_tlm_b_transport_imp #(type T=uvm_tlm_generic_payload,
-#                            type IMP=int)
-#  extends uvm_port_base #(uvm_tlm_if #(T));
-#  `UVM_IMP_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_imp", IMP)
-#  `UVM_TLM_B_TRANSPORT_IMP(m_imp, T, t, delay)
-#endclass
-#
+
+class UVMTlmBTransportImp(UVMPortBase):
+    pass
+
+UVM_IMP_COMMON(UVMTlmBTransportImp, UVM_TLM_B_MASK, "uvm_tlm_b_transport_imp")
+UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTlmBTransportImp)
+
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_nb_transport_fw_imp
 #//
@@ -187,15 +193,13 @@ def UVM_TLM_B_TRANSPORT_IMP(imp, T):
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
-#
-#class uvm_tlm_nb_transport_fw_imp #(type T=uvm_tlm_generic_payload,
-#                                type P=uvm_tlm_phase_e,
-#                                type IMP=int)
-#  extends uvm_port_base #(uvm_tlm_if #(T,P));
-#  `UVM_IMP_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_imp", IMP)
-#  `UVM_TLM_NB_TRANSPORT_FW_IMP(m_imp, T, P, t, p, delay)
-#endclass
-#
+
+class UVMTlmNbTransportFwImp(UVMPortBase):
+    pass
+
+UVM_IMP_COMMON(UVMTlmNbTransportFwImp, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_imp")
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTlmNbTransportFwImp)
+
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_nb_transport_bw_imp
 #//
@@ -203,11 +207,10 @@ def UVM_TLM_B_TRANSPORT_IMP(imp, T):
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
-#
-#class uvm_tlm_nb_transport_bw_imp #(type T=uvm_tlm_generic_payload,
-#                                type P=uvm_tlm_phase_e,
-#                                type IMP=int)
-#  extends uvm_port_base #(uvm_tlm_if #(T,P));
-#  `UVM_IMP_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp", IMP)
-#  `UVM_TLM_NB_TRANSPORT_BW_IMP(m_imp, T, P, t, p, delay)
-#endclass
+
+class UVMTlmNbTransportBwImp(UVMPortBase):
+    pass
+
+UVM_IMP_COMMON(UVMTlmNbTransportBwImp, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp")
+UVM_TLM_NB_TRANSPORT_BW_IMP('m_imp', UVMTlmNbTransportBwImp)
+

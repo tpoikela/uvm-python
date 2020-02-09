@@ -1,6 +1,7 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2010 Mentor Graphics Corporation
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2020 Matthew Ballance
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -59,7 +60,9 @@ from uvm.tlm2.uvm_tlm2_sockets_base import UVMTlmBPassthroughInitiatorSocketBase
     UVMTlmNbTargetSocketBase
 from uvm.base.sv import cat
 from uvm.macros.uvm_message_defines import uvm_error
-from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_NB_TRANSPORT_FW_IMP
+from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_NB_TRANSPORT_FW_IMP,\
+    UVM_TLM_B_TRANSPORT_IMP, UVMTlmNbTransportBwImp
+from uvm.tlm2.uvm_tlm2_ports import UVMTlmNbTransportBwPort
 
 class UVMTlmBInitiatorSocket(UVMTlmBInitiatorSocketBase):
 
@@ -145,7 +148,7 @@ class UVMTlmNbInitiatorSocket(UVMTlmNbInitiatorSocketBase):
     #// If not specified, it is assume to be the same as ~parent~.
     def __init__(self, name, parent, imp=None):
         super().__init__(name, parent)
-        self.
+        
         if (imp is None):
             imp = parent
         else:
@@ -162,25 +165,12 @@ class UVMTlmNbInitiatorSocket(UVMTlmNbInitiatorSocketBase):
         
         super().connect(provider)
 
-        if 
-        if($cast(initiator_pt_socket, provider)) begin
-      initiator_pt_socket.bw_export.connect(bw_imp);
-      return;
-    end
-    if($cast(target_pt_socket, provider)) begin
-      target_pt_socket.bw_port.connect(bw_imp);
-      return;
-    end
-
-    if($cast(target_socket, provider)) begin
-      target_socket.bw_port.connect(bw_imp);
-      return;
-    end
         if not isinstance(provider, valid_providers):
-            c = get_comp();
             # TODO:
-#             uvm_error_context(get_type_name(),
-#                 "type mismatch in connect -- connection cannot be completed", c)
+#             uvm_error_context(self.get_type_name(),
+#                 "type mismatch in connect -- connection cannot be completed", 
+#                self.get_comp())
+            pass
 
 
 #
@@ -198,8 +188,6 @@ class UVMTlmNbInitiatorSocket(UVMTlmNbInitiatorSocketBase):
 
 class UVMTlmNbTargetSocket(UVMTlmNbTargetSocketBase):
 
-  local IMP m_imp;
-
     #// Function: new
     #// Construct a new instance of this socket
     #// ~imp~ is a reference to the class implementing the
@@ -210,7 +198,7 @@ class UVMTlmNbTargetSocket(UVMTlmNbTargetSocketBase):
         self.m_imp = parent if imp is None else imp
         self.bw_port = UVMTlmNbTransportBwPort("bw_port", self.get_comp())
         
-        if (m_imp is None):
+        if (self.m_imp is None):
             uvm_error("UVM/TLM2/NOIMP", cat("nb_target socket ", name,
                                      " has no implementation"))
 
@@ -248,9 +236,11 @@ class UVMTlmBPassthroughInitiatorSocket(UVMTlmBPassthroughInitiatorSocketBase):
         super.connect(provider);
 
         if not isinstance(provider, valid_providers):
+            # TODO:
 #            uvm_error_context(get_type_name(), 
 #                "type mismatch in connect -- connection cannot be completed", 
 #                self.get_comp())
+            pass
 
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_b_passthrough_target_socket
@@ -276,6 +266,7 @@ class UVMTlmBPassthroughTargetSocket(UVMTlmBPassthroughTargetSocketBase):
 #            uvm_error_context(self.get_type_name(),
 #               "type mismatch in connect -- connection cannot be completed", 
 #               self.get_comp())
+            pass
 
 
 
@@ -324,8 +315,6 @@ class UVMTlmNbPassthroughTargetSocket(UVMTlmNbPassthroughTargetSocketBase):
     def connect(self, provider):
         valid_providers=(UVMTlmNbPassthroughTargetSocketBase,
             UVMTlmNbTargetSocketBase)
-
-    uvm_component c;
 
         super().connect(provider)
         

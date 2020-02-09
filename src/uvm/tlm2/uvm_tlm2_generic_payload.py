@@ -1,6 +1,7 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2010 Mentor Graphics Corporation
 #//   Copyright 2010-2011 Synopsys, Inc.
+#//   Copyright 2020 Matthew Ballance
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -25,6 +26,9 @@
 #// bus read/write access. It is used as the default transaction in
 #// TLM2 blocking and nonblocking transport interfaces.
 #//----------------------------------------------------------------------
+from enum import Enum, auto, IntEnum
+from uvm.seq.uvm_sequence_item import UVMSequenceItem
+from uvm.base.uvm_object import UVMObject
 #
 #
 #//---------------
@@ -43,15 +47,13 @@
 #// UVM_TLM_WRITE_COMMAND     - Bus write operation
 #//
 #// UVM_TLM_IGNORE_COMMAND    - No bus operation.
-#
-#typedef enum
-#{
-#    UVM_TLM_READ_COMMAND,
-#    UVM_TLM_WRITE_COMMAND,
-#    UVM_TLM_IGNORE_COMMAND
-#} uvm_tlm_command_e;
-#
-#
+
+class uvm_tlm_command_e(Enum):
+    UVM_TLM_READ_COMMAND = auto
+    UVM_TLM_WRITE_COMMAND = auto
+    UVM_TLM_IGNORE_COMMAND = auto
+
+
 #// Enum: uvm_tlm_response_status_e
 #//
 #// Response status attribute type definition
@@ -71,20 +73,16 @@
 #// UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE - Invalid byte enabling specified
 #//
 #
-#typedef enum
-#{
-#    UVM_TLM_OK_RESPONSE = 1,
-#    UVM_TLM_INCOMPLETE_RESPONSE = 0,
-#    UVM_TLM_GENERIC_ERROR_RESPONSE = -1,
-#    UVM_TLM_ADDRESS_ERROR_RESPONSE = -2,
-#    UVM_TLM_COMMAND_ERROR_RESPONSE = -3,
-#    UVM_TLM_BURST_ERROR_RESPONSE = -4,
-#    UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
-#} uvm_tlm_response_status_e;
-#
-#
-#typedef class uvm_tlm_extension_base;
-#
+class uvm_tlm_response_status_e(IntEnum):
+    UVM_TLM_OK_RESPONSE = 1
+    UVM_TLM_INCOMPLETE_RESPONSE = 0
+    UVM_TLM_GENERIC_ERROR_RESPONSE = -1
+    UVM_TLM_ADDRESS_ERROR_RESPONSE = -2
+    UVM_TLM_COMMAND_ERROR_RESPONSE = -3
+    UVM_TLM_BURST_ERROR_RESPONSE = -4
+    UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
+
+
 #
 #//-----------------------
 #// Group: Generic Payload
@@ -100,8 +98,8 @@
 #// generated in sequences and transported to drivers through sequencers.
 #//----------------------------------------------------------------------
 #
-#class uvm_tlm_generic_payload extends uvm_sequence_item;
-#   
+class UVMTlmGenericPayload(UVMSequenceItem):
+   
 #   // Variable: m_address
 #   //
 #   // Address for the bus operation.
@@ -368,19 +366,17 @@
 #  //
 #  // Create a new instance of the generic payload.  Initialize all the
 #  // members to their default values.
-#
-#  function new(string name="");
-#    super.new(name);
-#    m_address = 0;
-#    m_command = UVM_TLM_IGNORE_COMMAND;
-#    m_length = 0;
-#    m_response_status = UVM_TLM_INCOMPLETE_RESPONSE;
-#    m_dmi = 0;
-#    m_byte_enable_length = 0;
-#    m_streaming_width = 0;
-#  endfunction
-#
-#
+
+    def __init__(self, name=""):
+        super().__init__(name)
+        self.m_address = 0
+        self.m_command = uvm_tlm_command_e.UVM_TLM_IGNORE_COMMAND
+        self.m_length = 0
+        self.m_response_status = uvm_tlm_response_status_e.UVM_TLM_INCOMPLETE_RESPONSE
+        self.m_dmi = 0
+        self._byte_enable_length = 0
+        self.m_streaming_width = 0
+
 #  // Function- do_print
 #  //
 #  function void do_print(uvm_printer printer);
@@ -584,27 +580,19 @@
 #
 #  // Function- convert2string
 #  //
-#  function string convert2string();
-#
-#    string msg;
-#    string s;
-#
-#    $sformat(msg, "%s %s [0x%16x] =", super.convert2string(),
-#             m_command.name(), m_address);
-#
-#    for(int unsigned i = 0; i < m_length; i++) begin
-#      if (!m_byte_enable_length || (m_byte_enable[i % m_byte_enable_length] == 'hFF))
-#        $sformat(s, " %02x", m_data[i]);
-#      else
-#        $sformat(s, " --");
-#      msg = { msg , s };
-#    end
-#
-#    msg = { msg, " (status=", get_response_string(), ")" };
-#
-#    return msg;
-#
-#  endfunction
+    def convert2string(self):
+        msg = "%s %s [0x%16x] = " % (super().convert2string(), str(self.m_command), self.m_address)
+
+        for i in range(self.m_length):
+            if (self.m_byte_enable_length == 0 or (self.m_byte_enable[i % self.m_byte_enable_length] == 0xFF)):
+                s = " %02x" % (self.m_data[i])
+            else:
+                s = " --"
+            msg += s
+
+        msg += " (status=" + self.get_response_string() + ")"
+        
+        return msg;
 #
 #
 #  //--------------------------------------------------------------------
@@ -944,14 +932,13 @@
 #// This class is never used directly by users.
 #// The <uvm_tlm_extension> class is used instead.
 #//
-#virtual class uvm_tlm_extension_base extends uvm_object;
-#
+class UVMTlmExtensionBase(UVMObject):
+
 #  // Function: new
 #  //
-#  function new(string name = "");
-#    super.new(name);
-#  endfunction
-#
+    def __init__(self, name = ""):
+        super().__init__(name)
+
 #  // Function: get_type_handle
 #  //
 #  // An interface to polymorphically retrieve a handle that uniquely
@@ -966,16 +953,14 @@
 #
 #  pure virtual function string get_type_handle_name();
 #
-#  virtual function void do_copy(uvm_object rhs);
-#    super.do_copy(rhs);
-#  endfunction
-#
+    def do_copy(self, rhs):
+        super().do_copy(rhs)
+
 #  // Function: create
 #  //
-#   
-#  virtual function uvm_object create (string name="");
-#    return null;
-#  endfunction
+
+    def create(self, name=""):
+        return None
 #
 #endclass
 #
@@ -1009,8 +994,8 @@
 #//| endclass
 #//|
 #
-#class uvm_tlm_extension #(type T=int) extends uvm_tlm_extension_base;
-#
+class UVMTlmExtension(UVMTlmExtensionBase):
+
 #   typedef uvm_tlm_extension#(T) this_type;
 #
 #   local static this_type m_my_tlm_ext_type = ID();
@@ -1019,10 +1004,9 @@
 #   //
 #   // creates a new extension object.
 #
-#   function new(string name="");
-#     super.new(name);
-#   endfunction
-#
+    def __init__(self, name=""):
+        super().__init__(name)
+
 #   // Function: ID()
 #   //
 #   // Return the unique ID of this TLM extension type.

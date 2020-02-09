@@ -1,6 +1,7 @@
 #//----------------------------------------------------------------------
 #//   Copyright 2010 Mentor Graphics Corporation
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2020 Matthew Ballance
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -51,6 +52,8 @@ from uvm.tlm1.uvm_tlm_imps import UVM_TLM_GET_TYPE_NAME, UVM_PORT_COMMON,\
 from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK
 from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
     UVM_TLM_NB_TRANSPORT_BW_IMP, UVM_TLM_NB_TRANSPORT_FW_IMP
+from uvm.tlm2.uvm_tlm2_ports import UVMTlmNbTransportBwPort
+from uvm.tlm2.uvm_tlm2_exports import UVMTlmNbTransportBwExport
 
 class UVMTlmBTargetSocketBase(UVMPortBase):
 

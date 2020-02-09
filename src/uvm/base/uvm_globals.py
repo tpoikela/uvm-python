@@ -27,17 +27,18 @@
 
 import cocotb
 from cocotb.triggers import Timer
-from cocotb.utils import get_sim_time, simulator
+from cocotb.utils import get_sim_time
 from .uvm_object_globals import *
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
+from cocotb import scheduler
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
 
 
 def uvm_sim_time(units='NS'):
-    if simulator is not None:
+    if cocotb.simulator is not None:
         return get_sim_time(units=units)
     return 0
 
