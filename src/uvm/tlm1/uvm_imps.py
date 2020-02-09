@@ -250,8 +250,8 @@ UVM_GET_PEEK_IMP('m_imp', UVMGetPeekImp)
 #// port, as in the <uvm_tlm_req_rsp_channel #(REQ,RSP)> channel.
 #//
 #//------------------------------------------------------------------------------
-#
-#
+
+
 #// Function: new
 #//
 #// Creates a new bidirectional imp port with the given ~name~ and ~parent~.
