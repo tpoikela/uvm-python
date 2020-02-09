@@ -22,6 +22,10 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+import cocotb
+from uvm.base.uvm_port_base import UVMPortBase
+from ..macros.uvm_message_defines import (uvm_error)
+
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- TLM2 imps (interface implementations)
 #//
@@ -30,11 +34,11 @@
 #//
 #// TLM imps bind a TLM interface with the object that contains the
 #// interface implementation.
-#// In addition to the transaction type and the phase type, the imps 
+#// In addition to the transaction type and the phase type, the imps
 #// are parameterized with the type of the object that will provide the
-#// implementation. Most often this will be the type of the component 
-#// where the imp resides. The constructor of the imp takes as an argument 
-#// an object of type IMP and installs it as the implementation object. 
+#// implementation. Most often this will be the type of the component
+#// where the imp resides. The constructor of the imp takes as an argument
+#// an object of type IMP and installs it as the implementation object.
 #// Most often the imp constructor argument is "this".
 #//----------------------------------------------------------------------
 
@@ -47,17 +51,17 @@
 #// The macro wraps the forward path call function nb_transport_fw()
 #//
 #// The first call to this method for a transaction marks the initial timing point.
-#// Every call to this method may mark a timing point in the execution of the 
+#// Every call to this method may mark a timing point in the execution of the
 #// transaction. The timing annotation argument allows the timing points
 #// to be offset from the simulation times at which the forward path is used.
 #// The final timing point of a transaction may be marked by a call
-#// to nb_transport_bw() within <`UVM_TLM_NB_TRANSPORT_BW_IMP> or a return from this 
+#// to nb_transport_bw() within <`UVM_TLM_NB_TRANSPORT_BW_IMP> or a return from this
 #// or subsequent call to nb_transport_fw().
 #//
 #// See <TLM2 Interfaces, Ports, Exports and Transport Interfaces Subset>
 #// for more details on the semantics and rules of the nonblocking
 #// transport interface.
-#   
+#
 #`define UVM_TLM_NB_TRANSPORT_FW_IMP(imp, T, P, t, p, delay)              \
 #  def uvm_tlm_sync_e nb_transport_fw(self,T t, ref P p, input uvm_tlm_time delay):;  \
 #    if (delay is None): \
@@ -82,7 +86,7 @@
 #// The timing annotation argument allows the timing point
 #// to be offset from the simulation times at which the backward path is used.
 #// The final timing point of a transaction may be marked by a call
-#// to nb_transport_fw() within <`UVM_TLM_NB_TRANSPORT_FW_IMP> or a return from 
+#// to nb_transport_fw() within <`UVM_TLM_NB_TRANSPORT_FW_IMP> or a return from
 #// this or subsequent call to nb_transport_bw().
 #//
 #// See <TLM2 Interfaces, Ports, Exports and Transport Interfaces Subset>
@@ -120,8 +124,8 @@
 #    end \
 #    return imp.nb_transport_bw(t, p, delay); \
 #  endfunction
-#
-#
+
+
 
 #// Macro -- NODOCS -- `UVM_TLM_B_TRANSPORT_IMP
 #//
@@ -134,7 +138,7 @@
 #// The callee may modify or update the transaction object, subject
 #// to any constraints imposed by the transaction class. The
 #// initiator may re-use a transaction object from one call to
-#// the next and across calls to b_transport(). 
+#// the next and across calls to b_transport().
 #//
 #// The call to b_transport shall mark the first timing point of the
 #// transaction. The return from b_transport() shall mark the final
@@ -161,7 +165,7 @@ def UVM_TLM_B_TRANSPORT_IMP(T, imp):
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_transport_imp
 #//
-#// Used like exports, except an additional class parameter specifies 
+#// Used like exports, except an additional class parameter specifies
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
@@ -177,7 +181,7 @@ def UVM_TLM_B_TRANSPORT_IMP(T, imp):
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_transport_fw_imp
 #//
-#// Used like exports, except an additional class parameter specifies 
+#// Used like exports, except an additional class parameter specifies
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
@@ -194,7 +198,7 @@ def UVM_TLM_B_TRANSPORT_IMP(T, imp):
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_transport_bw_imp
 #//
-#// Used like exports, except an additional class parameter specifies 
+#// Used like exports, except an additional class parameter specifies
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
@@ -206,6 +210,3 @@ def UVM_TLM_B_TRANSPORT_IMP(T, imp):
     #  extends uvm_port_base #(uvm_tlm_if #(T,P))
     #  `UVM_IMP_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp", IMP)
     #  `UVM_TLM_NB_TRANSPORT_BW_IMP(m_imp, T, P, t, p, delay)
-import cocotb
-from uvm.base.uvm_port_base import *
-    #endclass
