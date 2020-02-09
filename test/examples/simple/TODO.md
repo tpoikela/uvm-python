@@ -10,12 +10,22 @@ DONE
 Add only finished examples here. All tests should be passing and no fatal errors
 should occur (unless the purpose of example is to cause uvm_fatal).
 
+### Simple examples ###
+
 [DONE] trivial/
 [DONE] basic_examples/event_pool/
 [DONE] basic_examples/module/
 [DONE] basic_examples/pkg/
 [DONE] hello_world/
 [DONE] sequence/basic_read_write_sequence/
+[DONE] callbacks/
+[DONE] factory/
+[DONE] interfaces/
+[DONE] objections/
+[DONE] phases/basic
+[DONE] phases/timeout
+
+### Registers ###
 
 [DONE] registers/models/user-defined
 [DONE] registers/primer/
@@ -28,7 +38,6 @@ should occur (unless the purpose of example is to cause uvm_fatal).
 [DONE] tlm1/hierarchy
 [DONE] tlm1/producer_consumer
 
-
 WIP
 ------------------
 
@@ -39,31 +48,14 @@ being converted into working Python code.
 TODO (NOT STARTED)
 ------------------
 
-callbacks/Makefile.icarus
-callbacks/top.sv
+### SIMPLE EXAMPLES ###
 
-factory/env_pkg.sv
-factory/gen_pkg.sv
-factory/Makefile.icarus
-factory/packet_pkg.sv
-factory/test.sv
-
-interfaces/interface.sv
-interfaces/Makefile.icarus
-
-objections/Makefile.icarus
-objections/simple.sv
-
-phases/basic/Makefile.icarus
-phases/basic/test.sv
 
 phases/run_test/Makefile.icarus
 phases/run_test/test.sv
 
-phases/timeout/Makefile.icarus
-phases/timeout/tb_env.svh
-phases/timeout/tb_timer.svh
-phases/timeout/test.sv
+
+### REGISTERS ###
 
 registers/common/any_agent.sv
 registers/common/any_config.sv
@@ -71,6 +63,8 @@ registers/common/apb/apb_agent.sv
 registers/common/apb/apb_master.sv
 registers/common/apb/apb_monitor.sv
 registers/common/reg_agent.sv
+
+These are not needed by any examples:
 registers/common/wishbone/agent.sv
 registers/common/wishbone/config.sv
 registers/common/wishbone/cycle.sv
@@ -147,6 +141,8 @@ registers/sequence_api/blk_top.sv
 registers/sequence_api/Makefile.icarus
 registers/sequence_api/README.txt
 registers/sequence_api/reg_B.sv
+
+### TLM2 ###
 
 tlm2/blocking_simple/apb_rw.sv
 tlm2/blocking_simple/initiator.sv

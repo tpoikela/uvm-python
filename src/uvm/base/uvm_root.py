@@ -35,6 +35,7 @@ from .uvm_objection import *
 from .uvm_report_server import UVMReportServer
 from .uvm_domain import end_of_elaboration_ph
 from .uvm_common_phases import UVMEndOfElaborationPhase
+from ..macros import *
 from ..uvm_macros import *
 
 MULTI_TESTS = ("Multiple ({}) +UVM_TESTNAME arguments provided on the command"
@@ -150,11 +151,23 @@ class UVMRoot(UVMComponent):
         self.top_levels = []
     #endfunction
 
+
+    m_called_get_common_domain = False
+    #   // internal function not to be used
+    #   // get the initialized singleton instance of uvm_root
     @classmethod
     def m_uvm_get_root(cls):
+        from .uvm_domain import UVMDomain
         if UVMRoot.m_inst is None:
             UVMRoot.m_inst = UVMRoot()
+        # tpoikela: Added flag to avoid infinite recursion
+        if cls.m_called_get_common_domain is False:
+            cls.m_called_get_common_domain = True
+            UVMDomain.get_common_domain()
+            UVMRoot.m_inst.m_domain = UVMDomain.get_uvm_domain()
+            cls.m_called_get_common_domain = False
         return UVMRoot.m_inst
+
 
     #@cocotb.coroutine
     #def run_phase(self):
@@ -798,16 +811,6 @@ class UVMRoot(UVMComponent):
             if srvr.get_severity_count(UVM_ERROR) > 0:
                 self.uvm_report_fatal("BUILDERR", "stopping due to build errors", UVM_NONE)
 
-    #   // internal function not to be used
-    #   // get the initialized singleton instance of uvm_root
-    #   static function uvm_root m_uvm_get_root()
-    #      if (m_inst == None):
-    #	 m_inst = new()
-    #	 void'(uvm_domain::get_common_domain())
-    #	 m_inst.m_domain = uvm_domain::get_uvm_domain()
-    #      end
-    #      return m_inst
-    #   endfunction
     #
     #
     # function void end_of_elaboration_phase(uvm_phase phase);

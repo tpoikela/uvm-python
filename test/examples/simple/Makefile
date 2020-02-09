@@ -1,5 +1,7 @@
 
-test: test-trivial test-basic_examples test-sequence test-hello_world test-registers test-tlm1 test-configuration test-callbacks
+test: test-trivial test-basic_examples test-sequence test-interfaces test-hello_world\
+    test-registers test-tlm1 test-configuration test-callbacks test-factory\
+    test-objections test-phases
 
 test-trivial:
 	make -C trivial/
@@ -9,20 +11,34 @@ test-basic_examples:
 	make -C basic_examples/event_pool/
 	make -C basic_examples/module/
 
+test-interfaces:
+	make -C interfaces/
+
 test-sequence:
 	make -C sequence/basic_read_write_sequence/
 
 test-hello_world:
 	make -C hello_world/
 
+test-objections:
+	make -C objections/
+
+test-phases:
+	make -C phases/basic/
+	make -C phases/timeout/
+
 test-tlm1:
 	make -C tlm1/producer_consumer/
 	make -C tlm1/hierarchy/
 	make -C tlm1/fifo/
 	make -C tlm1/bidir/
+	make -C tlm1/master_slave/
 
 test-callbacks:
 	make -C callbacks/
+
+test-factory:
+	make -C factory/
 
 test-configuration:
 	make -C configuration/manual/

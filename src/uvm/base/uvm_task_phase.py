@@ -119,6 +119,8 @@ class UVMTaskPhase(UVMPhase):
                   )), UVM_DEBUG)
 
         from .uvm_domain import UVMDomain
+        uvm_debug(self, 'm_traverse', "ph_dom: {}, comm_dom: {}".format(
+            phase_domain.get_name(), UVMDomain.get_common_domain().get_name()))
         if (phase_domain == UVMDomain.get_common_domain() or phase_domain == comp_domain):
             uvm_debug(self, 'm_traverse', "Comp: " + comp.get_name() + " - " + self.get_name() +
                 "| phase match found. Proceeding now...state is " + ph2str(state))

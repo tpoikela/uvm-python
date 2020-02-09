@@ -21,8 +21,8 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
-from .uvm_globals import uvm_info
-from .uvm_object_globals import UVM_NONE, UVM_MEDIUM
+from ..macros.uvm_message_defines import uvm_info
+from .uvm_object_globals import UVM_NONE
 
 #----------------------------------------------------------------------
 # class uvm_spell_chkr
@@ -106,17 +106,16 @@ class UVMSpellChkr:
 
         # if (min == max) then the string table is empty
         if min_val == UVMSpellChkr.max_val:
-              uvm_info("UVM/CONFIGDB/SPELLCHK","".format(
-                  "{1} not located, no alternatives to suggest", s),UVM_NONE)
+            uvm_info("UVM/CONFIGDB/SPELLCHK","".format(
+                "{1} not located, no alternatives to suggest", s),UVM_NONE)
         else:
-        # dump all the alternatives with the minimum distance
+            # dump all the alternatives with the minimum distance
             q = []
             for i in range(0, len(min_key)):
                 q.append(min_key[i])
                 q.append("|")
                 if len(q) > 0:
                     q.pop()
-
                     uvm_info("UVM/CONFIGDB/SPELLCHK",
                             "".format("{1} not located, did you mean {2}", s,
                                 "".join(q)),UVM_NONE)
@@ -184,22 +183,10 @@ class UVMSpellChkr:
     #--------------------------------------------------------------------
     @classmethod
     def minimum(cls, a, b, c):
-        min_val = a
-        if b < min_val:
-            min_val = b
-        if c < min_val:
-            min_val = c
-        return min_val
-
-
-import unittest
-
-class TestUVMSpellChkr(unittest.TestCase):
-
-    def test_check_exact_match(self):
-        strtab = {'xxx': 1, 'yyy': 2}
-        self.assertEqual(UVMSpellChkr.check(strtab, 'xxx'), True)
-        self.assertEqual(UVMSpellChkr.check(strtab, 'vvv'), True)
-
-if __name__ == '__main__':
-    unittest.main()
+        return min(a, b, c)
+        #min_val = a
+        #if b < min_val:
+        #    min_val = b
+        #if c < min_val:
+        #    min_val = c
+        #return min_val

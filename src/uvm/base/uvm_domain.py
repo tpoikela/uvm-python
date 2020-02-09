@@ -25,6 +25,15 @@ from .uvm_phase import UVMPhase
 from .uvm_object_globals import *
 from .uvm_globals import *
 from .uvm_debug import *
+from ..macros import uvm_error
+
+
+from .uvm_runtime_phases import (UVMMainPhase, UVMPreResetPhase,
+    UVMResetPhase, UVMPostResetPhase, UVMPreConfigurePhase, UVMConfigurePhase,
+    UVMPostConfigurePhase,
+    UVMPreMainPhase, UVMPostMainPhase, UVMPreShutdownPhase, UVMShutdownPhase,
+    UVMPostShutdownPhase)
+
 
 # UVMPhases
 build_ph = None
@@ -58,7 +67,7 @@ class UVMDomain(UVMPhase):
     #
     # Provides a list of all domains in the provided ~domains~ argument.
     #
-    def get_domains(domains = None):
+    def get_domains(domains=None):
         if domains is not None:
             raise Exception("get_domains() you must capture the retval")
         return UVMDomain.m_domains
@@ -68,10 +77,10 @@ class UVMDomain(UVMPhase):
     # Get the "UVM" schedule, which consists of the run-time phases that
     # all components execute when participating in the "UVM" domain.
     #
-    #static function uvm_phase get_uvm_schedule();
-    #  void'(get_uvm_domain());
-    #  return UVMDomain.m_uvm_schedule;
-    #endfunction
+    @classmethod
+    def get_uvm_schedule(cls):
+        cls.get_uvm_domain()
+        return UVMDomain.m_uvm_schedule
 
     # Function: get_common_domain
     #
@@ -94,7 +103,7 @@ class UVMDomain(UVMPhase):
         domain.add(UVMBuildPhase.get())
         domain.add(UVMConnectPhase.get())
         domain.add(UVMEndOfElaborationPhase.get())
-        domain.add(UVMStartofSimulationPhase.get());
+        domain.add(UVMStartofSimulationPhase.get())
         domain.add(UVMRunPhase.get())
         domain.add(UVMExtractPhase.get())
         domain.add(UVMCheckPhase.get())
@@ -119,12 +128,14 @@ class UVMDomain(UVMPhase):
         extract_ph             = domain.find(UVMExtractPhase.get())
         check_phase_exists('extract', extract_ph)
         check_ph               = domain.find(UVMCheckPhase.get())
+        check_phase_exists('check', check_ph)
         report_ph              = domain.find(UVMReportPhase.get())
-        UVMDomain.m_common_domain = domain;
+        check_phase_exists('report', report_ph)
+        UVMDomain.m_common_domain = domain
 
         domain = UVMDomain.get_uvm_domain()
-        #  UVMDomain.m_common_domain.add(domain,
-        #                   .with_phase(UVMDomain.m_common_domain.find(uvm_run_phase::get())));
+        UVMDomain.m_common_domain.add(domain,
+                with_phase=UVMDomain.m_common_domain.find(UVMRunPhase.get()))
         #
         #
         return UVMDomain.m_common_domain
@@ -135,19 +146,18 @@ class UVMDomain(UVMPhase):
     #
     @classmethod
     def add_uvm_phases(cls, schedule):
-        pass
-        #  schedule.add(uvm_pre_reset_phase::get());
-        #  schedule.add(uvm_reset_phase::get());
-        #  schedule.add(uvm_post_reset_phase::get());
-        #  schedule.add(uvm_pre_configure_phase::get());
-        #  schedule.add(uvm_configure_phase::get());
-        #  schedule.add(uvm_post_configure_phase::get());
-        #  schedule.add(uvm_pre_main_phase::get());
-        #  schedule.add(uvm_main_phase::get());
-        #  schedule.add(uvm_post_main_phase::get());
-        #  schedule.add(uvm_pre_shutdown_phase::get());
-        #  schedule.add(uvm_shutdown_phase::get());
-        #  schedule.add(uvm_post_shutdown_phase::get());
+        schedule.add(UVMPreResetPhase.get())
+        schedule.add(UVMResetPhase.get())
+        schedule.add(UVMPostResetPhase.get())
+        schedule.add(UVMPreConfigurePhase.get())
+        schedule.add(UVMConfigurePhase.get())
+        schedule.add(UVMPostConfigurePhase.get())
+        schedule.add(UVMPreMainPhase.get())
+        schedule.add(UVMMainPhase.get())
+        schedule.add(UVMPostMainPhase.get())
+        schedule.add(UVMPreShutdownPhase.get())
+        schedule.add(UVMShutdownPhase.get())
+        schedule.add(UVMPostShutdownPhase.get())
 
     # Function: get_uvm_domain
     #
@@ -166,9 +176,9 @@ class UVMDomain(UVMPhase):
     #
     # Create a new instance of a phase domain.
     def __init__(self, name):
-        UVMPhase.__init__(self, name, UVM_PHASE_DOMAIN)
+        super().__init__(name, UVM_PHASE_DOMAIN)
         if name in UVMDomain.m_domains:
-            uvm_report_error("UNIQDOMNAM",
+            uvm_error("UNIQDOMNAM",
                     "Domain created with non-unique name '{}'".format(name))
         UVMDomain.m_domains[name] = self
 
@@ -195,33 +205,12 @@ class UVMDomain(UVMPhase):
         #  uvm_domain domains[string];
         domains = UVMDomain.get_domains() # string -> uvm_domain
         for idx in domains:
-            domains[idx].jump(phase);
+            domains[idx].jump(phase)
 
     #endclass UVMDomain
 
+# tpoikela: Added for additional verification
 def check_phase_exists(name, phase):
     if phase is None:
         msg = 'Phase ' + name + ' is None! in UVMDomain.get_common_domain()'
         raise Exception(msg)
-
-import unittest
-
-class TestUVMDomain(unittest.TestCase):
-
-    def test_common(self):
-        common = UVMDomain.get_common_domain()
-        self.assertNotEqual(common, None)
-        bld = common.find(UVMBuildPhase.get())
-        self.assertNotEqual(bld, None)
-
-    def test_add_and_find(self):
-        my_ph = UVMPhase('my_ph')
-        dm = UVMDomain('my domain')
-        dm.add(my_ph)
-        my_ph2 = dm.find(my_ph)
-        self.assertNotEqual(my_ph2, None)
-        self.assertEqual(my_ph2.get_name(), 'my_ph')
-
-
-if __name__ == '__main__':
-    unittest.main()

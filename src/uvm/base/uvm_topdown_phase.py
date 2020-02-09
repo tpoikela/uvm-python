@@ -63,11 +63,11 @@ class UVMTopdownPhase(UVMPhase):
         if UVMPhase.m_phase_trace:
             dom_name = "NO DOMAIN"
             if comp_domain is not None:
-                dom_name = comp_domain.get_name(
+                dom_name = comp_domain.get_name()
             uvm_report_info("PH_TRACE", ("topdown-phase phase={} state={} comp={}"
                 + "comp.domain={} phase.domain={}").format(
                 str(phase), str(state), comp.get_full_name(),
-                    dom_name),phase_domain.get_name()), UVM_DEBUG)
+                    dom_name, phase_domain.get_name()), UVM_DEBUG)
 
         from .uvm_domain import UVMDomain
         if phase_domain == UVMDomain.get_common_domain() or phase_domain == comp_domain:

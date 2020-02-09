@@ -27,7 +27,6 @@ from .uvm_object_globals import *
 from .uvm_misc import (uvm_leaf_scope, uvm_integral_to_string,
         uvm_bitstream_to_string, uvm_object_value_str)
 from .uvm_globals import uvm_report_error
-# from .uvm_report_message import UVMReportMessage
 
 UVM_STDOUT = 1  # Writes to standard out and logfile
 
@@ -352,7 +351,7 @@ class UVMPrinter():
 
     # print_time
     # ----------
-    def print_time (self, name, value, scope_separator="."):
+    def print_time(self, name, value, scope_separator="."):
         self.print_field_int(name, value, 64, UVM_TIME, scope_separator)
 
     # print_string
@@ -365,7 +364,7 @@ class UVMPrinter():
             self.m_scope.set_arg(name)
 
         row_info.level = self.m_scope.depth()
-        row_info.name =self.adjust_name(self.m_scope.get(),scope_separator)
+        row_info.name = self.adjust_name(self.m_scope.get(),scope_separator)
         row_info.type_name = "string"
         row_info.size = "{}".format(len(value))
         if value == "":
@@ -581,6 +580,8 @@ class UVMPrinterKnobs:
 #|  ---------------------------------------------------
 #
 #------------------------------------------------------------------------------
+
+
 class UVMTablePrinter(UVMPrinter):
 
     def __init__(self):
@@ -591,10 +592,10 @@ class UVMTablePrinter(UVMPrinter):
         self.m_max_value = 0
 
     def calculate_max_widths(self):
-        self.m_max_name=4
-        self.m_max_type=4
+        self.m_max_name = 4
+        self.m_max_type = 4
         self.m_max_size = 4
-        self.m_max_value= 5
+        self.m_max_value = 5
         for j in range(0, len(self.m_rows)):
             name_len = 0
             row = self.m_rows[j]
@@ -657,16 +658,14 @@ class UVMTablePrinter(UVMPrinter):
         for i in range(0, len(self.m_rows)):
             row = self.m_rows[i]
             user_format = self.format_row(row)
-            if  user_format == "":
+            if user_format == "":
                 row_str = ""
                 if self.knobs.identifier:
                     row_str = (space[1:row.level * self.knobs.indent] + row.name
-                        + space[1:self.m_max_name-len(row.name)-(row.level*self.knobs.indent)+2]
-                    )
+                        + space[1:self.m_max_name-len(row.name)-(row.level*self.knobs.indent)+2])
                 if self.knobs.type_name:
                     row_str = (row_str + row.type_name
-                        + space[1:(self.m_max_type-len(row.type_name)+2)]
-                    )
+                        + space[1:(self.m_max_type-len(row.type_name)+2)])
                 if self.knobs.size:
                     row_str = row_str + row.size + space[1:self.m_max_size-len(row.size)+2]
                 s = s + row_str + row.val + space[1:self.m_max_value-len(row.val)] + linefeed
@@ -675,7 +674,7 @@ class UVMTablePrinter(UVMPrinter):
 
         if self.knobs.footer:
             user_format = self.format_footer()
-            if  user_format == "":
+            if user_format == "":
                 s = s + dashes
             else:
                 s = s + user_format + linefeed
@@ -760,8 +759,11 @@ class UVMTreePrinter(UVMPrinter):
                         s = s + "(" + row.size + ") "
 
                 if i < (len(self.m_rows) - 1):
-                    if (self.m_rows[i+1].level > row.level):
-                        s = s + str(knobs.separator[0]) + linefeed
+                    if self.m_rows[i+1].level > row.level:
+                        sep = ""
+                        if len(knobs.separator) > 0:
+                            sep = str(knobs.separator[0])
+                        s = s + sep + linefeed
                         continue
 
                 # Value (unconditional)
@@ -777,8 +779,11 @@ class UVMTreePrinter(UVMPrinter):
                     if (end_level < row.level):
                         indent_str = ""
                         for l in range(row.level-1, end_level-1, -1):
-                            indent_str = space.substr(1,l * knobs.indent)
-                            s = s + indent_str + str(knobs.separator[1]) + linefeed
+                            indent_str = space[1:l * knobs.indent+1]
+                            sep = ""
+                            if len(knobs.separator) > 1:
+                                sep = str(knobs.separator[1])
+                            s = s + indent_str + sep + linefeed
             else:
                 s = s + user_format
 

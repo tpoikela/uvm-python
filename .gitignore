@@ -13,5 +13,7 @@ vimproject
 
 uvm-1.2
 uvm_ref/
+obj_dir
+.venv
 
 [xi]run.history

@@ -10,7 +10,7 @@ class Packet(sv_obj):
         self.addr = 0
         self.b_addr = 0
         self.tx_id = 0
-        self.rand("addr", list(range(3)))
+        self.rand("addr", list(range(1, 4)))
         self.rand("b_addr", list(range(0, 256)))
         #self.constraint("addr", [1, 2, 3])
         #self.constraint("b_addr", range(0, 256))

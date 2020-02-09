@@ -1,7 +1,7 @@
 #
 #----------------------------------------------------------------------
 #   Copyright 2007-2011 Mentor Graphics Corporation
-#   Copyright 2007-2010 Cadence Design Systems, Inc. 
+#   Copyright 2007-2010 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
 #   Copyright 2019 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
@@ -64,19 +64,19 @@ from ..base.uvm_port_base import UVMPortBase
 # T - The type of transaction to be communicated by the export. The type T is not restricted
 # to class handles and may be a value type such as int,enum,struct or similar.
 #
-# Ports are connected to interface implementations directly via 
+# Ports are connected to interface implementations directly via
 # <uvm_*_imp #(T,IMP)> ports or indirectly via hierarchical connections
 # to <uvm_*_port #(T)> and <uvm_*_export #(T)> ports.
 #
 #------------------------------------------------------------------------------
 
 # Function: new
-# 
+#
 # The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
 # The ~min_size~ and ~max_size~ specify the minimum and maximum number of
 # interfaces that must have been connected to this port by the end of elaboration.
 #
-#|  function new (string name, 
+#|  function new (string name,
 #|                uvm_component parent,
 #|                int min_size=1,
 #|                int max_size=1)
@@ -86,12 +86,12 @@ class UVMBlockingPutPort():
     pass
 UVMBlockingPutPort = UVM_PORT_COMMON(UVMBlockingPutPort, UVM_TLM_BLOCKING_PUT_MASK, "uvm_blocking_put_port")
 UVM_BLOCKING_PUT_IMP('m_if', UVMBlockingPutPort)
-#endclass 
+#endclass
 
 #class uvm_nonblocking_put_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_PUT_MASK,"uvm_nonblocking_put_port")
-#  `UVM_NONBLOCKING_PUT_IMP (this.m_if, T, t)
+#  `UVM_NONBLOCKING_PUT_IMP(this.m_if, T, t)
 #endclass
 class UVMNonBlockingPutPort():
     pass
@@ -101,38 +101,38 @@ UVM_NONBLOCKING_PUT_IMP('m_if', UVMNonBlockingPutPort)
 #class uvm_put_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_PUT_MASK,"uvm_put_port")
-#  `UVM_PUT_IMP (this.m_if, T, t)
+#  `UVM_PUT_IMP(this.m_if, T, t)
 #endclass
 class UVMPutPort():
     pass
 UVMPutPort = UVM_PORT_COMMON(UVMPutPort, UVM_TLM_PUT_MASK,"uvm_put_port")
-UVM_PUT_IMP ('m_if', UVMPutPort)
+UVM_PUT_IMP('m_if', UVMPutPort)
 
 #class uvm_blocking_get_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_GET_MASK,"uvm_blocking_get_port")
-#  `UVM_BLOCKING_GET_IMP (this.m_if, T, t)
-#endclass 
+#  `UVM_BLOCKING_GET_IMP(this.m_if, T, t)
+#endclass
 class UVMBlockingGetPort():
     pass
 UVMBlockingGetPort = UVM_PORT_COMMON(UVMBlockingGetPort, UVM_TLM_BLOCKING_GET_MASK,"uvm_blocking_get_port")
-UVM_BLOCKING_GET_IMP ('m_if', UVMBlockingGetPort)
+UVM_BLOCKING_GET_IMP('m_if', UVMBlockingGetPort)
 
 #class uvm_nonblocking_get_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_port")
-#  `UVM_NONBLOCKING_GET_IMP (this.m_if, T, t)
+#  `UVM_NONBLOCKING_GET_IMP(this.m_if, T, t)
 #endclass
 class UVMNonBlockingGetPort():
     pass
 UVMNonBlockingGetPort = UVM_PORT_COMMON(UVMNonBlockingGetPort, UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_port")
-UVM_NONBLOCKING_GET_IMP ('m_if', UVMNonBlockingGetPort)
+UVM_NONBLOCKING_GET_IMP('m_if', UVMNonBlockingGetPort)
 
 #class uvm_get_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_GET_MASK,"uvm_get_port")
-#  `UVM_GET_IMP (this.m_if, T, t)
-#endclass 
+#  `UVM_GET_IMP(this.m_if, T, t)
+#endclass
 class UVMGetPort():
     pass
 UVMGetPort = UVM_PORT_COMMON(UVMGetPort, UVM_TLM_GET_MASK, "uvm_get_port")
@@ -141,8 +141,8 @@ UVM_GET_IMP('m_if', UVMGetPort)
 #class uvm_blocking_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_PEEK_MASK,"uvm_blocking_peek_port")
-#  `UVM_BLOCKING_PEEK_IMP (this.m_if, T, t)
-#endclass 
+#  `UVM_BLOCKING_PEEK_IMP(this.m_if, T, t)
+#endclass
 class UVMBlockingPeekPort():
     pass
 UVMBlockingPeekPort = UVM_PORT_COMMON(UVMBlockingPeekPort,
@@ -152,32 +152,55 @@ UVM_BLOCKING_PEEK_IMP('m_if', UVMBlockingPeekPort)
 #class uvm_nonblocking_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_PEEK_MASK,"uvm_nonblocking_peek_port")
-#  `UVM_NONBLOCKING_PEEK_IMP (this.m_if, T, t)
+#  `UVM_NONBLOCKING_PEEK_IMP(this.m_if, T, t)
 #endclass
+class UVMNonBlockingPeekPort():
+    pass
+UVMNonBlockingPeekPort = UVM_PORT_COMMON(UVMNonBlockingPeekPort,
+    UVM_TLM_NONBLOCKING_PEEK_MASK,"uvm_nonblocking_peek_port")
+UVM_NONBLOCKING_PEEK_IMP('m_if', UVMNonBlockingPeekPort)
 
 #class uvm_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_PEEK_MASK,"uvm_peek_port")
-#  `UVM_PEEK_IMP (this.m_if, T, t)
-#endclass 
+#  `UVM_PEEK_IMP(this.m_if, T, t)
+#endclass
+class UVMPeekPort():
+    pass
+UVMPeekPort = UVM_PORT_COMMON(UVMPeekPort, UVM_TLM_PEEK_MASK,"uvm_peek_port")
+UVM_PEEK_IMP('m_if', UVMPeekPort)
 
 #class uvm_blocking_get_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_GET_PEEK_MASK,"uvm_blocking_get_peek_port")
-#  `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, T, t)
-#endclass 
+#  `UVM_BLOCKING_GET_PEEK_IMP(this.m_if, T, t)
+#endclass
+class UVMBlockingGetPeekPort():
+    pass
+UVMBlockingGetPeekPort = UVM_PORT_COMMON(UVMBlockingGetPeekPort,
+    UVM_TLM_BLOCKING_GET_PEEK_MASK,"uvm_blocking_get_peek_port")
+UVM_BLOCKING_GET_PEEK_IMP('m_if', UVMBlockingGetPeekPort)
 
 #class uvm_nonblocking_get_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_GET_PEEK_MASK,"uvm_nonblocking_get_peek_port")
-#  `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, T, t)
+#  `UVM_NONBLOCKING_GET_PEEK_IMP(this.m_if, T, t)
 #endclass
+class UVMNonBlockingGetPeekPort():
+    pass
+UVMNonBlockingGetPeekPort = UVM_PORT_COMMON(UVMNonBlockingGetPeekPort,
+        UVM_TLM_NONBLOCKING_GET_PEEK_MASK,"uvm_nonblocking_get_peek_port")
+UVM_NONBLOCKING_GET_PEEK_IMP('m_if',  UVMNonBlockingGetPeekPort)
 
 #class uvm_get_peek_port #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
 #  `UVM_PORT_COMMON(`UVM_TLM_GET_PEEK_MASK,"uvm_get_peek_port")
-#  `UVM_GET_PEEK_IMP (this.m_if, T, t)
-#endclass 
+#  `UVM_GET_PEEK_IMP(this.m_if, T, t)
+#endclass
+class UVMGetPeekPort():
+    pass
+UVMGetPeekPort = UVM_PORT_COMMON(UVMGetPeekPort, UVM_TLM_GET_PEEK_MASK,"uvm_get_peek_port")
+UVM_GET_PEEK_IMP('m_if',  UVMGetPeekPort)
 
 #------------------------------------------------------------------------------
 #
@@ -203,7 +226,7 @@ UVM_BLOCKING_PEEK_IMP('m_if', UVMBlockingPeekPort)
 #|  nonblocking_slave
 #|  slave
 #
-# Ports are connected to interface implementations directly via 
+# Ports are connected to interface implementations directly via
 # <uvm_*_imp #(REQ,RSP,IMP,REQ_IMP,RSP_IMP)> ports or indirectly via
 # hierarchical connections to <uvm_*_port #(REQ,RSP)> and
 # <uvm_*_export #(REQ,RSP)> ports.
@@ -217,12 +240,12 @@ UVM_BLOCKING_PEEK_IMP('m_if', UVMBlockingPeekPort)
 #------------------------------------------------------------------------------
 #
 # Function: new
-# 
+#
 # The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
 # The ~min_size~ and ~max_size~ specify the minimum and maximum number of
 # interfaces that must have been supplied to this port by the end of elaboration.
 #
-#   function new (string name, 
+#   function new (string name,
 #                 uvm_component parent,
 #                 int min_size=1,
 #                 int max_size=1)
@@ -231,72 +254,111 @@ UVM_BLOCKING_PEEK_IMP('m_if', UVMBlockingPeekPort)
 #class uvm_blocking_master_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_MASTER_MASK,"uvm_blocking_master_port")
-#  `UVM_BLOCKING_PUT_IMP (this.m_if, REQ, t)
-#  `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, RSP, t)
-#endclass 
-#
+#  `UVM_BLOCKING_PUT_IMP(this.m_if, REQ, t)
+#  `UVM_BLOCKING_GET_PEEK_IMP(this.m_if, RSP, t)
+#endclass
+class UVMBlockingMasterPort():  #(type REQ=int, type RSP=REQ)
+    pass
+UVMBlockingMasterPort = UVM_PORT_COMMON(UVMBlockingMasterPort,
+        UVM_TLM_BLOCKING_MASTER_MASK,"uvm_blocking_master_port")
+UVM_BLOCKING_PUT_IMP('m_if',  UVMBlockingMasterPort)
+UVM_BLOCKING_GET_PEEK_IMP('m_if', UVMBlockingMasterPort)
+
 #class uvm_nonblocking_master_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_MASTER_MASK,"uvm_nonblocking_master_port")
-#  `UVM_NONBLOCKING_PUT_IMP (this.m_if, REQ, t)
-#  `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, RSP, t)
-#endclass 
-#
+#  `UVM_NONBLOCKING_PUT_IMP(this.m_if, REQ, t)
+#  `UVM_NONBLOCKING_GET_PEEK_IMP(this.m_if, RSP, t)
+#endclass
+class UVMNonBlockingMasterPort():   #(type REQ=int, type RSP=REQ)
+    pass
+UVMNonBlockingMasterPort = UVM_PORT_COMMON(UVMNonBlockingMasterPort,
+        UVM_TLM_NONBLOCKING_MASTER_MASK,"uvm_nonblocking_master_port")
+UVM_NONBLOCKING_PUT_IMP('m_if',  UVMNonBlockingMasterPort)
+UVM_NONBLOCKING_GET_PEEK_IMP('m_if', UVMNonBlockingMasterPort)
+
 #class uvm_master_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
 #  `UVM_PORT_COMMON(`UVM_TLM_MASTER_MASK,"uvm_master_port")
-#  `UVM_PUT_IMP (this.m_if, REQ, t)
-#  `UVM_GET_PEEK_IMP (this.m_if, RSP, t)
+#  `UVM_PUT_IMP(this.m_if, REQ, t)
+#  `UVM_GET_PEEK_IMP(this.m_if, RSP, t)
 #endclass
-#
+class UVMMasterPort():  # (type REQ=int, type RSP=REQ)
+    pass
+UVMMasterPort = UVM_PORT_COMMON(UVMMasterPort,
+        UVM_TLM_MASTER_MASK,"uvm_master_port")
+UVM_PUT_IMP('m_if',  UVMMasterPort)
+UVM_GET_PEEK_IMP('m_if', UVMMasterPort)
+
 #class uvm_blocking_slave_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(RSP, REQ));
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_SLAVE_MASK,"uvm_blocking_slave_port")
-#  `UVM_BLOCKING_PUT_IMP (this.m_if, RSP, t)
-#  `UVM_BLOCKING_GET_PEEK_IMP (this.m_if, REQ, t)
-#endclass 
-#
+#  `UVM_BLOCKING_PUT_IMP(this.m_if, RSP, t)
+#  `UVM_BLOCKING_GET_PEEK_IMP(this.m_if, REQ, t)
+#endclass
+class UVMBlockingSlavePort():  #(type REQ=int, type RSP=REQ)
+    pass
+UVMBlockingSlavePort = UVM_PORT_COMMON(UVMBlockingSlavePort,
+        UVM_TLM_BLOCKING_SLAVE_MASK,"uvm_blocking_slave_port")
+UVM_BLOCKING_PUT_IMP('m_if',  UVMBlockingSlavePort)
+UVM_BLOCKING_GET_PEEK_IMP('m_if', UVMBlockingSlavePort)
+
 #class uvm_nonblocking_slave_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(RSP, REQ));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_SLAVE_MASK,"uvm_nonblocking_slave_port")
-#  `UVM_NONBLOCKING_PUT_IMP (this.m_if, RSP, t)
-#  `UVM_NONBLOCKING_GET_PEEK_IMP (this.m_if, REQ, t)
-#endclass 
-#
+#  `UVM_NONBLOCKING_PUT_IMP(this.m_if, RSP, t)
+#  `UVM_NONBLOCKING_GET_PEEK_IMP(this.m_if, REQ, t)
+#endclass
+class UVMNonBlockingSlavePort():  # (type REQ=int, type RSP=REQ)
+    pass
+UVMNonBlockingSlavePort = UVM_PORT_COMMON(UVMNonBlockingSlavePort,
+        UVM_TLM_NONBLOCKING_SLAVE_MASK,"uvm_nonblocking_slave_port")
+UVM_NONBLOCKING_PUT_IMP('m_if',  UVMNonBlockingSlavePort)
+UVM_NONBLOCKING_GET_PEEK_IMP('m_if', UVMNonBlockingSlavePort)
+
 #class uvm_slave_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(RSP, REQ));
 #  `UVM_PORT_COMMON(`UVM_TLM_SLAVE_MASK,"uvm_slave_port")
-#  `UVM_PUT_IMP (this.m_if, RSP, t)
-#  `UVM_GET_PEEK_IMP (this.m_if, REQ, t)
+#  `UVM_PUT_IMP(this.m_if, RSP, t)
+#  `UVM_GET_PEEK_IMP(this.m_if, REQ, t)
 #endclass
-#
+class UVMSlavePort():  # (type REQ=int, type RSP=REQ)
+    pass
+UVMSlavePort = UVM_PORT_COMMON(UVMSlavePort,
+        UVM_TLM_SLAVE_MASK,"uvm_slave_port")
+UVM_PUT_IMP('m_if',  UVMSlavePort)
+UVM_GET_PEEK_IMP('m_if', UVMSlavePort)
+
 #class uvm_blocking_transport_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
 #  `UVM_PORT_COMMON(`UVM_TLM_BLOCKING_TRANSPORT_MASK,"uvm_blocking_transport_port")
-#  `UVM_BLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
+#  `UVM_BLOCKING_TRANSPORT_IMP(this.m_if, REQ, RSP, req, rsp)
 #endclass
-#
+class UVMBlockingTransportPort():   # (type REQ=int, type RSP=REQ)
+    pass
+UVMBlockingTransportPort = UVM_PORT_COMMON(UVMBlockingTransportPort,
+    UVM_TLM_BLOCKING_TRANSPORT_MASK,"uvm_blocking_transport_port")
+UVM_BLOCKING_TRANSPORT_IMP('m_if', UVMBlockingTransportPort)
+
 #class uvm_nonblocking_transport_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
 #  `UVM_PORT_COMMON(`UVM_TLM_NONBLOCKING_TRANSPORT_MASK,"uvm_nonblocking_transport_port")
-#  `UVM_NONBLOCKING_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
+#  `UVM_NONBLOCKING_TRANSPORT_IMP(this.m_if, REQ, RSP, req, rsp)
 #endclass
-#
+class UVMNonBlockingTransportPort():   # (type REQ=int, type RSP=REQ)
+    pass
+UVMNonBlockingTransportPort =  UVM_PORT_COMMON(UVMNonBlockingTransportPort,
+    UVM_TLM_NONBLOCKING_TRANSPORT_MASK,"uvm_nonblocking_transport_port")
+UVM_NONBLOCKING_TRANSPORT_IMP('m_if', UVMNonBlockingTransportPort)
+
+
 #class uvm_transport_port #(type REQ=int, type RSP=REQ)
 #  extends uvm_port_base #(uvm_tlm_if_base #(REQ, RSP));
 #  `UVM_PORT_COMMON(`UVM_TLM_TRANSPORT_MASK,"uvm_transport_port")
-#  `UVM_TRANSPORT_IMP (this.m_if, REQ, RSP, req, rsp)
+#  `UVM_TRANSPORT_IMP(this.m_if, REQ, RSP, req, rsp)
 #endclass
-
-import unittest
-
-class TestUVMPorts(unittest.TestCase):
-
-    def test_blocking_put_port(self):
-        from ..base.uvm_component import UVMComponent
-        comp = UVMComponent('comp', None)
-        put_port = UVMBlockingPutPort('my_port', comp)
-        self.assertEqual(put_port.is_port(), True)
-
-if __name__ == '__main__':
-    unittest.main()
+class UVMTransportPort():  # (type REQ=int, type RSP=REQ)
+    pass
+UVMTransportPort = UVM_PORT_COMMON(UVMTransportPort,
+    UVM_TLM_TRANSPORT_MASK,"uvm_transport_port")
+UVM_TRANSPORT_IMP('m_if', UVMTransportPort)

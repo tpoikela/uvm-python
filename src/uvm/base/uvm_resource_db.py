@@ -35,8 +35,6 @@
 #// specified, all resource DB accesses (read and write) are displayed.
 #//----------------------------------------------------------------------
 
-#typedef class UVMResourceDbOptions
-#typedef class uvm_cmdline_processor
 
 #//----------------------------------------------------------------------
 #// class: uvm_resource_db
@@ -55,12 +53,14 @@
 #class uvm_resource_db #(type T=uvm_object)
 
 from .sv import sv
+from .uvm_globals import uvm_check_output_args
 from ..uvm_macros import uvm_typename
 from ..macros.uvm_message_defines import uvm_info
 from .uvm_object_globals import UVM_LOW
-from .uvm_resource import UVMResource
+from .uvm_resource import UVMResource, UVMResourcePool
 
 rsrc_t = UVMResource
+
 
 class UVMResourceDb:
 
@@ -243,20 +243,20 @@ class UVMResourceDb:
     #  static function bit read_by_name(input string scope,
     #                                   input string name,
     #                                   inout T val, input uvm_object accessor = null)
-    #
-    #    rsrc_t rsrc = get_by_name(scope, name)
-    #
-    #    if(UVMResourceDbOptions::is_tracing())
-    #      m_show_msg("RSRCDB/RDBYNAM","Resource", "read", scope, name, accessor, rsrc)
-    #
-    #    if(rsrc == null)
-    #      return 0
-    #
-    #    val = rsrc.read(accessor)
-    #
-    #    return 1
-    #
-    #  endfunction
+    @classmethod
+    def read_by_name(cls, scope, name, val, accessor=None):
+        uvm_check_output_args([val])
+        rsrc = cls.get_by_name(scope, name)
+
+        if UVMResourceDbOptions.is_tracing():
+            cls.m_show_msg("RSRCDB/RDBYNAM","Resource", "read", scope, name, accessor, rsrc)
+
+        if rsrc is None:
+            return False
+
+        val.append(rsrc.read(accessor))
+        return True
+
 
     #  // function: read_by_type
     #  //
@@ -346,11 +346,11 @@ class UVMResourceDb:
     #  // it will dump the same thing -- the entire database -- no matter the
     #  // value of the parameter.
     #
-    #  static function void dump()
-    #    uvm_resource_pool rp = uvm_resource_pool::get()
-    #    rp.dump()
-    #  endfunction
-    #
+    @classmethod
+    def dump(cls):
+        rp = UVMResourcePool.get()
+        rp.dump()
+
     #endclass
 
     #//----------------------------------------------------------------------

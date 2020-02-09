@@ -89,6 +89,8 @@ my $re_packed = qr/(\[.*\])?/;       # $5
 my $re_name = qr/(\w+)/;             # $6
 my $re_unpacked = qr/((\[.*\])+)/;   # $7, $8 (full)
 my $re_init_var = qr/(=[^;]+)/;      # $9
+my $re_func_phases = qr/(build|connect|end_of_elaboration|end_of_simulation|extract|check|report|final)/;
+my $re_task_phases = qr/(reset|configure|main|run)/;
 
 my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?$re_init_var?\s*;\s*$/;
 my $re_new_call = qr/(\w+)\s*=\s*new\s*\(/;
@@ -103,6 +105,7 @@ my $IN_CLASS = 1 << 1;
 my $IN_NEW = 1 << 2;
 my $IN_TASK = 1 << 3;
 my $IN_FUNC = 1 << 4;
+my $IN_COMMENT = 1 << 5;
 
 #---------------------------------------------------------------------------
 # GLOBAL VARS
@@ -159,8 +162,10 @@ for my $file (@files) {
 }
 
 if ($DEBUG != 0) {
+    print "Dumping found class information:\n";
     print Dumper($all_classes);
 }
+
 
 #---------------------------------------------------------------------------
 # HELPERS
@@ -215,6 +220,14 @@ sub process_file {
             push(@outfile, "$ws#$line");
             next;
         }
+        elsif ($line =~ m{^\s*/\*}) {
+            push(@outfile, "$ws#$line");
+            $st = $st | $IN_COMMENT;
+            next;
+        }
+        elsif ($line =~ m{\*/}) {
+            $st = ~$IN_COMMENT & $st;
+        }
 
         # Look for line in which imports start, alternatively find 1st include
         # or ifndef
@@ -228,10 +241,10 @@ sub process_file {
             $ifndef_line = $lineno;
         }
 
-        # Add author name
+        # Add author name, use -author "My Name"
         if ($line =~ /^(.*)All rights reserved worldwide/i) {
             my $cline = "#$1Copyright 2019-2020 $AUTHOR\n";
-            my $has_author = 1;
+            $has_author = 1;
             push(@outfile, $cline);
         }
 
@@ -287,7 +300,7 @@ sub process_file {
             });
             $all_classes->{$2} = $class_info;
         }
-        elsif ($line =~ /^endclass/) {
+        elsif ($line =~ /^\s*endclass/) {
             --$ind;
             if ($ind < 0) {$ind = 0;}
             $st = $GLOBAL;
@@ -315,6 +328,7 @@ sub process_file {
             $st = $st & ~$IN_NEW;
         }
 
+        $line =~ s/(\w+)'\((.*)\);/$2  # cast to '$1' removed/g;
         $line =~ s/;$//g;  # Remove trailing semicolon
         $line =~ s/\s*==\s*null/ is None/g;
         $line =~ s/\s*!=\s*null/ is not None/g;
@@ -333,6 +347,11 @@ sub process_file {
         $line =~ s/\|\|/ or /g;
         $line =~ s/forever\s+begin/while True:/g;
         $line =~ s/self file except/this file except/g;
+        $line =~ s/repeat\((\w+)\)/for i in range($1)/g;
+        $line =~ s/^\s*import (\w+)::\*/from $1 import */g;
+
+        # We don't want to match ## here because it's different operator than #
+        $line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/yield Timer($1, $2)/g;
 
         if ($line =~ $edge_re) {
             my $edge = $2;
@@ -348,7 +367,6 @@ sub process_file {
             }
             push(@outfile, "$ws#${ii}yield $edge($sig)\n");
             add_import(\@imports, "from cocotb.triggers import *\n");
-
         }
 
         # Imports are added here
@@ -366,15 +384,17 @@ sub process_file {
 
 
         # Replace standard UVM functions
-        $line =~ s/(virtual)? function void build\(\)/$def_build_phase/g;
-        $line =~ s/(virtual)? function void connect\(\)/$def_build_phase/g;
-        $line =~ s/(virtual)? function void connect_phase\(uvm_phase phase\)/$def_conn_phase/g;
-        $line =~ s/(virtual)? function void build_phase\(uvm_phase phase\)/$def_build_phase/g;
+        $line =~ s/(virtual)?\s+function\+svoid\s+$re_func_phases\(.*\)/def $1(self, phase):/g;
+        $line =~ s/(virtual)?\s+task\s+$re_task_phases\(.*\)/def $1(self, phase):/g;
+        #$line =~ s/(virtual)? function void build\(\)/$def_build_phase/g;
+        #$line =~ s/(virtual)? function void connect\(\)/$def_build_phase/g;
+        #$line =~ s/(virtual)? function void connect_phase\(uvm_phase phase\)/$def_conn_phase/g;
+        #$line =~ s/(virtual)? function void build_phase\(uvm_phase phase\)/$def_build_phase/g;
         $line =~ s/class (\w+) extends (\w+)/class $1($2):/g;
         $line =~ s/super\./super()./g;
 
         # SystemVerilog functions
-        $line =~ s/\$(urandom|random|sformatf|cast|display)\b/sv.$1/g;
+        $line =~ s/\$(urandom|random|sformatf|bits|cast|display)\b/sv.$1/g;
 
         # Config/Resource Db replacements
         if ($line =~ $conf_db_re) {
@@ -405,11 +425,11 @@ sub process_file {
         # Final trimmings due to bad substitutions
         $line =~ s/\(self,\)/(self)/g;
         $line =~ s/,\s*uvm_component parent/, parent/g;
+        $line =~ s/virtual def \w+ (\w+)\(/def $1(/g;
 
         if ($add_line) {
             push(@outfile, "$ws#$line");
         }
-
     }
 
     foreach my $cls (@classes_file) {
@@ -418,7 +438,6 @@ sub process_file {
     }
 
     # Add imports to the import line
-
     my $chosen_line = $import_line == -1 ? $include_line : $import_line;
     splice(@outfile, $chosen_line, 0, @imports);
 
@@ -426,6 +445,7 @@ sub process_file {
         print("Warning! File $fname did not finish to global state\n");
     }
 
+    # Used only for re-runs of .py files
     my @new_array;
     if ($is_py) {
         for my $line (@outfile) {
@@ -441,6 +461,7 @@ sub process_file {
     return wantarray ? @outfile : join('', @outfile);
 }
 
+# Creates a simple py pkg map to add imports automatically to the file
 sub build_pkg_map {
     my @py_sources = glob("$ENV{UVM_PYTHON}/uvm/**/*.py");
     my $pkg_map = {};

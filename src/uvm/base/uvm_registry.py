@@ -50,6 +50,7 @@ from .uvm_factory import UVMObjectWrapper
 from .uvm_globals import uvm_report_warning, uvm_report_fatal
 from .uvm_object_globals import UVM_NONE
 
+
 class UVMComponentRegistry(UVMObjectWrapper):
 
     # dict of UVMComponentRegistry
@@ -76,7 +77,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
     # called by the factory after determining the type of object to create.
     # You should not call this method directly. Call <create> instead.
     def create_component(self, name, parent):
-         return UVMComponentRegistry.comps[self.tname](name, parent)
+        return UVMComponentRegistry.comps[self.tname](name, parent)
 
     # Function: get_type_name
     #
@@ -104,7 +105,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
     # ~parent~'s context. The new instance will have the given leaf ~name~
     # and ~parent~.
     def create(self, name, parent, contxt=""):
-        factory= get_factory()
+        factory = get_factory()
 
         if contxt == "" and parent is not None:
             contxt = parent.get_full_name()
@@ -131,7 +132,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
             msg += 'null'
         else:
             msg += parent.get_type_name()
-        msg +=  " contxt=" + contxt
+        msg += " contxt=" + contxt
         uvm_report_fatal("FCTTYP", msg, UVM_NONE)
 
     # Function: set_type_override
@@ -159,8 +160,6 @@ class UVMComponentRegistry(UVMObjectWrapper):
     # registered with the override. The ~inst_path~ may contain wildcards for
     # matching against multiple contexts.
     def set_inst_override(self, override_type, inst_path, parent=None):
-        # full_inst_path = ""
-
         if parent is not None:
             if inst_path == "":
                 inst_path = parent.get_full_name()
@@ -234,6 +233,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         if obj is not None:
             return obj
         create = obj
+        # tpoikela: TODO could check the type for extra safety
         #if (!$cast(create, obj)) begin
         #    string msg
         #    msg = {"Factory did not return an object of type '",type_name,
@@ -268,7 +268,6 @@ class UVMObjectRegistry(UVMObjectWrapper):
     # registered with the override. The ~inst_path~ may contain wildcards for
     # matching against multiple contexts.
     def set_inst_override(self, override_type, inst_path, parent=None):
-        full_inst_path = ""
         factory = get_factory()
 
         if parent is not None:
@@ -279,8 +278,9 @@ class UVMObjectRegistry(UVMObjectWrapper):
         factory.set_inst_override_by_type(self.get(),override_type,inst_path)
     #endclass
 
+
+
 def get_factory():
     from .uvm_coreservice import UVMCoreService
     cs = UVMCoreService.get()
     return cs.get_factory()
-
