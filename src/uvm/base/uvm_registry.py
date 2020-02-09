@@ -69,6 +69,13 @@ class UVMComponentRegistry(UVMObjectWrapper):
         UVMComponentRegistry.comps[tname] = Constr
         UVMComponentRegistry.registered[tname] = False
         UVMComponentRegistry.registry_db[tname] = self.get()
+        
+    @staticmethod
+    def reset():
+        """Resets the state of the component registry. Used for unit testing"""
+        UVMComponentRegistry.registry_db.clear()
+        UVMComponentRegistry.registered.clear()
+        UVMComponentRegistry.comps.clear()
 
     # Function: create_component
     #
@@ -188,6 +195,13 @@ class UVMObjectRegistry(UVMObjectWrapper):
         UVMObjectRegistry.objs[tname] = Constr
         UVMObjectRegistry.registered[tname] = False
         UVMObjectRegistry.registry_db[tname] = self.get()
+        
+    @staticmethod
+    def reset():
+        """Resets the state of the object registry. Used for unit testing"""
+        UVMObjectRegistry.registry_db.clear()
+        UVMObjectRegistry.registered.clear()
+        UVMObjectRegistry.objs.clear()
 
     # Function: create_object
     #
