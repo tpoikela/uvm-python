@@ -463,7 +463,10 @@ sub process_file {
 
 # Creates a simple py pkg map to add imports automatically to the file
 sub build_pkg_map {
-    my @py_sources = glob("$ENV{UVM_PYTHON}/uvm/**/*.py");
+    my @py_sources = ();
+    if (exists $ENV{UVM_PYTHON}) {
+        @py_sources = glob("$ENV{UVM_PYTHON}/uvm/**/*.py");
+    }
     my $pkg_map = {};
     foreach my $f (@py_sources) {
         my ($name,$path,$suffix) = fileparse($f, @suffixlist);
