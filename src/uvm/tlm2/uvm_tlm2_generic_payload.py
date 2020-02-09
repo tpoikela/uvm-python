@@ -4,7 +4,7 @@
 #// Copyright 2010-2012 Synopsys, Inc.
 #// Copyright 2010-2018 Cadence Design Systems, Inc.
 #// Copyright 2013-2018 NVIDIA Corporation
-#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
+#// Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -21,23 +21,27 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
+from ..seq.uvm_sequence_item import *
+from ..macros import *
+from ..base.uvm_object import UVMObject
+
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- TLM Generic Payload & Extensions
 #//----------------------------------------------------------------------
-#// The Generic Payload transaction represents a generic 
+#// The Generic Payload transaction represents a generic
 #// bus read/write access. It is used as the default transaction in
 #// TLM2 blocking and nonblocking transport interfaces.
 #//----------------------------------------------------------------------
-#
-#
+
+
 #//---------------
 #// Group -- NODOCS -- Globals
 #//---------------
 #//
 #// Defines, Constants, enums.
-#
-#
+
+
 #// Enum -- NODOCS -- uvm_tlm_command_e
 #//
 #// Command attribute type definition
@@ -47,15 +51,17 @@
 #// UVM_TLM_WRITE_COMMAND     - Bus write operation
 #//
 #// UVM_TLM_IGNORE_COMMAND    - No bus operation.
-#
+
 #typedef enum
 #{
 #    UVM_TLM_READ_COMMAND,
 #    UVM_TLM_WRITE_COMMAND,
 #    UVM_TLM_IGNORE_COMMAND
 #} uvm_tlm_command_e
-#
-#
+UVM_TLM_READ_COMMAND = 0
+UVM_TLM_WRITE_COMMAND = 1
+UVM_TLM_IGNORE_COMMAND = 2
+
 #// Enum -- NODOCS -- uvm_tlm_response_status_e
 #//
 #// Response status attribute type definition
@@ -85,15 +91,18 @@
 #    UVM_TLM_BURST_ERROR_RESPONSE = -4,
 #    UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
 #} uvm_tlm_response_status_e
-#
-#
-#typedef class uvm_tlm_extension_base
-#
-#
+UVM_TLM_OK_RESPONSE = 1
+UVM_TLM_INCOMPLETE_RESPONSE = 0
+UVM_TLM_GENERIC_ERROR_RESPONSE = -1
+UVM_TLM_ADDRESS_ERROR_RESPONSE = -2
+UVM_TLM_COMMAND_ERROR_RESPONSE = -3
+UVM_TLM_BURST_ERROR_RESPONSE = -4
+UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
+
 #//-----------------------
 #// Group -- NODOCS -- Generic Payload
 #//-----------------------
-#
+
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_generic_payload
 #//
@@ -102,8 +111,8 @@
 #//----------------------------------------------------------------------
 #
 #// @uvm-ieee 1800.2-2017 auto 12.3.4.2.1
-#class uvm_tlm_generic_payload(uvm_sequence_item):
-    #   
+class UVMTLMGenericPayload(UVMSequenceItem):
+    #
     #   // Variable -- NODOCS -- m_address
     #   //
     #   // Address for the bus operation.
@@ -124,8 +133,9 @@
     #   // recommended response status is ~UVM_TLM_ADDRESS_ERROR_RESPONSE~.
     #   //
     #   rand bit [63:0]             m_address
-    #
-    # 
+
+
+
     #   // Variable -- NODOCS -- m_command
     #   //
     #   // Bus operation type.
@@ -147,8 +157,9 @@
     #   // not be overwritten by any interconnect
     #   //
     #   rand uvm_tlm_command_e          m_command
-    #
-    #   
+
+
+
     #   // Variable -- NODOCS -- m_data
     #   //
     #   // Data read or to be written.
@@ -183,8 +194,8 @@
     #   // However, this process is currently outside the scope of this standard.
     #   //
     #   rand byte unsigned             m_data[]
-    #
-    #
+
+
     #   // Variable -- NODOCS -- m_length
     #   //
     #   // The number of bytes to be copied to or from the <m_data> array,
@@ -198,7 +209,7 @@
     #   // should be set to <UVM_TLM_IGNORE_COMMAND>.
     #   //
     #   rand int unsigned           m_length
-    #   
+    #
     #
     #   // Variable -- NODOCS -- m_response_status
     #   //
@@ -254,7 +265,7 @@
     #   // with SystemC.
     #   //
     #   bit m_dmi
-    #   
+    #
     #
     #   // Variable -- NODOCS -- m_byte_enable
     #   //
@@ -308,7 +319,7 @@
     #
     #
     #   // Variable -- NODOCS -- m_streaming_width
-    #   //    
+    #   //
     #   // Number of bytes transferred on each beat.
     #   // Should be set and read using the <set_streaming_width> or
     #   // <get_streaming_width> methods
@@ -342,7 +353,7 @@
     #   // maintaining the sequence of bytes.
     #   //
     #   // A streaming width of 0 indicates that a streaming transfer
-    #   // is not required. it is equivalent to a streaming width 
+    #   // is not required. it is equivalent to a streaming width
     #   // value greater than or equal to the size of the <m_data> array.
     #   //
     #   // Streaming may be used in conjunction with byte enables, in which
@@ -358,32 +369,35 @@
     #   // TLM_BURST_ERROR_RESPONSE.
     #   //
     #   rand int unsigned m_streaming_width
-    #
+
+
     #   protected uvm_tlm_extension_base m_extensions [uvm_tlm_extension_base]
     #   local rand uvm_tlm_extension_base m_rand_exts[]
-    #
-    #
-    #   `uvm_object_utils(uvm_tlm_generic_payload)
-    #
-    #
+
+
+
+
+
     #  // Function -- NODOCS -- new
     #  //
     #  // Create a new instance of the generic payload.  Initialize all the
     #  // members to their default values.
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.3
-    #  def __init__(self, name="")
-    #    super().__init__(name)
-    #    m_address = 0
-    #    m_command = UVM_TLM_IGNORE_COMMAND
-    #    m_length = 0
-    #    m_response_status = UVM_TLM_INCOMPLETE_RESPONSE
-    #    m_dmi = 0
-    #    m_byte_enable_length = 0
-    #    m_streaming_width = 0
+    def __init__(self, name=""):
+        super().__init__(name)
+        self.m_address = 0
+        self.m_command = UVM_TLM_IGNORE_COMMAND
+        self.m_length = 0
+        self.m_response_status = UVM_TLM_INCOMPLETE_RESPONSE
+        self.m_dmi = 0
+        self.m_byte_enable_length = 0
+        self.m_streaming_width = 0
+        self.m_data = []
+        #self.rand('m_data')
     #  endfunction
-    #
-    #
+
+
     #  // Function- do_print
     #  //
     #  def void do_print(self,uvm_printer printer):
@@ -402,7 +416,7 @@
     #        printer.print_generic (sv.sformatf("[%0d]",i), "byte", 8,
     #            sv.sformatf("'h%h%s",m_data[i],((be== 0xFF) ? "" : " x")))
     #      end
-    #      else 
+    #      else
     #        printer.print_generic (sv.sformatf("[%0d]",i), "byte", 8,
     #                               sv.sformatf("'h%h",m_data[i]))
     #    end
@@ -440,15 +454,15 @@
     #    m_extensions.delete()
     #    foreach (gp.m_extensions[ext])
     #       sv.cast(m_extensions[ext], gp.m_extensions[ext].clone())
-    #    
+    #
     #  endfunction
-    #   
+    #
     #`define m_uvm_tlm_fast_compare_int(VALUE,RADIX,NAME="") \
     #  if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and  \
     #      ((VALUE) != (gp.VALUE)) ): \
     #     string name = (NAME == "") ? `"VALUE`" : NAME; \
     #        comparer.compare_field_int(name , VALUE, gp.VALUE, sv.bits(VALUE), RADIX)  # cast to 'void' removed \
-    #  end 
+    #  end
     #
     #`define m_uvm_tlm_fast_compare_enum(VALUE,TYPE,NAME="") \
     #  if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and  \
@@ -457,13 +471,13 @@
     #        void'( comparer.compare_string(name, \
     #				sv.sformatf("%s'(%s)", `"TYPE`", VALUE.name()), \
     #				sv.sformatf("%%s)", `"TYPE`", gp.VALUE.name()))   # cast to 's' removed \
-    #  end 
+    #  end
     #
     #  // Function: do_compare
     #  // Compares this generic payload to ~rhs~.
     #  //
     #  // The <do_compare> method compares the fields of this instance to
-    #  // to those of ~rhs~.  All fields are compared, however if byte 
+    #  // to those of ~rhs~.  All fields are compared, however if byte
     #  // enables are being used, then non-enabled bytes of data are
     #  // skipped.
     #  def bit do_compare(self,uvm_object rhs, uvm_comparer comparer):
@@ -478,8 +492,8 @@
     #    `m_uvm_tlm_fast_compare_int(m_byte_enable_length, UVM_UNSIGNED)
     #    `m_uvm_tlm_fast_compare_enum(m_response_status, uvm_tlm_response_status_e)
     #    `m_uvm_tlm_fast_compare_int(m_streaming_width, UVM_UNSIGNED)
-    #   
-    #    if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and 
+    #
+    #    if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and
     #	 m_byte_enable_length == gp.m_byte_enable_length ):
     #
     #       for (int i=0; i < m_byte_enable_length  and  i < m_byte_enable.size(); i++):
@@ -487,9 +501,9 @@
     #       end
     #    end
     #
-    #    if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and 
+    #    if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and
     #	 m_length == gp.m_length ):
-    #     
+    #
     #        byte unsigned be
     #        for (int i=0; i < m_length  and  i < m_data.size(); i++):
     #          if (m_byte_enable_length):
@@ -510,15 +524,15 @@
     #
     #	   void'(comparer.compare_object(ext.get_name(),
     #                                         m_extensions[ext], rhs_ext))
-    #	 
+    #
     #	 if ( !comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()) )
     #	   break
-    #	 
+    #
     #      end
     #
     #    if (comparer.get_result()):
     #       string msg = sv.sformatf("GP miscompare between '%s' and '%s':\nlhs = %s\nrhs = %s",
-    #			      get_full_name(), gp.get_full_name(), 
+    #			      get_full_name(), gp.get_full_name(),
     #			      self.convert2string(), gp.convert2string())
     #       comparer.print_msg(msg)
     #    end
@@ -576,7 +590,7 @@
     #
     #  // Function: do_unpack
     #  // Unpacks the fields of the payload from ~packer~.
-    #  // 
+    #  //
     #  // The <m_data>/<m_byte_enable> arrays are reallocated if the
     #  // new size is greater than their current size; otherwise the
     #  // existing array allocations are kept.
@@ -655,12 +669,12 @@
     #  //--------------------------------------------------------------------
     #  // Group -- NODOCS -- Accessors
     #  //
-    #  // The accessor functions let you set and get each of the members of the 
-    #  // generic payload. All of the accessor methods are virtual. This implies 
-    #  // a slightly different use model for the generic payload than 
-    #  // in SystemC. The way the generic payload is defined in SystemC does 
-    #  // not encourage you to create new transaction types derived from 
-    #  // uvm_tlm_generic_payload. Instead, you would use the extensions mechanism. 
+    #  // The accessor functions let you set and get each of the members of the
+    #  // generic payload. All of the accessor methods are virtual. This implies
+    #  // a slightly different use model for the generic payload than
+    #  // in SystemC. The way the generic payload is defined in SystemC does
+    #  // not encourage you to create new transaction types derived from
+    #  // uvm_tlm_generic_payload. Instead, you would use the extensions mechanism.
     #  // Thus in SystemC none of the accessors are virtual.
     #  //--------------------------------------------------------------------
     #
@@ -676,7 +690,7 @@
     #   // Function -- NODOCS -- set_command
     #   //
     #   // Set the value of the <m_command> variable
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.14
     #  def set_command(self,uvm_tlm_command_e command):
     #    m_command = command
@@ -686,17 +700,17 @@
     #   //
     #   // Returns true if the current value of the <m_command> variable
     #   // is ~UVM_TLM_READ_COMMAND~.
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.15
     #  def is_read(self):
     #    return (m_command == UVM_TLM_READ_COMMAND)
     #  endfunction
-    # 
+    #
     #   // Function -- NODOCS -- set_read
     #   //
     #   // Set the current value of the <m_command> variable
     #   // to ~UVM_TLM_READ_COMMAND~.
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.16
     #  def set_read(self):
     #    set_command(UVM_TLM_READ_COMMAND)
@@ -706,12 +720,12 @@
     #   //
     #   // Returns true if the current value of the <m_command> variable
     #   // is ~UVM_TLM_WRITE_COMMAND~.
-    # 
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.17
     #  def is_write(self):
     #    return (m_command == UVM_TLM_WRITE_COMMAND)
     #  endfunction
-    # 
+    #
     #   // Function -- NODOCS -- set_write
     #   //
     #   // Set the current value of the <m_command> variable
@@ -721,7 +735,7 @@
     #  def set_write(self):
     #    set_command(UVM_TLM_WRITE_COMMAND)
     #  endfunction
-    #  
+    #
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.20
     #  def set_address(self,bit [63:0] addr):
@@ -731,7 +745,7 @@
     #   // Function -- NODOCS -- get_address
     #   //
     #   // Get the value of the <m_address> variable
-    # 
+    #
     #  virtual def bit [63:0] get_address(self):
     #    return m_address
     #  endfunction
@@ -739,7 +753,7 @@
     #   // Function -- NODOCS -- get_data
     #   //
     #   // Return the value of the <m_data> array
-    # 
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.21
     #  virtual def void get_data (self,output byte unsigned p []):
     #    p = m_data
@@ -747,24 +761,24 @@
     #
     #   // Function -- NODOCS -- set_data
     #   //
-    #   // Set the value of the <m_data> array  
+    #   // Set the value of the <m_data> array
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.22
     #  def set_data(self,ref byte unsigned p []):
     #    m_data = p
-    #  endfunction 
-    #  
+    #  endfunction
+    #
     #   // Function -- NODOCS -- get_data_length
     #   //
     #   // Return the current size of the <m_data> array
-    #   
+    #
     #  virtual def int unsigned get_data_length(self):
     #    return m_length
     #  endfunction
     #
     #  // Function -- NODOCS -- set_data_length
     #  // Set the value of the <m_length>
-    #   
+    #
     #   // @uvm-ieee 1800.2-2017 auto 12.3.4.2.24
     #   def set_data_length(self,int unsigned length):
     #    m_length = length
@@ -773,16 +787,16 @@
     #   // Function -- NODOCS -- get_streaming_width
     #   //
     #   // Get the value of the <m_streaming_width> array
-    #  
+    #
     #  virtual def int unsigned get_streaming_width(self):
     #    return m_streaming_width
     #  endfunction
     #
-    # 
+    #
     #   // Function -- NODOCS -- set_streaming_width
     #   //
     #   // Set the value of the <m_streaming_width> array
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.26
     #  def set_streaming_width(self,int unsigned width):
     #    m_streaming_width = width
@@ -797,7 +811,7 @@
     #   // Function -- NODOCS -- set_byte_enable
     #   //
     #   // Set the value of the <m_byte_enable> array
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.28
     #  def set_byte_enable(self,ref byte unsigned p[]):
     #    m_byte_enable = p
@@ -806,7 +820,7 @@
     #   // Function -- NODOCS -- get_byte_enable_length
     #   //
     #   // Return the current size of the <m_byte_enable> array
-    #   
+    #
     #  virtual def int unsigned get_byte_enable_length(self):
     #    return m_byte_enable_length
     #  endfunction
@@ -815,7 +829,7 @@
     #   //
     #   // Set the size <m_byte_enable_length> of the <m_byte_enable> array
     #   // i.e.  <m_byte_enable>.size()
-    #   
+    #
     # // @uvm-ieee 1800.2-2017 auto 12.3.4.2.30
     # def set_byte_enable_length(self,int unsigned length):
     #    m_byte_enable_length = length
@@ -824,15 +838,15 @@
     #   // Function -- NODOCS -- set_dmi_allowed
     #   //
     #   // DMI hint. Set the internal flag <m_dmi> to allow dmi access
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.31
     #  def set_dmi_allowed(self,bit dmi):
     #    m_dmi = dmi
     #  endfunction
-    #   
+    #
     #   // Function -- NODOCS -- is_dmi_allowed
     #   //
-    #   // DMI hint. Query the internal flag <m_dmi> if allowed dmi access 
+    #   // DMI hint. Query the internal flag <m_dmi> if allowed dmi access
     #
     # // @uvm-ieee 1800.2-2017 auto 12.3.4.2.32
     # def is_dmi_allowed(self):
@@ -842,7 +856,7 @@
     #   // Function -- NODOCS -- get_response_status
     #   //
     #   // Return the current value of the <m_response_status> variable
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.33
     #  def get_response_status(self):
     #    return m_response_status
@@ -911,7 +925,7 @@
     #  // extension type is allowed. If there is an existing extension
     #  // instance of the type of ~ext~, ~ext~ replaces it and its handle
     #  // is returned. Otherwise, ~null~ is returned.
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.41
     #  def uvm_tlm_extension_base set_extension(self,uvm_tlm_extension_base ext):
     #    uvm_tlm_extension_base ext_handle = ext.get_type_handle()
@@ -926,30 +940,30 @@
     #  // Function -- NODOCS -- get_num_extensions
     #  //
     #  // Return the current number of instance specific extensions.
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.39
     #  def int get_num_extensions(self):
     #    return m_extensions.num()
     #  endfunction: get_num_extensions
-    #   
+    #
     #
     #  // Function -- NODOCS -- get_extension
     #  //
     #  // Return the instance specific extension bound under the specified key.
     #  // If no extension is bound under that key, ~null~ is returned.
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.40
     #  def uvm_tlm_extension_base get_extension(self,uvm_tlm_extension_base ext_handle):
     #    if(!m_extensions.exists(ext_handle))
     #      return None
     #    return m_extensions[ext_handle]
     #  endfunction
-    #   
     #
+
     #  // Function -- NODOCS -- clear_extension
     #  //
     #  // Remove the instance-specific extension bound under the specified key.
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.42
     #  def void clear_extension(self,uvm_tlm_extension_base ext_handle):
     #    if(m_extensions.exists(ext_handle))
@@ -959,16 +973,18 @@
     #  endfunction
     #
     #
+
     #  // Function -- NODOCS -- clear_extensions
     #  //
     #  // Remove all instance-specific extensions
-    #   
+    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.43
     #  def void clear_extensions(self):
     #    m_extensions.delete()
     #  endfunction
     #
     #
+
     #  // Function -- NODOCS -- pre_randomize()
     #  // Prepare this class instance for randomization
     #  //
@@ -981,6 +997,7 @@
     #    end
     #  endfunction
     #
+
     #  // Function -- NODOCS -- post_randomize()
     #  // Clean-up this class instance after randomization
     #  //
@@ -988,7 +1005,10 @@
     #     m_rand_exts.delete()
     #  endfunction
     #endclass
-#
+
+
+uvm_object_utils(UVMTLMGenericPayload)
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_gp
 #//
@@ -1001,14 +1021,14 @@
 #
 #
 #// @uvm-ieee 1800.2-2017 auto 12.3.4.4.1
-#virtual class uvm_tlm_extension_base(uvm_object):
-    #
-    #
+class UVMTLMExtensionBase(UVMObject):
+
+
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.3
-    #  def __init__(self, name = "")
-    #    super().__init__(name)
-    #  endfunction
-    #
+    def __init__(self, name=""):
+        super().__init__(name)
+
+
     #  // Function -- NODOCS -- get_type_handle
     #  //
     #  // An interface to polymorphically retrieve a handle that uniquely
@@ -1031,7 +1051,7 @@
     #
     #  // Function -- NODOCS -- create
     #  //
-    #   
+    #
     #  virtual def uvm_object create (self,string name=""):
     #    return None
     #  endfunction
@@ -1067,9 +1087,9 @@
 #//|   endfunction
 #//| endclass
 #//|
-#
+
 #// @uvm-ieee 1800.2-2017 auto 12.3.4.5.1
-#class uvm_tlm_extension #(type T=int) extends uvm_tlm_extension_base
+class UVMTLMExtension(UVMTLMExtensionBase):  # (type T=int) extends uvm_tlm_extension_base
     #
     #   typedef uvm_tlm_extension#(T) this_type
     #
@@ -1080,10 +1100,10 @@
     #   // creates a new extension object.
     #
     #   // @uvm-ieee 1800.2-2017 auto 12.3.4.5.3
-    #   def __init__(self, name="")
-    #     super().__init__(name)
-    #   endfunction
-    #
+    def __init__(self, name=""):
+        super().__init__(name)
+
+
     #   // Function -- NODOCS -- ID()
     #   //
     #   // Return the unique ID of this TLM extension type.
@@ -1109,8 +1129,3 @@
     #    return None
     #  endfunction
     #
-from uvm.seq.uvm_sequence_item import *
-from uvm.macros import *
-from uvm.base.uvm_object import *
-from uvm.base.uvm_tlm_extension_base import *
-    #endclass

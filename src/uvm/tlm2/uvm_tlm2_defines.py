@@ -20,7 +20,7 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- Interface Masks
 #//
@@ -30,18 +30,21 @@
 #// for combination ports/exports.  The mask is used to do run-time
 #// interface type checking of port/export connections.
 #//----------------------------------------------------------------------
-#
+
 #// MACRO -- NODOCS -- `UVM_TLM_NB_FW_MASK
 #//
 #// Define Non blocking Forward mask onehot assignment = 'b001
 #`define UVM_TLM_NB_FW_MASK  (1<<0)
-#
+UVM_TLM_NB_FW_MASK = (1 << 0)
+
 #// MACRO -- NODOCS -- `UVM_TLM_NB_BW_MASK
 #//
 #// Define Non blocking backward mask onehot assignment = 'b010
 #`define UVM_TLM_NB_BW_MASK  (1<<1)
-#
+UVM_TLM_NB_BW_MASK = (1 << 1)
+
 #// MACRO -- NODOCS -- `UVM_TLM_B_MASK
 #//
 #// Define blocking mask onehot assignment = 'b100
 #`define UVM_TLM_B_MASK      (1<<2)
+UVM_TLM_B_MASK = (1 << 2)

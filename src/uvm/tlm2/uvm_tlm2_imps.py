@@ -21,7 +21,7 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- TLM2 imps (interface implementations)
 #//
@@ -37,11 +37,11 @@
 #// an object of type IMP and installs it as the implementation object. 
 #// Most often the imp constructor argument is "this".
 #//----------------------------------------------------------------------
-#
+
 #//--------------------------
 #// Group -- NODOCS -- IMP binding macros
 #//--------------------------
-#
+
 #// Macro -- NODOCS -- `UVM_TLM_NB_TRANSPORT_FW_IMP
 #//
 #// The macro wraps the forward path call function nb_transport_fw()
@@ -122,6 +122,7 @@
 #  endfunction
 #
 #
+
 #// Macro -- NODOCS -- `UVM_TLM_B_TRANSPORT_IMP
 #//
 #// The macro wraps the function b_transport()
@@ -140,21 +141,19 @@
 #// timing point of the transaction. The timing annotation argument
 #// allows the timing points to be offset from the simulation times
 #// at which the task call and return are executed.
-#
-#`define UVM_TLM_B_TRANSPORT_IMP(imp, T, t, delay)                        \
-#@cocotb.coroutine
-#  def b_transport(self,T t, uvm_tlm_time delay);                              \
-#    if (delay is None): \
-#       `uvm_error("UVM/TLM/NULLDELAY", \
-#                  {get_full_name(), \
-#                   ".b_transport() called with 'None' delay"}) \
-#       return; \
-#    end \
-#    imp.b_transport(t, delay);                                        \
-#  endtask
-#
-#
-#
+
+def UVM_TLM_B_TRANSPORT_IMP(T, imp):
+    @cocotb.coroutine
+    def b_transport(self, t, delay):
+        if delay is None:
+            uvm_error("UVM/TLM/NULLDELAY", (self.get_full_name() +
+            + ".b_transport() called with 'None' delay"))
+            return
+        yield getattr(self, imp).b_transport(t, delay)
+    setattr(T, 'b_transport', b_transport)
+
+
+
 #//---------------------------
 #// Group -- NODOCS -- IMP binding classes
 #//---------------------------

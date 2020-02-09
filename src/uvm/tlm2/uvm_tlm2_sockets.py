@@ -20,7 +20,22 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
+
+#from uvm.base.uvm_tlm_b_initiator_socket_base import *
+#from uvm.base.uvm_tlm_b_target_socket_base import *
+#from uvm.base.uvm_tlm_nb_initiator_socket_base import *
+#from uvm.base.uvm_tlm_nb_target_socket_base import *
+#from uvm.base.uvm_tlm_b_passthrough_initiator_socket_base import *
+#from uvm.base.uvm_tlm_b_passthrough_target_socket_base import *
+#from uvm.base.uvm_tlm_nb_passthrough_initiator_socket_base import *
+#from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
+
+from ..macros.uvm_message_defines import (uvm_error_context)
+from .uvm_tlm2_sockets_base import (UVMTLMBInitiatorSocketBase,
+    UVMTLMBTargetSocketBase)
+from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
+
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- TLM Sockets
 #//
@@ -29,10 +44,10 @@
 #// implementation of the class, The derived classes (in this file)
 #// contain the connection semantics.
 #//
-#// Sockets come in several flavors: Each socket is either an initiator or a 
-#// target, a pass-through or a terminator. Further, any particular socket 
-#// implements either the blocking interfaces or the nonblocking interfaces. 
-#// Terminator sockets are used on initiators and targets as well as 
+#// Sockets come in several flavors: Each socket is either an initiator or a
+#// target, a pass-through or a terminator. Further, any particular socket
+#// implements either the blocking interfaces or the nonblocking interfaces.
+#// Terminator sockets are used on initiators and targets as well as
 #// interconnect components as shown in the figure above. Pass-through
 #//  sockets are used to enable connections to cross hierarchical boundaries.
 #//
@@ -41,32 +56,31 @@
 #//
 #// Sockets are specified based on what they are (IS-A)
 #// and what they contains (HAS-A).
-#// IS-A and HAS-A are types of object relationships. 
+#// IS-A and HAS-A are types of object relationships.
 #// IS-A refers to the inheritance relationship and
-#//  HAS-A refers to the ownership relationship. 
-#// For example if you say D is a B that means that D is derived from base B. 
+#//  HAS-A refers to the ownership relationship.
+#// For example if you say D is a B that means that D is derived from base B.
 #// If you say object A HAS-A B that means that B is a member of A.
 #//----------------------------------------------------------------------
 #
 #
 #//----------------------------------------------------------------------
-#// Class -- NODOCS -- uvm_tlm_b_initiator_socket
+#// Class -- NODOCS -- UVMTLMBInitiatorSocket
 #//
 #// IS-A forward port; has no backward path except via the payload
 #// contents
 #//----------------------------------------------------------------------
-#
+
 #// @uvm-ieee 1800.2-2017 auto 12.3.5.2.1
-#class uvm_tlm_b_initiator_socket #(type T=uvm_tlm_generic_payload)
+class UVMTLMBInitiatorSocket(UVMTLMBInitiatorSocketBase):  #(type T=uvm_tlm_generic_payload)
     #                           extends uvm_tlm_b_initiator_socket_base #(T)
     #
-    #
+
     #  // @uvm-ieee 1800.2-2017 auto 12.3.5.2.3
-    #  def __init__(self, name, parent)
-    #    super().__init__(name, parent)
-    #  endfunction 
-    #   
-    #
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+
     #  // @uvm-ieee 1800.2-2017 auto 12.3.5.2.4
     #  def void connect(self,this_type provider):
     #
@@ -78,8 +92,8 @@
     #
     #    super().connect(provider)
     #
-    #    if(sv.cast(initiator_pt_socket, provider)   or 
-    #       sv.cast(target_pt_socket, provider)      or 
+    #    if(sv.cast(initiator_pt_socket, provider)   or
+    #       sv.cast(target_pt_socket, provider)      or
     #       sv.cast(target_socket, provider))
     #      return
     #
@@ -90,7 +104,8 @@
     #  endfunction
     #
     #endclass
-#
+
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_target_socket
 #//
@@ -105,7 +120,7 @@
 #//----------------------------------------------------------------------
 #
 #// @uvm-ieee 1800.2-2017 auto 12.3.5.1.1
-#class uvm_tlm_b_target_socket #(type IMP=int,
+class UVMTLMBTargetSocket(UVMTLMBTargetSocketBase):  # (type IMP=int,
     #                                type T=uvm_tlm_generic_payload)
     #  extends uvm_tlm_b_target_socket_base #(T)
     #
@@ -113,32 +128,28 @@
     #
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.5.1.3
-    #  def __init__(self, name, parent, IMP imp = None)
-    #    super().new (name, parent)
-    #    if (imp is None) sv.cast(m_imp, parent)
-    #    else m_imp = imp
-    #    if (m_imp is None)
-    #       `uvm_error("UVM/TLM2/NOIMP", {"b_target socket ", name,
-    #                                     " has no implementation"})
-    #  endfunction
-    #
-    #
+    def __init__(self, name, parent, imp=None):
+        super().__init__(name, parent)
+        if imp is None:
+            self.m_imp = parent
+            #sv.cast(m_imp, parent)
+        else:
+            self.m_imp = imp
+        if self.m_imp is None:
+            uvm_error("UVM/TLM2/NOIMP", "b_target socket " + name
+                + " has no implementation")
+
     #  // @uvm-ieee 1800.2-2017 auto 12.3.5.1.4
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #       "You cannot call connect() on a target termination socket", c)
-    #  endfunction
-    #
-    #  `UVM_TLM_B_TRANSPORT_IMP(m_imp, T, t, delay)
+    def connect(self, provider):
+        super().connect(provider)
+        c = self.get_comp()
+        uvm_error_context(self.get_type_name(),
+            "You cannot call connect() on a target termination socket", c)
+
     #
     #endclass
-#
+UVM_TLM_B_TRANSPORT_IMP(UVMTLMBTargetSocket, 'm_imp')  # , T, t, delay)
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_initiator_socket
 #//
@@ -195,7 +206,7 @@
     #      target_socket.bw_port.connect(bw_imp)
     #      return
     #    end
-    #    
+    #
     #    c = get_comp()
     #    `uvm_error_context(get_type_name(),
     #        "type mismatch in connect -- connection cannot be completed", c)
@@ -282,8 +293,8 @@
     #
     #    super().connect(provider)
     #
-    #    if(sv.cast(initiator_pt_socket, provider)  or 
-    #       sv.cast(target_pt_socket, provider)     or 
+    #    if(sv.cast(initiator_pt_socket, provider)  or
+    #       sv.cast(target_pt_socket, provider)     or
     #       sv.cast(target_socket, provider))
     #      return
     #
@@ -301,11 +312,11 @@
     #
     #  def __init__(self, name, parent)
     #    super().__init__(name, parent)
-    #  endfunction 
-    #   
+    #  endfunction
+    #
     #   // Function  -- NODOCS -- connect
     #   //
-    #   // Connect this socket to the specified <uvm_tlm_b_initiator_socket>
+    #   // Connect this socket to the specified <UVMTLMBInitiatorSocket>
     #  def void connect(self,this_type provider):
     #
     #    uvm_tlm_b_passthrough_target_socket_base #(T) target_pt_socket
@@ -315,7 +326,7 @@
     #
     #    super().connect(provider)
     #
-    #    if(sv.cast(target_pt_socket, provider)     or 
+    #    if(sv.cast(target_pt_socket, provider)     or
     #       sv.cast(target_socket, provider))
     #      return
     #
@@ -422,12 +433,3 @@
     #  endfunction
     #
     #endclass
-from uvm.base.uvm_tlm_b_initiator_socket_base import *
-from uvm.base.uvm_tlm_b_target_socket_base import *
-from uvm.base.uvm_tlm_nb_initiator_socket_base import *
-from uvm.base.uvm_tlm_nb_target_socket_base import *
-from uvm.base.uvm_tlm_b_passthrough_initiator_socket_base import *
-from uvm.base.uvm_tlm_b_passthrough_target_socket_base import *
-from uvm.base.uvm_tlm_nb_passthrough_initiator_socket_base import *
-from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
-#

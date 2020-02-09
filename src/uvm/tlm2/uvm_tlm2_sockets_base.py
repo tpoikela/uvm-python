@@ -20,7 +20,12 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
+from uvm.base.uvm_port_base import *
+from ..tlm1 import (UVM_PORT_COMMON)
+from .uvm_tlm2_defines import UVM_TLM_B_MASK
+from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
+
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- TLM Socket Base Classes
 #//
@@ -39,38 +44,32 @@
 #// exports for instance IS-A port and HAS-A export. Pass-through targets
 #// are the opposite, they are exports and contain ports.
 #//----------------------------------------------------------------------
-#
-#
+
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_target_socket_base
 #//
 #// IS-A forward imp; has no backward path except via the payload
 #// contents.
 #//----------------------------------------------------------------------
-#`ifndef UVM_ENABLE_DEPRECATED_API
-#virtual
-#`endif
-#class uvm_tlm_b_target_socket_base #(type T=uvm_tlm_generic_payload)
+
+
+class UVMTLMBTargetSocketBase(UVMPortBase):  # (type T=uvm_tlm_generic_payload)
     #  extends uvm_port_base #(uvm_tlm_if #(T))
-    #
-    #  def __init__(self, name, parent)
-    #    super().new (name, parent, UVM_IMPLEMENTATION, 1, 1)
-    #    m_if_mask = `UVM_TLM_B_MASK
-    #  endfunction
-    #
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent, UVM_IMPLEMENTATION, 1, 1)
+        self.m_if_mask = UVM_TLM_B_MASK
+
     #  `UVM_TLM_GET_TYPE_NAME("uvm_tlm_b_target_socket")
-    #
-    #endclass
-#
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_initiator_socket_base
 #//
 #// IS-A forward port; has no backward path except via the payload
 #// contents
 #//----------------------------------------------------------------------
-#`ifndef UVM_ENABLE_DEPRECATED_API
-#virtual
-#`endif
+
 #class uvm_tlm_b_initiator_socket_base #(type T=uvm_tlm_generic_payload)
     #  extends uvm_port_base #(uvm_tlm_if #(T))
     #
@@ -78,15 +77,18 @@
     #  `UVM_TLM_B_TRANSPORT_IMP(self.m_if, T, t, delay)
     #
     #endclass
-#
+class UVMTLMBInitiatorSocketBase:
+    pass
+UVMTLMBInitiatorSocketBase = UVM_PORT_COMMON(UVMTLMBInitiatorSocketBase,
+        UVM_TLM_B_MASK, "uvm_tlm_b_initiator_socket")
+UVM_TLM_B_TRANSPORT_IMP(UVMTLMBInitiatorSocketBase, 'm_if')  # , T, t, delay)
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_target_socket_base
 #//
 #// IS-A forward imp; HAS-A backward port
 #//----------------------------------------------------------------------
-#`ifndef UVM_ENABLE_DEPRECATED_API
-#virtual
-#`endif
+
 #class uvm_tlm_nb_target_socket_base #(type T=uvm_tlm_generic_payload,
     #                                   type P=uvm_tlm_phase_e)
     #  extends uvm_port_base #(uvm_tlm_if #(T,P))
@@ -103,7 +105,7 @@
     #  `UVM_TLM_NB_TRANSPORT_BW_IMP(bw_port, T, P, t, p, delay)
     #
     #endclass
-#
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_initiator_socket_base
 #//
@@ -217,5 +219,4 @@
     #  `UVM_EXPORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
     #  `UVM_TLM_B_TRANSPORT_IMP(self.m_if, T, t, delay)
     #
-from uvm.base.uvm_port_base import *
     # endclass

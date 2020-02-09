@@ -5,7 +5,7 @@
 #// Copyright 2010-2017 Synopsys, Inc.
 #// Copyright 2011-2018 Cadence Design Systems, Inc.
 #// Copyright 2014-2018 NVIDIA Corporation
-#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
+#// Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -22,8 +22,10 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
-#// CLASS -- NODOCS -- uvm_tlm_time
+
+from ..macros.uvm_message_defines import (uvm_error, uvm_fatal)
+
+#// CLASS -- NODOCS -- UVMTLMTime
 #// Canonical time type that can be used in different timescales
 #//
 #// This time type is used to represent time values in a canonical
@@ -32,13 +34,12 @@
 #//
 #// For a detailed explanation of the purpose for this class,
 #// see <Why is this necessary>.
-#//
-#
-#// @uvm-ieee 1800.2-2017 auto 5.6.1
-#class uvm_time
-    #
+
+
+class UVMTime:
+
     #   static local real m_resolution = 1.0e-12; // ps by default
-    #   local real m_res
+    m_resolution = 1.0e-12
     #   local time m_time;  // Number of 'm_res' time units,
     #   local string m_name
     #
@@ -52,11 +53,12 @@
     #   //
     #   // By default, the default resolution is 1.0e-12 (ps)
     #   //
-    #   static def void set_time_resolution(self,real res):
-    #      // Actually, it does not *really* need to be a power of 10.
-    #      m_resolution = res
-    #   endfunction
-    #
+    @classmethod
+    def set_time_resolution(cls, res):
+        # // Actually, it does not *really* need to be a power of 10.
+        cls.m_resolution = res
+
+
     #   // Function -- NODOCS -- new
     #   // Create a new canonical time value.
     #   //
@@ -65,18 +67,19 @@
     #   // the default resolution,
     #   // as specified by <set_time_resolution()>,
     #   // is used.
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.1
-    #   def __init__(self, name = "uvm_tlm_time", real res = 0)
-    #      m_name = name
-    #      m_res = (res == 0) ? m_resolution : res
-    #      reset()
-    #   endfunction
-    #
-    #
+    def __init__(self, name="UVMTLMTime", res=0):
+        self.m_name = name
+        self.m_res = res
+        self.m_time = 0
+        if res == 0:
+            self.m_res = UVMTime.m_resolution
+        self.reset()
+
+
+
     #   // Function -- NODOCS -- get_name
     #   // Return the name of this instance
     #   //
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.3
     #   def string get_name(self):
     #      return m_name
     #   endfunction
@@ -84,20 +87,17 @@
     #
     #   // Function -- NODOCS -- reset
     #   // Reset the value to 0
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.4
-    #   def void reset(self):
-    #      m_time = 0
-    #   endfunction
-    #   
-    #
+    def reset(self):
+        self.m_time = 0
+
     #   // Scale a timescaled value to 'm_res' units,
     #   // the specified scale
-    #   local def real to_m_res(self,real t, time scaled, real secs):
-    #      // ToDo: Check resolution
-    #      return t/scaled) * (secs/m_res  # cast to 'real' removed
+    def to_m_res(self, t, scaled, secs):
+        # ToDo: Check resolution
+        return (t/scaled) * (secs/self.m_res)  # cast to 'real' removed
     #   endfunction
-    #   
-    #   
+
+
     #   // Function -- NODOCS -- get_realtime
     #   // Return the current canonical time value,
     #   // scaled for the caller's timescale
@@ -110,12 +110,9 @@
     #   //| #(delay.get_realtime(1ns));
     #   //| #(delay.get_realtime(1fs, 1.0e-15));
     #   //
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.5
-    #   def real get_realtime(self,time scaled, real secs = 1.0e-9):
-    #      return m_time*real'(scaled) * m_res/secs
-    #   endfunction
-    #   
-    #
+    def get_realtime(self, scaled, secs = 1.0e-9):
+        return self.m_time * float(scaled) * self.m_res / secs
+
     #   // Function -- NODOCS -- incr
     #   // Increment the time value by the specified number of scaled time unit
     #   //
@@ -129,24 +126,23 @@
     #   //| delay.incr(1.5ns, 1ns);
     #   //| delay.incr(1.5ns, 1ps, 1.0e-12);
     #   //
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.6
-    #   def void incr(self,real t, time scaled, real secs = 1.0e-9):
-    #      if (t < 0.0):
-    #         `uvm_error("UVM/TLM/TIMENEG", {"Cannot increment uvm_tlm_time variable ", m_name, " by a negative value"})
-    #         return
-    #      end
-    #      if (scaled == 0):
-    #         `uvm_fatal("UVM/TLM/BADSCALE",
-    #                    "uvm_tlm_time::incr() called with a scaled time literal that is smaller than the current timescale")
-    #      end
-    #
-    #      m_time += to_m_res(t, scaled, secs)
-    #   endfunction
-    #
+    def incr(self, t, scaled, secs=1.0e-9):
+        if t < 0.0:
+            uvm_error("UVM/TLM/TIMENEG", "Cannot increment UVMTLMTime variable " 
+                    + self.m_name + " by a negative value")
+            return
+
+        if scaled == 0:
+            uvm_fatal("UVM/TLM/BADSCALE",
+                "UVMTLMTime::incr() called with a scaled time literal that is smaller than the current timescale")
+
+
+        self.m_time += self.to_m_res(t, scaled, secs)
+
     #
     #   // Function -- NODOCS -- decr
     #   // Decrement the time value by the specified number of scaled time unit
-    #   //  
+    #   //
     #   // ~t~ is a time value expressed in the scale and precision
     #   // of the caller.
     #   // ~scaled~ must be a time literal value that corresponds
@@ -156,21 +152,20 @@
     #   //
     #   //| delay.decr(200ps, 1ns);
     #   //
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.7
     #   def void decr(self,real t, time scaled, real secs):
     #      if (t < 0.0):
-    #         `uvm_error("UVM/TLM/TIMENEG", {"Cannot decrement uvm_tlm_time variable ", m_name, " by a negative value"})
+    #         `uvm_error("UVM/TLM/TIMENEG", {"Cannot decrement UVMTLMTime variable ", m_name, " by a negative value"})
     #         return
     #      end
     #      if (scaled == 0):
     #         `uvm_fatal("UVM/TLM/BADSCALE",
-    #                    "uvm_tlm_time::decr() called with a scaled time literal that is smaller than the current timescale")
+    #                    "UVMTLMTime::decr() called with a scaled time literal that is smaller than the current timescale")
     #      end
-    #      
+    #
     #      m_time -= to_m_res(t, scaled, secs)
     #
     #      if (m_time < 0.0):
-    #         `uvm_error("UVM/TLM/TOODECR", {"Cannot decrement uvm_tlm_time variable ", m_name, " to a negative value"})
+    #         `uvm_error("UVM/TLM/TOODECR", {"Cannot decrement UVMTLMTime variable ", m_name, " to a negative value"})
     #         reset()
     #      end
     #   endfunction
@@ -186,11 +181,10 @@
     #   //
     #   //| $write("%.3f ps\n", delay.get_abstime(1e-12));
     #   //
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.8
     #   def real get_abstime(self,real secs):
     #      return m_time*m_res/secs
     #   endfunction
-    #   
+    #
     #
     #   // Function -- NODOCS -- set_abstime
     #   // Set the current canonical time value,
@@ -202,14 +196,13 @@
     #   //
     #   //| delay.set_abstime(1.5, 1e-12));
     #   //
-    #   // @uvm-ieee 1800.2-2017 auto 5.6.2.9
     #   def void set_abstime(self,real t, real secs):
     #      m_time = t*secs/m_res
     #   endfunction
     #endclass
-#
-#typedef uvm_time uvm_tlm_time
-#
+
+UVMTLMTime = UVMTime
+
 #// Group -- NODOCS -- Why is this necessary
 #//
 #// Integers are not sufficient, on their own,
@@ -225,11 +218,11 @@
 #// they are not scaled back and forth to the underlying precision.
 #//
 #//| `timescale 1ns/1ps
-#//| 
+#//|
 #//| module m();
-#//| 
+#//|
 #//| time t;
-#//| 
+#//|
 #//| initial
 #//| begin
 #//|    #1.5;
@@ -264,69 +257,69 @@
 #//
 #// For example
 #//
-#//| `timescale 1ns/1ps 
-#//| 
-#//| package a_pkg; 
-#//| 
-#//| class a; 
-#//|    function void f(inout time t); 
-#//|       t += 10ns; 
+#//| `timescale 1ns/1ps
+#//|
+#//| package a_pkg;
+#//|
+#//| class a;
+#//|    function void f(inout time t);
+#//|       t += 10ns;
 #//|    endfunction
-#//| endclass 
-#//| 
-#//| endpackage 
-#//| 
-#//| 
-#//| `timescale 1ps/1ps 
-#//| 
-#//| program p; 
-#//| 
+#//| endclass
+#//|
+#//| endpackage
+#//|
+#//|
+#//| `timescale 1ps/1ps
+#//|
+#//| program p;
+#//|
 #//| import a_pkg::*;
 #//|
 #//| time t;
-#//| 
+#//|
 #//| initial
-#//| begin 
-#//|    a A = new; 
-#//|    A.f(t); 
-#//|    #t; 
+#//| begin
+#//|    a A = new;
+#//|    A.f(t);
+#//|    #t;
 #//|    $write("T=%0d ps (10,000)\n", $realtime());
 #//| end
 #//| endprogram
-#//  
+#//
 #// yields
-#//  
+#//
 #//| T=10 ps (10,000)
 #//
 #// Scaling is needed every time you make a procedural call
 #// to code that may interpret a time value in a different timescale.
 #//
-#// Using the uvm_tlm_time type
+#// Using the UVMTLMTime type
 #//
 #//| `timescale 1ns/1ps
-#//| 
+#//|
 #//|    package a_pkg;
-#//| 
+#//|
 #//| import uvm_pkg::*;
-#//| 
+#//|
 #//| class a;
-#//|    function void f(uvm_tlm_time t);
+#//|    function void f(UVMTLMTime t);
 #//|       t.incr(10ns, 1ns);
 #//|    endfunction
 #//| endclass
-#//| 
+#//|
 #//| endpackage
-#//| 
-#//| 
+#//|
+#//|
 #//| `timescale 1ps/1ps
-#//| 
+#//|
 #//| program p;
-#//| 
+#//|
 #//| import uvm_pkg::*;
 #//| import a_pkg::*;
-#//| 
-#//| uvm_tlm_time t = new;
-#//| 
+#//|
+#//| UVMTLMTime t = new;
+#//|
 #//| initial
 #//|    begin
 #//|       a A = new;
@@ -343,6 +336,3 @@
 #// A similar procedure is required when crossing any simulator
 #// or language boundary,
 #// such as interfacing between SystemVerilog and SystemC.
-#      
-# 
-# 
