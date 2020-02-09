@@ -31,7 +31,7 @@
 #from uvm.base.uvm_tlm_nb_passthrough_initiator_socket_base import *
 #from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
 
-from ..macros.uvm_message_defines import (uvm_error_context)
+from ..macros.uvm_message_defines import (uvm_error_context, uvm_error)
 from .uvm_tlm2_sockets_base import (UVMTLMBInitiatorSocketBase,
     UVMTLMBTargetSocketBase)
 from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
