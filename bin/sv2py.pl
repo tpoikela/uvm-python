@@ -106,6 +106,7 @@ my $IN_NEW = 1 << 2;
 my $IN_TASK = 1 << 3;
 my $IN_FUNC = 1 << 4;
 my $IN_COMMENT = 1 << 5;
+my $IN_COVERGROUP = 1 << 6;
 
 #---------------------------------------------------------------------------
 # GLOBAL VARS
@@ -210,7 +211,6 @@ sub process_file {
 
         # In .py files, skip uncommented lines to avoid overwriting modifications
         if ($is_py and $line !~ /^\s*#/) {
-            print "Skipping line $lineno: $line.\n";
             push(@outfile, $line);
             next;
         }
@@ -222,11 +222,11 @@ sub process_file {
         }
         elsif ($line =~ m{^\s*/\*}) {
             push(@outfile, "$ws#$line");
-            $st = $st | $IN_COMMENT;
+            set_state($IN_COMMENT);
             next;
         }
         elsif ($line =~ m{\*/}) {
-            $st = ~$IN_COMMENT & $st;
+            clear_state($IN_COMMENT);
         }
 
         # Look for line in which imports start, alternatively find 1st include
@@ -251,22 +251,22 @@ sub process_file {
         # Check for various tasks and functions
         if ($line =~ /^\s*(virtual\s+)?(protected\s+)?task\s+(\w+)/) {
             my $task_name = $1;
-            $st = $st | $IN_TASK;
+            set_state($IN_TASK);
             push(@outfile, "$ws#\@cocotb.coroutine\n");
             add_import(\@imports, "import cocotb\n");
         }
         elsif ($line =~ /^\s*endtask/) {
-            $st = ~$IN_TASK & $st;
+            clear_state($IN_TASK);
         }
         elsif ($line =~ /^\s*(virtual\s+)?(protected\s+)?function\s+(\w+)/) {
             my $func_name = $1;
-            $st = $st | $IN_FUNC;
+            set_state($IN_FUNC);
         }
         elsif ($line =~ /^\s*endfunction/) {
-            $st = ~$IN_FUNC & $st;
+            clear_state($IN_FUNC);
         }
 
-        # Inside class, finds member variables
+        # Inside class but not in task/function/group, finds member variables
         if ($st == $IN_CLASS) {
             if ($line !~ m{^\s*//} && $line =~ $re_var) {
                 my $value = "None";
@@ -288,7 +288,7 @@ sub process_file {
             }
         }
 
-        # Finds if we're inside a class, or getting out of it
+        # Finds if we're entering a class, or getting out of it
         if ($line =~ /^\s*(virtual\s+)?class\s+(\w+)/) {
             ++$ind;
             $st = $IN_CLASS;
@@ -319,13 +319,13 @@ sub process_file {
 
         # Finds where new declaration starts
         if ($line =~ /function\s+(\w+::)?new\s*\(/) {
-            $st = $st | $IN_NEW;
+            set_state($IN_NEW);
             $all_classes->{$curr_class}->{new_start} = $lineno;
         }
         elsif (($st & $IN_NEW) && $line =~ /endfunction/) {
             $new_endfunction->{$curr_class} = $lineno;
             $all_classes->{$curr_class}->{new_end} = $lineno;
-            $st = $st & ~$IN_NEW;
+            clear_state($IN_NEW);
         }
 
         $line =~ s/(\w+)'\((.*)\);/$2  # cast to '$1' removed/g;
@@ -382,14 +382,9 @@ sub process_file {
             add_import(\@imports, "from $imp_name import *\n");
         }
 
-
         # Replace standard UVM functions
         $line =~ s/(virtual)?\s+function\+svoid\s+$re_func_phases\(.*\)/def $1(self, phase):/g;
         $line =~ s/(virtual)?\s+task\s+$re_task_phases\(.*\)/def $1(self, phase):/g;
-        #$line =~ s/(virtual)? function void build\(\)/$def_build_phase/g;
-        #$line =~ s/(virtual)? function void connect\(\)/$def_build_phase/g;
-        #$line =~ s/(virtual)? function void connect_phase\(uvm_phase phase\)/$def_conn_phase/g;
-        #$line =~ s/(virtual)? function void build_phase\(uvm_phase phase\)/$def_build_phase/g;
         $line =~ s/class (\w+) extends (\w+)/class $1($2):/g;
         $line =~ s/super\./super()./g;
 
@@ -421,8 +416,11 @@ sub process_file {
             $line =~ s/task (.*)\((.*)\)/def $1(self,$2):  # task/g;
         }
 
+        do_coverage_subst(\$line, $lineno);
 
+        #--------------------------------------------------
         # Final trimmings due to bad substitutions
+        #--------------------------------------------------
         $line =~ s/\(self,\)/(self)/g;
         $line =~ s/,\s*uvm_component parent/, parent/g;
         $line =~ s/virtual def \w+ (\w+)\(/def $1(/g;
@@ -461,6 +459,21 @@ sub process_file {
     return wantarray ? @outfile : join('', @outfile);
 }
 
+sub do_coverage_subst {
+    my ($line, $lineno) = @_;
+    if ($$line =~ /covergroup\s+(\w+)/) {
+        set_state($IN_COVERGROUP);
+    }
+    elsif ($$line =~ /endgroup/) {
+        clear_state($IN_COVERGROUP);
+    }
+    elsif (in_state($st, $IN_COVERGROUP) > 0) {
+        $$line =~ s/(\w+)\s*: cross\s+(.*);/\@CoverCross('$1', items = [$2])/g;
+        $$line =~ s/cross/\@CoverCross/;
+        $$line =~ s/(\w+): coverpoint/\@CoverPoint('$1', xf = lambda a: a, bins = []) # /;
+    }
+}
+
 # Creates a simple py pkg map to add imports automatically to the file
 sub build_pkg_map {
     my @py_sources = ();
@@ -468,11 +481,13 @@ sub build_pkg_map {
         @py_sources = glob("$ENV{UVM_PYTHON}/uvm/**/*.py");
     }
     my $pkg_map = {};
+
     foreach my $f (@py_sources) {
         my ($name,$path,$suffix) = fileparse($f, @suffixlist);
         my @path = File::Spec->splitdir($path);
         my $pkg_path = "";
         my $found = 0;
+
         for my $p (@path) {
             print "|$p|\n" if $DEBUG;
             if ($found == 1) {
@@ -512,4 +527,20 @@ sub add_import {
     if ($found == 0) {
         push(@{$aref}, $imp);
     }
+}
+
+sub in_state {
+    my ($st, $state) = @_;
+    my $res = ($st & $state);
+    return $res != 0;
+}
+
+sub set_state {
+    my ($new_state) = @_;
+    $st = $st | $new_state;
+}
+
+sub clear_state {
+    my ($new_state) = @_;
+    $st = $st & ~$new_state;
 }
