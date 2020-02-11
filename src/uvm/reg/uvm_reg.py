@@ -1822,6 +1822,12 @@ class UVMReg(UVMObject):
     #   extern static function void include_coverage(string scope,
     #                                                uvm_reg_cvr_t models,
     #                                                uvm_object accessor = None)
+    @classmethod
+    def include_coverage(cls, scope, models, accessor=None):
+        uvm_reg_cvr_rsrc_db.set("uvm_reg::" + scope, "include_coverage",
+            models, accessor)
+    #endfunction
+
     #
     #   // Function: build_coverage
     #   //
@@ -1837,8 +1843,14 @@ class UVMReg(UVMObject):
     #   // register model.
     #   //
     #   extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models)
-    #
-    #
+    def build_coverage(self, models):
+        build_coverage = UVM_NO_COVERAGE
+        uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" + self.get_full_name(),
+                "include_coverage",
+                build_coverage, self)
+        return build_coverage & models
+
+
     #   // Function: add_coverage
     #   //
     #   // Specify that additional coverage models are available.
@@ -1854,6 +1866,7 @@ class UVMReg(UVMObject):
     #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
     #
     #
+
     #   // Function: has_coverage
     #   //
     #   // Check if register has coverage model(s)
@@ -1864,6 +1877,9 @@ class UVMReg(UVMObject):
     #   // coverage model as defined in <uvm_coverage_model_e>.
     #   //
     #   extern virtual function bit has_coverage(uvm_reg_cvr_t models)
+    def has_coverage(self, models):
+        return ((self.m_has_cover & models) == models)
+
     #
     #
     #   // Function: set_coverage
@@ -2289,26 +2305,8 @@ class UVMReg(UVMObject):
 #//---------
 #
 #
-#// include_coverage
-#
-#function void uvm_reg::include_coverage(string scope,
-#                                        uvm_reg_cvr_t models,
-#                                        uvm_object accessor = None)
-#   uvm_reg_cvr_rsrc_db::set({"uvm_reg::", scope},
-#                            "include_coverage",
-#                            models, accessor)
-#endfunction
 #
 #
-#// build_coverage
-#
-#function uvm_reg_cvr_t uvm_reg::build_coverage(uvm_reg_cvr_t models)
-#   build_coverage = UVM_NO_COVERAGE
-#   void'(uvm_reg_cvr_rsrc_db::read_by_name({"uvm_reg::", get_full_name()},
-#                                           "include_coverage",
-#                                           build_coverage, this))
-#   return build_coverage & models
-#endfunction: build_coverage
 #
 #
 #// add_coverage
@@ -2318,11 +2316,6 @@ class UVMReg(UVMObject):
 #endfunction: add_coverage
 #
 #
-#// has_coverage
-#
-#function bit uvm_reg::has_coverage(uvm_reg_cvr_t models)
-#   return ((self.m_has_cover & models) == models)
-#endfunction: has_coverage
 #
 #
 #// set_coverage
