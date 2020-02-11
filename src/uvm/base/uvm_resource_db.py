@@ -62,20 +62,22 @@ from .uvm_resource import UVMResource, UVMResourcePool
 rsrc_t = UVMResource
 
 
+
 class UVMResourceDb:
 
     #  typedef uvm_resource #(T) rsrc_t
     #
-    def __init__(self):
-        pass
+    def __init__(self, T=None):
+        self.T = T
 
     #  // function: get_by_type
     #  //
     #  // Get a resource by type.  The type is specified in the db
     #  // class parameter so the only argument to this function is the
     #  // ~scope~.
-    #  static function rsrc_t get_by_type(string scope)
-    #    return rsrc_t::get_by_type(scope, rsrc_t::get_type())
+    @classmethod
+    def get_by_type(cls, scope):
+        return rsrc_t.get_by_type(scope, rsrc_t.get_type())
     #  endfunction
 
     #  // function: get_by_name
@@ -101,16 +103,12 @@ class UVMResourceDb:
     #  // add a new item into the resources database.  The item will not be
     #  // written to so it will have its default value. The resource is
     #  // created using ~name~ and ~scope~ as the lookup parameters.
-    #
     #  static function rsrc_t set_default(string scope, string name)
-    #
-    #    rsrc_t r
-    #
-    #    r = new(name, scope)
-    #    r.set()
-    #    return r
-    #  endfunction
-    #
+    @classmethod
+    def set_default(cls, scope, name):
+        r = UVMResource(name, scope)
+        r.set()
+        return r
 
     #  // function- show_msg
     #
@@ -144,7 +142,7 @@ class UVMResourceDb:
             rtype, scope, _name, msg, action, acc_name, rsrc_str)
         uvm_info(id, msg, UVM_LOW)
 
-    #
+
     #  // function: set
     #  //
     #  // Create a new resource, write a ~val~ to it, and set it into the
@@ -384,20 +382,21 @@ class UVMResourceDbOptions:
     #  // the accesses. Tracing is off by default.
     #  //
     #  // This method is implicitly called by the ~+UVM_RESOURCE_DB_TRACE~.
-    #  static function void turn_on_tracing()
-    #     if (!ready) init()
-    #    tracing = 1
-    #  endfunction
-
+    @classmethod
+    def turn_on_tracing(cls):
+        if cls.ready is False:
+            cls.init()
+        cls.tracing = True
 
     #  // Function: turn_off_tracing
     #  //
     #  // Turn tracing off for the resource database.
     #
-    #  static function void turn_off_tracing()
-    #     if (!ready) init()
-    #    tracing = 0
-    #  endfunction
+    @classmethod
+    def turn_off_tracing(cls):
+        if cls.ready is False:
+            cls.init()
+        cls.tracing = False
 
 
     #  // Function: is_tracing
@@ -424,4 +423,18 @@ class UVMResourceDbOptions:
         cls.ready = True
     #  endfunction
 
-    #endclass
+
+
+# Returns new resource DB class declaration specialized with type T
+def ResourceDbClassFactory(name, argnames, T=None):
+    def __init__(self, **kwargs):
+        for key, val in kwargs.items():
+            if key not in argnames:
+                raise TypeError('Arg {} not valid for {}'.format(
+                    key, name))
+            else:
+                setattr(self, key, val)
+        UVMResourceDb.__init__(self, T)
+    newclass = type(name, (UVMResourceDb,),
+        {"__init__": __init__})
+    return newclass
