@@ -32,8 +32,8 @@
 #from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
 
 from ..macros.uvm_message_defines import (uvm_error_context, uvm_error)
-from .uvm_tlm2_sockets_base import (UVMTLMBInitiatorSocketBase,
-    UVMTLMBTargetSocketBase)
+from .uvm_tlm2_sockets_base import (UVMTlmBInitiatorSocketBase,
+    UVMTlmBTargetSocketBase)
 from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
 
 #//----------------------------------------------------------------------
@@ -65,46 +65,44 @@ from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
 #
 #
 #//----------------------------------------------------------------------
-#// Class -- NODOCS -- UVMTLMBInitiatorSocket
+#// Class -- NODOCS -- UVMTlmBInitiatorSocket
 #//
 #// IS-A forward port; has no backward path except via the payload
 #// contents
 #//----------------------------------------------------------------------
+from uvm.tlm2.uvm_tlm2_sockets_base import UVMTlmBPassthroughInitiatorSocketBase,\
+    UVMTlmBPassthroughTargetSocketBase, UVMTlmBTargetSocketBase,\
+    UVMTlmBInitiatorSocketBase, UVMTlmNbInitiatorSocketBase,\
+    UVMTlmNbPassthroughInitiatorSocketBase, UVMTlmNbPassthroughTargetSocketBase,\
+    UVMTlmNbTargetSocketBase
+from uvm.base.sv import cat
+from uvm.macros.uvm_message_defines import uvm_error
+from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_NB_TRANSPORT_FW_IMP,\
+    UVM_TLM_B_TRANSPORT_IMP, UVMTlmNbTransportBwImp
+from uvm.tlm2.uvm_tlm2_ports import UVMTlmNbTransportBwPort
 
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.2.1
-class UVMTLMBInitiatorSocket(UVMTLMBInitiatorSocketBase):  #(type T=uvm_tlm_generic_payload)
-    #                           extends uvm_tlm_b_initiator_socket_base #(T)
-    #
+class UVMTlmBInitiatorSocket(UVMTlmBInitiatorSocketBase):
 
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.2.3
+    #  // Function: new
+    #  // Construct a new instance of this socket
     def __init__(self, name, parent):
         super().__init__(name, parent)
-
-
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.2.4
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_tlm_b_passthrough_initiator_socket_base #(T) initiator_pt_socket
-    #    uvm_tlm_b_passthrough_target_socket_base #(T) target_pt_socket
-    #    uvm_tlm_b_target_socket_base #(T) target_socket
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    if(sv.cast(initiator_pt_socket, provider)   or
-    #       sv.cast(target_pt_socket, provider)      or
-    #       sv.cast(target_socket, provider))
-    #      return
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #       "type mismatch in connect -- connection cannot be completed", c)
-    #
-    #  endfunction
-    #
-    #endclass
-
+  
+    #// Function: Connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_b_target_socket>
+    def connect(self, provider):
+        valid_providers = (UVMTlmBPassthroughInitiatorSocketBase, 
+            UVMTlmBPassthroughTargetSocketBase, UVMTlmBTargetSocketBase)
+        
+        super().connect(provider)
+       
+        if not isinstance(provider, valid_providers):
+            print("TODO: uvm_error_context")
+#             c = self.get_comp();
+#             uvm_error_context(self.get_type_name(),
+#                           "type mismatch in connect -- connection cannot be completed", c)
+            pass
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_target_socket
@@ -118,37 +116,32 @@ class UVMTLMBInitiatorSocket(UVMTLMBInitiatorSocketBase):  #(type T=uvm_tlm_gene
 #//|   task b_transport(T t, uvm_tlm_time delay);
 #//
 #//----------------------------------------------------------------------
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.1.1
-class UVMTLMBTargetSocket(UVMTLMBTargetSocketBase):  # (type IMP=int,
-    #                                type T=uvm_tlm_generic_payload)
-    #  extends uvm_tlm_b_target_socket_base #(T)
-    #
-    #  local IMP m_imp
-    #
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.1.3
-    def __init__(self, name, parent, imp=None):
-        super().__init__(name, parent)
-        if imp is None:
-            self.m_imp = parent
-            #sv.cast(m_imp, parent)
-        else:
-            self.m_imp = imp
-        if self.m_imp is None:
-            uvm_error("UVM/TLM2/NOIMP", "b_target socket " + name
-                + " has no implementation")
+class UVMTlmBTargetSocket(UVMTlmBTargetSocketBase):
 
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.1.4
+    #// Function: new
+    #// Construct a new instance of this socket
+    #// ~imp~ is a reference to the class implementing the
+    #// b_transport() method.
+    #// If not specified, it is assume to be the same as ~parent~.
+    def __init__(self, name, parent, imp = None):
+        super().__init__(name, parent)
+        self.m_imp = parent if imp == None else imp
+        if (self.m_imp == None):
+            uvm_error("UVM/TLM2/NOIMP", cat("b_target socket ", name,
+                                     " has no implementation"));
+
+    #// Function: Connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_b_initiator_socket>
     def connect(self, provider):
         super().connect(provider)
-        c = self.get_comp()
-        uvm_error_context(self.get_type_name(),
-            "You cannot call connect() on a target termination socket", c)
 
-    #
-    #endclass
-UVM_TLM_B_TRANSPORT_IMP(UVMTLMBTargetSocket, 'm_imp')  # , T, t, delay)
+        c = self.get_comp();
+        # TODO:
+#         uvm_error_context(get_type_name(),
+#             "You cannot call connect() on a target termination socket", c)
+
+UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTlmBTargetSocket)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_initiator_socket
@@ -161,60 +154,41 @@ UVM_TLM_B_TRANSPORT_IMP(UVMTLMBTargetSocket, 'm_imp')  # , T, t, delay)
 #//|   function uvm_tlm_sync_e nb_transport_bw(T t, ref P p, input uvm_tlm_time delay);
 #//
 #//----------------------------------------------------------------------
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.4.1
-#class uvm_tlm_nb_initiator_socket #(type IMP=int,
-    #                                    type T=uvm_tlm_generic_payload,
-    #                                    type P=uvm_tlm_phase_e)
-    #  extends uvm_tlm_nb_initiator_socket_base #(T,P)
-    #
-    #  uvm_tlm_nb_transport_bw_imp #(T,P,IMP) bw_imp
-    #
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.4.3
-    #  def __init__(self, name, parent, IMP imp = None)
-    #    super().new (name, parent)
-    #    if (imp is None) sv.cast(imp, parent)
-    #    if (imp is None)
-    #       `uvm_error("UVM/TLM2/NOIMP", {"nb_initiator socket ", name,
-    #                                     " has no implementation"})
-    #    bw_imp = new("bw_imp", imp)
-    #  endfunction
-    #
-    #
-    #   // @uvm-ieee 1800.2-2017 auto 12.3.5.4.4
-    #   def void connect(self,this_type provider):
-    #
-    #    uvm_tlm_nb_passthrough_initiator_socket_base #(T,P) initiator_pt_socket
-    #    uvm_tlm_nb_passthrough_target_socket_base #(T,P) target_pt_socket
-    #    uvm_tlm_nb_target_socket_base #(T,P) target_socket
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    if(sv.cast(initiator_pt_socket, provider)):
-    #      initiator_pt_socket.bw_export.connect(bw_imp)
-    #      return
-    #    end
-    #    if(sv.cast(target_pt_socket, provider)):
-    #      target_pt_socket.bw_port.connect(bw_imp)
-    #      return
-    #    end
-    #
-    #    if(sv.cast(target_socket, provider)):
-    #      target_socket.bw_port.connect(bw_imp)
-    #      return
-    #    end
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #        "type mismatch in connect -- connection cannot be completed", c)
-    #
-    #  endfunction
-    #
-    #endclass
-#
+
+class UVMTlmNbInitiatorSocket(UVMTlmNbInitiatorSocketBase):
+
+    #// Function: new
+    #// Construct a new instance of this socket
+    #// ~imp~ is a reference to the class implementing the
+    #// nb_transport_bw() method.
+    #// If not specified, it is assume to be the same as ~parent~.
+    def __init__(self, name, parent, imp=None):
+        super().__init__(name, parent)
+        
+        if (imp is None):
+            imp = parent
+        else:
+            uvm_error("UVM/TLM2/NOIMP", cat("nb_initiator socket ", name,
+                                     " has no implementation"));
+        self.bw_imp = UVMTlmNbTransportBwImp("bw_imp", imp)
+
+    #// Function: Connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_nb_target_socket>
+    def connect(self, provider):
+        valid_providers = (UVMTlmNbPassthroughInitiatorSocketBase,
+            UVMTlmNbPassthroughInitiatorSocketBase, UVMTlmNbPassthroughTargetSocketBase)
+        
+        super().connect(provider)
+
+        if not isinstance(provider, valid_providers):
+            # TODO:
+#             uvm_error_context(self.get_type_name(),
+#                 "type mismatch in connect -- connection cannot be completed", 
+#                self.get_comp())
+            pass
+
+
 #
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_target_socket
@@ -227,209 +201,144 @@ UVM_TLM_B_TRANSPORT_IMP(UVMTLMBTargetSocket, 'm_imp')  # , T, t, delay)
 #//|   function uvm_tlm_sync_e nb_transport_fw(T t, ref P p, input uvm_tlm_time delay);
 #//
 #//----------------------------------------------------------------------
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.3.1
-#class uvm_tlm_nb_target_socket #(type IMP=int,
-    #                                 type T=uvm_tlm_generic_payload,
-    #                                 type P=uvm_tlm_phase_e)
-    #  extends uvm_tlm_nb_target_socket_base #(T,P)
-    #
-    #  local IMP m_imp
-    #
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.3.3
-    #  def __init__(self, name, parent, IMP imp = None)
-    #    super().new (name, parent)
-    #    if (imp is None) sv.cast(m_imp, parent)
-    #    else m_imp = imp
-    #    bw_port = new("bw_port", get_comp())
-    #    if (m_imp is None)
-    #       `uvm_error("UVM/TLM2/NOIMP", {"nb_target socket ", name,
-    #                                     " has no implementation"})
-    #  endfunction
-    #
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.3.4
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #       "You cannot call connect() on a target termination socket", c)
-    #  endfunction
-    #
-    #  `UVM_TLM_NB_TRANSPORT_FW_IMP(m_imp, T, P, t, p, delay)
-    #
-    #endclass
-#
-#
+
+class UVMTlmNbTargetSocket(UVMTlmNbTargetSocketBase):
+
+    #// Function: new
+    #// Construct a new instance of this socket
+    #// ~imp~ is a reference to the class implementing the
+    #// nb_transport_fw() method.
+    #// If not specified, it is assume to be the same as ~parent~.
+    def __init__(self, name, parent, imp=None):
+        super().__init__(name, parent)
+        self.m_imp = parent if imp is None else imp
+        self.bw_port = UVMTlmNbTransportBwPort("bw_port", self.get_comp())
+        
+        if (self.m_imp is None):
+            uvm_error("UVM/TLM2/NOIMP", cat("nb_target socket ", name,
+                                     " has no implementation"))
+
+    #// Function: connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_nb_initiator_socket>
+    def connect(self, provider):
+        super().connect(provider)
+        # TODO:
+        #uvm_error_context(self.get_type_name(),
+        #    "You cannot call connect() on a target termination socket", 
+        #    self.get_comp())
+
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTlmNbTargetSocket)
+
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_passthrough_initiator_socket
 #//
 #// IS-A forward port;
 #//----------------------------------------------------------------------
 #
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.7
-#class uvm_tlm_b_passthrough_initiator_socket #(type T=uvm_tlm_generic_payload)
-    #  extends uvm_tlm_b_passthrough_initiator_socket_base #(T)
-    #
-    #  def __init__(self, name, parent)
-    #    super().__init__(name, parent)
-    #  endfunction
-    #
-    #   // Function  -- NODOCS -- connect
-    #   //
-    #   // Connect this socket to the specified <uvm_tlm_b_target_socket>
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_tlm_b_passthrough_initiator_socket_base #(T) initiator_pt_socket
-    #    uvm_tlm_b_passthrough_target_socket_base #(T) target_pt_socket
-    #    uvm_tlm_b_target_socket_base #(T) target_socket
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    if(sv.cast(initiator_pt_socket, provider)  or
-    #       sv.cast(target_pt_socket, provider)     or
-    #       sv.cast(target_socket, provider))
-    #      return
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(), "type mismatch in connect -- connection cannot be completed", c)
-    #
-    #  endfunction
-    #
-    #endclass
-#
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.8
-#class uvm_tlm_b_passthrough_target_socket #(type T=uvm_tlm_generic_payload)
-    #  extends uvm_tlm_b_passthrough_target_socket_base #(T)
-    #
-    #  def __init__(self, name, parent)
-    #    super().__init__(name, parent)
-    #  endfunction
-    #
-    #   // Function  -- NODOCS -- connect
-    #   //
-    #   // Connect this socket to the specified <UVMTLMBInitiatorSocket>
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_tlm_b_passthrough_target_socket_base #(T) target_pt_socket
-    #    uvm_tlm_b_target_socket_base #(T) target_socket
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    if(sv.cast(target_pt_socket, provider)     or
-    #       sv.cast(target_socket, provider))
-    #      return
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #       "type mismatch in connect -- connection cannot be completed", c)
-    #  endfunction
-    #
-    #endclass
-#
-#
-#
+class UVMTlmBPassthroughInitiatorSocket(UVMTlmBPassthroughInitiatorSocketBase):
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+    #// Function : connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_b_target_socket>
+    def connect(self, provider):
+        valid_providers=(UVMTlmBPassthroughInitiatorSocketBase,
+            UVMTlmBPassthroughTargetSocketBase, UVMTlmBTargetSocketBase)
+
+        super.connect(provider);
+
+        if not isinstance(provider, valid_providers):
+            # TODO:
+#            uvm_error_context(get_type_name(), 
+#                "type mismatch in connect -- connection cannot be completed", 
+#                self.get_comp())
+            pass
+
+#//----------------------------------------------------------------------
+#// Class: uvm_tlm_b_passthrough_target_socket
+#//
+#// IS-A forward export;
+#//----------------------------------------------------------------------
+class UVMTlmBPassthroughTargetSocket(UVMTlmBPassthroughTargetSocketBase):
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+   
+    #// Function : connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_b_initiator_socket>
+    def connect(self, provider):
+        valid_providers=(UVMTlmBPassthroughTargetSocketBase,
+            UVMTlmBTargetSocketBase)
+
+        super().connect(provider)
+        
+        if not isinstance(provider, valid_providers):
+            # TODO:
+#            uvm_error_context(self.get_type_name(),
+#               "type mismatch in connect -- connection cannot be completed", 
+#               self.get_comp())
+            pass
+
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_passthrough_initiator_socket
 #//
 #// IS-A forward port; HAS-A backward export
 #//----------------------------------------------------------------------
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.5
-#class uvm_tlm_nb_passthrough_initiator_socket #(type T=uvm_tlm_generic_payload,
-    #                                             type P=uvm_tlm_phase_e)
-    #  extends uvm_tlm_nb_passthrough_initiator_socket_base #(T,P)
-    #
-    #  def __init__(self, name, parent)
-    #    super().__init__(name, parent)
-    #  endfunction
-    #
-    #   // Function  -- NODOCS -- connect
-    #   //
-    #   // Connect this socket to the specified <uvm_tlm_nb_target_socket>
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_tlm_nb_passthrough_initiator_socket_base #(T,P) initiator_pt_socket
-    #    uvm_tlm_nb_passthrough_target_socket_base #(T,P) target_pt_socket
-    #    uvm_tlm_nb_target_socket_base #(T,P) target_socket
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    if(sv.cast(initiator_pt_socket, provider)):
-    #      bw_export.connect(initiator_pt_socket.bw_export)
-    #      return
-    #    end
-    #
-    #    if(sv.cast(target_pt_socket, provider)):
-    #      target_pt_socket.bw_port.connect(bw_export)
-    #      return
-    #    end
-    #
-    #    if(sv.cast(target_socket, provider)):
-    #      target_socket.bw_port.connect(bw_export)
-    #      return
-    #    end
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #       "type mismatch in connect -- connection cannot be completed", c)
-    #
-    #  endfunction
-    #
-    #endclass
-#
+
+class UVMTlmNbPassthroughInitiatorSocket(UVMTlmNbPassthroughInitiatorSocketBase):
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+
+    #// Function : connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_nb_target_socket>
+    def connect(self, provider):
+        valid_providers=(UVMTlmNbPassthroughInitiatorSocketBase,
+            UVMTlmNbPassthroughTargetSocketBase, UVMTlmNbTargetSocketBase)
+
+        super().connect(provider)
+
+        if not isinstance(provider, valid_providers):
+            # TODO:
+#             uvm_error_context(self.get_type_name(),
+#                 "type mismatch in connect -- connection cannot be completed", 
+#                 self.get_comp())
+            pass
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_passthrough_target_socket
 #//
 #// IS-A forward export; HAS-A backward port
 #//----------------------------------------------------------------------
+
+class UVMTlmNbPassthroughTargetSocket(UVMTlmNbPassthroughTargetSocketBase):
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+    #// Function: connect
+    #//
+    #// Connect this socket to the specified <uvm_tlm_nb_initiator_socket>
+    def connect(self, provider):
+        valid_providers=(UVMTlmNbPassthroughTargetSocketBase,
+            UVMTlmNbTargetSocketBase)
+
+        super().connect(provider)
+        
+        if not isinstance(provider, valid_providers):
+            # TODO:
+#             uvm_error_context(self.get_type_name(),
+#                 "type mismatch in connect -- connection cannot be completed", 
+#                 self.get_comp())
+            pass
+
 #
-#// @uvm-ieee 1800.2-2017 auto 12.3.5.6.1
-#class uvm_tlm_nb_passthrough_target_socket #(type T=uvm_tlm_generic_payload,
-    #                                          type P=uvm_tlm_phase_e)
-    #  extends uvm_tlm_nb_passthrough_target_socket_base #(T,P)
-    #
-    #  def __init__(self, name, parent)
-    #    super().__init__(name, parent)
-    #  endfunction
-    #
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.5.6.2
-    #  def void connect(self,this_type provider):
-    #
-    #    uvm_tlm_nb_passthrough_target_socket_base #(T,P) target_pt_socket
-    #    uvm_tlm_nb_target_socket_base #(T,P) target_socket
-    #
-    #    uvm_component c
-    #
-    #    super().connect(provider)
-    #
-    #    if(sv.cast(target_pt_socket, provider)):
-    #      target_pt_socket.bw_port.connect(bw_port)
-    #      return
-    #    end
-    #
-    #    if(sv.cast(target_socket, provider)):
-    #      target_socket.bw_port.connect(bw_port)
-    #      return
-    #    end
-    #
-    #    c = get_comp()
-    #    `uvm_error_context(get_type_name(),
-    #       "type mismatch in connect -- connection cannot be completed", c)
-    #
-    #  endfunction
-    #
-    #endclass
+#//----------------------------------------------------------------------

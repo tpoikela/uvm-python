@@ -33,7 +33,9 @@ from ..base.uvm_object import UVMObject
 #// bus read/write access. It is used as the default transaction in
 #// TLM2 blocking and nonblocking transport interfaces.
 #//----------------------------------------------------------------------
-
+from enum import Enum, auto, IntEnum
+from uvm.seq.uvm_sequence_item import UVMSequenceItem
+from uvm.base.uvm_object import UVMObject
 
 #//---------------
 #// Group -- NODOCS -- Globals
@@ -52,15 +54,14 @@ from ..base.uvm_object import UVMObject
 #//
 #// UVM_TLM_IGNORE_COMMAND    - No bus operation.
 
-#typedef enum
-#{
-#    UVM_TLM_READ_COMMAND,
-#    UVM_TLM_WRITE_COMMAND,
-#    UVM_TLM_IGNORE_COMMAND
-#} uvm_tlm_command_e
-UVM_TLM_READ_COMMAND = 0
-UVM_TLM_WRITE_COMMAND = 1
-UVM_TLM_IGNORE_COMMAND = 2
+class uvm_tlm_command_e(Enum):
+    UVM_TLM_READ_COMMAND = auto
+    UVM_TLM_WRITE_COMMAND = auto
+    UVM_TLM_IGNORE_COMMAND = auto
+
+UVM_TLM_READ_COMMAND = uvm_tlm_command_e.UVM_TLM_READ_COMMAND
+UVM_TLM_WRITE_COMMAND = uvm_tlm_command_e.UVM_TLM_WRITE_COMMAND
+UVM_TLM_IGNORE_COMMAND = uvm_tlm_command_e.UVM_TLM_IGNORE_COMMAND
 
 #// Enum -- NODOCS -- uvm_tlm_response_status_e
 #//
@@ -81,37 +82,30 @@ UVM_TLM_IGNORE_COMMAND = 2
 #// UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE - Invalid byte enabling specified
 #//
 #
-#typedef enum
-#{
-#    UVM_TLM_OK_RESPONSE = 1,
-#    UVM_TLM_INCOMPLETE_RESPONSE = 0,
-#    UVM_TLM_GENERIC_ERROR_RESPONSE = -1,
-#    UVM_TLM_ADDRESS_ERROR_RESPONSE = -2,
-#    UVM_TLM_COMMAND_ERROR_RESPONSE = -3,
-#    UVM_TLM_BURST_ERROR_RESPONSE = -4,
-#    UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
-#} uvm_tlm_response_status_e
-UVM_TLM_OK_RESPONSE = 1
-UVM_TLM_INCOMPLETE_RESPONSE = 0
-UVM_TLM_GENERIC_ERROR_RESPONSE = -1
-UVM_TLM_ADDRESS_ERROR_RESPONSE = -2
-UVM_TLM_COMMAND_ERROR_RESPONSE = -3
-UVM_TLM_BURST_ERROR_RESPONSE = -4
-UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE = -5
+class uvm_tlm_response_status_e(IntEnum):
+    OK_RESPONSE = 1
+    INCOMPLETE_RESPONSE = 0
+    GENERIC_ERROR_RESPONSE = -1
+    ADDRESS_ERROR_RESPONSE = -2
+    COMMAND_ERROR_RESPONSE = -3
+    BURST_ERROR_RESPONSE = -4
+    BYTE_ENABLE_ERROR_RESPONSE = -5
+
+
+UVM_TLM_OK_RESPONSE=uvm_tlm_response_status_e.OK_RESPONSE
+UVM_TLM_INCOMPLETE_RESPONSE=uvm_tlm_response_status_e.INCOMPLETE_RESPONSE
+UVM_TLM_GENERIC_ERROR_RESPONSE=uvm_tlm_response_status_e.GENERIC_ERROR_RESPONSE
+UVM_TLM_ADDRESS_ERROR_RESPONSE=uvm_tlm_response_status_e.ADDRESS_ERROR_RESPONSE
+UVM_TLM_COMMAND_ERROR_RESPONSE=uvm_tlm_response_status_e.COMMAND_ERROR_RESPONSE
+UVM_TLM_BURST_ERROR_RESPONSE=uvm_tlm_response_status_e.BURST_ERROR_RESPONSE
+UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE=uvm_tlm_response_status_e.BYTE_ENABLE_ERROR_RESPONSE
 
 #//-----------------------
 #// Group -- NODOCS -- Generic Payload
 #//-----------------------
 
-#//----------------------------------------------------------------------
-#// Class: uvm_tlm_generic_payload
-#//
-#// Implementation of uvm_tlm_generic_payload, as described in
-#// section 12.3.4.2.1 of 1800.2-2017.
-#//----------------------------------------------------------------------
-#
 #// @uvm-ieee 1800.2-2017 auto 12.3.4.2.1
-class UVMTLMGenericPayload(UVMSequenceItem):
+class UVMTlmGenericPayload(UVMSequenceItem):
     #
     #   // Variable -- NODOCS -- m_address
     #   //
@@ -641,30 +635,21 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  endfunction
     #
     #
-    #  // Function- convert2string
-    #  //
-    #  def string convert2string(self):
-    #
-    #    string msg
-    #    string s
-    #
-    #    $sformat(msg, "%s %s [0x%16x] =", super().convert2string(),
-    #             m_command.name(), m_address)
-    #
-    #    for(int unsigned i = 0; i < m_length; i++):
-    #      if (!m_byte_enable_length  or  (m_byte_enable[i % m_byte_enable_length] ==  0xFF))
-    #        $sformat(s, " %02x", m_data[i])
-    #      else
-    #        $sformat(s, " --")
-    #      msg = { msg , s }
-    #    end
-    #
-    #    msg = { msg, " (status=", get_response_string(), ")" }
-    #
-    #    return msg
-    #
-    #  endfunction
-    #
+    #// Function- convert2string
+    #//
+    def convert2string(self):
+        msg = "%s %s [0x%16x] = " % (super().convert2string(), str(self.m_command), self.m_address)
+
+        for i in range(self.m_length):
+            if (self.m_byte_enable_length == 0 or (self.m_byte_enable[i % self.m_byte_enable_length] == 0xFF)):
+                s = " %02x" % (self.m_data[i])
+            else:
+                s = " --"
+            msg += s
+
+        msg += " (status=" + self.get_response_string() + ")"
+        
+        return msg;
     #
     #  //--------------------------------------------------------------------
     #  // Group -- NODOCS -- Accessors
@@ -1007,7 +992,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #endclass
 
 
-uvm_object_utils(UVMTLMGenericPayload)
+uvm_object_utils(UVMTlmGenericPayload)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_gp
@@ -1016,51 +1001,54 @@ uvm_object_utils(UVMTLMGenericPayload)
 #// <uvm_tlm_generic_payload> type.
 #//----------------------------------------------------------------------
 #
-#typedef uvm_tlm_generic_payload uvm_tlm_gp
-#
-#
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.4.4.1
-class UVMTLMExtensionBase(UVMObject):
 
+#//----------------------------------------------------------------------
+#// Class: uvm_tlm_extension_base
+#//
+#// The class uvm_tlm_extension_base is the non-parameterized base class for
+#// all generic payload extensions.  It includes the utility do_copy()
+#// and create().  The pure virtual function get_type_handle() allows you
+#// to get a unique handle that represents the derived type.  This is
+#// implemented in derived classes.
+#//
+#// This class is never used directly by users.
+#// The <uvm_tlm_extension> class is used instead.
+#//
+class UVMTlmExtensionBase(UVMObject):
 
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.3
-    def __init__(self, name=""):
+#  // Function: new
+#  //
+    def __init__(self, name = ""):
         super().__init__(name)
 
+#  // Function: get_type_handle
+#  //
+#  // An interface to polymorphically retrieve a handle that uniquely
+#  // identifies the type of the sub-class
+#
+#  pure virtual function uvm_tlm_extension_base get_type_handle();
+#
+#  // Function: get_type_handle_name
+#  //
+#  // An interface to polymorphically retrieve the name that uniquely
+#  // identifies the type of the sub-class
+#
+#  pure virtual function string get_type_handle_name();
+#
+    def do_copy(self, rhs):
+        super().do_copy(rhs)
 
-    #  // Function -- NODOCS -- get_type_handle
-    #  //
-    #  // An interface to polymorphically retrieve a handle that uniquely
-    #  // identifies the type of the sub-class
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.4
-    #  pure def get_type_handle(self):
-    #
-    #  // Function -- NODOCS -- get_type_handle_name
-    #  //
-    #  // An interface to polymorphically retrieve the name that uniquely
-    #  // identifies the type of the sub-class
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.4.4.5
-    #  pure def get_type_handle_name(self):
-    #
-    #  def do_copy(self,uvm_object rhs):
-    #    super().do_copy(rhs)
-    #  endfunction
-    #
-    #  // Function -- NODOCS -- create
-    #  //
-    #
-    #  virtual def uvm_object create (self,string name=""):
-    #    return None
-    #  endfunction
-    #
-    #endclass
+#  // Function: create
+#  //
+
+    def create(self, name=""):
+        return None
+#
+#endclass
 #
 #
 #//----------------------------------------------------------------------
-#// Class -- NODOCS -- uvm_tlm_extension
+#// Class: uvm_tlm_extension
 #//
 #// TLM extension class. The class is parameterized with arbitrary type
 #// which represents the type of the extension. An instance of the
@@ -1087,45 +1075,44 @@ class UVMTLMExtensionBase(UVMObject):
 #//|   endfunction
 #//| endclass
 #//|
+#
+class UVMTlmExtension(UVMTlmExtensionBase):
 
-#// @uvm-ieee 1800.2-2017 auto 12.3.4.5.1
-class UVMTLMExtension(UVMTLMExtensionBase):  # (type T=int) extends uvm_tlm_extension_base
-    #
-    #   typedef uvm_tlm_extension#(T) this_type
-    #
-    #   local static this_type m_my_tlm_ext_type = ID()
-    #
-    #   // Function -- NODOCS -- new
-    #   //
-    #   // creates a new extension object.
-    #
-    #   // @uvm-ieee 1800.2-2017 auto 12.3.4.5.3
+#   typedef uvm_tlm_extension#(T) this_type;
+#
+#   local static this_type m_my_tlm_ext_type = ID();
+#
+#   // Function: new
+#   //
+#   // creates a new extension object.
+#
     def __init__(self, name=""):
         super().__init__(name)
 
-
-    #   // Function -- NODOCS -- ID()
-    #   //
-    #   // Return the unique ID of this TLM extension type.
-    #   // This method is used to identify the type of the extension to retrieve
-    #   // from a <uvm_tlm_generic_payload> instance,
-    #   // using the <uvm_tlm_generic_payload::get_extension()> method.
-    #   //
-    #  static def this_type ID(self):
-    #    if (m_my_tlm_ext_type is None)
-    #      self.m_my_tlm_ext_type = this_type()
-    #    return m_my_tlm_ext_type
-    #  endfunction
-    #
-    #  def get_type_handle(self):
-    #     return ID()
-    #  endfunction
-    #
-    #  def get_type_handle_name(self):
-    #    return `uvm_typename(T)
-    #  endfunction
-    #
-    #  virtual def uvm_object create (self,string name=""):
-    #    return None
-    #  endfunction
-    #
+#   // Function: ID()
+#   //
+#   // Return the unique ID of this TLM extension type.
+#   // This method is used to identify the type of the extension to retrieve
+#   // from a <uvm_tlm_generic_payload> instance,
+#   // using the <uvm_tlm_generic_payload::get_extension()> method.
+#   //
+#  static function this_type ID();
+#    if (m_my_tlm_ext_type == null)
+#      m_my_tlm_ext_type = new();
+#    return m_my_tlm_ext_type;
+#  endfunction
+#
+#  virtual function uvm_tlm_extension_base get_type_handle();
+#     return ID();
+#  endfunction
+#
+#  virtual function string get_type_handle_name();
+#    return `uvm_typename(T);
+#  endfunction
+#
+#  virtual function uvm_object create (string name="");
+#    return null;
+#  endfunction
+#
+#endclass
+#

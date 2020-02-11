@@ -287,6 +287,16 @@ class sv_if(Bus):
         Bus.__init__(self, entity, name, signals, optional_signals,
                 bus_separator, array_idx)
 
+def sformatf(fmt, *args):
+    return fmt % args
+
+def cat(*args):
+    ret = ""
+    for a in args:
+        ret += a
+        
+    return ret
+
 @cocotb.coroutine
 def wait(cond, ev):
     if not callable(cond):

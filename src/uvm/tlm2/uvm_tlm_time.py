@@ -25,7 +25,7 @@
 
 from ..macros.uvm_message_defines import (uvm_error, uvm_fatal)
 
-#// CLASS -- NODOCS -- UVMTLMTime
+#// CLASS -- NODOCS -- UVMTlmTime
 #// Canonical time type that can be used in different timescales
 #//
 #// This time type is used to represent time values in a canonical
@@ -67,7 +67,7 @@ class UVMTime:
     #   // the default resolution,
     #   // as specified by <set_time_resolution()>,
     #   // is used.
-    def __init__(self, name="UVMTLMTime", res=0):
+    def __init__(self, name="UVMTlmTime", res=0):
         self.m_name = name
         self.m_res = res
         self.m_time = 0
@@ -128,13 +128,13 @@ class UVMTime:
     #   //
     def incr(self, t, scaled, secs=1.0e-9):
         if t < 0.0:
-            uvm_error("UVM/TLM/TIMENEG", "Cannot increment UVMTLMTime variable " 
+            uvm_error("UVM/TLM/TIMENEG", "Cannot increment UVMTlmTime variable " 
                     + self.m_name + " by a negative value")
             return
 
         if scaled == 0:
             uvm_fatal("UVM/TLM/BADSCALE",
-                "UVMTLMTime::incr() called with a scaled time literal that is smaller than the current timescale")
+                "UVMTlmTime::incr() called with a scaled time literal that is smaller than the current timescale")
 
 
         self.m_time += self.to_m_res(t, scaled, secs)
@@ -154,18 +154,18 @@ class UVMTime:
     #   //
     #   def void decr(self,real t, time scaled, real secs):
     #      if (t < 0.0):
-    #         `uvm_error("UVM/TLM/TIMENEG", {"Cannot decrement UVMTLMTime variable ", m_name, " by a negative value"})
+    #         `uvm_error("UVM/TLM/TIMENEG", {"Cannot decrement UVMTlmTime variable ", m_name, " by a negative value"})
     #         return
     #      end
     #      if (scaled == 0):
     #         `uvm_fatal("UVM/TLM/BADSCALE",
-    #                    "UVMTLMTime::decr() called with a scaled time literal that is smaller than the current timescale")
+    #                    "UVMTlmTime::decr() called with a scaled time literal that is smaller than the current timescale")
     #      end
     #
     #      m_time -= to_m_res(t, scaled, secs)
     #
     #      if (m_time < 0.0):
-    #         `uvm_error("UVM/TLM/TOODECR", {"Cannot decrement UVMTLMTime variable ", m_name, " to a negative value"})
+    #         `uvm_error("UVM/TLM/TOODECR", {"Cannot decrement UVMTlmTime variable ", m_name, " to a negative value"})
     #         reset()
     #      end
     #   endfunction
@@ -201,7 +201,7 @@ class UVMTime:
     #   endfunction
     #endclass
 
-UVMTLMTime = UVMTime
+UVMTlmTime = UVMTime
 
 #// Group -- NODOCS -- Why is this necessary
 #//
@@ -294,7 +294,7 @@ UVMTLMTime = UVMTime
 #// Scaling is needed every time you make a procedural call
 #// to code that may interpret a time value in a different timescale.
 #//
-#// Using the UVMTLMTime type
+#// Using the UVMTlmTime type
 #//
 #//| `timescale 1ns/1ps
 #//|
@@ -303,7 +303,7 @@ UVMTLMTime = UVMTime
 #//| import uvm_pkg::*;
 #//|
 #//| class a;
-#//|    function void f(UVMTLMTime t);
+#//|    function void f(UVMTlmTime t);
 #//|       t.incr(10ns, 1ns);
 #//|    endfunction
 #//| endclass
@@ -318,7 +318,7 @@ UVMTLMTime = UVMTime
 #//| import uvm_pkg::*;
 #//| import a_pkg::*;
 #//|
-#//| UVMTLMTime t = new;
+#//| UVMTlmTime t = new;
 #//|
 #//| initial
 #//|    begin

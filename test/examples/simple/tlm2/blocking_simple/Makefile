@@ -41,6 +41,7 @@ PWD=$(shell pwd)
 
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
@@ -51,13 +52,11 @@ PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
-
 ifeq ($(TOPLEVEL_LANG),verilog)
 	VERILOG_SOURCES ?= $(WPWD)/../../common_stub.v
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
-
 
 ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
