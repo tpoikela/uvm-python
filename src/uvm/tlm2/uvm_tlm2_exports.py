@@ -20,6 +20,13 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
+
+from uvm.base.uvm_port_base import UVMPortBase
+from uvm.tlm1.uvm_tlm_imps import UVM_EXPORT_COMMON
+from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK, UVM_TLM_NB_FW_MASK,\
+    UVM_TLM_NB_BW_MASK
+from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
+    UVM_TLM_NB_TRANSPORT_FW_IMP, UVM_TLM_NB_TRANSPORT_BW_IMP
 #
 #//----------------------------------------------------------------------
 #// Title -- NODOCS -- TLM2 Export Classes
@@ -32,40 +39,34 @@
 #// Class -- NODOCS -- uvm_tlm_b_transport_export
 #//
 #// Blocking transport export class.
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.7.1
-#class uvm_tlm_b_transport_export #(type T=uvm_tlm_generic_payload)
-    #  extends uvm_port_base #(uvm_tlm_if #(T))
-    #  `UVM_EXPORT_COMMON(`UVM_TLM_B_MASK, "uvm_tlm_b_transport_export")
-    #  `UVM_TLM_B_TRANSPORT_IMP(self.m_if, T, t, delay)
-    #endclass
-#
-#
-#
-#// Class -- NODOCS -- uvm_tlm_nb_transport_fw_export
+
+class UVMTlmBTransportExport(UVMPortBase):
+    pass
+
+UVM_EXPORT_COMMON(UVMTlmBTransportExport, UVM_TLM_B_MASK, "uvm_tlm_b_transport_export")
+UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBTransportExport)
+
+
+
+#// Class: uvm_tlm_nb_transport_fw_export
 #//
 #// Non-blocking forward transport export class 
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.7.2
-#class uvm_tlm_nb_transport_fw_export #(type T=uvm_tlm_generic_payload,
-    #                                   type P=uvm_tlm_phase_e)
-    #  extends uvm_port_base #(uvm_tlm_if #(T,P))
-    #  `UVM_EXPORT_COMMON(`UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_export")
-    #  `UVM_TLM_NB_TRANSPORT_FW_IMP(self.m_if, T, P, t, p, delay)
-    #endclass
-#
-#
-#
-#// Class -- NODOCS -- uvm_tlm_nb_transport_bw_export
+
+class UVMTlmNbTransportFwExport(UVMPortBase): 
+    pass
+
+UVM_EXPORT_COMMON(UVMTlmNbTransportFwExport, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_export")
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbTransportFwExport)
+
+
+
+#// Class: uvm_tlm_nb_transport_bw_export
 #//
 #// Non-blocking backward transport export class 
-#
-#// @uvm-ieee 1800.2-2017 auto 12.3.7.3
-#class uvm_tlm_nb_transport_bw_export #(type T=uvm_tlm_generic_payload,
-    #                                   type P=uvm_tlm_phase_e)
-    #  extends uvm_port_base #(uvm_tlm_if #(T,P))
-    #   // Function -- NODOCS -- new
-    #  `UVM_EXPORT_COMMON(`UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_export")
-    #  `UVM_TLM_NB_TRANSPORT_BW_IMP(self.m_if, T, P, t, p, delay)
-from uvm.base.uvm_port_base import *
-    #endclass
+
+class UVMTlmNbTransportBwExport(UVMPortBase): 
+    pass
+
+UVM_EXPORT_COMMON(UVMTlmNbTransportBwExport, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_export")
+UVM_TLM_NB_TRANSPORT_BW_IMP('m_if', UVMTlmNbTransportBwExport)
+

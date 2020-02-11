@@ -285,13 +285,8 @@ class env(UVMEnv):
         fork_procs = []
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
-            #fork begin
-            fork_proc = cocotb.fork(the_sequence.start(self.sqr, None))
-            fork_procs.append(fork_proc)
-            #join_none
-        #wait fork
-        #yield fork_procs
-        yield Timer(1000, "NS")
+            fork_procs.append(cocotb.fork(the_sequence.start(self.sqr, None)))
+        yield list(map(lambda t : t.join(), fork_procs))
         phase.drop_objection(self)
 
     def check_phase(self, phase):

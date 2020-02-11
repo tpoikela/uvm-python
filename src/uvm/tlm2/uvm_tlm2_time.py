@@ -28,9 +28,12 @@
 #// For a detailed explanation of the purpose for this class,
 #// see <Why is this necessary>.
 #//
-#class uvm_tlm_time;
+from uvm.macros.uvm_message_defines import uvm_error, uvm_fatal
+from uvm.base.sv import cat
+class UVMTlmTime():
 #
 #   static local real m_resolution = 1.0e-12; // ps by default
+    m_resolution = 1.0e-12 
 #   local real m_res;
 #   local time m_time;  // Number of 'm_res' time units,
 #   local string m_name;
@@ -45,11 +48,10 @@
 #   //
 #   // By default, the default resolution is 1.0e-12 (ps)
 #   //
-#   static function void set_time_resolution(real res);
-#      // Actually, it does not *really* need to be a power of 10.
-#      m_resolution = res;
-#   endfunction
-#
+    @staticmethod
+    def set_time_resolution(res):
+        UVMTlmTime.m_resolution = res
+
 #   // Function: new
 #   // Create a new canonical time value.
 #   //
@@ -58,36 +60,29 @@
 #   // the default resolution,
 #   // as specified by <set_time_resolution()>,
 #   // is used.
-#   function new(string name = "uvm_tlm_time", real res = 0);
-#      m_name = name;
-#      m_res = (res == 0) ? m_resolution : res;
-#      reset();
-#   endfunction
-#
-#
+    def __init__(self, name="uvm_tlm_time", res=0):
+        self.m_name = name
+        self.m_res = UVMTlmTime.m_resolution if (res == 0) else res
+        self.reset()
+
 #   // Function: get_name
 #   // Return the name of this instance
 #   //
-#   function string get_name();
-#      return m_name;
-#   endfunction
-#
-#
+    def get_name(self):
+        return self.m_name
+
 #   // Function: reset
 #   // Reset the value to 0
-#   function void reset();
-#      m_time = 0;
-#   endfunction
-#   
-#
+    def reset(self):
+        self.m_time = 0
+
+
 #   // Scale a timescaled value to 'm_res' units,
 #   // the specified scale
-#   local function real to_m_res(real t, time scaled, real secs);
+    def _to_m_res(self, t, scaled, secs):
 #      // ToDo: Check resolution
-#      return t/real'(scaled) * (secs/m_res);
-#   endfunction
-#   
-#   
+        return (t/scaled) * (secs/self.m_res)
+
 #   // Function: get_realtime
 #   // Return the current canonical time value,
 #   // scaled for the caller's timescale
@@ -100,11 +95,9 @@
 #   //| #(delay.get_realtime(1ns));
 #   //| #(delay.get_realtime(1fs, 1.0e-15));
 #   //
-#   function real get_realtime(time scaled, real secs = 1.0e-9);
-#      return m_time*real'(scaled) * m_res/secs;
-#   endfunction
-#   
-#
+    def get_realtime(self, scaled, secs = 1.0e-9):
+        return self.m_time*scaled * (self.m_res/secs)
+
 #   // Function: incr
 #   // Increment the time value by the specified number of scaled time unit
 #   //
@@ -118,20 +111,16 @@
 #   //| delay.incr(1.5ns, 1ns);
 #   //| delay.incr(1.5ns, 1ps, 1.0e-12);
 #   //
-#   function void incr(real t, time scaled, real secs = 1.0e-9);
-#      if (t < 0.0) begin
-#         `uvm_error("UVM/TLM/TIMENEG", {"Cannot increment uvm_tlm_time variable ", m_name, " by a negative value"});
-#         return;
-#      end
-#      if (scaled == 0) begin
-#         `uvm_fatal("UVM/TLM/BADSCALE",
-#                    "uvm_tlm_time::incr() called with a scaled time literal that is smaller than the current timescale")
-#      end
-#
-#      m_time += to_m_res(t, scaled, secs);
-#   endfunction
-#
-#
+    def incr(self, t, scaled, secs = 1.0e-9):
+        if (t < 0.0):
+            uvm_error("UVM/TLM/TIMENEG", cat("Cannot increment uvm_tlm_time variable ", self.m_name, " by a negative value"))
+            return
+        if (scaled == 0):
+            uvm_fatal("UVM/TLM/BADSCALE",
+                    "uvm_tlm_time::incr() called with a scaled time literal that is smaller than the current timescale")
+
+        self.m_time += self._to_m_res(t, scaled, secs)
+
 #   // Function: decr
 #   // Decrement the time value by the specified number of scaled time unit
 #   //  
@@ -144,25 +133,20 @@
 #   //
 #   //| delay.decr(200ps, 1ns);
 #   //
-#   function void decr(real t, time scaled, real secs);
-#      if (t < 0.0) begin
-#         `uvm_error("UVM/TLM/TIMENEG", {"Cannot decrement uvm_tlm_time variable ", m_name, " by a negative value"});
-#         return;
-#      end
-#      if (scaled == 0) begin
-#         `uvm_fatal("UVM/TLM/BADSCALE",
-#                    "uvm_tlm_time::decr() called with a scaled time literal that is smaller than the current timescale")
-#      end
-#      
-#      m_time -= to_m_res(t, scaled, secs);
-#
-#      if (m_time < 0.0) begin
-#         `uvm_error("UVM/TLM/TOODECR", {"Cannot decrement uvm_tlm_time variable ", m_name, " to a negative value"});
-#         reset();
-#      end
-#   endfunction
-#
-#
+    def decr(self, t, scaled, secs):
+        if (t < 0.0):
+            uvm_error("UVM/TLM/TIMENEG", cat("Cannot decrement uvm_tlm_time variable ", self.m_name, " by a negative value"));
+            return
+        if (scaled == 0):
+            uvm_fatal("UVM/TLM/BADSCALE",
+                 "uvm_tlm_time::decr() called with a scaled time literal that is smaller than the current timescale")
+      
+        self.m_time -= self._to_m_res(t, scaled, secs);
+
+        if (self.m_time < 0.0):
+            uvm_error("UVM/TLM/TOODECR", cat("Cannot decrement uvm_tlm_time variable ", self.m_name, " to a negative value"))
+            self.reset()
+
 #   // Function: get_abstime
 #   // Return the current canonical time value,
 #   // in the number of specified time unit, regardless of the
@@ -173,11 +157,9 @@
 #   //
 #   //| $write("%.3f ps\n", delay.get_abstime(1e-12));
 #   //
-#   function real get_abstime(real secs);
-#      return m_time*m_res/secs;
-#   endfunction
-#   
-#
+    def get_abstime(self, secs):
+        return self.m_time*self.m_res/secs
+
 #   // Function: set_abstime
 #   // Set the current canonical time value,
 #   // to the number of specified time unit, regardless of the
@@ -188,12 +170,9 @@
 #   //
 #   //| delay.set_abstime(1.5, 1e-12));
 #   //
-#   function void set_abstime(real t, real secs);
-#      m_time = t*secs/m_res;
-#   endfunction
-#endclass
-#
-#
+    def set_abstime(self, t, secs):
+        self.m_time = t*secs/self.m_res
+
 #// Group: Why is this necessary
 #//
 #// Integers are not sufficient, on their own,
