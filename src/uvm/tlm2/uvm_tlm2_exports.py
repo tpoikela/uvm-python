@@ -1,7 +1,9 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
-#//   Copyright 2020 Matthew Ballance
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#// Copyright 2015 NVIDIA Corporation
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -27,14 +29,14 @@ from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
     UVM_TLM_NB_TRANSPORT_FW_IMP, UVM_TLM_NB_TRANSPORT_BW_IMP
 #
 #//----------------------------------------------------------------------
-#// Title: TLM2 Export Classes
+#// Title -- NODOCS -- TLM2 Export Classes
 #//
 #// This section defines the export classes for connecting TLM2
 #// interfaces.
 #//----------------------------------------------------------------------
 #
 #
-#// Class: uvm_tlm_b_transport_export
+#// Class -- NODOCS -- uvm_tlm_b_transport_export
 #//
 #// Blocking transport export class.
 

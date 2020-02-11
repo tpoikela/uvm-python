@@ -1,7 +1,10 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010-2011 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
-#//   Copyright 2020 Matthew Ballance
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2014 Semifore
+#// Copyright 2010-2017 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#// Copyright 2014-2015 NVIDIA Corporation
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -23,9 +26,10 @@ from enum import Enum, auto
 from uvm.macros.uvm_message_defines import uvm_error
 import cocotb
 
-#// File: TLM2 Types
+#// File -- NODOCS -- TLM2 Types
+#typedef class uvm_time
 #
-#// Enum: uvm_tlm_phase_e 
+#// Enum -- NODOCS -- uvm_tlm_phase_e 
 #//
 #// Nonblocking transport synchronization state values between
 #// an initiator and a target.
@@ -45,7 +49,7 @@ class uvm_tlm_phase_e(Enum):
     END_RESP = auto
     
 #
-#// Enum: uvm_tlm_sync_e
+#// Enum -- NODOCS -- uvm_tlm_sync_e
 #//
 #// Pre-defined phase state values for the nonblocking transport
 #// Base Protocol between an initiator and a target.
@@ -60,18 +64,20 @@ class uvm_tlm_sync_e(Enum):
     UVM_TLM_COMPLETED = auto
 
 #
-#// MACRO: `UVM_TLM_TASK_ERROR
+#// MACRO -- NODOCS -- `UVM_TLM_TASK_ERROR
 #//
 #// Defines Not-Yet-Implemented TLM tasks
 UVM_TLM_TASK_ERROR="TLM-2 interface task not implemented"
 
 #// MACRO: `UVM_TLM_FUNCTION_ERROR
+#
+#// MACRO -- NODOCS -- `UVM_TLM_FUNCTION_ERROR
 #//
 #// Defines Not-Yet-Implemented TLM functions
 UVM_TLM_FUNCTION_ERROR="TLM-2 interface function not implemented"
 
 #//
-#// Class: uvm_tlm_if
+#// Class -- NODOCS -- uvm_tlm_if
 #//
 #// Base class type to define the transport functions.
 #//

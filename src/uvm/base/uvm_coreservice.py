@@ -25,6 +25,14 @@ class UVMCoreService:
         if UVMCoreService.m_inst is None:
             UVMCoreService.m_inst = UVMCoreService()
         return UVMCoreService.m_inst
+    
+    @staticmethod
+    def reset():
+        """Reset the state of coreservices. Used for unit testing"""
+        UVMCoreService.m_inst = None
+        from .uvm_registry import UVMComponentRegistry, UVMObjectRegistry
+        UVMComponentRegistry.reset()
+        UVMObjectRegistry.reset()
 
     def get_root(self):
         from .uvm_root import UVMRoot

@@ -1,7 +1,6 @@
 #//----------------------------------------------------------------------
-#// Copyright 2010-2011 Mentor Graphics Corporation
-#// Copyright 2010-2017 Synopsys, Inc.
-#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#//   Copyright 2010 Mentor Graphics Corporation
+#//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
@@ -19,13 +18,13 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
-#  `include "tlm2/uvm_tlm2_defines.svh"
-#  `include "tlm2/uvm_tlm_time.svh"
-#  `include "tlm2/uvm_tlm2_generic_payload.svh"
-#  `include "tlm2/uvm_tlm2_ifs.svh"
-#  `include "tlm2/uvm_tlm2_imps.svh"
-#  `include "tlm2/uvm_tlm2_ports.svh"
-#  `include "tlm2/uvm_tlm2_exports.svh"
-#  `include "tlm2/uvm_tlm2_sockets_base.svh"
-#  `include "tlm2/uvm_tlm2_sockets.svh"
+
+import cocotb
+from uvm import run_test
+from tb_env import tb_env
+
+
+@cocotb.test()
+def initial_begin(dut):
+    env = tb_env("env_for_tlm2_test")
+    yield run_test()

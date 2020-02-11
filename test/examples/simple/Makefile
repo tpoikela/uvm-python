@@ -1,7 +1,7 @@
 
 test: test-trivial test-basic_examples test-sequence test-interfaces test-hello_world\
     test-registers test-tlm1 test-configuration test-callbacks test-factory\
-    test-objections test-phases
+    test-objections test-phases test-tlm2
 
 test-trivial:
 	make -C trivial/
@@ -33,6 +33,9 @@ test-tlm1:
 	make -C tlm1/fifo/
 	make -C tlm1/bidir/
 	make -C tlm1/master_slave/
+
+test-tlm2:
+	make -C tlm2/blocking_simple/
 
 test-callbacks:
 	make -C callbacks/

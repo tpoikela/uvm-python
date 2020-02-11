@@ -18,9 +18,14 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
+from uvm.base.uvm_port_base import *
+from ..tlm1 import (UVM_PORT_COMMON)
+from .uvm_tlm2_defines import UVM_TLM_B_MASK
+from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
+
 #//----------------------------------------------------------------------
-#// Title: TLM Socket Base Classes
+#// Title -- NODOCS -- TLM Socket Base Classes
 #//
 #// A collection of base classes, one for each socket type.  The reason
 #// for having a base class for each socket is that all the socket (base)
@@ -37,10 +42,10 @@
 #// exports for instance IS-A port and HAS-A export. Pass-through targets
 #// are the opposite, they are exports and contain ports.
 #//----------------------------------------------------------------------
-#
-#
+
+
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_b_target_socket_base
+#// Class -- NODOCS -- uvm_tlm_b_target_socket_base
 #//
 #// IS-A forward imp; has no backward path except via the payload
 #// contents.
@@ -107,11 +112,8 @@ class UVMTlmNbInitiatorSocketBase(UVMPortBase):
 UVM_TLM_GET_TYPE_NAME(UVMTlmNbInitiatorSocketBase)
 UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbInitiatorSocketBase)
 
-
-
-
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_nb_passthrough_initiator_socket_base
+#// Class -- NODOCS -- uvm_tlm_nb_passthrough_initiator_socket_base
 #//
 #// IS-A forward port; HAS-A backward export
 #//----------------------------------------------------------------------
@@ -154,7 +156,7 @@ UVM_PORT_COMMON(UVMTlmBPassthroughInitiatorSocketBase, UVM_TLM_B_MASK, "uvm_tlm_
 UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBPassthroughInitiatorSocketBase)
 
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_b_passthrough_target_socket_base
+#// Class -- NODOCS -- uvm_tlm_b_passthrough_target_socket_base
 #//
 #// IS-A forward export
 #//----------------------------------------------------------------------

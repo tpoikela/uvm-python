@@ -230,10 +230,11 @@ def UVM_TRANSPORT_IMP(imp, T):
     UVM_NONBLOCKING_TRANSPORT_IMP(imp, T)
 
 def UVM_TLM_GET_TYPE_NAME(T):
-  Ts = T.__name__
-  def get_type_name(self):
-    return Ts
-  setattr(T, 'get_type_name', get_type_name)
+    Ts = T.__name__
+
+    def get_type_name(self):
+        return Ts
+    setattr(T, 'get_type_name', get_type_name)
 #
 
 #`define UVM_PORT_COMMON(MASK,TYPE_NAME) \

@@ -1,7 +1,6 @@
 #//----------------------------------------------------------------------
-#// Copyright 2010-2011 Mentor Graphics Corporation
-#// Copyright 2010-2017 Synopsys, Inc.
-#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#//   Copyright 2010 Mentor Graphics Corporation
+#//   Copyright 2010-2011 Synopsys, Inc
 #//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
@@ -20,12 +19,29 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 #
-#  `include "tlm2/uvm_tlm2_defines.svh"
-#  `include "tlm2/uvm_tlm_time.svh"
-#  `include "tlm2/uvm_tlm2_generic_payload.svh"
-#  `include "tlm2/uvm_tlm2_ifs.svh"
-#  `include "tlm2/uvm_tlm2_imps.svh"
-#  `include "tlm2/uvm_tlm2_ports.svh"
-#  `include "tlm2/uvm_tlm2_exports.svh"
-#  `include "tlm2/uvm_tlm2_sockets_base.svh"
-#  `include "tlm2/uvm_tlm2_sockets.svh"
+
+from uvm import UVMComponent, uvm_component_utils
+from uvm.macros import *
+
+from initiator import initiator
+from target import target
+
+class tb_env(UVMComponent):
+
+    def __init__(self, name="tb_env", parent=None):
+        super().__init__(name, parent)
+        self.master = None
+        self.slave = None
+
+    def build_phase(self, phase):
+        self.master = initiator.type_id.create("master", self)
+        self.slave  = target.type_id.create("slave", self)
+
+    def connect_phase(self, phase):
+        self.master.sock.connect(self.slave.sock)
+
+    def check_phase(self, phase):
+        if self.slave.num_transport == 0:
+            uvm_fatal("ERR_NUM_TRANSPORT", "Got zero items!")
+
+uvm_component_utils(tb_env)

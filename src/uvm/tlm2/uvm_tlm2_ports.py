@@ -1,7 +1,10 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
-#//   Copyright 2020 Matthew Ballance
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#// Copyright 2015 NVIDIA Corporation
+#// Copyright 2014 Cisco Systems, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -20,13 +23,13 @@
 #//----------------------------------------------------------------------
 #
 #//----------------------------------------------------------------------
-#// Title: TLM2 ports
+#// Title -- NODOCS -- TLM2 ports
 #//
 #// The following defines TLM2 port classes.
 #//
 #//----------------------------------------------------------------------
 #
-#// class: uvm_tlm_b_transport_port
+#// class -- NODOCS -- uvm_tlm_b_transport_port
 #//
 #// Class providing the blocking transport port.
 #// The port can be bound to one export.
@@ -45,7 +48,7 @@ UVM_PORT_COMMON(UVMTlmBTransportPort, UVM_TLM_B_MASK, "uvm_tlm_b_transport_port"
 UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBTransportPort)
 
 #
-#// class: uvm_tlm_nb_transport_fw_port
+#// class -- NODOCS -- uvm_tlm_nb_transport_fw_port
 #//
 #// Class providing the non-blocking backward transport port.
 #// Transactions received from the producer, on the forward path, are
@@ -53,7 +56,6 @@ UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBTransportPort)
 #// non-blocking transport port.
 #// The port can be bound to one export.
 #//
-  
 class UVMTlmNbTransportFwPort(UVMPortBase):
     pass
 

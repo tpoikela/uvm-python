@@ -11,6 +11,7 @@ def uvm_object_utils(T):
     m_uvm_object_registry_internal(T,Ts)
     m_uvm_object_create_func(T, Ts)
     m_uvm_get_type_name_func(T, Ts)
+    return T
 
 
 def uvm_component_utils(T):
@@ -19,6 +20,7 @@ def uvm_component_utils(T):
     Ts = T.__name__
     m_uvm_component_registry_internal(T, Ts)
     m_uvm_get_type_name_func(T, Ts)
+    return T
 
 
 def m_uvm_get_type_name_func(T, Ts):

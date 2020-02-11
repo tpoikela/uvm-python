@@ -1,7 +1,9 @@
 #//----------------------------------------------------------------------
-#//   Copyright 2010 Mentor Graphics Corporation
-#//   Copyright 2010 Synopsys, Inc.
-#//   Copyright 2020 Matthew Ballance
+#// Copyright 2010-2011 Mentor Graphics Corporation
+#// Copyright 2010 Synopsys, Inc.
+#// Copyright 2010-2018 Cadence Design Systems, Inc.
+#// Copyright 2015-2018 NVIDIA Corporation
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -18,19 +20,34 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
+
+
+#from uvm.base.uvm_tlm_b_initiator_socket_base import *
+#from uvm.base.uvm_tlm_b_target_socket_base import *
+#from uvm.base.uvm_tlm_nb_initiator_socket_base import *
+#from uvm.base.uvm_tlm_nb_target_socket_base import *
+#from uvm.base.uvm_tlm_b_passthrough_initiator_socket_base import *
+#from uvm.base.uvm_tlm_b_passthrough_target_socket_base import *
+#from uvm.base.uvm_tlm_nb_passthrough_initiator_socket_base import *
+#from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
+
+from ..macros.uvm_message_defines import (uvm_error_context, uvm_error)
+from .uvm_tlm2_sockets_base import (UVMTlmBInitiatorSocketBase,
+    UVMTlmBTargetSocketBase)
+from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
+
 #//----------------------------------------------------------------------
-#// Title: TLM Sockets
+#// Title -- NODOCS -- TLM Sockets
 #//
 #// Each uvm_tlm_*_socket class is derived from a corresponding
 #// uvm_tlm_*_socket_base class.  The base class contains most of the
 #// implementation of the class, The derived classes (in this file)
 #// contain the connection semantics.
 #//
-#// Sockets come in several flavors: Each socket is either an initiator or a 
-#// target, a pass-through or a terminator. Further, any particular socket 
-#// implements either the blocking interfaces or the nonblocking interfaces. 
-#// Terminator sockets are used on initiators and targets as well as 
+#// Sockets come in several flavors: Each socket is either an initiator or a
+#// target, a pass-through or a terminator. Further, any particular socket
+#// implements either the blocking interfaces or the nonblocking interfaces.
+#// Terminator sockets are used on initiators and targets as well as
 #// interconnect components as shown in the figure above. Pass-through
 #//  sockets are used to enable connections to cross hierarchical boundaries.
 #//
@@ -39,16 +56,16 @@
 #//
 #// Sockets are specified based on what they are (IS-A)
 #// and what they contains (HAS-A).
-#// IS-A and HAS-A are types of object relationships. 
+#// IS-A and HAS-A are types of object relationships.
 #// IS-A refers to the inheritance relationship and
-#//  HAS-A refers to the ownership relationship. 
-#// For example if you say D is a B that means that D is derived from base B. 
+#//  HAS-A refers to the ownership relationship.
+#// For example if you say D is a B that means that D is derived from base B.
 #// If you say object A HAS-A B that means that B is a member of A.
 #//----------------------------------------------------------------------
 #
 #
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_b_initiator_socket
+#// Class -- NODOCS -- UVMTlmBInitiatorSocket
 #//
 #// IS-A forward port; has no backward path except via the payload
 #// contents
@@ -88,7 +105,7 @@ class UVMTlmBInitiatorSocket(UVMTlmBInitiatorSocketBase):
             pass
 
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_b_target_socket
+#// Class -- NODOCS -- uvm_tlm_b_target_socket
 #//
 #// IS-A forward imp; has no backward path except via the payload
 #// contents.
@@ -99,7 +116,6 @@ class UVMTlmBInitiatorSocket(UVMTlmBInitiatorSocketBase):
 #//|   task b_transport(T t, uvm_tlm_time delay);
 #//
 #//----------------------------------------------------------------------
-
 class UVMTlmBTargetSocket(UVMTlmBTargetSocketBase):
 
     #// Function: new
@@ -126,9 +142,9 @@ class UVMTlmBTargetSocket(UVMTlmBTargetSocketBase):
 #             "You cannot call connect() on a target termination socket", c)
 
 UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTlmBTargetSocket)
-#
+
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_nb_initiator_socket
+#// Class -- NODOCS -- uvm_tlm_nb_initiator_socket
 #//
 #// IS-A forward port; HAS-A backward imp
 #//
@@ -175,7 +191,7 @@ class UVMTlmNbInitiatorSocket(UVMTlmNbInitiatorSocketBase):
 
 #
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_nb_target_socket
+#// Class -- NODOCS -- uvm_tlm_nb_target_socket
 #//
 #// IS-A forward imp; HAS-A backward port
 #//
@@ -216,7 +232,7 @@ UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTlmNbTargetSocket)
 
 
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_b_passthrough_initiator_socket
+#// Class -- NODOCS -- uvm_tlm_b_passthrough_initiator_socket
 #//
 #// IS-A forward port;
 #//----------------------------------------------------------------------
@@ -269,9 +285,8 @@ class UVMTlmBPassthroughTargetSocket(UVMTlmBPassthroughTargetSocketBase):
             pass
 
 
-
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_nb_passthrough_initiator_socket
+#// Class -- NODOCS -- uvm_tlm_nb_passthrough_initiator_socket
 #//
 #// IS-A forward port; HAS-A backward export
 #//----------------------------------------------------------------------
@@ -299,7 +314,7 @@ class UVMTlmNbPassthroughInitiatorSocket(UVMTlmNbPassthroughInitiatorSocketBase)
             pass
 
 #//----------------------------------------------------------------------
-#// Class: uvm_tlm_nb_passthrough_target_socket
+#// Class -- NODOCS -- uvm_tlm_nb_passthrough_target_socket
 #//
 #// IS-A forward export; HAS-A backward port
 #//----------------------------------------------------------------------
