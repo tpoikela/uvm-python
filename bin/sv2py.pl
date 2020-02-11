@@ -463,13 +463,15 @@ sub do_coverage_subst {
     my ($line, $lineno) = @_;
     if ($$line =~ /covergroup\s+(\w+)/) {
         set_state($IN_COVERGROUP);
+        $$line =~ s/covergroup\s+(\w+)/$1 = coverage_section(/g;
     }
     elsif ($$line =~ /endgroup/) {
         clear_state($IN_COVERGROUP);
+        $$line =~ s/\bendgroup\b/) # Close coverage section/g;
     }
     elsif (in_state($st, $IN_COVERGROUP) > 0) {
-        $$line =~ s/(\w+)\s*: cross\s+(.*);/\@CoverCross('$1', items = [$2])/g;
-        $$line =~ s/cross/\@CoverCross/;
+        $$line =~ s/(\w+)\s*:\s*cross/\@CoverCross('$1', items = [/g;
+        #$$line =~ s/cross/\@CoverCross/;
         $$line =~ s/(\w+): coverpoint/\@CoverPoint('$1', xf = lambda a: a, bins = []) # /;
     }
 }
