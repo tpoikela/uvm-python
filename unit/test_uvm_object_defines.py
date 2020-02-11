@@ -10,7 +10,8 @@ from uvm.base.uvm_registry import UVMComponentRegistry
 class TestUVMObjectDefines(unittest.TestCase):
     
     def setUp(self):
-        UVMCoreService.reset()
+        # UVMCoreService.reset()  # tpoikela: Affects other unit tests
+        pass
 
     def test_comp_utils(self):
         # Class for testing
