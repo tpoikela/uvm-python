@@ -34,7 +34,7 @@ class target(UVMComponent):
 
     def __init__(self, name="target", parent=None):
         super().__init__(name, parent)
-        self.sock = UVMTlmBTargetSocket("sock", self)
+        self.sock = UVMTLMBTargetSocket("sock", self)
         self.m_data = 0xDEADBEEF
         self.num_transport = 0
 
