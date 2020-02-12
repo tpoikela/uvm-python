@@ -57,16 +57,16 @@ from uvm.tlm1.uvm_tlm_imps import UVM_TLM_GET_TYPE_NAME, UVM_PORT_COMMON,\
 from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK, UVM_TLM_NB_FW_MASK
 from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
     UVM_TLM_NB_TRANSPORT_BW_IMP, UVM_TLM_NB_TRANSPORT_FW_IMP
-from uvm.tlm2.uvm_tlm2_ports import UVMTlmNbTransportBwPort
-from uvm.tlm2.uvm_tlm2_exports import UVMTlmNbTransportBwExport
+from uvm.tlm2.uvm_tlm2_ports import UVMTLMNbTransportBwPort
+from uvm.tlm2.uvm_tlm2_exports import UVMTLMNbTransportBwExport
 
-class UVMTlmBTargetSocketBase(UVMPortBase):
+class UVMTLMBTargetSocketBase(UVMPortBase):
 
     def __init__(self, name, parent):
         super().__init__(name, parent, UVM_IMPLEMENTATION, 1, 1)
         self.m_if_mask = UVM_TLM_B_MASK
 
-UVM_TLM_GET_TYPE_NAME(UVMTlmBTargetSocketBase)
+UVM_TLM_GET_TYPE_NAME(UVMTLMBTargetSocketBase)
     
 #
 #//----------------------------------------------------------------------
@@ -75,11 +75,11 @@ UVM_TLM_GET_TYPE_NAME(UVMTlmBTargetSocketBase)
 #// IS-A forward port; has no backward path except via the payload
 #// contents
 #//----------------------------------------------------------------------
-class UVMTlmBInitiatorSocketBase(UVMPortBase):
+class UVMTLMBInitiatorSocketBase(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTlmBInitiatorSocketBase, UVM_TLM_B_MASK, "UVMTlmBInitiatorSocketBase")
-UVM_TLM_B_TRANSPORT_IMP("m_if", UVMTlmBInitiatorSocketBase)
+UVM_PORT_COMMON(UVMTLMBInitiatorSocketBase, UVM_TLM_B_MASK, "UVMTLMBInitiatorSocketBase")
+UVM_TLM_B_TRANSPORT_IMP("m_if", UVMTLMBInitiatorSocketBase)
 
 #
 #//----------------------------------------------------------------------
@@ -87,15 +87,15 @@ UVM_TLM_B_TRANSPORT_IMP("m_if", UVMTlmBInitiatorSocketBase)
 #//
 #// IS-A forward imp; HAS-A backward port
 #//----------------------------------------------------------------------
-class UVMTlmNbTargetSocketBase(UVMPortBase):
+class UVMTLMNbTargetSocketBase(UVMPortBase):
 
     def __init__(self, name, parent):
         super().__init__(name, parent, UVM_IMPLEMENTATION, 1, 1)
         self.m_if_mask = UVM_TLM_NB_FW_MASK
-#        self.bw_port = UVMTlmNbTransportBwPort(name, parent, port_type, min_size, max_size)None # TODO: uvm_tlm_nb_transport_bw_port
+#        self.bw_port = UVMTLMNbTransportBwPort(name, parent, port_type, min_size, max_size)None # TODO: uvm_tlm_nb_transport_bw_port
 
-UVM_TLM_GET_TYPE_NAME(UVMTlmNbTargetSocketBase)
-UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTlmNbTargetSocketBase)
+UVM_TLM_GET_TYPE_NAME(UVMTLMNbTargetSocketBase)
+UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTLMNbTargetSocketBase)
 
 
 #//----------------------------------------------------------------------
@@ -103,66 +103,66 @@ UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTlmNbTargetSocketBase)
 #//
 #// IS-A forward port; HAS-A backward imp
 #//----------------------------------------------------------------------
-class UVMTlmNbInitiatorSocketBase(UVMPortBase):
+class UVMTLMNbInitiatorSocketBase(UVMPortBase):
     
     def __init__(self, name, parent):
         super().__init__(name, parent, UVM_PORT, 1, 1)
         self.m_if_mask = UVM_TLM_NB_FW_MASK
 
-UVM_TLM_GET_TYPE_NAME(UVMTlmNbInitiatorSocketBase)
-UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbInitiatorSocketBase)
+UVM_TLM_GET_TYPE_NAME(UVMTLMNbInitiatorSocketBase)
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbInitiatorSocketBase)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_passthrough_initiator_socket_base
 #//
 #// IS-A forward port; HAS-A backward export
 #//----------------------------------------------------------------------
-class UVMTlmNbPassthroughInitiatorSocketBase(UVMPortBase):
+class UVMTLMNbPassthroughInitiatorSocketBase(UVMPortBase):
 
     def __init__(self, name, parent, min_size=1, max_size=1):
         super().__init__(name, parent, UVM_PORT, min_size, max_size)
         self.m_if_mask = UVM_TLM_NB_FW_MASK
-        self.bw_export = UVMTlmNbTransportBwExport("bw_export", self.get_comp())
+        self.bw_export = UVMTLMNbTransportBwExport("bw_export", self.get_comp())
 
-UVM_TLM_GET_TYPE_NAME(UVMTlmNbPassthroughInitiatorSocketBase)
-UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbPassthroughInitiatorSocketBase)
-UVM_TLM_NB_TRANSPORT_BW_IMP('bw_export', UVMTlmNbPassthroughInitiatorSocketBase)
+UVM_TLM_GET_TYPE_NAME(UVMTLMNbPassthroughInitiatorSocketBase)
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbPassthroughInitiatorSocketBase)
+UVM_TLM_NB_TRANSPORT_BW_IMP('bw_export', UVMTLMNbPassthroughInitiatorSocketBase)
 
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_nb_passthrough_target_socket_base
 #//
 #// IS-A forward export; HAS-A backward port
 #//----------------------------------------------------------------------
-class UVMTlmNbPassthroughTargetSocketBase(UVMPortBase):
+class UVMTLMNbPassthroughTargetSocketBase(UVMPortBase):
 
     def __init__(self, name, parent, min_size=1, max_size=1):
         super().__init__(name, parent, UVM_EXPORT, min_size, max_size)
         self.m_if_mask = UVM_TLM_NB_FW_MASK
-        self.bw_port = UVMTlmNbTransportBwPort("bw_port", self.get_comp())
+        self.bw_port = UVMTLMNbTransportBwPort("bw_port", self.get_comp())
 
-UVM_TLM_GET_TYPE_NAME(UVMTlmNbPassthroughTargetSocketBase)
-UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbPassthroughTargetSocketBase)
-UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTlmNbPassthroughTargetSocketBase)
+UVM_TLM_GET_TYPE_NAME(UVMTLMNbPassthroughTargetSocketBase)
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbPassthroughTargetSocketBase)
+UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTLMNbPassthroughTargetSocketBase)
 
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_b_passthrough_initiator_socket_base
 #//
 #// IS-A forward port
 #//----------------------------------------------------------------------
-class UVMTlmBPassthroughInitiatorSocketBase(UVMPortBase):
+class UVMTLMBPassthroughInitiatorSocketBase(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTlmBPassthroughInitiatorSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_initiator_socket")
-UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBPassthroughInitiatorSocketBase)
+UVM_PORT_COMMON(UVMTLMBPassthroughInitiatorSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_initiator_socket")
+UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBPassthroughInitiatorSocketBase)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_passthrough_target_socket_base
 #//
 #// IS-A forward export
 #//----------------------------------------------------------------------
-class UVMTlmBPassthroughTargetSocketBase(UVMPortBase):
+class UVMTLMBPassthroughTargetSocketBase(UVMPortBase):
     pass
 
-UVM_EXPORT_COMMON(UVMTlmBPassthroughTargetSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
-UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBPassthroughTargetSocketBase)
+UVM_EXPORT_COMMON(UVMTLMBPassthroughTargetSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
+UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBPassthroughTargetSocketBase)
 

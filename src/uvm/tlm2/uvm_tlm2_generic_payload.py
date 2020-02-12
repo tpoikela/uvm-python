@@ -105,7 +105,7 @@ UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE=uvm_tlm_response_status_e.BYTE_ENABLE_ERROR_R
 #//-----------------------
 
 #// @uvm-ieee 1800.2-2017 auto 12.3.4.2.1
-class UVMTlmGenericPayload(UVMSequenceItem):
+class UVMTLMGenericPayload(UVMSequenceItem):
     #
     #   // Variable -- NODOCS -- m_address
     #   //
@@ -992,7 +992,7 @@ class UVMTlmGenericPayload(UVMSequenceItem):
     #endclass
 
 
-uvm_object_utils(UVMTlmGenericPayload)
+uvm_object_utils(UVMTLMGenericPayload)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_gp
@@ -1014,7 +1014,7 @@ uvm_object_utils(UVMTlmGenericPayload)
 #// This class is never used directly by users.
 #// The <uvm_tlm_extension> class is used instead.
 #//
-class UVMTlmExtensionBase(UVMObject):
+class UVMTLMExtensionBase(UVMObject):
 
 #  // Function: new
 #  //
@@ -1076,7 +1076,7 @@ class UVMTlmExtensionBase(UVMObject):
 #//| endclass
 #//|
 #
-class UVMTlmExtension(UVMTlmExtensionBase):
+class UVMTLMExtension(UVMTLMExtensionBase):
 
 #   typedef uvm_tlm_extension#(T) this_type;
 #

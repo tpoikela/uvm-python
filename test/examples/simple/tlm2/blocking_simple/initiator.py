@@ -20,8 +20,8 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from uvm import (UVMComponent, uvm_component_utils, UVMTlmTime,
-    UVMTlmBInitiatorSocket)
+from uvm import (UVMComponent, uvm_component_utils, UVMTLMTime,
+    UVMTLMBInitiatorSocket)
 
 from uvm.macros import *
 from apb_rw import apb_rw
@@ -33,14 +33,14 @@ class initiator(UVMComponent):
 
     def __init__(self, name="initiator", parent=None):
         super().__init__(name, parent)
-        self.sock = UVMTlmBInitiatorSocket("sock", self)  # (apb_rw)("sock", self)
+        self.sock = UVMTLMBInitiatorSocket("sock", self)  # (apb_rw)("sock", self)
 
     #   //
     #   // Execute a simple read-modify-write
     #   //
     @cocotb.coroutine
     def run_phase(self, phase):
-        delay = UVMTlmTime()
+        delay = UVMTLMTime()
         phase.raise_objection(self)
         for i in range(10):
             rw = apb_rw.type_id.create("rw",None,self.get_full_name())

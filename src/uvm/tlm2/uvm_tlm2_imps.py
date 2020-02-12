@@ -178,11 +178,11 @@ def UVM_TLM_B_TRANSPORT_IMP(imp, T):
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
 
-class UVMTlmBTransportImp(UVMPortBase):
+class UVMTLMBTransportImp(UVMPortBase):
     pass
 
-UVM_IMP_COMMON(UVMTlmBTransportImp, UVM_TLM_B_MASK, "uvm_tlm_b_transport_imp")
-UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTlmBTransportImp)
+UVM_IMP_COMMON(UVMTLMBTransportImp, UVM_TLM_B_MASK, "uvm_tlm_b_transport_imp")
+UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTLMBTransportImp)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_transport_fw_imp
@@ -191,11 +191,11 @@ UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTlmBTransportImp)
 #// the type of the implementation object.  When the
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
-class UVMTlmNbTransportFwImp(UVMPortBase):
+class UVMTLMNbTransportFwImp(UVMPortBase):
     pass
 
-UVM_IMP_COMMON(UVMTlmNbTransportFwImp, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_imp")
-UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTlmNbTransportFwImp)
+UVM_IMP_COMMON(UVMTLMNbTransportFwImp, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_imp")
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTLMNbTransportFwImp)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_transport_bw_imp
@@ -205,9 +205,9 @@ UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTlmNbTransportFwImp)
 #// imp is instantiated the implementation object is bound.
 #//----------------------------------------------------------------------
 
-class UVMTlmNbTransportBwImp(UVMPortBase):
+class UVMTLMNbTransportBwImp(UVMPortBase):
     pass
 
-UVM_IMP_COMMON(UVMTlmNbTransportBwImp, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp")
-UVM_TLM_NB_TRANSPORT_BW_IMP('m_imp', UVMTlmNbTransportBwImp)
+UVM_IMP_COMMON(UVMTLMNbTransportBwImp, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp")
+UVM_TLM_NB_TRANSPORT_BW_IMP('m_imp', UVMTLMNbTransportBwImp)
 
