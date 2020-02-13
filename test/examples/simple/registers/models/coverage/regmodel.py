@@ -20,10 +20,11 @@
 #// -------------------------------------------------------------
 #//
 
-from cocotb.coverage import coverage_section, CoverPoint
+from cocotb_coverage.coverage import coverage_section, CoverPoint
 
 from uvm.reg import (UVMReg, UVMRegField, UVMMem, UVMRegBlock,
-    UVM_CVR_FIELD_VALS, UVM_CVR_REG_BITS, UVM_CVR_ADDR_MAP)
+    UVM_CVR_FIELD_VALS, UVM_CVR_REG_BITS, UVM_CVR_ADDR_MAP,
+    UVM_BIG_ENDIAN)
 from uvm.macros import uvm_object_utils
 
 #//
@@ -40,10 +41,11 @@ from uvm.macros import uvm_object_utils
 #// are generator-specific and outside the scope of UVM.
 #//
 
+
 class reg_R(UVMReg):
 
-    cg_bits = coverage_section(
-        CoverPoint('wF1_0',
+    CgBits = coverage_section(
+        CoverPoint('top.cb_bits.wF1_0',
             xf = lambda cond, m_curr, m_data: cond and (m_curr & m_data & (1 << 1)),
             bins = [True, False])  #  {m_current[0],m_data[0]} iff (!m_is_read  and  m_be[0])
         #      @CoverPoint('wF1_1', xf = lambda a: a, bins = []) #  {m_current[1],m_data[1]} iff (!m_is_read  and  m_be[0])
@@ -64,7 +66,8 @@ class reg_R(UVMReg):
 
 
     def __init__(self, name="reg_R"):
-        super().__init__(name, 8, self.build_coverage(UVM_CVR_REG_BITS + UVM_CVR_FIELD_VALS))
+        super().__init__(name, 8)
+        self.has_cover = self.build_coverage(UVM_CVR_REG_BITS + UVM_CVR_FIELD_VALS)
         if self.has_coverage(UVM_CVR_REG_BITS):
             # self.cg_bits = covergroup()
             pass
@@ -106,9 +109,9 @@ uvm_object_utils(reg_R)
 class mem_M(UVMMem):
     #   local uvm_reg_addr_t m_offset
     #
-    cg_addr = coverage_section(
+    CgAddr = coverage_section(
         CoverPoint(
-            'MIN_MID_MAX',
+            'top.cg_addr.MIN_MID_MAX',
             xf=lambda offset: offset,
             bins=[(0), (1,1022), (1023)],
             bins_labels=['MIN', 'MID', 'MAX']
@@ -121,10 +124,12 @@ class mem_M(UVMMem):
     #         }
 
     def __init__(self, name="mem_M"):
-        super().__init__(name, 1024, 8, "RW", self.build_coverage(UVM_CVR_ADDR_MAP))
+        super().__init__(name, 1024, 8, "RW")
         self.m_offset = 0
-        if (self.has_coverage(UVM_CVR_ADDR_MAP)):
-            self.cg_addr = covergroup()
+        self.has_cover = self.build_coverage(UVM_CVR_ADDR_MAP)
+        if self.has_coverage(UVM_CVR_ADDR_MAP):
+            pass
+            #self.cg_addr = covergroup()
 
 
     #   virtual function void sample(uvm_reg_addr_t offset,
@@ -172,11 +177,14 @@ class block_B(UVMRegBlock):
     #
     #
     def __init__(self, name="B"):
-        super().__init__(name, self.build_coverage(UVM_CVR_ADDR_MAP+UVM_CVR_FIELD_VALS))
+        super().__init__(name)
+        self.has_cover = self.build_coverage(UVM_CVR_ADDR_MAP+UVM_CVR_FIELD_VALS)
         if self.has_coverage(UVM_CVR_ADDR_MAP):
-            self.cg_addr = covergroup()
+            pass
+            # self.cg_addr = covergroup()
         if self.has_coverage(UVM_CVR_FIELD_VALS):
-            self.cg_vals = covergroup()
+            pass
+            #self.cg_vals = covergroup()
 
 
     def build(self):
