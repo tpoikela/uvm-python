@@ -235,6 +235,9 @@ class UVMResourceBase(UVMObject):
     #// represents the set of scopes over which this resource is visible.
     def __init__(self, name="", s="*"):
         UVMObject.__init__(self, name)
+        if s is None:
+            raise TypeError('s/scope must be string (or use "*" default) ' 
+                    + ', got: ' + str(s))
         #self.scope = ""
         self.set_scope(s)
         self.modified = False
