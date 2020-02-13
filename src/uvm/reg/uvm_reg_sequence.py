@@ -196,8 +196,7 @@ class UVMRegSequence(UVMSequence):
         if (self.parent_select == LOCAL):
             rw.parent = self.upstream_parent
 
-    #
-    #
+
     #   //----------------------------------
     #   // Group: Convenience Write/Read API
     #   //----------------------------------

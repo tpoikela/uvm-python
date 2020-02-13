@@ -22,6 +22,7 @@
 #-------------------------------------------------------------
 
 from ..macros import uvm_fatal
+from ..base.uvm_resource_db import ResourceDbClassFactory
 
 #------------------------------------------------------------------------------
 # TITLE: Global Declarations for the Register Layer
@@ -107,7 +108,10 @@ class uvm_hdl_path_slice:
         self.size = -1
 #} uvm_hdl_path_slice
 #
+
 #typedef uvm_resource_db#(uvm_reg_cvr_t) uvm_reg_cvr_rsrc_db
+uvm_reg_cvr_rsrc_db = ResourceDbClassFactory('uvm_reg_cvr_rsrc_db',
+    [], int)
 
 
 #--------------------

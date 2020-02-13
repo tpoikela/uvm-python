@@ -91,7 +91,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   function new(string name="", int has_coverage=UVM_NO_COVERAGE)
     def __init__(self, name="", has_coverage=UVM_NO_COVERAGE):
-        UVMObject.__init__(self, name)
+        super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
         self.has_cover = has_coverage
         # Root block until registered with a parent
@@ -387,7 +387,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function string get_full_name()
     def get_full_name(self):
-        if (self.parent is None):
+        if self.parent is None:
             return self.get_name()
 
         return self.parent.get_full_name() + "." + self.get_name()
@@ -496,6 +496,15 @@ class UVMRegBlock(UVMObject):
     #                                               input uvm_hier_e hier=UVM_HIER)
     #
     #
+    def get_registers(self, regs, hier=UVM_HIER):
+        for rg in self.regs.key_list():
+            regs.append(rg)
+     
+        if hier == UVM_HIER:
+            for blk_ in self.blks.key_list():
+                blk = blk_
+                blk.get_registers(regs)
+    #endfunction: get_registers
 
     #   // Function: get_fields
     #   //
@@ -718,6 +727,16 @@ class UVMRegBlock(UVMObject):
     #   // block model.
     #   //
     #   extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models)
+    def build_coverage(self, models):
+        build_coverage = UVM_NO_COVERAGE
+        cov_arr = []
+        uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" + self.get_full_name(),
+                "include_coverage",
+                cov_arr, self)
+        build_coverage = cov_arr[0]
+        return build_coverage & models
+    #endfunction: build_coverage
+
     #
     #
     #   // Function: add_coverage
@@ -733,6 +752,7 @@ class UVMRegBlock(UVMObject):
     #   // subsequently derived classes.
     #   //
     #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
+
     #
     #
     #   // Function: has_coverage
@@ -745,6 +765,10 @@ class UVMRegBlock(UVMObject):
     #   // coverage model as defined in <uvm_coverage_model_e>.
     #   //
     #   extern virtual function bit has_coverage(uvm_reg_cvr_t models)
+    def has_coverage(self, models):
+        return ((self.has_cover & models) == models)
+    #endfunction: has_coverage
+
     #
     #
     #   // Function: set_coverage
@@ -769,6 +793,23 @@ class UVMRegBlock(UVMObject):
     #   // the available functional coverage models.
     #   //
     #   extern virtual function uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on)
+    def set_coverage(self, is_on):
+        self.cover_on = self.has_cover & is_on
+
+        for rg_ in self.regs.key_list():
+            rg = rg_
+            rg.set_coverage(is_on)
+
+        for mem in self.mems.key_list():
+            mem.set_coverage(is_on)
+
+        for blk_ in self.blks.key_list():
+            blk = blk_
+            blk.set_coverage(is_on)
+
+        return self.cover_on
+    #endfunction: set_coverage
+
     #
     #
     #   // Function: get_coverage
@@ -958,7 +999,7 @@ class UVMRegBlock(UVMObject):
 
 
         for blk_ in self.blks.key_list():
-            blk = blk_  # uvm_reg_block 
+            blk = blk_  # uvm_reg_block
 
             curr_stat = []
             yield blk.mirror(curr_stat, check, path, parent, prior, extension, fname, lineno)
@@ -1334,19 +1375,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: get_virtual_fields
 #
 #
-# get_registers
-#
-#function void uvm_reg_block::get_registers(ref uvm_reg regs[$],
-#                                           input uvm_hier_e hier=UVM_HIER)
-#   foreach (self.regs[rg])
-#     regs.push_back(rg)
-#
-#   if (hier == UVM_HIER)
-#     foreach (blks[blk_]):
-#       uvm_reg_block blk = blk_
-#       blk.get_registers(regs)
-#     end
-#endfunction: get_registers
 #
 #
 # get_virtual_registers
@@ -1611,28 +1639,6 @@ class UVMRegBlock(UVMObject):
 # Coverage API
 #-------------
 #
-# set_coverage
-#
-#function uvm_reg_cvr_t uvm_reg_block::set_coverage(uvm_reg_cvr_t is_on)
-#   self.cover_on = self.has_cover & is_on
-#
-#   foreach (regs[rg_]):
-#     uvm_reg rg = rg_
-#     void'(rg.set_coverage(is_on))
-#   end
-#
-#   foreach (mems[mem_]):
-#     uvm_mem mem = mem_
-#     void'(mem.set_coverage(is_on))
-#   end
-#
-#   foreach (blks[blk_]):
-#     uvm_reg_block blk = blk_
-#     void'(blk.set_coverage(is_on))
-#   end
-#
-#   return self.cover_on
-#endfunction: set_coverage
 #
 #
 # sample_values
@@ -1652,13 +1658,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-#function uvm_reg_cvr_t uvm_reg_block::build_coverage(uvm_reg_cvr_t models)
-#   build_coverage = UVM_NO_COVERAGE
-#   void'(uvm_reg_cvr_rsrc_db::read_by_name({"uvm_reg::", get_full_name()},
-#                                           "include_coverage",
-#                                           build_coverage, this))
-#   return build_coverage & models
-#endfunction: build_coverage
 #
 #
 # add_coverage
@@ -1668,11 +1667,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: add_coverage
 #
 #
-# has_coverage
-#
-#function bit uvm_reg_block::has_coverage(uvm_reg_cvr_t models)
-#   return ((self.has_cover & models) == models)
-#endfunction: has_coverage
 #
 #
 # get_coverage

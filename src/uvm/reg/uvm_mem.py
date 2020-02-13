@@ -1390,6 +1390,14 @@ class UVMMem(UVMObject):
     #   // memory model.
     #   //
     #   extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models)
+    def build_coverage(self, models):
+        build_coverage = UVM_NO_COVERAGE
+        cov_arr = []
+        uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" + self.get_full_name(),
+                "include_coverage", cov_arr, self)
+        build_coverage = cov_arr[0]
+        return build_coverage & models
+
     #
     #
     #   // Function: add_coverage
@@ -1405,6 +1413,7 @@ class UVMMem(UVMObject):
     #   // subsequently derived classes.
     #   //
     #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
+
     #
     #
     #   // Function: has_coverage
@@ -1417,8 +1426,10 @@ class UVMMem(UVMObject):
     #   // coverage model as defined in <uvm_coverage_model_e>.
     #   //
     #   extern virtual function bit has_coverage(uvm_reg_cvr_t models)
-    #
-    #
+    def has_coverage(self, models):
+        return ((self.m_has_cover & models) == models)
+
+
     #   // Function: set_coverage
     #   //
     #   // Turns on coverage measurement.
@@ -1441,7 +1452,14 @@ class UVMMem(UVMObject):
     #   // the available functional coverage models.
     #   //
     #   extern virtual function uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on)
-    #
+    def set_coverage(self, is_on):
+        if is_on == UVM_NO_COVERAGE:
+            self.m_cover_on = is_on
+            return self.m_cover_on
+     
+        self.m_cover_on = self.m_has_cover & is_on
+        return self.m_cover_on
+
     #
     #   // Function: get_coverage
     #   //
@@ -1475,7 +1493,7 @@ class UVMMem(UVMObject):
     #   protected virtual function void  sample(uvm_reg_addr_t offset,
     #                                           bit            is_read,
     #                                           uvm_reg_map    map)
-    def  sample(self, offset, is_read, _map):
+    def sample(self, offset, is_read, _map):
         pass
 
 
@@ -1747,13 +1765,6 @@ class UVMMem(UVMObject):
 #//---------
 #
 #
-#function uvm_reg_cvr_t uvm_mem::build_coverage(uvm_reg_cvr_t models)
-#   build_coverage = UVM_NO_COVERAGE
-#   void'(uvm_reg_cvr_rsrc_db::read_by_name({"uvm_reg::", get_full_name()},
-#                                           "include_coverage",
-#                                           build_coverage, this))
-#   return build_coverage & models
-#endfunction: build_coverage
 #
 #
 #// add_coverage
@@ -1763,25 +1774,8 @@ class UVMMem(UVMObject):
 #endfunction: add_coverage
 #
 #
-#// has_coverage
-#
-#function bit uvm_mem::has_coverage(uvm_reg_cvr_t models)
-#   return ((m_has_cover & models) == models)
-#endfunction: has_coverage
 #
 #
-#// set_coverage
-#
-#function uvm_reg_cvr_t uvm_mem::set_coverage(uvm_reg_cvr_t is_on)
-#   if (is_on == uvm_reg_cvr_t'(UVM_NO_COVERAGE)):
-#      m_cover_on = is_on
-#      return m_cover_on
-#   end
-#
-#   m_cover_on = m_has_cover & is_on
-#
-#   return m_cover_on
-#endfunction: set_coverage
 #
 #
 #// get_coverage

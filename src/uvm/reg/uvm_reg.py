@@ -46,6 +46,8 @@ from .uvm_reg_cbs import UVMRegFieldCbIter, UVMRegCbIter
 # A register may be mapped to one or more address maps,
 # each with different access rights and policy.
 #-----------------------------------------------------------------
+
+
 class UVMReg(UVMObject):
     m_max_size = 0
 
@@ -69,7 +71,7 @@ class UVMReg(UVMObject):
     #   // Multiple functional coverage models may be specified by adding their
     #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
     #   //
-    def __init__(self,  name, n_bits, has_coverage):
+    def __init__(self, name, n_bits, has_coverage=UVM_NO_COVERAGE):
         UVMObject.__init__(self, name)
         self.m_fields = []   # Fields in LSB to MSB order
         self.m_parent = None # uvm_reg_block
@@ -96,9 +98,9 @@ class UVMReg(UVMObject):
         self.m_update_in_progress = False
         self.m_lineno = 0
         self.m_fname = ""
-        self.m_maps = UVMPool() # bit[uvm_reg_map]
-        self.m_regfile_parent = None # uvm_reg_file
-        self.m_backdoor = None # uvm_reg_backdoor
+        self.m_maps = UVMPool()  # bit[uvm_reg_map]
+        self.m_regfile_parent = None  # uvm_reg_file
+        self.m_backdoor = None  # uvm_reg_backdoor
 
         if n_bits > UVMReg.m_max_size:
             UVMReg.m_max_size = n_bits
@@ -1845,9 +1847,10 @@ class UVMReg(UVMObject):
     #   extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models)
     def build_coverage(self, models):
         build_coverage = UVM_NO_COVERAGE
+        cov_arr = []
         uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" + self.get_full_name(),
-                "include_coverage",
-                build_coverage, self)
+                "include_coverage", cov_arr, self)
+        build_coverage = cov_arr[0]
         return build_coverage & models
 
 
@@ -1904,6 +1907,13 @@ class UVMReg(UVMObject):
     #   // the available functional coverage models.
     #   //
     #   extern virtual function uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on)
+    def set_coverage(self, is_on):
+        if is_on == UVM_NO_COVERAGE:
+            self.m_cover_on = is_on
+            return self.m_cover_on
+     
+        self.m_cover_on = self.m_has_cover & is_on
+        return self.m_cover_on
 
 
     #   // Function: get_coverage
@@ -2317,19 +2327,6 @@ class UVMReg(UVMObject):
 #
 #
 #
-#
-#// set_coverage
-#
-#function uvm_reg_cvr_t uvm_reg::set_coverage(uvm_reg_cvr_t is_on)
-#   if (is_on == uvm_reg_cvr_t'(UVM_NO_COVERAGE)):
-#      self.m_cover_on = is_on
-#      return self.m_cover_on
-#   end
-#
-#   self.m_cover_on = self.m_has_cover & is_on
-#
-#   return self.m_cover_on
-#endfunction: set_coverage
 #
 #
 #// get_coverage
