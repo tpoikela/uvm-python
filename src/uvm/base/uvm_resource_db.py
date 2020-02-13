@@ -59,14 +59,13 @@ from ..macros.uvm_message_defines import uvm_info
 from .uvm_object_globals import UVM_LOW
 from .uvm_resource import UVMResource, UVMResourcePool
 
-rsrc_t = UVMResource
-
-
 
 class UVMResourceDb:
 
+    rsrc_t = UVMResource
+
     #  typedef uvm_resource #(T) rsrc_t
-    #
+
     def __init__(self, T=None):
         self.T = T
 
@@ -77,7 +76,7 @@ class UVMResourceDb:
     #  // ~scope~.
     @classmethod
     def get_by_type(cls, scope):
-        return rsrc_t.get_by_type(scope, rsrc_t.get_type())
+        return cls.rsrc_t.get_by_type(scope, cls.rsrc_t.get_type())
     #  endfunction
 
     #  // function: get_by_name
@@ -152,7 +151,7 @@ class UVMResourceDb:
     #                           T val, input uvm_object accessor = null)
     @classmethod
     def set(cls, scope, name, val, accessor=None):
-        rsrc = rsrc_t(name, scope)
+        rsrc = cls.rsrc_t(name, scope)
         rsrc.write(val, accessor)
         rsrc.set()
 
