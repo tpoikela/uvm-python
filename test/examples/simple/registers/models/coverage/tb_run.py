@@ -27,9 +27,10 @@ import cocotb
 from uvm import (UVMTest, sv, uvm_fatal, uvm_top,
     UVMRegBitBashSeq, UVMMemWalkSeq,
     UVM_CVR_ALL, UVM_FINISHED, uvm_info, UVM_LOW,
-    UVMReg, UVMCoreService, run_test)
+    UVMReg, UVMCoreService, run_test, UVMConfigDb)
 
 from tb_env import tb_env
+from cocotb_coverage.coverage import coverage_db
 
 
 class tb_test(UVMTest):
@@ -86,5 +87,12 @@ def initial_begin(dut):
 
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
+    UVMConfigDb.set(None, "", "dut", dut)
 
     yield run_test()
+
+    def my_log(msg):
+        uvm_info("COV_RPT", msg, UVM_LOW)
+
+    coverage_db.report_coverage(my_log, bins=False)
+    coverage_db.export_to_xml("results_coverage.xml")

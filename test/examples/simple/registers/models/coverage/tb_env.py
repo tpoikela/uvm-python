@@ -21,9 +21,9 @@
 #// -------------------------------------------------------------
 #//
 
-
-from uvm import (UVMEnv, uvm_component_utils)
-#`include "reg_agent.sv"
+from uvm import (UVMEnv, uvm_component_utils, UVMRegPredictor)
+from common.reg_agent import (reg_agent, reg2rw_adapter)
+from regmodel import block_B
 
 
 class dut():
@@ -69,26 +69,28 @@ class tb_env(UVMEnv):
 
     def __init__(self, name="tb_env", parent=None):
         super().__init__(name, parent)
+        self.regmodel = None
+        self.bus = None
+        self.predict = None
 
-    #   def build_phase(self,uvm_phase phase):
-    #      regmodel = block_B.type_id.create("regmodel")
-    #      regmodel.build()
-    #      regmodel.lock_model()
-    #
-    #      bus = reg_agent#(dut).type_id.create("bus", self)
-    #      predict = uvm_reg_predictor#(reg_rw).type_id.create("predict", self)
-    #  endfunction: build_phase
-    #
-    #   def connect_phase(self,uvm_phase phase):
-    #      reg2rw_adapter reg2rw  = new("reg2rw")
-    #      regmodel.default_map.set_sequencer(bus.sqr, reg2rw)
-    #
-    #      predict.map = regmodel.default_map
-    #      predict.adapter = reg2rw
-    #      bus.mon.ap.connect(predict.bus_in)
-    #      regmodel.default_map.set_auto_predict(0)
-    #   endfunction
-    #
+    def build_phase(self, phase):
+        self.regmodel = block_B.type_id.create("regmodel")
+        self.regmodel.build()
+        self.regmodel.lock_model()
+
+        self.bus = reg_agent.type_id.create("bus", self)
+        self.predict = UVMRegPredictor.type_id.create("predict", self)
+
+
+    def connect_phase(self, phase):
+        self.reg2rw  = reg2rw_adapter("reg2rw")
+        self.regmodel.default_map.set_sequencer(self.bus.sqr, self.reg2rw)
+
+        self.predict.map = self.regmodel.default_map
+        self.predict.adapter = self.reg2rw
+        self.bus.mon.ap.connect(self.predict.bus_in)
+        self.regmodel.default_map.set_auto_predict(0)
+
     #endclass
 
 
