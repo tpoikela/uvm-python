@@ -25,7 +25,7 @@ import cocotb
 #from cocotb_coverage.coverage import *
 from cocotb_coverage import crv
 from cocotb.triggers import Lock, Timer
-from cocotb.utils import get_sim_time
+from cocotb.utils import get_sim_time, simulator
 from cocotb.bus import Bus
 from inspect import getframeinfo, stack
 
@@ -96,7 +96,9 @@ class sv:
 
     @classmethod
     def realtime(cls, unit=None):
-        if unit is None:
+        if simulator is None:
+            return 0
+        elif unit is None:
             return get_sim_time()
         else:
             return get_sim_time(unit)
@@ -228,6 +230,7 @@ class sv_obj(crv.Randomized):
             super().randomize()
             return True and ok
         except:
+            # TODO this can mask all sorts of errors
             return False
 
 
@@ -242,6 +245,7 @@ class sv_obj(crv.Randomized):
             super().randomize_with(*constr)
             return True and ok
         except:
+            # TODO this can mask all sorts of errors
             return False
 
 
