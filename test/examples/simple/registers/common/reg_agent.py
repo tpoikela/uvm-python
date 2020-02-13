@@ -100,23 +100,17 @@ class reg_driver(UVMComponent):
     def run_phase(self, phase):
         mon = self.m_parent.get_child("mon")
         while True:
-            print("XYZ reg_driver while True loop")
             rw = []  # reg_rw
             yield self.seqr_port.peek(rw)  # aka 'get_next_rw'
             rw = rw[0]
-            print("XYZ reg_driver after peek")
             yield self.drive_transaction(rw)
-            print("XYZ reg_driver after rw")
             mon.ap.write(rw)
-            print("XYZ reg_driver mon.ap.write")
             rw = []
             yield self.seqr_port.get(rw)  # aka 'item_done'
-            print("XYZ reg_driver after get")
     #   endtask
 
     @cocotb.coroutine
     def drive_transaction(self, rw):
-        print("reg_driver driving into DUT: " + rw.convert2string())
         if rw.read is False:
             yield RisingEdge(self.dut.clk)
             yield Timer(0)
@@ -163,9 +157,7 @@ class reg_agent(UVMAgent):
         self.mon = reg_monitor("mon", self)
 
     def build_phase(self, phase):
-        print("Started building...\n")
         UVMAgent.build_phase(self, phase)
-        print("Ended building...\n")
         dut = []
         if not UVMConfigDb.get(self, "", "dut", dut):
             uvm_fatal("REG_AGENT", "No 'dut' found inf config DB")
@@ -175,6 +167,7 @@ class reg_agent(UVMAgent):
         self.drv.seqr_port.connect(self.sqr.seq_item_export)
     #endclass
 uvm_component_utils(reg_agent)
+
 
 class reg2rw_adapter(UVMRegAdapter):
     #
