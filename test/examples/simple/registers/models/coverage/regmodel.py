@@ -204,7 +204,7 @@ class block_B(UVMRegBlock):
 
         self.default_map.add_reg(self.Ra, 0x0000, "RW")
         self.default_map.add_reg(self.Rb, 0x0100, "RW")
-        self.default_map.add_mem(self.M,  0x2000, "RW")
+        self.default_map.add_mem(self.M, 0x2000, "RW")
 
 
     #   virtual function void sample(uvm_reg_addr_t offset,
