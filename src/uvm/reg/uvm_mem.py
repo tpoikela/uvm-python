@@ -21,6 +21,8 @@
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
 
+import cocotb
+
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import UVMPool, UVMObjectStringPool
 from ..base.uvm_globals import *
@@ -276,8 +278,10 @@ class UVMMem(UVMObject):
     #   // Returns all of the address ~maps~ where this memory is mapped
     #   //
     #   extern virtual function void get_maps (ref uvm_reg_map maps[$])
-    #
-    #
+    def get_maps(self, maps):
+        for map_ in self.m_maps.key_list():
+            maps.append(map_)
+
 
     #   /*local*/ extern function uvm_reg_map get_local_map   (uvm_reg_map map,
     #                                                          string caller = "")
@@ -624,7 +628,7 @@ class UVMMem(UVMObject):
     #
     @cocotb.coroutine
     def write(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None, parent=None,
-            prior = -1, extension = None, fname = "", lineno = 0):
+            prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
 
         # create an abstract transaction for this operation
@@ -643,9 +647,7 @@ class UVMMem(UVMObject):
         rw.lineno       = lineno
 
         yield self.do_write(rw)
-
         status.append(rw.status)
-        #
         #endtask: write
 
     #   // Task: read
@@ -672,7 +674,7 @@ class UVMMem(UVMObject):
     @cocotb.coroutine
     def read(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
-        uvm_check_output_args([status])
+        uvm_check_output_args([status, value])
 
         rw = UVMRegItem.type_id.create("mem_read",None,self.get_full_name())
         rw.element      = self
@@ -901,8 +903,10 @@ class UVMMem(UVMObject):
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
+                print("BBB fs.start")
                 yield fd.start(fd.sequencer, rw.parent)
             else:
+                print("BBB local_map.do_write()")
                 yield rw.local_map.do_write(rw)
 
             if rw.status != UVM_NOT_OK:
@@ -1556,12 +1560,6 @@ class UVMMem(UVMObject):
 #
 #
 #
-#// get_maps
-#
-#function void uvm_mem::get_maps(ref uvm_reg_map maps[$])
-#   foreach (m_maps[map])
-#     maps.push_back(map)
-#endfunction
 #
 #
 #// is_in_map
@@ -1653,7 +1651,7 @@ class UVMMem(UVMObject):
 #
 #function void uvm_mem::get_virtual_registers(ref uvm_vreg regs[$])
 #  foreach (m_vregs[vreg])
-#     regs.push_back(vreg)
+#     regs.append(vreg)
 #endfunction
 #
 #
