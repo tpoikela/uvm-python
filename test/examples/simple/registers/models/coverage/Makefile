@@ -52,7 +52,7 @@ PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
 ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(WPWD)/../../../common_stub.v
+    VERILOG_SOURCES ?= $(WPWD)/reg_mem_dut.sv
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
@@ -62,7 +62,7 @@ ifneq ($(VLOG),)
 endif
 
 SIM_ARGS = ""
-TOPLEVEL := common_stub
+TOPLEVEL := reg_mem_dut
 MODULE   ?= tb_run
 
 
