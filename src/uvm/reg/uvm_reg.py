@@ -304,6 +304,11 @@ class UVMReg(UVMObject):
     #   // Returns all of the address ~maps~ where this register is mapped
     #   //
     #   extern virtual function void get_maps (ref uvm_reg_map maps[$])
+    def get_maps(self, maps):
+        for _map in self.m_maps.key_list():
+            maps.append(_map)
+        return maps
+
 
     #// get_local_map
     def get_local_map(self, reg_map, caller=""):
@@ -396,7 +401,7 @@ class UVMReg(UVMObject):
     #   //
     #   extern virtual function int unsigned get_n_bytes()
     def get_n_bytes(self):
-        return ((self.m_n_bits-1) / 8) + 1
+        return int((self.m_n_bits-1) / 8) + 1
 
     #   // Function: get_max_size
     #   //
@@ -2276,12 +2281,6 @@ class UVMReg(UVMObject):
 #
 #
 #
-#// get_maps
-#
-#function void uvm_reg::get_maps(ref uvm_reg_map maps[$])
-#   foreach (self.m_maps[map])
-#     maps.append(map)
-#endfunction
 #
 #
 #// get_n_maps
