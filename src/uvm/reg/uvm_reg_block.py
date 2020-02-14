@@ -56,27 +56,24 @@ ERR_MSG3 = "Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or
 class UVMRegBlock(UVMObject):
     m_roots = {}  # static bit[uvm_reg_block]
     id = 0
-    #   local int unsigned   blks[uvm_reg_block]
-    #   local int unsigned   vregs[uvm_vreg]
-    #   local int unsigned   mems[uvm_mem]
-    #
+
     #   // Variable: default_path
     #   // Default access path for the registers and memories in this block.
     #   uvm_path_e      default_path = UVM_DEFAULT_PATH
     #
     #   local uvm_object_string_pool #(uvm_queue #(string)) hdl_paths_pool
     #   local string         root_hdl_paths[string]
-    #
+
     #   local int            has_cover
     #   local int            cover_on
     #   local string         fname
     #   local int            lineno
-    #
-    #
+
+
     #   //----------------------
     #   // Group: Initialization
     #   //----------------------
-    #
+
     #   // Function: new
     #   //
     #   // Create a new instance and type-specific configuration
@@ -101,6 +98,7 @@ class UVMRegBlock(UVMObject):
         self.regs = UVMPool()  #int unsigned[uvm_reg]
         self.blks = UVMPool()
         self.mems = UVMPool()
+        self.vregs = UVMPool()
         self.root_hdl_paths = UVMPool()
         self.backdoor = None
         self.default_hdl_path = "RTL"
@@ -499,7 +497,7 @@ class UVMRegBlock(UVMObject):
     def get_registers(self, regs, hier=UVM_HIER):
         for rg in self.regs.key_list():
             regs.append(rg)
-     
+
         if hier == UVM_HIER:
             for blk_ in self.blks.key_list():
                 blk = blk_
@@ -533,6 +531,16 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_memories (ref uvm_mem mems[$],
     #                                              input uvm_hier_e hier=UVM_HIER)
+    def get_memories(self, mems, hier=UVM_HIER):
+        #   foreach (self.mems[mem_]):
+        for mem_ in self.mems.key_list():
+            mem = mem_
+            mems.append(mem)
+
+        if hier == UVM_HIER:
+            for blk_ in self.blks.key_list():
+                blk = blk_
+                blk.get_memories(mems)
 
     #
     #
@@ -1393,23 +1401,6 @@ class UVMRegBlock(UVMObject):
 #endfunction: get_virtual_registers
 #
 #
-# get_memories
-#
-#function void uvm_reg_block::get_memories(ref uvm_mem mems[$],
-#                                          input uvm_hier_e hier=UVM_HIER)
-#
-#   foreach (self.mems[mem_]):
-#     uvm_mem mem = mem_
-#     mems.push_back(mem)
-#   end
-#
-#   if (hier == UVM_HIER)
-#     foreach (blks[blk_]):
-#       uvm_reg_block blk = blk_
-#       blk.get_memories(mems)
-#     end
-#
-#endfunction: get_memories
 #
 #
 #
