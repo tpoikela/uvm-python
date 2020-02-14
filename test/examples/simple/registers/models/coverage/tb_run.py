@@ -24,6 +24,8 @@
 
 
 import cocotb
+from cocotb.clock import Clock
+
 from uvm import (UVMTest, sv, uvm_fatal, uvm_top,
     UVMRegBitBashSeq, UVMMemWalkSeq,
     UVM_CVR_ALL, UVM_FINISHED, uvm_info, UVM_LOW,
@@ -82,6 +84,7 @@ def initial_begin(dut):
     #   uvm_report_server svr
 
     UVMReg.include_coverage("*", UVM_CVR_ALL)
+    c = Clock(dut.clk, 10, 'ns')
 
     test = tb_test("test")
 
@@ -89,6 +92,7 @@ def initial_begin(dut):
     svr.set_max_quit_count(10)
     UVMConfigDb.set(None, "", "dut", dut)
 
+    cocotb.fork(c.start())
     yield run_test()
 
     def my_log(msg):
