@@ -22,10 +22,15 @@
 #//
 
 import cocotb
+from cocotb.triggers import Timer
 
-from uvm.reg.uvm_reg_sequence import UVMRegSequence
-from uvm.macros import *
-from uvm.base.uvm_resource_db import *
+from ..uvm_reg_sequence import UVMRegSequence
+from ..uvm_reg_model import (UVM_FRONTDOOR, UVM_IS_OK, UVM_NO_HIER,
+    UVM_STATUS_NAMES)
+from ...macros import (uvm_info, uvm_error, uvm_object_utils)
+from ...base.uvm_resource_db import UVMResourceDb
+from ...base.sv import sv
+from ...base.uvm_object_globals import UVM_LOW
 
 #//------------------------------------------------------------------------------
 #// Title: Memory Walking-Ones Test Sequences
@@ -65,121 +70,121 @@ from uvm.base.uvm_resource_db import *
 
 
 class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
-    #
-    #
-    #
-    #   // Variable: mem
-    #   //
-    #   // The memory to test; must be assigned prior to starting sequence.
-    #
-    #   uvm_mem mem
-    #
-    #
+
     #   // Function: new
     #   //
     #   // Creates a new instance of the class with the given name.
     #
     def __init__(self, name="UVMMemWalkSeq"):
         super().__init__(name)
+        #   // Variable: mem
+        #   //
+        #   // The memory to test; must be assigned prior to starting sequence.
+        self.mem = None
     #   endfunction
-    #
-    #
+
+
     #   // Task: body
     #   //
     #   // Performs the walking-ones algorithm on each map of the memory
     #   // specified in <mem>.
-    #
-    #@cocotb.coroutine
-    #   def body(self)
-    #      uvm_reg_map maps[$]
-    #      int n_bits
-    #
-    #      if (mem is None):
-    #         `uvm_error("UVMMemWalkSeq", "No memory specified to run sequence on")
-    #         return
-    #      end
-    #
-    #      // Memories with some attributes are not to be tested
-    #      if (UVMResourceDb.get_by_name({"REG::",mem.get_full_name()},
-    #                                             "NO_REG_TESTS", 0) is not None  or
-    #          UVMResourceDb.get_by_name({"REG::",mem.get_full_name()},
-    #                                             "NO_MEM_TESTS", 0) is not None  or
-    #	  UVMResourceDb.get_by_name({"REG::",mem.get_full_name()},
-    #                                             "NO_MEM_WALK_TEST", 0) is not None )
-    #         return
-    #
-    #      n_bits = mem.get_n_bits()
-    #
-    #      // Memories may be accessible from multiple physical interfaces (maps)
-    #      mem.get_maps(maps)
-    #
-    #      // Walk the memory via each map
-    #      foreach (maps[j]):
-    #         uvm_status_e status
-    #         uvm_reg_data_t  val, exp, v
-    #
-    #         // Only deal with RW memories
-    #         if (mem.get_access(maps[j]) != "RW") continue
-    #
-    #         `uvm_info("UVMMemWalkSeq", sv.sformatf("Walking memory %s in map \"%s\"...",
-    #                                    mem.get_full_name(), maps[j].get_full_name()), UVM_LOW)
-    #
-    #         // The walking process is, for address k:
-    #         // - Write ~k
-    #         // - Read k-1 and expect ~(k-1) if k > 0
-    #         // - Write k-1 at k-1
-    #         // - Read k and expect ~k if k == last address
-    #         for (int k = 0; k < mem.get_size(); k++):
-    #
-    #            mem.write(status, k, ~k, UVM_FRONTDOOR, maps[j], self)
-    #
-    #            if (status != UVM_IS_OK):
-    #               `uvm_error("UVMMemWalkSeq", sv.sformatf("Status was %s when writing \"%s[%0d]\" through map \"%s\".",
-    #                                           status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
-    #            end
-    #
-    #            if (k > 0):
-    #               mem.read(status, k-1, val, UVM_FRONTDOOR, maps[j], self)
-    #               if (status != UVM_IS_OK):
-    #                  `uvm_error("UVMMemWalkSeq", sv.sformatf("Status was %s when reading \"%s[%0d]\" through map \"%s\".",
-    #                                              status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
-    #               end
-    #               else begin
-    #                  exp = ~(k-1) & ((1'b1<<n_bits)-1)
-    #                  if (val != exp):
-    #                     `uvm_error("UVMMemWalkSeq", sv.sformatf("\"%s[%0d-1]\" read back as 'h%h instead of 'h%h.",
-    #                                                 mem.get_full_name(), k, val, exp))
-    #
-    #                  end
-    #               end
-    #
-    #               mem.write(status, k-1, k-1, UVM_FRONTDOOR, maps[j], self)
-    #               if (status != UVM_IS_OK):
-    #                  `uvm_error("UVMMemWalkSeq", sv.sformatf("Status was %s when writing \"%s[%0d-1]\" through map \"%s\".",
-    #                                              status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
-    #               end
-    #            end
-    #
-    #            if (k == mem.get_size() - 1):
-    #               mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
-    #               if (status != UVM_IS_OK):
-    #                  `uvm_error("UVMMemWalkSeq", sv.sformatf("Status was %s when reading \"%s[%0d]\" through map \"%s\".",
-    #                                              status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
-    #               end
-    #               else begin
-    #                  exp = ~(k) & ((1'b1<<n_bits)-1)
-    #                  if (val != exp):
-    #                     `uvm_error("UVMMemWalkSeq", sv.sformatf("\"%s[%0d]\" read back as 'h%h instead of 'h%h.",
-    #                                                 mem.get_full_name(), k, val, exp))
-    #
-    #                  end
-    #               end
-    #            end
-    #         end
-    #      end
-    #   endtask: body
-    #
-    #endclass: UVMMemSingleWalkSeq
+    @cocotb.coroutine
+    def body(self):
+        maps = []  # uvm_reg_map [$]
+        n_bits = 0
+        mem = self.mem
+
+        if mem is None:
+            uvm_error("UVMMemWalkSeq", "No memory specified to run sequence on")
+            return
+
+        # Memories with some attributes are not to be tested
+        if (UVMResourceDb.get_by_name("REG::" + mem.get_full_name(),
+            "NO_REG_TESTS", 0) is not None or
+            UVMResourceDb.get_by_name("REG::" + mem.get_full_name(),
+                "NO_MEM_TESTS", 0) is not None or
+            UVMResourceDb.get_by_name("REG::" + mem.get_full_name(),
+                "NO_MEM_WALK_TEST", 0) is not None):
+            return
+
+        n_bits = mem.get_n_bits()
+
+        # Memories may be accessible from multiple physical interfaces (maps)
+        mem.get_maps(maps)
+
+        # Walk the memory via each map
+        for j in range(len(maps)):
+            status = 0
+            val = 0
+            exp = 0
+            # v = 0
+
+            # Only deal with RW memories
+            if mem.get_access(maps[j]) != "RW":
+                continue
+
+            uvm_info("UVMMemWalkSeq", sv.sformatf("Walking memory %s (n_bits: %d) in map \"%s\"...",
+                mem.get_full_name(), n_bits, maps[j].get_full_name()), UVM_LOW)
+
+            # The walking process is, for address k:
+            # - Write ~k
+            # - Read k-1 and expect ~(k-1) if k > 0
+            # - Write k-1 at k-1
+            # - Read k and expect ~k if k == last address
+            print("KKK000")
+            for k in range(mem.get_size()):
+                print("KKK001 k is now {:02X}, ~k is {:02X}".format(k, ~k))
+                status = []
+                yield mem.write(status, k, ~k, UVM_FRONTDOOR, maps[j], self)
+                print("KKK002")
+                status = status[0]
+
+                if status != UVM_IS_OK:
+                    uvm_error("UVMMemWalkSeq", sv.sformatf("Status was %s when writing \"%s[%0d]\" through map \"%s\".",
+                        status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
+
+                if k > 0:
+                    status = []
+                    val = []
+                    yield mem.read(status, k-1, val, UVM_FRONTDOOR, maps[j], self)
+                    status = status[0]
+                    if status != UVM_IS_OK:
+                       uvm_error("UVMMemWalkSeq", sv.sformatf(
+                           "Status was %s when reading \"%s[%0d]\" through map \"%s\".",
+                           UVM_STATUS_NAMES[status], mem.get_full_name(), k, maps[j].get_full_name()))
+                    else:
+                        exp = ~(k-1) & ((1 << n_bits)-1)
+                        val = val[0]
+                        if val != exp:
+                            uvm_error("UVMMemWalkSeq",
+                                sv.sformatf("\"%s[%0d-1]\" read back as 'h%h instead of 'h%h.",
+                                mem.get_full_name(), k, val, exp))
+
+                    status = []
+                    yield mem.write(status, k-1, k-1, UVM_FRONTDOOR, maps[j], self)
+                    status = status[0]
+                    if status != UVM_IS_OK:
+                        uvm_error("UVMMemWalkSeq", sv.sformatf(
+                            "Status was %s when writing \"%s[%0d-1]\" through map \"%s\".",
+                            UVM_STATUS_NAMES[status], mem.get_full_name(), k, maps[j].get_full_name()))
+
+                if k == mem.get_size() - 1:
+                    status = []
+                    val = []
+                    yield mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
+                    status = status[0]
+                    if status != UVM_IS_OK:
+                        uvm_error("UVMMemWalkSeq", sv.sformatf(
+                            "Status was %s when reading \"%s[%0d]\" through map \"%s\".",
+                            UVM_STATUS_NAMES[status], mem.get_full_name(), k, maps[j].get_full_name()))
+                    else:
+                        exp = ~(k) & ((1<<n_bits)-1)
+                        val = val[0]
+                        if val != exp:
+                            uvm_error("UVMMemWalkSeq", sv.sformatf("\"%s[%0d]\" read back as 'h%h instead of 'h%h.",
+                                mem.get_full_name(), k, val, exp))
+
+
 uvm_object_utils(UVMMemSingleWalkSeq)
 
 
@@ -226,67 +231,57 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Executes the mem walk sequence, one block at a time.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    #@cocotb.coroutine
-    #   def body(self)
-    #
-    #      if (model is None):
-    #         `uvm_error("UVMMemWalkSeq", "No register model specified to run sequence on")
-    #         return
-    #      end
-    #
-    #      uvm_report_info("STARTING_SEQ",{"\n\nStarting ",get_name()," sequence...\n"},UVM_LOW)
-    #
-    #      mem_seq = UVMMemSingleWalkSeq.type_id.create("single_mem_walk_seq")
-    #
-    #      self.reset_blk(model)
-    #      model.reset()
-    #
-    #      do_block(model)
-    #   endtask: body
-    #
-    #
+    @cocotb.coroutine
+    def body(self):
+        if self.model is None:
+            uvm_error("UVMMemWalkSeq", "No register model specified to run sequence on")
+            return
+
+        uvm_info("STARTING_SEQ","\n\nStarting " + self.get_name() + " sequence...\n",UVM_LOW)
+
+        self.mem_seq = UVMMemSingleWalkSeq.type_id.create("single_mem_walk_seq")
+
+        yield self.reset_blk(self.model)
+        self.model.reset()
+        yield self.do_block(self.model)
+
+
     #   // Task: do_block
     #   //
     #   // Test all of the memories in a given ~block~
     #   //
-    #   protected def do_block(self,uvm_reg_block blk)
-    #      uvm_mem mems[$]
-    #
-    #      if (UVMResourceDb.get_by_name({"REG::",blk.get_full_name()},
-    #                                             "NO_REG_TESTS", 0) is not None  or
-    #          UVMResourceDb.get_by_name({"REG::",blk.get_full_name()},
-    #                                             "NO_MEM_TESTS", 0) is not None  or
-    #          UVMResourceDb.get_by_name({"REG::",blk.get_full_name()},
-    #                                             "NO_MEM_ACCESS_TEST", 0) is not None )
-    #         return
-    #
-    #      // Iterate over all memories, checking accesses
-    #      blk.get_memories(mems, UVM_NO_HIER)
-    #      foreach (mems[i]):
-    #         // Memories with some attributes are not to be tested
-    #         if (UVMResourceDb.get_by_name({"REG::",mems[i].get_full_name()},
-    #                                                "NO_REG_TESTS", 0) is not None  or
-    #             UVMResourceDb.get_by_name({"REG::",mems[i].get_full_name()},
-    #                                                "NO_MEM_TESTS", 0) is not None  or
-    #	     UVMResourceDb.get_by_name({"REG::",mems[i].get_full_name()},
-    #                                                "NO_MEM_WALK_TEST", 0) is not None )
-    #           continue
-    #
-    #         mem_seq.mem = mems[i]
-    #         mem_seq.start(None, self)
-    #      end
-    #
-    #      begin
-    #         uvm_reg_block blks[$]
-    #
-    #         blk.get_blocks(blks)
-    #         foreach (blks[i]):
-    #            do_block(blks[i])
-    #         end
-    #      end
-    #   endtask: do_block
-    #
-    #
+    @cocotb.coroutine
+    def do_block(self, blk):
+        mems = []  # uvm_mem[$]
+
+        if (UVMResourceDb.get_by_name("REG::" + blk.get_full_name(),
+            "NO_REG_TESTS", 0) is not None or
+            UVMResourceDb.get_by_name("REG::" + blk.get_full_name(),
+                "NO_MEM_TESTS", 0) is not None or
+            UVMResourceDb.get_by_name("REG::" + blk.get_full_name(),
+                "NO_MEM_ACCESS_TEST", 0) is not None):
+            return
+
+        # Iterate over all memories, checking accesses
+        blk.get_memories(mems, UVM_NO_HIER)
+        for i in range(len(mems)):
+            # Memories with some attributes are not to be tested
+            if (UVMResourceDb.get_by_name("REG::" + mems[i].get_full_name(),
+                "NO_REG_TESTS", 0) is not None or
+                UVMResourceDb.get_by_name("REG::" + mems[i].get_full_name(),
+                    "NO_MEM_TESTS", 0) is not None or
+                UVMResourceDb.get_by_name("REG::" + mems[i].get_full_name(),
+                    "NO_MEM_WALK_TEST", 0) is not None):
+                continue
+            self.mem_seq.mem = mems[i]
+            yield self.mem_seq.start(None, self)
+
+        blks = []  # uvm_reg_block [$]
+        blk.get_blocks(blks)
+        for i in range(len(blks)):
+            yield self.do_block(blks[i])
+
+
     #   // Task: reset_blk
     #   //
     #   // Reset the DUT that corresponds to the specified block abstraction class.
@@ -299,9 +294,9 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    #@cocotb.coroutine
-    #   def reset_blk(self,uvm_reg_block blk)
-    #   endtask
-    #
+    @cocotb.coroutine
+    def reset_blk(self, blk):
+        yield Timer(0, "NS")
+
     #endclass: UVMMemWalkSeq
 uvm_object_utils(UVMMemWalkSeq)
