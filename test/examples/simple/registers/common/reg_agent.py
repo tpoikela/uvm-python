@@ -122,15 +122,17 @@ class reg_driver(UVMComponent):
                 yield RisingEdge(self.dut.clk)
             yield Timer(0)
             self.dut.we <= 0
+            uvm_info("REG_DRIVER WRITE", "Wrote value to DUT: " + str(rw.data) +
+                ' addr:' + str(rw.addr), UVM_LOW)
         else:
             yield RisingEdge(self.dut.clk)
             self.dut.addr_in <= rw.addr
             self.dut.read <= 0x1
             yield RisingEdge(self.dut.clk)
-            rw.data = self.dut.data_out.value
+            rw.data = self.dut.data_out.value.integer
             yield RisingEdge(self.dut.clk)
             self.dut.read <= 0x0
-            uvm_info("REG_DRIVER", "Read value from reg: " + str(rw.data) +
+            uvm_info("REG_DRIVER READ", "Read value from DUT: " + str(rw.data) +
                 ' addr:' + str(rw.addr), UVM_LOW)
             #rw.data = 0x6666
     #endclass
