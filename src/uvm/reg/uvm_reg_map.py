@@ -33,6 +33,8 @@ from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegBusOp
 from ..seq import UVMSequenceBase
 
+UVM_VERB_MEM_MAP = UVM_LOW
+
 
 class UVMRegMapInfo:
     def __init__(self):
@@ -747,6 +749,16 @@ class UVMRegMap(UVMObject):
     #   // See <set_submap_offset>.
     #   //
     #   extern virtual function uvm_reg_addr_t get_base_addr (uvm_hier_e hier=UVM_HIER)
+    def get_base_addr(self, hier=UVM_HIER):
+        # child = self
+        if (hier == UVM_NO_HIER or self.m_parent_map is None):
+            return self.m_base_addr
+        get_base_addr = self.m_parent_map.get_submap_offset(self)
+        get_base_addr += self.m_parent_map.get_base_addr(UVM_HIER)
+        return get_base_addr
+        #endfunction
+
+
     #
     #
     #   // Function: get_n_bytes
@@ -1160,9 +1172,6 @@ class UVMRegMap(UVMObject):
     def get_check_on_read(self):
         return self.m_check_on_read
 
-    #
-    #
-    #
     #   // Task: do_bus_write
     #   //
     #   // Perform a bus write operation.
@@ -1186,7 +1195,6 @@ class UVMRegMap(UVMObject):
         n_bits_init = 0
         accesses = []
 
-        print("do_bus_write Given rw was " + rw.convert2string())
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         #addrs = map_info.addr
         addrs = map_info.addr.copy()
@@ -1207,13 +1215,13 @@ class UVMRegMap(UVMObject):
                 n_access = n_access_extra + n_bits_init
                 temp_be = n_access_extra
                 value = value << n_access_extra
-                while(temp_be >= 8):
+                while temp_be >= 8:
                     byte_en[idx] = 0
                     idx += 1
                     temp_be -= 8
 
                 temp_be += n_bits_init
-                while(temp_be > 0):
+                while temp_be > 0:
                     byte_en[idx] = 1
                     idx += 1
                     temp_be -= 8
@@ -1232,9 +1240,9 @@ class UVMRegMap(UVMObject):
 
                 uvm_info(self.get_type_name(),
                    sv.sformatf("Writing 0x%0h at 0x%0h via map %s...",
-                        data, addrs[i], rw.map.get_full_name()), UVM_FULL)
+                        data, addrs[i], rw.map.get_full_name()), UVM_VERB_MEM_MAP)
 
-                if (rw.element_kind == UVM_FIELD):
+                if rw.element_kind == UVM_FIELD:
                     for z in range(bus_width):
                         rw_access.byte_en[z] = byte_en[curr_byte+z]
 
@@ -1271,7 +1279,7 @@ class UVMRegMap(UVMObject):
                         "adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
-                yield rw.parent.start_item(bus_req,rw.prior)
+                yield rw.parent.start_item(bus_req, rw.prior)
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
@@ -1284,7 +1292,7 @@ class UVMRegMap(UVMObject):
                     op = None  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
                     yield rw.parent.get_base_response(bus_rsp)
-                    rw_access = adapter.bus2reg(bus_rsp,rw_access)
+                    rw_access = adapter.bus2reg(bus_rsp, rw_access)
                 else:
                     rw_access = adapter.bus2reg(bus_req, rw_access)
                     if rw_access is None:
@@ -1301,7 +1309,7 @@ class UVMRegMap(UVMObject):
 
                 uvm_info(self.get_type_name(),
                    sv.sformatf("Wrote 0x%0h at 0x%0h via map %s: %s...",
-                      rw_access.data, addrs[i], rw.map.get_full_name(), rw.status), UVM_FULL)
+                      rw_access.data, addrs[i], rw.map.get_full_name(), rw.status), UVM_VERB_MEM_MAP)
 
                 if rw.status == UVM_NOT_OK:
                     break
@@ -1385,7 +1393,7 @@ class UVMRegMap(UVMObject):
 
                 uvm_info(self.get_type_name(),
                    sv.sformatf("Reading address 'h%0h via map \"%s\"...",
-                             addrs[i], self.get_full_name()), UVM_FULL)
+                             addrs[i], self.get_full_name()), UVM_VERB_MEM_MAP)
 
                 if (rw.element_kind == UVM_FIELD):
                     #for (int z=0;z<bus_width;z++)
@@ -1449,8 +1457,8 @@ class UVMRegMap(UVMObject):
                 #if (rw.status == UVM_IS_OK && (^data) === 1'bx):
 
                 uvm_info(self.get_type_name(),
-                   sv.sformatf("Read 0x%0h at 0x%0h via map %s: %s...", data,
-                       addrs[i], self.get_full_name(), str(rw.status)), UVM_FULL)
+                   sv.sformatf("Read 0x%h at 0x%h via map %s: %s...", data,
+                       addrs[i], self.get_full_name(), str(rw.status)), UVM_VERB_MEM_MAP)
 
                 if (rw.status == UVM_NOT_OK):
                     break
@@ -1594,6 +1602,7 @@ class UVMRegMap(UVMObject):
 
 
     #   extern virtual function string      convert2string()
+
     #   extern virtual function uvm_object  clone()
     #   extern virtual function void        do_print (uvm_printer printer)
     #   extern virtual function void        do_copy   (uvm_object rhs)
@@ -1745,15 +1754,6 @@ uvm_object_utils(UVMRegMap)
 # get methods
 #------------
 #
-# get_base_addr
-#
-#function uvm_reg_addr_t  uvm_reg_map::get_base_addr(uvm_hier_e hier=UVM_HIER)
-#  uvm_reg_map child = this
-#  if (hier == UVM_NO_HIER || self.m_parent_map is None)
-#    return self.m_base_addr
-#  get_base_addr = self.m_parent_map.get_submap_offset(this)
-#  get_base_addr += self.m_parent_map.get_base_addr(UVM_HIER)
-#endfunction
 #
 #
 #
