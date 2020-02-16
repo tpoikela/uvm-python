@@ -36,10 +36,9 @@ from .uvm_reg_model import *
 from .uvm_reg_cbs import UVMRegFieldCbIter
 
 NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
-   "W1C", "W1S", "W1T", "W0C", "W0S", "W0T",
-   "W1SRC", "W1CRS", "W0SRC", "W0CRS", "WSRC", "WCRS",
-    "WOC", "WOS"
-}
+        "W1C", "W1S", "W1T", "W0C", "W0S", "W0T",
+        "W1SRC", "W1CRS", "W0SRC", "W0CRS", "WSRC", "WCRS",
+        "WOC", "WOS"}
 
 #-----------------------------------------------------------------
 # CLASS: uvm_reg_field
@@ -52,6 +51,8 @@ NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
 # have different access policies depending on the address map
 # use the access the register (thus the field).
 #-----------------------------------------------------------------
+
+
 class UVMRegField(UVMObject):
     m_max_size = 0
     m_policy_names = {}  # string -> bit
@@ -126,6 +127,7 @@ class UVMRegField(UVMObject):
             size = 1
 
         self.m_size      = size
+        self.rand('value', range((1 << size) - 1))
         self.m_volatile  = volatile
         self.m_access    = access.upper()
         self.m_lsb       = lsb_pos
@@ -636,8 +638,8 @@ class UVMRegField(UVMObject):
     #   // for the specified reset ~kind~.
     #   // If ~delete~ is TRUE, removes the reset value, if any.
     #   //
-    def has_reset(self, kind = "HARD", delete = False):
-        if not kind in self.m_reset:
+    def has_reset(self, kind="HARD", delete=False):
+        if kind not in self.m_reset:
             return False
         if delete:
             del self.m_reset[kind]
@@ -650,8 +652,8 @@ class UVMRegField(UVMObject):
     #   // Specify or modify the reset value for this field corresponding
     #   // to the cause specified by ~kind~.
     #   //
-    def set_reset(self, value,kind = "HARD"):
-        self.m_reset[kind] = value & ((1<<self.m_size) - 1)
+    def set_reset(self, value,kind="HARD"):
+        self.m_reset[kind] = value & ((1 << self.m_size) - 1)
 
     #   // Function: needs_update
     #   //
@@ -1199,10 +1201,17 @@ class UVMRegField(UVMObject):
         self.m_mirrored = field_val
         self.m_desired  = field_val
         self.value = field_val
-    #endfunction: do_predict
 
 
-    #   extern function void pre_randomize()
+    def pre_randomize(self):
+        #   // Update the only publicly known property with the current
+        #   // desired value so it can be used as a state variable should
+        #   // the rand_mode of the field be turned off.
+        self.value = self.m_desired
+
+
+    def post_randomize(self):
+        self.m_desired = self.value
 
     #   extern function void post_randomize()
 
@@ -1768,21 +1777,6 @@ uvm_object_utils(UVMRegField)
 #                      fname, lineno)
 #endtask: mirror
 #
-#// pre_randomize
-#
-#function void uvm_reg_field::pre_randomize()
-#   // Update the only publicly known property with the current
-#   // desired value so it can be used as a state variable should
-#   // the rand_mode of the field be turned off.
-#   value = self.m_desired
-#endfunction: pre_randomize
-#
-#
-#// post_randomize
-#
-#function void uvm_reg_field::post_randomize()
-#   self.m_desired = value
-#endfunction: post_randomize
 #
 #
 #// do_print
