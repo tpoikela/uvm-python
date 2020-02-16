@@ -124,7 +124,7 @@ class slave_memory_seq(UVMSequence):
     @cocotb.coroutine
     def body(self):
         #p = None  # uvm_phase
-        uvm_info(self.get_type_name(), sv.sformatf("%s starting...",
+        uvm_info(self.get_type_name(), sv.sformatf("ubus_slave_seq %s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
 
         #$cast(req, create_item(ubus_transfer::get_type(), p_sequencer, "req"))
