@@ -1052,12 +1052,12 @@ class UVMMem(UVMObject):
                 value_s = "='{"
                 pre_s = "Burst "
                 for i in range(len(rw.value)):
-                    value_s = value_s + sv.sformatf("%0h,",rw.value[i])
+                    value_s = value_s + sv.sformatf("%0h,", int(rw.value[i]))
                 value_s[len(value_s)-1] = "}"
                 range_s = sv.sformatf("[%0d:%0d]",rw.offset,rw.offset+len(rw.value))
             else:
-                value_s = sv.sformatf("=%0h",rw.value[0])
-                range_s = sv.sformatf("[%0d]",rw.offset)
+                value_s = sv.sformatf("=%0h", int(rw.value[0]))
+                range_s = sv.sformatf("[%0d]", rw.offset)
 
             uvm_report_info("RegModel", pre_s + "Read memory via " + path_s + ": "
                     + self.get_full_name() + range_s + value_s, UVM_HIGH)
