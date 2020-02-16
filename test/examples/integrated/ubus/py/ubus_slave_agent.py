@@ -41,23 +41,24 @@ class ubus_slave_agent(UVMAgent):
         self.driver = None
         self.sequencer = None
         self.monitor = None
+        self.tag = "UBUS_SLAVE_AGENT_" + name
 
     #  // build_phase
     def build_phase(self, phase):
         UVMAgent.build_phase(self, phase)
-        self.monitor = ubus_slave_monitor.type_id.create("monitor", self)
+        self.monitor = ubus_slave_monitor.type_id.create("u_slv_monitor", self)
         if self.get_is_active() == UVM_ACTIVE:
-            self.driver = ubus_slave_driver.type_id.create("driver", self)
-            self.sequencer = ubus_slave_sequencer.type_id.create("sequencer",
+            self.driver = ubus_slave_driver.type_id.create("u_slv_driver", self)
+            self.sequencer = ubus_slave_sequencer.type_id.create("u_slv_sequencer",
                     self)
-        #  endfunction : build_phase
 
     # connect_phase
     def connect_phase(self, phase):
         if self.get_is_active() == UVM_ACTIVE:
+            uvm_info(self.tag, "Connecting comps in active mode now",
+                    UVM_MEDIUM)
             self.driver.seq_item_port.connect(self.sequencer.seq_item_export)
             self.sequencer.addr_ph_port.connect(self.monitor.addr_ph_imp)
-        #  endfunction : connect_phase
 
     #endclass : ubus_slave_agent
 uvm_component_utils(ubus_slave_agent)
