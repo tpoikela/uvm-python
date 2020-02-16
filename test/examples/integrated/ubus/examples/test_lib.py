@@ -31,17 +31,12 @@ from ubus_example_master_seq_lib import read_modify_write_seq
 from ubus_slave_seq_lib import slave_memory_seq
 from uvm.seq import UVMSequence
 
-#// Base Test
-#class ubus_example_base_test extends uvm_test
+
 class ubus_example_base_test(UVMTest):
 
-    #  ubus_example_tb ubus_example_tb0
-    #  uvm_table_printer printer
-    #  bit test_pass = 1
-    #
-    #  function new(string name = "ubus_example_base_test",
+
     def __init__(self, name="ubus_example_base_test", parent=None):
-        UVMTest.__init__(self, name, parent)
+        super().__init__(name, parent)
         self.test_pass = True
         self.ubus_example_tb0 = None
         self.printer = None
@@ -62,16 +57,14 @@ class ubus_example_base_test(UVMTest):
         else:
             uvm_fatal("NOVIF", "Could not get vif from config DB")
 
-        #  endfunction : build_phase
 
-    #  function void end_of_elaboration_phase(uvm_phase phase)
-    #    // Set verbosity for the bus monitor for this demo
-    #     if(ubus_example_tb0.ubus0.bus_monitor != null)
-    #       ubus_example_tb0.ubus0.bus_monitor.set_report_verbosity_level(UVM_FULL)
-    #    `self.uvm_report_info(get_type_name(),
-    #      $sformatf("Printing the test topology :\n%s", this.sprint(printer)), UVM_LOW)
-    #  endfunction : end_of_elaboration_phase
-    #
+    def end_of_elaboration_phase(self, phase):
+        # Set verbosity for the bus monitor for this demo
+        if self.ubus_example_tb0.ubus0.bus_monitor is not None:
+            self.ubus_example_tb0.ubus0.bus_monitor.set_report_verbosity_level(UVM_FULL)
+        uvm_info(self.get_type_name(),
+            sv.sformatf("Printing the test topology :\n%s", self.sprint(self.printer)), UVM_LOW)
+
 
     #  task run_phase(uvm_phase phase)
     #    //set a drain-time for the environment if desired
@@ -97,13 +90,13 @@ class ubus_example_base_test(UVMTest):
         else:
             uvm_fatal(self.get_type_name(), "** UVM TEST FAIL **\n" +
                 self.err_msg)
-    #  endfunction
+
 
     #endclass : ubus_example_base_test
 uvm_component_utils(ubus_example_base_test)
 
 #// Read Modify Write Read Test
-#class test_read_modify_write extends ubus_example_base_test
+
 class test_read_modify_write(ubus_example_base_test):
 
     def __init__(self, name="test_read_modify_write", parent=None):
@@ -124,14 +117,14 @@ class test_read_modify_write(ubus_example_base_test):
         master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
         slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
 
-        uvm_info("TEST_TOP", "FFFForking master_proc now", UVM_LOW)
+        uvm_info("TEST_TOP", "Forking master_proc now", UVM_LOW)
         master_seq = read_modify_write_seq("r_mod_w_seq")
         master_proc = cocotb.fork(master_seq.start(master_sqr))
 
         slave_seq = slave_memory_seq("mem_seq")
         slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
         yield [slave_proc, master_proc.join()]
-        phase.drop_objection(self)
+        phase.drop_objection(self, "test_read_modify_write drop objection")
 
     #endclass : test_read_modify_write
 uvm_component_utils(test_read_modify_write)
