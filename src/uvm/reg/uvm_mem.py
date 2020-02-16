@@ -1417,9 +1417,10 @@ class UVMMem(UVMObject):
     #   // subsequently derived classes.
     #   //
     #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
+    def add_coverage(self, models):
+        self.m_has_cover |= models
 
-    #
-    #
+
     #   // Function: has_coverage
     #   //
     #   // Check if memory has coverage model(s)
@@ -1464,7 +1465,7 @@ class UVMMem(UVMObject):
         self.m_cover_on = self.m_has_cover & is_on
         return self.m_cover_on
 
-    #
+
     #   // Function: get_coverage
     #   //
     #   // Check if coverage measurement is on.
@@ -1477,9 +1478,12 @@ class UVMMem(UVMObject):
     #   // See <uvm_mem::set_coverage()> for more details.
     #   //
     #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on)
-    #
+    def get_coverage(self, is_on):
+        if self.has_coverage(is_on) == 0:
+            return 0
+        return ((self.m_cover_on & is_on) == is_on)
 
-    #
+
     #   // Function: sample
     #   //
     #   // Functional coverage measurement method
@@ -1503,9 +1507,8 @@ class UVMMem(UVMObject):
 
     def XsampleX(self, addr, is_read, _map):
         self.sample(addr, is_read, _map)
-    #   endfunction
 
-    #
+
     #   // Core ovm_object operations
     #
     #   extern virtual function void do_print (uvm_printer printer)
@@ -1519,9 +1522,7 @@ class UVMMem(UVMObject):
     #
     #
     #endclass: uvm_mem
-#
-#
-#
+
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
 #//------------------------------------------------------------------------------
@@ -1552,14 +1553,6 @@ class UVMMem(UVMObject):
 #
 #   map.m_set_mem_offset(this, offset, unmapped)
 #endfunction
-#
-#
-#
-#
-#
-#
-#
-#
 #
 #
 #// is_in_map
@@ -1755,35 +1748,6 @@ class UVMMem(UVMObject):
 #   void'(get_addresses(offset, map, addr))
 #   return addr[0]
 #endfunction
-#
-#
-#
-#//---------
-#// COVERAGE
-#//---------
-#
-#
-#
-#
-#// add_coverage
-#
-#function void uvm_mem::add_coverage(uvm_reg_cvr_t models)
-#   m_has_cover |= models
-#endfunction: add_coverage
-#
-#
-#
-#
-#
-#
-#// get_coverage
-#
-#function bit uvm_mem::get_coverage(uvm_reg_cvr_t is_on)
-#   if (has_coverage(is_on) == 0) return 0
-#   return ((m_cover_on & is_on) == is_on)
-#endfunction: get_coverage
-#
-#
 #
 #
 #//-----------
