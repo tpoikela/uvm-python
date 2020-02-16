@@ -45,8 +45,10 @@ def initial_run_test(dut, vif):
 
 @cocotb.coroutine
 def initial_reset(vif):
+    yield Timer(5, "NS")
     vif.ubus_reset <= 1
     vif.ubus_clock <= 1
+    vif.ubus_wait <= 0
     yield Timer(51, "NS")
     vif.ubus_reset <= 0
 
