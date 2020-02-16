@@ -768,9 +768,10 @@ class UVMRegBlock(UVMObject):
     #   // subsequently derived classes.
     #   //
     #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
+    def add_coverage(self, models):
+        self.has_cover |= models
 
-    #
-    #
+
     #   // Function: has_coverage
     #   //
     #   // Check if block has coverage model(s)
@@ -783,10 +784,8 @@ class UVMRegBlock(UVMObject):
     #   extern virtual function bit has_coverage(uvm_reg_cvr_t models)
     def has_coverage(self, models):
         return ((self.has_cover & models) == models)
-    #endfunction: has_coverage
 
-    #
-    #
+
     #   // Function: set_coverage
     #   //
     #   // Turns on coverage measurement.
@@ -948,8 +947,7 @@ class UVMRegBlock(UVMObject):
             blk.reset(kind)
         #endfunction
 
-    #
-    #
+
     #   // Function: needs_update
     #   //
     #   // Check if DUT registers need to be written
@@ -1009,7 +1007,7 @@ class UVMRegBlock(UVMObject):
 
 
         uvm_info("RegModel", sv.sformatf("%s:%0d - Updating model block %s with %s path",
-            fname, lineno, self.get_name(), path.name ), UVM_HIGH)
+            fname, lineno, self.get_name(), path.name), UVM_HIGH)
 
         for rg_ in self.regs.key_list():
             rg = rg_
@@ -1031,8 +1029,7 @@ class UVMRegBlock(UVMObject):
         status.append(stat_all)
         #endtask: update
 
-    #
-    #
+
     #   // Task: mirror
     #   //
     #   // Update the mirrored values
@@ -1075,11 +1072,8 @@ class UVMRegBlock(UVMObject):
             if (curr_stat[0] != UVM_IS_OK and curr_stat[0] != UVM_HAS_X):
                 final_status = curr_stat[0]
         status.append(final_status)
-    #endtask: mirror
 
 
-    #
-    #
     #   // Task: write_reg_by_name
     #   //
     #   // Write the named register
@@ -1097,8 +1091,9 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object          extension = None,
     #                              input  string              fname = "",
     #                              input  int                 lineno = 0)
-    #
-    #
+
+
+
     #   // Task: read_reg_by_name
     #   //
     #   // Read the named register
@@ -1116,8 +1111,8 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    #
-    #
+
+
     #   // Task: write_mem_by_name
     #   //
     #   // Write the named memory
@@ -1136,8 +1131,8 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    #
-    #
+
+
     #   // Task: read_mem_by_name
     #   //
     #   // Read the named memory
@@ -1156,13 +1151,12 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    #
-    #
+
+
     #   extern virtual task readmemh(string filename)
+
     #   extern virtual task writememh(string filename)
-    #
-    #
-    #
+
 
     #   //----------------
     #   // Group: Backdoor
@@ -1203,8 +1197,8 @@ class UVMRegBlock(UVMObject):
     #   extern function void set_backdoor (uvm_reg_backdoor bkdr,
     #                                      string fname = "",
     #                                      int lineno = 0)
-    #
-    #
+
+
     #   // Function:  clear_hdl_path
     #   //
     #   // Delete HDL paths
@@ -1230,12 +1224,8 @@ class UVMRegBlock(UVMObject):
         #  uvm_queue #(string) paths
         paths = self.hdl_paths_pool.get(kind)
         paths.push_back(path)
-        #
-        #endfunction
-        #
 
-    #
-    #
+
     #   // Function:   has_hdl_path
     #   //
     #   // Check if a HDL path is specified
@@ -1246,8 +1236,8 @@ class UVMRegBlock(UVMObject):
     #   // the nearest block ancestor with a specified default design abstraction.
     #   //
     #   extern function bit has_hdl_path (string kind = "")
-    #
-    #
+
+
     #   // Function:  get_hdl_path
     #   //
     #   // Get the incremental HDL path(s)
@@ -1261,8 +1251,8 @@ class UVMRegBlock(UVMObject):
     #   // for this block is used.
     #   //
     #   extern function void get_hdl_path (ref string paths[$], input string kind = "")
-    #
-    #
+
+
     #   // Function:  get_full_hdl_path
     #   //
     #   // Get the full hierarchical HDL path(s)
@@ -1280,8 +1270,8 @@ class UVMRegBlock(UVMObject):
     #   extern function void get_full_hdl_path (ref string paths[$],
     #                                           input string kind = "",
     #                                           string separator = ".")
-    #
-    #
+
+
     #   // Function: set_default_hdl_path
     #   //
     #   // Set the default design abstraction
@@ -1289,8 +1279,7 @@ class UVMRegBlock(UVMObject):
     #   // Set the default design abstraction for this block instance.
     #   //
     #   extern function void   set_default_hdl_path (string kind)
-    #
-    #
+
     #   // Function:  get_default_hdl_path
     #   //
     #   // Get the default design abstraction
@@ -1303,8 +1292,8 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern function string get_default_hdl_path ()
     def get_default_hdl_path(self):
-        if (self.default_hdl_path == "" and parent is not None):
-            return parent.get_default_hdl_path()
+        if (self.default_hdl_path == "" and self.parent is not None):
+            return self.parent.get_default_hdl_path()
         return self.default_hdl_path
         #endfunction
 
@@ -1376,12 +1365,6 @@ class UVMRegBlock(UVMObject):
 #endfunction
 #
 #
-# new
-#
-#
-#
-#
-#
 # add_vreg
 #
 #function void uvm_reg_block::add_vreg(uvm_vreg vreg)
@@ -1400,11 +1383,9 @@ class UVMRegBlock(UVMObject):
 #endfunction: add_vreg
 #
 #
-#
 #--------------------------
 # Get Hierarchical Elements
 #--------------------------
-#
 #
 # get_fields
 #
@@ -1686,43 +1667,9 @@ class UVMRegBlock(UVMObject):
 #endfunction: get_vfield_by_name
 #
 #
-#
-#-------------
-# Coverage API
-#-------------
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# add_coverage
-#
-#function void uvm_reg_block::add_coverage(uvm_reg_cvr_t models)
-#   self.has_cover |= models
-#endfunction: add_coverage
-#
-#
-#
-#
-#
 #----------------
 # Run-Time Access
 #----------------
-#
-#
-#
-#
-#
-#
-# update
-#
-#
-#
-#
 #
 # write_reg_by_name
 #
@@ -1836,14 +1783,6 @@ class UVMRegBlock(UVMObject):
 #---------------
 # Map Management
 #---------------
-#
-#
-#
-#
-#
-#
-#
-#
 #
 #----------------
 # Group- Backdoor
@@ -2141,5 +2080,3 @@ class UVMRegBlock(UVMObject):
 #`endif
 #   return image
 #endfunction: convert2string
-#
-
