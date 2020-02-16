@@ -5,6 +5,7 @@ __pycache__
 build
 sim_build
 results.xml
+results_coverage.xml
 tags
 vimproject
 .mypy_cache
