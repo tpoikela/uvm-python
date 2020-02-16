@@ -42,8 +42,11 @@ class ubus_slave_driver(UVMDriver):
         UVMDriver.__init__(self, name, parent)
         # The virtual interface used to drive and view HDL signals.
         self.vif = None
+        self.tag = "UBUS_SLAVE_DRIVER_" + name
 
     def build_phase(self, phase):
+        super().build_phase(phase)
+        uvm_info(self.tag, "build_phase started", UVM_MEDIUM)
         arr = []
         if UVMConfigDb.get(self, "", "vif", arr):
             self.vif = arr[0]
@@ -57,7 +60,7 @@ class ubus_slave_driver(UVMDriver):
         #    fork
         fork_get = cocotb.fork(self.get_and_drive())
         fork_reset = cocotb.fork(self.reset_signals())
-        yield [fork_get, fork_reset.join()]
+        yield [fork_get.join(), fork_reset.join()]
         #    join
     #  endtask : run_phase
 
@@ -92,7 +95,6 @@ class ubus_slave_driver(UVMDriver):
     @cocotb.coroutine
     def respond_to_transfer(self, resp):
         if resp.read_write != NOP:
-            print("QQQ slave driver responding to " + resp.convert2string())
             self.vif.sig_error <= 0
             for i in range(resp.size):
                 if resp.read_write == READ:
