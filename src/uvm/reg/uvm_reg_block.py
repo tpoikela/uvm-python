@@ -26,15 +26,19 @@
 import cocotb
 from ..base.sv import sv
 from ..base.uvm_object import UVMObject
-from ..base.uvm_pool import *
+from ..base.uvm_globals import uvm_check_output_args
+from ..base.uvm_object_globals import (UVM_HIGH)
+from ..base.uvm_pool import UVMPool, UVMObjectStringPool
 from ..base.uvm_queue import UVMQueue
 from ..base.uvm_resource_db import UVMResourceDb
-from .uvm_reg_model import *
+from .uvm_reg_model import (UVM_IS_OK, UVM_HAS_X, UVM_NO_COVERAGE,
+    UVM_DEFAULT_PATH, UVM_HIER, uvm_reg_cvr_rsrc_db, UVM_FRONTDOOR,
+    UVM_NO_CHECK, UVM_CVR_ALL)
 from .uvm_reg_map import UVMRegMap
 from .uvm_mem import UVMMem
 from .uvm_reg_field import UVMRegField
 from .uvm_reg import UVMReg
-from ..macros import (uvm_error, uvm_warning, uvm_fatal, UVM_REG_DATA_WIDTH)
+from ..macros import (uvm_info, uvm_error, uvm_warning, uvm_fatal, UVM_REG_DATA_WIDTH)
 
 #------------------------------------------------------------------------
 # Class: uvm_reg_block
@@ -49,9 +53,12 @@ from ..macros import (uvm_error, uvm_warning, uvm_fatal, UVM_REG_DATA_WIDTH)
 #
 #------------------------------------------------------------------------
 
-ERR_MSG1 = "There are %0d root register models named %s. The names of the root register models have to be unique"
+ERR_MSG1 = ("There are %0d root register models named %s. The names of the root"
+    + " register models have to be unique")
 
-ERR_MSG3 = "Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d"
+ERR_MSG3 = ("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d"
+    + " or greater. Currently defined as %0d")
+
 
 class UVMRegBlock(UVMObject):
     m_roots = {}  # static bit[uvm_reg_block]
@@ -87,6 +94,7 @@ class UVMRegBlock(UVMObject):
     #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
     #   //
     #   function new(string name="", int has_coverage=UVM_NO_COVERAGE)
+
     def __init__(self, name="", has_coverage=UVM_NO_COVERAGE):
         super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
@@ -95,7 +103,7 @@ class UVMRegBlock(UVMObject):
         UVMRegBlock.m_roots[self] = 0
         self.locked = False
         self.maps = UVMPool()  # bit[UVMRegMap]
-        self.regs = UVMPool()  #int unsigned[uvm_reg]
+        self.regs = UVMPool()  # int unsigned[uvm_reg]
         self.blks = UVMPool()
         self.mems = UVMPool()
         self.vregs = UVMPool()
@@ -263,11 +271,11 @@ class UVMRegBlock(UVMObject):
     # add_reg
     def add_reg(self, rg):
         if self.is_locked():
-            uvm_report_error("RegModel", "Cannot add register to locked block model")
+            uvm_error("RegModel", "Cannot add register to locked block model")
             return
 
         if rg in self.regs:
-            uvm_report_error("RegModel", ("Register '" + rg.get_name()
+            uvm_error("RegModel", ("Register '" + rg.get_name()
               + "' has already been registered with block '"
               + self.get_name() + "'"))
             return
@@ -832,6 +840,10 @@ class UVMRegBlock(UVMObject):
     #   // See <uvm_reg_block::set_coverage()> for more details.
     #   //
     #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL)
+    def get_coverage(self, is_on=UVM_CVR_ALL):
+        if self.has_coverage(is_on) == 0:
+            return 0
+        return ((self.cover_on & is_on) == is_on)
 
 
     #   // Function: sample
@@ -874,7 +886,16 @@ class UVMRegBlock(UVMObject):
     #   // If this method is extended, it MUST call super.sample_values().
     #   //
     #   extern virtual function void sample_values()
-    #
+    def sample_values(self):
+        for rg_ in self.regs.key_list():
+            rg = rg_
+            rg.sample_values()
+
+        for blk_ in self.blks.key_list():
+            blk = blk_
+            blk.sample_values()
+
+
     #   /*local*/ extern function void XsampleX(uvm_reg_addr_t addr,
     #                                           bit            is_read,
     #                                           UVMRegMap    map)
@@ -884,15 +905,11 @@ class UVMRegBlock(UVMObject):
             pass
             # ToDo: Call XsampleX in the parent block
             # with the offset and map within that block's context
-    #endfunction
 
 
-    #
-    #
     #   //--------------
     #   // Group: Access
     #   //--------------
-    #
 
     #   // Function: get_default_path
     #   //
@@ -907,7 +924,6 @@ class UVMRegBlock(UVMObject):
         if (self.parent is not None):
             return self.parent.get_default_path()
         return UVM_FRONTDOOR
-        #endfunction
 
 
     #   // Function: reset
@@ -951,8 +967,18 @@ class UVMRegBlock(UVMObject):
     #   // For additional information, see <uvm_reg_block::update()> method.
     #   //
     #   extern virtual function bit needs_update()
-    #
-    #
+    def needs_update(self):
+
+        for rg_ in self.regs.key_list():
+            rg = rg_
+            if rg.needs_update():
+                return 1
+        for blk_ in self.blks.key_list():
+            blk = blk_
+            if blk.needs_update():
+                return 1
+        return 0
+
     #   // Task: update
     #   //
     #   // Batch update of register.
@@ -970,6 +996,41 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
+    @cocotb.coroutine
+    def update(self, status, path=UVM_DEFAULT_PATH, parent=None, prior=-1, extension=None, fname="",
+            lineno=0):
+        uvm_check_output_args([status])
+        stat_all = UVM_IS_OK
+
+        if self.needs_update() is False:
+            uvm_info("RegModel", sv.sformatf("%s:%0d - RegModel block %s does not need updating",
+                         fname, lineno, self.get_name()), UVM_HIGH)
+            return
+
+
+        uvm_info("RegModel", sv.sformatf("%s:%0d - Updating model block %s with %s path",
+            fname, lineno, self.get_name(), path.name ), UVM_HIGH)
+
+        for rg_ in self.regs.key_list():
+            rg = rg_
+            if rg.needs_update():
+                stat = []
+                yield rg.update(stat, path, None, parent, prior, extension)
+                if (stat[0] != UVM_IS_OK and stat[0] != UVM_HAS_X):
+                    uvm_error("RegModel", sv.sformatf("Register \"%s\" could not be updated",
+                        rg.get_full_name()))
+                    status.append(stat[0])
+                    return
+
+        for blk_ in self.blks.key_list():
+            blk = blk_
+            stat_blk = []
+            yield blk.update(status,path,parent,prior,extension,fname,lineno)
+            if (stat_blk[0] != UVM_IS_OK and stat_blk[0] != UVM_HAS_X):
+                stat_all = stat_blk
+        status.append(stat_all)
+        #endtask: update
+
     #
     #
     #   // Task: mirror
@@ -1632,19 +1693,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# sample_values
-#
-#function void uvm_reg_block::sample_values()
-#   foreach (regs[rg_]):
-#      uvm_reg rg = rg_
-#      rg.sample_values()
-#   end
-#
-#   foreach (blks[blk_]):
-#      uvm_reg_block blk = blk_
-#      blk.sample_values()
-#   end
-#endfunction
 #
 #
 #
@@ -1660,13 +1708,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# get_coverage
-#
-#function bit uvm_reg_block::get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL)
-#   if (self.has_coverage(is_on) == 0) return 0
-#   return ((self.cover_on & is_on) == is_on)
-#endfunction: get_coverage
-#
 #
 #----------------
 # Run-Time Access
@@ -1675,61 +1716,10 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# needs_update
-#
-#function bit uvm_reg_block::needs_update()
-#   needs_update = 0
-#
-#   foreach (regs[rg_]):
-#     uvm_reg rg = rg_
-#     if (rg.needs_update())
-#       return 1
-#   end
-#   foreach (blks[blk_]):
-#     uvm_reg_block blk =blk_
-#     if (blk.needs_update())
-#       return 1
-#   end
-#endfunction: needs_update
 #
 #
 # update
 #
-#task uvm_reg_block::update(output uvm_status_e  status,
-#                           input  uvm_path_e    path = UVM_DEFAULT_PATH,
-#                           input  uvm_sequence_base  parent = None,
-#                           input  int                prior = -1,
-#                           input  uvm_object         extension = None,
-#                           input  string             fname = "",
-#                           input  int                lineno = 0)
-#   status = UVM_IS_OK
-#
-#   if (!needs_update()):
-#     `uvm_info("RegModel", $sformatf("%s:%0d - RegModel block %s does not need updating",
-#                    fname, lineno, self.get_name()), UVM_HIGH)
-#      return
-#   end
-#
-#   `uvm_info("RegModel", $sformatf("%s:%0d - Updating model block %s with %s path",
-#                    fname, lineno, self.get_name(), path.name ), UVM_HIGH)
-#
-#   foreach (regs[rg_]):
-#      uvm_reg rg = rg_
-#      if (rg.needs_update()):
-#         rg.update(status, path, None, parent, prior, extension)
-#         if (status != UVM_IS_OK && status != UVM_HAS_X):
-#           `uvm_error("RegModel", $sformatf("Register \"%s\" could not be updated",
-#                                        rg.get_full_name()))
-#           return
-#         end
-#      end
-#   end
-#
-#   foreach (blks[blk_]):
-#     uvm_reg_block blk = blk_
-#     blk.update(status,path,parent,prior,extension,fname,lineno)
-#   end
-#endtask: update
 #
 #
 #
