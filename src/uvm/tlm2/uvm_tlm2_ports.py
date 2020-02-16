@@ -41,11 +41,11 @@ from uvm.tlm2.uvm_tlm2_defines import UVM_TLM_B_MASK, UVM_TLM_NB_FW_MASK,\
 from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
     UVM_TLM_NB_TRANSPORT_FW_IMP, UVM_TLM_NB_TRANSPORT_BW_IMP
 
-class UVMTlmBTransportPort(UVMPortBase):
+class UVMTLMBTransportPort(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTlmBTransportPort, UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
-UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBTransportPort)
+UVM_PORT_COMMON(UVMTLMBTransportPort, UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
+UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBTransportPort)
 
 #
 #// class -- NODOCS -- uvm_tlm_nb_transport_fw_port
@@ -56,11 +56,11 @@ UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTlmBTransportPort)
 #// non-blocking transport port.
 #// The port can be bound to one export.
 #//
-class UVMTlmNbTransportFwPort(UVMPortBase):
+class UVMTLMNbTransportFwPort(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTlmNbTransportFwPort, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
-UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbTransportFwPort)
+UVM_PORT_COMMON(UVMTLMNbTransportFwPort, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
+UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbTransportFwPort)
 
 #// class: uvm_tlm_nb_transport_bw_port
 #//
@@ -71,9 +71,9 @@ UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTlmNbTransportFwPort)
 #// The port can be bound to one export.
 #//
   
-class UVMTlmNbTransportBwPort(UVMPortBase):
+class UVMTLMNbTransportBwPort(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTlmNbTransportBwPort, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
-UVM_TLM_NB_TRANSPORT_BW_IMP('m_if', UVMTlmNbTransportBwPort)
+UVM_PORT_COMMON(UVMTLMNbTransportBwPort, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
+UVM_TLM_NB_TRANSPORT_BW_IMP('m_if', UVMTLMNbTransportBwPort)
 

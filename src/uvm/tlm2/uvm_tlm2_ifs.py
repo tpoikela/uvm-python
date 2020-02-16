@@ -88,7 +88,7 @@ UVM_TLM_FUNCTION_ERROR="TLM-2 interface function not implemented"
 #//  - <b_transport>
 #//
 
-class UVMTlmIf():
+class UVMTLMIf():
     
     #//----------------------------------------------------------------------
     #// Group: tlm transport methods

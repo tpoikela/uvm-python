@@ -30,7 +30,7 @@
 #//
 from uvm.macros.uvm_message_defines import uvm_error, uvm_fatal
 from uvm.base.sv import cat
-class UVMTlmTime():
+class UVMTLMTime():
 #
 #   static local real m_resolution = 1.0e-12; // ps by default
     m_resolution = 1.0e-12 
@@ -50,7 +50,7 @@ class UVMTlmTime():
 #   //
     @staticmethod
     def set_time_resolution(res):
-        UVMTlmTime.m_resolution = res
+        UVMTLMTime.m_resolution = res
 
 #   // Function: new
 #   // Create a new canonical time value.
@@ -62,7 +62,7 @@ class UVMTlmTime():
 #   // is used.
     def __init__(self, name="uvm_tlm_time", res=0):
         self.m_name = name
-        self.m_res = UVMTlmTime.m_resolution if (res == 0) else res
+        self.m_res = UVMTLMTime.m_resolution if (res == 0) else res
         self.reset()
 
 #   // Function: get_name
