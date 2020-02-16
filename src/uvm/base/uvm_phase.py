@@ -46,32 +46,6 @@ def UVM_PH_TRACE(ID,MSG,PH,VERB):
     uvm_info(ID, (sv.sformatf("Phase '%0s' (id=%0d) ", PH.get_full_name(),
         PH.get_inst_id()) + MSG), UVM_LOW)
 
-# class Simultaneous(_AggregateWaitable):
-#     @cocotb.coroutine
-#     def _wait(self):
-#         t = Timer(1)
-#         all_t = Combine(triggers)
-#         any_t = First(triggers)
-#
-#         while True:
-#             triggers = list(self.triggers)
-#
-#             @cocotb.coroutine
-#             def wait_all():
-#                 yield all_t
-#
-#             # make sure to queue up the all_t trigger at the same time as the any_t one
-#             all_task = cocotb.fork(wait_all)
-#             yield any_t
-#             f = yield First(all_task.join(), t)
-#             if f is not t:
-#                 break
-#
-#             # stop waiting on the combination
-#             all_task.kill()
-#
-#         raise ReturnValue(self)
-
 
 @cocotb.coroutine
 def my_combine(events):
@@ -1417,9 +1391,8 @@ class UVMPhase(UVMObject):
                 #-----------
                 # EXECUTING: (task phases)
                 #-----------
-                uvm_debug(self, 'execute_phase', "Forking now task_phase for " +
-                        top.get_name())
-                task_proc = cocotb.fork(task_phase.traverse(top,self, UVM_PHASE_EXECUTING))
+                uvm_debug(self, 'execute_phase', "Forking now task_phase for uvm_top")
+                task_proc = cocotb.fork(task_phase.traverse(top, self, UVM_PHASE_EXECUTING))
                 #wait(0); // stay alive for later kill
                 #join_none
 
@@ -1585,12 +1558,10 @@ class UVMPhase(UVMObject):
                 #wait (pred.m_state == UVM_PHASE_DONE)
                 #events.append(pred.get_phase_done_event())
                 events.append(pred.get_phase_done_event().wait())
-            #yield(Simultaneous(*events))
-            #yield my_combine(events) # Combine expects *args, not list
+
             uvm_debug(self, '_wait_all_predecessors_done', nn + "| Before combining events")
             yield Combine(*events)  # Combine expects *args, not list
             uvm_debug(self, '_wait_all_predecessors_done', nn + "| After combining events")
-            #yield Timer(0)
         else:
             uvm_debug(self, '_wait_all_predecessors_done', nn + '| before yield Timer(0)')
             yield Timer(0)
