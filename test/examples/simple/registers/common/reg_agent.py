@@ -19,6 +19,7 @@
 
 import cocotb
 from cocotb.triggers import RisingEdge, Timer
+from cocotb.binary import BinaryValue
 
 from uvm.base import *
 from uvm.reg import UVMRegAdapter
@@ -93,6 +94,7 @@ class reg_driver(UVMComponent):
         self.seqr_port = UVMSeqItemPullPort("seqr_port",self)
         self.T = reg_rw
         self.dut = None
+        self.n_bits = 32
         #endfunction
 
 
@@ -112,10 +114,11 @@ class reg_driver(UVMComponent):
     @cocotb.coroutine
     def drive_transaction(self, rw):
         if rw.read is False:
+            wdata = BinaryValue(value=rw.data,n_bits=self.n_bits)
             yield RisingEdge(self.dut.clk)
             yield Timer(0)
             self.dut.we <= 1
-            self.dut.data_in <= rw.data
+            self.dut.data_in <= wdata
             self.dut.addr_in <= rw.addr
 
             for i in range(2):
