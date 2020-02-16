@@ -73,7 +73,6 @@ class ubus_example_scoreboard(UVMScoreboard):
     #  // memory_verify
     #  protected function void memory_verify(input ubus_transfer trans)
     def memory_verify(self, trans):
-        print("SSSCCCBBB memory_verify called here")
         data = 0
         exp = 0
         for i in range(trans.size):
@@ -84,7 +83,7 @@ class ubus_example_scoreboard(UVMScoreboard):
                     data = trans.data[i]
                     uvm_info(self.get_type_name(),
                         sv.sformatf("%s to existing address...Checking address : %0h with data : %0h",
-                            str(trans.read_write), trans.addr, data), UVM_LOW)
+                            str(trans.read_write), int(trans.addr), int(data)), UVM_LOW)
 
                     if not (self.m_mem_expected[trans.addr + i] == trans.data[i]):
                         exp = self.m_mem_expected[trans.addr + i]
@@ -99,7 +98,7 @@ class ubus_example_scoreboard(UVMScoreboard):
                     data = trans.data[i]
                     uvm_info(self.get_type_name(),
                       sv.sformatf("Op %s to existing address...Updating address : %0h with data : %0h",
-                          str(trans.read_write), trans.addr + i, data), UVM_LOW)
+                          str(trans.read_write), int(trans.addr + i), int(data)), UVM_LOW)
                     self.m_mem_expected[trans.addr + i] = trans.data[i]
                     self.num_writes += 1
 
@@ -109,7 +108,7 @@ class ubus_example_scoreboard(UVMScoreboard):
                 data = trans.data[i]
                 uvm_info(self.get_type_name(),
                     sv.sformatf("%s to empty address...Updating address : %0h with data : %0h",
-                    str(trans.read_write), trans.addr + i, data), UVM_LOW)
+                    str(trans.read_write), int(trans.addr + i), int(data)), UVM_LOW)
                 self.m_mem_expected[trans.addr + i] = trans.data[i]
                 if trans.read_write == READ:
                     self.num_uninit_reads += 1
