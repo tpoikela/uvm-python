@@ -116,7 +116,7 @@ class transaction(UVMTransaction):
         return t
 
     def convert2string(self):
-        s = sv.sformatf("[ addr = %0h, data = %0h cmd: %s]", hex(self.addr),
+        s = sv.sformatf("[ addr = %s, data = %s cmd: %s]", hex(self.addr),
                 hex(self.data), str(self.cmd))
         return s
 
