@@ -72,9 +72,9 @@ class UVMReg(UVMObject):
     #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
     #   //
     def __init__(self, name, n_bits, has_coverage=UVM_NO_COVERAGE):
-        UVMObject.__init__(self, name)
+        super().__init__(name)
         self.m_fields = []   # Fields in LSB to MSB order
-        self.m_parent = None # uvm_reg_block
+        self.m_parent = None  # uvm_reg_block
         if n_bits == 0:
             uvm_report_error("RegModel", "Register \"{}\" cannot have 0 bits".format(
                 self.get_name()))
@@ -106,8 +106,6 @@ class UVMReg(UVMObject):
             UVMReg.m_max_size = n_bits
         #endfunction: new
 
-    def get_parent(self):
-        return self.get_block()
 
     #   // Function: configure
     #   //
@@ -184,7 +182,7 @@ class UVMReg(UVMObject):
         # Store fields in LSB to MSB order
         offset = field.get_lsb_pos()
         idx = -1
-        for f in self.m_fields:
+        for i, f in enumerate(self.m_fields):
             if offset < f.get_lsb_pos():
                 j = i
                 self.m_fields.insert(j, field)
@@ -214,7 +212,7 @@ class UVMReg(UVMObject):
             if (offset + field.get_n_bits() >
                     self.m_fields[idx+1].get_lsb_pos()):
                 uvm_report_error("RegModel", "Field {} overlaps field {} in register \"{}\"".format(
-                    field.get_name(), self.m_fields[idx+1].get_name(), get_name()))
+                    field.get_name(), self.m_fields[idx+1].get_name(), self.get_name()))
     #endfunction: add_field
 
     #   /*local*/ extern virtual function void add_map    (uvm_reg_map map)
@@ -236,7 +234,6 @@ class UVMReg(UVMObject):
     #   // Get the simple name
     #   //
     #   // Return the simple object name of this register.
-    #   //
 
     #   // Function: get_full_name
     #   //
@@ -253,7 +250,6 @@ class UVMReg(UVMObject):
             return self.m_parent.get_full_name() + "." + self.get_name()
 
         return self.get_name()
-    #endfunction: get_full_name
 
 
     #   // Function: get_parent
@@ -261,6 +257,8 @@ class UVMReg(UVMObject):
     #   // Get the parent block
     #   //
     #   extern virtual function uvm_reg_block get_parent ()
+    def get_parent(self):
+        return self.get_block()
 
     #   extern virtual function uvm_reg_block get_block  ()
     def get_block(self):
@@ -273,12 +271,17 @@ class UVMReg(UVMObject):
     #   // Returns ~None~ if this register is instantiated in a block.
     #   //
     #   extern virtual function uvm_reg_file get_regfile ()
+    def get_regfile(self):
+        return self.m_regfile_parent
+
 
     #   // Function: get_n_maps
     #   //
     #   // Returns the number of address maps this register is mapped in
     #   //
     #   extern virtual function int get_n_maps ()
+    def get_n_maps(self):
+        return self.m_maps.num()
 
     #   // Function: is_in_map
     #   //
@@ -509,7 +512,7 @@ class UVMReg(UVMObject):
     #   // the register is not mapped in the specified
     #   // address map, an error message is issued.
     #   //
-    def get_address(self, reg_map = None):
+    def get_address(self, reg_map=None):
         addr = []
         self.get_addresses(reg_map,addr)
         return addr[0]
@@ -663,6 +666,11 @@ class UVMReg(UVMObject):
     #   // Use the <uvm_reg::update()> to actually update the DUT register.
     #   //
     #   extern virtual function bit needs_update()
+    def needs_update(self):
+        for i in range(len(self.m_fields)):
+            if self.m_fields[i].needs_update():
+                return True
+        return False
 
 
     #   // Function: reset
@@ -892,6 +900,23 @@ class UVMReg(UVMObject):
     #                              input  string            fname = "",
     #                              input  int               lineno = 0)
     #
+    @cocotb.coroutine
+    def update(self, status, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1, extension=None,
+            fname="", lineno=0):
+        uvm_check_output_args([status])
+        upd = 0x0
+        # status = UVM_IS_OK
+
+        if self.needs_update() is False:
+            return
+
+        # Concatenate the write-to-update values from each field
+        # Fields are stored in LSB or MSB order
+        for i in range(len(self.m_fields)):
+            upd = upd | (self.m_fields[i].XupdateX() << self.m_fields[i].get_lsb_pos())
+
+        yield self.write(status, upd, path, _map, parent, prior, extension, fname, lineno)
+    #endtask: update
 
     #   // Task: mirror
     #   //
@@ -1872,8 +1897,8 @@ class UVMReg(UVMObject):
     #   // subsequently derived classes.
     #   //
     #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
-    #
-    #
+    def add_coverage(self, models):
+        self.m_has_cover |= models
 
     #   // Function: has_coverage
     #   //
@@ -1888,8 +1913,7 @@ class UVMReg(UVMObject):
     def has_coverage(self, models):
         return ((self.m_has_cover & models) == models)
 
-    #
-    #
+
     #   // Function: set_coverage
     #   //
     #   // Turns on coverage measurement.
@@ -1916,7 +1940,7 @@ class UVMReg(UVMObject):
         if is_on == UVM_NO_COVERAGE:
             self.m_cover_on = is_on
             return self.m_cover_on
-     
+
         self.m_cover_on = self.m_has_cover & is_on
         return self.m_cover_on
 
@@ -1933,6 +1957,10 @@ class UVMReg(UVMObject):
     #   // See <uvm_reg::set_coverage()> for more details.
     #   //
     #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on)
+    def get_coverage(self, is_on):
+        if (self.has_coverage(is_on) == 0):
+            return False
+        return ((self.m_cover_on & is_on) == is_on)
 
 
     #   // Function: sample
@@ -1972,9 +2000,9 @@ class UVMReg(UVMObject):
     #   // abstraction class generator to perform the required sampling
     #   // in any provided field-value functional coverage model.
     #   //
-    #   virtual function void sample_values()
-    #   endfunction
-    #
+    def sample_values(self):
+        pass
+
 
     #   /*local*/ function void XsampleX(uvm_reg_data_t  data,
     #                                    uvm_reg_data_t  byte_en,
@@ -1982,17 +2010,14 @@ class UVMReg(UVMObject):
     #                                    uvm_reg_map     map)
     def XsampleX(self, data, byte_en, is_read, _map):
         self.sample(data, byte_en, is_read, _map)
-        #   endfunction
 
-    #
-    #
+
     #   //-----------------
     #   // Group: Callbacks
     #   //-----------------
-    #   `uvm_register_cb(uvm_reg, uvm_reg_cbs)
+    #   TODO `uvm_register_cb(uvm_reg, uvm_reg_cbs)
 
 
-    #
     #   // Task: pre_write
     #   //
     #   // Called before register write.
@@ -2069,10 +2094,52 @@ class UVMReg(UVMObject):
     def post_read(self, rw):
         yield uvm_empty_delay()
 
-    #
-    #
+
     #   extern virtual function void            do_print (uvm_printer printer)
+
     #   extern virtual function string          convert2string()
+    def convert2string(self):
+        prefix = ""
+        convert2string = sv.sformatf("Register %s -- %0d bytes, mirror value:'h%h",
+            self.get_full_name(), self.get_n_bytes(),self.get())
+
+        if self.m_maps.num() == 0:
+            convert2string = convert2string + "  (unmapped)\n"
+        else:
+            convert2string = convert2string + "\n"
+        for key in self.m_maps.key_list():
+            parent_map = key  # uvm_reg_map
+            offset = 0
+            while parent_map is not None:
+                this_map = parent_map  # uvm_reg_map
+                parent_map = this_map.get_parent_map()
+                offset = this_map.get_base_addr(UVM_NO_HIER)
+                if parent_map is not None:
+                    offset = parent_map.get_submap_offset(this_map)
+                prefix += "  "
+                e = this_map.get_endian()  # uvm_endianness_e
+                convert2string += sv.sformatf("%sMapped in '%s' -- %d bytes, %s, offset 'h%0h\n",
+                    prefix, this_map.get_full_name(), this_map.get_n_bytes(),
+                    str(e), offset)
+
+        prefix = "  "
+        for i in range(len(self.m_fields)):
+            convert2string += sv.sformatf("\n%s", self.m_fields[i].convert2string())
+
+        if self.m_read_in_progress is True:
+            res_str = ""
+            if self.m_fname != "" and self.m_lineno != 0:
+                res_str  = sv.sformatf("%s:%0d ",self.m_fname, self.m_lineno)
+            convert2string += "\n" + res_str + "currently executing read method"
+
+        if self.m_write_in_progress is True:
+            res_str = ""
+            if self.m_fname != "" and self.m_lineno != 0:
+                res_str  = sv.sformatf("%s:%0d ",self.m_fname, self.m_lineno)
+            convert2string += "\n" + res_str + "currently executing write method"
+        return convert2string
+
+
     #   extern virtual function uvm_object      clone      ()
     #   extern virtual function void            do_copy    (uvm_object rhs)
     #   extern virtual function bit             do_compare (uvm_object  rhs,
@@ -2269,31 +2336,6 @@ class UVMReg(UVMObject):
 #      end
 #   end
 #endfunction
-#// get_parent
-#
-#
-#// get_regfile
-#
-#function uvm_reg_file uvm_reg::get_regfile()
-#   return self.m_regfile_parent
-#endfunction
-#
-#
-#
-#
-#
-#
-#// get_n_maps
-#
-#function int uvm_reg::get_n_maps()
-#   return self.m_maps.num()
-#endfunction
-#
-#
-#
-#
-#
-#
 #
 #// get_field_by_name
 #
@@ -2305,36 +2347,6 @@ class UVMReg(UVMObject):
 #                            "' in register '",get_name(),"'"})
 #   return None
 #endfunction
-#
-#
-#
-#
-#//---------
-#// COVERAGE
-#//---------
-#
-#
-#
-#
-#
-#
-#// add_coverage
-#
-#function void uvm_reg::add_coverage(uvm_reg_cvr_t models)
-#   self.m_has_cover |= models
-#endfunction: add_coverage
-#
-#
-#
-#
-#
-#// get_coverage
-#
-#function bit uvm_reg::get_coverage(uvm_reg_cvr_t is_on)
-#   if (has_coverage(is_on) == 0)
-#      return False
-#   return ((self.m_cover_on & is_on) == is_on)
-#endfunction: get_coverage
 #
 #
 #
@@ -2383,57 +2395,6 @@ class UVMReg(UVMObject):
 #      self.m_fields[i].set_reset(value >> self.m_fields[i].get_lsb_pos(), kind)
 #   end
 #endfunction: set_reset
-#
-#
-#//-----------
-#// BUS ACCESS
-#//-----------
-#
-#// needs_update
-#
-#function bit uvm_reg::needs_update()
-#   needs_update = 0
-#   foreach (self.m_fields[i]):
-#      if (self.m_fields[i].needs_update()):
-#         return True
-#      end
-#   end
-#endfunction: needs_update
-#
-#
-#// update
-#
-#task uvm_reg::update(output uvm_status_e      status,
-#                     input  uvm_path_e        path = UVM_DEFAULT_PATH,
-#                     input  uvm_reg_map       map = None,
-#                     input  uvm_sequence_base parent = None,
-#                     input  int               prior = -1,
-#                     input  uvm_object        extension = None,
-#                     input  string            fname = "",
-#                     input  int               lineno = 0)
-#   uvm_reg_data_t upd
-#
-#   status = UVM_IS_OK
-#
-#   if (!needs_update()) return
-#
-#   // Concatenate the write-to-update values from each field
-#   // Fields are stored in LSB or MSB order
-#   upd = 0
-#   foreach (self.m_fields[i])
-#      upd |= self.m_fields[i].XupdateX() << self.m_fields[i].get_lsb_pos()
-#
-#   write(status, upd, path, map, parent, prior, extension, fname, lineno)
-#endtask: update
-#
-#
-#
-#
-#
-#
-#
-#
-#
 #
 #
 #
@@ -2652,61 +2613,6 @@ class UVMReg(UVMObject):
 #// STANDARD OPS
 #//-------------
 #
-#// convert2string
-#
-
-#function string uvm_reg::convert2string()
-#   string res_str
-#   string t_str
-#   bit with_debug_info
-#
-#   string prefix
-#
-#   $sformat(convert2string, "Register %s -- %0d bytes, mirror value:'h%h",
-#            get_full_name(), get_n_bytes(),get())
-#
-#   if (self.m_maps.num()==0)
-#     convert2string = {convert2string, "  (unmapped)\n"}
-#   else
-#     convert2string = {convert2string, "\n"}
-#   foreach (self.m_maps[map]):
-#     uvm_reg_map parent_map = map
-#     int unsigned offset
-#     while (parent_map is not None):
-#       uvm_reg_map this_map = parent_map
-#       parent_map = this_map.get_parent_map()
-#       offset = parent_map is None ? this_map.get_base_addr(UVM_NO_HIER) :
-#                                     parent_map.get_submap_offset(this_map)
-#       prefix = {prefix, "  "}
-#       begin
-#            uvm_endianness_e e = this_map.get_endian()
-#            $sformat(convert2string,
-#                "%sMapped in '%s' -- %d bytes, %s, offset 'h%0h\n",
-#                prefix, this_map.get_full_name(), this_map.get_n_bytes(),
-#                e.name(), offset)
-#       end
-#     end
-#   end
-#   prefix = "  "
-#   foreach(self.m_fields[i]):
-#      $sformat(convert2string, "%s\n%s", convert2string,
-#               self.m_fields[i].convert2string())
-#   end
-#
-#   if (self.m_read_in_progress == 1'b1):
-#      if (self.m_fname != "" && self.m_lineno != 0)
-#         $sformat(res_str, "%s:%0d ",self.m_fname, self.m_lineno)
-#      convert2string = {convert2string, "\n", res_str,
-#                        "currently executing read method"}
-#   end
-#   if ( self.m_write_in_progress == 1'b1):
-#      if (self.m_fname != "" && self.m_lineno != 0)
-#         $sformat(res_str, "%s:%0d ",self.m_fname, self.m_lineno)
-#      convert2string = {convert2string, "\n", res_str,
-#                        "currently executing write method"}
-#   end
-#
-#endfunction: convert2string
 
 #
 #
