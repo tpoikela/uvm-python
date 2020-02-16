@@ -41,6 +41,20 @@ class TestUVMReg(unittest.TestCase):
         val = reg32.get()
         self.assertEqual(val, 0x12345678)
 
+    def test_reg_randomize(self):
+        class RandReg(UVMReg):
+            def __init__(self, name):
+                super().__init__(name, 16)
+                self.F1 = UVMRegField('my_field_1')
+                self.F1.configure(self, 16, 0, 'RW', volatile=False, reset=0,
+                        has_reset=True, is_rand=False, individually_accessible=True)
+                self.rand('F1')
+
+        new_reg = RandReg('rng_reg')
+        ok = new_reg.randomize()
+        self.assertTrue(ok, 'randomize OK')
+        self.assertTrue(new_reg.F1.value > 0)
+
 
 if __name__ == '__main__':
     unittest.main()
