@@ -131,16 +131,14 @@ class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             # - Read k-1 and expect ~(k-1) if k > 0
             # - Write k-1 at k-1
             # - Read k and expect ~k if k == last address
-            print("KKK000")
             for k in range(mem.get_size()):
-                print("KKK001 k is now {:02X}, ~k is {:02X}".format(k, ~k))
                 status = []
                 yield mem.write(status, k, ~k, UVM_FRONTDOOR, maps[j], self)
-                print("KKK002")
                 status = status[0]
 
                 if status != UVM_IS_OK:
-                    uvm_error("UVMMemWalkSeq", sv.sformatf("Status was %s when writing \"%s[%0d]\" through map \"%s\".",
+                    uvm_error("UVMMemWalkSeq", sv.sformatf(
+                        "Status was %s when writing \"%s[%0d]\" through map \"%s\".",
                         status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
 
                 if k > 0:
