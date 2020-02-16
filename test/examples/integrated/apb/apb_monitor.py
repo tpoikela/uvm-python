@@ -79,7 +79,7 @@ class apb_monitor(UVMMonitor):
             tr.kind = apb_rw.READ
             if self.sigs.pwrite:
                 tr.kind = apb_rw.WRITE
-            tr.addr = self.sigs.paddr
+            tr.addr = self.sigs.paddr.value.integer
 
             yield self.sample_delay()
             if int(self.sigs.penable) != 1:
@@ -87,9 +87,9 @@ class apb_monitor(UVMMonitor):
                 uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle"
                         + " |Exp: 1, got: " + str(val))
                 self.errors += 1
-            tr.data = self.sigs.pwdata
-            if (tr.kind == apb_rw.READ):
-                tr.data = self.sigs.prdata
+            tr.data = self.sigs.pwdata.value.integer
+            if tr.kind == apb_rw.READ:
+                tr.data = self.sigs.prdata.value.integer
 
             self.trans_observed(tr)
             #uvm_do_callbacks(apb_monitor,apb_monitor_cbs, self.trans_observed(self, tr))
