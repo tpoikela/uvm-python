@@ -22,7 +22,18 @@ components. UVM Phasing is in place, and working. Stimulus can be generated
 using hierarchical sequences. Register
 layer supports already read/write to registers (via frontdoor), and to 
 memories (frontdoor and backdoor). TLM 1.0 is implemented,
-put/get/analysis interfaces are done, and master/slave interfaces work.
+put/get/analysis interfaces are done, and master/slave interfaces work. Initial
+implementation of TLM2.0 has also been added. The table below summarizes the
+status:
+
+| Feature    | Status                                                    |
+| ---------  | ------                                                    |
+| TLM1.0     | Done                                                      |
+| TLM2.0     | Started, 1st example working                              |
+| Components | Done                                                      |
+| Phases     | Done                                                      |
+| Sequences  | Partially done, hier sequences work                       |
+| Registers  | Reg/mem access working, built-in sequences partially done |
 
 NOTE: Despite the working state, the project is under development, and still
 missing a lot of functionality. Please try it out, and let me know if
