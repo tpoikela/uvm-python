@@ -26,7 +26,7 @@
 import cocotb
 from cocotb.clock import Clock
 
-from uvm import (UVMTest, sv, uvm_fatal, uvm_top,
+from uvm import (UVMTest, uvm_top,
     UVMRegBitBashSeq, UVMMemWalkSeq,
     UVM_CVR_ALL, UVM_FINISHED, uvm_info, UVM_LOW,
     UVMReg, UVMCoreService, run_test, UVMConfigDb)
@@ -78,10 +78,6 @@ class tb_test(UVMTest):
 @cocotb.test()
 def initial_begin(dut):
     cs_ = UVMCoreService.get()
-
-    #   tb_env env
-    #   tb_test test
-    #   uvm_report_server svr
 
     UVMReg.include_coverage("*", UVM_CVR_ALL)
     c = Clock(dut.clk, 10, 'ns')
