@@ -99,13 +99,22 @@ class UVMTaskPhase(UVMPhase):
         uvm_debug(self, "m_traverse", "Looping through children, comp: " +
                 comp.get_name() + ' children: ' + ", ".join(children))
 
-        if comp.has_first_child():
-            child = comp.get_first_child()
-            while child is not None:
-                uvm_debug(self, "m_traverse", "Yielding now child traverse with "
-                    + child.get_name())
-                yield self.m_traverse(child, phase, state)
-                child = comp.get_next_child()
+        # tpoikela: Added this loop, cause while-loop not safe
+        children = []
+        comp.get_children(children)
+        for child in children:
+            uvm_debug(self, "m_traverse", "Yielding now child traverse with "
+                + child.get_name())
+            yield self.m_traverse(child, phase, state)
+
+        # tpoikela: Not safe loop with parallel tasks phases
+        #if comp.has_first_child():
+        #    child = comp.get_first_child()
+        #    while child is not None:
+        #        uvm_debug(self, "m_traverse", "Yielding now child traverse with "
+        #            + child.get_name())
+        #        yield self.m_traverse(child, phase, state)
+        #        child = comp.get_next_child()
 
         uvm_debug(self, "m_traverse", comp.get_name() + "| Comp children done.  Moving to its own phase..")
 
