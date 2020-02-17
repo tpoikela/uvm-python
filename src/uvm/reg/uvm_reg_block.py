@@ -64,18 +64,6 @@ class UVMRegBlock(UVMObject):
     m_roots = {}  # static bit[uvm_reg_block]
     id = 0
 
-    #   // Variable: default_path
-    #   // Default access path for the registers and memories in this block.
-    #   uvm_path_e      default_path = UVM_DEFAULT_PATH
-    #
-    #   local uvm_object_string_pool #(uvm_queue #(string)) hdl_paths_pool
-    #   local string         root_hdl_paths[string]
-
-    #   local int            has_cover
-    #   local int            cover_on
-    #   local string         fname
-    #   local int            lineno
-
 
     #   //----------------------
     #   // Group: Initialization
@@ -99,6 +87,7 @@ class UVMRegBlock(UVMObject):
         super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
         self.has_cover = has_coverage
+        self.cover_on = 0
         # Root block until registered with a parent
         UVMRegBlock.m_roots[self] = 0
         self.locked = False
@@ -111,7 +100,11 @@ class UVMRegBlock(UVMObject):
         self.backdoor = None
         self.default_hdl_path = "RTL"
         self.parent = None
+        #   // Variable: default_path
+        #   // Default access path for the registers and memories in this block.
         self.default_path = UVM_DEFAULT_PATH
+        self.fname = ""
+        self.lineno = 0
 
     #
     #   // Function: configure
@@ -1334,9 +1327,10 @@ class UVMRegBlock(UVMObject):
     #                                                 uvm_comparer comparer)
     #   extern virtual function void   do_pack       (uvm_packer packer)
     #   extern virtual function void   do_unpack     (uvm_packer packer)
+
     #   extern virtual function string convert2string ()
+
     #   extern virtual function uvm_object clone()
-    #
 
     #   extern local function void Xinit_address_mapsX()
     def Xinit_address_mapsX(self):
@@ -2016,10 +2010,9 @@ class UVMRegBlock(UVMObject):
 #  `uvm_warning("RegModel","RegModel blocks cannot be unpacked")
 #endfunction
 #
+#// convert2string
 #
-# convert2string
-#
-#function string uvm_reg_block::convert2string()
+#def string uvm_reg_block::convert2string(self):
 #   string image
 #   string maps[]
 #   string blk_maps[]
@@ -2079,4 +2072,3 @@ class UVMRegBlock(UVMObject):
 #   end
 #`endif
 #   return image
-#endfunction: convert2string
