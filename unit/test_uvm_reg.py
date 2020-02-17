@@ -2,6 +2,7 @@
 import unittest
 from uvm.reg.uvm_reg import UVMReg
 from uvm.reg.uvm_reg_field import UVMRegField
+from test.uvm_unit import create_reg_map
 
 
 class TestUVMReg(unittest.TestCase):
@@ -54,6 +55,14 @@ class TestUVMReg(unittest.TestCase):
         ok = new_reg.randomize()
         self.assertTrue(ok, 'randomize OK')
         self.assertTrue(new_reg.F1.value > 0)
+
+    def test_get_address(self):
+        reg = self.create_reg('my_reg', 32)
+        reg_map, rb = create_reg_map('test_map')
+        reg.configure(rb)
+        reg_map.add_reg(reg, 0x8)
+        # TODO fix this addr = reg.get_address()
+        # self.assertEqual(addr, 0x8)
 
 
 if __name__ == '__main__':
