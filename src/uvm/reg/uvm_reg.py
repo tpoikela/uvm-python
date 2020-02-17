@@ -510,12 +510,13 @@ class UVMReg(UVMObject):
     #   //
     #   // If an address map is specified and
     #   // the register is not mapped in the specified
-    #   // address map, an error message is issued.
+    #   // address map, a warning message is issued.
     #   //
     def get_address(self, reg_map=None):
         addr = []
         self.get_addresses(reg_map,addr)
-        return addr[0]
+        if len(addr) > 0:
+            return addr[0]
 
     #   // Function: get_addresses
     #   //
@@ -551,15 +552,14 @@ class UVMReg(UVMObject):
             uvm_warning("RegModel", ("Register '" + self.get_name()
                  + "' is unmapped in reg_map '" + map_name + "'"))
             return -1
-        addr = map_info.addr
+        addr.extend(map_info.addr)
         system_map = reg_map.get_root_map()
         return reg_map.get_n_bytes()
 
     #   //--------------
     #   // Group: Access
     #   //--------------
-    #
-    #
+
     #   // Function: set
     #   //
     #   // Set the desired value for this register
@@ -1858,9 +1858,8 @@ class UVMReg(UVMObject):
     def include_coverage(cls, scope, models, accessor=None):
         uvm_reg_cvr_rsrc_db.set("uvm_reg::" + scope, "include_coverage",
             models, accessor)
-    #endfunction
 
-    #
+
     #   // Function: build_coverage
     #   //
     #   // Check if all of the specified coverage models must be built.
