@@ -1,4 +1,5 @@
 ![Build](https://github.com/tpoikela/uvm-python/workflows/Build/badge.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/tpoikela/uvm-python/badge.svg?branch=master)](https://coveralls.io/github/tpoikela/uvm-python?branch=master)
 
 UVM library for Python
 ======================
