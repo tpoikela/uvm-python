@@ -1,3 +1,5 @@
+![Build](https://github.com/tpoikela/uvm-python/workflows/Build/badge.svg?branch=master)
+
 UVM library for Python
 ======================
 
