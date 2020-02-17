@@ -36,7 +36,8 @@ from ubus_env import ubus_env
 #// CLASS: ubus_example_tb
 #//
 #//------------------------------------------------------------------------------
-#class ubus_example_tb extends uvm_env
+
+
 class ubus_example_tb(UVMEnv):
     #
     #  // Provide implementations of virtual methods such as get_type_name and create
