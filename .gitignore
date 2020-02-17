@@ -18,3 +18,7 @@ obj_dir
 .venv
 
 [xi]run.history
+
+.coverage
+htmlcov/
+.coveralls.yml
