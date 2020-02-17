@@ -26,7 +26,8 @@ from ..base.uvm_component import UVMComponent
 from ..base.uvm_pool import UVMPool
 from ..base.uvm_globals import *
 from ..tlm1 import UVMAnalysisImp, UVMAnalysisPort
-from ..macros import uvm_component_utils, uvm_info, uvm_fatal, uvm_error
+from ..macros import (uvm_component_utils, uvm_info, uvm_fatal, uvm_error)
+from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegItem, UVMRegBusOp
 from .uvm_reg_indirect import UVMRegIndirectData
@@ -40,15 +41,12 @@ from .uvm_reg_indirect import UVMRegIndirectData
 #// based on transactions explicitly observed on a physical bus.
 #//------------------------------------------------------------------------------
 
-#class uvm_predict_s
+
 class UVMPredictS():
-    #   bit addr[uvm_reg_addr_t]
-    #   uvm_reg_item reg_item
 
     def __init__(self):
         self.addr = {}
         self.reg_item = None
-    #endclass
 
 #//------------------------------------------------------------------------------
 #//
@@ -67,8 +65,8 @@ class UVMPredictS():
 
 #class uvm_reg_predictor #(type BUSTYPE=int) extends uvm_component
 class UVMRegPredictor(UVMComponent):
-    #
-    #
+
+
     #  // Variable: bus_in
     #  //
     #  // Observed bus transactions of type ~BUSTYPE~ are received from this
@@ -90,46 +88,30 @@ class UVMRegPredictor(UVMComponent):
     #  //
     #  uvm_analysis_imp #(BUSTYPE, uvm_reg_predictor #(BUSTYPE)) bus_in
 
-    #
-    #
-    #  // Variable: reg_ap
-    #  //
-    #  // Analysis output port that publishes <uvm_reg_item> transactions
-    #  // converted from bus transactions received on ~bus_in~.
-    #  uvm_analysis_port #(uvm_reg_item) reg_ap
-
-    #
-    #
-    #  // Variable: map
-    #  //
-    #  // The map used to convert a bus address to the corresponding register
-    #  // or memory handle. Must be configured before the run phase.
-    #  //
-    #  uvm_reg_map map
-
-    #
-    #
-    #  // Variable: adapter
-    #  //
-    #  // The adapter used to convey the parameters of a bus operation in
-    #  // terms of a canonical <UVMRegBusOp> datum.
-    #  // The <uvm_reg_adapter> must be configured before the run phase.
-    #  //
-    #  uvm_reg_adapter adapter
-
-    #
-    #
     #  // Function: new
     #  //
     #  // Create a new instance of this type, giving it the optional ~name~
     #  // and ~parent~.
     #  //
     def __init__(self, name, parent):
-        UVMComponent.__init__(self, name, parent)
+        super().__init__(name, parent)
         self.bus_in = UVMAnalysisImp("bus_in", self)
+        #  // Variable: reg_ap
+        #  //
+        #  // Analysis output port that publishes <uvm_reg_item> transactions
+        #  // converted from bus transactions received on ~bus_in~.
         self.reg_ap = UVMAnalysisPort("reg_ap", self)
         self.m_pending = UVMPool()  # uvm_predict_s [uvm_reg]
+        #  // Variable: adapter
+        #  //
+        #  // The adapter used to convey the parameters of a bus operation in
+        #  // terms of a canonical <UVMRegBusOp> datum.
+        #  // The <uvm_reg_adapter> must be configured before the run phase.
         self.adapter = None
+        #  // Variable: map
+        #  //
+        #  // The map used to convert a bus address to the corresponding register
+        #  // or memory handle. Must be configured before the run phase.
         self.map = None
 
     #  // This method is documented in uvm_object
@@ -173,12 +155,13 @@ class UVMRegPredictor(UVMComponent):
         # In case they forget to set byte_en
         rw.byte_en = -1
         rw = self.adapter.bus2reg(tr, rw)
+        if rw is None:
+            uvm_error("REG_PREDICT_BUS2REG_ERR", "Adapter returned None from bus2reg")
         rg = self.map.get_reg_by_offset(rw.addr, (rw.kind == UVM_READ))
 
         # TODO: Add memory look-up and call <uvm_mem::XsampleX()>
 
         if rg is not None:
-            print("OOO reg_predict 1")
             found = False
             reg_item = None  # uvm_reg_item
             local_map = None  # uvm_reg_map
@@ -207,22 +190,19 @@ class UVMRegPredictor(UVMComponent):
 
             local_map = rg.get_local_map(self.map,"predictor::write()")
             map_info = local_map.get_reg_map_info(rg)
-            # TODO how to solve this
-            # ir=($cast(ireg, rg))?ireg.get_indirect_reg():rg
             ir = rg
+
             ireg = []  # uvm_reg_indirect_data
             if sv.cast(ireg, rg, UVMRegIndirectData):
                 ireg = ireg[0]
                 ir = ireg.get_indirect_reg()
 
             for i in range(len(map_info.addr)):
-                if (rw.addr == map_info.addr[i]):
+                if rw.addr == map_info.addr[i]:
                     found = True
-                    print("OOO reg_predict 2 found is True")
                     reg_item.value[0] |= rw.data << (i * self.map.get_n_bytes()*8)
                     predict_info.addr[rw.addr] = 1
                     if len(predict_info.addr) == len(map_info.addr):
-                        print("OOO reg_predict 3 len matches OK")
                         # We've captured the entire abstract register transaction.
                         predict_kind = UVM_PREDICT_READ
                         if (reg_item.kind == UVM_WRITE):
@@ -232,7 +212,6 @@ class UVMRegPredictor(UVMComponent):
                         if (reg_item.kind == UVM_READ and
                                 local_map.get_check_on_read() and
                                 reg_item.status != UVM_NOT_OK):
-                            print("OOO reg_predict 3.1 calling rg.do_check")
                             is_ok = rg.do_check(ir.get_mirrored_value(), reg_item.value[0], local_map)
 
                         self.pre_predict(reg_item)
@@ -240,13 +219,13 @@ class UVMRegPredictor(UVMComponent):
                         ir.XsampleX(reg_item.value[0], rw.byte_en,
                                     reg_item.kind == UVM_READ, local_map)
 
-                        blk = rg.get_parent()  # uvm_reg_block 
+                        blk = rg.get_parent()  # uvm_reg_block
                         blk.XsampleX(map_info.offset,
                                      reg_item.kind == UVM_READ,
                                      local_map)
 
                         rg.do_predict(reg_item, predict_kind, rw.byte_en)
-                        if (reg_item.kind == UVM_WRITE):
+                        if reg_item.kind == UVM_WRITE:
                             uvm_info("REG_PREDICT", "Observed WRITE transaction to register "
                                      + ir.get_full_name() + ": value='h"
                                      + sv.sformatf("%0h",reg_item.value[0]) + " : updated value = 'h"
@@ -268,31 +247,24 @@ class UVMRegPredictor(UVMComponent):
             uvm_info("REG_PREDICT_NOT_FOR_ME",
                "Observed transaction does not target a register: " +
                  sv.sformatf("%p",tr), UVM_FULL)
-        #  endfunction
 
 
-    #
-    #
     #  // Function: check_phase
     #  //
     #  // Checks that no pending register transactions are still queued.
-    #  virtual function void check_phase(uvm_phase phase)
     def check_phase(self, phase):
         q = []  # [$]
         UVMComponent.check_phase(self, phase)
-        
+
         for l in self.m_pending.key_list():
             rg = l
             q.append(sv.sformatf("\n%s",rg.get_full_name()))
-        
+
         if self.m_pending.num() > 0:
-            uvm_error("PENDING REG ITEMS",
-            	sv.sformatf(
-                    "There are %0d incomplete register transactions still pending completion:%s",
-                    self.m_pending.num(), UVM_STRING_QUEUE_STREAMING_PACK(q)))
+            uvm_error("PENDING REG ITEMS", sv.sformatf(
+                "There are %0d incomplete register transactions still pending completion:%s",
+                self.m_pending.num(), UVM_STRING_QUEUE_STREAMING_PACK(q)))
         #  endfunction
 
-    #
-    #endclass
-#uvm_component_param_utils(uvm_reg_predictor#(BUSTYPE))
+
 uvm_component_utils(UVMRegPredictor)
