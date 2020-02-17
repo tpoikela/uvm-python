@@ -90,7 +90,7 @@ class UVMRegTransactionOrderPolicy(UVMObject):
 
 class UVMRegMap(UVMObject):
 
-    #   extern /*local*/ function void Xinit_address_mapX()
+
     def Xinit_address_mapX(self):
         bus_width = 0
         top_map = self.get_root_map()
@@ -506,11 +506,7 @@ class UVMRegMap(UVMObject):
             root_map = self.get_root_map()
             root_map.Xinit_address_mapX()
 
-        #endfunction
 
-
-    #
-    #
     #   // Function: get_submap_offset
     #   //
     #   // Return the offset of the given ~submap~.
@@ -526,16 +522,13 @@ class UVMRegMap(UVMObject):
                   + "' is not a submap of '" + self.get_full_name() + "'")
             return -1
         return self.m_submaps[submap]
-        #endfunction
 
-    #
-    #
+
     #   // Function: set_base_addr
     #   //
     #   // Set the base address of this map.
     #
     #   extern virtual function void   set_base_addr (uvm_reg_addr_t  offset)
-    #
 
     #   // Function: reset
     #   //
@@ -552,8 +545,6 @@ class UVMRegMap(UVMObject):
     #   // reset event for this method is "SOFT".
     #   //
     #   extern virtual function void reset(string kind = "SOFT")
-    #
-    #
 
     #   /*local*/ extern virtual function void add_parent_map(uvm_reg_map  parent_map,
     #                                                         uvm_reg_addr_t offset)
@@ -738,8 +729,7 @@ class UVMRegMap(UVMObject):
     def get_parent_map(self):
         return self.m_parent_map
 
-    #
-    #
+
     #   // Function: get_base_addr
     #   //
     #   // Get the base offset address for this map. If this map is the
@@ -756,11 +746,8 @@ class UVMRegMap(UVMObject):
         get_base_addr = self.m_parent_map.get_submap_offset(self)
         get_base_addr += self.m_parent_map.get_base_addr(UVM_HIER)
         return get_base_addr
-        #endfunction
 
 
-    #
-    #
     #   // Function: get_n_bytes
     #   //
     #   // Get the width in bytes of the bus associated with this map. If ~hier~
@@ -784,8 +771,13 @@ class UVMRegMap(UVMObject):
     #   // Returns <get_n_bytes()> otherwise.
     #   //
     #   extern virtual function int unsigned get_addr_unit_bytes()
-    #
-    #
+    def get_addr_unit_bytes(self):
+        if (self.m_byte_addressing):
+            return 1
+        else:
+            return self.m_n_bytes
+
+
     #   // Function: get_base_addr
     #   //
     #   // Gets the endianness of the bus associated with this map. If ~hier~ is
@@ -1744,32 +1736,9 @@ uvm_object_utils(UVMRegMap)
 #   end
 #endfunction
 #
-#
-#
-#
-#
-#
-#
 #------------
 # get methods
 #------------
-#
-#
-#
-#
-# get_addr_unit_bytes
-#
-#function int unsigned uvm_reg_map::get_addr_unit_bytes()
-#   return (self.m_byte_addressing) ? 1 : self.m_n_bytes
-#endfunction
-#
-#
-#
-#
-#
-#
-#
-#
 #
 #
 #
