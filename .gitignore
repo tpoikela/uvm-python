@@ -22,3 +22,6 @@ obj_dir
 .coverage
 htmlcov/
 .coveralls.yml
+test-cocotb.xml
+test-results.xml
+
