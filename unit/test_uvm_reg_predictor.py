@@ -26,3 +26,7 @@ class TestUVMRegPredictor(unittest.TestCase):
         predict.check_phase(phase=None)
         predict.m_pending[create_reg('test_reg')] = UVMPredictS()
         predict.check_phase(phase=None)
+
+
+if __name__ == '__main__':
+    unittest.main()
