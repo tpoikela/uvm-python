@@ -5,7 +5,7 @@ else
     UNIT_ARGS = unit.$(TEST)
 endif
 
-test: test-simple test-integrated test-unit
+test: test-unit test-simple test-integrated
 	find test/examples -name results.xml -exec cat {} \; > results.log
 	bash ci/check_errors.sh
 
