@@ -37,4 +37,5 @@ jobs:
       run: |
         export SIM=icarus
         ln -s src/uvm uvm
+        export PYTHONPATH=.
         make test
