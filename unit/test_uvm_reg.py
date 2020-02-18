@@ -2,7 +2,7 @@
 import unittest
 from uvm.reg.uvm_reg import UVMReg
 from uvm.reg.uvm_reg_field import UVMRegField
-from test.uvm_unit import create_reg_map
+from uvm.uvm_unit import create_reg_map
 
 
 class TestUVMReg(unittest.TestCase):

@@ -3,7 +3,7 @@ import unittest
 
 from uvm.reg.uvm_reg_predictor import UVMRegPredictor, UVMPredictS
 
-from test.uvm_unit import (create_reg, create_reg_block, TestPacket,
+from uvm.uvm_unit import (create_reg, create_reg_block, TestPacket,
     TestRegAdapter)
 
 

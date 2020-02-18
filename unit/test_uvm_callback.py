@@ -6,7 +6,7 @@ from uvm.base.uvm_callback import (UVMCallback, UVMCallbacks,
 
 from uvm.base.uvm_component import UVMComponent
 
-from test.uvm_unit import MockObj, MockCb
+from uvm.uvm_unit import MockObj, MockCb
 from uvm.macros import (uvm_register_cb, uvm_do_callbacks)
 
 UVMCallbacksBase.m_tracing = True
