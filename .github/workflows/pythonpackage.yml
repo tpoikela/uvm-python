@@ -13,6 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Cache iverilog
+      uses: actions/cache@v1
+      env:
+        cache-name: cache-iverilog
+      with:
+        path: ./iverilog
+        key: ${{ runner.os }}-build${{ env.cache-name }}
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
