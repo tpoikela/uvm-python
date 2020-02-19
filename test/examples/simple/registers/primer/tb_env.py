@@ -43,8 +43,12 @@ class tb_env(UVMComponent):
 
 
     def build_phase(self, phase):
+        dut = []
+        if UVMConfigDb.get(self, "", "dut", dut):
+            dut = dut[0]
         if self.model is None:
             self.model = reg_block_slave.type_id.create("model", self)
+            self.model.nsession = dut.NSESS.value
             self.model.build()
             self.model.lock_model()
 
