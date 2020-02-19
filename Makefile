@@ -5,8 +5,6 @@ else
     UNIT_ARGS = unit.$(TEST)
 endif
 
-PWD=`pwd`
-
 test: test-unit test-simple test-integrated
 	find test/examples -name results.xml -exec cat {} \; > results.log
 	bash ci/check_errors.sh
@@ -37,7 +35,7 @@ cov:
 
 cov-all:
 	# Need to run unit tests separately for this
-	#coverage run -m unittest unit/*.py TODO figure why combine does not work
+	coverage run -m unittest unit/*.py
 	COVERAGE=1 COVERAGE_RCFILE=$(PWD)/.coveragerc make test
 	find -name '.coverage.*' | xargs coverage combine  # Merge cov from all tests
 	COVERAGE_RCFILE=$(PWD)/.coveragerc coverage html
