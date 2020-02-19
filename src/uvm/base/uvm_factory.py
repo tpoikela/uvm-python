@@ -181,7 +181,7 @@ class UVMDefaultFactory(UVMFactory):
 
         # check that old and new are not the same
         if original_type == override_type:
-            if (original_type.get_type_name() == "" or original_type.get_type_name() == "<unknown>"):
+            if original_type.get_type_name() == "" or original_type.get_type_name() == "<unknown>":
                 uvm_report_warning("TYPDUP", "Original and override type "
                         + "arguments are identical", UVM_NONE)
             else:
@@ -415,17 +415,9 @@ class UVMDefaultFactory(UVMFactory):
 
     # create_object_by_name
     # ---------------------
-    def create_object_by_name (self, requested_type_name, parent_inst_path="",
+    def create_object_by_name(self, requested_type_name, parent_inst_path="",
               name=""):
-        wrapper = None
-        inst_path = ""
-
-        if parent_inst_path == "":
-            inst_path = name
-        elif name != "":
-            inst_path = parent_inst_path + "." + name
-        else:
-            inst_path = parent_inst_path
+        inst_path = self._get_inst_path(parent_inst_path, name)
 
         self.m_override_info.delete()
         wrapper = self.find_override_by_name(requested_type_name, inst_path)
@@ -445,13 +437,7 @@ class UVMDefaultFactory(UVMFactory):
     def create_object_by_type(self, requested_type, parent_inst_path="", name=""):
         if requested_type is None:
             uvm_report_fatal("REQ_TYPE_NONE", "Requested type object was None")
-        full_inst_path = ""
-        if parent_inst_path == "":
-            full_inst_path = name
-        elif name != "":
-            full_inst_path = parent_inst_path + "." + name
-        else:
-            full_inst_path = parent_inst_path
+        full_inst_path = self._get_inst_path(parent_inst_path, name)
 
         self.m_override_info.delete()
         requested_type = self.find_override_by_type(requested_type, full_inst_path)
@@ -459,19 +445,22 @@ class UVMDefaultFactory(UVMFactory):
             uvm_report_fatal("REQ_TYPE_NONE", "Requested type object was None after override")
         return requested_type.create_object(name)
 
-    # create_component_by_name
-    # ------------------------
-    def create_component_by_name(self, requested_type_name,
-            parent_inst_path, name, parent):
-        wrapper = None
+    def _get_inst_path(self, parent_inst_path, name):
         inst_path = ""
-
         if parent_inst_path == "":
             inst_path = name
         elif name != "":
             inst_path = parent_inst_path + "." + name
         else:
             inst_path = parent_inst_path
+        return inst_path
+
+    # create_component_by_name
+    # ------------------------
+    def create_component_by_name(self, requested_type_name,
+            parent_inst_path, name, parent):
+
+        inst_path = self._get_inst_path(parent_inst_path, name)
 
         self.m_override_info.delete()
         wrapper = self.find_override_by_name(requested_type_name, inst_path)
@@ -491,13 +480,7 @@ class UVMDefaultFactory(UVMFactory):
     # ------------------------
     def create_component_by_type(self, requested_type, parent_inst_path, name,
             parent):
-        full_inst_path = ""
-        if parent_inst_path == "":
-            full_inst_path = name
-        elif name != "":
-            full_inst_path = parent_inst_path + "." + name
-        else:
-            full_inst_path = parent_inst_path
+        full_inst_path = self._get_inst_path(parent_inst_path, name)
 
         self.m_override_info.delete()
         requested_type = self.find_override_by_type(requested_type, full_inst_path)
@@ -519,7 +502,7 @@ class UVMDefaultFactory(UVMFactory):
     # find_override_by_name
     # ---------------------
     # @return uvm_object_wrapper
-    def find_override_by_name (self, requested_type_name, full_inst_path):
+    def find_override_by_name(self, requested_type_name, full_inst_path):
         rtype = None
         qc = UVMQueue()
         lindex = None
