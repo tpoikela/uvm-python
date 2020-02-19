@@ -5,6 +5,7 @@
 include =
      *src/uvm*
 parallel = True
+branch = True
 
 [report]
 include = 
@@ -14,4 +15,4 @@ skip_covered = True
 #skip_empty = True
 
 [html]
-directory = htmlcov_uvm
+directory = htmlcov
