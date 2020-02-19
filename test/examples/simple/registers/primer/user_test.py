@@ -70,7 +70,7 @@ class user_test_seq(UVMRegSequence):
         # Randomize the content of 10 random indexed registers
         #for i in range(10):
         for i in range(1):
-            idx = sv.urandom_range(0, 255)
+            idx = sv.urandom_range(0, self.model.nsession-1)
             data = sv.urandom()
             status = []
             default_map = model.TABLES[idx].get_default_map()
