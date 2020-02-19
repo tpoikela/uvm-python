@@ -33,6 +33,7 @@ from ..base.uvm_globals import *
 from ..base.uvm_resource_db import UVMResourceDb
 from ..macros.uvm_object_defines import uvm_object_utils
 from .uvm_reg_model import *
+from .uvm_reg_item import UVMRegItem
 from .uvm_reg_cbs import UVMRegFieldCbIter
 
 NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
@@ -487,63 +488,64 @@ class UVMRegField(UVMObject):
                 + "the likely cause of the problem.").format(
                     self.get_name(), self.m_parent.get_full_name()))
 
-        self.m_desired = value
         if self.m_access == "RO":
             self.m_desired = self.m_desired
-        if self.m_access == "RW":
+        elif self.m_access == "RW":
             self.m_desired = value
-        if self.m_access == "RC":
+        elif self.m_access == "RC":
             self.m_desired = self.m_desired
-        if self.m_access == "RS":
+        elif self.m_access == "RS":
             self.m_desired = self.m_desired
-        if self.m_access == "WC":
+        elif self.m_access == "WC":
             self.m_desired = 0
-        if self.m_access == "WS":
+        elif self.m_access == "WS":
             self.m_desired = mask
-        if self.m_access == "WRC":
+        elif self.m_access == "WRC":
             self.m_desired = value
-        if self.m_access == "WRS":
+        elif self.m_access == "WRS":
             self.m_desired = value
-        if self.m_access == "WSRC":
+        elif self.m_access == "WSRC":
             self.m_desired = mask
-        if self.m_access == "WCRS":
+        elif self.m_access == "WCRS":
             self.m_desired = 0
-        if self.m_access == "W1C":
+        elif self.m_access == "W1C":
             self.m_desired = self.m_desired & (~value)
-        if self.m_access == "W1S":
+        elif self.m_access == "W1S":
             self.m_desired = self.m_desired | value
-        if self.m_access == "W1T":
+        elif self.m_access == "W1T":
             self.m_desired = self.m_desired ^ value
-        if self.m_access == "W0C":
+        elif self.m_access == "W0C":
             self.m_desired = self.m_desired & value
-        if self.m_access == "W0S":
+        elif self.m_access == "W0S":
             self.m_desired = self.m_desired | (~value & mask)
-        if self.m_access == "W0T":
+        elif self.m_access == "W0T":
             self.m_desired = self.m_desired ^ (~value & mask)
-        if self.m_access == "W1SRC":
+        elif self.m_access == "W1SRC":
             self.m_desired = self.m_desired | value
-        if self.m_access == "W1CRS":
+        elif self.m_access == "W1CRS":
             self.m_desired = self.m_desired & (~value)
-        if self.m_access == "W0SRC":
+        elif self.m_access == "W0SRC":
             self.m_desired = self.m_desired | (~value & mask)
-        if self.m_access == "W0CRS":
+        elif self.m_access == "W0CRS":
             self.m_desired = self.m_desired & value
-        if self.m_access == "WO":
+        elif self.m_access == "WO":
             self.m_desired = value
-        if self.m_access == "WOC":
+        elif self.m_access == "WOC":
             self.m_desired = 0
-        if self.m_access == "WOS":
+        elif self.m_access == "WOS":
             self.m_desired = mask
-        if self.m_access == "W1":
+        elif self.m_access == "W1":
             if self.m_written:
                 self.m_desired = self.m_desired
             else:
                 self.m_desired = value
-        if self.m_access == "WO1":
+        elif self.m_access == "WO1":
             if self.m_written:
                 self.m_desired = self.m_desired
             else:
                 self.m_desired = value
+        else:
+            self.m_desired = value
         self.value = self.m_desired
 
     #
@@ -565,7 +567,7 @@ class UVMRegField(UVMObject):
     #   // to reside in the bits implementing it.
     #   // Although a physical read operation would something different,
     #   // the returned value is the actual content.
-    def get(self, fname = "", lineno = 0):
+    def get(self, fname="", lineno=0):
         self.m_fname = fname
         self.m_lineno = lineno
         return self.m_desired
@@ -584,7 +586,7 @@ class UVMRegField(UVMObject):
     #   // Although a physical read operation would something different,
     #   // the returned value is the actual content.
     #   //
-    def get_mirrored_value(self, fname = "", lineno = 0):
+    def get_mirrored_value(self, fname="", lineno=0):
         self.m_fname = fname
         self.m_lineno = lineno
         return self.m_mirrored
@@ -623,7 +625,7 @@ class UVMRegField(UVMObject):
     #   // Returns the current field value is no reset value has been
     #   // specified for the specified reset event.
     #   //
-    def get_reset(self, kind = "HARD"):
+    def get_reset(self, kind="HARD"):
         if not kind in self.m_reset:
             return self.m_desired
         return self.m_reset[kind]
@@ -713,9 +715,9 @@ class UVMRegField(UVMObject):
     #                              input  uvm_object         extension = null,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    #
 
-    #
+
+
     #   // Task: read
     #   //
     #   // Read the current value from this field
@@ -998,7 +1000,6 @@ class UVMRegField(UVMObject):
     #   //
     #   // Returns TRUE if the prediction was successful.
     #   //
-
     #function bit uvm_reg_field::predict (uvm_reg_data_t    value,
     #                                     uvm_reg_byte_en_t be = -1,
     #                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
@@ -1006,14 +1007,19 @@ class UVMRegField(UVMObject):
     #                                     uvm_reg_map       map = null,
     #                                     string            fname = "",
     #                                     int               lineno = 0)
-    #  uvm_reg_item rw = new
-    #  rw.value[0] = value
-    #  rw.path = path
-    #  rw.map = map
-    #  rw.fname = fname
-    #  rw.lineno = lineno
-    #  do_predict(rw, kind, be)
-    #  predict = (rw.status == UVM_NOT_OK) ? 0 : 1
+    def predict(self, value, be=-1, kind=UVM_PREDICT_DIRECT, path=UVM_FRONTDOOR,
+            _map=None, fname="", lineno=0):
+        rw = UVMRegItem()
+        rw.value[0] = value
+        rw.path = path
+        rw.map = _map
+        rw.fname = fname
+        rw.lineno = lineno
+        self.do_predict(rw, kind, be)
+        if rw.status == UVM_NOT_OK:
+            return 0
+        return 1
+        # predict = (rw.status == UVM_NOT_OK) ? 0 : 1
     #endfunction: predict
 
     def _get_mask(self):
