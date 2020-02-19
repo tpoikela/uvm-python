@@ -218,8 +218,6 @@ class UVMPortBase():
     # <connect> for more information.
 
     def __init__(self, name, parent, port_type, min_size=0, max_size=1):
-        #comp = None
-        #tmp = 0
         self.m_port_type = port_type
         self.m_min_size    = min_size
         self.m_max_size    = max_size
@@ -279,7 +277,7 @@ class UVMPortBase():
     #
     # Returns the maximum number of implementation ports that must
     # be connected to this port by the end_of_elaboration phase.
-    def max_size (self):
+    def max_size(self):
         return self.m_max_size
 
 
@@ -287,7 +285,7 @@ class UVMPortBase():
     #
     # Returns the minimum number of implementation ports that must
     # be connected to this port by the end_of_elaboration phase.
-    def min_size (self):
+    def min_size(self):
         return self.m_min_size
 
     # Function: is_unbounded
@@ -296,17 +294,17 @@ class UVMPortBase():
     # ports this port can connect to. A port is unbounded when the ~max_size~
     # argument in the constructor is specified as ~UVM_UNBOUNDED_CONNECTIONS~.
 
-    def is_unbounded (self):
+    def is_unbounded(self):
         return self.m_max_size == UVM_UNBOUNDED_CONNECTIONS
 
     # Function: is_port
 
-    def is_port (self):
+    def is_port(self):
         return self.m_port_type == UVM_PORT
 
     # Function: is_export
 
-    def is_export (self):
+    def is_export(self):
         return self.m_port_type == UVM_EXPORT
 
     # Function: is_imp
@@ -341,7 +339,7 @@ class UVMPortBase():
     # must not be set before the end_of_elaboration phase, when port connections
     # have not yet been resolved.
 
-    def set_default_index (self, index):
+    def set_default_index(self, index):
         self.m_def_index = index
 
     # Function: connect
@@ -453,6 +451,7 @@ class UVMPortBase():
         curr_num = 0
         s_sz = ""
         port = None
+        save = ""
 
         if level < 0:
             level = 0
@@ -466,7 +465,8 @@ class UVMPortBase():
         num = len(self.m_provided_by)
 
         if len(self.m_provided_by) != 0:
-            for port in self.m_provided_by[nm]:
+            for nm in self.m_provided_by:
+                port = self.m_provided_by[nm]
                 curr_num += 1
                 save = save + indent + "    | \n"
                 save = save + indent + "    |_" + nm + " (" + port.get_type_name() + ")\n"
@@ -481,19 +481,23 @@ class UVMPortBase():
             if save != "":
                 save = "This port's fanout network:\n\n    " + self.get_full_name() + " (" + self.get_type_name() + ")\n" + save + "\n"
             if len(self.m_imp_list) == 0:
+                from .uvm_coreservice import UVMCoreService
                 cs = UVMCoreService.get()
                 top = cs.get_root()
-                if end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING or end_of_elaboration_ph.get_state() == UVM_PHASE_DONE:
-                     save = save + "    Connected implementations: none\n"
-                else:
-                     save = save + "    Connected implementations: not resolved until end-of-elab\n"
+                if end_of_elaboration_ph is not None:
+                    if end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING or end_of_elaboration_ph.get_state() == UVM_PHASE_DONE:
+                        save = save + "    Connected implementations: none\n"
+                    else:
+                        save = save + "    Connected implementations: not resolved until end-of-elab\n"
             else:
                 save = save + "    Resolved implementation list:\n"
-                for port in self.m_imp_list[nm]:
+                for nm in self.m_imp_list:
+                    port = self.m_imp_list[nm]
                     s_sz.itoa(sz)
                     save = save + indent + s_sz + ": " + nm + " (" + port.get_type_name() + ")\n"
                     sz += 1
         self.m_comp.uvm_report_info("debug_connected_to", save)
+        return save
 
     # Function: debug_provided_to
     #
@@ -521,22 +525,23 @@ class UVMPortBase():
         num = len(self.m_provided_to)
 
         if num != 0:
-            for port in self.m_provided_to[nm]:
+            for nm in self.m_provided_to:
+                port = self.m_provided_to[nm]
                 curr_num += 1
                 save = save + indent + "    | \n"
-                save = save + indent + "    |_" +nm +" (" +port.get_type_name() +")\n"
+                save = save + indent + "    |_" + nm + " (" + port.get_type_name() +")\n"
                 if num > 1 and curr_num != num:
                     indent = indent + "    | "
-                else :
+                else:
                     indent = indent + "        "
                 port.debug_provided_to(level+1, max_level)
                 # indent = indent.substr(0,indent.len()-4-1); #TODO
 
         if level == 0:
             if save != "":
-                save = "This port's fanin network:\n\n    "
-                + self.get_full_name() + " (" +  self.get_type_name()
-                + ")\n" + save + "\n"
+                save = ("This port's fanin network:\n\n    "
+                + self.get_full_name() + " (" + self.get_type_name()
+                + ")\n" + save + "\n")
             if len(self.m_provided_to) == 0:
                 save = save + indent + "This port has not been bound\n"
             self.m_comp.uvm_report_info("debug_provided_to", save)
@@ -544,23 +549,23 @@ class UVMPortBase():
     # get_connected_to
     # ----------------
 
-    def get_connected_to (self, port_list):
-        port_list = {}
-        for port in self.m_provided_by:
+    def get_connected_to(self, port_list):
+        for name in self.m_provided_by:
+            port = self.m_provided_by[name]
             port_list[name] = port.get_comp()
 
     # get_provided_to
     # ---------------
 
-    def get_provided_to (self, port_list):
-        port_list = {}
-        for port in self.m_provided_to:
-            list[name] = port.get_comp()
+    def get_provided_to(self, port_list):
+        for name in self.m_provided_to:
+            port = self.m_provided_to[name]
+            port_list[name] = port.get_comp()
 
     # m_check_relationship
     # --------------------
 
-    def m_check_relationship (self, provider):
+    def m_check_relationship(self, provider):
         s = ""
         res_from = None
         from_parent = None
