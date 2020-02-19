@@ -1,5 +1,5 @@
 #//
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 #//   Copyright 2011 Mentor Graphics Corporation
 #//   Copyright 2011 Synopsys, Inc.
 #//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
@@ -18,10 +18,10 @@
 #//   CONDITIONS OF ANY KIND, either express or implied.  See
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
-#//------------------------------------------------------------------------------
+#//----------------------------------------------------------------------------
 
 from uvm.reg.uvm_reg import UVMReg
-from uvm.macros import *
+from uvm.macros import uvm_object_utils
 from uvm.base.sv import sv
 from uvm.reg.uvm_reg_indirect import *
 from uvm.reg.uvm_reg_field import UVMRegField
@@ -62,6 +62,8 @@ class reg_slave_INDEX(UVMReg):
     def build(self):
         self.value = UVMRegField.type_id.create("value")
         self.value.configure(self, 8, 0, "RW", 0, 0x0, 1, 0, 1)
+
+
 uvm_object_utils(reg_slave_INDEX)
 
 
@@ -92,6 +94,7 @@ class reg_slave_SOCKET(UVMReg):
         self.PORT = UVMRegField.type_id.create("PORT")
         self.IP.configure(self, 48, 0, "RW", 0, 0x0, 1, 0, 1)
         self.PORT.configure(self, 16, 48, "RW", 0, 0x0, 1, 0, 1)
+
 
 uvm_object_utils(reg_slave_SOCKET)
 
