@@ -382,7 +382,7 @@ class UVMReg(UVMObject):
     #   // address map, an error message is issued
     #   // and "RW" is returned.
     #   //
-    def get_rights(self, reg_map = None):
+    def get_rights(self, reg_map=None):
         reg_map = self.get_local_map(reg_map,"get_rights()")
         if reg_map is None:
             return "RW"
@@ -1334,6 +1334,14 @@ class UVMReg(UVMObject):
         rw.element_kind = UVM_REG
 
         # REPORT
+        self._report_op_with(rw, map_info)
+
+        self.m_write_in_progress = False
+        #yield self.XatomicX(0)
+        #endtask: do_write
+
+
+    def _report_op_with(self, rw, map_info):
         if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
             path_s = ""
             value_s = ""
@@ -1346,14 +1354,12 @@ class UVMReg(UVMObject):
                 if (self.get_backdoor() is not None):
                     path_s = "user backdoor"
 
+            op_s = "Wrote"
+            if rw.kind == UVM_READ:
+                op_s = "Read"
             value_s = sv.sformatf("=0x%0h",rw.value[0])
-            uvm_report_info("RegModel", "Wrote register via " + path_s + ": "
+            uvm_report_info("RegModel", op_s + " register via " + path_s + ": "
                     + self.get_full_name() + value_s, UVM_HIGH)
-
-        self.m_write_in_progress = False
-        #yield self.XatomicX(0)
-        #endtask: do_write
-
 
 
     #   extern virtual task do_read(uvm_reg_item rw)
@@ -1527,21 +1533,7 @@ class UVMReg(UVMObject):
         rw.element_kind = UVM_REG
 
         # REPORT
-        if (uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
-            path_s = ""
-            value_s = ""
-            if (rw.path == UVM_FRONTDOOR):
-                path_s = "map " + rw.map.get_full_name()
-                if (map_info.frontdoor is not None):
-                    path_s = "user frontdoor"
-            else:
-                path_s = "DPI backdoor"
-                if (self.get_backdoor() is not None):
-                    path_s = "user backdoor"
-
-            value_s = sv.sformatf("=%0h",rw.value[0])
-            uvm_report_info("RegModel", "Read  register via " + path_s + ": "
-                    + self.get_full_name() + value_s, UVM_HIGH)
+        self._report_op_with(rw, map_info)
         self.m_read_in_progress = False
         #endtask: do_read
 
