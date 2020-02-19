@@ -9,26 +9,85 @@ from uvm.macros import uvm_component_utils, uvm_object_utils
 from uvm.base.uvm_coreservice import UVMCoreService
 
 
+def createXXX():
+    class XXX(UVMObject):
+        pass
+    uvm_object_utils(XXX)
+    return XXX
+
+
+def createYYY():
+    class YYY(UVMObject):
+        pass
+    uvm_object_utils(YYY)
+    return  YYY
+
+def createLastOverride():
+    class LastOverride(UVMObject):
+        pass
+    uvm_object_utils(LastOverride)
+    return LastOverride
+
+
 class TestUVMDefaultFactory(unittest.TestCase):
 
     def test_override(self):
         cs = UVMCoreService.get()
         fact = UVMDefaultFactory()
         cs.set_factory(fact)
-
-        class XXX(UVMObject):
-            pass
-        uvm_object_utils(XXX)
-
-        class YYY(UVMObject):
-            pass
-        uvm_object_utils(YYY)
+        XXX = createXXX()
+        YYY = createYYY()
 
         fact.set_type_override_by_name('XXX', 'YYY')
         ovrd = fact.find_override_by_type(requested_type=XXX.get_type(), full_inst_path='')
         self.assertIsNotNone(ovrd, 'Override XXX->YYY should exist')
         self.assertEqual(ovrd.get_type_name(), 'YYY')
 
+
+    def test_type_double_override(self):
+        cs = UVMCoreService.get()
+        fact = UVMDefaultFactory()
+        cs.set_factory(fact)
+
+        XXX = createXXX()
+        YYY = createYYY()
+        LastOverride = createLastOverride()
+
+        fact.set_type_override_by_name('XXX', 'YYY')
+        fact.set_type_override_by_name('XXX', 'LastOverride')
+        self.assertFalse(fact.check_inst_override_exists(XXX.get_type(),
+            LastOverride.get_type(), ''))
+        ovrd = fact.find_override_by_type(requested_type=XXX.get_type(), full_inst_path='')
+        self.assertIsNotNone(ovrd, 'Override XXX->LastOverride should exist')
+        self.assertEqual(ovrd.get_type_name(), 'LastOverride')
+
+        fact.set_type_override_by_name('YYY', 'LastOverride')
+        ovrd = fact.find_override_by_type(requested_type=YYY.get_type(), full_inst_path='')
+        self.assertIsNotNone(ovrd, 'Override YYY->LastOverride should exist')
+        self.assertEqual(ovrd.get_type_name(), 'LastOverride')
+
+
+    def test_inst_override(self):
+        cs = UVMCoreService.get()
+        fact = UVMDefaultFactory()
+        cs.set_factory(fact)
+
+        XXX = createXXX()
+        LastOverride = createLastOverride()
+
+        fact.set_inst_override_by_type(XXX.get_type(), LastOverride.get_type(),
+                'top.my_inst.is_override')
+        self.assertTrue(fact.check_inst_override_exists(XXX.get_type(),
+            LastOverride.get_type(), 'top.my_inst.is_override'))
+        self.assertFalse(fact.check_inst_override_exists(XXX.get_type(),
+            LastOverride.get_type(), 'top.my_inst2'))
+
+        obj = fact.create_object_by_type(XXX.get_type(), 'top.my_inst', 'is_override')
+        obj2 = fact.create_object_by_type(XXX.get_type(), 'top.my_inst2', 'is_xxx')
+        self.assertEqual(obj.get_name(), 'is_override')
+        self.assertEqual(obj.get_type_name(), 'LastOverride')
+        self.assertEqual(obj2.get_name(), 'is_xxx')
+        self.assertEqual(obj2.get_type_name(), 'XXX')
 
     def test_create_component_by_name(self):
         cs = UVMCoreService.get()
@@ -57,6 +116,15 @@ class TestUVMDefaultFactory(unittest.TestCase):
 
         new_obj = factory.create_object_by_name('MyObj', "", "my_obj_name")
         self.assertEqual(new_obj.get_name(), 'my_obj_name')
+
+
+    def test_register(self):
+        fact = UVMDefaultFactory()
+        class NotWorks(UVMObject):
+            type_name = "xxx"
+
+        obj = NotWorks('my_name')
+        fact.register(obj)
 
 
 if __name__ == '__main__':
