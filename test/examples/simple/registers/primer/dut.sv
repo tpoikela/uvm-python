@@ -27,7 +27,11 @@
 /* verilator lint_off CASEINCOMPLETE */
 
 
-module slave(
+module slave#(
+    parameter int DMA_SIZE = 1024,
+    parameter int NSESS = 128
+)
+(
    // apb_if    apb,
    input bit rst,
    input apb_pclk,
@@ -48,10 +52,10 @@ typedef struct packed {
 } socket_t;
 
 reg [ 7:0] INDEX;
-socket_t[255:0] SESSION;
-reg[255:0][63:0] DST;
-reg[255:0][31:0] TABLES;
-reg[31:0] DMA[1023:0];
+socket_t[NSESS-1:0] SESSION;
+reg[NSESS-1:0][63:0] DST;
+reg[NSESS-1:0][31:0] TABLES;
+reg[31:0] DMA[DMA_SIZE-1:0];
 
 wire[9:0] paddr;
 assign paddr = apb_paddr[11:2];
@@ -63,7 +67,7 @@ always @ (posedge apb_pclk)
   begin
    if (rst) begin
       INDEX <= 'h00;
-      for (int i = 0; i < 256; i += 1) begin
+      for (int i = 0; i < NSESS; i += 1) begin
          TABLES[i] <= 32'h0000_0000;
       end
       pr_data <= 32'h0;
@@ -71,6 +75,8 @@ always @ (posedge apb_pclk)
    end
    else begin
        if (write_socket) begin
+           assert(paddr < NSESS)
+           else $error("paddr %0d out of range %0d", paddr, NSESS);
            SESSION[paddr] <= chosen_sock;
            write_socket <= 1'b0;
        end
