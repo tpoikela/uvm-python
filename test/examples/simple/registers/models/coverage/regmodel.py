@@ -150,12 +150,10 @@ class mem_M(UVMMem):
     @CgAddr
     # *Note that lambda args must match sample() args (omit self)
     def sample(self, offset, is_read, _map):
-        print("Sample called with offset " + str(offset))
         if self.get_coverage(UVM_CVR_ADDR_MAP):
             self.m_offset  = offset
-            # cg_addr.sample()
 
-    #endclass : mem_M
+
 uvm_object_utils(mem_M)
 
 
@@ -210,7 +208,6 @@ class block_B(UVMRegBlock):
         self.Ra.configure(self, None)
         self.Ra.build()
         self.rand('Ra')
-        print(self.Ra.convert2string())
 
         self.Rb = reg_R.type_id.create("Rb",None,self.get_full_name())
         self.Rb.configure(self, None)
@@ -226,7 +223,6 @@ class block_B(UVMRegBlock):
 
 
     def sample(self, offset, is_read, _map):
-        print("reg_block_B sample() called now")
         if self. get_coverage(UVM_CVR_ADDR_MAP):
             self.m_offset  = offset
             self.sample_addr_cg(offset)
@@ -234,17 +230,14 @@ class block_B(UVMRegBlock):
 
     @CgAddrRange
     def sample_addr_cg(self, offset):
-        print("reg_block_B sample_addr_cg() called now with offset " + str(offset))
         pass
 
     def sample_vals_cg(self, ra, rb):
-        print("reg_block_B sample_vals_cg() called now")
         pass
 
     def sample_values(self):
         super().sample_values()
         if self.get_coverage(UVM_CVR_FIELD_VALS):
-            print('Reg in sample\n' + self.Ra.convert2string())
             ra = self.Ra.F1.value
             rb = self.Rb.F1.value
             self.sample_vals_cg(ra, rb)
