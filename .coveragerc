@@ -1,0 +1,17 @@
+# .coveragerc to control coverage.py
+# Coverages settings for uvm-python
+
+[run]
+include =
+     *src/uvm*
+parallel = True
+
+[report]
+include = 
+    *src/uvm*
+
+skip_covered = True
+#skip_empty = True
+
+[html]
+directory = htmlcov_uvm
