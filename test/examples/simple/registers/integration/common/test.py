@@ -22,14 +22,11 @@
 #// -------------------------------------------------------------
 #//
 
-#`include "uvm_macros.svh"
-#`include "apb.sv"
-#`include "tb_top.sv"
-
 import cocotb
+from cocotb.clock import Clock
 from uvm import (UVMConfigDb, run_test, UVMCoreService, sv,
     UVMRegSequence, uvm_fatal)
-# from apb_pkg import *
+from apb.apb_if import apb_if
 
 
 @cocotb.test()
@@ -37,17 +34,20 @@ def initial_begin(dut):
     cs_ = UVMCoreService.get()
     env = tb_env("env")
 
+    vif = apb_if(dut)
+    cocotb.fork(Clock(dut.clk, 10, "NS").start())
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
 
-    seq_name = ""
-    if sv.value_plusargs("UVM_SEQUENCE=%s",seq_name):
-        seq = UVMRegSequence.create_type_by_name(seq_name, "tb")
+    seq_name = []
+    if sv.value_plusargs("UVM_SEQUENCE=%s", seq_name):
+        seq = UVMRegSequence.create_type_by_name(seq_name[0], "tb")
         if seq is None:
             uvm_fatal("NO_SEQUENCE",
                 "This env requires you to specify the sequence to run using UVM_SEQUENCE=<name>")
         env.seq = seq
 
 
-    UVMConfigDb.set(env, "apb", "vif", dut)
+    UVMConfigDb.set(env, "apb", "vif", vif)
+    UVMConfigDb.set(None, "DUT_REF", "dut", dut)
     yield run_test()
