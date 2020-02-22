@@ -28,6 +28,75 @@ use File::Basename;
 use File::Spec;
 use Data::Dumper;
 
+package SV2PyReplacer;
+
+sub new {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+
+    my $self = {};
+    bless($self, $class);
+
+
+    $self->{re} = {};
+    $self->{re}->{func_phases} =
+        qr/(build|connect|end_of_elaboration|end_of_simulation|extract|check|report|final)/;
+    $self->{re}->{task_phases} = qr/(reset|configure|main|run)/;
+    return $self;
+}
+
+sub do_simple_subst {
+    my ($self, $line) = @_;
+    $$line =~ s/(\w+)'\((.*)\);/$2  # cast to '$1' removed/g;
+    $$line =~ s/;$//g;  # Remove trailing semicolon
+    $$line =~ s/\s*==\s*null/ is None/g;
+    $$line =~ s/\s*!=\s*null/ is not None/g;
+    $$line =~ s/\bnull\b/None/g;
+    $$line =~ s/\bthis\b/self/g;
+    $$line =~ s/\) begin\b/):/g;
+    $$line =~ s/\belse\s+if\b/elif/g;
+    $$line =~ s/function new\s*\(\s*string name/def __init__(self, name/g;
+    $$line =~ s/::type_id::create/.type_id.create/g;
+    $$line =~ s/super\.new\(/super().__init__(/g;
+    $$line =~ s/(\W)'h([a-fA-F0-9]+)/$1 0x$2/g;
+    $$line =~ s/(\W)'b([01]+)/$1 0b$2/g;
+    $$line =~ s/(\W)'([0-9]+)/$1 $2/g;
+    $$line =~ s/&&/ and /g;
+    $$line =~ s/!==/!=/g;
+    $$line =~ s/\|\|/ or /g;
+    $$line =~ s/forever\s+begin/while True:/g;
+    $$line =~ s/self file except/this file except/g;
+    $$line =~ s/repeat\((\w+)\)/for i in range($1)/g;
+    $$line =~ s/^\s*import (\w+)::\*/from $1 import */g;
+
+    # We don't want to match ## here because it's different operator than #
+    $$line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/yield Timer($1, $2)/g;
+}
+
+sub do_sv_uvm_subts {
+    my ($self, $line) = @_;
+    my $re_func_phases = $self->{re}->{func_phases};
+    my $re_task_phases = $self->{re}->{task_phases};
+    # Replace standard UVM functions
+    $$line =~ s/(virtual)?\s+function\+svoid\s+$re_func_phases\(.*\)/def $1(self, phase):/g;
+    $$line =~ s/(virtual)?\s+task\s+$re_task_phases\(.*\)/def $1(self, phase):/g;
+    $$line =~ s/class\s+(\w+)\s+extends\s+(\w+)/class $1($2):/g;
+    $$line =~ s/super\./super()./g;
+
+    # SystemVerilog functions
+    $$line =~ s/\$(urandom|random|sformatf|bits|cast|display)\b/sv.$1/g;
+
+    $$line =~ s/(virtual\s+)?(protected\s+)?task\s+(\w+)\s*\(/def $3(self,/g;
+    $$line =~ s/super\.(\w+)_phase(phase)/super().$1_phase(phase)/g;
+    $$line =~ s/uvm_component parent = None/parent=None/g;
+    $$line =~ s/phase\(self,\s*uvm_phase\s+phase\s*\)$/phase(self, phase):/g;
+    $$line =~ s/`uvm_(info|warning|fatal|error)\(/uvm_$1(/g;
+}
+
+
+1;
+
+# Stores info about classes found, such as name, start_line etc
 package ClassInfo;
 
 sub new {
@@ -89,8 +158,6 @@ my $re_packed = qr/(\[.*\])?/;       # $5
 my $re_name = qr/(\w+)/;             # $6
 my $re_unpacked = qr/((\[.*\])+)/;   # $7, $8 (full)
 my $re_init_var = qr/(=[^;]+)/;      # $9
-my $re_func_phases = qr/(build|connect|end_of_elaboration|end_of_simulation|extract|check|report|final)/;
-my $re_task_phases = qr/(reset|configure|main|run)/;
 
 my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?$re_init_var?\s*;\s*$/;
 my $re_new_call = qr/(\w+)\s*=\s*new\s*\(/;
@@ -202,6 +269,8 @@ sub process_file {
     my $found_vars = {};
     my $has_author = $is_py;  # Do not re-insert to py files
     my @classes_file = ();
+
+    my $sv2py = SV2PyReplacer->new();
 
     while (<$IFILE>) {
         my $line = $_;
@@ -328,30 +397,8 @@ sub process_file {
             clear_state($IN_NEW);
         }
 
-        $line =~ s/(\w+)'\((.*)\);/$2  # cast to '$1' removed/g;
-        $line =~ s/;$//g;  # Remove trailing semicolon
-        $line =~ s/\s*==\s*null/ is None/g;
-        $line =~ s/\s*!=\s*null/ is not None/g;
-        $line =~ s/\bnull\b/None/g;
-        $line =~ s/\bthis\b/self/g;
-        $line =~ s/\) begin\b/):/g;
-        $line =~ s/\belse\s+if\b/elif/g;
-        $line =~ s/function new\s*\(string name/def __init__(self, name/g;
-        $line =~ s/::type_id::create/.type_id.create/g;
-        $line =~ s/super\.new\(/super().__init__(/g;
-        $line =~ s/(\W)'h([a-fA-F0-9]+)/$1 0x$2/g;
-        $line =~ s/(\W)'b([01]+)/$1 0b$2/g;
-        $line =~ s/(\W)'([0-9]+)/$1 $2/g;
-        $line =~ s/&&/ and /g;
-        $line =~ s/!==/!=/g;
-        $line =~ s/\|\|/ or /g;
-        $line =~ s/forever\s+begin/while True:/g;
-        $line =~ s/self file except/this file except/g;
-        $line =~ s/repeat\((\w+)\)/for i in range($1)/g;
-        $line =~ s/^\s*import (\w+)::\*/from $1 import */g;
+        $sv2py->do_simple_subst(\$line);
 
-        # We don't want to match ## here because it's different operator than #
-        $line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/yield Timer($1, $2)/g;
 
         if ($line =~ $edge_re) {
             my $edge = $2;
@@ -370,7 +417,7 @@ sub process_file {
         }
 
         # Imports are added here
-        if ($line =~ /`uvm_(component|object)_utils/) {
+        if ($line =~ /`uvm_(component|object)(_param)?_utils/) {
             add_import(\@imports, "from uvm.macros import *\n");
         }
         elsif ($line =~ /extends uvm_(\w+)/) {
@@ -382,14 +429,7 @@ sub process_file {
             add_import(\@imports, "from $imp_name import *\n");
         }
 
-        # Replace standard UVM functions
-        $line =~ s/(virtual)?\s+function\+svoid\s+$re_func_phases\(.*\)/def $1(self, phase):/g;
-        $line =~ s/(virtual)?\s+task\s+$re_task_phases\(.*\)/def $1(self, phase):/g;
-        $line =~ s/class (\w+) extends (\w+)/class $1($2):/g;
-        $line =~ s/super\./super()./g;
-
-        # SystemVerilog functions
-        $line =~ s/\$(urandom|random|sformatf|bits|cast|display)\b/sv.$1/g;
+        $sv2py->do_sv_uvm_subts(\$line);
 
         # Config/Resource Db replacements
         if ($line =~ $conf_db_re) {
@@ -405,12 +445,6 @@ sub process_file {
             add_import(\@imports, "from uvm.base.uvm_resource_db import *\n");
         }
 
-        $line =~ s/(virtual\s+)?(protected\s+)?task\s+(\w+)\s*\(/def $3(self,/g;
-
-        $line =~ s/super\.(\w+)_phase(phase)/super().$1_phase(phase)/g;
-        $line =~ s/uvm_component parent = None/parent=None/g;
-        $line =~ s/phase\(self,\s*uvm_phase\s+phase\s*\)$/phase(self, phase):/g;
-
         if ($IN_CLASS) {
             $line =~ s/function (.*)\((.*)\)/def $1(self,$2):/g;
             $line =~ s/task (.*)\((.*)\)/def $1(self,$2):  # task/g;
@@ -421,9 +455,7 @@ sub process_file {
         #--------------------------------------------------
         # Final trimmings due to bad substitutions
         #--------------------------------------------------
-        $line =~ s/\(self,\)/(self)/g;
-        $line =~ s/,\s*uvm_component parent/, parent/g;
-        $line =~ s/virtual def \w+ (\w+)\(/def $1(/g;
+        do_final_trimmings(\$line);
 
         if ($add_line) {
             push(@outfile, "$ws#$line");
@@ -545,4 +577,15 @@ sub set_state {
 sub clear_state {
     my ($new_state) = @_;
     $st = $st & ~$new_state;
+}
+
+sub do_final_trimmings {
+    my ($line) = @_;
+    $$line =~ s/\(self,\)/(self)/g;
+    $$line =~ s/,\s*uvm_component parent/, parent/g;
+    $$line =~ s/virtual def \w+ (\w+)\(/def $1(/g;
+    $$line =~ s/self,\s*uvm_phase\s+phase/self, phase/g;
+    # Remaining func return type
+    $$line =~ s/def (\w+) (\w+)\s*\(/def $2(/g;
+    $$line =~ s/virtual def/def/g;
 }
