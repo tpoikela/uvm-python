@@ -25,7 +25,7 @@
 import cocotb
 from cocotb.clock import Clock
 from uvm import (UVMConfigDb, run_test, UVMCoreService, sv,
-    UVMRegSequence, uvm_fatal)
+    uvm_fatal, UVMUtils)
 from apb.apb_if import apb_if
 
 # Note: This has to be specified with PYTHONPATH
@@ -44,7 +44,7 @@ def initial_begin(dut):
 
     seq_name = []
     if sv.value_plusargs("UVM_SEQUENCE=%s", seq_name):
-        seq = UVMRegSequence.create_type_by_name(seq_name[0], "tb")
+        seq = UVMUtils.create_type_by_name(seq_name[0], "tb")
         if seq is None:
             uvm_fatal("NO_SEQUENCE",
                 "This env requires you to specify the sequence to run using UVM_SEQUENCE=<name>")
