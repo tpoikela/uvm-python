@@ -76,5 +76,17 @@ always @ (posedge apb_pclk)
    end
 end
 
-endmodule
+`ifdef COCOTB_SIM
+`ifdef VCD
+initial begin
+ $dumpfile ("slave_dut.vcd");
+ $dumpvars (0, slave);
+ // Dump only first 16 vars of memories
+ for (int i = 0; i < 16; i++) $dumpvars(0, DMA[i]);
+ for (int i = 0; i < 16; i++) $dumpvars(0, SOCKET[i]);
+end
+`endif
+`endif
+
+endmodule: slave
 
