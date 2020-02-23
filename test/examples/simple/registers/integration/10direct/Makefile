@@ -38,24 +38,34 @@ COCOTB_HDL_TIMEUNIT=1ns
 COCOTB_HDL_TIMEPRECISION=1ns
 
 TOPLEVEL_LANG ?= verilog
-UVM_PYTHON ?= $(WPWD)/../../../../../src
 
 PWD=$(shell pwd)
 
+
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
+INTEGRATED=$(WPWD)/../../../../integrated
+COMMON=$(WPWD)/../common
+UVM_PYTHON ?= $(WPWD)/../../../../../src
+
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:$(INTEGRATED)
+PYTHONPATH := $(COMMON):$(PYTHONPATH)
 PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
+INTEGRATED=$(WPWD)/../../../../integrated
+COMMON=$(WPWD)/../common
+UVM_PYTHON ?= $(WPWD)/../../../../../src
+
+PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:$(INTEGRATED)
+PYTHONPATH := $(COMMON):$(PYTHONPATH)
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
 ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(WPWD)/dut.sv
+    VERILOG_SOURCES ?= $(WPWD)/../common/dut.sv
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
