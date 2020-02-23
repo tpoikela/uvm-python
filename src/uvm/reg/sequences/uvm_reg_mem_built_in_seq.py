@@ -31,8 +31,8 @@
 
 import cocotb
 from ..uvm_reg_sequence import UVMRegSequence
-from ..macros import uvm_object_utils, uvm_error, uvm_info
-from ..base.uvm_resource_db import UVMResourceDb
+from ...macros import uvm_object_utils, uvm_error, uvm_info
+from ...base.uvm_resource_db import UVMResourceDb
 
 
 class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
