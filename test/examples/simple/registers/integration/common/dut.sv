@@ -23,17 +23,25 @@
 
 `timescale 1ns/1ns
 
-module slave(apb_if apb,
-             input bit rst);
+module slave(
+   input apb_pclk,
+   input bit rst,
+   input wire [31:0] apb_paddr,
+   input        apb_psel,
+   input        apb_penable,
+   input        apb_pwrite,
+   output [31:0] apb_prdata,
+   input [31:0] apb_pwdata
+);
 
 reg [31:0] pr_data;
-assign apb.prdata = (apb.psel && apb.penable && !apb.pwrite) ? pr_data : 'z;
+assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite) ? pr_data : 'z;
 
 reg [31:0] DATA;
 reg [63:0] SOCKET[256];
 reg [31:0] DMA[1024];
 
-always @ (posedge apb.pclk)
+always @ (posedge apb_pclk)
   begin
    if (rst) begin
       DATA <= 'h00;
@@ -45,23 +53,23 @@ always @ (posedge apb.pclk)
    else begin
 
       // Wait for a SETUP+READ or ENABLE+WRITE cycle
-      if (apb.psel == 1'b1 && apb.penable == apb.pwrite) begin
+      if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
          pr_data <= 32'h0;
-         if (apb.pwrite) begin
-            casex (apb.paddr)
-              16'h0024: DATA <= apb.pwdata;
-              16'h1XX0: SOCKET[apb.paddr[11:4]][63:32] <= apb.pwdata; 
-              16'h1XX4: SOCKET[apb.paddr[11:4]][31: 0] <= apb.pwdata;
-              16'h2XXX: DMA[apb.paddr[11:2]] <= apb.pwdata;
+         if (apb_pwrite) begin
+            casex (apb_paddr)
+              16'h0024: DATA <= apb_pwdata;
+              16'h1XX0: SOCKET[apb_paddr[11:4]][63:32] <= apb_pwdata; 
+              16'h1XX4: SOCKET[apb_paddr[11:4]][31: 0] <= apb_pwdata;
+              16'h2XXX: DMA[apb_paddr[11:2]] <= apb_pwdata;
             endcase
          end
          else begin
-            casex (apb.paddr)
+            casex (apb_paddr)
               16'h0000: pr_data <= {4'h0, 10'h176, 8'h5A, 8'h03};
               16'h0024: pr_data <= DATA;
-              16'h1XX0: pr_data <= SOCKET[apb.paddr[11:4]][63:32];
-              16'h1XX4: pr_data <= SOCKET[apb.paddr[11:4]][31: 0];
-              16'h2XXX: pr_data <= DMA[apb.paddr[11:2]];
+              16'h1XX0: pr_data <= SOCKET[apb_paddr[11:4]][63:32];
+              16'h1XX4: pr_data <= SOCKET[apb_paddr[11:4]][31: 0];
+              16'h2XXX: pr_data <= DMA[apb_paddr[11:2]];
             endcase
          end
       end

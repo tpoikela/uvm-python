@@ -114,7 +114,7 @@ class dut_regmodel(UVMRegBlock):
 
     def __init__(self, name="slave"):
         super().__init__(name, UVM_NO_COVERAGE)
-        self.SOCKET = [None] * 256
+        self.SOCKET = []
 
 
     def build(self):

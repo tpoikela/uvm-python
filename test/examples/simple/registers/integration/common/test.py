@@ -28,6 +28,9 @@ from uvm import (UVMConfigDb, run_test, UVMCoreService, sv,
     UVMRegSequence, uvm_fatal)
 from apb.apb_if import apb_if
 
+# Note: This has to be specified with PYTHONPATH
+from tb_env import tb_env
+
 
 @cocotb.test()
 def initial_begin(dut):
@@ -35,7 +38,7 @@ def initial_begin(dut):
     env = tb_env("env")
 
     vif = apb_if(dut)
-    cocotb.fork(Clock(dut.clk, 10, "NS").start())
+    cocotb.fork(Clock(vif.clk, 10, "NS").start())
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
 
