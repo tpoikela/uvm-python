@@ -193,6 +193,19 @@ class sv:
             line = caller.lineno
             print("$error: {},{} Assertion failed.".format(filename, line))
 
+    @classmethod
+    def value_plusargs(cls, arg_str, arr):
+        plusarg_dict = cocotb.plusargs
+        for name in plusarg_dict:
+            full_arg = '+' + name + '='
+            for i in range(len(full_arg)):
+                if full_arg[i] != name[i]:
+                    break
+                elif i == len(full_arg) - 1:
+                    arr.append(plusarg_dict[name])
+                    return plusarg_dict[name]
+
+
 random.seed(0)
 
 SV_MAX_INT_VALUE = (1 << 31) - 1
