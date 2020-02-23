@@ -28,7 +28,7 @@ from uvm.base.uvm_component import UVMComponent
 from uvm.macros import *
 from uvm.base import sv
 from apb.apb_agent import apb_agent
-from apb.reg2apb_adapter import reg2apb_adapter
+from apb.apb_rw import reg2apb_adapter
 from uvm.reg import UVMRegPredictor
 from regmodel import dut_regmodel
 
