@@ -108,7 +108,7 @@ class tb_env(UVMComponent):
         yield Timer(100, "NS")
 
         uvm_info("START_SEQ", "Starting sequence '" + self.seq.get_name() + "'", UVM_LOW)
-        self.seq.model = regmodel
+        self.seq.model = self.regmodel
         yield self.seq.start(None)
         phase.drop_objection(self)
 
