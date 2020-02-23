@@ -186,20 +186,20 @@ class sv:
         return random.randint(start, stop)
 
     @classmethod
-    def sv_assert(cls, val):
+    def sv_assert(cls, val, msg=""):
         if not val:
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
             line = caller.lineno
-            print("$error: {},{} Assertion failed.".format(filename, line))
+            print("$error: {},{} Assertion failed. {}".format(filename, line, msg))
 
     @classmethod
     def value_plusargs(cls, arg_str, arr):
         plusarg_dict = cocotb.plusargs
         for name in plusarg_dict:
-            full_arg = '+' + name + '='
+            full_arg = name + '='
             for i in range(len(full_arg)):
-                if full_arg[i] != name[i]:
+                if full_arg[i] != arg_str[i]:
                     break
                 elif i == len(full_arg) - 1:
                     arr.append(plusarg_dict[name])
