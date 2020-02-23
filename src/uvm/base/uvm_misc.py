@@ -319,3 +319,109 @@ def m_uvm_string_queue_join(i):
     return res
 
 
+#//------------------------------------------------------------------------------
+#// CLASS: uvm_utils #(TYPE,FIELD)
+#//
+#// This class contains useful template functions.
+#//
+#//------------------------------------------------------------------------------
+
+class UVMUtils():  # (type TYPE=int, string FIELD="config")
+
+    #  typedef TYPE types_t[$]
+    #
+    #  // Function: find_all
+    #  //
+    #  // Recursively finds all component instances of the parameter type ~TYPE~,
+    #  // starting with the component given by ~start~. Uses <uvm_root::find_all>.
+    #
+
+    #  static def find_all(self,uvm_component start):
+    #    uvm_component list[$]
+    #    types_t types
+    #    uvm_root top
+    #    uvm_coreservice_t cs
+    #    cs = uvm_coreservice_t::get()
+    #    top = cs.get_root()
+    #    top.find_all("*",list,start)
+    #    foreach (list[i]):
+    #      TYPE typ
+    #      if (sv.cast(typ,list[i]))
+    #        types.push_back(typ)
+    #    end
+    #    if (types.size() == 0):
+    #      uvm_warning("find_type-no match",{"Instance of type '",TYPE::type_name,
+    #         " not found in component hierarchy beginning at ",start.get_full_name()})
+    #    end
+    #    return types
+    #  endfunction
+
+    #
+    #  static def find(self,uvm_component start):
+    #    types_t types = find_all(start)
+    #    if (types.size() == 0)
+    #      return None
+    #    if (types.size() > 1):
+    #      uvm_warning("find_type-multi match",{"More than one instance of type '",TYPE::type_name,
+    #         " found in component hierarchy beginning at ",start.get_full_name()})
+    #      return None
+    #    end
+    #    return types[0]
+    #  endfunction
+    #
+
+    @classmethod
+    def create_type_by_name(cls, type_name, contxt):
+        from .uvm_coreservice import UVMCoreService
+        obj = None
+        typ = None  # TYPE
+        cs = UVMCoreService.get()
+        factory = cs.get_factory()
+
+        obj = factory.create_object_by_name(type_name,contxt,type_name)
+        typ = obj
+        # TODO cast
+        #    if (!sv.cast(typ,obj))
+        #     uvm_report_error("WRONG_TYPE",{"The type_name given '",type_name,
+        #            "' with context '",contxt,"' did not produce the expected type."})
+        return typ
+        #  endfunction
+
+
+    #  // Function: get_config
+    #  //
+    #  // This method gets the object config of type ~TYPE~
+    #  // associated with component ~comp~.
+    #  // We check for the two kinds of error which may occur with this kind of
+    #  // operation.
+    #
+    #  static def get_config(self,uvm_component comp, bit is_fatal):
+    #    uvm_object obj
+    #    TYPE cfg
+    #
+    #    if (!m_uvm_config_obj_misc::get(comp,"",FIELD, obj)):
+    #      if (is_fatal)
+    #        comp.uvm_report_fatal("NO_SET_CFG", {"no set_config to field '", FIELD,
+    #                           "' for component '",comp.get_full_name(),"'"},
+    #                           UVM_MEDIUM, `uvm_file , `uvm_line  )
+    #      else
+    #        comp.uvm_report_warning("NO_SET_CFG", {"no set_config to field '", FIELD,
+    #                           "' for component '",comp.get_full_name(),"'"},
+    #                           UVM_MEDIUM, `uvm_file , `uvm_line  )
+    #      return None
+    #    end
+    #
+    #    if (!sv.cast(cfg, obj)):
+    #      if (is_fatal)
+    #        comp.uvm_report_fatal( "GET_CFG_TYPE_FAIL",
+    #                          {"set_config_object with field name ",FIELD,
+    #                          " is not of type '",TYPE::type_name,"'"},
+    #                          UVM_NONE , `uvm_file , `uvm_line )
+    #      else
+    #        comp.uvm_report_warning( "GET_CFG_TYPE_FAIL",
+    #                          {"set_config_object with field name ",FIELD,
+    #                          " is not of type '",TYPE::type_name,"'"},
+    #                          UVM_NONE , `uvm_file , `uvm_line )
+    #    end
+    #
+    #    return cfg
