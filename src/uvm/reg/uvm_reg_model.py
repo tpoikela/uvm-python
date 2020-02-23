@@ -22,7 +22,7 @@
 #-------------------------------------------------------------
 
 from ..macros import uvm_fatal
-from ..base.uvm_resource_db import ResourceDbClassFactory
+from ..base.uvm_resource_db import ResourceDbClassFactory, UVMResourceDb
 
 #------------------------------------------------------------------------------
 # TITLE: Global Declarations for the Register Layer
@@ -386,3 +386,20 @@ class UVMRegMapAddrRange:
         res = ("min: " + str(self.min) + ', max: ' + str(self.max) +
                 ', stride: ' + str(self.stride))
         return res
+
+
+
+def reg_test_off(model, test_patt):
+    """ Reg test is disabled if given test_patt is found for that register """
+    if isinstance(test_patt, list):
+        res = False
+        for patt in test_patt:
+            res |= reg_test_off(model, patt)
+        return res
+    else:
+        name = "REG::" + model.get_full_name()
+        return (UVMResourceDb.get_by_name(name, test_patt, 0) is not None)
+
+
+def reg_test_on(model, test_patt):
+    return not reg_test_off(model, test_patt)
