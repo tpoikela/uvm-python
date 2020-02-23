@@ -24,13 +24,14 @@
 
 import cocotb
 from cocotb.triggers import Timer, RisingEdge
-from uvm.base.uvm_component import UVMComponent
+
 from uvm.macros import *
-from uvm.base import sv
+from uvm.base import sv, UVMConfigDb, UVMComponent
+from uvm.reg import UVMRegPredictor
+
+from regmodel import dut_regmodel
 from apb.apb_agent import apb_agent
 from apb.apb_rw import reg2apb_adapter
-from uvm.reg import UVMRegPredictor
-from regmodel import dut_regmodel
 
 EXPLICIT_MON = 1
 
@@ -51,6 +52,7 @@ class tb_env(UVMComponent):
         self.regmodel = None  # dut_regmodel
         self.Aapb = None  # apb_agent
         self.seq = None  # uvm_reg_sequence
+        self.vif = None
         if EXPLICIT_MON:
             self.apb2reg_predictor = None  # uvm_reg_predictor#(apb_rw)
 
@@ -68,6 +70,11 @@ class tb_env(UVMComponent):
         hdl_root = "tb_top.dut"
         sv.value_plusargs("ROOT_HDL_PATH=%s",hdl_root)  # cast to 'void' removed
         self.regmodel.set_hdl_path_root(hdl_root)
+        vif = []
+        if UVMConfigDb.get(self, "apb", "vif", vif):
+            self.vif = vif[0]
+        else:
+            uvm_fatal("NO_VIF", "Could not find vif from config DB")
 
 
     def connect_phase(self, phase):
@@ -93,10 +100,10 @@ class tb_env(UVMComponent):
 
         # begin : do_reset
         uvm_info("RESET","Performing reset of 5 cycles", UVM_LOW)
-        self.tb_top.rst <= 1
+        self.vif.rst <= 1
         for _ in range(5):
-            yield RisingEdge(tb_top.clk)
-        self.tb_top.rst <= 0
+            yield RisingEdge(self.vif.clk)
+        self.vif.rst <= 0
 
         yield Timer(100, "NS")
 
