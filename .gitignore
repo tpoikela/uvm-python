@@ -25,3 +25,5 @@ htmlcov/
 test-cocotb.xml
 test-results.xml
 
+.eggs
+*egg-info*
