@@ -63,13 +63,14 @@ class tb_test(UVMTest):
         yield seq.wait_for_sequence_state(UVM_FINISHED)
 
 
-        uvm_info("Test", "Generating and uploading 100 configurations...", UVM_LOW)
+        uvm_info("Test", "Generating and uploading 5 configurations...", UVM_LOW)
 
-        for _ in range(100):
+        for _ in range(5):
             status = 0
             #env.regmodel.randomize_with({Ra.F2.value == Rb.F2.value}) # TODO
             env.regmodel.randomize()
-            env.regmodel.update(status)
+            status = []
+            yield env.regmodel.update(status)
             env.regmodel.sample_values()
 
         phase.drop_objection(self)
