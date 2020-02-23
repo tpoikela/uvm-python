@@ -25,6 +25,7 @@ import cocotb
 
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import UVMPool, UVMObjectStringPool
+from ..base.uvm_queue import UVMQueue
 from ..base.uvm_globals import *
 from ..base.sv import sv
 from ..macros import *
@@ -49,7 +50,7 @@ from .uvm_reg_cbs import UVMMemCbIter
 #// backdoor access be used instead.
 #//
 #//------------------------------------------------------------------------------
-#class uvm_mem extends uvm_object
+
 
 #   typedef enum {UNKNOWNS, ZEROES, ONES, ADDRESS, VALUE, INCR, DECR} init_e
 UNKNOWNS = 0
@@ -116,7 +117,7 @@ class UVMMem(UVMObject):
         self.m_backdoor  = None
         self.m_access    = access.upper()
         self.m_has_cover = has_coverage
-        self.m_hdl_paths_pool = UVMObjectStringPool("hdl_paths")
+        self.m_hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
         self.m_read_in_progress = False
         self.m_write_in_progress = False
         self.m_is_powered_down = False
@@ -1204,6 +1205,19 @@ class UVMMem(UVMObject):
     #                                           int size,
     #                                           bit first = 0,
     #                                           string kind = "RTL")
+    def add_hdl_path_slice(self, name, offset, size, first=0, kind="RTL"):
+        paths = self.m_hdl_paths_pool.get(kind)  # #    uvm_queue #(uvm_hdl_path_concat)
+        concat = None  #    uvm_hdl_path_concat
+
+        if first or paths.size() == 0:
+            concat = uvm_hdl_path_concat()
+            paths.push_back(concat)
+        else:
+            concat = paths.get(paths.size()-1)
+
+        concat.add_path(name, offset, size)
+    #endfunction
+
 
     #
     #
@@ -1461,7 +1475,7 @@ class UVMMem(UVMObject):
         if is_on == UVM_NO_COVERAGE:
             self.m_cover_on = is_on
             return self.m_cover_on
-     
+
         self.m_cover_on = self.m_has_cover & is_on
         return self.m_cover_on
 
@@ -2120,25 +2134,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// add_hdl_path_slice
-#
-#function void uvm_mem::add_hdl_path_slice(string name,
-#                                          int offset,
-#                                          int size,
-#                                          bit first = 0,
-#                                          string kind = "RTL")
-#    uvm_queue #(uvm_hdl_path_concat) paths=m_hdl_paths_pool.get(kind)
-#    uvm_hdl_path_concat concat
-#
-#    if (first || paths.size() == 0):
-#       concat = new()
-#       paths.push_back(concat)
-#    end
-#    else
-#       concat = paths.get(paths.size()-1)
-#
-#    concat.add_path(name, offset, size)
-#endfunction
 #
 #
 #
