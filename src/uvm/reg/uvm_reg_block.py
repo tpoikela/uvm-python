@@ -1000,7 +1000,7 @@ class UVMRegBlock(UVMObject):
 
 
         uvm_info("RegModel", sv.sformatf("%s:%0d - Updating model block %s with %s path",
-            fname, lineno, self.get_name(), path.name), UVM_HIGH)
+            fname, lineno, self.get_name(), path), UVM_HIGH)
 
         for rg_ in self.regs.key_list():
             rg = rg_
@@ -1263,6 +1263,42 @@ class UVMRegBlock(UVMObject):
     #   extern function void get_full_hdl_path (ref string paths[$],
     #                                           input string kind = "",
     #                                           string separator = ".")
+    def get_full_hdl_path(self, paths, kind="", separator="."):
+
+        if kind == "":
+            kind = self.get_default_hdl_path()
+
+        paths.clear()
+        if self.is_hdl_path_root(kind):
+            if self.root_hdl_paths[kind] != "":
+                paths.append(self.root_hdl_paths[kind])
+            return
+
+
+        if not self.has_hdl_path(kind):
+            uvm_error("RegModel", "Block " + self.get_full_name() +
+                " does not have hdl path defined for abstraction '" + kind + "'")
+            return
+
+        hdl_paths = self.hdl_paths_pool.get(kind)  # uvm_queue #(string)
+        parent_paths = []
+
+        if self.parent is not None:
+            self.parent.get_full_hdl_path(parent_paths, kind, separator)
+
+        for i in range(len(hdl_paths)):
+            hdl_path = hdl_paths.get(i)
+
+            if len(parent_paths) == 0:
+                if hdl_path != "":
+                    paths.push_back(hdl_path)
+                continue
+
+            for j in range(len(parent_paths)):
+                if hdl_path == "":
+                    paths.append(parent_paths[j])
+                else:
+                    paths.append(parent_paths[j] + separator + hdl_path)
 
 
     #   // Function: set_default_hdl_path
@@ -1319,8 +1355,14 @@ class UVMRegBlock(UVMObject):
     #   // for this block is used.
     #   //
     #   extern function bit is_hdl_path_root (string kind = "")
-    #
-    #
+    def is_hdl_path_root(self, kind=""):
+        if kind == "":
+            kind = self.get_default_hdl_path()
+        return self.root_hdl_paths.exists(kind)
+    #endfunction
+
+
+
     #   extern virtual function void   do_print      (uvm_printer printer)
     #   extern virtual function void   do_copy       (uvm_object rhs)
     #   extern virtual function bit    do_compare    (uvm_object  rhs,
@@ -1852,54 +1894,6 @@ class UVMRegBlock(UVMObject):
 #endfunction
 #
 #
-# get_full_hdl_path
-#
-#function void uvm_reg_block::get_full_hdl_path(ref string paths[$],
-#                                               input string kind = "",
-#                                               string separator = ".")
-#
-#   if (kind == "")
-#      kind = get_default_hdl_path()
-#
-#   paths.delete()
-#   if (is_hdl_path_root(kind)):
-#      if (root_hdl_paths[kind] != "")
-#         paths.push_back(root_hdl_paths[kind])
-#      return
-#   end
-#
-#   if (!has_hdl_path(kind)):
-#      `uvm_error("RegModel",{"Block does not have hdl path defined for abstraction '",kind,"'"})
-#      return
-#   end
-#
-#   begin
-#      uvm_queue #(string) hdl_paths = hdl_paths_pool.get(kind)
-#      string parent_paths[$]
-#
-#      if (parent is not None)
-#         parent.get_full_hdl_path(parent_paths, kind, separator)
-#
-#      for (int i=0; i<hdl_paths.size();i++):
-#         string hdl_path = hdl_paths.get(i)
-#
-#         if (parent_paths.size() == 0):
-#            if (hdl_path != "")
-#               paths.push_back(hdl_path)
-#
-#            continue
-#         end
-#
-#         foreach (parent_paths[j])  begin
-#            if (hdl_path == "")
-#               paths.push_back(parent_paths[j])
-#            else
-#               paths.push_back({ parent_paths[j], separator, hdl_path })
-#         end
-#      end
-#   end
-#
-#endfunction
 #
 #
 #
@@ -1922,14 +1916,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# is_hdl_path_root
-#
-#function bit  uvm_reg_block::is_hdl_path_root (string kind = "")
-#  if (kind == "")
-#    kind = get_default_hdl_path()
-#
-#  return root_hdl_paths.exists(kind)
-#endfunction
 #
 #
 #----------------------------------
