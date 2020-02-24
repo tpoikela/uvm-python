@@ -35,6 +35,11 @@ from .uvm_reg_map import UVMRegMap
 from .uvm_mem_mam import *
 from .uvm_reg_cbs import UVMMemCbIter
 
+from ..dpi.uvm_hdl import uvm_hdl
+
+ERR_MEM_BD_READ = ("Backdoor read of register %s with multiple HDL copies: "
+    + "values are not the same: %0h at path '%s', and %0h at path '%s'. Returning first value.")
+
 #//------------------------------------------------------------------------------
 #// CLASS: uvm_mem
 #//------------------------------------------------------------------------------
@@ -769,8 +774,46 @@ class UVMMem(UVMObject):
     #                            input  uvm_object         extension = None,
     #                            input  string             fname = "",
     #                            input  int                lineno = 0)
-    #
-    #
+    def poke(self, status,
+            offset, value, kind="", parent=None, extension=None, fname="", lineno=0):
+        uvm_check_output_args([status])
+        bkdr = self.get_backdoor()  # uvm_reg_backdoor
+        rw = None  # uvm_reg_item
+
+        self.m_fname = fname
+        self.m_lineno = lineno
+
+        if bkdr is None and self.has_hdl_path(kind) is False:
+            uvm_error("RegModel", "No backdoor access available in memory '"
+                      + self.get_full_name() + "'")
+            status.append(UVM_NOT_OK)
+            return
+        #
+        #   // create an abstract transaction for this operation
+        rw = UVMRegItem.type_id.create("mem_poke_item", None, self.get_full_name())
+        rw.element      = self
+        rw.path         = UVM_BACKDOOR
+        rw.element_kind = UVM_MEM
+        rw.kind         = UVM_READ
+        rw.offset       = offset
+        rw.value[0]     = value & ((1 << self.m_n_bits)-1)
+        rw.bd_kind      = kind
+        rw.parent       = parent
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+        #
+        if bkdr is not None:
+            bkdr.write(rw)
+        else:
+            self.backdoor_write(rw)
+
+        status.append(rw.status)
+
+        uvm_info("RegModel", sv.sformatf("Poked memory '%s[%0d]' with value 'h%h",
+            self.get_full_name(), offset, value), UVM_HIGH)
+
+
     #   // Task: peek
     #   //
     #   // Read the current value from a memory location
@@ -790,9 +833,50 @@ class UVMMem(UVMObject):
     #                            input  uvm_object         extension = None,
     #                            input  string             fname = "",
     #                            input  int                lineno = 0)
-    #
-    #
-    #
+    # @cocotb.coroutine
+    def peek(self, status, offset, value, kind="", parent=None, extension=None, fname="",
+            lineno=0):
+        uvm_check_output_args([status, value])
+        bkdr = self.get_backdoor()  # uvm_reg_backdoor
+        rw = None  # uvm_reg_item
+
+        self.m_fname = fname
+        self.m_lineno = lineno
+
+        if bkdr is None and self.has_hdl_path(kind) is False:
+            uvm_error("RegModel", "No backdoor access available in memory '"
+                      + self.get_full_name() + "'")
+            status.append(UVM_NOT_OK)
+            return
+
+
+        # create an abstract transaction for this operation
+        rw = UVMRegItem.type_id.create("mem_peek_item", None, self.get_full_name())
+        rw.element      = self
+        rw.path         = UVM_BACKDOOR
+        rw.element_kind = UVM_MEM
+        rw.kind         = UVM_READ
+        rw.offset       = offset
+        rw.bd_kind      = kind
+        rw.parent       = parent
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+
+        if bkdr is not None:
+            bkdr.read(rw)
+        else:
+            self.backdoor_read(rw)
+
+        status.append(rw.status)
+        value.append(rw.value[0])
+
+        uvm_info("RegModel", sv.sformatf("Peeked memory '%s[%0d]' has value '%s'",
+            self.get_full_name(), offset, str(value)), UVM_HIGH)
+        #endtask: peek
+
+
+
 
     #   extern protected function bit Xcheck_accessX (input uvm_reg_item rw,
     #                                                 output uvm_reg_map_info map_info,
@@ -1272,13 +1356,43 @@ class UVMMem(UVMObject):
     #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
     #                                           input string kind = "",
     #                                           input string separator = ".")
-    #
+    def get_full_hdl_path(self, paths, kind = "", separator = "."):
+        #
+        if (kind == ""):
+            kind = self.m_parent.get_default_hdl_path()
+        #
+        if self.has_hdl_path(kind) is False:
+            uvm_error("RegModel",
+                "Memory does not have hdl path defined for abstraction '" + kind + "'")
+            return
+
+        hdl_paths = self.m_hdl_paths_pool.get(kind)
+        parent_paths = []  # string[$]
+        self.m_parent.get_full_hdl_path(parent_paths, kind, separator)
+
+        for i in range(len(hdl_paths)):
+            hdl_concat = hdl_paths.get(i)
+
+            for j in range(len(parent_paths)):
+                t = uvm_hdl_path_concat()
+
+                for k in range(len(hdl_concat.slices)):
+                    if (hdl_concat.slices[k].path == ""):
+                        t.add_path(parent_paths[j])
+                    else:
+                        t.add_path(parent_paths[j] + separator + hdl_concat.slices[k].path,
+                                  hdl_concat.slices[k].offset,
+                                  hdl_concat.slices[k].size)
+                paths.append(t)
+
+
     #   // Function: get_hdl_path_kinds
     #   //
     #   // Get design abstractions for which HDL paths have been defined
     #   //
     #   extern function void get_hdl_path_kinds (ref string kinds[$])
-    #
+
+
     #   // Function: backdoor_read
     #   //
     #   // User-define backdoor read access
@@ -1288,8 +1402,10 @@ class UVMMem(UVMObject):
     #   // By default calls <uvm_mem::backdoor_read_func()>.
     #   //
     #   extern virtual protected task backdoor_read(uvm_reg_item rw)
-    #
-    #
+    def backdoor_read(self, rw):
+        rw.status = self.backdoor_read_func(rw)
+
+
     #   // Function: backdoor_write
     #   //
     #   // User-defined backdoor read access
@@ -1298,8 +1414,34 @@ class UVMMem(UVMObject):
     #   // for this memory type.
     #   //
     #   extern virtual task backdoor_write(uvm_reg_item rw)
-    #
-    #
+    def backdoor_write(self, rw):
+        paths = []
+        ok = 1
+        self.get_full_hdl_path(paths,rw.bd_kind)
+
+        for mem_idx in range(len(rw.value)):
+            idx = str(rw.offset + mem_idx)
+            for i in range(len(paths)):
+                hdl_concat = paths[i]  # uvm_hdl_path_concat
+                for j in range(len(hdl_concat.slices)):
+                    uvm_info("RegModel", sv.sformatf("backdoor_write to %s ", hdl_concat.slices[j].path),UVM_DEBUG)
+
+                    if (hdl_concat.slices[j].offset < 0):
+                        ok &= uvm_hdl.uvm_hdl_deposit(hdl_concat.slices[j].path
+                                + "[" + idx + "]", rw.value[mem_idx])
+                        continue
+
+                    _slice = 0
+                    _slice = rw.value[mem_idx] >> hdl_concat.slices[j].offset
+                    _slice &= (1 << hdl_concat.slices[j].size)-1
+                    ok &= uvm_hdl.uvm_hdl_deposit(hdl_concat.slices[j].path +
+                            "[" + idx + "]", _slice)
+        rw.status = UVM_NOT_OK
+        if ok:
+            rw.status = UVM_IS_OK
+        #endtask
+
+
     #   // Function: backdoor_read_func
     #   //
     #   // User-defined backdoor read access
@@ -1308,8 +1450,54 @@ class UVMMem(UVMObject):
     #   // for this memory type.
     #   //
     #   extern virtual function uvm_status_e backdoor_read_func(uvm_reg_item rw)
-    #
-    #
+    def backdoor_read_func(self, rw):
+
+        paths = []  # uvm_hdl_path_concat [$]
+        val = 0x0
+        ok = 1
+
+        self.get_full_hdl_path(paths,rw.bd_kind)
+
+        # foreach (rw.value[mem_idx]):
+        for mem_idx in range(len(rw.value)):
+            idx = str(rw.offset + mem_idx)
+            for i in range(len(paths)):
+                hdl_concat = paths[i]  # uvm_hdl_path_concat
+                val = 0
+                for j in range(len(hdl_concat.slices)):
+                    hdl_path = hdl_concat.slices[j].path + "[" + idx + "]"
+                    uvm_info("RegModel", "backdoor_read from " + hdl_path, UVM_DEBUG)
+
+                    if hdl_concat.slices[j].offset < 0:
+                        ok &= uvm_hdl.uvm_hdl_read(hdl_path, val)
+                        continue
+
+                    _slice = 0
+                    k = hdl_concat.slices[j].offset
+                    ok &= uvm_hdl.uvm_hdl_read(hdl_path, _slice)
+                    for _ in range(hdl_concat.slices[j].size):
+                        val[k] = _slice[0]
+                        k += 1
+                        _slice >>= 1
+
+                val &= (1 << self.m_n_bits)-1
+
+                if i == 0:
+                    rw.value[mem_idx] = val
+
+                if val != rw.value[mem_idx]:
+                    uvm_error("RegModel", sv.sformatf(ERR_MEM_BD_READ,
+                       self.get_full_name(), rw.value[mem_idx], uvm_hdl_concat2string(paths[0]),
+                       val, uvm_hdl_concat2string(paths[i])));
+                    return UVM_NOT_OK
+
+        rw.status = UVM_NOT_OK
+        if ok:
+            rw.status = UVM_IS_OK
+        return rw.status
+        #endfunction
+
+
 
     #   //-----------------
     #   // Group: Callbacks
@@ -1852,103 +2040,8 @@ class UVMMem(UVMObject):
 #// ACCESS
 #//-------
 #
-#// poke
-#
-#task uvm_mem::poke(output uvm_status_e      status,
-#                   input  uvm_reg_addr_t    offset,
-#                   input  uvm_reg_data_t    value,
-#                   input  string            kind = "",
-#                   input  uvm_sequence_base parent = None,
-#                   input  uvm_object        extension = None,
-#                   input  string            fname = "",
-#                   input  int               lineno = 0)
-#   uvm_reg_item rw
-#   uvm_reg_backdoor bkdr = get_backdoor()
-#
-#   m_fname = fname
-#   m_lineno = lineno
-#
-#   if (bkdr is None && !has_hdl_path(kind)):
-#      `uvm_error("RegModel", {"No backdoor access available in memory '",
-#                             get_full_name(),"'"})
-#      status = UVM_NOT_OK
-#      return
-#   end
-#
-#   // create an abstract transaction for this operation
-#   rw = uvm_reg_item::type_id::create("mem_poke_item",,get_full_name())
-#   rw.element      = this
-#   rw.path         = UVM_BACKDOOR
-#   rw.element_kind = UVM_MEM
-#   rw.kind         = UVM_WRITE
-#   rw.offset       = offset
-#   rw.value[0]     = value & ((1 << m_n_bits)-1)
-#   rw.bd_kind      = kind
-#   rw.parent       = parent
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   if (bkdr != None)
-#     bkdr.write(rw)
-#   else
-#     backdoor_write(rw)
-#
-#   status = rw.status
-#
-#   `uvm_info("RegModel", $sformatf("Poked memory '%s[%0d]' with value 'h%h",
-#                              get_full_name(), offset, value),UVM_HIGH)
-#
-#endtask: poke
 #
 #
-#// peek
-#
-#task uvm_mem::peek(output uvm_status_e      status,
-#                   input  uvm_reg_addr_t    offset,
-#                   output uvm_reg_data_t    value,
-#                   input  string            kind = "",
-#                   input  uvm_sequence_base parent = None,
-#                   input  uvm_object        extension = None,
-#                   input  string            fname = "",
-#                   input  int               lineno = 0)
-#   uvm_reg_backdoor bkdr = get_backdoor()
-#   uvm_reg_item rw
-#
-#   m_fname = fname
-#   m_lineno = lineno
-#
-#   if (bkdr is None && !has_hdl_path(kind)):
-#      `uvm_error("RegModel", {"No backdoor access available in memory '",
-#                 get_full_name(),"'"})
-#      status = UVM_NOT_OK
-#      return
-#   end
-#
-#   // create an abstract transaction for this operation
-#   rw = uvm_reg_item::type_id::create("mem_peek_item",,get_full_name())
-#   rw.element      = this
-#   rw.path         = UVM_BACKDOOR
-#   rw.element_kind = UVM_MEM
-#   rw.kind         = UVM_READ
-#   rw.offset       = offset
-#   rw.bd_kind      = kind
-#   rw.parent       = parent
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   if (bkdr != None)
-#     bkdr.read(rw)
-#   else
-#     backdoor_read(rw)
-#
-#   status = rw.status
-#   value  = rw.value[0]
-#
-#   `uvm_info("RegModel", $sformatf("Peeked memory '%s[%0d]' has value 'h%h",
-#                         get_full_name(), offset, value),UVM_HIGH)
-#endtask: peek
 #
 #
 #//-----------------
@@ -2002,103 +2095,6 @@ class UVMMem(UVMObject):
 #// Group- Backdoor
 #//----------------
 #
-#
-#// backdoor_read_func
-#
-#function uvm_status_e uvm_mem::backdoor_read_func(uvm_reg_item rw)
-#
-#  uvm_hdl_path_concat paths[$]
-#  uvm_hdl_data_t val
-#  bit ok=1
-#
-#  get_full_hdl_path(paths,rw.bd_kind)
-#
-#  foreach (rw.value[mem_idx]):
-#     string idx
-#     idx.itoa(rw.offset + mem_idx)
-#     foreach (paths[i]):
-#        uvm_hdl_path_concat hdl_concat = paths[i]
-#        val = 0
-#        foreach (hdl_concat.slices[j]):
-#           string hdl_path = {hdl_concat.slices[j].path, "[", idx, "]"}
-#
-#           `uvm_info("RegModel", {"backdoor_read from ",hdl_path},UVM_DEBUG)
-#
-#           if (hdl_concat.slices[j].offset < 0):
-#              ok &= uvm_hdl_read(hdl_path, val)
-#              continue
-#           end
-#           begin
-#              uvm_reg_data_t slice
-#              int k = hdl_concat.slices[j].offset
-#              ok &= uvm_hdl_read(hdl_path, slice)
-#              repeat (hdl_concat.slices[j].size):
-#                 val[k++] = slice[0]
-#                 slice >>= 1
-#              end
-#           end
-#        end
-#
-#        val &= (1 << m_n_bits)-1
-#
-#        if (i == 0)
-#           rw.value[mem_idx] = val
-#
-#        if (val != rw.value[mem_idx]):
-#           `uvm_error("RegModel", $sformatf("Backdoor read of register %s with multiple HDL copies: values are not the same: %0h at path '%s', and %0h at path '%s'. Returning first value.",
-#               get_full_name(), rw.value[mem_idx], uvm_hdl_concat2string(paths[0]),
-#               val, uvm_hdl_concat2string(paths[i])));
-#           return UVM_NOT_OK
-#         end
-#      end
-#  end
-#
-#  rw.status = (ok) ? UVM_IS_OK : UVM_NOT_OK
-#
-#  return rw.status
-#endfunction
-#
-#
-#// backdoor_read
-#
-#task uvm_mem::backdoor_read(uvm_reg_item rw)
-#  rw.status = backdoor_read_func(rw)
-#endtask
-#
-#
-#// backdoor_write
-#
-#task uvm_mem::backdoor_write(uvm_reg_item rw)
-#
-#  uvm_hdl_path_concat paths[$]
-#  bit ok=1
-#
-#
-#  get_full_hdl_path(paths,rw.bd_kind)
-#
-#  foreach (rw.value[mem_idx]):
-#     string idx
-#     idx.itoa(rw.offset + mem_idx)
-#     foreach (paths[i]):
-#       uvm_hdl_path_concat hdl_concat = paths[i]
-#       foreach (hdl_concat.slices[j]):
-#          `uvm_info("RegModel", $sformatf("backdoor_write to %s ",hdl_concat.slices[j].path),UVM_DEBUG)
-#
-#          if (hdl_concat.slices[j].offset < 0):
-#             ok &= uvm_hdl_deposit({hdl_concat.slices[j].path,"[", idx, "]"},rw.value[mem_idx])
-#             continue
-#          end
-#          begin
-#            uvm_reg_data_t slice
-#            slice = rw.value[mem_idx] >> hdl_concat.slices[j].offset
-#            slice &= (1 << hdl_concat.slices[j].size)-1
-#            ok &= uvm_hdl_deposit({hdl_concat.slices[j].path, "[", idx, "]"}, slice)
-#          end
-#       end
-#     end
-#  end
-#  rw.status = (ok ? UVM_IS_OK : UVM_NOT_OK)
-#endtask
 #
 #
 #
@@ -2176,46 +2172,6 @@ class UVMMem(UVMObject):
 #  while (m_hdl_paths_pool.next(kind))
 #endfunction
 #
-#// get_full_hdl_path
-#
-#function void uvm_mem::get_full_hdl_path(ref uvm_hdl_path_concat paths[$],
-#                                         input string kind = "",
-#                                         input string separator = ".")
-#
-#   if (kind == "")
-#      kind = m_parent.get_default_hdl_path()
-#
-#   if (!has_hdl_path(kind)):
-#      `uvm_error("RegModel",
-#          {"Memory does not have hdl path defined for abstraction '",kind,"'"})
-#      return
-#   end
-#
-#   begin
-#      uvm_queue #(uvm_hdl_path_concat) hdl_paths = m_hdl_paths_pool.get(kind)
-#      string parent_paths[$]
-#
-#      m_parent.get_full_hdl_path(parent_paths, kind, separator)
-#
-#      for (int i=0; i<hdl_paths.size();i++):
-#         uvm_hdl_path_concat hdl_concat = hdl_paths.get(i)
-#
-#         foreach (parent_paths[j])  begin
-#            uvm_hdl_path_concat t = new
-#
-#            foreach (hdl_concat.slices[k]):
-#               if (hdl_concat.slices[k].path == "")
-#                  t.add_path(parent_paths[j])
-#               else
-#                  t.add_path({ parent_paths[j], separator, hdl_concat.slices[k].path },
-#                             hdl_concat.slices[k].offset,
-#                             hdl_concat.slices[k].size)
-#            end
-#            paths.push_back(t)
-#         end
-#      end
-#   end
-#endfunction
 #
 #
 #// set_parent
