@@ -27,9 +27,10 @@ from cocotb.triggers import Timer
 
 from .uvm_mem_access_seq import UVMMemAccessSeq
 from ..uvm_reg_model import *
+from ..uvm_reg_map import UVMRegMap
 from ..uvm_reg_sequence import UVMRegSequence
-from ...macros import uvm_object_utils, uvm_error, uvm_info
-from ...base.uvm_resource_db import UVMResourceDb
+from ...macros import uvm_object_utils, uvm_error, uvm_info, uvm_warning
+from ...base import UVMResourceDb, UVM_LOW
 
 #//------------------------------------------------------------------------------
 #//
@@ -144,29 +145,37 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 + "' ..."), UVM_LOW)
 
             v = rg.get()
+            status = []
             yield rg.write(status, ~v, UVM_FRONTDOOR, maps[j], self)
+            status = status[0]
 
             if status != UVM_IS_OK:
-               uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
+                uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
                    + "' when writing '" + rg.get_full_name() +
                    + "' through map '" + maps[j].get_full_name() + "'"))
             yield Timer(1, "NS")
 
+            status = []
             yield rg.mirror(status, UVM_CHECK, UVM_BACKDOOR, UVMRegMap.backdoor(), self)
+            status = status[0]
             if status != UVM_IS_OK:
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
                                     + "' when reading reset value of register '"
                                     + rg.get_full_name() +  "' through backdoor"))
 
+            status = []
             yield rg.write(status, v, UVM_BACKDOOR, maps[j], self)
+            status = status[0]
             if status != UVM_IS_OK:
-               uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
+                uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
                    + "' when writing '" + rg.get_full_name()
                    + "' through backdoor"))
 
+            status = []
             yield rg.mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[j], self)
+            status = status[0]
             if status != UVM_IS_OK:
-               uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
+                uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
                    + "' when reading reset value of register '"
                    + rg.get_full_name() + "' through map '"
                    + maps[j].get_full_name() + "'"))
@@ -240,6 +249,7 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   //
     #   // Test all of the registers in a block
     #   //
+    @cocotb.coroutine
     def do_block(self, blk):
         #      uvm_reg regs[$]
         regs = []
@@ -262,8 +272,8 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
                        + "' does not have a backdoor mechanism available")
                 continue
 
-            reg_seq.rg = regs[i]
-            yield reg_seq.start(None,self)
+            self.reg_seq.rg = regs[i]
+            yield self.reg_seq.start(None,self)
 
         blks = []  # uvm_reg_block[$]
         blk.get_blocks(blks)

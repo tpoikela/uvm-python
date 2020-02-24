@@ -24,10 +24,12 @@
 import cocotb
 from cocotb.triggers import Timer
 
-from uvm.reg.uvm_reg_sequence import UVMRegSequence
-from uvm.reg.uvm_reg_model import (UVM_NO_HIER, UVM_NO_CHECK)
-from uvm.macros import *
-from uvm.base.uvm_resource_db import UVMResourceDb
+from ..uvm_reg_sequence import UVMRegSequence
+from ..uvm_reg_model import (UVM_NO_HIER, UVM_NO_CHECK,
+        UVM_FRONTDOOR, UVM_IS_OK)
+from ...macros import uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH
+from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH
+
 
 
 #//----------------------------------------------------------------------------
@@ -90,9 +92,9 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
         # Registers with some attributes are not to be tested
         if (UVMResourceDb.get_by_name("REG::" + rg.get_full_name(),
-            "NO_REG_TESTS", 0) is not None  or
+            "NO_REG_TESTS", 0) is not None or
                   UVMResourceDb.get_by_name("REG::" + rg.get_full_name(),
-                      "NO_REG_BIT_BASH_TEST", 0) is not None ):
+                      "NO_REG_BIT_BASH_TEST", 0) is not None):
             return
 
         n_bits = self.rg.get_n_bytes() * 8
@@ -148,53 +150,65 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 # Cannot test unpredictable bit behavior
                 if dc_mask[k] == 1:
                     continue
-                yield self.bash_kth_bit(rg, k, mode[k], maps[j], dc_mask)
+                dc_mask_int = 0x0
+                for i in range(len(dc_mask)):
+                    dc_mask_int |= (dc_mask[i] << i)
+
+                yield self.bash_kth_bit(rg, k, mode[k], maps[j], dc_mask_int)
 
     #   endtask: body
 
 
     @cocotb.coroutine
-    def bash_kth_bit(self, rg, k, mode, map, dc_mask):
+    def bash_kth_bit(self, rg, k, mode, _map, dc_mask):
         status = 0
         val = 0x0
         exp = 0x0
         v = 0x0
         bit_val = False
-
-        uvm_info("UVMRegBitBashSeq", sv.sformatf("...Bashing %s bit #%0d", mode, k),UVM_HIGH)
+        uvm_info("UVMRegBitBashSeq", sv.sformatf("...Bashing %s bit #%0d", mode, k), UVM_HIGH)
 
         for _ in range(2):
             val = rg.get()
             v   = val
             exp = val
-            val[k] = ~val[k]
-            bit_val = val[k]
+            mask = 1 << k
+            #val[k] = ~val[k]
+            #val = (val & ~mask) | (~val & mask)
+            val ^= mask
+            bit_val = (val >> k) & 0x1
 
-            yield rg.write(status, val, UVM_FRONTDOOR, map, self)
+            status = []
+            yield rg.write(status, val, UVM_FRONTDOOR, _map, self)
+            status = status[0]
             if status != UVM_IS_OK:
                 uvm_error("UVMRegBitBashSeq",
                         sv.sformatf("Status was %s when writing to register \"%s\" through map \"%s\".",
-                            status.name(), rg.get_full_name(), map.get_full_name()))
-            end
+                            status.name(), rg.get_full_name(), _map.get_full_name()))
 
             exp = rg.get() & ~dc_mask
-            yield rg.read(status, val, UVM_FRONTDOOR, map, self)
+            status = []
+            out_val = []
+            yield rg.read(status, out_val, UVM_FRONTDOOR, _map, self)
+            status = status[0]
+            val = out_val[0]
             if status != UVM_IS_OK:
                uvm_error("UVMRegBitBashSeq",
                        sv.sformatf("Status was %s when reading register \"%s\" through map \"%s\".",
-                           status.name(), rg.get_full_name(), map.get_full_name()))
+                           status.name(), rg.get_full_name(), _map.get_full_name()))
 
             val &= ~dc_mask
             if val != exp:
-                uvm_error("UVMRegBitBashSeq",
-                        sv.sformatf("Writing a %b in bit #%0d of register \"%s\" with initial value 'h%h yielded 'h%h instead of 'h%h",
-                            bit_val, k, rg.get_full_name(), v, val, exp))
+                uvm_error("UVMRegBitBashSeq", sv.sformatf(
+                    ("Writing a %b in bit #%0d of register \"%s\" with initial value "
+                    + "'h%h yielded 'h%h instead of 'h%h"),
+                    bit_val, k, rg.get_full_name(), v, val, exp))
 
     #endclass: UVMRegSingleBitBashSeq
 
 uvm_object_utils(UVMRegSingleBitBashSeq)
 
-#
+
 #//------------------------------------------------------------------------------
 #// Class: UVMRegBitBashSeq
 #//
@@ -241,7 +255,7 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             uvm_error("UVMRegBitBashSeq", "No register model specified to run sequence on")
             return
 
-        uvm_report_info("STARTING_SEQ","\n\nStarting " + self.get_name() + " sequence...\n",UVM_LOW)
+        uvm_info("STARTING_SEQ","\n\nStarting " + self.get_name() + " sequence...\n",UVM_LOW)
         self.reg_seq = UVMRegSingleBitBashSeq.type_id.create("reg_single_bit_bash_seq")
 
         yield self.reset_blk(self.model)

@@ -26,8 +26,8 @@ from cocotb.triggers import Timer
 
 from ..uvm_reg_sequence import UVMRegSequence
 from ..uvm_reg_model import *
-from ...macros import *
-from ...base import sv
+from ...macros import uvm_error, uvm_object_utils, uvm_info, uvm_warning
+from ...base import sv, UVM_LOW
 
 
 #//
@@ -77,7 +77,7 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         mode = ""
         maps = []  # uvm_reg_map[$]
         n_bits = 0
-        
+
         if mem is None:
             uvm_error("UVMMemAccessSeq", "No register specified to run sequence on")
             return
@@ -93,29 +93,30 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             return
 
         n_bits = mem.get_n_bits()
-        
+
         # Memories may be accessible from multiple physical interfaces (maps)
         mem.get_maps(maps)
 
+        print("Walking mem with each N maps: " + str(len(maps)))
         # Walk the memory via each map
         for j in range(len(maps)):
             status = 0
             val = 0
             exp = 0
             v = 0
-        
+
             uvm_info("UVMMemAccessSeq", "Verifying access of memory '"
                 + mem.get_full_name() + "' in map '" + maps[j].get_full_name()
                 + "' ...", UVM_LOW)
             mode = mem.get_access(maps[j])
-        
+
             # The access process is, for address k:
             # - Write random value via front door
             # - Read via backdoor and expect same random value if RW
             # - Write complement of random value via back door
             # - Read via front door and expect inverted random value
-            for k in range(len(mem)):
-                val = sv.random() & (1 << n_bits) -1  # cast to 'uvm_reg_data_t' removed
+            for k in range(mem.get_size()):
+                val = sv.random() & (1 << n_bits) - 1  # cast to 'uvm_reg_data_t' removed
                 if n_bits > 32:
                     val = (val << 32) | sv.random()
                 if mode == "RO":
@@ -128,49 +129,55 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                            status.name(), mem.get_full_name(), k))
                 else:
                     exp = val
-        
+
                 status = []
                 yield mem.write(status, k, val, UVM_FRONTDOOR, maps[j], self)
                 status = status[0]
-                if (status != UVM_IS_OK):
+                if status != UVM_IS_OK:
                     uvm_error("UVMMemAccessSeq", sv.sformatf(
-                        "Status was %s when writing \"%s[%0d]\" through map \"%s\".",
+                        "Status was %s when writing '%s[%0d]' through map '%s'.",
                         status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
                 yield Timer(1, "NS")
-                val = 0
+
+                val = []
                 status = []
-                yield mem.peek(status, k, val)
+                #yield mem.peek(status, k, val)
+                mem.peek(status, k, val)
                 status = status[0]
-                if (status != UVM_IS_OK):
+                if status != UVM_IS_OK:
                     uvm_error("UVMMemAccessSeq", sv.sformatf(
-                        "Status was %s when reading \"%s[%0d]\" through backdoor.",
-                        status.name(), mem.get_full_name(), k))
+                        "Status was %s when reading '%s[%0d]' through backdoor.",
+                        str(status), mem.get_full_name(), k))
 
                 else:
+                    val = val[0]
                     if val != exp:
                        uvm_error("UVMMemAccessSeq", sv.sformatf(
-                           "Backdoor \"%s[%0d]\" read back as 'h%h instead of 'h%h.",
+                           "Backdoor '%s[%0d]' read back as 'h%h instead of 'h%h.",
                            mem.get_full_name(), k, val, exp))
-        
+
                 exp = ~exp & ((1 << n_bits)-1)
                 status = []
-                yield mem.poke(status, k, exp)
+                #yield mem.poke(status, k, exp)
+                mem.poke(status, k, exp)
                 status = status[0]
-                if (status != UVM_IS_OK):
+                if status != UVM_IS_OK:
                     uvm_error("UVMMemAccessSeq", sv.sformatf(
-                        "Status was %s when writing \"%s[%0d-1]\" through backdoor.",
-                        status.name(), mem.get_full_name(), k))
-        
+                        "Status was %s when writing '%s[%0d-1]' through backdoor.",
+                        str(status), mem.get_full_name(), k))
+
                 status = []
+                val = []
                 yield mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
                 status = status[0]
+                val = val[0]
                 if status != UVM_IS_OK:
                     uvm_error("UVMMemAccessSeq", sv.sformatf(
                         "Status was %s when reading \"%s[%0d]\" through map \"%s\".",
                         status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
                 else:
-                    if (mode == "WO"):
-                        if (val !=  0):
+                    if mode == "WO":
+                        if val != 0:
                            uvm_error("UVMMemAccessSeq", sv.sformatf(
                                "Front door \"%s[%0d]\" read back as 'h%h instead of 'h%h.",
                                mem.get_full_name(), k, val, 0))
@@ -221,11 +228,12 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     @cocotb.coroutine
     def body(self):
         model = self.model
-        if (model is None):
+        if model is None:
             uvm_error("UVMMemAccessSeq", "No register model specified to run sequence on")
             return
 
-        uvm_report_info("STARTING_SEQ",{"\n\nStarting ",get_name()," sequence...\n"},UVM_LOW)
+        uvm_info("STARTING_SEQ", "\n\nStarting " + self.get_name()
+                + " sequence...\n", UVM_LOW)
 
         self.mem_seq = UVMMemSingleAccessSeq.type_id.create("single_mem_access_seq")
 
@@ -241,13 +249,15 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   //
     @cocotb.coroutine
     def do_block(self, blk):
-        mems = []  # uvm_mem[$]
 
+        print("UUU do_block  for MemAccessSeq: " + blk.get_full_name())
         if reg_test_off(blk, ["NO_REG_TESTS", "NO_MEM_TESTS", "NO_MEM_ACCESS_TEST"]):
             return
 
         # Iterate over all memories, checking accesses
+        mems = []  # uvm_mem[$]
         blk.get_memories(mems, UVM_NO_HIER)
+        print("UUU found N mems " + str(len(mems)))
         for i in range(len(mems)):
             # Registers with some attributes are not to be tested
             if reg_test_off(mems[i], ["NO_REG_TESTS", "NO_MEM_TESTS",
@@ -263,6 +273,7 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 continue
 
             self.mem_seq.mem = mems[i]
+            print("UUU will run mem_seq now")
             yield self.mem_seq.start(None, self)
 
 

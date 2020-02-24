@@ -114,7 +114,7 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 "NO_MEM_ACCESS_TEST", 0) is None):
             seq = UVMMemAccessSeq.type_id.create("mem_access_seq")
             seq.model = model
-            yield seq.start(None,self)
+            yield seq.start(None, self)
             uvm_info("FINISH_SEQ", "Finished " + seq.get_name() + " sequence.", UVM_LOW)
 
 
