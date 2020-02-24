@@ -35,6 +35,11 @@ from .uvm_reg_field import UVMRegField
 from .uvm_reg_model import *
 from .uvm_reg_item import *
 from .uvm_reg_cbs import UVMRegFieldCbIter, UVMRegCbIter
+from .uvm_reg_map import UVMRegMap
+
+ERR_BD_READ = ("Backdoor read of register %s with multiple HDL copies: "
+    + "values are not the same: %0h at path '%s', and %0h at path '%s'. "
+    + "Returning first value.")
 
 #-----------------------------------------------------------------
 # CLASS: uvm_reg
@@ -1202,7 +1207,9 @@ class UVMReg(UVMObject):
         if self.Xcheck_accessX(rw, map_info, "write()") is False:
             yield uvm_empty_delay()
             return
-        map_info = map_info[0]
+        # May be not be set for BACKDOOR, so check len
+        if len(map_info) > 0:
+            map_info = map_info[0]
         self.m_write_in_progress = True
 
         rw.value[0] &= ((1 << self.m_n_bits)-1)
@@ -1265,9 +1272,9 @@ class UVMReg(UVMObject):
                 field_val = 0
                 lsb = self.m_fields[i].get_lsb_pos()
                 sz  = self.m_fields[i].get_n_bits()
-                field_val = self.m_fields[i].XpredictX((rw.value[0] >> lsb) & ((1<<sz)-1),
-                                                  (value >> lsb) & ((1<<sz)-1),
-                                                  rw.local_map)
+                field_val = self.m_fields[i].XpredictX((rw.value[0] >> lsb) & ((1 << sz)-1),
+                        (value >> lsb) & ((1 << sz)-1),
+                        rw.local_map)
                 final_val |= field_val << lsb
             rw.kind = UVM_WRITE
             rw.value[0] = final_val
@@ -1375,7 +1382,9 @@ class UVMReg(UVMObject):
         if not(self.Xcheck_accessX(rw,map_info,"read()")):
             yield uvm_empty_delay()
             return
-        map_info = map_info[0]
+        # May be not be set for BACKDOOR, so check len
+        if len(map_info) > 0:
+            map_info = map_info[0]
 
         self.m_read_in_progress = 1
         rw.status = UVM_IS_OK
@@ -1704,7 +1713,7 @@ class UVMReg(UVMObject):
     def add_hdl_path_slice(self, name, offset, size, first=0, kind="RTL"):
         if not (self.m_hdl_paths_pool.exists(kind)):
             self.m_hdl_paths_pool[kind] = UVMQueue()
-        paths = self.m_hdl_paths_pool.get(kind) # uvm_queue #(uvm_hdl_path_concat)
+        paths = self.m_hdl_paths_pool.get(kind)  # uvm_queue #(uvm_hdl_path_concat)
         concat = None
 
         if first or paths.size() == 0:
@@ -1724,6 +1733,15 @@ class UVMReg(UVMObject):
     #   // uses the default design abstraction specified for the parent block.
     #   //
     #   extern function bit has_hdl_path (string kind = "")
+    def has_hdl_path(self, kind=""):
+        if (kind == ""):
+            if (self.m_regfile_parent is not None):
+                kind = self.m_regfile_parent.get_default_hdl_path()
+            else:
+                kind = self.m_parent.get_default_hdl_path()
+
+            return self.m_hdl_paths_pool.exists(kind)
+        #endfunction
 
     #
     #   // Function:  get_hdl_path
@@ -1747,8 +1765,8 @@ class UVMReg(UVMObject):
     #   // Get design abstractions for which HDL paths have been defined
     #   //
     #   extern function void get_hdl_path_kinds (ref string kinds[$])
-    #
-    #
+
+
     #   // Function:  get_full_hdl_path
     #   //
     #   // Get the full hierarchical HDL path(s)
@@ -1766,8 +1784,45 @@ class UVMReg(UVMObject):
     #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
     #                                           input string kind = "",
     #                                           input string separator = ".")
-    #
-    #
+    def get_full_hdl_path(self, paths, kind="", separator="."):
+
+        if kind == "":
+            if (self.m_regfile_parent is not None):
+                kind = self.m_regfile_parent.get_default_hdl_path()
+            else:
+                kind = self.m_parent.get_default_hdl_path()
+
+
+        if not self.has_hdl_path(kind):
+            uvm_error("RegModel", "Register " + self.get_full_name()
+                    + " does not have hdl path defined for abstraction '" + kind + "'")
+            return
+
+        hdl_paths = self.m_hdl_paths_pool.get(kind)  # uvm_queue #(uvm_hdl_path_concat)
+        parent_paths = []
+
+        if self.m_regfile_parent is not None:
+            self.m_regfile_parent.get_full_hdl_path(parent_paths, kind, separator)
+        else:
+            self.m_parent.get_full_hdl_path(parent_paths, kind, separator)
+
+        for i in range(len(hdl_paths)):
+            hdl_concat = hdl_paths.get(i)
+
+            for j in range(len(parent_paths)):
+                t = uvm_hdl_path_concat()
+
+                for k in range(len(hdl_concat.slices)):
+                    if (hdl_concat.slices[k].path == ""):
+                        t.add_path(parent_paths[j])
+                    else:
+                        t.add_path(parent_paths[j] + separator + hdl_concat.slices[k].path,
+                                  hdl_concat.slices[k].offset,
+                                  hdl_concat.slices[k].size)
+                paths.append(t)
+        #endfunction
+
+
     #   // Function: backdoor_read
     #   //
     #   // User-define backdoor read access
@@ -1777,8 +1832,9 @@ class UVMReg(UVMObject):
     #   // By default calls <uvm_reg::backdoor_read_func()>.
     #   //
     #   extern virtual task backdoor_read(uvm_reg_item rw)
-    #
-    #
+    def backdoor_read(self, rw):
+        rw.status = self.backdoor_read_func(rw)
+
     #   // Function: backdoor_write
     #   //
     #   // User-defined backdoor read access
@@ -1787,8 +1843,32 @@ class UVMReg(UVMObject):
     #   // for this register type.
     #   //
     #   extern virtual task backdoor_write(uvm_reg_item rw)
-    #
-    #
+    # @cocotb.coroutine
+    def backdoor_write(self, rw):
+        paths = []  # uvm_hdl_path_concat [$]
+        ok = 1
+        self.get_full_hdl_path(paths,rw.bd_kind)
+        for i in range(len(paths)):
+            hdl_concat = paths[i]  # uvm_hdl_path_concat
+            for j in range(len(hdl_concat.slices)):
+                uvm_info("RegMem", "backdoor_write to "
+                        + hdl_concat.slices[j].path, UVM_DEBUG)
+
+                if hdl_concat.slices[j].offset < 0:
+                    ok &= uvm_hdl_deposit(hdl_concat.slices[j].path,rw.value[0])
+                    continue
+
+                _slice = 0  # uvm_reg_data_t
+                _slice = rw.value[0] >> hdl_concat.slices[j].offset
+                _slice &= (1 << hdl_concat.slices[j].size)-1
+                ok &= uvm_hdl_deposit(hdl_concat.slices[j].path, _slice)
+
+        rw.status = UVM_NOT_OK
+        if ok:
+            rw.status = UVM_IS_OK
+        #endtask
+
+
     #   // Function: backdoor_read_func
     #   //
     #   // User-defined backdoor read access
@@ -1797,8 +1877,53 @@ class UVMReg(UVMObject):
     #   // for this register type.
     #   //
     #   extern virtual function uvm_status_e backdoor_read_func(uvm_reg_item rw)
-    #
-    #
+    def backdoor_read_func(self, rw):
+        paths = []  # uvm_hdl_path_concat [$]
+        val = 0x0
+        ok = 1
+        self.get_full_hdl_path(paths,rw.bd_kind)
+        for i in range(len(paths)):
+            hdl_concat = paths[i]  # uvm_hdl_path_concat
+            val = 0
+            for j in range(len(hdl_concat.slices)):
+                uvm_info("RegMem", "backdoor_read from %s "
+                    + hdl_concat.slices[j].path, UVM_DEBUG)
+
+                if hdl_concat.slices[j].offset < 0:
+                    ok &= uvm_hdl_read(hdl_concat.slices[j].path, val)
+                    continue
+
+                _slice = 0
+                k = hdl_concat.slices[j].offset
+
+                ok &= uvm_hdl_read(hdl_concat.slices[j].path, _slice)
+
+                for _ in range(hdl_concat.slices[j].size):
+                    val[k] = _slice[0]
+                    k += 1
+                    _slice >>= 1
+
+            val &= (1 << self.m_n_bits)-1
+
+            if i == 0:
+                rw.value[0] = val
+
+            if val != rw.value[0]:
+                uvm_error("RegModel", sv.sformatf(ERR_BD_READ,
+                      self. get_full_name(), rw.value[0], uvm_hdl_concat2string(paths[0]),
+                      val, uvm_hdl_concat2string(paths[i])))
+                return UVM_NOT_OK
+
+            uvm_info("RegMem",
+                sv.sformatf("returned backdoor value 0x%0x",rw.value[0]),UVM_DEBUG)
+
+        rw.status = UVM_NOT_OK
+        if ok:
+            rw.status = UVM_IS_OK
+        return rw.status
+        #endfunction
+
+
     #   // Function: backdoor_watch
     #   //
     #   // User-defined DUT register change monitor
@@ -2224,18 +2349,6 @@ class UVMReg(UVMObject):
 #endfunction
 #
 #
-#// has_hdl_path
-#
-#function bit  uvm_reg::has_hdl_path(string kind = "")
-#  if (kind == ""):
-#     if (self.m_regfile_parent is not None)
-#        kind = self.m_regfile_parent.get_default_hdl_path()
-#     else
-#        kind = self.m_parent.get_default_hdl_path()
-#  end
-#
-#  return self.m_hdl_paths_pool.exists(kind)
-#endfunction
 #
 #
 #// get_hdl_path_kinds
@@ -2280,53 +2393,6 @@ class UVMReg(UVMObject):
 #endfunction
 #
 #
-#// get_full_hdl_path
-#
-#function void uvm_reg::get_full_hdl_path(ref uvm_hdl_path_concat paths[$],
-#                                         input string kind = "",
-#                                         input string separator = ".")
-#
-#   if (kind == ""):
-#      if (self.m_regfile_parent is not None)
-#         kind = self.m_regfile_parent.get_default_hdl_path()
-#      else
-#         kind = self.m_parent.get_default_hdl_path()
-#   end
-#
-#   if (!has_hdl_path(kind)):
-#      `uvm_error("RegModel",
-#         {"Register ",get_full_name()," does not have hdl path defined for abstraction '",kind,"'"})
-#      return
-#   end
-#
-#   begin
-#      uvm_queue #(uvm_hdl_path_concat) hdl_paths = self.m_hdl_paths_pool.get(kind)
-#      string parent_paths[$]
-#
-#      if (self.m_regfile_parent is not None)
-#         self.m_regfile_parent.get_full_hdl_path(parent_paths, kind, separator)
-#      else
-#         self.m_parent.get_full_hdl_path(parent_paths, kind, separator)
-#
-#      for (int i=0; i<hdl_paths.size();i++):
-#         uvm_hdl_path_concat hdl_concat = hdl_paths.get(i)
-#
-#         foreach (parent_paths[j])  begin
-#            uvm_hdl_path_concat t = new
-#
-#            foreach (hdl_concat.slices[k]):
-#               if (hdl_concat.slices[k].path == "")
-#                  t.add_path(parent_paths[j])
-#               else
-#                  t.add_path({ parent_paths[j], separator, hdl_concat.slices[k].path },
-#                             hdl_concat.slices[k].offset,
-#                             hdl_concat.slices[k].size)
-#            end
-#            paths.append(t)
-#         end
-#      end
-#   end
-#endfunction
 #
 #// get_field_by_name
 #
@@ -2396,92 +2462,10 @@ class UVMReg(UVMObject):
 #endfunction
 #
 #
-#// backdoor_write
-#
-#task  uvm_reg::backdoor_write(uvm_reg_item rw)
-#  uvm_hdl_path_concat paths[$]
-#  bit ok=1
-#  get_full_hdl_path(paths,rw.bd_kind)
-#  foreach (paths[i]):
-#     uvm_hdl_path_concat hdl_concat = paths[i]
-#     foreach (hdl_concat.slices[j]):
-#        `uvm_info("RegMem", {"backdoor_write to ",
-#                  hdl_concat.slices[j].path},UVM_DEBUG)
-#
-#        if (hdl_concat.slices[j].offset < 0):
-#           ok &= uvm_hdl_deposit(hdl_concat.slices[j].path,rw.value[0])
-#           continue
-#        end
-#        begin
-#           uvm_reg_data_t slice
-#           slice = rw.value[0] >> hdl_concat.slices[j].offset
-#           slice &= (1 << hdl_concat.slices[j].size)-1
-#           ok &= uvm_hdl_deposit(hdl_concat.slices[j].path, slice)
-#        end
-#     end
-#  end
-#  rw.status = (ok ? UVM_IS_OK : UVM_NOT_OK)
-#endtask
 #
 #
-#// backdoor_read
-#
-#task  uvm_reg::backdoor_read (uvm_reg_item rw)
-#  rw.status = backdoor_read_func(rw)
-#endtask
 #
 #
-#// backdoor_read_func
-#
-#function uvm_status_e uvm_reg::backdoor_read_func(uvm_reg_item rw)
-#  uvm_hdl_path_concat paths[$]
-#  uvm_reg_data_t val
-#  bit ok=1
-#  get_full_hdl_path(paths,rw.bd_kind)
-#  foreach (paths[i]):
-#     uvm_hdl_path_concat hdl_concat = paths[i]
-#     val = 0
-#     foreach (hdl_concat.slices[j]):
-#        `uvm_info("RegMem", {"backdoor_read from %s ",
-#               hdl_concat.slices[j].path},UVM_DEBUG)
-#
-#        if (hdl_concat.slices[j].offset < 0):
-#           ok &= uvm_hdl_read(hdl_concat.slices[j].path,val)
-#           continue
-#        end
-#        begin
-#           uvm_reg_data_t slice
-#           int k = hdl_concat.slices[j].offset
-#
-#           ok &= uvm_hdl_read(hdl_concat.slices[j].path, slice)
-#
-#           repeat (hdl_concat.slices[j].size):
-#              val[k++] = slice[0]
-#              slice >>= 1
-#           end
-#        end
-#     end
-#
-#     val &= (1 << self.m_n_bits)-1
-#
-#     if (i == 0)
-#        rw.value[0] = val
-#
-#     if (val != rw.value[0]):
-#        `uvm_error("RegModel", $sformatf("Backdoor read of register %s with multiple HDL copies: values are not the same: %0h at path '%s', and %0h at path '%s'. Returning first value.",
-#               get_full_name(),
-#               rw.value[0], uvm_hdl_concat2string(paths[0]),
-#               val, uvm_hdl_concat2string(paths[i])))
-#        return UVM_NOT_OK
-#      end
-#      `uvm_info("RegMem",
-#         $sformatf("returned backdoor value 0x%0x",rw.value[0]),UVM_DEBUG)
-#
-#  end
-#
-#  rw.status = (ok) ? UVM_IS_OK : UVM_NOT_OK
-#  return rw.status
-#endfunction
 #
 #
 #// poke
