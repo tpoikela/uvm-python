@@ -118,6 +118,13 @@ uvm_reg_cvr_rsrc_db = ResourceDbClassFactory('uvm_reg_cvr_rsrc_db',
 # Group: Enumerations
 #--------------------
 
+def enum_val_from(val, enum_names):
+    if val < len(enum_names):
+        return enum_names[val]
+    else:
+        raise Exception("Val {} out of range: {}".format(str(val),
+            str(enum_names)))
+
 
 # Enum: uvm_status_e
 #
@@ -127,13 +134,14 @@ uvm_reg_cvr_rsrc_db = ResourceDbClassFactory('uvm_reg_cvr_rsrc_db',
 # UVM_NOT_OK     - Operation completed with error
 # UVM_HAS_X      - Operation completed successfully bit had unknown bits.
 #
-#
-#   typedef enum {
 UVM_IS_OK = 0
 UVM_NOT_OK = 1
 UVM_HAS_X = 2
 UVM_STATUS_NAMES = ["UVM_IS_OK", "UVM_NOT_OK", "UVM_HAS_X"]
-#   } uvm_status_e
+
+def uvm_status_e(name):
+    return enum_val_from(name, UVM_STATUS_NAMES)
+
 
 # Enum: uvm_path_e
 #
@@ -144,13 +152,16 @@ UVM_STATUS_NAMES = ["UVM_IS_OK", "UVM_NOT_OK", "UVM_HAS_X"]
 # UVM_PREDICT      - Operation derived from observations by a bus monitor via
 #                    the <uvm_reg_predictor> class.
 # UVM_DEFAULT_PATH - Operation specified by the context
-#
-#   typedef enum {
+
 UVM_FRONTDOOR = 0
 UVM_BACKDOOR = 1
 UVM_PREDICT = 2
 UVM_DEFAULT_PATH = 3
-#   } uvm_path_e
+UVM_PATH_NAMES = ["UVM_FRONTDOOR", "UVM_BACKDOOR", "UVM_PREDICT",
+        "UVM_DEFAULT_PATH"]
+
+def uvm_path_e(name):
+    return enum_val_from(name, UVM_PATH_NAMES)
 
 # Enum: uvm_check_e
 #
