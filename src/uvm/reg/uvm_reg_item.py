@@ -171,6 +171,8 @@ class UVMRegItem(UVMSequenceItem):
         #  //
         self.map = None
 
+        self.local_map = None
+
     #  // Function: convert2string
     #  //
     #  // Returns a string showing the contents of this transaction.
