@@ -41,6 +41,10 @@ NO_RAND_SET = {"RO", "RC", "RS", "WC", "WS",
         "W1SRC", "W1CRS", "W0SRC", "W0CRS", "WSRC", "WCRS",
         "WOC", "WOS"}
 
+KNOWN_ACCESSES = ["RO", "RW", "RC", "RS", "WC", "WS", "W1C", "W1S", "W1T",
+        "W0C", "W0S", "W0T", "WRC", "WRS", "W1SRC", "W1CRS", "W0SRC", "W0CRS",
+        "WSRC", "WCRS", "WO", "WOC", "WOS", "W1", "WO1"]
+
 #-----------------------------------------------------------------
 # CLASS: uvm_reg_field
 # Field abstraction class
@@ -396,17 +400,12 @@ class UVMRegField(UVMObject):
     #   // is a built-in access policy.
     #   //
     #   extern virtual function bit is_known_access(uvm_reg_map map = null)
+    def is_known_access(self, _map=None):
+        acc = self.get_access(_map)
+        if acc in KNOWN_ACCESSES:
+            return 1
+        return 0
 
-    #function bit uvm_reg_field::is_known_access(uvm_reg_map map = null)
-    #   string acc = get_access(map)
-    #   case (acc)
-    #    "RO", "RW", "RC", "RS", "WC", "WS",
-    #      "W1C", "W1S", "W1T", "W0C", "W0S", "W0T",
-    #      "WRC", "WRS", "W1SRC", "W1CRS", "W0SRC", "W0CRS", "WSRC", "WCRS",
-    #      "WO", "WOC", "WOS", "W1", "WO1" : return 1
-    #   endcase
-    #   return 0
-    #endfunction
 
     #   //
     #   // Function: set_volatility
