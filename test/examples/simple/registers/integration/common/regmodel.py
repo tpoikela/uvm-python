@@ -145,7 +145,7 @@ class dut_regmodel(UVMRegBlock):
         self.default_map.add_reg(self.DATA, 0x24, "RW")
         for i in range(len(self.SOCKET)):
             self.default_map.add_reg(self.SOCKET[i], 0x1000 + 16 * i, "RW")
-            self.default_map.add_mem(self.RAM, 0x2000, "RW")
+        self.default_map.add_mem(self.RAM, 0x2000, "RW")
 
 
 uvm_object_utils(dut_regmodel)

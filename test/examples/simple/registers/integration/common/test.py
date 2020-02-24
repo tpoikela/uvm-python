@@ -23,21 +23,28 @@
 #//
 
 import cocotb
+from cocotb.utils import simulator
 from cocotb.clock import Clock
 from uvm import (UVMConfigDb, run_test, UVMCoreService, sv,
-    uvm_fatal, UVMUtils)
+    uvm_fatal, UVMUtils, uvm_hdl)
 from apb.apb_if import apb_if
 
 # Note: This has to be specified with PYTHONPATH
 from tb_env import tb_env
-
 
 @cocotb.test()
 def initial_begin(dut):
     cs_ = UVMCoreService.get()
     env = tb_env("env")
 
+    print(str(dir(simulator)))
+    print(str(dir(dut)))
     vif = apb_if(dut)
+    
+    uvm_hdl.set_dut(dut)
+    #root = simulator.get_root_handle()
+    #print(str(dir(root)))
+
     cocotb.fork(Clock(vif.clk, 10, "NS").start())
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
