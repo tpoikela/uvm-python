@@ -873,16 +873,11 @@ class UVMMem(UVMObject):
 
         uvm_info("RegModel", sv.sformatf("Peeked memory '%s[%0d]' has value '%s'",
             self.get_full_name(), offset, str(value)), UVM_HIGH)
-        #endtask: peek
-
-
 
 
     #   extern protected function bit Xcheck_accessX (input uvm_reg_item rw,
     #                                                 output uvm_reg_map_info map_info,
     #                                                 input string caller)
-    #
-    #
     def Xcheck_accessX(self, rw, map_info, caller):
         uvm_check_output_args([map_info])
 
@@ -988,10 +983,8 @@ class UVMMem(UVMObject):
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
-                print("BBB fs.start")
                 yield fd.start(fd.sequencer, rw.parent)
             else:
-                print("BBB local_map.do_write()")
                 yield rw.local_map.do_write(rw)
 
             if rw.status != UVM_NOT_OK:
@@ -1356,11 +1349,11 @@ class UVMMem(UVMObject):
     #   extern function void get_full_hdl_path (ref uvm_hdl_path_concat paths[$],
     #                                           input string kind = "",
     #                                           input string separator = ".")
-    def get_full_hdl_path(self, paths, kind = "", separator = "."):
-        #
-        if (kind == ""):
+    def get_full_hdl_path(self, paths, kind="", separator="."):
+
+        if kind == "":
             kind = self.m_parent.get_default_hdl_path()
-        #
+
         if self.has_hdl_path(kind) is False:
             uvm_error("RegModel",
                 "Memory does not have hdl path defined for abstraction '" + kind + "'")
@@ -1377,10 +1370,11 @@ class UVMMem(UVMObject):
                 t = uvm_hdl_path_concat()
 
                 for k in range(len(hdl_concat.slices)):
-                    if (hdl_concat.slices[k].path == ""):
+                    if hdl_concat.slices[k].path == "":
                         t.add_path(parent_paths[j])
                     else:
-                        t.add_path(parent_paths[j] + separator + hdl_concat.slices[k].path,
+                        t.add_path(parent_paths[j] + separator
+                            + hdl_concat.slices[k].path,
                                   hdl_concat.slices[k].offset,
                                   hdl_concat.slices[k].size)
                 paths.append(t)
@@ -1456,7 +1450,7 @@ class UVMMem(UVMObject):
         val = 0x0
         ok = 1
 
-        self.get_full_hdl_path(paths,rw.bd_kind)
+        self.get_full_hdl_path(paths, rw.bd_kind)
 
         # foreach (rw.value[mem_idx]):
         for mem_idx in range(len(rw.value)):
@@ -1469,16 +1463,22 @@ class UVMMem(UVMObject):
                     uvm_info("RegModel", "backdoor_read from " + hdl_path, UVM_DEBUG)
 
                     if hdl_concat.slices[j].offset < 0:
-                        ok &= uvm_hdl.uvm_hdl_read(hdl_path, val)
+                        arr = []
+                        ok &= uvm_hdl.uvm_hdl_read(hdl_path, arr)
+                        val = arr[0]
                         continue
 
                     _slice = 0
                     k = hdl_concat.slices[j].offset
                     ok &= uvm_hdl.uvm_hdl_read(hdl_path, _slice)
-                    for _ in range(hdl_concat.slices[j].size):
-                        val[k] = _slice[0]
+
+                    # TODO Loops all bits one by one
+                    for n in range(hdl_concat.slices[j].size):
+                        slice_n_bit = (_slice >> n) & 0x1
+                        # Need to set slice_n_bit in pos k
+                        val |= (slice_n_bit << k) & (1 << k)
                         k += 1
-                        _slice >>= 1
+                        # _slice >>= 1
 
                 val &= (1 << self.m_n_bits)-1
 
@@ -1488,7 +1488,7 @@ class UVMMem(UVMObject):
                 if val != rw.value[mem_idx]:
                     uvm_error("RegModel", sv.sformatf(ERR_MEM_BD_READ,
                        self.get_full_name(), rw.value[mem_idx], uvm_hdl_concat2string(paths[0]),
-                       val, uvm_hdl_concat2string(paths[i])));
+                       val, uvm_hdl_concat2string(paths[i])))
                     return UVM_NOT_OK
 
         rw.status = UVM_NOT_OK
