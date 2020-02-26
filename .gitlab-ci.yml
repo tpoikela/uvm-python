@@ -48,20 +48,19 @@ test:
     # - pip install tox flake8  # you can also use tox
     # - tox -e py36,flake8
 
-#run:
+#coverage:
 #  script:
-#    - python setup.py bdist_wheel
-#    # an alternative approach is to install and run:
-#    - pip install dist/*
-#    # run the command here
+#    - pip install coverage coveralls
+#    - make cov-all
+#    - coveralls
 #  artifacts:
 #    paths:
-#      - dist/*.whl
+#      - htmlcov/
 
-#pages:
+#docs:
 #  script:
 #    - pip install sphinx sphinx-rtd-theme
-#    - cd doc ; make html
+#    - cd docs ; make html
 #    - mv build/html/ ../public/
 #  artifacts:
 #    paths:
