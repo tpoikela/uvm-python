@@ -46,7 +46,7 @@ ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
 INTEGRATED=$(WPWD)/../../../../integrated
 COMMON=$(WPWD)/../common
-UVM_PYTHON ?= $(WPWD)/../../../../../src
+UVM_PYTHON ?= $(WPWD)/../../../../../../src
 
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:$(INTEGRATED)
 PYTHONPATH := $(COMMON):$(PYTHONPATH)
@@ -56,7 +56,7 @@ else
 WPWD=$(shell pwd)
 INTEGRATED=$(WPWD)/../../../../integrated
 COMMON=$(WPWD)/../common
-UVM_PYTHON ?= $(WPWD)/../../../../../src
+UVM_PYTHON ?= $(WPWD)/../../../../../../src
 
 PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:$(INTEGRATED)
 PYTHONPATH := $(COMMON):$(PYTHONPATH)
@@ -79,12 +79,9 @@ ifeq ($(VCD), 1)
 endif
 
 UVM_SEQUENCE ?= UVMRegMemBuiltInSeq
-#PLUSARGS=+UVM_TESTNAME=ubus_example_base_test +UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_HIGH
-PLUSARGS += +UVM_VERBOSITY=UVM_DEBUG
-PLUSARGS += +UVM_CONFIG_DB_TRACE=1 +UVM_DUMP_CMDLINE_ARGS
-#PLUSARGS += +UVM_REG_SEQ=UVMRegHWResetSeq
+PLUSARGS += +UVM_VERBOSITY=UVM_LOW
+#PLUSARGS += +UVM_CONFIG_DB_TRACE=1 +UVM_DUMP_CMDLINE_ARGS
 PLUSARGS += +UVM_SEQUENCE=$(UVM_SEQUENCE)
-#PLUSARGS += +UVM_REG_SEQ=user_test_seq
 ifneq ($(UVM_TEST),)
     PLUSARGS += +UVM_TESTNAME=$(UVM_TEST) +UVM_RESOURCE_DB_TRACE
 endif
