@@ -24,6 +24,7 @@ htmlcov/
 .coveralls.yml
 test-cocotb.xml
 test-results.xml
+.cocotb-results
 
 .eggs
 *egg-info*
