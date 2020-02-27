@@ -1339,11 +1339,10 @@ class UVMRegMap(UVMObject):
         n_bits_init = 0
         accesses = []  # uvm_reg_bus_op[$]
 
-        print("do_bus_read Given rw was " + rw.convert2string())
+        # print("do_bus_read Given rw was " + rw.convert2string())
         [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits, lsb, skip)
-        #addrs = map_info.addr
+        # Need a copy as this will be modified later
         addrs = map_info.addr.copy()
-        #size = n_bits
 
         # if a memory, adjust addresses based on offset
         if (rw.element_kind == UVM_MEM):
