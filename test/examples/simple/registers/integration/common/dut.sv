@@ -23,7 +23,12 @@
 
 `timescale 1ns/1ns
 
-module slave(
+module slave#(
+    parameter int MEM_SIZE = 128,
+    parameter int NSOCKETS = 64,
+    parameter int ID_REGISTER = {2'b00, 4'h0, 10'h176, 8'h5A, 8'h03}
+)
+(
    input apb_pclk,
    input bit rst,
    input wire [31:0] apb_paddr,
@@ -38,8 +43,8 @@ reg [31:0] pr_data;
 assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite) ? pr_data : 'z;
 
 reg [31:0] DATA;
-reg [63:0] SOCKET[256];
-reg [31:0] DMA[1024];
+reg [63:0] SOCKET[NSOCKETS];
+reg [31:0] DMA[MEM_SIZE];
 
 always @ (posedge apb_pclk)
   begin
@@ -65,7 +70,7 @@ always @ (posedge apb_pclk)
          end
          else begin
             casex (apb_paddr)
-              16'h0000: pr_data <= {4'h0, 10'h176, 8'h5A, 8'h03};
+              16'h0000: pr_data <= ID_REGISTER;
               16'h0024: pr_data <= DATA;
               16'h1XX0: pr_data <= SOCKET[apb_paddr[11:4]][63:32];
               16'h1XX4: pr_data <= SOCKET[apb_paddr[11:4]][31: 0];
