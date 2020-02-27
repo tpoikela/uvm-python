@@ -73,15 +73,15 @@ class dut_SOCKET(UVMReg):
 
     #   rand UVMRegField IP
     #   rand UVMRegField PORT
-    #
+
     def __init__(self, name="dut_ADDR"):
-        super().__init__(name,64,UVM_NO_COVERAGE)
+        super().__init__(name, 64, UVM_NO_COVERAGE)
         self.IP = None
         self.PORT = None
 
 
     def build(self):
-        self.IP   = UVMRegField.type_id.create("value")
+        self.IP = UVMRegField.type_id.create("value")
         self.PORT = UVMRegField.type_id.create("value")
         self.IP.configure(self, 48, 0, "RW", 0, 0x0, 1, 0, 1)
         self.PORT.configure(self, 16, 48, "RW", 0, 0x0, 1, 0, 1)
@@ -115,7 +115,7 @@ class dut_regmodel(UVMRegBlock):
     def __init__(self, name="slave"):
         super().__init__(name, UVM_NO_COVERAGE)
         self.SOCKET = []
-        self.nsockets = 0
+        self.nsockets = 16
 
 
     def build(self):
@@ -127,19 +127,19 @@ class dut_regmodel(UVMRegBlock):
             self.SOCKET.append(socket)
 
         self.RAM   = dut_RAM.type_id.create("DMA_RAM")
-        #
-        # configure
+
+        # configure/build registers
         self.ID.configure(self, None, "ID")
         self.ID.build()
         self.DATA.configure(self, None, "DATA")
         self.DATA.build()
         for i in range(len(self.SOCKET)):
-            self.SOCKET[i].configure(self, None, sv.sformatf("SOCKET[%0d]",i))
+            self.SOCKET[i].configure(self, None, sv.sformatf("SOCKET[%0d]", i))
             self.SOCKET[i].build()
 
         self.RAM.configure(self, "DMA")
-        #
-        # define default map
+
+        # define default map/add register to map
         self.default_map = self.create_map("default_map", 0x0, 4, UVM_LITTLE_ENDIAN, 1)
         self.default_map.add_reg(self.ID, 0x0, "RW")
         self.default_map.add_reg(self.DATA, 0x24, "RW")
