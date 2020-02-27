@@ -80,7 +80,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         fields = []  # uvm_reg_field[$]
         mode = [""] * UVM_REG_DATA_WIDTH  # string [`UVM_REG_DATA_WIDTH]
         maps = []  # uvm_reg_map [$]
-        dc_mask = [0] * 32
+        dc_mask = [0] * UVM_REG_DATA_WIDTH
         reset_val = 0x0
         n_bits = 0
         field_access = ""
@@ -112,7 +112,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             exp = 0x0
             v = 0x0
             next_lsb = 0
-            dc_mask  = [0] * 32
+            dc_mask  = [0] * UVM_REG_DATA_WIDTH
 
             for k in range(len(fields)):
                 lsb = 0
