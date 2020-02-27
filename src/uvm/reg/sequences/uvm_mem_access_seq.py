@@ -97,7 +97,6 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         # Memories may be accessible from multiple physical interfaces (maps)
         mem.get_maps(maps)
 
-        print("Walking mem with each N maps: " + str(len(maps)))
         # Walk the memory via each map
         for j in range(len(maps)):
             status = 0
@@ -250,14 +249,12 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     @cocotb.coroutine
     def do_block(self, blk):
 
-        print("UUU do_block  for MemAccessSeq: " + blk.get_full_name())
         if reg_test_off(blk, ["NO_REG_TESTS", "NO_MEM_TESTS", "NO_MEM_ACCESS_TEST"]):
             return
 
         # Iterate over all memories, checking accesses
         mems = []  # uvm_mem[$]
         blk.get_memories(mems, UVM_NO_HIER)
-        print("UUU found N mems " + str(len(mems)))
         for i in range(len(mems)):
             # Registers with some attributes are not to be tested
             if reg_test_off(mems[i], ["NO_REG_TESTS", "NO_MEM_TESTS",
@@ -273,9 +270,7 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 continue
 
             self.mem_seq.mem = mems[i]
-            print("UUU will run mem_seq now")
             yield self.mem_seq.start(None, self)
-
 
         blks = []  # uvm_reg_block[$]
 
