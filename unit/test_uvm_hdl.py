@@ -24,6 +24,7 @@ class MockDut():
 
 
 class TestUVMHDL(unittest.TestCase):
+    pass
 
     #def test_uvm_hdl_split_path(self):
     #    path1 = "dut.mem"
@@ -51,22 +52,22 @@ class TestUVMHDL(unittest.TestCase):
     #    uvm_hdl.uvm_hdl_read('dut.mem_2d[0].mem_sig[7]', val)
     #    self.assertEqual(val[0], 0xF)
 
-    def test_uvm_hdl_deposit(self):
-        dut = MockDut()
-        uvm_hdl.set_dut(dut)
-        # Should raise an error
-        # uvm_hdl.uvm_hdl_deposit('dut.error.signal', 0xABCD)
-        uvm_hdl.uvm_hdl_deposit('dut.signal', 0xABCD)
-        self.assertEqual(dut.signal.value, 0xABCD)
+    #def test_uvm_hdl_deposit(self):
+    #    dut = MockDut()
+    #    uvm_hdl.set_dut(dut)
+    #    # Should raise an error
+    #    # uvm_hdl.uvm_hdl_deposit('dut.error.signal', 0xABCD)
+    #    uvm_hdl.uvm_hdl_deposit('dut.signal', 0xABCD)
+    #    self.assertEqual(dut.signal.value, 0xABCD)
 
-        uvm_hdl.uvm_hdl_deposit('dut.sub_dut.signal', 0xAFFF)
-        self.assertEqual(dut.sub_dut.signal.value, 0xAFFF)
+    #    uvm_hdl.uvm_hdl_deposit('dut.sub_dut.signal', 0xAFFF)
+    #    self.assertEqual(dut.sub_dut.signal.value, 0xAFFF)
 
-        for i in range(16):
-            value = 0xF + 2 * i
-            uvm_hdl.uvm_hdl_deposit('dut.mem.mem_sig[{}]'.format(i), value)
-            msg = "uvm_hdl_deposit to mem{} OK".format(i)
-            self.assertEqual(dut.mem.mem_sig[i].value, value, msg)
+    #    for i in range(16):
+    #        value = 0xF + 2 * i
+    #        uvm_hdl.uvm_hdl_deposit('dut.mem.mem_sig[{}]'.format(i), value)
+    #        msg = "uvm_hdl_deposit to mem{} OK".format(i)
+    #        self.assertEqual(dut.mem.mem_sig[i].value, value, msg)
 
 
 
