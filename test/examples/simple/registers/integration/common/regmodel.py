@@ -95,7 +95,7 @@ uvm_object_utils(dut_SOCKET)
 class dut_RAM(UVMMem):
 
     def __init__(self, name="dut_RAM"):
-        super().__init__(name, 0x400,32,"RW",UVM_NO_COVERAGE)
+        super().__init__(name, 8, 32, "RW", UVM_NO_COVERAGE)
 
 
 uvm_object_utils(dut_RAM)
@@ -115,29 +115,29 @@ class dut_regmodel(UVMRegBlock):
     def __init__(self, name="slave"):
         super().__init__(name, UVM_NO_COVERAGE)
         self.SOCKET = []
+        self.nsockets = 0
 
 
     def build(self):
-        #
         # create
         self.ID        = dut_ID.type_id.create("ID")
         self.DATA      = dut_DATA.type_id.create("DATA")
-        for i in range(len(self.SOCKET)):
-            socket = dut_SOCKET.type_id.create(sv.sformatf("SOCKET[%0d]",i))
+        for i in range(self.nsockets):
+            socket = dut_SOCKET.type_id.create(sv.sformatf("SOCKET[%0d]", i))
             self.SOCKET.append(socket)
 
         self.RAM   = dut_RAM.type_id.create("DMA_RAM")
         #
         # configure
-        self.ID.configure(self,None,"ID")
+        self.ID.configure(self, None, "ID")
         self.ID.build()
-        self.DATA.configure(self,None,"DATA")
+        self.DATA.configure(self, None, "DATA")
         self.DATA.build()
         for i in range(len(self.SOCKET)):
-            self.SOCKET[i].configure(self,None,sv.sformatf("SOCKET[%0d]",i))
+            self.SOCKET[i].configure(self, None, sv.sformatf("SOCKET[%0d]",i))
             self.SOCKET[i].build()
 
-        self.RAM.configure(self,"DMA")
+        self.RAM.configure(self, "DMA")
         #
         # define default map
         self.default_map = self.create_map("default_map", 0x0, 4, UVM_LITTLE_ENDIAN, 1)
