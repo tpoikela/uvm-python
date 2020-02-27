@@ -67,7 +67,7 @@ class tb_env(UVMComponent):
         if EXPLICIT_MON:
             self.apb2reg_predictor = UVMRegPredictor("apb2reg_predictor", self)
 
-        hdl_root = "tb_top.dut"
+        hdl_root = "dut"
         sv.value_plusargs("ROOT_HDL_PATH=%s",hdl_root)  # cast to 'void' removed
         self.regmodel.set_hdl_path_root(hdl_root)
         vif = []
