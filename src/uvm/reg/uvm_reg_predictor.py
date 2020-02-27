@@ -202,6 +202,7 @@ class UVMRegPredictor(UVMComponent):
                     found = True
                     reg_item.value[0] |= rw.data << (i * self.map.get_n_bytes()*8)
                     predict_info.addr[rw.addr] = 1
+
                     if len(predict_info.addr) == len(map_info.addr):
                         # We've captured the entire abstract register transaction.
                         predict_kind = UVM_PREDICT_READ
@@ -236,8 +237,7 @@ class UVMRegPredictor(UVMComponent):
                                      sv.sformatf("%0h", reg_item.value[0]),UVM_HIGH)
                         self.reg_ap.write(reg_item)
                         self.m_pending.delete(rg)
-                    else:
-                        print("OOO reg_predict 4 len DID NOT MATCH")
+
                     break
 
             if found is False:
