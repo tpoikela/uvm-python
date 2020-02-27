@@ -23,7 +23,7 @@
 
 import cocotb
 
-from ..macros import uvm_error
+from ..macros import uvm_error, uvm_info
 from ..base.sv import sv
 from ..base.uvm_mailbox import UVMMailbox
 from ..base.uvm_object import UVMObject
@@ -36,6 +36,7 @@ from .uvm_reg_model import *
 from .uvm_reg_item import *
 from .uvm_reg_cbs import UVMRegFieldCbIter, UVMRegCbIter
 from .uvm_reg_map import UVMRegMap
+from ..dpi.uvm_hdl import uvm_hdl
 
 ERR_BD_READ = ("Backdoor read of register %s with multiple HDL copies: "
     + "values are not the same: %0h at path '%s', and %0h at path '%s'. "
@@ -1734,13 +1735,13 @@ class UVMReg(UVMObject):
     #   //
     #   extern function bit has_hdl_path (string kind = "")
     def has_hdl_path(self, kind=""):
-        if (kind == ""):
-            if (self.m_regfile_parent is not None):
+        if kind == "":
+            if self.m_regfile_parent is not None:
                 kind = self.m_regfile_parent.get_default_hdl_path()
             else:
                 kind = self.m_parent.get_default_hdl_path()
 
-            return self.m_hdl_paths_pool.exists(kind)
+        return self.m_hdl_paths_pool.exists(kind)
         #endfunction
 
     #
@@ -1758,8 +1759,9 @@ class UVMReg(UVMObject):
     #   //
     #   extern function void get_hdl_path (ref uvm_hdl_path_concat paths[$],
     #                                      input string kind = "")
-    #
-    #
+
+
+
     #   // Function:  get_hdl_path_kinds
     #   //
     #   // Get design abstractions for which HDL paths have been defined
@@ -1787,7 +1789,7 @@ class UVMReg(UVMObject):
     def get_full_hdl_path(self, paths, kind="", separator="."):
 
         if kind == "":
-            if (self.m_regfile_parent is not None):
+            if self.m_regfile_parent is not None:
                 kind = self.m_regfile_parent.get_default_hdl_path()
             else:
                 kind = self.m_parent.get_default_hdl_path()
@@ -1855,13 +1857,13 @@ class UVMReg(UVMObject):
                         + hdl_concat.slices[j].path, UVM_DEBUG)
 
                 if hdl_concat.slices[j].offset < 0:
-                    ok &= uvm_hdl_deposit(hdl_concat.slices[j].path,rw.value[0])
+                    ok &= uvm_hdl.uvm_hdl_deposit(hdl_concat.slices[j].path,rw.value[0])
                     continue
 
                 _slice = 0  # uvm_reg_data_t
                 _slice = rw.value[0] >> hdl_concat.slices[j].offset
                 _slice &= (1 << hdl_concat.slices[j].size)-1
-                ok &= uvm_hdl_deposit(hdl_concat.slices[j].path, _slice)
+                ok &= uvm_hdl.uvm_hdl_deposit(hdl_concat.slices[j].path, _slice)
 
         rw.status = UVM_NOT_OK
         if ok:
@@ -1890,13 +1892,15 @@ class UVMReg(UVMObject):
                     + hdl_concat.slices[j].path, UVM_DEBUG)
 
                 if hdl_concat.slices[j].offset < 0:
-                    ok &= uvm_hdl_read(hdl_concat.slices[j].path, val)
+                    arr = []
+                    ok &= uvm_hdl.uvm_hdl_read(hdl_concat.slices[j].path, arr)
+                    val = arr[0]
                     continue
 
                 _slice = 0
                 k = hdl_concat.slices[j].offset
 
-                ok &= uvm_hdl_read(hdl_concat.slices[j].path, _slice)
+                ok &= uvm_hdl.uvm_hdl_read(hdl_concat.slices[j].path, _slice)
 
                 for _ in range(hdl_concat.slices[j].size):
                     val[k] = _slice[0]
