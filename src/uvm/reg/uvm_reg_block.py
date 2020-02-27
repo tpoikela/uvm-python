@@ -1321,7 +1321,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern function string get_default_hdl_path ()
     def get_default_hdl_path(self):
-        if (self.default_hdl_path == "" and self.parent is not None):
+        if self.default_hdl_path == "" and self.parent is not None:
             return self.parent.get_default_hdl_path()
         return self.default_hdl_path
         #endfunction
@@ -1341,7 +1341,7 @@ class UVMRegBlock(UVMObject):
     #   extern function void set_hdl_path_root (string path, string kind = "RTL")
     # set_hdl_path_root
     def set_hdl_path_root(self, path, kind="RTL"):
-        if (kind == ""):
+        if kind == "":
             kind = self.get_default_hdl_path()
         self.root_hdl_paths[kind] = path
 
