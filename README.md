@@ -52,10 +52,11 @@ To run unit tests only:
 ### Minimal working example ###
 
 `uvm-python` must be installed prior to running the example. You can find the
-source code for this example [here](test/examples/simple/Makefile). This example
+source code for this example [here](test/examples/minimal). This example
 create a test component, register it with the UVM factory, and starts the test.
 
-You can execute the example by running `make`.
+You can execute the example by running `SIM=icarus make`. Alternatively, you can
+run it with `SIM=verilator make`.
 
 ```make
 # File: Makefile
