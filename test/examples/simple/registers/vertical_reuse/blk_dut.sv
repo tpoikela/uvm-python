@@ -71,25 +71,26 @@ always @ (posedge apb_pclk)
       if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
          pr_data <= 32'h0;
          if (apb_pwrite) begin
-            casex (pr_addr)
+             casez (pr_addr)
               32'h00000000:
                  R <= apb_pwdata[7:0];
               32'h00000001:
                  casez (apb_pwdata[1:0]) 
-                   2'b01: R++;
-                   2'b10: R--;
+                   2'b00: R <= R;
+                   2'b01: R <= R + 1;
+                   2'b10: R <= R - 1;
                    2'b11: R <= 0;
                  endcase
             endcase
          end
          else begin
-            casex (pr_addr)
+            casez (pr_addr)
               32'h00000000: pr_data <= {24'h0, R}; 
               default: pr_data <= 32'h0;
             endcase
-            #1;
+            // #1;
          end
-         #0;
+         // #0;
       end
    end
 end

@@ -42,12 +42,14 @@ always_ff@(posedge clk or negedge reset)
         if (we) acp[addr_in] <= data_in;
     end
 
+`ifndef VERILATOR
 `ifdef COCOTB_SIM
 initial begin
   $dumpfile ("gui.vcd");
   $dumpvars (0, dut);
   #1;
 end
+`endif
 `endif
 
 endmodule

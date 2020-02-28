@@ -54,13 +54,14 @@ module sys_dut #(
   blk_dut #(BASE_ADDR)        b1 (.*);
   blk_dut #(BASE_ADDR+'h100 ) b2(.*);
 
-
+`ifndef VERILATOR
 `ifdef COCOTB_SIM
 initial begin
   $dumpfile ("vcd_sys_dut.vcd");
   $dumpvars (0, sys_dut);
   #2;
 end
+`endif
 `endif
 
 endmodule

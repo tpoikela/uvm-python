@@ -91,7 +91,9 @@ endif
 ifeq ($(SIM),$(filter $(SIM),ius xcelium))
     EXTRA_ARGS=-gpg "PBASE_ADDR => 'h100"
 else
-    EXTRA_ARGS="-PBASE_ADDR='h100"
+    ifeq ($(SIM), icarus)
+        EXTRA_ARGS="-PBASE_ADDR='h100"
+    endif
 endif
 
 include $(shell cocotb-config --makefiles)/Makefile.inc
