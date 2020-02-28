@@ -18,6 +18,86 @@ testbenches can be written in Python as well. `uvm-python` tries to offer
 an API similar to the original SV version. This means that many UVM verificaton
 skills are transferable from SV to Python very easily.
 
+Installation
+------------
+
+You can install uvm-python as a normal Python package:
+
+```shell
+git clone https://github.com/tpoikela/uvm-python.git
+cd uvm-python
+python -m pip install --user .  # Omit --user for global installation
+```
+
+See [Makefile](test/examples/simple/Makefile) for working examples. You can
+also use Makefiles in `test/examples/simple` as a
+template for your project.
+
+Running the examples and development
+------------------------------------
+
+See `test/examples/simple/Makefile` for working examples. More features/examples will be added
+incrementally.
+
+To run all tests:
+```shell
+    SIM=icarus make test  # Use iverilog as a simulator
+```
+
+To run unit tests only:
+```
+    make test-unit  # Does not require simulator
+```
+
+### Minimal working example ###
+
+`uvm-python` must be installed prior to running the example. You can find the
+source code for this example [here](test/examples/simple/Makefile). This example
+create a test component, register it with the UVM factory, and starts the test.
+
+You can execute the example by running `make`.
+
+```make
+# File: Makefile
+TOPLEVEL_LANG ?= verilog
+VERILOG_SOURCES ?= new_dut.sv
+TOPLEVEL := new_dut
+MODULE   ?= new_test
+include $(shell cocotb-config --makefiles)/Makefile.inc
+include $(shell cocotb-config --makefiles)/Makefile.sim
+```
+
+The top-level module must match `TOPLEVEL` in `Makefile`:
+
+```verilog
+// File: new_dut.sv
+module new_dut(input clk, input rst, output[7:0] byte_out);
+    assign byte_out = 8'hAB;
+endmodule: new_dut
+```
+
+The Python test file name must match `MODULE` in `Makefile`:
+
+```python
+# File: new_test.py
+import cocotb
+from cocotb.triggers import Timer
+from uvm import *
+
+class NewTest(UVMTest):
+    @cocotb.coroutine
+    def run_phase(self, phase):
+        phase.raise_objection(self)
+        yield Timer(100, "NS")
+        phase.drop_objection(self)
+
+uvm_component_utils(NewTest)
+
+@cocotb.test()
+def test_dut(dut):
+    yield run_test('NewTest')
+```
+
 Current status
 --------------
 Current status: Testbenches can already be written with all the typical UVM 
@@ -43,35 +123,6 @@ missing a lot of functionality. Please try it out, and let me know if
 something you require should be added, or even better, add it yourself, test it
 and create a pull request!
 
-Installation
-------------
-
-You can install uvm-python as a normal Python package:
-
-```shell
-git clone https://github.com/tpoikela/uvm-python.git
-cd uvm-python
-python -m pip install --user .  # Omit --user for global installation
-```
-
-See `Makefile` for working examples. You can use Makefiles in `test/examples` as a
-template for your project.
-
-Development and Running the examples
-------------------------------------
-
-See `Makefile` for working examples. More features/examples will be added
-incrementally.
-
-To run all tests:
-```shell
-    SIM=icarus make test  # Use iverilog as a simulator
-```
-
-To run unit tests only:
-```
-    make test-unit  # Does not require simulator
-```
 
 HDL Simulators
 --------------
