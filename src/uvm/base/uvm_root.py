@@ -248,7 +248,7 @@ class UVMRoot(UVMComponent):
         if test_name != "":
             if "uvm_test_top" in self.m_children:
                 uvm_fatal("TTINST",
-                    "An uvm_test_top already exists via a previous call to run_test", UVM_NONE)
+                    "An uvm_test_top already exists via a previous call to run_test")
             #0; // forces shutdown because $finish is forked
             yield Timer(0, "NS")
             uvm_debug(self, 'run_test', "factory.create in UVMRoot testname " + test_name)
@@ -261,16 +261,15 @@ class UVMRoot(UVMComponent):
                     msg = "command line +UVM_TESTNAME=" + test_name
                 else:
                     msg = "call to run_test(" + test_name + ")"
-                uvm_report_fatal("INVTST",
-                    "Requested test from " + msg + " not found." , UVM_NONE)
+                uvm_fatal("INVTST", "Requested test from " + msg + " not found.")
         yield Timer(0, "NS")
 
         if len(self.m_children) == 0:
-            self.uvm_report_fatal("NOCOMP", ("No components instantiated. You must either instantiate"
+            uvm_fatal("NOCOMP", ("No components instantiated. You must either instantiate"
                    + " at least one component before calling run_test or use"
                    + " run_test to do so. To run a test using run_test,"
                    + " use +UVM_TESTNAME or supply the test name in"
-                   + " the argument to run_test(). Exiting simulation."), UVM_NONE)
+                   + " the argument to run_test(). Exiting simulation."))
             return
 
         self.running_test_msg(test_name, uvm_test_top)
