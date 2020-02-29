@@ -674,12 +674,12 @@ class UVMObjection(UVMReportObject):
     #  // m_execute_scheduled_forks
     #  // -------------------------
     #  // background process; when non
-    @cocotb.coroutine
-    def m_execute_scheduled_forks(self):
+    
+    async def m_execute_scheduled_forks(self):
         while True:
             #wait(UVMObjection.m_scheduled_list.size() != 0)
             uvm_debug(self, 'm_execute_scheduled_forks', 'waiting list to not be empty')
-            yield UVMObjection.m_scheduled_list_not_empty_event.wait()
+            await UVMObjection.m_scheduled_list_not_empty_event.wait()
             UVMObjection.m_scheduled_list_not_empty_event.clear()
 
             if len(UVMObjection.m_scheduled_list) != 0:
@@ -698,8 +698,8 @@ class UVMObjection(UVMReportObject):
                 pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks_fork_join_none(c))
         #endtask
 
-    @cocotb.coroutine
-    def m_execute_scheduled_forks_fork_join_none(self, c):
+    
+    async def m_execute_scheduled_forks_fork_join_none(self, c):
         objection = c.objection  # automatic uvm_objection
         # Check to maike sure re-raise didn't empty the fifo
         uvm_debug(self, 'm_execute_scheduled_forks_fork_join_none', 'check list len')
@@ -720,7 +720,7 @@ class UVMObjection(UVMReportObject):
             #    objection.m_drain_proc[ctxt.obj]=c
 
             # Execute the forked drain
-            yield objection.m_forked_drain(ctxt.obj, ctxt.source_obj, ctxt.description,
+            await objection.m_forked_drain(ctxt.obj, ctxt.source_obj, ctxt.description,
                     ctxt.count, 1)
             # Cleanup if we survived (no re-raises)
             if ctxt.obj in objection.m_drain_proc:
@@ -732,7 +732,7 @@ class UVMObjection(UVMReportObject):
             ctxt.clear()
             # Save the context in the pool for later reuse
             UVMObjection.m_context_pool.append(ctxt)
-        yield Timer(0)
+        await Timer(0)
 
     #  // m_forked_drain
     #  // -------------
@@ -741,15 +741,15 @@ class UVMObjection(UVMReportObject):
     #                       string description="",
     #                       int count=1,
     #                       int in_top_thread=0)
-    @cocotb.coroutine
-    def m_forked_drain(self, obj, source_obj, description="", count=1,
+    
+    async def m_forked_drain(self, obj, source_obj, description="", count=1,
             in_top_thread=0):
         diff_count = 0
 
         if obj in self.m_drain_time:
             # pass
             # TODO `uvm_delay(self.m_drain_time[obj])
-            yield Timer(self.m_drain_time[obj])
+            await Timer(self.m_drain_time[obj])
 
         if self.m_trace_mode:
             self.m_report(obj,source_obj,description,count,"all_dropped")
@@ -757,7 +757,7 @@ class UVMObjection(UVMReportObject):
         self.all_dropped(obj,source_obj,description, count)
 
         # wait for all_dropped cbs to complete
-        yield Timer(0)
+        await Timer(0)
         # TODO wait fork
 
         # we are ready to delete the 0-count entries for the current
@@ -778,11 +778,11 @@ class UVMObjection(UVMReportObject):
     #  // -----------------
     #
     #  // Forks off the single background process
-    @cocotb.coroutine
-    def m_init_objections(self):
+    
+    async def m_init_objections(self):
         #uvm_debug(cls, 'm_init_objections', "Forking m_execute_scheduled_forks")
         pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks())
-        yield Timer(0)
+        await Timer(0)
 
     #  // Function: set_drain_time
     #  //
@@ -878,8 +878,8 @@ class UVMObjection(UVMReportObject):
     #  // for that event have been executed.
     #  //
     #  task wait_for(uvm_objection_event objt_event, uvm_object obj=null)
-    @cocotb.coroutine
-    def wait_for(self, objt_event, obj=None):
+    
+    async def wait_for(self, objt_event, obj=None):
         if obj is None:
             obj = self.m_top
 
@@ -888,11 +888,11 @@ class UVMObjection(UVMReportObject):
 
         self.m_events[obj].waiters += 1
         if objt_event == UVM_RAISED:
-            yield self.m_events[obj].raised.wait()
+            await self.m_events[obj].raised.wait()
         elif objt_event == UVM_DROPPED:
-            yield self.m_events[obj].dropped.wait()
+            await self.m_events[obj].dropped.wait()
         elif objt_event == UVM_ALL_DROPPED:
-            yield self.m_events[obj].all_dropped.wait()
+            await self.m_events[obj].all_dropped.wait()
 
         self.m_events[obj].waiters -= 1
 

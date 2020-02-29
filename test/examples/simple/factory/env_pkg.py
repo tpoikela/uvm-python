@@ -40,17 +40,17 @@ class env(UVMEnv):
         self.gen1 = gen.type_id.create("gen1", self)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_default_tree_printer.knobs.separator = ""
         for i in range(5):
-            yield Timer(15, "NS")
+            await Timer(15, "NS")
             p = self.gen1.get_packet()
             if hasattr(p, 'my_packet_prop') is False:
                 uvm_fatal("PKT_ERR", "Wrong packet type created: " + str(p))
             uvm_info("PKTGEN", sv.sformatf("Got packet: %s", p.sprint(uvm_default_tree_printer)), UVM_NONE)
-        yield Timer(15, "NS")
+        await Timer(15, "NS")
         phase.drop_objection(self)
 
 

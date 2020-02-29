@@ -137,8 +137,8 @@ class master(UVMComponent):
         self.use_blocking = True
         self.tag = "MASTER"
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         for i in range(NUM_ITEMS):
             t = transaction()
             if not t.randomize():
@@ -147,11 +147,11 @@ class master(UVMComponent):
                 t.addr = t.addr
             uvm_info(self.tag, sv.sformatf("sending  : %s", t.convert2string()), UVM_MEDIUM)
             if t.cmd == Cmd.WRITE:
-                yield self.master_port.put(t)
+                await self.master_port.put(t)
             else:
-                yield self.master_port.get([t])
+                await self.master_port.get([t])
             self.num_items += 1
-            yield Timer(sv.urandom_range(1, 10) * 10, "NS")
+            await Timer(sv.urandom_range(1, 10) * 10, "NS")
 
 
 # Base class for slave components
@@ -180,17 +180,17 @@ class slave_base(UVMComponent):
     def can_peek(self, t):
         return False
 
-    @cocotb.coroutine
-    def get(self, t):
-        yield Timer(0)
+    
+    async def get(self, t):
+        await Timer(0)
 
-    @cocotb.coroutine
-    def put(self, t):
-        yield Timer(0)
+    
+    async def put(self, t):
+        await Timer(0)
 
-    @cocotb.coroutine
-    def peek(self, t):
-        yield Timer(0)
+    
+    async def peek(self, t):
+        await Timer(0)
 
 
 class bus(slave_base):
@@ -224,19 +224,19 @@ class bus(slave_base):
                         comp.get_name(), self)
                 self.master_ports[addr].connect(port)
 
-    @cocotb.coroutine
-    def get(self, t):
+    
+    async def get(self, t):
         addr = t[0].addr
         if addr in self.addr_map:
-            yield self.master_ports[addr].get(t)
+            await self.master_ports[addr].get(t)
         else:
             uvm_error('BUS_READ_ERR', "No addr {} in map".format(addr))
 
-    @cocotb.coroutine
-    def put(self, t):
+    
+    async def put(self, t):
         addr = t.addr
         if addr in self.addr_map:
-            yield self.master_ports[addr].put(t)
+            await self.master_ports[addr].put(t)
         else:
             uvm_error('BUS_WRITE_ERR', "No addr {} in map".format(addr))
 
@@ -256,16 +256,16 @@ class slave(slave_base):
     def num_cmds(self):
         return self.num_put + self.num_get
 
-    @cocotb.coroutine
-    def put(self, t):
-        yield Timer(10, "NS")
+    
+    async def put(self, t):
+        await Timer(10, "NS")
         uvm_info("SLAVE_PUT", "Received cmd", UVM_MEDIUM)
         self.num_put += 1
 
 
-    @cocotb.coroutine
-    def get(self, t):
-        yield Timer(10, "NS")
+    
+    async def get(self, t):
+        await Timer(10, "NS")
         uvm_info("SLAVE_GET", "Received cmd", UVM_MEDIUM)
         self.num_get += 1
 
@@ -276,9 +276,9 @@ class io_slave(slave):
         super().__init__(name, parent)
         self.trans_port = UVMTransportPort('trans_imp', self)
 
-    @cocotb.coroutine
-    def put(self, t):
-        yield Timer(10, "NS")
+    
+    async def put(self, t):
+        await Timer(10, "NS")
         uvm_info("SLAVE_PUT", "Received cmd", UVM_MEDIUM)
         self.num_put += 1
         rsp = []
@@ -286,15 +286,15 @@ class io_slave(slave):
             uvm_info(self.tag, "Transport put to IO port OK")
 
 
-    @cocotb.coroutine
-    def get(self, t):
-        yield Timer(10, "NS")
+    
+    async def get(self, t):
+        await Timer(10, "NS")
         uvm_info("IO_SLAVE_GET",
             "Oh no! We hit the blocking IO slave read. This will take long time",
             UVM_MEDIUM)
         self.num_get += 1
         rsp = []
-        yield self.trans_port.transport(t[0], rsp)
+        await self.trans_port.transport(t[0], rsp)
         t.clear()
         t.append(rsp[0])
 
@@ -308,9 +308,9 @@ class io_port(UVMComponent):
         self.num_io_reads = 0
 
     # IO Reads implemented as blocking
-    @cocotb.coroutine
-    def transport(self, req, rsp):
-        yield Timer(500, "NS")
+    
+    async def transport(self, req, rsp):
+        await Timer(500, "NS")
         self.num_io_reads += 1
         rsp.append("READ DONE")
 
@@ -339,9 +339,9 @@ class memory(slave_base):
     def num_cmds(self):
         return self.num_reads + self.num_writes
 
-    @cocotb.coroutine
-    def put(self, t):
-        yield self.wait_access()
+    
+    async def put(self, t):
+        await self.wait_access()
         addr = t.addr & MEM_ADDR_MASK
         if addr in self.mem:
             self.num_writes += 1
@@ -349,9 +349,9 @@ class memory(slave_base):
                 t.data), UVM_MEDIUM)
             self.mem[addr] = t.data
 
-    @cocotb.coroutine
-    def get(self, t):
-        yield self.wait_access()
+    
+    async def get(self, t):
+        await self.wait_access()
         addr = t[0].addr & MEM_ADDR_MASK
         if addr in self.mem:
             self.num_reads += 1
@@ -359,15 +359,15 @@ class memory(slave_base):
             uvm_info("MEM_READ", "Read data [{:0X}]: {:0X}".format(addr,
                 self.mem[addr]), UVM_MEDIUM)
 
-    @cocotb.coroutine
-    def wait_access(self):
-        yield Timer(10, "NS")
+    
+    async def wait_access(self):
+        await Timer(10, "NS")
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         while True:
-            yield Timer(100, "NS")
+            await Timer(100, "NS")
 
 
 class listener(UVMSubscriber):  # (transaction)
@@ -423,11 +423,11 @@ class env_top(UVMEnv):
     def connect_phase(self, phase):
         pass
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_info("ENV_TOP", "run_phase started", UVM_MEDIUM)
-        yield Timer(NUM_ITEMS * 100, "NS")
+        await Timer(NUM_ITEMS * 100, "NS")
         phase.drop_objection(self)
 
 

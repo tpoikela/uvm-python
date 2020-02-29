@@ -47,8 +47,8 @@ class producer(UVMComponent):
         if UVMConfigDb.get(self, "", "num_packets", nn):
             self.num_packets = nn[0]
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         if self.add_objection:
             phase.raise_objection(self)
         num = ""
@@ -71,8 +71,8 @@ class producer(UVMComponent):
             if self.uvm_report_enabled(UVM_HIGH,UVM_INFO,""):
                 p.print()
 
-            yield self.out.put(p)
-            yield Timer(10, "NS")
+            await self.out.put(p)
+            await Timer(10, "NS")
 
         uvm_info("producer", "Exiting.", UVM_MEDIUM)
         if self.add_objection:

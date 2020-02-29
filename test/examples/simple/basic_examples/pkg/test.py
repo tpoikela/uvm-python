@@ -45,10 +45,10 @@ class lower(UVMComponent):
         self.data = 0
         self.str = ""
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         print("{}: {} HI".format(get_sim_time(), self.get_full_name()))
         phase.drop_objection(self)
 
@@ -85,10 +85,10 @@ class myunit(UVMComponent):
         for i in range(5):
             self.a[i] = i*i
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         #10 $display("%0t: %s HI", $time, get_full_name())
         phase.drop_objection(self)
 
@@ -200,19 +200,19 @@ uvm_object_utils(UVMObject)
 # top
 #----------------------------------------------------------------------
 
-@cocotb.coroutine
-def initial1():
-    yield run_test()
+
+async def initial1():
+    await run_test()
 
 
-@cocotb.coroutine
-def initial2(mu):
-    yield Timer(5, "NS")
+
+async def initial2(mu):
+    await Timer(5, "NS")
     mu.l1.kill()
 
 
 @cocotb.test()
-def test_module_top(dut):
+async def test_module_top(dut):
     mu = myunit("mu", None)
     bar = mydata()
     cs_ = UVMCoreService.get()
@@ -231,4 +231,4 @@ def test_module_top(dut):
     # Fork 2 initial tasks
     task1 = cocotb.fork(initial1())
     task2 = cocotb.fork(initial2(mu))
-    yield [task1.join(), task2.join()]
+    await [task1.join(), task2.join()]

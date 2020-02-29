@@ -98,42 +98,42 @@ class reg_driver(UVMComponent):
         #endfunction
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         mon = self.m_parent.get_child("mon")
         while True:
             rw = []  # reg_rw
-            yield self.seqr_port.peek(rw)  # aka 'get_next_rw'
+            await self.seqr_port.peek(rw)  # aka 'get_next_rw'
             rw = rw[0]
-            yield self.drive_transaction(rw)
+            await self.drive_transaction(rw)
             mon.ap.write(rw)
             rw = []
-            yield self.seqr_port.get(rw)  # aka 'item_done'
+            await self.seqr_port.get(rw)  # aka 'item_done'
     #   endtask
 
-    @cocotb.coroutine
-    def drive_transaction(self, rw):
+    
+    async def drive_transaction(self, rw):
         if rw.read is False:
             wdata = BinaryValue(value=rw.data,n_bits=self.n_bits)
-            yield RisingEdge(self.dut.clk)
-            yield Timer(0)
+            await RisingEdge(self.dut.clk)
+            await Timer(0)
             self.dut.we <= 1
             self.dut.data_in <= wdata
             self.dut.addr_in <= rw.addr
 
             for i in range(2):
-                yield RisingEdge(self.dut.clk)
-            yield Timer(0)
+                await RisingEdge(self.dut.clk)
+            await Timer(0)
             self.dut.we <= 0
             uvm_info("REG_DRIVER WRITE", "Wrote value to DUT: " + str(rw.data) +
                 ' addr:' + str(rw.addr), UVM_LOW)
         else:
-            yield RisingEdge(self.dut.clk)
+            await RisingEdge(self.dut.clk)
             self.dut.addr_in <= rw.addr
             self.dut.read <= 0x1
-            yield RisingEdge(self.dut.clk)
+            await RisingEdge(self.dut.clk)
             rw.data = self.dut.data_out.value.integer
-            yield RisingEdge(self.dut.clk)
+            await RisingEdge(self.dut.clk)
             self.dut.read <= 0x0
             uvm_info("REG_DRIVER READ", "Read value from DUT: " + str(rw.data) +
                 ' addr:' + str(rw.addr), UVM_LOW)

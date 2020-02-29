@@ -55,36 +55,36 @@ class ubus_slave_driver(UVMDriver):
                 self.get_full_name() + ".vif")
 
     # run phase
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         #    fork
         fork_get = cocotb.fork(self.get_and_drive())
         fork_reset = cocotb.fork(self.reset_signals())
-        yield [fork_get.join(), fork_reset.join()]
+        await [fork_get.join(), fork_reset.join()]
         #    join
     #  endtask : run_phase
 
 
     #  // get_and_drive
     #  virtual protected task get_and_drive();
-    @cocotb.coroutine
-    def get_and_drive(self):
-        yield Timer(0)
-        yield FallingEdge(self.vif.sig_reset)
+    
+    async def get_and_drive(self):
+        await Timer(0)
+        await FallingEdge(self.vif.sig_reset)
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             req = []
-            yield self.seq_item_port.get_next_item(req)
-            yield self.respond_to_transfer(req[0])
+            await self.seq_item_port.get_next_item(req)
+            await self.respond_to_transfer(req[0])
             self.seq_item_port.item_done()
         #  endtask : get_and_drive
 
 
     #  // reset_signals
-    @cocotb.coroutine
-    def reset_signals(self):
+    
+    async def reset_signals(self):
         while True:
-            yield RisingEdge(self.vif.sig_reset)
+            await RisingEdge(self.vif.sig_reset)
             self.vif.sig_error      <= 0
             self.vif.sig_wait       <= 0
             self.vif.slave_en       <= 0
@@ -92,8 +92,8 @@ class ubus_slave_driver(UVMDriver):
 
 
     #  // respond_to_transfer
-    @cocotb.coroutine
-    def respond_to_transfer(self, resp):
+    
+    async def respond_to_transfer(self, resp):
         if resp.read_write != NOP:
             self.vif.sig_error <= 0
             for i in range(resp.size):
@@ -103,15 +103,15 @@ class ubus_slave_driver(UVMDriver):
                 if resp.wait_state[i] > 0:
                     self.vif.sig_wait <= 1
                     for j in range(resp.wait_state[i]):
-                        yield RisingEdge(self.vif.sig_clock)
+                        await RisingEdge(self.vif.sig_clock)
                 self.vif.sig_wait <= 0
-                yield RisingEdge(self.vif.sig_clock)
+                await RisingEdge(self.vif.sig_clock)
                 resp.data[i] = int(self.vif.sig_data)
             self.vif.slave_en <= 0
             self.vif.sig_wait  <= 0  # 1'bz
             self.vif.sig_error <= 0  # 1'bz
         else:
-            yield Timer(0)
+            await Timer(0)
         #  endtask : respond_to_transfer
 
     #

@@ -95,21 +95,21 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
     def is_full(self):
         return (self.m_size != 0) and (self.m.num() == self.m_size)
 
-    @cocotb.coroutine
-    def put(self, t):
-        yield self.m.put(t)
+    
+    async def put(self, t):
+        await self.m.put(t)
         self.put_ap.write(t)
 
-    @cocotb.coroutine
-    def get(self, t):
+    
+    async def get(self, t):
         self.m_pending_blocked_gets += 1
-        yield self.m.get(t)
+        await self.m.get(t)
         self.m_pending_blocked_gets -= 1
         self.get_ap.write(t)
 
-    @cocotb.coroutine
-    def peek(self, t):
-        yield self.m.peek(t)
+    
+    async def peek(self, t):
+        await self.m.peek(t)
 
     def try_get(self, t):
         if not self.m.try_get(t):

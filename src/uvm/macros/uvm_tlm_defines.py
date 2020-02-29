@@ -566,24 +566,24 @@ def UVM_SEQ_ITEM_PULL_IMP(T, imp):
         return getattr(self, imp).is_auto_item_recording_enabled()
     setattr(T, 'is_auto_item_recording_enabled', is_auto_item_recording_enabled)
 
-    @cocotb.coroutine
-    def get_next_item(self, req_arg):
+    
+    async def get_next_item(self, req_arg):
         uvm_check_ref_arg('get_next_item', req_arg)
-        yield getattr(self, imp).get_next_item(req_arg)
+        await getattr(self, imp).get_next_item(req_arg)
     setattr(T, 'get_next_item', get_next_item)
 
-    @cocotb.coroutine
-    def try_next_item(self, req_arg):
-        yield getattr(self, imp).try_next_item(req_arg)
+    
+    async def try_next_item(self, req_arg):
+        await getattr(self, imp).try_next_item(req_arg)
     setattr(T, 'try_next_item', try_next_item)
 
     def item_done(self, rsp_arg=None):
         getattr(self, imp).item_done(rsp_arg)
     setattr(T, 'item_done', item_done)
 
-    @cocotb.coroutine
-    def wait_for_sequences(self):
-        yield getattr(self, imp).wait_for_sequences()
+    
+    async def wait_for_sequences(self):
+        await getattr(self, imp).wait_for_sequences()
     setattr(T, 'wait_for_sequences', wait_for_sequences)
 
     def has_do_available(self):
@@ -594,21 +594,21 @@ def UVM_SEQ_ITEM_PULL_IMP(T, imp):
         getattr(self, imp).put_response(rsp_arg)
     setattr(T, 'put_response', put_response)
 
-    @cocotb.coroutine
-    def get(self, req_arg):
+    
+    async def get(self, req_arg):
         uvm_check_ref_arg('get', req_arg)
-        yield getattr(self, imp).get(req_arg)
+        await getattr(self, imp).get(req_arg)
     setattr(T, 'get', get)
 
-    @cocotb.coroutine
-    def peek(self, req_arg):
+    
+    async def peek(self, req_arg):
         uvm_check_ref_arg('get', req_arg)
-        yield getattr(self, imp).peek(req_arg)
+        await getattr(self, imp).peek(req_arg)
     setattr(T, 'peek', peek)
 
-    @cocotb.coroutine
-    def put(self, rsp_arg):
-        yield getattr(self, imp).put(rsp_arg)
+    
+    async def put(self, rsp_arg):
+        await getattr(self, imp).put(rsp_arg)
     setattr(T, 'put', put)
 
 

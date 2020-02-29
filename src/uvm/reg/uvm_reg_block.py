@@ -987,8 +987,8 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    @cocotb.coroutine
-    def update(self, status, path=UVM_DEFAULT_PATH, parent=None, prior=-1, extension=None, fname="",
+    
+    async def update(self, status, path=UVM_DEFAULT_PATH, parent=None, prior=-1, extension=None, fname="",
             lineno=0):
         uvm_check_output_args([status])
         stat_all = UVM_IS_OK
@@ -1006,7 +1006,7 @@ class UVMRegBlock(UVMObject):
             rg = rg_
             if rg.needs_update():
                 stat = []
-                yield rg.update(stat, path, None, parent, prior, extension)
+                await rg.update(stat, path, None, parent, prior, extension)
                 if (stat[0] != UVM_IS_OK and stat[0] != UVM_HAS_X):
                     uvm_error("RegModel", sv.sformatf("Register \"%s\" could not be updated",
                         rg.get_full_name()))
@@ -1016,7 +1016,7 @@ class UVMRegBlock(UVMObject):
         for blk_ in self.blks.key_list():
             blk = blk_
             stat_blk = []
-            yield blk.update(status,path,parent,prior,extension,fname,lineno)
+            await blk.update(status,path,parent,prior,extension,fname,lineno)
             if (stat_blk[0] != UVM_IS_OK and stat_blk[0] != UVM_HAS_X):
                 stat_all = stat_blk
         status.append(stat_all)
@@ -1044,15 +1044,15 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    @cocotb.coroutine
-    def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, parent=None, prior=-1,
+    
+    async def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, parent=None, prior=-1,
             extension=None, fname="", lineno=0):
         final_status = UVM_IS_OK
 
         for rg_ in self.regs.key_list():
             rg = rg_
             curr_stat = []
-            yield rg.mirror(curr_stat, check, path, None, parent, prior, extension, fname, lineno)
+            await rg.mirror(curr_stat, check, path, None, parent, prior, extension, fname, lineno)
             if (curr_stat[0] != UVM_IS_OK and curr_stat[0] != UVM_HAS_X):
                 final_status = curr_stat[0]
 
@@ -1061,7 +1061,7 @@ class UVMRegBlock(UVMObject):
             blk = blk_  # uvm_reg_block
 
             curr_stat = []
-            yield blk.mirror(curr_stat, check, path, parent, prior, extension, fname, lineno)
+            await blk.mirror(curr_stat, check, path, parent, prior, extension, fname, lineno)
             if (curr_stat[0] != UVM_IS_OK and curr_stat[0] != UVM_HAS_X):
                 final_status = curr_stat[0]
         status.append(final_status)

@@ -41,4 +41,4 @@ def initial(dut):
     UVMConfigDb.set(None, "", "dut", dut)
     #UVMConfigDb.set(env, "apb", "vif", tb_top.apb0)
     cocotb.fork(Clock(vif.clk, 10, "NS").start())
-    yield run_test()
+    await run_test()

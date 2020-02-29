@@ -56,17 +56,17 @@ class producer(UVMComponent):
         self.put_port = UVMBlockingPutPort("put_port", self)
         self.num_items = 0
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         #
         randval = 0
 
         for i in range(10):
             randval = sv.random() % 100
             #10
-            yield Timer(10, "NS")
+            await Timer(10, "NS")
             uvm_info("producer", sv.sformatf("sending %d", randval), UVM_MEDIUM)
-            yield self.put_port.put(randval)
+            await self.put_port.put(randval)
             self.num_items += 1
 
 
@@ -77,13 +77,13 @@ class consumer(UVMComponent):
         self.get_port = UVMBlockingGetPort("get_port", self)
         self.num_items = 0
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         val = 0
         while True:
             uvm_info("CONSUMER", "Started to get items..", UVM_MEDIUM)
             arr = []
-            yield self.get_port.get(arr)
+            await self.get_port.get(arr)
             val = arr[0]
             uvm_info("consumer", sv.sformatf("receiving %d", val), UVM_MEDIUM)
             self.num_items += 1
@@ -108,10 +108,10 @@ class env(UVMEnv):
         self.c.get_port.connect(self.f.get_export)
         self.f.set_report_verbosity_level_hier(UVM_DEBUG)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(1000, "NS")
+        await Timer(1000, "NS")
         phase.drop_objection(self)
 
 
@@ -128,4 +128,4 @@ class env(UVMEnv):
 def module_top(dut):
     # Main body of module top:
     e = env("prod_cons_env")
-    yield run_test()
+    await run_test()

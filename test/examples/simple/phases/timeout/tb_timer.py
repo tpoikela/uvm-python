@@ -52,107 +52,107 @@ class tb_timer(UVMComponent):
         super().__init__(name, parent)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "run", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in run phase")
 
     #
-    @cocotb.coroutine
-    def pre_reset_phase(self, phase):
+    
+    async def pre_reset_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "pre_reset", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in pre_reset phase")
 
     #
-    @cocotb.coroutine
-    def reset_phase(self, phase):
+    
+    async def reset_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "reset", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in reset phase")
 
     #
-    @cocotb.coroutine
-    def post_reset_phase(self, phase):
+    
+    async def post_reset_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "post_reset", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in post_reset phase")
 
     #
-    @cocotb.coroutine
-    def pre_configure_phase(self, phase):
+    
+    async def pre_configure_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "pre_configure", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in pre_configure phase")
 
     #
-    @cocotb.coroutine
-    def configure_phase(self, phase):
+    
+    async def configure_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "configure", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in configure phase")
 
     #
-    @cocotb.coroutine
-    def post_configure_phase(self, phase):
+    
+    async def post_configure_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "post_configure", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in post_configure phase")
 
     #
-    @cocotb.coroutine
-    def pre_main_phase(self, phase):
+    
+    async def pre_main_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "pre_main", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in pre_main phase")
 
     #
-    @cocotb.coroutine
-    def main_phase(self, phase):
+    
+    async def main_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "main", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in main phase")
 
     #
-    @cocotb.coroutine
-    def post_main_phase(self, phase):
+    
+    async def post_main_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "post_main", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in post_main phase")
 
     #
-    @cocotb.coroutine
-    def pre_shutdown_phase(self, phase):
+    
+    async def pre_shutdown_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "pre_shutdown", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in pre_shutdown phase")
 
     #
-    @cocotb.coroutine
-    def shutdown_phase(self, phase):
+    
+    async def shutdown_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "shutdown", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in shutdown phase")
 
     #
-    @cocotb.coroutine
-    def post_shutdown_phase(self, phase):
+    
+    async def post_shutdown_phase(self, phase):
         t = []
         if (UVMConfigDb.get(self, "post_shutdown", "timeout", t) and t[0] > 0):
-            yield Timer(t[0], "NS")
+            await Timer(t[0], "NS")
             uvm_fatal("TIMEOUT", "Time-out expired in post_shutdown phase")
 
 

@@ -35,32 +35,32 @@ UBUS_ADDR_WIDTH = 16
 #UVMPhase.m_phase_trace = True
 
 
-@cocotb.coroutine
-def initial_run_test(dut, vif):
+
+async def initial_run_test(dut, vif):
     from uvm.base import UVMCoreService
     cs_ = UVMCoreService.get()
     UVMConfigDb.set(None, "*", "vif", vif)
-    yield run_test()
+    await run_test()
 
 
-@cocotb.coroutine
-def initial_reset(vif):
-    yield Timer(5, "NS")
+
+async def initial_reset(vif):
+    await Timer(5, "NS")
     vif.ubus_reset <= 1
     vif.ubus_clock <= 1
     vif.ubus_wait <= 0
-    yield Timer(51, "NS")
+    await Timer(51, "NS")
     vif.ubus_reset <= 0
 
 
-@cocotb.coroutine
-def always_clk(dut, ncycles):
+
+async def always_clk(dut, ncycles):
     dut.ubus_clock <= 0
     n = 0
     print("EEE starting always_clk")
     while n < 2*ncycles:
         n += 1
-        yield Timer(5, "NS")
+        await Timer(5, "NS")
         next_val = not dut.ubus_clock.value
         dut.ubus_clock <= int(next_val)
 
@@ -75,5 +75,5 @@ def module_ubus_tb(dut):
     proc_clk = cocotb.fork(always_clk(dut, 100))
     proc_vif = cocotb.fork(vif.start())
 
-    yield Timer(999, "NS")
-    yield [proc_run_test, proc_clk.join()]
+    await Timer(999, "NS")
+    await [proc_run_test, proc_clk.join()]

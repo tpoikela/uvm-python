@@ -1171,8 +1171,8 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_bus_write (uvm_reg_item rw,
     #                                     uvm_sequencer_base sequencer,
     #                                     uvm_reg_adapter adapter)
-    @cocotb.coroutine
-    def do_bus_write(self, rw, sequencer, adapter):
+    
+    async def do_bus_write(self, rw, sequencer, adapter):
         addrs = []
         system_map = self.get_root_map()
         bus_width = self.get_n_bytes()
@@ -1271,19 +1271,19 @@ class UVMRegMap(UVMObject):
                         "adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
-                yield rw.parent.start_item(bus_req, rw.prior)
+                await rw.parent.start_item(bus_req, rw.prior)
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
 
-                yield rw.parent.finish_item(bus_req)
-                yield bus_req.end_event.wait_on()
+                await rw.parent.finish_item(bus_req)
+                await bus_req.end_event.wait_on()
 
                 if adapter.provides_responses:
                     bus_rsp = None  # uvm_sequence_item
                     op = None  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
-                    yield rw.parent.get_base_response(bus_rsp)
+                    await rw.parent.get_base_response(bus_rsp)
                     rw_access = adapter.bus2reg(bus_rsp, rw_access)
                 else:
                     rw_access = adapter.bus2reg(bus_req, rw_access)
@@ -1322,8 +1322,8 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_bus_read (uvm_reg_item rw,
     #                                    uvm_sequencer_base sequencer,
     #                                    uvm_reg_adapter adapter)
-    @cocotb.coroutine
-    def do_bus_read(self, rw, sequencer, adapter):
+    
+    async def do_bus_read(self, rw, sequencer, adapter):
         addrs = []  # uvm_reg_addr_t[$]
         system_map = self.get_root_map()
         bus_width  = self.get_n_bytes()
@@ -1424,19 +1424,19 @@ class UVMRegMap(UVMObject):
                     uvm_fatal("RegMem","adapter [" + adapter.get_name() + "] didnt return a bus transaction")
 
                 bus_req.set_sequencer(sequencer)
-                yield rw.parent.start_item(bus_req, rw.prior)
+                await rw.parent.start_item(bus_req, rw.prior)
 
                 if (rw.parent is not None and i == 0):
                     rw.parent.mid_do(rw)
 
-                yield rw.parent.finish_item(bus_req)
-                yield bus_req.end_event.wait_on()
+                await rw.parent.finish_item(bus_req)
+                await bus_req.end_event.wait_on()
 
                 if adapter.provides_responses:
                     bus_rsp = None  # uvm_sequence_item
                     op = 0  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
-                    yield rw.parent.get_base_response(bus_rsp)
+                    await rw.parent.get_base_response(bus_rsp)
                     rw_access = adapter.bus2reg(bus_rsp,rw_access)
                 else:
                     adapter.bus2reg(bus_req,rw_access)
@@ -1474,8 +1474,8 @@ class UVMRegMap(UVMObject):
     #   // Perform a write operation.
     #   //
     #   extern virtual task do_write(uvm_reg_item rw)
-    @cocotb.coroutine
-    def do_write(self, rw):
+    
+    async def do_write(self, rw):
         tmp_parent_seq = None  # uvm_sequence_base
         system_map = self.get_root_map()
         adapter = system_map.get_adapter()
@@ -1499,12 +1499,12 @@ class UVMRegMap(UVMObject):
         if adapter is None:
             uvm_debug(self, 'do_write', 'Start seq because adapter is None')
             rw.set_sequencer(sequencer)
-            yield rw.parent.start_item(rw,rw.prior)
-            yield rw.parent.finish_item(rw)
-            yield rw.end_event.wait_on()
+            await rw.parent.start_item(rw,rw.prior)
+            await rw.parent.finish_item(rw)
+            await rw.end_event.wait_on()
         else:
             uvm_debug(self, 'do_write', 'do_bus_write because adapter exists')
-            yield self.do_bus_write(rw, sequencer, adapter)
+            await self.do_bus_write(rw, sequencer, adapter)
 
         # TODO
         #  if (tmp_parent_seq is not None)
@@ -1518,8 +1518,8 @@ class UVMRegMap(UVMObject):
     #   // Perform a read operation.
     #   //
     #   extern virtual task do_read(uvm_reg_item rw)
-    @cocotb.coroutine
-    def do_read(self, rw):
+    
+    async def do_read(self, rw):
         tmp_parent_seq = None  # uvm_sequence_base
         system_map = self.get_root_map()
         adapter = system_map.get_adapter()
@@ -1541,11 +1541,11 @@ class UVMRegMap(UVMObject):
 
         if adapter is None:
             rw.set_sequencer(sequencer)
-            yield rw.parent.start_item(rw, rw.prior)
-            yield rw.parent.finish_item(rw)
-            yield rw.end_event.wait_on()
+            await rw.parent.start_item(rw, rw.prior)
+            await rw.parent.finish_item(rw)
+            await rw.end_event.wait_on()
         else:
-            yield self.do_bus_read(rw, sequencer, adapter)
+            await self.do_bus_read(rw, sequencer, adapter)
 
         if tmp_parent_seq is not None:
             sequencer.m_sequence_exiting(tmp_parent_seq)

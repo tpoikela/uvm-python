@@ -79,8 +79,8 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         self.reg = None
 
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         maps = []  # uvm_reg_map[$]
         rg = self.rg
 
@@ -146,17 +146,17 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
             v = rg.get()
             status = []
-            yield rg.write(status, ~v, UVM_FRONTDOOR, maps[j], self)
+            await rg.write(status, ~v, UVM_FRONTDOOR, maps[j], self)
             status = status[0]
 
             if status != UVM_IS_OK:
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
                    + "' when writing '" + rg.get_full_name() +
                    + "' through map '" + maps[j].get_full_name() + "'"))
-            yield Timer(1, "NS")
+            await Timer(1, "NS")
 
             status = []
-            yield rg.mirror(status, UVM_CHECK, UVM_BACKDOOR, UVMRegMap.backdoor(), self)
+            await rg.mirror(status, UVM_CHECK, UVM_BACKDOOR, UVMRegMap.backdoor(), self)
             status = status[0]
             if status != UVM_IS_OK:
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
@@ -164,7 +164,7 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                                     + rg.get_full_name() +  "' through backdoor"))
 
             status = []
-            yield rg.write(status, v, UVM_BACKDOOR, maps[j], self)
+            await rg.write(status, v, UVM_BACKDOOR, maps[j], self)
             status = status[0]
             if status != UVM_IS_OK:
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
@@ -172,7 +172,7 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                    + "' through backdoor"))
 
             status = []
-            yield rg.mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[j], self)
+            await rg.mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[j], self)
             status = status[0]
             if status != UVM_IS_OK:
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
@@ -229,8 +229,8 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   // Executes the Register Access sequence.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         model = self.model
 
         if model is None:
@@ -242,15 +242,15 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
         self.reg_seq = UVMRegSingleAccessSeq.type_id.create("single_reg_access_seq")
         self.reset_blk(model)
         model.reset()
-        yield self.do_block(model)
+        await self.do_block(model)
 
 
     #   // Task: do_block
     #   //
     #   // Test all of the registers in a block
     #   //
-    @cocotb.coroutine
-    def do_block(self, blk):
+    
+    async def do_block(self, blk):
         #      uvm_reg regs[$]
         regs = []
 
@@ -273,12 +273,12 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
                 continue
 
             self.reg_seq.rg = regs[i]
-            yield self.reg_seq.start(None,self)
+            await self.reg_seq.start(None,self)
 
         blks = []  # uvm_reg_block[$]
         blk.get_blocks(blks)
         for i in range(len(blks)):
-            yield self.do_block(blks[i])
+            await self.do_block(blks[i])
         #   endtask: do_block
 
 
@@ -294,9 +294,9 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    @cocotb.coroutine
-    def reset_blk(self, blk):
-        yield Timer(0, "NS")
+    
+    async def reset_blk(self, blk):
+        await Timer(0, "NS")
 
 
 uvm_object_utils(UVMRegAccessSeq)
@@ -324,8 +324,8 @@ class UVMRegMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         super().__init__(name)
 
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         model = self.model
 
         if model is None:
@@ -338,24 +338,24 @@ class UVMRegMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         if reg_test_on(model, "NO_REG_TESTS") and reg_test_on(model,
                 "NO_REG_ACCESS_TEST"):
             sub_seq = UVMRegAccessSeq("reg_access_seq")
-            yield self.reset_blk(model)
+            await self.reset_blk(model)
             model.reset()
             sub_seq.model = model
-            yield sub_seq.start(None,self)
+            await sub_seq.start(None,self)
 
         if reg_test_on(model, "NO_MEM_ACCESS_TEST"):
             sub_seq = UVMMemAccessSeq("mem_access_seq")
-            yield self.reset_blk(model)
+            await self.reset_blk(model)
             model.reset()
             sub_seq.model = model
-            yield sub_seq.start(None,self)
+            await sub_seq.start(None,self)
 
 
     #   // Any additional steps required to reset the block
     #   // and make it accessibl
-    @cocotb.coroutine
-    def reset_blk(self, blk):
-        yield Timer(1, "NS")
+    
+    async def reset_blk(self, blk):
+        await Timer(1, "NS")
 
 
     #endclass: UVMRegMemAccessSeq

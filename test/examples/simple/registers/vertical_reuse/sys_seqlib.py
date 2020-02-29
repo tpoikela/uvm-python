@@ -40,11 +40,11 @@ class dut_reset_seq(UVMSequence):
         self.vif = None
 
     #
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         self.vif.rst <= 1
         for i in range(5):
-            yield FallingEdge(self.vif.clk)
+            await FallingEdge(self.vif.clk)
         self.vif.rst <= 0
 
     #endclass
@@ -59,22 +59,22 @@ class sys_R_test_seq(UVMRegSequence):
         self.model = None  # reg_sys_S
 
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         if self.model is None:
             uvm_fatal("NO_REG","RegModel model handle is None")
             return
         for i in range(2):
-            yield self.start_blk_seq(i)
+            await self.start_blk_seq(i)
 
 
-    @cocotb.coroutine
-    def start_blk_seq(self, i):
+    
+    async def start_blk_seq(self, i):
         # fork
         seq = blk_R_test_seq.type_id.create(sv.sformatf("blk_seq%0d",i),
                 None, self.get_full_name())
         seq.model = self.model.B[i]
-        yield seq.start(None, self)
+        await seq.start(None, self)
         #end join_none
 
 

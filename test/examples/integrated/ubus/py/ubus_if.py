@@ -58,33 +58,33 @@ class ubus_if(sv_if):
         self.has_checks = True
         self.has_coverage = True
 
-    @cocotb.coroutine
-    def start(self):
+    
+    async def start(self):
         a = cocotb.fork(self.drive_data())
         b = cocotb.fork(self.always())
         c = cocotb.fork(self.always_assertions())
-        yield [a, b, c]
+        await [a, b, c]
 
-    @cocotb.coroutine
-    def drive_data(self):
+    
+    async def drive_data(self):
         while True:
-            yield Combine(Edge(self.sig_data_out), Edge(self.sig_data))
+            await Combine(Edge(self.sig_data_out), Edge(self.sig_data))
             if self.slave_en == 1:
                 self.sig_data <= self.sig_data_out
 
-    @cocotb.coroutine
-    def always(self):
+    
+    async def always(self):
         if self.has_checks is True:
             while True:
-                yield RisingEdge(self.sig_reset)
+                await RisingEdge(self.sig_reset)
         else:
-            yield Timer(0, "NS")
+            await Timer(0, "NS")
 
 
-    @cocotb.coroutine
-    def always_assertions(self):
+    
+    async def always_assertions(self):
         while True:
-            yield FallingEdge(self.sig_clock)
+            await FallingEdge(self.sig_clock)
         #// Coverage and assertions to be implemented here.
         #
         #always @(negedge sig_clock)

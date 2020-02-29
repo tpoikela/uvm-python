@@ -154,14 +154,14 @@ def UVM_TLM_NB_TRANSPORT_BW_IMP(imp, T):
 #// allows the timing points to be offset from the simulation times
 #// at which the task call and return are executed.
 def UVM_TLM_B_TRANSPORT_IMP(imp, T):
-    @cocotb.coroutine
-    def b_transport(self, t, delay):
+    
+    async def b_transport(self, t, delay):
         if delay == None:
             uvm_error("UVM/TLM/NULLDELAY", 
                   cat(self.get_full_name(), 
                    ".b_transport() called with 'null' delay"))
             return
-        yield getattr(self, imp).b_transport(t, delay)
+        await getattr(self, imp).b_transport(t, delay)
     setattr(T, "b_transport", b_transport)
 
 #

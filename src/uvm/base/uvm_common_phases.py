@@ -279,13 +279,13 @@ from .uvm_task_phase import UVMTaskPhase
 
 class UVMRunPhase(UVMTaskPhase):
 
-    @cocotb.coroutine
-    def exec_task(self, comp, phase):
+    
+    async def exec_task(self, comp, phase):
         uvm_debug(self, 'exec_task', comp.get_name() + ' yielding comp.run_phase()')
         # tpoikela, modification  of original to allow handle for proc
         #yield comp.run_phase(phase)
         comp.m_run_process = cocotb.fork(comp.run_phase(phase))
-        yield comp.m_run_process
+        await comp.m_run_process
 
         #parent = comp.get_parent()
         #if parent is not None and parent.get_name() == '__top__':

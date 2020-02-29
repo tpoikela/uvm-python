@@ -111,8 +111,8 @@ class test_read_modify_write(ubus_example_base_test):
         ubus_example_base_test.build_phase(self, phase)
         #  endfunction : build_phase
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self, "test_read_modify_write OBJECTED")
         master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
         slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
@@ -123,7 +123,7 @@ class test_read_modify_write(ubus_example_base_test):
 
         slave_seq = slave_memory_seq("mem_seq")
         slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
-        yield [slave_proc, master_proc.join()]
+        await [slave_proc, master_proc.join()]
         phase.drop_objection(self, "test_read_modify_write drop objection")
 
     #endclass : test_read_modify_write
@@ -164,8 +164,8 @@ class seq_2m_4s(UVMSequence):
         self.master_sqr = []
         self.slave_sqr = []
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         # TODO create sequences and fork them
         i = 0
         for sqr in self.master_sqr:
@@ -178,7 +178,7 @@ class seq_2m_4s(UVMSequence):
             slave_seq = slave_memory_seq("mem_seq_" + str(i))
             slave_proc = cocotb.fork(slave_seq.start(sqr))
             i += 1
-        yield Timer(0, "NS")
+        await Timer(0, "NS")
 
 #// 2 Master, 4 Slave test
 class test_2m_4s(ubus_example_base_test):
@@ -223,8 +223,8 @@ class test_2m_4s(ubus_example_base_test):
         #  end
         #  endfunction : build_phase
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self, "test_2m_4s objects", 1)
         top_seq = seq_2m_4s("seq_2m_4s")
         for slave in self.ubus_example_tb0.ubus0.slaves:
@@ -232,9 +232,9 @@ class test_2m_4s(ubus_example_base_test):
         for master in self.ubus_example_tb0.ubus0.masters:
             top_seq.master_sqr.append(master.sequencer)
         # TODO add handles for sequencers
-        yield top_seq.start(None)  # vseq runs with sequencer
+        await top_seq.start(None)  # vseq runs with sequencer
         #yield Timer(1000, "NS")
-        yield Timer(500, "NS")
+        await Timer(500, "NS")
         phase.drop_objection(self)
 
 

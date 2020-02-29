@@ -42,7 +42,7 @@ def initial(dut):
     c = Clock(dut.apb_pclk, 10, 'ns')
     cocotb.fork(c.start())
     cocotb.fork(run_test())
-    yield Timer(1000, "NS")
+    await Timer(1000, "NS")
 
     if env.all_ok is False:
         uvm_fatal("ALL_NOT_OK", "env.all_ok == False, something went wrong!")

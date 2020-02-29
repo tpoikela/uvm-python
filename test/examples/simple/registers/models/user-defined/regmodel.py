@@ -74,8 +74,8 @@ class user_acp_reg(UVMReg):
         #   endfunction: build
 
 
-    @cocotb.coroutine
-    def pre_write(self, rw):
+    
+    async def pre_write(self, rw):
         m_data = 0
         rg = None
 
@@ -89,7 +89,7 @@ class user_acp_reg(UVMReg):
         # with the incremented value to emulate the front-door
         if (rw.path == UVM_BACKDOOR):
             rw.value[0] = m_data
-        yield Timer(5, "NS")
+        await Timer(5, "NS")
         #   endtask: pre_write
     #
     #endclass : user_acp_reg

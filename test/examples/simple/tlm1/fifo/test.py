@@ -52,19 +52,19 @@ class producer(UVMComponent):
         super().__init__(name,parent)
         self.data_out = UVMPutPort("data_out", self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
-        yield Timer(1, "NS")
+    
+    async def run_phase(self, phase):
+        await Timer(1, "NS")
         p = packet(0)
 
         while self.data_out.try_put(p):
             sv.display("%0t: put data %0d", sv.time(), p.i)
-            yield Timer(10, "NS")
+            await Timer(10, "NS")
             p = packet(p.i + 1)
 
         sv.display("try_put status return: %0d", p.i)
         sv.display("%0t: do a blocking put", sv.time())
-        yield self.data_out.put(p)
+        await self.data_out.put(p)
         sv.display("%0t: blocking put succeeded", sv.time())
 
 
@@ -77,14 +77,14 @@ class consumer(UVMComponent):
         self.data_in = UVMGetPort("data_in", self)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         #100;  // fifo will fill up
-        yield Timer(100, "NS")  # FIFO will fill up
+        await Timer(100, "NS")  # FIFO will fill up
         sv.display("%0t: getting one", sv.time())
 
         p = []
-        yield self.data_in.get(p)
+        await self.data_in.get(p)
         p = p[0]  # Required for python-tlm now
         sv.display("%0t: received data %0d", sv.time(), p.i)
         #100;  // let the blocking put succeed
@@ -93,7 +93,7 @@ class consumer(UVMComponent):
             p = p[0]
             sv.display("%0t: received data %0d", sv.time(), p.i)
             #10
-            yield Timer(10, "NS")
+            await Timer(10, "NS")
             p = []
 
 
@@ -103,22 +103,22 @@ class test(UVMTest):
         super().__init__(name, parent)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(None)
         #5us
-        yield Timer(5, "US")
+        await Timer(5, "US")
         phase.drop_objection(None)
 uvm_component_utils(test)
 
 #
 
 
-@cocotb.coroutine
-def print_proc(fifo):
+
+async def print_proc(fifo):
     for i in range(30):
         sv.display("%0t:   FIFO level %0d of %0d", sv.time(), fifo.used(), fifo.size())
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         #10
 
 
@@ -133,7 +133,7 @@ def module_top(dut):
 
     proc1 = cocotb.fork(run_test("test"))
     proc2 = cocotb.fork(print_proc(fifo))
-    yield [proc1, proc2.join()]
+    await [proc1, proc2.join()]
 
 #  initial begin
 #    prod.data_out.connect(fifo.put_export)

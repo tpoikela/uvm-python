@@ -94,9 +94,9 @@ def uvm_create(seq_obj, SEQ_OR_ITEM, m_sequencer):
 #`define uvm_do(seq_obj, SEQ_OR_ITEM) \
 #  `uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, m_sequencer, -1, {})
 
-@cocotb.coroutine
-def uvm_do(seq_obj, SEQ_OR_ITEM):
-    yield uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1, [])
+
+async def uvm_do(seq_obj, SEQ_OR_ITEM):
+    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1, [])
 #
 #
 #// MACRO: `uvm_do_pri
@@ -120,9 +120,9 @@ def uvm_do(seq_obj, SEQ_OR_ITEM):
 #
 #`define uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, CONSTRAINTS)
-@cocotb.coroutine
-def uvm_do_with(seq_obj, SEQ_OR_ITEM, CONSTRAINTS):
-    yield uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1,
+
+async def uvm_do_with(seq_obj, SEQ_OR_ITEM, CONSTRAINTS):
+    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1,
             CONSTRAINTS)
 
 
@@ -221,18 +221,18 @@ def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
 #  if (!$cast(__seq,SEQ_OR_ITEM)) finish_item(SEQ_OR_ITEM, PRIORITY); \
 #  else __seq.start(SEQR, this, PRIORITY, 0); \
 #  end
-@cocotb.coroutine
-def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
+
+async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
     from ..seq.uvm_sequence import UVMSequence
     _seq = uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR)
     if isinstance(_seq, UVMSequence):
-        yield SEQ_OR_ITEM.start(SEQR, seq_obj, PRIORITY, 0)
+        await SEQ_OR_ITEM.start(SEQR, seq_obj, PRIORITY, 0)
     else:
         # TODO handle constraints
-        yield seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
+        await seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
         if SEQ_OR_ITEM.randomize_with(CONSTRAINTS) is False:
             uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action")
-        yield seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
+        await seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
 
 #
 #

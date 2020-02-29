@@ -41,7 +41,7 @@ def initial(dut):
     UVMConfigDb.set(env, "apb", "vif", vif)
     c = Clock(dut.apb_pclk, 10, 'ns')
     cocotb.fork(c.start())
-    yield run_test()
+    await run_test()
 
     if env.all_ok is False:
         uvm_fatal("ALL_NOT_OK", "env.all_ok == False, something went wrong!")

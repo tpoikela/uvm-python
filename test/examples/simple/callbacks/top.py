@@ -95,7 +95,7 @@ class bus_driver_cb(UVMCallback):
 
     #@cocotb.coroutine TODO fix this
     def trans_executed(self, driver, tr):
-        yield Timer(0, "NS")
+        await Timer(0, "NS")
 
     def __init__(self, name="bus_driver_cb_inst"):
         super().__init__(name)
@@ -143,20 +143,20 @@ class bus_driver(UVMComponent):
         uvm_do_callbacks_exit_on(self,bus_driver_cb, 'trans_received', 1, self, tr)
 
 
-    @cocotb.coroutine
-    def trans_executed(self, tr):
-        yield Timer(0, "NS")
+    
+    async def trans_executed(self, tr):
+        await Timer(0, "NS")
         return uvm_do_callbacks(self, bus_driver_cb, 'trans_executed', self, tr)
 
-    @cocotb.coroutine
-    def put(self, t):
+    
+    async def put(self, t):
         uvm_report_info("bus_tr received",t.convert2string())
         if self.trans_received(t) is False:
             uvm_info("bus_tr dropped", "user callback indicated DROPPED\n")
             return
 
-        yield Timer(100, "NS")
-        yield self.trans_executed(t)
+        await Timer(100, "NS")
+        await self.trans_executed(t)
         uvm_info("bus_tr executed", t.convert2string() + "\n", UVM_LOW)
 
 
@@ -266,7 +266,7 @@ def module_top(dut):
     for i in range(5):
         tr.addr = i
         tr.data = 6-i
-        yield driver.in_port.put(tr)
+        await driver.in_port.put(tr)
 
     svr = UVMReportServer.get_server()
     svr.report_summarize()

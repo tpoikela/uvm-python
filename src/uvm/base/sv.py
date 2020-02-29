@@ -277,16 +277,16 @@ class semaphore():
         self.lock = Lock("sem_lock")
         self.locked = False
 
-    @cocotb.coroutine
-    def get(self, count=1):
+    
+    async def get(self, count=1):
         if self.count > count:
             self.count -= count
-            yield Timer(0, "NS")
+            await Timer(0, "NS")
         elif count > self.max_count:
             raise Exception("Tried to get {} > max count {}".format(count,
                 self.max_count))
         else:
-            yield self.lock.acquire()
+            await self.lock.acquire()
             self.locked = True
             self.count -= count
 
@@ -324,8 +324,8 @@ def cat(*args):
     return ret
 
 
-@cocotb.coroutine
-def wait(cond, ev):
+
+async def wait(cond, ev):
     if not callable(cond):
         raise Exception("wait expects the first arguments to be callable")
 
@@ -333,5 +333,5 @@ def wait(cond, ev):
         if cond():
             break
         else:
-            yield ev.wait()
+            await ev.wait()
             ev.clear()

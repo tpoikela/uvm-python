@@ -32,7 +32,7 @@
 #
 
 import cocotb
-from cocotb.triggers import Timer
+from cocotb.triggers import Timer, First, Combine
 
 from uvm.base.uvm_coreservice import UVMCoreService
 from uvm.base.uvm_pool import UVMEventPool
@@ -43,21 +43,21 @@ from uvm.macros import uvm_error
 from uvm.base.uvm_global_vars import uvm_default_table_printer
 
 
-@cocotb.coroutine
-def trig_event(e):
-    yield Timer(100, "NS")
-    e.trigger()
-    yield Timer(1, "NS")
 
-@cocotb.coroutine
-def trig_data_event(e):
-    yield Timer(50, "NS")
+async def trig_event(e):
+    await Timer(100, "NS")
+    e.trigger()
+    await Timer(1, "NS")
+
+
+async def trig_data_event(e):
+    await Timer(50, "NS")
     e.trigger(0x1234)
-    yield Timer(1, "NS")
+    await Timer(1, "NS")
 
 
 @cocotb.test()
-def test_test(dut):
+async def test_test(dut):
 
     ep = UVMEventPool("ep")
     cs_ = UVMCoreService.get()
@@ -71,12 +71,12 @@ def test_test(dut):
 
     trig_proc = cocotb.fork(trig_event(e))
     cocotb.fork(trig_data_event(e_data))
-    yield e_data.wait_trigger()
-    yield e.wait_on()
+    await e_data.wait_trigger()
+    await e.wait_on()
     e.reset()
-    yield Timer(1, "NS")
+    await Timer(1, "NS")
     trig_proc = cocotb.fork(trig_event(e))
-    yield [trig_proc.join(), e.wait_on().join()]
+    await Combine(trig_proc.join(), e.wait_on().join())
 
     svr = None  # uvm_report_server
     svr = cs_.get_report_server()

@@ -442,19 +442,19 @@ class UVMComponent(UVMReportObject):
     # but they will be killed once the phase ends.
     #
     # The run_phase task should never be called directly.
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         uvm_debug(self, 'run_phase', self.get_name() + ' yielding self.run()')
         # self.m_run_process = cocotb.fork(self.run())
         # yield self.m_run_process
-        yield self.run()
+        await self.run()
 
     # For backward compatibility the base <run_phase> method calls <run>.
     # extern virtual task run()
-    @cocotb.coroutine
-    def run(self):
+    
+    async def run(self):
         uvm_debug(self, 'run', self.get_name() + ' yield Timer(0) in self.run()')
-        yield Timer(0)
+        await Timer(0)
 
     #// Task: pre_reset_phase
     #//
@@ -474,9 +474,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task pre_reset_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def pre_reset_phase(self, phase):
-        yield Timer(0)
+    
+    async def pre_reset_phase(self, phase):
+        await Timer(0)
 
     #// Task: reset_phase
     #//
@@ -496,9 +496,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task reset_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def reset_phase(self, phase):
-        yield Timer(0)
+    
+    async def reset_phase(self, phase):
+        await Timer(0)
 
     #// Task: post_reset_phase
     #//
@@ -518,9 +518,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task post_reset_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def post_reset_phase(self, phase):
-        yield Timer(0)
+    
+    async def post_reset_phase(self, phase):
+        await Timer(0)
 
     #// Task: pre_configure_phase
     #//
@@ -540,9 +540,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task pre_configure_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def pre_configure_phase(self, phase):
-        yield Timer(0)
+    
+    async def pre_configure_phase(self, phase):
+        await Timer(0)
 
     #// Task: configure_phase
     #//
@@ -562,9 +562,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task configure_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def configure_phase(self, phase):
-        yield Timer(0)
+    
+    async def configure_phase(self, phase):
+        await Timer(0)
 
     #// Task: post_configure_phase
     #//
@@ -584,9 +584,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task post_configure_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def post_configure_phase(self, phase):
-        yield Timer(0)
+    
+    async def post_configure_phase(self, phase):
+        await Timer(0)
 
     #// Task: pre_main_phase
     #//
@@ -606,9 +606,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task pre_main_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def pre_main_phase(self, phase):
-        yield Timer(0)
+    
+    async def pre_main_phase(self, phase):
+        await Timer(0)
 
     #// Task: main_phase
     #//
@@ -628,9 +628,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task main_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def main_phase(self, phase):
-        yield Timer(0)
+    
+    async def main_phase(self, phase):
+        await Timer(0)
 
     #// Task: post_main_phase
     #//
@@ -650,9 +650,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task post_main_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def post_main_phase(self, phase):
-        yield Timer(0)
+    
+    async def post_main_phase(self, phase):
+        await Timer(0)
 
     #// Task: pre_shutdown_phase
     #//
@@ -672,9 +672,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task pre_shutdown_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def pre_shutdown_phase(self, phase):
-        yield Timer(0)
+    
+    async def pre_shutdown_phase(self, phase):
+        await Timer(0)
 
     #// Task: shutdown_phase
     #//
@@ -694,9 +694,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task shutdown_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def shutdown_phase(self, phase):
-        yield Timer(0)
+    
+    async def shutdown_phase(self, phase):
+        await Timer(0)
 
     #// Task: post_shutdown_phase
     #//
@@ -716,9 +716,9 @@ class UVMComponent(UVMReportObject):
     #//
     #// This method should not be called directly.
     #extern virtual task post_shutdown_phase(uvm_phase phase)
-    @cocotb.coroutine
-    def post_shutdown_phase(self, phase):
-        yield Timer(0)
+    
+    async def post_shutdown_phase(self, phase):
+        await Timer(0)
 
     #// Function: extract_phase
     #//

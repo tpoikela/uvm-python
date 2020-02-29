@@ -96,12 +96,12 @@ from ..base.uvm_object_globals import *
 #
 #`define UVM_BLOCKING_PUT_IMP(imp, TYPE, arg) \
 def UVM_BLOCKING_PUT_IMP(imp, T):
-    @cocotb.coroutine
-    def put(self, t):
+    
+    async def put(self, t):
         if not hasattr(self, imp):
             raise Exception('Tried calling put() for attr {}'.format(imp))
         port_imp = getattr(self, imp)
-        yield port_imp.put(t)
+        await port_imp.put(t)
     #endtask
     setattr(T, 'put', put)
 
@@ -126,9 +126,9 @@ def UVM_NONBLOCKING_PUT_IMP(imp, T):
 #    imp.get(arg); \
 #  endtask
 def UVM_BLOCKING_GET_IMP(imp, T):
-    @cocotb.coroutine
-    def get(self, arg):
-        yield getattr(self, imp).get(arg)
+    
+    async def get(self, arg):
+        await getattr(self, imp).get(arg)
     setattr(T, 'get', get)
 
 #`define UVM_NONBLOCKING_GET_IMP(imp, TYPE, arg) \
@@ -151,9 +151,9 @@ def UVM_NONBLOCKING_GET_IMP(imp, T):
 #  task peek (output TYPE arg); \
 #    imp.peek(arg); \
 def UVM_BLOCKING_PEEK_IMP(imp, T):
-    @cocotb.coroutine
-    def peek(self, arg):
-        yield getattr(self, imp).peek(arg)
+    
+    async def peek(self, arg):
+        await getattr(self, imp).peek(arg)
     setattr(T, 'peek', peek)
 
 #`define UVM_NONBLOCKING_PEEK_IMP(imp, TYPE, arg) \
@@ -173,9 +173,9 @@ def UVM_NONBLOCKING_PEEK_IMP(imp, T):
 #  task transport (REQ req_arg, output RSP rsp_arg); \
 #    imp.transport(req_arg, rsp_arg); \
 def UVM_BLOCKING_TRANSPORT_IMP(imp, T):
-    @cocotb.coroutine
-    def transport (self, req_arg, rsp_arg):
-        yield getattr(self, imp).transport(req_arg, rsp_arg)
+    
+    async def transport (self, req_arg, rsp_arg):
+        await getattr(self, imp).transport(req_arg, rsp_arg)
     setattr(T, 'transport', transport)
 
 #`define UVM_NONBLOCKING_TRANSPORT_IMP(imp, REQ, RSP, req_arg, rsp_arg) \

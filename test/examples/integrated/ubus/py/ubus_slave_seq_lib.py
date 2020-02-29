@@ -121,8 +121,8 @@ class slave_memory_seq(UVMSequence):
             for i in range(self.req.size):
                 self.m_mem[self.req.addr + i] = self.req.data[i]
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         #p = None  # uvm_phase
         uvm_info(self.get_type_name(), sv.sformatf("ubus_slave_seq %s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
@@ -134,7 +134,7 @@ class slave_memory_seq(UVMSequence):
 
         while True:
             util_transfer = []
-            yield self.p_sequencer.addr_ph_port.peek(util_transfer)
+            await self.p_sequencer.addr_ph_port.peek(util_transfer)
             self.util_transfer = util_transfer[0]
             _print("slave_mem_seq after peek. Got util_xfer: " +
                 self.util_transfer.convert2string())
@@ -145,9 +145,9 @@ class slave_memory_seq(UVMSequence):
 
             _print("BEFORE start_item. req is " +
                 self.req.convert2string())
-            yield self.start_item(self.req)
+            await self.start_item(self.req)
             _print("after start_item")
-            yield self.finish_item(self.req)
+            await self.finish_item(self.req)
             _print("after finish_item")
 
             #p.drop_objection(self)

@@ -124,10 +124,10 @@ class B(VerifComp):
     def report_phase(self, phase):
         sv.display("%0t: %0s:  report", sv.time("NS"), self.get_full_name())
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         sv.display("%0t: %0s:  start run phase", sv.time("NS"), self.get_full_name())
-        yield Timer(self.delay, "NS")
+        await Timer(self.delay, "NS")
         sv.display("%0t: %0s:  end run phase", sv.time("NS"), self.get_full_name())
 
 
@@ -161,10 +161,10 @@ class A(VerifComp):
     def report_phase(self, phase):
         sv.display("%0t: %0s:  report", sv.time("NS"), self.get_full_name())
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         sv.display("%0t: %0s:  start run phase", sv.time("NS"), self.get_full_name())
-        yield Timer(self.delay, "NS")
+        await Timer(self.delay, "NS")
         sv.display("%0t: %0s:  end run phase", sv.time("NS"), self.get_full_name())
 
 
@@ -203,11 +203,11 @@ class top(UVMEnv):
     def report_phase(self, phase):
         sv.display("%0t: %0s:  report", sv.time("NS"), self.get_full_name())
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         sv.display("%0t: %0s:  start run phase", sv.time("NS"), self.get_full_name())
-        yield Timer(test_duration, "NS")
+        await Timer(test_duration, "NS")
         sv.display("%0t: %0s:  end run phase", sv.time("NS"), self.get_full_name())
         phase.drop_objection(self)
 
@@ -218,7 +218,7 @@ def initial_begin(dut):
     t = top("top", None)
     # Randomize all of the delays
     t.randomize()  # cast to 'void' removed
-    yield run_test()
+    await run_test()
     if sv.realtime("NS") != test_duration:
         uvm_fatal("TIME_ERR", "Exp: {}, Got: {}".format(
             test_duration, sv.realtime("NS")))

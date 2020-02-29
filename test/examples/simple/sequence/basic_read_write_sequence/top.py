@@ -20,7 +20,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Timer
+from cocotb.triggers import Timer, Combine
 from cocotb.utils import get_sim_time
 
 from uvm.base.uvm_debug import UVMDebug
@@ -169,8 +169,8 @@ class my_driver(UVMDriver):
         self.nitems = 0
         self.recording_detail = UVM_HIGH
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         req = None
         rsp = None
 
@@ -178,7 +178,7 @@ class my_driver(UVMDriver):
             uvm_info("DRIVER", "my_driver getting the req now..",
                 UVM_MEDIUM)
             qreq = []
-            yield self.seq_item_port.get(qreq)
+            await self.seq_item_port.get(qreq)
 
             self.nitems += 1
             req = qreq[0]
@@ -194,7 +194,7 @@ class my_driver(UVMDriver):
             else:
                 self.data_array[req.addr] = req.data
                 uvm_info("sending", toSTRING(req), UVM_MEDIUM)
-            yield self.seq_item_port.put(rsp)
+            await self.seq_item_port.put(rsp)
             self.end_tr(req)
 
 uvm_component_utils(my_driver)
@@ -210,8 +210,8 @@ class sequenceA(UVMSequence):
         self.my_id = sequenceA.g_my_id
         sequenceA.g_my_id += 1
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         req = None  # REQ  req
         rsp = None  # RSP  rsp
         uvm_info("sequenceA", "Starting sequence", UVM_MEDIUM)
@@ -220,7 +220,7 @@ class sequenceA(UVMSequence):
             #req = uvm_create(req, self.m_sequencer)
             uvm_info("sequenceA", "Starting item " + str(i), UVM_MEDIUM)
             req = bus_req("my_req")
-            yield Timer(10, "NS")
+            await Timer(10, "NS")
 
             req.addr = (self.my_id * NUM_LOOPS) + i
             req.data = self.my_id + i + 55
@@ -230,11 +230,11 @@ class sequenceA(UVMSequence):
                 raise Exception("Null sequencer CRASH")
 
             # uvm_send(req)
-            yield self.start_item(req)
-            yield self.finish_item(req)
+            await self.start_item(req)
+            await self.finish_item(req)
             uvm_info("sequenceA", "getting response1 for " + str(i), UVM_MEDIUM)
             rsp = []
-            yield self.get_response(rsp)
+            await self.get_response(rsp)
             uvm_info("sequenceA", "got response1 for " + str(i) + ": " +
                     rsp[0].convert2string(), UVM_MEDIUM)
 
@@ -245,11 +245,11 @@ class sequenceA(UVMSequence):
             req.op   = BUS_READ
 
             #uvm_send(req)
-            yield self.start_item(req)
-            yield self.finish_item(req)
+            await self.start_item(req)
+            await self.finish_item(req)
             uvm_info("sequenceA", "getting response2 for " + str(i), UVM_MEDIUM)
             rsp = []
-            yield self.get_response(rsp)
+            await self.get_response(rsp)
 
             rsp = rsp[0]
             if rsp.data != (self.my_id + i + 55):
@@ -279,14 +279,15 @@ class env(UVMEnv):
         uvm_info("ENV", "Connecting ports now here", UVM_MEDIUM)
         self.drv.seq_item_port.connect(self.sqr.seq_item_export)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         fork_procs = []
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
             fork_procs.append(cocotb.fork(the_sequence.start(self.sqr, None)))
-        yield list(map(lambda t : t.join(), fork_procs))
+        join_list = list(map(lambda t: t.join(), fork_procs))
+        await Combine(*join_list)
         phase.drop_objection(self)
 
     def check_phase(self, phase):
@@ -300,11 +301,11 @@ uvm_component_utils(env)
 
 
 @cocotb.test()
-def test_module_top(dut):
+async def test_module_top(dut):
     UVMPhase.m_phase_trace = True
     e = env("env_name", parent=None)
     uvm_info("top","In top initial block", UVM_MEDIUM)
-    yield run_test()
+    await run_test()
     sim_time = sim_time = get_sim_time('ns')
 
     if sim_time == 0:

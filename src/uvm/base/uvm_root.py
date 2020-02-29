@@ -198,8 +198,8 @@ class UVMRoot(UVMComponent):
     # variable, finish_on_completion, is set, then $finish is called after
     # phasing completes.
 
-    @cocotb.coroutine
-    def run_test(self, test_name=""):
+    
+    async def run_test(self, test_name=""):
         uvm_debug(self, 'run_test', 'Called with testname |' + test_name + '|')
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
@@ -217,7 +217,7 @@ class UVMRoot(UVMComponent):
         # Needs to be done in run_test since it needs to be in an
         # initial block to fork a process.
         uvm_debug(self, 'run_test', 'Calling m_init_objections')
-        yield UVMObjection().m_init_objections()
+        await UVMObjection().m_init_objections()
 
         # Retrieve the test names provided on the command line.  Command line
         # overrides the argument.
@@ -250,7 +250,7 @@ class UVMRoot(UVMComponent):
                 uvm_fatal("TTINST",
                     "An uvm_test_top already exists via a previous call to run_test")
             #0; // forces shutdown because $finish is forked
-            yield Timer(0, "NS")
+            await Timer(0, "NS")
             uvm_debug(self, 'run_test', "factory.create in UVMRoot testname " + test_name)
 
             uvm_test_top = factory.create_component_by_name(test_name,
@@ -262,7 +262,7 @@ class UVMRoot(UVMComponent):
                 else:
                     msg = "call to run_test(" + test_name + ")"
                 uvm_fatal("INVTST", "Requested test from " + msg + " not found.")
-        yield Timer(0, "NS")
+        await Timer(0, "NS")
 
         if len(self.m_children) == 0:
             uvm_fatal("NOCOMP", ("No components instantiated. You must either instantiate"
@@ -283,11 +283,11 @@ class UVMRoot(UVMComponent):
         uvm_debug(self, 'run_test', 'After phase-fork executing')
         #end
         #join_none
-        yield Timer(0)
+        await Timer(0)
         ##0; // let the phase runner start
 
         uvm_debug(self, 'run_test', 'Waiting all phases to complete JKJK')
-        yield self.wait_all_phases_done()
+        await self.wait_all_phases_done()
         uvm_debug(self, 'run_test', 'All phases are done now JKJK')
 
         #// clean up after ourselves
@@ -297,9 +297,9 @@ class UVMRoot(UVMComponent):
         if self.finish_on_completion:
             self.uvm_report_info('FINISH', '$finish was reached in run_test()', UVM_NONE)
 
-    @cocotb.coroutine
-    def wait_all_phases_done(self):
-        yield self.m_phase_all_done_event.wait()
+    
+    async def wait_all_phases_done(self):
+        await self.m_phase_all_done_event.wait()
         #wait (m_phase_all_done == 1)
 
     # Function: die

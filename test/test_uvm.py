@@ -37,8 +37,8 @@ def mailbox_test(dut):
     read_proc = cocotb.fork(read_packets(fifo, npackets))
     print("Waiting to join() the forked procs")
     #yield Timer(10)
-    yield [write_proc.join(), read_proc.join()]
-    yield Timer(10000)
+    await [write_proc.join(), read_proc.join()]
+    await Timer(10000)
 
 class TestParentComp(UVMComponent):
     def __init__(self, name, parent):
@@ -71,15 +71,15 @@ def uvm_component_test(dut):
     caller.call_bottomup_phase(comp, 'connect_phase')
     caller.expect_call_order(['child1', 'top'])
     #yield comp.run_phase({})
-    yield caller.call_topdown_task_phase(comp, 'run_phase')
-    yield Timer(100)
+    await caller.call_topdown_task_phase(comp, 'run_phase')
+    await Timer(100)
 
 @cocotb.test(skip=True)
 def uvm_basic_top_test(dut):
     """ Test for checking that UVM is up and running """
     test = UVMTest('my test', None)
     test.dut = dut
-    yield run_test('MyTest')
+    await run_test('MyTest')
 
 @cocotb.test(skip=False)
 def uvm_phase_test(dut):
@@ -87,30 +87,30 @@ def uvm_phase_test(dut):
     test_comp = CompPhaseTest('comp_phase_test', uvm_root)
     clp = UVMCmdlineProcessor.get_inst()
     print("tool=" + clp.get_tool_name() + " version=" + clp.get_tool_version())
-    yield run_test()
-    yield test_comp.m_done_event.wait()
+    await run_test()
+    await test_comp.m_done_event.wait()
     if not test_comp.all_done:
         raise Exception('Error in comp_phase_test')
 
 # HELPERS
 
-@cocotb.coroutine
-def write_packets(fifo, n):
+
+async def write_packets(fifo, n):
     nwritten = 0
     while nwritten < n:
-        yield fifo.put(n + 100)
+        await fifo.put(n + 100)
         uvm_debug('', 'write_packets', "Wrote packet {} into FIFO".format(nwritten))
         nwritten += 1
         rand_delay = random.randint(1, 15)
-        yield Timer(rand_delay)
+        await Timer(rand_delay)
     uvm_debug('', 'write_packets', "Write completed".format(n))
 
-@cocotb.coroutine
-def read_packets(fifo, n):
+
+async def read_packets(fifo, n):
     nread = 0
     while nread < n:
         q = []
-        yield fifo.get(q)
+        await fifo.get(q)
         print("Read packet {} into FIFO".format(nread))
         nread += 1
         if len(q) == 1:
@@ -119,7 +119,7 @@ def read_packets(fifo, n):
         else:
             raise Exception('q.len must be 1 after get()')
         rand_delay = random.randint(1, 15)
-        yield Timer(rand_delay)
+        await Timer(rand_delay)
     print("read_packets completed")
 
 class UVMPhaseCaller:
@@ -165,20 +165,20 @@ class UVMPhaseCaller:
             func(self.top_phase)
             self.call_order.append(comp.get_name())
     
-    @cocotb.coroutine
-    def call_topdown_task_phase(self, comp, name):
+    
+    async def call_topdown_task_phase(self, comp, name):
         #func = getattr(comp, name)
         #yield func(self.top_phase)
         children = []
         comp.get_children(children)
         if hasattr(comp, name):
              func = getattr(comp, name)
-             yield func(self.top_phase)
+             await func(self.top_phase)
         else:
             raise Expection('No phase func {} in comp {}'.format(name,
                 comp.get_name()))
         for c in children:
-             yield self.call_topdown_task_phase(c, name)
+             await self.call_topdown_task_phase(c, name)
 
     def expect_call_order(self, exp_order):
         ii = 0

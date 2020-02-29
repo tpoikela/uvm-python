@@ -29,13 +29,13 @@ from uvm.macros import *
 from cocotb.triggers import *
 
 class apb_master_cbs(UVMCallback):
-    @cocotb.coroutine
-    def trans_received(self, xactor, cycle):
-        yield Timer(0)
+    
+    async def trans_received(self, xactor, cycle):
+        await Timer(0)
 
-    @cocotb.coroutine
-    def trans_executed(self, xactor, cycle):
-        yield Timer(0)
+    
+    async def trans_executed(self, xactor, cycle):
+        await Timer(0)
 
 
 class apb_master(UVMDriver):  # (apb_rw)

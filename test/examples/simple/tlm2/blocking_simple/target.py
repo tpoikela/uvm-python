@@ -39,8 +39,8 @@ class target(UVMComponent):
         self.num_transport = 0
 
 
-    @cocotb.coroutine
-    def b_transport(self, rw, delay):
+    
+    async def b_transport(self, rw, delay):
         if rw.addr == 0x0000FF00:
             delay.incr(5, 1)
             if rw.kind == apb_rw.READ:
@@ -48,7 +48,7 @@ class target(UVMComponent):
             else:
                 self.m_data = rw.data
         self.num_transport += 1
-        yield Timer(5, "NS")
+        await Timer(5, "NS")
 
 
     def start_of_simulation_phase(self, phase):

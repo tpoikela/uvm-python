@@ -40,11 +40,11 @@ class dut_reset_seq(UVMSequence):
         super().__init__(name)
         self.vif = None
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         self.vif.rst <= 1
         for i in range(5):
-            yield RisingEdge(self.vif.clk)
+            await RisingEdge(self.vif.clk)
         self.vif.rst <= 0
 
 
@@ -58,8 +58,8 @@ class cmdline_test(UVMTest):
         super().__init__(name, parent)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         cs_ = UVMCoreService.get()
         env = None  # tb_env
         phase.raise_objection(self)
@@ -76,7 +76,7 @@ class cmdline_test(UVMTest):
         # dut_reset_seq rst_seq
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)
         rst_seq.vif = vif
-        yield rst_seq.start(None)
+        await rst_seq.start(None)
         env.model.reset()
 
         # uvm_cmdline_processor
@@ -98,7 +98,7 @@ class cmdline_test(UVMTest):
             UVMResourceDb.set("REG::" + env.model.SESSION[i].get_full_name() + ".*", "NO_REG_TESTS", 1, self)
         for i in range(len(env.model.TABLES)):
             UVMResourceDb.set("REG::" + env.model.TABLES[i].get_full_name() + ".*", "NO_REG_TESTS", 1, self)
-        yield seq.start(None)
+        await seq.start(None)
         phase.drop_objection(self)
 
     def check_phase(self, phase):

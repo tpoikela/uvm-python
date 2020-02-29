@@ -61,11 +61,11 @@ class my_env(UVMEnv):
             uvm_error("STR_VAL_ERR", "Expected 'I am tagged'. Got: " +
                 self.inst1.u1.tag)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_top.print_topology()
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         phase.drop_objection(self)
 
 

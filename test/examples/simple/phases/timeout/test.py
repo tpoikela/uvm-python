@@ -57,25 +57,25 @@ class test_comp(UVMTest):
         self.catcher = timeout_catcher()
         UVMReportCb.add(None, self.catcher)
 
-    @cocotb.coroutine
-    def pre_main_phase(self, phase):
+    
+    async def pre_main_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
         phase.drop_objection(self)
 
-    @cocotb.coroutine
-    def main_phase(self, phase):
+    
+    async def main_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
         # Will cause a time-out
         # because we forgot to drop the objection
         phase.drop_objection(self)
 
 
-    @cocotb.coroutine
-    def shutdown_phase(self, phase):
+    
+    async def shutdown_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
         phase.drop_objection(self)
 
 
@@ -85,4 +85,4 @@ uvm_component_utils(test_comp)
 @cocotb.test()
 def initial_begin(dut):
     env = tb_env("env")
-    yield run_test("test_comp")
+    await run_test("test_comp")

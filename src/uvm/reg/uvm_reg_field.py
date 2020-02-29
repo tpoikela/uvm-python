@@ -1242,9 +1242,9 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_write  (uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def pre_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_write(self, rw):
+        await uvm_empty_delay()
 
     #   // Task: post_write
     #   //
@@ -1260,9 +1260,9 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write (uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def post_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_write(self, rw):
+        await uvm_empty_delay()
 
     #   // Task: pre_read
     #   //
@@ -1279,9 +1279,9 @@ class UVMRegField(UVMObject):
     #   // The registered callback methods are invoked after the invocation
     #   // of this method.
     #   //
-    @cocotb.coroutine
-    def pre_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_read(self, rw):
+        await uvm_empty_delay()
 
     #   // Task: post_read
     #   //
@@ -1297,9 +1297,9 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_read  (uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def post_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_read(self, rw):
+        await uvm_empty_delay()
 
     #   extern virtual function void do_print (uvm_printer printer)
 

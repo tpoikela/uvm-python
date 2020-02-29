@@ -40,31 +40,31 @@ class tb_env(UVMEnv):
         UVMConfigDb.set(None, "global_timer.run",  "timeout", 0)
 
 
-    @cocotb.coroutine
-    def reset_phase(self, phase):
+    
+    async def reset_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(20, "NS")
+        await Timer(20, "NS")
         phase.drop_objection(self)
 
 
-    @cocotb.coroutine
-    def configure_phase(self, phase):
+    
+    async def configure_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(200, "NS")
+        await Timer(200, "NS")
         phase.drop_objection(self)
 
 
-    @cocotb.coroutine
-    def main_phase(self, phase):
+    
+    async def main_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(1000, "NS")
+        await Timer(1000, "NS")
         phase.drop_objection(self)
 
 
-    @cocotb.coroutine
-    def shutdown_phase(self, phase):
+    
+    async def shutdown_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         phase.drop_objection(self)
 
 

@@ -35,8 +35,8 @@ from uvm.reg.uvm_reg_predictor import UVMRegPredictor
 class dut_rw():
 
     @classmethod
-    @cocotb.coroutine
-    def rw(rw, dut):
+    
+    async def rw(rw, dut):
         if (rw.addr == 0x0000):
             #'h0000: // acp (MSB)
             if (rw.read):
@@ -47,7 +47,7 @@ class dut_rw():
             else:
                 dut.acp += 1
         #1;
-        yield Timer(1, "NS")
+        await Timer(1, "NS")
         # $write("%s\n", rw.convert2string());
 #endclass
 

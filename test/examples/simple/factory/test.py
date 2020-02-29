@@ -79,4 +79,4 @@ def module_top(dut):
 
     # If a string is used to run_test, run_test will used the string based factory
     # create method to create an object of the desired type.
-    yield run_test("env")
+    await run_test("env")

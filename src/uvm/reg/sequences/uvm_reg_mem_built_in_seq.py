@@ -63,8 +63,8 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Executes any or all the built-in register and memory sequences.
     #   // Do not call directly. Use seq.start() instead.
     #
-    @cocotb.coroutine
-    def body(self):  # task
+    
+    async def body(self):  # task
 
         if self.model is None:
             uvm_error("UVMRegMemBuiltInSeq", "Not block or system specified to run sequence on")
@@ -80,7 +80,7 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                     "NO_REG_HW_RESET_TEST", 0) is None):
             seq = UVMRegHWResetSeq.type_id.create("reg_hw_reset_seq")
             seq.model = self.model
-            yield seq.start(None, self)
+            await seq.start(None, self)
             uvm_info("FINISH_SEQ","Finished " + seq.get_name() + " sequence.", UVM_LOW)
 
         if (self.tests & UVM_DO_REG_BIT_BASH and
@@ -90,7 +90,7 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 "NO_REG_BIT_BASH_TEST", 0) is None):
             seq = UVMRegBitBashSeq.type_id.create("reg_bit_bash_seq")
             seq.model = model
-            yield seq.start(None, self)
+            await seq.start(None, self)
             uvm_info("FINISH_SEQ", "Finished " + seq.get_name() + " sequence.", UVM_LOW)
 
 
@@ -101,7 +101,7 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 "NO_REG_ACCESS_TEST", 0) is None):
             seq = UVMRegAccessSeq.type_id.create("reg_access_seq")
             seq.model = model
-            yield seq.start(None,self)
+            await seq.start(None,self)
             uvm_info("FINISH_SEQ", "Finished " + seq.get_name() + " sequence.", UVM_LOW)
 
 
@@ -114,7 +114,7 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 "NO_MEM_ACCESS_TEST", 0) is None):
             seq = UVMMemAccessSeq.type_id.create("mem_access_seq")
             seq.model = model
-            yield seq.start(None, self)
+            await seq.start(None, self)
             uvm_info("FINISH_SEQ", "Finished " + seq.get_name() + " sequence.", UVM_LOW)
 
 
@@ -137,7 +137,7 @@ class UVMRegMemBuiltInSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 "NO_MEM_WALK_TEST", 0) is None):
             seq = UVMMemWalkSeq.type_id.create("mem_walk_seq")
             seq.model = model
-            yield seq.start(None,self)
+            await seq.start(None,self)
             uvm_info("FINISH_SEQ", "Finished " + seq.get_name() + " sequence.", UVM_LOW)
 
 

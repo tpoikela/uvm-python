@@ -39,8 +39,8 @@ class user_test_seq(UVMRegSequence):
     #   rand bit   [31:0] addr
     #   rand logic [31:0] data
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         #reg_block_slave model
 
         #sv.cast(model, self.model)
@@ -50,10 +50,10 @@ class user_test_seq(UVMRegSequence):
             default_map = model.INDEX.get_default_map()
             status = []
             idx = sv.urandom_range(0, 255)
-            yield model.INDEX.write(status, idx, _map=default_map, parent=self)
+            await model.INDEX.write(status, idx, _map=default_map, parent=self)
 
             status = []
-            yield model.INDEX.mirror(status, UVM_CHECK, UVM_FRONTDOOR,
+            await model.INDEX.mirror(status, UVM_CHECK, UVM_FRONTDOOR,
                     default_map, self)
             got = model.INDEX.get()
             if idx != got:
@@ -62,9 +62,9 @@ class user_test_seq(UVMRegSequence):
             for i in range(5):
                 status = []
                 idx = sv.urandom_range(0, (1 << 64) - 1)
-                yield model.SESSION[i].SRC.write(status, idx, _map=default_map, parent=self)
+                await model.SESSION[i].SRC.write(status, idx, _map=default_map, parent=self)
                 status = []
-                yield model.SESSION[i].SRC.mirror(status, UVM_CHECK, UVM_FRONTDOOR,
+                await model.SESSION[i].SRC.mirror(status, UVM_CHECK, UVM_FRONTDOOR,
                         default_map, self)
 
         # Randomize the content of 10 random indexed registers
@@ -75,7 +75,7 @@ class user_test_seq(UVMRegSequence):
             status = []
             default_map = model.TABLES[idx].get_default_map()
             print("Writing to TABLES idx " + str(idx))
-            yield model.TABLES[idx].write(status, data, _map=default_map, parent=self)
+            await model.TABLES[idx].write(status, data, _map=default_map, parent=self)
             print("AFTER Writing to TABLES idx " + str(idx))
 
         # Find which indexed registers are non-zero
@@ -85,7 +85,7 @@ class user_test_seq(UVMRegSequence):
             status = []
 
             print("Reading from TABLES idx " + str(i))
-            yield model.TABLES[i].read(status, data)
+            await model.TABLES[i].read(status, data)
             if data[0] != 0:
                 print(sv.sformatf("TABLES[%0d] is 0x%h...", i, data[0]))
 

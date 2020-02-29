@@ -81,9 +81,9 @@ from .uvm_debug import uvm_debug
 
 class UVMPreResetPhase(UVMTaskPhase):
 
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.pre_reset_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.pre_reset_phase(phase)
 
     m_inst = None
     type_name = "uvm_pre_reset_phase"
@@ -131,9 +131,9 @@ class UVMPreResetPhase(UVMTaskPhase):
 
 
 class UVMResetPhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.reset_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.reset_phase(phase)
 
     m_inst = None
     type_name = "uvm_reset_phase"
@@ -174,9 +174,9 @@ class UVMResetPhase(UVMTaskPhase):
 
 
 class UVMPostResetPhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.post_reset_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.post_reset_phase(phase)
 
     m_inst = None
     type_name = "uvm_post_reset_phase"
@@ -219,9 +219,9 @@ class UVMPostResetPhase(UVMTaskPhase):
 
 
 class UVMPreConfigurePhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.pre_configure_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.pre_configure_phase(phase)
 
     m_inst = None
     type_name = "uvm_pre_configure_phase"
@@ -263,9 +263,9 @@ class UVMPreConfigurePhase(UVMTaskPhase):
 
 
 class UVMConfigurePhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.configure_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.configure_phase(phase)
 
     m_inst = None
     type_name = "uvm_configure_phase"
@@ -305,9 +305,9 @@ class UVMConfigurePhase(UVMTaskPhase):
 #//   and is ready to start operating normally.
 #//
 class UVMPostConfigurePhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.post_configure_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.post_configure_phase(phase)
 
     m_inst = None
     type_name = "uvm_post_configure_phase"
@@ -346,9 +346,9 @@ class UVMPostConfigurePhase(UVMTaskPhase):
 
 class UVMPreMainPhase(UVMTaskPhase):
 
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.pre_main_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.pre_main_phase(phase)
 
     m_inst = None
     type_name = "uvm_pre_main_phase"
@@ -392,10 +392,10 @@ class UVMPreMainPhase(UVMTaskPhase):
 
 class UVMMainPhase(UVMTaskPhase):
 
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
+    
+    async def exec_task(self,comp, phase):
         uvm_debug(self, 'exec_task', 'yield main_phase for ' + comp.get_name())
-        yield comp.main_phase(phase)
+        await comp.main_phase(phase)
 
     m_inst = None  # local static UVMMainPhase
     type_name = "UVMMainPhase"
@@ -434,9 +434,9 @@ class UVMMainPhase(UVMTaskPhase):
 
 
 class UVMPostMainPhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.post_main_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.post_main_phase(phase)
 
     m_inst = None
     type_name = "uvm_post_main_phase"
@@ -473,9 +473,9 @@ class UVMPostMainPhase(UVMTaskPhase):
 #// - None.
 #//
 class UVMPreShutdownPhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.pre_shutdown_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.pre_shutdown_phase(phase)
 
     m_inst = None
     type_name = "uvm_pre_shutdown_phase"
@@ -516,9 +516,9 @@ class UVMPreShutdownPhase(UVMTaskPhase):
 #//
 class UVMShutdownPhase(UVMTaskPhase):
 
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.shutdown_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.shutdown_phase(phase)
 
     m_inst = None
     type_name = "uvm_shutdown_phase"
@@ -559,9 +559,9 @@ class UVMShutdownPhase(UVMTaskPhase):
 #// - The <uvm_run_phase> phase is ready to end.
 #//
 class UVMPostShutdownPhase(UVMTaskPhase):
-    @cocotb.coroutine
-    def exec_task(self,comp, phase):
-        yield comp.post_shutdown_phase(phase)
+    
+    async def exec_task(self,comp, phase):
+        await comp.post_shutdown_phase(phase)
 
     m_inst = None
     type_name = "uvm_post_shutdown_phase"

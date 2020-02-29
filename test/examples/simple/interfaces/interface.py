@@ -114,10 +114,10 @@ class driver(UVMComponent):
         sv.sv_assert(UVMResourceDb.read_by_name(self.get_full_name(), 'pif', arr))
         self.pif = arr[0]
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         while True:
-            yield FallingEdge(self.pif.clk)
+            await FallingEdge(self.pif.clk)
             uvm_info("driver", "posedge clk", UVM_NONE)
 
 
@@ -136,10 +136,10 @@ class env(UVMEnv):
         self.pif = None
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
         phase.drop_objection(self)
 
 
@@ -148,12 +148,12 @@ class env(UVMEnv):
 #// module clkgen
 #//----------------------------------------------------------------------
 
-@cocotb.coroutine
-def module_clkgen(clk):
+
+async def module_clkgen(clk):
     while True:
-        yield Timer(5, "NS")
+        await Timer(5, "NS")
         clk <= 1
-        yield Timer(5, "NS")
+        await Timer(5, "NS")
         clk <= 0
 
 
@@ -162,7 +162,7 @@ def module_clkgen(clk):
 #//----------------------------------------------------------------------
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
 
     pif = pin_if(dut) #  pin_if pif(clk)
     ck_proc = cocotb.fork(module_clkgen(pif.clk))
@@ -173,4 +173,4 @@ def module_top(dut):
     e = env("e_env")
     UVMResourceDb.set("env.driver", "pif", pif)
     UVMResourceDb.dump()
-    yield run_test()
+    await run_test()

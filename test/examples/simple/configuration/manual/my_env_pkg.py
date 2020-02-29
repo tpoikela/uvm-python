@@ -64,9 +64,9 @@ class my_env(UVMEnv):
         printer.print_field("debug", self.debug, 1)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_top.print_topology()
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         phase.drop_objection(self)

@@ -301,9 +301,9 @@ class UVMResourceBase(UVMObject):
     #// releases the block.  Wait_modified() then clears the modified bit so
     #// it can be called repeatedly.
 
-    @cocotb.coroutine
-    def wait_modified(self):
-        yield wait(lambda: self.modified is True, self.event_modified)
+    
+    async def wait_modified(self):
+        await wait(lambda: self.modified is True, self.event_modified)
         self.modified = False
 
     #//-----------------------

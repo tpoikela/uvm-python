@@ -62,14 +62,14 @@ class apb_monitor(UVMMonitor):
                 self.sigs = arr[0]
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         while True:
             tr = None
 
             # Wait for a SETUP cycle
             while True:
-                yield self.sample_delay()
+                await self.sample_delay()
                 if (self.sigs.psel == 1 and
                    self.sigs.penable == 0):
                     break
@@ -81,7 +81,7 @@ class apb_monitor(UVMMonitor):
                 tr.kind = apb_rw.WRITE
             tr.addr = self.sigs.paddr.value.integer
 
-            yield self.sample_delay()
+            await self.sample_delay()
             if int(self.sigs.penable) != 1:
                 val = int(self.sigs.penable)
                 uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle"
@@ -104,9 +104,9 @@ class apb_monitor(UVMMonitor):
         pass
 
 
-    @cocotb.coroutine
-    def sample_delay(self):
-        yield RisingEdge(self.sigs.clk)
-        yield Timer(1, "NS")
+    
+    async def sample_delay(self):
+        await RisingEdge(self.sigs.clk)
+        await Timer(1, "NS")
 
 uvm_component_utils(apb_monitor)

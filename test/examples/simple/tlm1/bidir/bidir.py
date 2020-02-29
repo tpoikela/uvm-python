@@ -51,33 +51,33 @@ class master(UVMComponent):
         self.req_port = UVMBlockingPutPort("req_port", self)
         self.rsp_port = UVMBlockingGetPort("rsp_port", self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         req_proc = cocotb.fork(self.request_process())
         rsp_proc = cocotb.fork(self.response_process())
-        yield [req_proc, rsp_proc.join()]
+        await [req_proc, rsp_proc.join()]
         #    fork
         #      request_process
         #      response_process
         #    join
 
 
-    @cocotb.coroutine
-    def request_process(self):
+    
+    async def request_process(self):
         request_str = ""
         for i in range(10):
           request_str = sv.sformatf("%d", i)
           self.uvm_report_info("sending request   ", request_str, UVM_MEDIUM)
-          yield self.req_port.put(i)
+          await self.req_port.put(i)
 
 
-    @cocotb.coroutine
-    def response_process(self):
+    
+    async def response_process(self):
         response = 0
         response_str = ""
         while True:
             arr = []
-            yield self.rsp_port.get(arr);   
+            await self.rsp_port.get(arr);   
             response = arr[0]
             response_str = sv.sformatf("%d", response)
             self.uvm_report_info("receiving response", response_str)
@@ -96,8 +96,8 @@ class slave(UVMComponent):
         self.req_port = UVMBlockingGetPort("req_port", self)
         self.rsp_port = UVMBlockingPutPort("rsp_port", self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         request = 0
         response = 0
         request_str = ""
@@ -105,14 +105,14 @@ class slave(UVMComponent):
 
         while True:
             arr = []
-            yield self.req_port.get(arr)
+            await self.req_port.get(arr)
             request = arr[0]
             request_str = sv.sformatf("%d", request)
             self.uvm_report_info("receiving request  ", request_str, UVM_MEDIUM)
             response = request
             response_str = sv.sformatf("%d", response)
             self.uvm_report_info("sending response   ", response_str, UVM_MEDIUM)
-            yield self.rsp_port.put(response)
+            await self.rsp_port.put(response)
            
 
 #//----------------------------------------------------------------------
@@ -136,11 +136,11 @@ class bidir_env(UVMEnv):
         self.s.rsp_port.connect(self.req_rsp.blocking_put_response_export)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         #10
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         phase.drop_objection(self)
 
 
@@ -152,5 +152,5 @@ class bidir_env(UVMEnv):
 def module_top(dut):
     env = bidir_env("env", None)
     uvm_info("TOP_ENV", "top-level env is " + env.get_name(), UVM_LOW)
-    yield run_test()
+    await run_test()
 

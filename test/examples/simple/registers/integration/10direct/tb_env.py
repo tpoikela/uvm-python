@@ -91,8 +91,8 @@ class tb_env(UVMComponent):
             self.regmodel.print()
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         if self.seq is None:
             uvm_fatal("NO_SEQUENCE","Env's sequence is not defined. Nothing to do. Exiting.")
@@ -102,14 +102,14 @@ class tb_env(UVMComponent):
         uvm_info("RESET","Performing reset of 5 cycles", UVM_LOW)
         self.vif.rst <= 1
         for _ in range(5):
-            yield RisingEdge(self.vif.clk)
+            await RisingEdge(self.vif.clk)
         self.vif.rst <= 0
 
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
 
         uvm_info("START_SEQ", "Starting sequence '" + self.seq.get_name() + "'", UVM_LOW)
         self.seq.model = self.regmodel
-        yield self.seq.start(None)
+        await self.seq.start(None)
         phase.drop_objection(self)
 
 

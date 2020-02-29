@@ -41,12 +41,12 @@ def test_single_event(dut):
     #e2 = UVMEvent('e2')
     #yield wait_events([e1])
 
-    @cocotb.coroutine
-    def notify_evt():
-        yield Timer(100, "NS")
+    
+    async def notify_evt():
+        await Timer(100, "NS")
         e1.trigger(123)
     cocotb.fork(notify_evt())
-    yield e1.wait_trigger()
+    await e1.wait_trigger()
 
     end_time = sv.realtime()
     data = e1.get_trigger_data()
@@ -60,14 +60,14 @@ def test_uvm_event(dut):
     evt2 = UVMEvent('MyEvent2')
     n1 = cocotb.fork(notify_event(evt1, 10))
     n2 = cocotb.fork(notify_event(evt2, 20))
-    yield evt1.wait_trigger()
+    await evt1.wait_trigger()
     d1 = evt1.get_trigger_data()
-    yield evt2.wait_trigger()
+    await evt2.wait_trigger()
     d2 = evt2.get_trigger_data()
     if d1 != 10 or d2 != 20:
         raise Exception('Event data error. d1: {}, d2: {}'.format(d1, d2))
 
-@cocotb.coroutine
-def notify_event(evt, after=10):
-    yield Timer(after, "NS")
+
+async def notify_event(evt, after=10):
+    await Timer(after, "NS")
     evt.trigger(after)

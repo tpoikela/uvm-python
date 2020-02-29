@@ -57,15 +57,15 @@ class apb_monitor(UVMMonitor):
                    "No virtual interface specified for self monitor instance")
             self.sigs = tmp[0]
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         super().run_phase(phase)
         while True:
             tr = None
     
             # Wait for a SETUP cycle
             while True:
-                yield Edge(self.sigs.pck)
+                await Edge(self.sigs.pck)
                 if (self.sigs.pck.psel != 1 or
                    self.sigs.pck.penable != 0):
                     break
@@ -77,7 +77,7 @@ class apb_monitor(UVMMonitor):
                 tr.kind = apb_rw.WRITE
             tr.addr = self.sigs.pck.paddr
     
-            yield Edge(self.sigs.pck)
+            await Edge(self.sigs.pck)
             if (self.sigs.pck.penable != 1):
                 uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle")
             tr.data = self.sigs.pck.pwdata

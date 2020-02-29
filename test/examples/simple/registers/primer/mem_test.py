@@ -36,14 +36,14 @@ class mem_backdoor(UVMRegBackdoor):
         self.dut = None
         self.mem_name = "DMA"
 
-    @cocotb.coroutine
-    def write(self, rw):  # task
-        yield self.do_pre_write(rw)  # Required, as stated in uvm_reg_backdoor
+    
+    async def write(self, rw):  # task
+        await self.do_pre_write(rw)  # Required, as stated in uvm_reg_backdoor
         #uvm_fatal("RegModel", "UVMRegBackdoor::write() method has not been overloaded")
         print("rw.offset is " + str(rw.offset))
         self.dut.DMA[rw.offset] <= rw.value[0]
         rw.status = UVM_IS_OK
-        yield self.do_post_write(rw)  # Required, as stated in uvm_reg_backdoor
+        await self.do_post_write(rw)  # Required, as stated in uvm_reg_backdoor
 
 
     def read_func(self, rw):
@@ -65,8 +65,8 @@ class mem_test_seq(UVMRegSequence):
         self.data = None  # type: int
         self.dut = None
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         arr = []
         if UVMConfigDb.get(None, "", "dut", arr):
             self.dut = arr[0]
@@ -83,33 +83,33 @@ class mem_test_seq(UVMRegSequence):
             status = []
             data = 0x1234
             offset = i * 4
-            yield dma_ram.write(status, offset, data)
-            yield Timer(100, "NS")
+            await dma_ram.write(status, offset, data)
+            await Timer(100, "NS")
 
             status = []
             data = []
             offset = i * 4
-            yield dma_ram.read(status, offset, data)
+            await dma_ram.read(status, offset, data)
             exp = data[0]
-            yield Timer(100, "NS")
+            await Timer(100, "NS")
             status = []
             data = []
-            yield dma_ram.read(status, offset, data, path=UVM_BACKDOOR)
+            await dma_ram.read(status, offset, data, path=UVM_BACKDOOR)
             if exp != data[0]:
                 uvm_error("MEM_READ_ERR", "Exp: {}, Got: {}".format(exp, data[0]))
 
             # Test backdoor access with write/read operation
             ref_data = 0xBEEFFACE
             status = []
-            yield Timer(100, "NS")
-            yield dma_ram.write(status, offset, ref_data, path=UVM_BACKDOOR)
+            await Timer(100, "NS")
+            await dma_ram.write(status, offset, ref_data, path=UVM_BACKDOOR)
             status = []
             data = []
-            yield Timer(100, "NS")
-            yield dma_ram.read(status, offset, data, path=UVM_BACKDOOR)
+            await Timer(100, "NS")
+            await dma_ram.read(status, offset, data, path=UVM_BACKDOOR)
             if data[0] != ref_data:
                 uvm_fatal("MEM_DATA_ERR", "Exp: {}, Got: {}".format(ref_data, data[0]))
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
 
 
 uvm_object_utils(mem_test_seq)

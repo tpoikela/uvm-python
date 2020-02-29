@@ -45,9 +45,9 @@ class apb_if(sv_if):
         self.rst = dut.rst
 
 
-    @cocotb.coroutine
-    def start(self):
-        yield Timer(0)
+    
+    async def start(self):
+        await Timer(0)
 
     #   clocking mck @(posedge pclk)
     #      output paddr, psel, penable, pwrite, pwdata

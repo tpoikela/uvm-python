@@ -38,8 +38,8 @@ class initiator(UVMComponent):
     #   //
     #   // Execute a simple read-modify-write
     #   //
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         delay = UVMTLMTime()
         phase.raise_objection(self)
         for i in range(10):
@@ -48,13 +48,13 @@ class initiator(UVMComponent):
             rw.addr = 0x0000FF00
             rw.data = i + 1
 
-            yield self.sock.b_transport(rw, delay)
+            await self.sock.b_transport(rw, delay)
 
             # Ok to reuse the same RW instance
             rw.kind = apb_rw.WRITE
             rw.data = ~rw.data
 
-            yield self.sock.b_transport(rw, delay)
+            await self.sock.b_transport(rw, delay)
         phase.drop_objection(self)
 
 

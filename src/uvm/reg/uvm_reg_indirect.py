@@ -188,8 +188,8 @@ class UVMRegIndirectData(UVMReg):
     #                      input  uvm_object        extension = None,
     #                      input  string            fname = "",
     #                      input  int               lineno = 0)
-    @cocotb.coroutine
-    def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
+    
+    async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
 
@@ -208,7 +208,7 @@ class UVMRegIndirectData(UVMReg):
 
 
         rw = UVMRegItem.type_id.create("write_item", None, self.get_full_name())
-        yield self.XatomicX(1, rw)
+        await self.XatomicX(1, rw)
         rw.element      = self
         rw.element_kind = UVM_REG
         rw.kind         = UVM_WRITE
@@ -221,10 +221,10 @@ class UVMRegIndirectData(UVMReg):
         rw.fname        = fname
         rw.lineno       = lineno
 
-        yield self.do_write(rw)
+        await self.do_write(rw)
         status.append(rw.status)
 
-        yield self.XatomicX(0)
+        await self.XatomicX(0)
         #   endtask
 
 
@@ -316,8 +316,8 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
         self.m_idx      = idx       # int
         #   endfunction: new
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
 
         rw = None  # uvm_reg_item
 
@@ -331,11 +331,11 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
         rw.kind    = UVM_WRITE
         rw.value[0] = self.m_idx
 
-        yield self.m_addr_reg.XatomicX(1, rw)
-        yield self.m_data_reg.XatomicX(1, rw)
+        await self.m_addr_reg.XatomicX(1, rw)
+        await self.m_data_reg.XatomicX(1, rw)
 
         # This write selects the address to write/read
-        yield self.m_addr_reg.do_write(rw)
+        await self.m_addr_reg.do_write(rw)
 
         if rw.status == UVM_NOT_OK:
             return
@@ -347,13 +347,13 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
 
         # This fetches the actual data
         if self.rw_info.kind == UVM_WRITE:
-            yield self.m_data_reg.do_write(rw)
+            await self.m_data_reg.do_write(rw)
         else:
-            yield self.m_data_reg.do_read(rw)
+            await self.m_data_reg.do_read(rw)
             self.rw_info.value[0] = rw.value[0]
 
-        yield self.m_addr_reg.XatomicX(0)
-        yield self.m_data_reg.XatomicX(0)
+        await self.m_addr_reg.XatomicX(0)
+        await self.m_data_reg.XatomicX(0)
 
         self.rw_info.status = rw.status
         #   endtask

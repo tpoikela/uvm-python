@@ -46,11 +46,11 @@ from inspect import getframeinfo, stack
 # information.
 
 
-@cocotb.coroutine
-def run_test(test_name=""):
+
+async def run_test(test_name=""):
     cs = get_cs()
     top = cs.get_root()
-    yield top.run_test(test_name)
+    await top.run_test(test_name)
 
 #//----------------------------------------------------------------------------
 #//
@@ -294,8 +294,8 @@ UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
 
 
-@cocotb.coroutine
-def uvm_wait_for_nba_region():
+
+async def uvm_wait_for_nba_region():
     s = ""
     nba = 0
     next_nba = 0
@@ -307,10 +307,10 @@ def uvm_wait_for_nba_region():
         #nba <= next_nba
         nba = next_nba
         #@(nba)
-        yield Timer(0)
+        await Timer(0)
     else:
         for i in range(0, UVM_POUND_ZERO_COUNT):
-            yield Timer(0)
+            await Timer(0)
 
 
 # Returns UVM coreservice
@@ -402,9 +402,9 @@ def uvm_sim_time(units='NS'):
     return 0
 
 
-@cocotb.coroutine
-def uvm_empty_delay():
-    yield Timer(0, "NS")
+
+async def uvm_empty_delay():
+    await Timer(0, "NS")
 
 
 # Check that all args in the arr are lists to emulate the SV inout/output/ref args

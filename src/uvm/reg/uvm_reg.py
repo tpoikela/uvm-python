@@ -694,15 +694,15 @@ class UVMReg(UVMObject):
     #   // was completed
     #   //
     #   extern virtual function void reset(string kind = "HARD")
-    @cocotb.coroutine
-    def reset(self, kind="HARD"):
+    
+    async def reset(self, kind="HARD"):
         for i in range(len(self.m_fields)):
             self.m_fields[i].reset(kind)
         # Put back a key in the semaphore if it is checked out
         # in case a thread was killed during an operation
         q = []
         self.m_atomic.try_get(q)
-        yield self.m_atomic.put(1)
+        await self.m_atomic.put(1)
         self.m_process = None
         self.Xset_busyX(0)
         #endfunction: reset
@@ -770,14 +770,14 @@ class UVMReg(UVMObject):
     #                             input  uvm_object        extension = None,
     #                             input  string            fname = "",
     #                             input  int               lineno = 0)
-    @cocotb.coroutine
-    def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
+    
+    async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
             extension=None, fname="", lineno=0):
 
         uvm_check_output_args([status])
         # create an abstract transaction for this operation
         rw = UVMRegItem.type_id.create("write_item", None, self.get_full_name())
-        yield self.XatomicX(1, rw)
+        await self.XatomicX(1, rw)
         self.set(value)
 
         rw.element      = self
@@ -792,9 +792,9 @@ class UVMReg(UVMObject):
         rw.fname        = fname
         rw.lineno       = lineno
 
-        yield self.do_write(rw)
+        await self.do_write(rw)
         status.append(rw.status)
-        yield self.XatomicX(0)
+        await self.XatomicX(0)
         #endtask
 
 
@@ -827,14 +827,14 @@ class UVMReg(UVMObject):
     #                            input  string            fname = "",
     #                            input  int               lineno = 0)
     #
-    @cocotb.coroutine
-    def read(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
+    
+    async def read(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status, value])
         rw = UVMRegItem.type_id.create("pseudo-read_item", None, self.get_full_name())
-        yield self.XatomicX(1, rw)
-        yield self.XreadX(status, value, path, _map, parent, prior, extension, fname, lineno)
-        yield self.XatomicX(0)
+        await self.XatomicX(1, rw)
+        await self.XreadX(status, value, path, _map, parent, prior, extension, fname, lineno)
+        await self.XatomicX(0)
         #endtask: read
 
 
@@ -906,8 +906,8 @@ class UVMReg(UVMObject):
     #                              input  string            fname = "",
     #                              input  int               lineno = 0)
     #
-    @cocotb.coroutine
-    def update(self, status, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1, extension=None,
+    
+    async def update(self, status, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1, extension=None,
             fname="", lineno=0):
         uvm_check_output_args([status])
         upd = 0x0
@@ -921,7 +921,7 @@ class UVMReg(UVMObject):
         for i in range(len(self.m_fields)):
             upd = upd | (self.m_fields[i].XupdateX() << self.m_fields[i].get_lsb_pos())
 
-        yield self.write(status, upd, path, _map, parent, prior, extension, fname, lineno)
+        await self.write(status, upd, path, _map, parent, prior, extension, fname, lineno)
     #endtask: update
 
     #   // Task: mirror
@@ -958,15 +958,15 @@ class UVMReg(UVMObject):
     #                              input  uvm_object        extension = None,
     #                              input string             fname = "",
     #                              input int                lineno = 0)
-    @cocotb.coroutine
-    def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, _map=None,
+    
+    async def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
         exp = 0  # uvm_reg_data_t  exp
         bkdr = self.get_backdoor()
 
         rw = UVMRegItem.type_id.create("mirror_pseudo_item", None, self.get_full_name())
-        yield self.XatomicX(1, rw)
+        await self.XatomicX(1, rw)
         self.m_fname = fname
         self.m_lineno = lineno
 
@@ -986,17 +986,17 @@ class UVMReg(UVMObject):
             exp = self.get_mirrored_value()
 
         v = []
-        yield self.XreadX(status, v, path, _map, parent, prior, extension, fname, lineno)
+        await self.XreadX(status, v, path, _map, parent, prior, extension, fname, lineno)
         v = v[0]
 
         if status == UVM_NOT_OK:
-            yield self.XatomicX(0)
+            await self.XatomicX(0)
             return
 
         if check == UVM_CHECK:
             self.do_check(exp, v, _map)
 
-        yield self.XatomicX(0)
+        await self.XatomicX(0)
         #endtask: mirror
 
     #   // Function: predict
@@ -1046,8 +1046,8 @@ class UVMReg(UVMObject):
     #                                 input  uvm_object        extension = None,
     #                                 input  string            fname = "",
     #                                 input  int               lineno = 0)
-    @cocotb.coroutine
-    def XreadX(self, status, value, path, _map,
+    
+    async def XreadX(self, status, value, path, _map,
             parent=None, prior=-1,extension=None,fname="", lineno=0):
         uvm_check_output_args([status, value])
 
@@ -1065,32 +1065,32 @@ class UVMReg(UVMObject):
         rw.fname        = fname
         rw.lineno       = lineno
 
-        yield self.do_read(rw)
+        await self.do_read(rw)
         # TODO change arg passing
         status.append(rw.status)
         value.append(rw.value[0])
         #endtask: XreadX
 
     #   /*local*/ extern task XatomicX(bit on)
-    @cocotb.coroutine
-    def XatomicX(self, on, rw=None):
+    
+    async def XatomicX(self, on, rw=None):
         #   process m_reg_process
         #   m_reg_process=process::self()
         if on == 1:
             if rw is None:
                 raise Exception("rw must not be None for on=1")
             if (rw is not None) and rw == self.m_atomic_rw:
-                yield Timer(0, "NS")
+                await Timer(0, "NS")
                 return
             q = []
-            yield self.m_atomic.get(q)
+            await self.m_atomic.get(q)
             self.m_atomic_rw = rw
         #   end
         else:
             # Maybe a key was put back in by a spurious call to reset()
             q = []
             self.m_atomic.try_get(q)
-            yield self.m_atomic.put(1)
+            await self.m_atomic.put(1)
             self.m_atomic_rw = None
         #   end
         #endtask: XatomicX
@@ -1194,9 +1194,9 @@ class UVMReg(UVMObject):
     #
     #   extern virtual task do_write(uvm_reg_item rw)
     #
-    @cocotb.coroutine
-    def do_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def do_write(self, rw):
+        await uvm_empty_delay()
         # TODO finish this
         cbs = UVMRegCbIter(self)  # uvm_reg_cb_iter  cbs = new(this)
         map_info = []  # uvm_reg_map_info
@@ -1206,7 +1206,7 @@ class UVMReg(UVMObject):
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, map_info, "write()") is False:
-            yield uvm_empty_delay()
+            await uvm_empty_delay()
             return
         # May be not be set for BACKDOOR, so check len
         if len(map_info) > 0:
@@ -1228,12 +1228,12 @@ class UVMReg(UVMObject):
             lsb = f.get_lsb_pos()
             msk = ((1 << f.get_n_bits() )-1) << lsb
             rw.value[0] = (value & msk) >> lsb
-            yield f.pre_write(rw)  # TODO yield?
+            await f.pre_write(rw)  # TODO yield?
             cb = cbs.first()
             while cb is not None:
                 rw.element = f
                 rw.element_kind = UVM_FIELD
-                yield cb.pre_write(rw)
+                await cb.pre_write(rw)
                 cb = cbs.next()
             value = (value & ~msk) | (rw.value[0] << lsb)
 
@@ -1242,15 +1242,15 @@ class UVMReg(UVMObject):
         rw.value[0] = value
 
         # PRE-WRITE CBS - REG
-        yield self.pre_write(rw)
+        await self.pre_write(rw)
         cb = cbs.first()
         while cb is not None:
-            yield cb.pre_write(rw)
+            await cb.pre_write(rw)
             cb = cbs.next()
 
         if rw.status != UVM_IS_OK:
             self.m_write_in_progress = False
-            yield self.XatomicX(0)
+            await self.XatomicX(0)
             return
 
         if rw.path == UVM_BACKDOOR:
@@ -1296,11 +1296,11 @@ class UVMReg(UVMObject):
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
-                yield fd.start(fd.sequencer, rw.parent)
+                await fd.start(fd.sequencer, rw.parent)
 
             # ...VIA BUILT-IN FRONTDOOR
             else:  # built_in_frontdoor
-                yield rw.local_map.do_write(rw)
+                await rw.local_map.do_write(rw)
 
             self.m_is_busy = False
 
@@ -1371,8 +1371,8 @@ class UVMReg(UVMObject):
 
 
     #   extern virtual task do_read(uvm_reg_item rw)
-    @cocotb.coroutine
-    def do_read(self, rw):
+    
+    async def do_read(self, rw):
         value = 0  # uvm_reg_data_t   value
         exp = 0  # uvm_reg_data_t   exp
 
@@ -1381,7 +1381,7 @@ class UVMReg(UVMObject):
 
         map_info = []
         if not(self.Xcheck_accessX(rw,map_info,"read()")):
-            yield uvm_empty_delay()
+            await uvm_empty_delay()
             return
         # May be not be set for BACKDOOR, so check len
         if len(map_info) > 0:
@@ -1410,7 +1410,7 @@ class UVMReg(UVMObject):
         cbs = UVMRegCbIter(self)
         # PRE-READ CBS - REG
         # TODO yield?
-        yield self.pre_read(rw)
+        await self.pre_read(rw)
         cb = cbs.first()
         while cb is not None:
             cb.pre_read(rw)
@@ -1493,10 +1493,10 @@ class UVMReg(UVMObject):
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
-                yield fd.start(fd.sequencer, rw.parent)
+                await fd.start(fd.sequencer, rw.parent)
             # ...VIA BUILT-IN FRONTDOOR
             else:
-                yield rw.local_map.do_read(rw)
+                await rw.local_map.do_read(rw)
 
             self.m_is_busy = 0
 
@@ -1845,8 +1845,8 @@ class UVMReg(UVMObject):
     #   // for this register type.
     #   //
     #   extern virtual task backdoor_write(uvm_reg_item rw)
-    # @cocotb.coroutine
-    def backdoor_write(self, rw):
+    # 
+    async def backdoor_write(self, rw):
         paths = []  # uvm_hdl_path_concat [$]
         ok = 1
         self.get_full_hdl_path(paths,rw.bd_kind)
@@ -2153,9 +2153,9 @@ class UVMReg(UVMObject):
     #   // All register callbacks are executed before the corresponding
     #   // field callbacks
     #   //
-    @cocotb.coroutine
-    def pre_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_write(self, rw):
+        await uvm_empty_delay()
 
 
     #   // Task: post_write
@@ -2172,9 +2172,9 @@ class UVMReg(UVMObject):
     #   // field callbacks
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def post_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_write(self, rw):
+        await uvm_empty_delay()
 
 
     #   // Task: pre_read
@@ -2192,9 +2192,9 @@ class UVMReg(UVMObject):
     #   // All register callbacks are executed before the corresponding
     #   // field callbacks
     #   //
-    @cocotb.coroutine
-    def pre_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_read(self, rw):
+        await uvm_empty_delay()
 
     #   // Task: post_read
     #   //
@@ -2210,9 +2210,9 @@ class UVMReg(UVMObject):
     #   // field callbacks
     #   //
     #   virtual task post_read(uvm_reg_item rw)
-    @cocotb.coroutine
-    def post_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_read(self, rw):
+        await uvm_empty_delay()
 
 
     #   extern virtual function void            do_print (uvm_printer printer)

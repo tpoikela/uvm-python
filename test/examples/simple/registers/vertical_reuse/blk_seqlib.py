@@ -40,11 +40,11 @@ class dut_reset_seq(UVMSequence):
         self.vif = None
 
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         self.vif.rst <= 1
         for i in range(5):
-            yield FallingEdge(self.vif.clk)
+            await FallingEdge(self.vif.clk)
         self.vif.rst <= 0
 
 
@@ -63,18 +63,18 @@ class blk_R_test_seq(UVMRegSequence):
         if status[0] != UVM_IS_OK:
             uvm_fatal(msg, "status not OK")
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         status = 0
         n = 0
 
         # Initialize R with a random value then check against mirror
         data = sv.urandom()
         status = []
-        yield self.model.R.write(status, data, parent=self)
+        await self.model.R.write(status, data, parent=self)
         self.check_status(status, "WRITE_FAIL")
         status = []
-        yield self.model.R.mirror(status, UVM_CHECK, parent=self)
+        await self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR FAIL")
 
         # Perform a random number of INC operations
@@ -82,13 +82,13 @@ class blk_R_test_seq(UVMRegSequence):
         uvm_info("blk_R_test_seq", sv.sformatf("Incrementing R %0d times...", n), UVM_NONE)
         for i in range(n):
             status = []
-            yield self.model.CTL.write(status, reg_fld_B_CTL_CTL.INC, parent=self)
+            await self.model.CTL.write(status, reg_fld_B_CTL_CTL.INC, parent=self)
             self.check_status(status, "WRITE " + str(i) + " FAIL")
             data += 1
             self.model.R.predict(data)
         # Check the final value
         status = []
-        yield self.model.R.mirror(status, UVM_CHECK, parent=self)
+        await self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR2 FAIL")
 
         # Perform a random number of DEC operations
@@ -96,23 +96,23 @@ class blk_R_test_seq(UVMRegSequence):
         uvm_info("blk_R_test_seq", sv.sformatf("Decrementing R %0d times...", n), UVM_NONE)
         for i in range(n):
             status = []
-            yield self.model.CTL.write(status, reg_fld_B_CTL_CTL.DEC, parent=self)
+            await self.model.CTL.write(status, reg_fld_B_CTL_CTL.DEC, parent=self)
             self.check_status(status, "WRITE B." + str(i) + " FAIL (DEC OP)")
             data -= 1
             self.model.R.predict(data)
 
         # Check the final value
         status = []
-        yield self.model.R.mirror(status, UVM_CHECK, parent=self)
+        await self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR3 FAIL")
         #
         # Reset the register and check
         status = []
-        yield self.model.CTL.write(status, reg_fld_B_CTL_CTL.CLR, parent=self)
+        await self.model.CTL.write(status, reg_fld_B_CTL_CTL.CLR, parent=self)
         self.check_status(status, "WRITE4 FAIL")
         self.model.R.predict(0)
         status = []
-        yield self.model.R.mirror(status, UVM_CHECK, parent=self)
+        await self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR4 FAIL")
         #   endtask
     #

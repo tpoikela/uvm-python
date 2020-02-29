@@ -222,11 +222,11 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //
     #  //| wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED)
     #  task wait_for_sequence_state(int unsigned state_mask)
-    @cocotb.coroutine
-    def wait_for_sequence_state(self, state_mask):
+    
+    async def wait_for_sequence_state(self, state_mask):
         state = self.m_sequence_state & state_mask
         if state in self.m_events:
-            yield self.m_events[state].wait()
+            await self.m_events[state].wait()
         else:
             raise Exception("Cannot wait for state " + str(state)
                     + " - not implemented")
@@ -275,8 +275,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #                      uvm_sequence_base parent_sequence = None,
     #                      int this_priority = -1,
     #                      bit call_pre_post = 1)
-    @cocotb.coroutine
-    def start(self, sequencer, parent_sequence=None, this_priority=-1,
+    
+    async def start(self, sequencer, parent_sequence=None, this_priority=-1,
             call_pre_post=1):
         old_automatic_phase_objection = False
         self.set_item_context(parent_sequence, sequencer)
@@ -332,7 +332,7 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_sequence_state = UVM_PRE_START
 
         self.m_sequence_process = cocotb.fork(self.start_process(parent_sequence, call_pre_post))
-        yield self.m_sequence_process
+        await self.m_sequence_process
 
         if self.m_sequencer is not None:
             self.m_sequencer.end_tr(self)
@@ -344,7 +344,7 @@ class UVMSequenceBase(UVMSequenceItem):
                 self.m_sequencer.m_sequence_exiting(self)
 
         #0; // allow stopped and finish waiters to resume
-        yield Timer(0)
+        await Timer(0)
 
         if (self.m_parent_sequence is not None and
                 self in self.m_parent_sequence.children_array):
@@ -355,14 +355,14 @@ class UVMSequenceBase(UVMSequenceItem):
         self.set_automatic_phase_objection(old_automatic_phase_objection)
         #endtask
 
-    @cocotb.coroutine
-    def start_process(self, parent_sequence, call_pre_post):
+    
+    async def start_process(self, parent_sequence, call_pre_post):
         #fork
         #m_sequence_process = process::self()
 
         # absorb delta to ensure PRE_START was seen
         #0
-        yield Timer(0)
+        await Timer(0)
 
         # Raise the objection if enabled
         # (This will lock the uvm_get_to_lock_dap)
@@ -374,7 +374,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if call_pre_post == 1:
             self.m_sequence_state = UVM_PRE_BODY
             #0
-            yield Timer(0)
+            await Timer(0)
             self.pre_body()
 
         if parent_sequence is not None:
@@ -383,12 +383,12 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.m_sequence_state = UVM_BODY
         #0
-        yield Timer(0)
-        yield self.body()
+        await Timer(0)
+        await self.body()
 
         self.m_sequence_state = UVM_ENDED
         #0
-        yield Timer(0)
+        await Timer(0)
 
         if parent_sequence is not None:
             parent_sequence.post_do(self)
@@ -396,12 +396,12 @@ class UVMSequenceBase(UVMSequenceItem):
         if call_pre_post == 1:
             self.m_sequence_state = UVM_POST_BODY
             #0
-            yield Timer(0)
+            await Timer(0)
             self.post_body()
 
         self.m_sequence_state = UVM_POST_START
         #0
-        yield Timer(0)
+        await Timer(0)
         self.post_start()
 
         # Drop the objection if enabled
@@ -411,7 +411,7 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_sequence_state = UVM_FINISHED
         self.m_events[UVM_FINISHED].set()
         #0
-        yield Timer(0)
+        await Timer(0)
         #join
 
 
@@ -466,10 +466,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // This is the user-defined task where the main sequence code resides.
     #  // This method should not be called directly by the user.
     #
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         uvm_warning("uvm_sequence_base", "Body definition undefined")
-        yield Timer(0, "NS")
+        await Timer(0, "NS")
 
     #  // Function: post_do
     #  //
@@ -911,8 +911,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #  virtual task start_item (uvm_sequence_item item,
     #                           int set_priority = -1,
     #                           uvm_sequencer_base sequencer=None)
-    @cocotb.coroutine
-    def start_item(self, item, set_priority=-1, sequencer=None):
+    
+    async def start_item(self, item, set_priority=-1, sequencer=None):
         seq = None
 
         if item is None:
@@ -943,7 +943,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if (set_priority < 0):
             set_priority = self.get_priority()
 
-        yield sequencer.wait_for_grant(self, set_priority)
+        await sequencer.wait_for_grant(self, set_priority)
 
         # TODO recording
         #if (sequencer.is_auto_item_recording_enabled()) begin
@@ -963,8 +963,8 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //
     #  virtual task finish_item (uvm_sequence_item item,
     #                            int set_priority = -1)
-    @cocotb.coroutine
-    def finish_item(self, item, set_priority=-1):
+    
+    async def finish_item(self, item, set_priority=-1):
         sequencer = item.get_sequencer()
 
         if sequencer is None:
@@ -972,7 +972,7 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.mid_do(item)
         sequencer.send_request(self, item)
-        yield sequencer.wait_for_item_done(self, -1)
+        await sequencer.wait_for_item_done(self, -1)
 
         # tpoikela: commented out, otherwise item.end_event is not triggered
         # if sequencer.is_auto_item_recording_enabled():
@@ -1137,13 +1137,13 @@ class UVMSequenceBase(UVMSequenceItem):
 
     #  // Function- get_base_response
     #  virtual task get_base_response(output uvm_sequence_item response, input int transaction_id = -1)
-    @cocotb.coroutine
-    def get_base_response(self, response, transaction_id=-1):
+    
+    async def get_base_response(self, response, transaction_id=-1):
         queue_size = 0
         i = 0
 
         if self.response_queue.size() == 0:
-            yield wait(lambda : self.response_queue.size() == 0,
+            await wait(lambda : self.response_queue.size() == 0,
                  self.m_resp_queue_event)
 
         if transaction_id == -1:
@@ -1160,7 +1160,7 @@ class UVMSequenceBase(UVMSequenceItem):
                     self.m_resp_queue_event.set()
                     return
             #wait (self.response_queue.size() != queue_size)
-            yield wait(lambda : self.response_queue.size() != queue_size,
+            await wait(lambda : self.response_queue.size() != queue_size,
                        self.m_resp_queue_event)
         #  endtask
 

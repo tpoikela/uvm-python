@@ -60,4 +60,4 @@ def initial_begin(dut):
 
     UVMConfigDb.set(env, "apb", "vif", vif)
     UVMConfigDb.set(None, "DUT_REF", "dut", dut)
-    yield run_test()
+    await run_test()

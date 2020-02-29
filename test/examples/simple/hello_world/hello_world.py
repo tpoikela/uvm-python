@@ -25,7 +25,7 @@ from uvm.base.uvm_globals import run_test
 from top import top
 
 @cocotb.test()
-def hello_world(dut):
+async def hello_world(dut):
     #  `include "packet.sv"
     #  `include "producer.sv"
     #  `include "consumer.sv"
@@ -46,7 +46,7 @@ def hello_world(dut):
     #    uvm_default_printer.knobs.reference=0;
     mytop = top("top", parent=None)
     #    uvm_default_table_printer.knobs.type_width=20;
-    yield run_test()
+    await run_test()
 
     if mytop.error:
         raise Exception("mytop had errors")

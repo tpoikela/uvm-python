@@ -71,8 +71,8 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         self.mem = None
 
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         mem = self.mem
         mode = ""
         maps = []  # uvm_reg_map[$]
@@ -120,7 +120,7 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                     val = (val << 32) | sv.random()
                 if mode == "RO":
                     status = []
-                    yield mem.peek(status, k, exp)
+                    await mem.peek(status, k, exp)
                     status = status[0]
                     if status != UVM_IS_OK:
                        uvm_error("UVMMemAccessSeq", sv.sformatf(
@@ -130,13 +130,13 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                     exp = val
 
                 status = []
-                yield mem.write(status, k, val, UVM_FRONTDOOR, maps[j], self)
+                await mem.write(status, k, val, UVM_FRONTDOOR, maps[j], self)
                 status = status[0]
                 if status != UVM_IS_OK:
                     uvm_error("UVMMemAccessSeq", sv.sformatf(
                         "Status was %s when writing '%s[%0d]' through map '%s'.",
                         status.name(), mem.get_full_name(), k, maps[j].get_full_name()))
-                yield Timer(1, "NS")
+                await Timer(1, "NS")
 
                 val = []
                 status = []
@@ -167,7 +167,7 @@ class UVMMemSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
                 status = []
                 val = []
-                yield mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
+                await mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
                 status = status[0]
                 val = val[0]
                 if status != UVM_IS_OK:
@@ -224,8 +224,8 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Execute the Memory Access sequence.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         model = self.model
         if model is None:
             uvm_error("UVMMemAccessSeq", "No register model specified to run sequence on")
@@ -236,18 +236,18 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
         self.mem_seq = UVMMemSingleAccessSeq.type_id.create("single_mem_access_seq")
 
-        yield self.reset_blk(model)
+        await self.reset_blk(model)
         model.reset()
 
-        yield self.do_block(model)
+        await self.do_block(model)
 
 
     #   // Task: do_block
     #   //
     #   // Test all of the memories in a given ~block~
     #   //
-    @cocotb.coroutine
-    def do_block(self, blk):
+    
+    async def do_block(self, blk):
 
         if reg_test_off(blk, ["NO_REG_TESTS", "NO_MEM_TESTS", "NO_MEM_ACCESS_TEST"]):
             return
@@ -270,13 +270,13 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 continue
 
             self.mem_seq.mem = mems[i]
-            yield self.mem_seq.start(None, self)
+            await self.mem_seq.start(None, self)
 
         blks = []  # uvm_reg_block[$]
 
         blk.get_blocks(blks)
         for i in range(len(blks)):
-            yield self.do_block(blks[i])
+            await self.do_block(blks[i])
 
 
     #   // Task: reset_blk
@@ -291,9 +291,9 @@ class UVMMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    @cocotb.coroutine
-    def reset_blk(self, blk):
-        yield Timer(1, "NS")
+    
+    async def reset_blk(self, blk):
+        await Timer(1, "NS")
 
 
 

@@ -73,18 +73,18 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Executes the Hardware Reset sequence.
     #   // Do not call directly. Use seq.start() instead.
     #
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         if self.model is None:
             uvm_error("UVMRegHWResetSeq", "Not block or system specified to run sequence on")
             return
         uvm_info("STARTING_SEQ", "|UVMRegHWResetSeq| Starting " + self.get_name() +
                 " sequence...",UVM_LOW)
 
-        yield self.reset_blk(self.model)
+        await self.reset_blk(self.model)
         self.model.reset()
 
-        yield self.do_block(self.model)
+        await self.do_block(self.model)
     #   endtask: body
 
     #// Task: do_block
@@ -92,8 +92,8 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Test all of the registers in a given ~block~
     #   //
     #   protected virtual task do_block(uvm_reg_block blk)
-    @cocotb.coroutine
-    def do_block(self, blk):
+    
+    async def do_block(self, blk):
         maps = []  # uvm_reg_map maps[$]
         sub_maps = []  # uvm_reg_map sub_maps[$]
         no_rr1 = UVMResourceDb.get_by_name("REG::" + blk.get_full_name(), "NO_REG_TESTS", 0)
@@ -133,7 +133,7 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                             regs[i].get_full_name(), maps[d].get_full_name()), UVM_LOW)
 
                 status = []
-                yield regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
+                await regs[i].mirror(status, UVM_CHECK, UVM_FRONTDOOR, maps[d], self)
                 status = status[0]
 
                 if status != UVM_IS_OK:
@@ -144,7 +144,7 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             blks = []  # uvm_reg_block blks[$]
             blk.get_blocks(blks)
             for i in range(len(blks)):
-                yield self.do_block(blks[i])
+                await self.do_block(blks[i])
 
         #   endtask:do_block
 
@@ -160,9 +160,9 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // in an extension to reset the DUT.
     #   //
     #   virtual task reset_blk(uvm_reg_block blk)
-    @cocotb.coroutine
-    def reset_blk(self, blk):
-        yield uvm_empty_delay()
+    
+    async def reset_blk(self, blk):
+        await uvm_empty_delay()
 
     #endclass: UVMRegHWResetSeq
 uvm_object_utils(UVMRegHWResetSeq)

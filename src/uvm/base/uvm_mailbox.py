@@ -40,26 +40,26 @@ class UVMMailbox():
         self.m_read_event = Event('mailbox_read_event')
         self.m_write_event = Event('mailbox_write_event')
 
-    @cocotb.coroutine
-    def put(self, item):
+    
+    async def put(self, item):
         _uvm_debug(self, 'put', 'Starting to check can_put()')
         if not self.can_put():
             self.m_read_event.clear()
-            yield self.m_read_event.wait()
+            await self.m_read_event.wait()
             self.m_read_event.clear()
         _uvm_debug(self, 'put', 'Putting an event into item queue')
         self.m_queue.push_back(item)
         _uvm_debug(self, 'put', 'ZZZ pushed to queue, can_get is ' + str(self.can_get()))
         self.m_write_event.set()
-        yield Timer(0)
+        await Timer(0)
         _uvm_debug(self, 'put', 'Finished')
 
-    @cocotb.coroutine
-    def get(self, itemq):
+    
+    async def get(self, itemq):
         if not self.can_get():
             _uvm_debug(self, 'get', 'waiting write event to get item')
             self.m_write_event.clear()
-            yield self.m_write_event.wait()
+            await self.m_write_event.wait()
             self.m_write_event.clear()
             _uvm_debug(self, 'get', 'event cleared, can_get ' + str(self.can_get()))
 
@@ -71,15 +71,15 @@ class UVMMailbox():
         self.m_read_event.set()
         _uvm_debug(self, 'get', 'getting an item from mailbox now')
         itemq.append(item)
-        yield Timer(0)
+        await Timer(0)
 
-    @cocotb.coroutine
-    def peek(self, itemq):
+    
+    async def peek(self, itemq):
         """ Peeks (with blocking) next item from mailbox without removing it """
         if not self.can_get():
             _uvm_debug(self, 'get', 'waiting write event to get item')
             self.m_write_event.clear()
-            yield self.m_write_event.wait()
+            await self.m_write_event.wait()
             self.m_write_event.clear()
             _uvm_debug(self, 'get', 'event cleared, can_get ' + str(self.can_get()))
         item = self.m_queue.front()

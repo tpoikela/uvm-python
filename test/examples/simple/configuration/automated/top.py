@@ -50,5 +50,5 @@ def module_top(dut):
     UVMConfigDb.set(None, "topenv.inst1.u1", "my_conf_obj", obj)
     UVMConfigDb.set(None, "topenv.inst1.u1", "tag", 'I am tagged')
     topenv = my_env("topenv", None)
-    yield run_test()
+    await run_test()
 

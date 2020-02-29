@@ -78,15 +78,15 @@ class UVMTaskPhase(UVMPhase):
     #  // matter, as each component task is executed in a separate process whose
     #  // starting order is not deterministic.
     #  //
-    @cocotb.coroutine
-    def traverse(self, comp, phase, state):
+    
+    async def traverse(self, comp, phase, state):
         phase.m_num_procs_not_yet_returned = 0
-        yield self.m_traverse(comp, phase, state)
+        await self.m_traverse(comp, phase, state)
         uvm_debug(self, 'traverse', 'Finished self.m_traverse for comp ' +
                 comp.get_name())
 
-    @cocotb.coroutine
-    def m_traverse(self, comp, phase, state):
+    
+    async def m_traverse(self, comp, phase, state):
         uvm_debug(self, "m_traverse", "START OF m_traverse, comp: " +
                 comp.get_name())
         name = ""
@@ -105,7 +105,7 @@ class UVMTaskPhase(UVMPhase):
         for child in children:
             uvm_debug(self, "m_traverse", "Yielding now child traverse with "
                 + child.get_name())
-            yield self.m_traverse(child, phase, state)
+            await self.m_traverse(child, phase, state)
 
         # tpoikela: Not safe loop with parallel tasks phases
         #if comp.has_first_child():
@@ -140,7 +140,7 @@ class UVMTaskPhase(UVMPhase):
                 if hasattr(comp, 'm_sequencer_id'):
                     seqr = comp  # was if ($cast(seqr, comp))
                     uvm_debug(self, "m_traverse", comp.get_name() + " is SQR")
-                    yield seqr.start_phase_sequence(phase)
+                    await seqr.start_phase_sequence(phase)
                 else:
                     uvm_debug(self, "m_traverse", comp.get_name() + " is not SQR")
             elif state == UVM_PHASE_EXECUTING:
@@ -149,7 +149,7 @@ class UVMTaskPhase(UVMPhase):
                     ph = comp.m_phase_imps[self]
 
                 uvm_debug(self, "m_traverse", comp.get_name() + " yield ph.execute")
-                yield ph.execute(comp, phase)
+                await ph.execute(comp, phase)
             elif state == UVM_PHASE_READY_TO_END:
                 comp.phase_ready_to_end(phase)
             elif state == UVM_PHASE_ENDED:
@@ -168,8 +168,8 @@ class UVMTaskPhase(UVMPhase):
     #  //
     #  // Fork the task-based phase ~phase~ for the component ~comp~.
     #  //
-    @cocotb.coroutine
-    def execute(self, comp, phase):
+    
+    async def execute(self, comp, phase):
         uvm_debug(self, 'execute', 'exec task_phase |' + self.get_name() + '| with comp: ' +
                 comp.get_name())
         #fork
@@ -181,19 +181,19 @@ class UVMTaskPhase(UVMPhase):
         #phase.m_num_procs_not_yet_returned += 1
         proc = cocotb.fork(self._execute_fork_join_none(comp,phase))
         #phase.m_num_procs_not_yet_returned -= 1
-        yield Timer(0)
+        await Timer(0)
         #end
         #join_none
         #endfunction
     #endclass
 
 
-    @cocotb.coroutine
-    def _execute_fork_join_none(self, comp, phase):
+    
+    async def _execute_fork_join_none(self, comp, phase):
         phase.m_num_procs_not_yet_returned += 1
         uvm_debug(self, '_execute_fork_join_none', 'exec task_phase |' + self.get_name()
                 + '| yielding comp: ' + comp.get_name())
-        yield self.exec_task(comp, phase)
+        await self.exec_task(comp, phase)
         uvm_debug(self, '_execute_fork_join_none', 'exec task_phase |' + self.get_name()
                 + '| AFTER yield comp: ' + comp.get_name())
         phase.m_num_procs_not_yet_returned -= 1

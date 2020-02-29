@@ -202,49 +202,49 @@ class ubus_bus_monitor(UVMMonitor):
         self.vif = vif[0]
 
     #  // run phase
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         #    fork
         reset_proc = cocotb.fork(self.observe_reset())
         collect_proc = cocotb.fork(self.collect_transactions())
         #    join
-        yield [reset_proc, collect_proc.join()]
+        await [reset_proc, collect_proc.join()]
         #  endtask : run_phase
     #
 
     #  // observe_reset
-    @cocotb.coroutine
-    def observe_reset(self):
+    
+    async def observe_reset(self):
         #    fork
-        @cocotb.coroutine
-        def rst_start():
+        
+        async def rst_start():
             while True:
-                yield RisingEdge(self.vif.sig_reset)
+                await RisingEdge(self.vif.sig_reset)
                 self.status.bus_state = RST_START
             self.state_port.write(self.status)
 
-        @cocotb.coroutine
-        def rst_stop():
+        
+        async def rst_stop():
             while True:
-                yield RisingEdge(self.vif.sig_reset)
+                await RisingEdge(self.vif.sig_reset)
                 self.status.bus_state = RST_STOP
                 self.state_port.write(self.status)
 
         start_proc = cocotb.fork(rst_start())
         stop_proc = cocotb.fork(rst_stop())
 
-        yield [start_proc, stop_proc.join()]
+        await [start_proc, stop_proc.join()]
         #    join
         #  endtask : observe_reset
 
 
     #  // collect_transactions
-    @cocotb.coroutine
-    def collect_transactions(self):
+    
+    async def collect_transactions(self):
         while True:
-            yield self.collect_arbitration_phase()
-            yield self.collect_address_phase()
-            yield self.collect_data_phase()
+            await self.collect_arbitration_phase()
+            await self.collect_address_phase()
+            await self.collect_data_phase()
             uvm_info("UBUS_MON", sv.sformatf("Transfer collected :\n%s",
                 self.trans_collected.sprint()), UVM_HIGH)
             if (self.checks_enable):
@@ -255,12 +255,12 @@ class ubus_bus_monitor(UVMMonitor):
         #  endtask : collect_transactions
 
     #  // collect_arbitration_phase
-    @cocotb.coroutine
-    def collect_arbitration_phase(self):
+    
+    async def collect_arbitration_phase(self):
         tmpStr = ""
         # @(posedge vif.sig_clock iff (vif.sig_grant != 0))
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             if self.vif.sig_grant != 0:
                 break
         self.status.bus_state = ARBI
@@ -278,9 +278,9 @@ class ubus_bus_monitor(UVMMonitor):
         #
 
     #  // collect_address_phase
-    @cocotb.coroutine
-    def collect_address_phase(self):
-        yield RisingEdge(self.vif.sig_clock)
+    
+    async def collect_address_phase(self):
+        await RisingEdge(self.vif.sig_clock)
         self.trans_collected.addr = int(self.vif.sig_addr.value)
         sig_size = int(self.vif.sig_size)
         if sig_size == 0:
@@ -317,22 +317,22 @@ class ubus_bus_monitor(UVMMonitor):
         #
 
     #  // collect_data_phase
-    @cocotb.coroutine
-    def collect_data_phase(self):
+    
+    async def collect_data_phase(self):
         if (self.trans_collected.read_write != NOP):
             self.check_which_slave()
             for i in range(self.trans_collected.size):
                 self.status.bus_state = DATA_PH
                 self.state_port.write(self.status)
                 while True:
-                    yield RisingEdge(self.vif.sig_clock)
+                    await RisingEdge(self.vif.sig_clock)
                     if self.vif.sig_wait == 0:
                         break
                 self.trans_collected.data[i] = self.vif.sig_data
             self.num_transactions += 1
             self.end_tr(self.trans_collected)
         else:
-            yield Timer(0)
+            await Timer(0)
         #  endtask : collect_data_phase
         #
 

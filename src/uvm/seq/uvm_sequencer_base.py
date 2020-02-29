@@ -237,8 +237,8 @@ class UVMSequencerBase(UVMComponent):
     #  //
     #
     #  extern virtual function void start_phase_sequence(uvm_phase phase)
-    @cocotb.coroutine
-    def start_phase_sequence(self, phase):
+    
+    async def start_phase_sequence(self, phase):
         rp = UVMResourcePool.get()  # uvm_resource_pool
         rq = []  # uvm_resource_types::rsrc_q_t
         seq = None  # uvm_sequence_base
@@ -269,7 +269,7 @@ class UVMSequencerBase(UVMComponent):
                 if seq is None:
                     uvm_info("UVM/SQR/PH/DEF/SB/None", "Default phase sequence for phase '"
                             + phase.get_name() + "' explicitly disabled", UVM_FULL)
-                    yield Timer(0, "NS")
+                    await Timer(0, "NS")
                     return
 
             # uvm_config_db#(uvm_object_wrapper)?
@@ -279,7 +279,7 @@ class UVMSequencerBase(UVMComponent):
                 if wrapper is None:
                     uvm_info("UVM/SQR/PH/DEF/OW/None", "Default phase sequence for phase '"
                             + phase.get_name() + "' explicitly disabled", UVM_FULL)
-                    yield Timer(0, "NS")
+                    await Timer(0, "NS")
                     return
 
                 new_obj = f.create_object_by_type(wrapper, self.get_full_name(),
@@ -288,7 +288,7 @@ class UVMSequencerBase(UVMComponent):
                 if not(sv.cast(seq_arr, new_obj, UVMSequence) or seq_arr[0] is None):
                     uvm_warning("PHASESEQ", "Default sequence for phase '" +
                             phase.get_name() + "' %s is not a sequence type")
-                    yield Timer(0, "NS")
+                    await Timer(0, "NS")
                     return
                 else:
                     seq = seq_arr[0]
@@ -296,7 +296,7 @@ class UVMSequencerBase(UVMComponent):
         if seq is None:
             uvm_info("PHASESEQ", "No default phase sequence for phase '"
                     + phase.get_name() + "'", UVM_FULL)
-            yield Timer(0, "NS")
+            await Timer(0, "NS")
             return
 
         uvm_info("PHASESEQ", "Starting default sequence '" + seq.get_type_name()
@@ -310,15 +310,15 @@ class UVMSequencerBase(UVMComponent):
         if (seq.do_not_randomize is False and seq.randomize() is False):
             uvm_warning("STRDEFSEQ", "Randomization failed for default sequence '"
                     + seq.get_type_name() + "' for phase '" + phase.get_name() + "'")
-            yield Timer(0, "NS")
+            await Timer(0, "NS")
             return
 
         cocotb.fork(self.c_seq_fork_proc(seq, phase))
-        yield Timer(0, "NS")
+        await Timer(0, "NS")
         #endfunction
 
-    @cocotb.coroutine
-    def _seq_fork_proc(self, seq, phase):
+    
+    async def _seq_fork_proc(self, seq, phase):
         #fork begin TODO this section incomplete
         w = uvm_sequence_process_wrapper()
         # reseed this process for random stability
@@ -327,7 +327,7 @@ class UVMSequencerBase(UVMComponent):
         # w.pid.srandom(uvm_create_random_seed(seq.get_type_name(), self.get_full_name()))
         self.m_default_sequences[phase] = w
         # this will either complete naturally, or be killed later
-        yield seq.start(self)
+        await seq.start(self)
         self.m_default_sequences.delete(phase)
         #join_none
 
@@ -368,8 +368,8 @@ class UVMSequencerBase(UVMComponent):
     #  extern virtual task wait_for_grant(uvm_sequence_base sequence_ptr,
     #                                     int item_priority = -1,
     #                                     bit lock_request = 0)
-    @cocotb.coroutine
-    def wait_for_grant(self, sequence_ptr, item_priority=-1, lock_request=0):
+    
+    async def wait_for_grant(self, sequence_ptr, item_priority=-1, lock_request=0):
         req_s = None  # uvm_sequence_request
         my_seq_id = 0
 
@@ -407,7 +407,7 @@ class UVMSequencerBase(UVMComponent):
 
         # Wait until this entry is granted
         # Continue to point to the element, since location in queue will change
-        yield self.m_wait_for_arbitration_completed(req_s.request_id)
+        await self.m_wait_for_arbitration_completed(req_s.request_id)
 
         # The wait_for_grant_semaphore is used only to check that send_request
         # is only called after wait_for_grant.  This is not a complete check, since
@@ -431,20 +431,20 @@ class UVMSequencerBase(UVMComponent):
     #  //
     #  extern virtual task wait_for_item_done(uvm_sequence_base sequence_ptr,
     #                                         int transaction_id)
-    @cocotb.coroutine
-    def wait_for_item_done(self, sequence_ptr, transaction_id):
+    
+    async def wait_for_item_done(self, sequence_ptr, transaction_id):
         sequence_id = sequence_ptr.m_get_sqr_sequence_id(self.m_sequencer_id, 1)
         self.m_wait_for_item_sequence_id = -1
         self.m_wait_for_item_transaction_id = -1
 
         if (transaction_id == -1):
             #wait (m_wait_for_item_sequence_id == sequence_id)
-            yield wait(lambda : self.m_wait_for_item_sequence_id == sequence_id,
+            await wait(lambda : self.m_wait_for_item_sequence_id == sequence_id,
                  self.m_event_value_changed)
         else:
             # wait ((m_wait_for_item_sequence_id == sequence_id &&
             #        m_wait_for_item_transaction_id == transaction_id))
-            yield wait(lambda : self.m_wait_for_item_sequence_id == sequence_id and
+            await wait(lambda : self.m_wait_for_item_sequence_id == sequence_id and
                  self.m_wait_for_item_transaction_id == transaction_id,
                  self.m_event_value_changed)
 
@@ -594,9 +594,9 @@ class UVMSequencerBase(UVMComponent):
     #
     #  extern virtual task wait_for_sequences()
     #// ------------------
-    @cocotb.coroutine
-    def wait_for_sequences(self):
-        yield uvm_wait_for_nba_region()
+    
+    async def wait_for_sequences(self):
+        await uvm_wait_for_nba_region()
 
     #  // Function: send_request
     #  //
@@ -682,16 +682,16 @@ class UVMSequencerBase(UVMComponent):
                 self.m_update_lists()
 
     #  extern protected task          m_select_sequence()
-    @cocotb.coroutine
-    def m_select_sequence(self):
+    
+    async def m_select_sequence(self):
         selected_sequence = 0
 
         # Select a sequence
         while True:
-            yield self.wait_for_sequences()
+            await self.wait_for_sequences()
             selected_sequence = self.m_choose_next_request()
             if selected_sequence == -1:
-                yield self.m_wait_for_available_sequence()
+                await self.m_wait_for_available_sequence()
             if selected_sequence != -1:
                 break
             #end while (selected_sequence == -1)
@@ -833,8 +833,8 @@ class UVMSequencerBase(UVMComponent):
     #endfunction
 
     #  extern           task          m_wait_for_arbitration_completed(int request_id)
-    @cocotb.coroutine
-    def m_wait_for_arbitration_completed(self, request_id):
+    
+    async def m_wait_for_arbitration_completed(self, request_id):
         lock_arb_size = 0
 
         # Search the list of arb_wait_q, see if this item is done
@@ -845,7 +845,7 @@ class UVMSequencerBase(UVMComponent):
                 self.arb_completed.delete(request_id)
                 return
             
-            yield wait(lambda : lock_arb_size != self.m_lock_arb_size,
+            await wait(lambda : lock_arb_size != self.m_lock_arb_size,
                 self.m_event_value_changed)
 
         #endtask
@@ -972,14 +972,14 @@ class UVMSequencerBase(UVMComponent):
         self.m_event_value_changed.set()
 
     #  extern protected task            m_wait_arb_not_equal()
-    @cocotb.coroutine
-    def m_wait_arb_not_equal(self):
-        yield wait(lambda : self.m_arb_size != self.m_lock_arb_size, 
+    
+    async def m_wait_arb_not_equal(self):
+        await wait(lambda : self.m_arb_size != self.m_lock_arb_size, 
              self.m_event_value_changed)
 
     #  extern protected task            m_wait_for_available_sequence()
-    @cocotb.coroutine
-    def m_wait_for_available_sequence(self):
+    
+    async def m_wait_for_available_sequence(self):
         i = 0
         is_relevant_entries: List[int] = []  # int[$]
 
@@ -995,18 +995,18 @@ class UVMSequencerBase(UVMComponent):
 
         # Typical path - don't need fork if all queued entries are relevant
         if (len(is_relevant_entries) == 0):
-            yield self.m_wait_arb_not_equal()
+            await self.m_wait_arb_not_equal()
             return
 
         #fork // isolate inner fork block for disabling
         fork_first = cocotb.fork(self._fork_first_proc(is_relevant_entries))
-        yield fork_first
+        await fork_first
         #join
 
-    @cocotb.coroutine
-    def _rel_entry_fork_proc(self, i, is_relevant_entries):
+    
+    async def _rel_entry_fork_proc(self, i, is_relevant_entries):
         k = i
-        yield self.arb_sequence_q[is_relevant_entries[k]].sequence_ptr.wait_for_relevant()
+        await self.arb_sequence_q[is_relevant_entries[k]].sequence_ptr.wait_for_relevant()
         if sv.realtime() != self.m_last_wait_relevant_time:
             self.m_last_wait_relevant_time = sv.realtime()
             self.m_wait_relevant_count = 0
@@ -1017,8 +1017,8 @@ class UVMSequencerBase(UVMComponent):
         #self.m_is_relevant_completed = 1
         self.set_value('m_is_relevant_completed', True)
 
-    @cocotb.coroutine
-    def _fork_first_proc(self, is_relevant_entries):
+    
+    async def _fork_first_proc(self, is_relevant_entries):
         started_forks = []
         #fork
         forked_proc1 = cocotb.fork(self._fork_first_proc_sub_fork1(is_relevant_entries))
@@ -1026,13 +1026,13 @@ class UVMSequencerBase(UVMComponent):
         # The other path in the fork is for any queue entry to change
         forked_proc2 = self.m_wait_arb_not_equal()
         started_forks.append(forked_proc2)
-        yield started_forks  # join_any
+        await started_forks  # join_any
         # disable fork
         for p in started_forks:
             p.kill()
 
-    @cocotb.coroutine
-    def _fork_first_proc_sub_fork1(self, is_relevant_entries):
+    
+    async def _fork_first_proc_sub_fork1(self, is_relevant_entries):
         # One path in fork is for any wait_for_relevant to return
         fork_procs_join_none = []
         self.set_value('m_is_relevant_completed', False)
@@ -1041,7 +1041,7 @@ class UVMSequencerBase(UVMComponent):
             forked_proc = cocotb.fork(self._rel_entry_fork_proc(i, is_relevant_entries))
             fork_procs_join_none.append(forked_proc)
             #join_none
-        yield wait(lambda : self.m_is_relevant_completed > 0,
+        await wait(lambda : self.m_is_relevant_completed > 0,
                    self.m_event_value_changed)
 
     #  extern protected function int    m_get_seq_item_priority(uvm_sequence_request seq_q_entry)

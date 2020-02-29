@@ -41,25 +41,25 @@ class consumer(UVMComponent):
         self.count = 0
         self.lock = semaphore(1)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         while self.out.size():
             print("consumer run_phase in while-loop")
             p = []
-            yield self.out.get(p)
-            yield self.put(p[0])
+            await self.out.get(p)
+            await self.put(p[0])
 
-    @cocotb.coroutine
-    def put(self, p):
+    
+    async def put(self, p):
         print("consumer put() called with count " + str(self.count))
-        yield self.lock.get()
+        await self.lock.get()
         self.count += 1
         self.accept_tr(p)
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         #    #10
         self.begin_tr(p)
         #    #30; 
-        yield Timer(10, "NS")
+        await Timer(10, "NS")
         self.end_tr(p)
         uvm_info("consumer", sv.sformatf("Received %0s local_count=%0d",
             p.get_name(),self.count), UVM_MEDIUM)

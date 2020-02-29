@@ -37,30 +37,30 @@ class MyComponent(UVMComponent):
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
     
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         self.uvm_report_info("component", "before raising objection", UVM_MEDIUM)
         phase.raise_objection(self)
         UVMDebug.DEBUG = False
         self.uvm_report_info("component", "after raising objection", UVM_MEDIUM)
-        yield Timer(1, 'ns')
+        await Timer(1, 'ns')
         uvm_debug(self, 'run_phase', "Objection raised run_phase " +
                 self.get_name())
-        yield Timer(2, 'ns')
+        await Timer(2, 'ns')
         self.uvm_report_info("component", "hello out there!", UVM_MEDIUM)
-        yield Timer(1000, 'ns')
+        await Timer(1000, 'ns')
         self.uvm_report_info("component", "finishing up!", UVM_MEDIUM)
         phase.drop_objection(self)
 # uvm_component_utils(MyComponent)
 
 
 @cocotb.test()
-def component_test(dut):
+async def component_test(dut):
     cc = MyComponent("Top", None)
     print(cc.get_full_name())
-    yield run_test()
+    await run_test()
     sim_time = get_sim_time()
-    yield Timer(1001, 'ns')
+    await Timer(1001, 'ns')
 
     if sim_time == 0:
         raise Exception('Sim time has not progressed')

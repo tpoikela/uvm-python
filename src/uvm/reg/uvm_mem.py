@@ -632,8 +632,8 @@ class UVMMem(UVMObject):
     #                             input  int                lineno = 0)
     #
     #
-    @cocotb.coroutine
-    def write(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None, parent=None,
+    
+    async def write(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None, parent=None,
             prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
 
@@ -652,7 +652,7 @@ class UVMMem(UVMObject):
         rw.fname        = fname
         rw.lineno       = lineno
 
-        yield self.do_write(rw)
+        await self.do_write(rw)
         status.append(rw.status)
         #endtask: write
 
@@ -677,8 +677,8 @@ class UVMMem(UVMObject):
     #                            input  uvm_object          extension = None,
     #                            input  string              fname = "",
     #                            input  int                 lineno = 0)
-    @cocotb.coroutine
-    def read(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None,
+    
+    async def read(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status, value])
 
@@ -696,7 +696,7 @@ class UVMMem(UVMObject):
         rw.fname        = fname
         rw.lineno       = lineno
 
-        yield self.do_read(rw)
+        await self.do_read(rw)
 
         status.append(rw.status)
         value.append(rw.value[0])
@@ -833,8 +833,8 @@ class UVMMem(UVMObject):
     #                            input  uvm_object         extension = None,
     #                            input  string             fname = "",
     #                            input  int                lineno = 0)
-    # @cocotb.coroutine
-    def peek(self, status, offset, value, kind="", parent=None, extension=None, fname="",
+    # 
+    async def peek(self, status, offset, value, kind="", parent=None, extension=None, fname="",
             lineno=0):
         uvm_check_output_args([status, value])
         bkdr = self.get_backdoor()  # uvm_reg_backdoor
@@ -943,8 +943,8 @@ class UVMMem(UVMObject):
         #endfunction
 
     #   extern virtual task do_write (uvm_reg_item rw)
-    @cocotb.coroutine
-    def do_write(self, rw):  # task
+    
+    async def do_write(self, rw):  # task
         cbs = UVMMemCbIter(self)
         map_info = []  # uvm_reg_map_info
 
@@ -952,19 +952,19 @@ class UVMMem(UVMObject):
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, map_info, "burst_write()") is False:
-            yield uvm_empty_delay()
+            await uvm_empty_delay()
             return
 
         self.m_write_in_progress = True
         rw.status = UVM_IS_OK
 
         # PRE-WRITE CBS
-        yield self.pre_write(rw)
+        await self.pre_write(rw)
         #   for (uvm_reg_cbs cb=cbs.first(); cb is not None; cb=cbs.next())
         #      cb.pre_write(rw)
         cb = cbs.first()
         while cb is not None:
-            yield cb.pre_write(rw)
+            await cb.pre_write(rw)
             cb = cbs.next()
 
         if rw.status != UVM_IS_OK:
@@ -983,9 +983,9 @@ class UVMMem(UVMObject):
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
-                yield fd.start(fd.sequencer, rw.parent)
+                await fd.start(fd.sequencer, rw.parent)
             else:
-                yield rw.local_map.do_write(rw)
+                await rw.local_map.do_write(rw)
 
             if rw.status != UVM_NOT_OK:
                 _min = rw.offset
@@ -1002,17 +1002,17 @@ class UVMMem(UVMObject):
             if self.get_access(rw.map) == "RW":
                 bkdr = self.get_backdoor()  # uvm_reg_backdoor
                 if (bkdr is not None):
-                    yield bkdr.write(rw)
+                    await bkdr.write(rw)
                 else:
-                    yield self.backdoor_write(rw)
+                    await self.backdoor_write(rw)
             else:
                 rw.status = UVM_IS_OK
 
         #   // POST-WRITE CBS
-        yield self.post_write(rw)
+        await self.post_write(rw)
         cb = cbs.first()
         while cb is not None:
-            yield cb.post_write(rw)
+            await cb.post_write(rw)
             cb = cbs.next()
 
         # REPORT
@@ -1047,8 +1047,8 @@ class UVMMem(UVMObject):
         #endtask: do_write
 
     #   extern virtual task do_read  (uvm_reg_item rw)
-    @cocotb.coroutine
-    def do_read(self, rw):  # task
+    
+    async def do_read(self, rw):  # task
         cbs = UVMMemCbIter(self)
         map_info = []  # uvm_reg_map_info
 
@@ -1056,14 +1056,14 @@ class UVMMem(UVMObject):
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, map_info, "burst_read()") is False:
-            yield uvm_empty_delay()
+            await uvm_empty_delay()
             return
 
         self.m_read_in_progress = True
         rw.status = UVM_IS_OK
         #
         # PRE-READ CBS
-        yield self.pre_read(rw)
+        await self.pre_read(rw)
         cb = cbs.first()
         while cb is not None:
             cb.pre_read(rw)
@@ -1085,9 +1085,9 @@ class UVMMem(UVMObject):
                 fd.rw_info = rw
                 if fd.sequencer is None:
                     fd.sequencer = system_map.get_sequencer()
-                yield fd.start(fd.sequencer, rw.parent)
+                await fd.start(fd.sequencer, rw.parent)
             else:
-                yield rw.local_map.do_read(rw)
+                await rw.local_map.do_read(rw)
 
             if rw.status != UVM_NOT_OK:
                 _min = rw.offset
@@ -1100,15 +1100,15 @@ class UVMMem(UVMObject):
         else:
             bkdr = self.get_backdoor()  # uvm_reg_backdoor
             if bkdr is not None:
-                yield bkdr.read(rw)
+                await bkdr.read(rw)
             else:
-                yield self.backdoor_read(rw)
+                await self.backdoor_read(rw)
 
         # POST-READ CBS
-        yield self.post_read(rw)
+        await self.post_read(rw)
         cb = cbs.first()
         while cb is not None:
-            yield cb.post_read(rw)
+            await cb.post_read(rw)
             cb = cbs.next()
 
         # REPORT
@@ -1519,9 +1519,9 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_write(uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def pre_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_write(self, rw):
+        await uvm_empty_delay()
 
     #   // Task: post_write
     #   //
@@ -1534,9 +1534,9 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def post_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_write(self, rw):
+        await uvm_empty_delay()
 
     #
     #
@@ -1554,9 +1554,9 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def pre_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_read(self, rw):
+        await uvm_empty_delay()
     #
     #
     #   // Task: post_read
@@ -1571,9 +1571,9 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_read(uvm_reg_item rw); endtask
-    @cocotb.coroutine
-    def post_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_read(self, rw):
+        await uvm_empty_delay()
 
 
     #

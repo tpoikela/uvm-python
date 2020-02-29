@@ -93,8 +93,8 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Retrieves the next available item from a sequence.
     #  //
     #  extern virtual task          get_next_item (output REQ t)
-    @cocotb.coroutine
-    def get_next_item(self, t):
+    
+    async def get_next_item(self, t):
         uvm_check_output_args([t])
         # req_item = None
 
@@ -106,13 +106,13 @@ class UVMSequencer(UVMSequencerParamBase):
                 "Get_next_item called twice without item_done or get in between", UVM_NONE)
 
         if self.sequence_item_requested is False:
-            yield self.m_select_sequence()
+            await self.m_select_sequence()
 
         # Set flag indicating that the item has been requested to ensure that item_done or get
         # is called between requests
         self.sequence_item_requested = True
         self.get_next_item_called = True
-        yield self.m_req_fifo.peek(t)
+        await self.m_req_fifo.peek(t)
         #endtask
     #
     #  // Task: try_next_item
@@ -149,21 +149,21 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Sends a response back to the sequence that issued the request.
     #  //
     #  extern virtual task          put           (RSP t)
-    @cocotb.coroutine
-    def put(self, t):
+    
+    async def put(self, t):
         self.put_response(t)
-        yield Timer(0)
+        await Timer(0)
 
 
     #  // Task: get
     #  // Retrieves the next available item from a sequence.
-    @cocotb.coroutine
-    def get(self, t):
+    
+    async def get(self, t):
         print("Called get in sequencer " + self.get_name())
         if self.sequence_item_requested == 0:
-            yield self.m_select_sequence()
+            await self.m_select_sequence()
         self.sequence_item_requested = 1
-        yield self.m_req_fifo.peek(t)
+        await self.m_req_fifo.peek(t)
         print("sequencer.get() item is now " + t[0].convert2string())
         self.item_done()
 
@@ -171,15 +171,15 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Returns the current request item if one is in the FIFO.
     #  //
     #  extern task                  peek          (output REQ t)
-    @cocotb.coroutine
-    def peek(self, t):
+    
+    async def peek(self, t):
         if self.sequence_item_requested == 0:
-            yield self.m_select_sequence()
+            await self.m_select_sequence()
        
         # Set flag indicating that the item has been requested to ensure that item_done or get
         # is called between requests
         self.sequence_item_requested = 1
-        yield self.m_req_fifo.peek(t)
+        await self.m_req_fifo.peek(t)
 
     #
     #  /// Documented here for clarity, implemented in uvm_sequencer_base

@@ -66,13 +66,13 @@ class UVMEventBase(UVMObject):
         if self.m_waiters > 0:
             self.on_event.set()
 
-    @cocotb.coroutine
-    def wait(self):
+    
+    async def wait(self):
         if self.m_waiters == 0:
             self.on_event.clear()
 
         self.m_waiters += 1
-        yield self.on_event.wait()
+        await self.on_event.wait()
         self.m_waiters -= 1
         if self.m_waiters == 0:
             self.on_event.clear()
@@ -94,16 +94,16 @@ class UVMEventBase(UVMObject):
     #    // Once an event has been triggered, it will be remain "on" until the event
     #    // is <reset>.
     #    virtual task wait_on (bit delta = 0)
-    @cocotb.coroutine
-    def wait_on(self, delta=False):
+    
+    async def wait_on(self, delta=False):
         if self.on is True:
             if delta is True:
                 #0
-                yield Timer(0)
-            yield Timer(0)
+                await Timer(0)
+            await Timer(0)
             return
         self.num_waiters += 1
-        yield wait(lambda: self.on is True, self.m_value_changed_event)
+        await wait(lambda: self.on is True, self.m_value_changed_event)
         #while True:
         #    yield self.m_value_changed_event.wait()
         #    self.m_value_changed_event.clear()
@@ -122,14 +122,14 @@ class UVMEventBase(UVMObject):
     #    // previously waiting processes have had a chance to resume.
     #
     #    virtual task wait_off (bit delta = 0)
-    @cocotb.coroutine
-    def wait_off(self, delta=False):
+    
+    async def wait_off(self, delta=False):
         if self.on is False:
             if delta is True:
-                yield Timer(0)  #0
+                await Timer(0)  #0
             return
         self.num_waiters += 1
-        yield wait(lambda: self.on is False, self.m_value_changed_event)
+        await wait(lambda: self.on is False, self.m_value_changed_event)
         #    endtask
 
     #    // Task: wait_trigger
@@ -142,10 +142,10 @@ class UVMEventBase(UVMObject):
     #    // occurs after the trigger, this method will not return until the next
     #    // trigger, which may never occur and thus cause deadlock.
     #
-    @cocotb.coroutine
-    def wait_trigger(self):
+    
+    async def wait_trigger(self):
         self.num_waiters += 1
-        yield self.m_event.wait()
+        await self.m_event.wait()
         self.m_event.clear()
     # endtask
 
@@ -156,12 +156,12 @@ class UVMEventBase(UVMObject):
     #    // certain race conditions. If this method is called after the trigger but
     #    // within the same time-slice, the caller returns immediately.
 
-    @cocotb.coroutine
-    def wait_ptrigger(self):
+    
+    async def wait_ptrigger(self):
         if self.m_event.fired:
             return
         self.num_waiters += 1
-        yield self.m_event.wait()
+        await self.m_event.wait()
         self.m_event.clear()
 
     #    // Function: get_trigger_time
@@ -295,9 +295,9 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     # Task: wait_trigger_data
     #
     # This method calls <uvm_event_base::wait_trigger> followed by <get_trigger_data>.
-    @cocotb.coroutine
-    def wait_trigger_data(self):  # output T data)
-        yield self.wait_trigger()
+    
+    async def wait_trigger_data(self):  # output T data)
+        await self.wait_trigger()
         return self.get_trigger_data()
 
 
@@ -306,9 +306,9 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #    // This method calls <uvm_event_base::wait_ptrigger> followed by <get_trigger_data>.
     #
     #    virtual task wait_ptrigger_data (output T data)
-    @cocotb.coroutine
-    def wait_ptrigger_data(self, data):
-        yield self.wait_ptrigger()
+    
+    async def wait_ptrigger_data(self, data):
+        await self.wait_ptrigger()
         trig_data = self.get_trigger_data()
         data.append(trig_data)
         return trig_data

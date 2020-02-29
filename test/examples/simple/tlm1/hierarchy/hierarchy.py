@@ -99,14 +99,14 @@ class gen(UVMComponent):
         self.put_port = UVMBlockingPutPort("put_port", self)
         self.num_items = 0
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         for i in range(20):
             t = transaction()
             if not t.randomize():
                 uvm_error("GEN", "Failed to randomize transaction")
             uvm_info("gen", sv.sformatf("sending  : %s", t.convert2string()), UVM_MEDIUM)
-            yield self.put_port.put(t)
+            await self.put_port.put(t)
             self.num_items += 1
 
 
@@ -123,14 +123,14 @@ class conv(UVMComponent):
         self.get_port = UVMBlockingGetPort("get_port", self)
         self.ap = UVMAnalysisPort("analysis_port", self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         while True:
             t = []
-            yield self.get_port.get(t)
+            await self.get_port.get(t)
             t = t[0]
             self.ap.write(t)
-            yield self.put_port.put(t)
+            await self.put_port.put(t)
 
     #  endclass
 
@@ -147,12 +147,12 @@ class bfm(UVMComponent):
         super().__init__(name, parent)
         self.get_port = UVMBlockingGetPort("get_port", self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
 
         while True:
             t = []
-            yield self.get_port.get(t)
+            await self.get_port.get(t)
             t = t[0]
             uvm_info("bfm", sv.sformatf("receiving: %s", t.convert2string()),UVM_MEDIUM)
 
@@ -242,11 +242,11 @@ class top(UVMEnv):
         self.p.ap.connect(self.list.analysis_export)
         #    endfunction
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_info("ENV_TOP", "run_phase started", UVM_MEDIUM)
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
         phase.drop_objection(self)
 
 
@@ -260,10 +260,10 @@ class env(UVMEnv):
         self.t = top("top", self)
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(900, "NS")
+        await Timer(900, "NS")
         phase.drop_objection(self)
 
     #  endclass
@@ -275,4 +275,4 @@ class env(UVMEnv):
 @cocotb.test()
 def module_top(dut):
     e = env("e")
-    yield run_test()
+    await run_test()

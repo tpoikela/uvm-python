@@ -151,28 +151,28 @@ class ubus_slave_monitor(UVMMonitor):
     #  endfunction : get_max_addr
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         #    fork
         forked_proc = cocotb.fork(self.collect_transactions())
         #    join
-        yield forked_proc
+        await forked_proc
     #  endtask : run_phase
 
     # collect_transactions
-    @cocotb.coroutine
-    def collect_transactions(self):
-        yield RisingEdge(self.vif.sig_reset)
+    
+    async def collect_transactions(self):
+        await RisingEdge(self.vif.sig_reset)
         range_check = False
         while True:
             if (self.m_parent is not None):
                 self.trans_collected.slave = self.m_parent.get_name()
-            yield self.collect_address_phase()
+            await self.collect_address_phase()
             range_check = self.check_addr_range()
             if (range_check):
                 self.begin_tr(self.trans_collected)
                 self.address_phase_grabbed.set()
-                yield self.collect_data_phase()
+                await self.collect_data_phase()
                 uvm_info(self.get_type_name(), sv.sformatf("Transfer collected :\n%s",
                     self.trans_collected.sprint()), UVM_FULL)
                 if (self.checks_enable):
@@ -192,11 +192,11 @@ class ubus_slave_monitor(UVMMonitor):
 
 
     #  // collect_address_phase
-    @cocotb.coroutine
-    def collect_address_phase(self):
+    
+    async def collect_address_phase(self):
         found = False
         while found is False:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             if self.vif.sig_read.value.is_resolvable and self.vif.sig_write.value.is_resolvable:
 
                 if self.vif.sig_read.value == 1 or self.vif.sig_write.value == 1:
@@ -225,12 +225,12 @@ class ubus_slave_monitor(UVMMonitor):
 
     #
     #  // collect_data_phase
-    @cocotb.coroutine
-    def collect_data_phase(self):
+    
+    async def collect_data_phase(self):
         if (self.trans_collected.read_write != NOP):
             for i in range(self.trans_collected.size):
                 while True:
-                    yield RisingEdge(self.vif.sig_clock)
+                    await RisingEdge(self.vif.sig_clock)
                     if self.vif.sig_wait.value == 0:
                         break
                 self.trans_collected.data[i] = self.vif.sig_data.value
@@ -273,10 +273,10 @@ class ubus_slave_monitor(UVMMonitor):
         #    end
         #  endfunction : perform_transfer_coverage
 
-    @cocotb.coroutine
-    def peek(self, trans):
+    
+    async def peek(self, trans):
         _print("in blocking peek yielding to grabbed_wait")
-        yield self.address_phase_grabbed.wait()
+        await self.address_phase_grabbed.wait()
         self.address_phase_grabbed.clear()
         _print("in blocking peek AFTER grabbed_wait: " +
             self.trans_collected.convert2string())

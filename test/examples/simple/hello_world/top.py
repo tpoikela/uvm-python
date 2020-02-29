@@ -52,11 +52,11 @@ class top(UVMComponent):
     def end_of_elaboration_phase(self, phase):
         uvm_top.print_topology()
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         print("top run_Phase started XYZ")
         phase.raise_objection(self)
-        yield Timer(1000, "NS")
+        await Timer(1000, "NS")
         phase.drop_objection(self)
 
     def check_phase(self, phase):

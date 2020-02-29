@@ -18,16 +18,16 @@ class UVMTestProducer(UVMComponent):
         self.put_port = UVMPutPort('put_port', self)
         self.get_port = UVMGetPort('get_port', self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         for i in range(0, 10):
             seq_item = UVMSequenceItem('item')
             exp_id = 2 * i + 1
             seq_item.set_transaction_id(exp_id)
-            yield self.put_b_port.put(seq_item)
-            yield Timer(1)
+            await self.put_b_port.put(seq_item)
+            await Timer(1)
             arr = []
-            yield self.get_b_port.get(arr)
+            await self.get_b_port.get(arr)
             got_id = arr[0].get_transaction_id()
             if got_id != exp_id:
                 raise Exception("Item ID error. Got: {}, Exp: {}".format(got_id,
@@ -47,26 +47,26 @@ class UVMTestConsumer(UVMComponent):
         self.get_imp = UVMGetImp('get_imp', self)
         self.put_imp = UVMGetImp('put_imp', self)
 
-    @cocotb.coroutine
-    def put(self, item):
+    
+    async def put(self, item):
         self.count += 1
         if self.count % 2 == 0:
-            yield Timer(1)
+            await Timer(1)
         else:
-            yield Timer(2)
+            await Timer(2)
         self.curr_item = item
         if self.count == self.wait_n:
             self.my_event.trigger(self.count)
 
-    @cocotb.coroutine
-    def get(self, item):
-        yield Timer(12)
+    
+    async def get(self, item):
+        await Timer(12)
         item.append(self.curr_item)
 
-    @cocotb.coroutine
-    def wait_all_data(self, n = 10):
+    
+    async def wait_all_data(self, n = 10):
         self.wait_n = n
-        yield self.my_event.wait_trigger()
+        await self.my_event.wait_trigger()
 uvm_component_utils(UVMTestConsumer)
 
 class UVMTestExporter(UVMComponent):
@@ -80,7 +80,7 @@ class UVMTestExporter(UVMComponent):
     def connect_phase(self, phase):
         self.put_export.connect(self.consumer.put_imp)
 
-    @cocotb.coroutine
-    def wait_all_data(self, n = 10):
-        yield consumer.wait_all_data(n)
+    
+    async def wait_all_data(self, n = 10):
+        await consumer.wait_all_data(n)
 uvm_component_utils(UVMTestExporter)

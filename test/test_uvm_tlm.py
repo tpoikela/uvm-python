@@ -24,7 +24,7 @@ def test_tlm_nb_put_basic(dut):
 
     pproc = cocotb.fork(producer.run_phase(None))
     #yield producer.run_phase(None)
-    yield consumer.wait_all_data()
+    await consumer.wait_all_data()
     #yield [pproc.join(), wproc.join()]
     if consumer.count != 10:
         raise Exception('Consumer data count only {}'.format(consumer.count))
@@ -38,7 +38,7 @@ def test_tlm_exports(dut):
     producer.put_port.resolve_bindings()
 
     pproc = cocotb.fork(producer.run_phase(None))
-    yield exporter.wait_all_data()
+    await exporter.wait_all_data()
 
 @cocotb.test(skip=False)
 def test_tlm_fifo(dut):

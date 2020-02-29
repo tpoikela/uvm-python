@@ -33,13 +33,13 @@ from .apb_rw import *
 
 
 class apb_master_cbs(UVMCallback):
-    @cocotb.coroutine
-    def trans_received(self, xactor, cycle):
-        yield Timer(0, "NS")
+    
+    async def trans_received(self, xactor, cycle):
+        await Timer(0, "NS")
 
-    @cocotb.coroutine
-    def trans_executed(self, xactor, cycle):
-        yield Timer(0, "NS")
+    
+    async def trans_executed(self, xactor, cycle):
+        await Timer(0, "NS")
 
 
 class apb_master(UVMDriver):  #(apb_rw)
@@ -70,38 +70,38 @@ class apb_master(UVMDriver):  #(apb_rw)
                 self.sigs = arr[0]
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         uvm_info("APB_MASTER", "apb_master run_phase started", UVM_MEDIUM)
 
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
 
         while True:
-            yield self.drive_delay()
+            await self.drive_delay()
 
             tr = []
-            yield self.seq_item_port.get_next_item(tr)
+            await self.seq_item_port.get_next_item(tr)
             tr = tr[0]
             uvm_info("APB_MASTER", "Driving trans into DUT: " + tr.convert2string(), UVM_DEBUG)
 
             #if (not self.sigs.clk.triggered):
             #yield Edge(self.sigs.clk)
-            yield self.drive_delay()
+            await self.drive_delay()
             #yield RisingEdge(self.sigs.clk)
             #yield Timer(1, "NS")
 
-            yield self.trans_received(tr)
+            await self.trans_received(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_received(self,tr))
 
             if tr.kind == apb_rw.READ:
                 data = []
-                yield self.read(tr.addr, data)
+                await self.read(tr.addr, data)
                 tr.data = data[0]
             elif tr.kind == apb_rw.WRITE:
-                yield self.write(tr.addr, tr.data)
+                await self.write(tr.addr, tr.data)
 
-            yield self.trans_executed(tr)
+            await self.trans_executed(tr)
             #uvm_do_callbacks(apb_master,apb_master_cbs,trans_executed(self,tr))
 
             self.seq_item_port.item_done()
@@ -110,50 +110,50 @@ class apb_master(UVMDriver):  #(apb_rw)
         #   endtask: run_phase
 
 
-    @cocotb.coroutine
-    def read(self, addr, data):
+    
+    async def read(self, addr, data):
         uvm_info(self.tag, "Doing APB read to addr " + str(addr), UVM_MEDIUM)
 
         self.sigs.paddr   <= addr
         self.sigs.pwrite  <= 0
         self.sigs.psel    <= 1
-        yield self.drive_delay()
+        await self.drive_delay()
         self.sigs.penable <= 1
-        yield self.drive_delay()
+        await self.drive_delay()
         data.append(int(self.sigs.prdata))
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
         #   endtask: read
 
 
-    @cocotb.coroutine
-    def write(self, addr, data):
+    
+    async def write(self, addr, data):
         uvm_info(self.tag, "Doing APB write to addr " + str(addr), UVM_MEDIUM)
         self.sigs.paddr   <= addr
         self.sigs.pwdata  <= data
         self.sigs.pwrite  <= 1
         self.sigs.psel    <= 1
-        yield self.drive_delay()
+        await self.drive_delay()
         self.sigs.penable <= 1
-        yield self.drive_delay()
+        await self.drive_delay()
         self.sigs.psel    <= 0
         self.sigs.penable <= 0
         uvm_info(self.tag, "Finished APB write to addr " + str(addr), UVM_MEDIUM)
         #   endtask: write
 
 
-    @cocotb.coroutine
-    def drive_delay(self):
-        yield RisingEdge(self.sigs.clk)
-        yield Timer(1, "NS")
+    
+    async def drive_delay(self):
+        await RisingEdge(self.sigs.clk)
+        await Timer(1, "NS")
 
-    @cocotb.coroutine
-    def trans_received(self, tr):
-        yield Timer(0, "NS")
+    
+    async def trans_received(self, tr):
+        await Timer(0, "NS")
 
-    @cocotb.coroutine
-    def trans_executed(self, tr):
-        yield Timer(0, "NS")
+    
+    async def trans_executed(self, tr):
+        await Timer(0, "NS")
 
 
 uvm_component_utils(apb_master)

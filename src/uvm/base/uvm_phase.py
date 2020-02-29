@@ -47,19 +47,19 @@ def UVM_PH_TRACE(ID,MSG,PH,VERB):
         PH.get_inst_id()) + MSG), UVM_LOW)
 
 
-@cocotb.coroutine
-def my_combine(events):
+
+async def my_combine(events):
     pproc = []
     for e in events:
         e.clear()
-        @cocotb.coroutine
-        def my_task(ee):
-            yield ee.wait()
+        
+        async def my_task(ee):
+            await ee.wait()
         my_fork  = cocotb.fork(my_task(e))
         pproc.append(my_fork)
     for pp in pproc:
         # Crashes after this call
-        yield pp.join()
+        await pp.join()
 
 #------------------------------------------------------------------------------
 #
@@ -960,8 +960,8 @@ class UVMPhase(UVMObject):
     #  //| wait_for_state(UVM_PHASE_STARTED | UVM_PHASE_EXECUTING, UVM_EQ)
     #  //
     #  extern task wait_for_state(uvm_phase_state state, uvm_wait_op op=UVM_EQ)
-    @cocotb.coroutine
-    def wait_for_state(self, state, op=UVM_EQ):
+    
+    async def wait_for_state(self, state, op=UVM_EQ):
         func = None
         if op == UVM_EQ:
             def func():
@@ -983,12 +983,12 @@ class UVMPhase(UVMObject):
                 return self.m_state > state
         else:
             raise Exception('IMPL for wait_for_state not finished yet')
-        yield self._wait_state_change_func(func)
+        await self._wait_state_change_func(func)
 
-    @cocotb.coroutine
-    def _wait_state_change_func(self, func):
+    
+    async def _wait_state_change_func(self, func):
         while True:
-            yield self.m_phase_set_state_event.wait()
+            await self.m_phase_set_state_event.wait()
             self.m_phase_set_state_event.clear()
             if func():
                 break
@@ -1193,11 +1193,11 @@ class UVMPhase(UVMObject):
     #endfunction
 
 
-    @cocotb.coroutine
-    def m_wait_for_pred(self):
+    
+    async def m_wait_for_pred(self):
         pred_of_succ = {}  # bit [uvm_phase]
         self.get_predecessors_for_successors(pred_of_succ)
-        yield Timer(0)
+        await Timer(0)
 
         # wait for predecessors to successors (real phase nodes, not terminals)
         # mostly debug msgs
@@ -1208,7 +1208,7 @@ class UVMPhase(UVMObject):
                     sibling.get_name(),sibling.get_inst_id(),sibling.m_state.name())
                 UVM_PH_TRACE("PH/TRC/WAIT_PRED_OF_SUCC",s,self,UVM_HIGH)
 
-            yield sibling.wait_for_state(UVM_PHASE_READY_TO_END, UVM_GTE)
+            await sibling.wait_for_state(UVM_PHASE_READY_TO_END, UVM_GTE)
 
             if UVMPhase.m_phase_trace:
                 s = sv.sformatf("Phase '%s' (%0d) is now READY_TO_END. Releasing phase",
@@ -1230,7 +1230,7 @@ class UVMPhase(UVMObject):
                           "*** No pred to succ other than myself, so ending phase ***",self,UVM_HIGH)
 
         #  #0; // LET ANY WAITERS WAKE UP
-        yield Timer(0, "NS")
+        await Timer(0, "NS")
 
 
     #
@@ -1257,8 +1257,8 @@ class UVMPhase(UVMObject):
     # processes.  By hosting the phase processes here we avoid problems
     # associated with phase processes related as parents/children
     @classmethod
-    @cocotb.coroutine
-    def m_run_phases(cls):
+    
+    async def m_run_phases(cls):
         cs = get_cs()
         top = cs.get_root()
         uvm_debug(cls, 'm_run_phases', 'Forking all phases in while-True')
@@ -1273,20 +1273,20 @@ class UVMPhase(UVMObject):
 
         while True:
             qphase = []
-            yield UVMPhase.m_phase_hopper.get(qphase)  # Should block?
+            await UVMPhase.m_phase_hopper.get(qphase)  # Should block?
             #fork
             uvm_debug(cls, 'm_run_phases', 'Calling execute phase with |' +
                     str(qphase[0].get_name()) + '|')
             cocotb.fork(qphase[0].execute_phase())
             #join_none
-            yield Timer(0)
+            await Timer(0)
             #0;  // let the process start running
 
     # execute_phase
     # -------------
 
-    @cocotb.coroutine
-    def execute_phase(self):
+    
+    async def execute_phase(self):
         task_phase = None
         state_chg = None
 
@@ -1299,7 +1299,7 @@ class UVMPhase(UVMObject):
         # all its predecessor nodes to be marked DONE.
         # (the next conditional speeds this up)
         # Also, this helps us fast-forward through terminal (end) nodes
-        yield self._wait_all_predecessors_done()
+        await self._wait_all_predecessors_done()
         uvm_debug(self, 'execute_phase', 'All predecessors are DONE ' +
             self.get_name())
 
@@ -1322,13 +1322,13 @@ class UVMPhase(UVMObject):
         state_chg.m_prev_state = self.m_state
         self.set_state(UVM_PHASE_SYNCING)
         uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
-        yield Timer(0)
+        await Timer(0)
         uvm_debug(self, 'execute_phase', 'Checking for wait_phases_synced')
 
         if len(self.m_sync) > 0:
             uvm_debug(self, 'execute_phase', 'Waiting for wait_phases_synced ' +
                 self.get_name())
-            yield self._wait_phases_synced()
+            await self._wait_phases_synced()
 
         self.m_run_count += 1
         if UVMPhase.m_phase_trace is True:
@@ -1341,13 +1341,13 @@ class UVMPhase(UVMObject):
             self.set_state(UVM_PHASE_STARTED)
             uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
 
-            yield Timer(0)
+            await Timer(0)
 
             state_chg.m_prev_state = self.m_state
             self.set_state(UVM_PHASE_EXECUTING)
             uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
 
-            yield Timer(0)
+            await Timer(0)
         else:  # PHASE NODE
             uvm_debug(self, 'execute_phase', 'PHASE_NODE, setting phase to started')
             #---------
@@ -1362,10 +1362,10 @@ class UVMPhase(UVMObject):
             if not self.m_imp.is_task_phase():
                 self.m_imp.traverse(top,self, UVM_PHASE_STARTED)
             else:
-                yield self.m_imp.traverse(top,self, UVM_PHASE_STARTED)
+                await self.m_imp.traverse(top,self, UVM_PHASE_STARTED)
 
             self.m_ready_to_end_count = 0  # reset the ready_to_end count when phase starts
-            yield Timer(0)  # LET ANY WAITERS WAKE UP
+            await Timer(0)  # LET ANY WAITERS WAKE UP
 
             if not self.m_imp.is_task_phase():
                 #-----------
@@ -1375,7 +1375,7 @@ class UVMPhase(UVMObject):
                 state_chg.m_prev_state = self.m_state
                 self.set_state(UVM_PHASE_EXECUTING)
                 uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
-                yield Timer(0) # LET ANY WAITERS WAKE UP
+                await Timer(0) # LET ANY WAITERS WAKE UP
                 uvm_debug(self, 'execute_phase', 'Will traverse something now')
                 self.m_imp.traverse(top,self,UVM_PHASE_EXECUTING)
             else:
@@ -1396,8 +1396,8 @@ class UVMPhase(UVMObject):
                 #wait(0); // stay alive for later kill
                 #join_none
 
-                yield uvm_wait_for_nba_region()  # Give sequences, etc. a chance to object
-                yield self.wait_for_criterion_for_end_phase(state_chg)
+                await uvm_wait_for_nba_region()  # Give sequences, etc. a chance to object
+                await self.wait_for_criterion_for_end_phase(state_chg)
                 uvm_debug(self, 'execute_phase', "End criterion reached for " +
                         top.get_name())
         #  end # PHASE_NODE
@@ -1438,7 +1438,7 @@ class UVMPhase(UVMObject):
                            self.get_domain_name())), UVM_MEDIUM)
 
                 #0; // LET ANY WAITERS ON READY_TO_END TO WAKE UP
-                yield Timer(0)
+                await Timer(0)
 
                 if UVMPhase.m_phase_trace:
                     UVM_PH_TRACE("PH_END","ENDING PHASE PREMATURELY",self,UVM_MEDIUM)
@@ -1446,7 +1446,7 @@ class UVMPhase(UVMObject):
                 # WAIT FOR PREDECESSORS:  // WAIT FOR PREDECESSORS:
                 # function phases only
                 if task_phase is None:
-                    yield self.m_wait_for_pred()
+                    await self.m_wait_for_pred()
 
             #-------
             # ENDED:
@@ -1459,11 +1459,11 @@ class UVMPhase(UVMObject):
             uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             if self.m_imp is not None:
                 if self.m_imp.is_task_phase():
-                    yield self.m_imp.traverse(top,self, UVM_PHASE_ENDED)
+                    await self.m_imp.traverse(top,self, UVM_PHASE_ENDED)
                 else:
                     self.m_imp.traverse(top,self, UVM_PHASE_ENDED)
             uvm_debug(self, "execute_phase", "MMM KKK SSS ZZZ before yield")
-            yield Timer(0)
+            await Timer(0)
             uvm_debug(self, "execute_phase", "Phase ended after yield")
             #0; // LET ANY WAITERS WAKE UP
 
@@ -1482,7 +1482,7 @@ class UVMPhase(UVMObject):
             if self.m_phase_proc is not None:
                 self.m_phase_proc.kill()
                 self.m_phase_proc = None
-            yield Timer(0)
+            await Timer(0)
             #0; // LET ANY WAITERS WAKE UP
             uvm_debug(self, "execute_phase", "Cleanup DONE |" + self.m_imp.get_name() + "|")
             if self.phase_done is not None:
@@ -1507,8 +1507,8 @@ class UVMPhase(UVMObject):
             uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             uvm_debug(self, 'exec_phase', 'DONE after uvm_callbacks done')
             self.m_phase_proc = None
-            yield Timer(0)  # 0; // LET ANY WAITERS WAKE UP
-        yield Timer(0)  # 0; // LET ANY WAITERS WAKE UP
+            await Timer(0)  # 0; // LET ANY WAITERS WAKE UP
+        await Timer(0)  # 0; // LET ANY WAITERS WAKE UP
         if self.phase_done is not None:
             self.phase_done.clear()
 
@@ -1538,7 +1538,7 @@ class UVMPhase(UVMObject):
                     state_chg.m_phase = succ
                     succ.set_state(UVM_PHASE_SCHEDULED)
                     uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', succ, state_chg)
-                    yield Timer(0)  #0; // LET ANY WAITERS WAKE UP
+                    await Timer(0)  #0; // LET ANY WAITERS WAKE UP
                     if not UVMPhase.m_phase_hopper.try_put(succ):
                         raise Exception('Failed try_put(succ). Should not ever fail')
                     if UVMPhase.m_phase_trace:
@@ -1547,8 +1547,8 @@ class UVMPhase(UVMObject):
         uvm_debug(self, 'execute_phase', 'End of task reached. Yay!')
         #endtask
 
-    @cocotb.coroutine
-    def _wait_all_predecessors_done(self):
+    
+    async def _wait_all_predecessors_done(self):
         nn = self.get_name()
         if self.has_predecessors():
             uvm_debug(self, '_wait_all_predecessors_done', nn + '| has predecessors() OK')
@@ -1560,19 +1560,19 @@ class UVMPhase(UVMObject):
                 events.append(pred.get_phase_done_event().wait())
 
             uvm_debug(self, '_wait_all_predecessors_done', nn + "| Before combining events")
-            yield Combine(*events)  # Combine expects *args, not list
+            await Combine(*events)  # Combine expects *args, not list
             uvm_debug(self, '_wait_all_predecessors_done', nn + "| After combining events")
         else:
             uvm_debug(self, '_wait_all_predecessors_done', nn + '| before yield Timer(0)')
-            yield Timer(0)
+            await Timer(0)
             uvm_debug(self, '_wait_all_predecessors_done', nn + '| after yield Timer(0)')
 
-    def _wait_phases_synced(self):
+    async def _wait_phases_synced(self):
         events = []
         for phase in self.m_sync:
             if (phase.m_state < UVM_PHASE_SYNCING):
                 events.append(phase.get_phase_synced_event())
-        yield Combine(*events)
+        await Combine(*events)
 
     def has_predecessors(self):
         return len(self.m_predecessors) > 0
@@ -1588,8 +1588,8 @@ class UVMPhase(UVMObject):
     #// This task loops until this phase instance and all its siblings, either
     #// sync'd or sharing a common successor, have all objections dropped.
     #task uvm_phase::wait_for_self_and_siblings_to_drop() 
-    @cocotb.coroutine
-    def wait_for_self_and_siblings_to_drop(self):
+    
+    async def wait_for_self_and_siblings_to_drop(self):
         need_to_check_all = True
         top = None
         cs = None
@@ -1601,7 +1601,7 @@ class UVMPhase(UVMObject):
         self.get_predecessors_for_successors(siblings)
         for ss in self.m_sync:
             siblings[ss] = 1
-        yield Timer(0)
+        await Timer(0)
 
         while need_to_check_all is True:
             need_to_check_all = False  # if all are dropped, we won't need to do this again
@@ -1610,19 +1610,19 @@ class UVMPhase(UVMObject):
             if ((self.phase_done is not None) and
                     (self.phase_done.get_objection_total(top) != 0)):
                 self.set_state(UVM_PHASE_EXECUTING)
-                yield self.phase_done.wait_for(UVM_ALL_DROPPED, top)
+                await self.phase_done.wait_for(UVM_ALL_DROPPED, top)
                 need_to_check_all = True
 
             # now wait for siblings to drop
             #foreach(siblings[sib]) begin
             for sib in siblings:
                 # sibling must be at least executing
-                yield sib.wait_for_state(UVM_PHASE_EXECUTING, UVM_GTE)
+                await sib.wait_for_state(UVM_PHASE_EXECUTING, UVM_GTE)
                 if ((sib.phase_done is not None) and
                         (sib.phase_done.get_objection_total(top) != 0)):
                     self.set_state(UVM_PHASE_EXECUTING)
                     # sibling must drop any objection
-                    yield sib.phase_done.wait_for(UVM_ALL_DROPPED, top)
+                    await sib.phase_done.wait_for(UVM_ALL_DROPPED, top)
                     need_to_check_all = True
         #endtask
 
@@ -1669,10 +1669,10 @@ class UVMPhase(UVMObject):
     #uvm_object_utils(UVMPhase)
     #uvm_register_cb(UVMPhase, UVMPhaseCb)
 
-    @cocotb.coroutine
-    def wait_for_criterion_for_end_phase(self, state_chg):
+    
+    async def wait_for_criterion_for_end_phase(self, state_chg):
         #yield Timer(0)
-        yield self._wait_for_all_dropped(state_chg)
+        await self._wait_for_all_dropped(state_chg)
         # Now wait for one of three criterion for end-of-phase.
         #        fork
         #          begin // guard
@@ -1742,8 +1742,8 @@ class UVMPhase(UVMObject):
         #
         #        join // guard
 
-    @cocotb.coroutine
-    def _wait_for_all_dropped(self, state_chg):
+    
+    async def _wait_for_all_dropped(self, state_chg):
         cs = get_cs()
         top = cs.get_root()
         # WAIT_FOR_ALL_DROPPED
@@ -1752,14 +1752,14 @@ class UVMPhase(UVMObject):
         if (self.phase_done.get_objection_total(top) or (UVMPhase.m_use_ovm_run_semantic
                 and self.m_imp.get_name() == "run")):
             if not self.phase_done.m_top_all_dropped:
-                yield self.phase_done.wait_for(UVM_ALL_DROPPED, top)
+                await self.phase_done.wait_for(UVM_ALL_DROPPED, top)
             UVM_PH_TRACE("PH/TRC/EXE/ALLDROP","PHASE EXIT ALL_DROPPED",self,UVM_MEDIUM)
         else:
             if (UVMPhase.m_phase_trace):
                 UVM_PH_TRACE("PH/TRC/SKIP","No objections raised, skipping phase",self,UVM_LOW)
 
         uvm_debug(self, '_wait_for_all_dropped', self.get_name() + ' waiting siblings to drop')
-        yield self.wait_for_self_and_siblings_to_drop()
+        await self.wait_for_self_and_siblings_to_drop()
         uvm_debug(self, '_wait_for_all_dropped', self.get_name() + ' all siblings have dropped')
         do_ready_to_end = True
 
@@ -1768,7 +1768,7 @@ class UVMPhase(UVMObject):
         # --------------
         while do_ready_to_end:
             # Let all siblings see no objections before traverse might raise another
-            yield uvm_wait_for_nba_region()
+            await uvm_wait_for_nba_region()
             UVM_PH_TRACE("PH_READY_TO_END","PHASE READY TO END",self,UVM_MEDIUM)
             self.m_ready_to_end_count += 1
             if (UVMPhase.m_phase_trace):
@@ -1779,8 +1779,8 @@ class UVMPhase(UVMObject):
             if self.m_imp is not None:
                 self.m_imp.traverse(top,self,UVM_PHASE_READY_TO_END)
 
-            yield uvm_wait_for_nba_region()  # Give traverse targets a chance to object
-            yield self.wait_for_self_and_siblings_to_drop()
+            await uvm_wait_for_nba_region()  # Give traverse targets a chance to object
+            await self.wait_for_self_and_siblings_to_drop()
             do_ready_to_end = ((self.m_state == UVM_PHASE_EXECUTING) and (self.m_ready_to_end_count
                 < self.max_ready_to_end_iter))  # when we don't wait in task above, we drop out of while loop
 

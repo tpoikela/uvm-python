@@ -27,4 +27,4 @@ from tb_env import tb_env
 @cocotb.test()
 def initial_begin(dut):
     env = tb_env("env_for_tlm2_test")
-    yield run_test()
+    await run_test()

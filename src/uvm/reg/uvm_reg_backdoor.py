@@ -63,9 +63,9 @@ class UVMRegBackdoor(UVMObject):
     #   // This method ~must~ be called as the first statement in
     #   // a user extension of the <read()> method.
     #   //
-    @cocotb.coroutine
-    def do_pre_read(self, rw):
-        yield self.pre_read(rw)
+    
+    async def do_pre_read(self, rw):
+        await self.pre_read(rw)
         uvm_do_obj_callbacks(self, UVMRegCbs, 'pre_read', self, rw)
 
     #
@@ -76,8 +76,8 @@ class UVMRegBackdoor(UVMObject):
     #   // This method ~must~ be called as the last statement in
     #   // a user extension of the <read()> method.
     #   //
-    @cocotb.coroutine
-    def do_post_read(self, rw):
+    
+    async def do_post_read(self, rw):
         iter = UVMCallbackIter(self)
         # for(uvm_reg_cbs cb = iter.last(); cb is not None; cb=iter.prev())
         #     cb.decode(rw.value)
@@ -86,7 +86,7 @@ class UVMRegBackdoor(UVMObject):
             cb.decode(rw.value)
             cb = iter.next()
         uvm_do_obj_callbacks(self, UVMRegCbs,'post_read',self,rw)
-        yield self.post_read(rw)
+        await self.post_read(rw)
     #   endtask
 
 
@@ -98,11 +98,11 @@ class UVMRegBackdoor(UVMObject):
     #   // This method ~must~ be called as the first statement in
     #   // a user extension of the <write()> method.
     #   //
-    @cocotb.coroutine
-    def do_pre_write(self, rw):
+    
+    async def do_pre_write(self, rw):
         #uvm_callback_iter#(UVMRegBackdoor, uvm_reg_cbs) iter = new(self)
         iter = UVMCallbackIter(self)
-        yield self.pre_write(rw)
+        await self.pre_write(rw)
         uvm_do_obj_callbacks(self, UVMRegCbs,'pre_write',self,rw)
         #      for(uvm_reg_cbs cb = iter.first(); cb is not None; cb = iter.next())
         #         cb.encode(rw.value)
@@ -121,10 +121,10 @@ class UVMRegBackdoor(UVMObject):
     #   // This method ~must~ be called as the last statement in
     #   // a user extension of the <write()> method.
     #   //
-    @cocotb.coroutine
-    def do_post_write(self, rw):
+    
+    async def do_post_write(self, rw):
         uvm_do_obj_callbacks(self, UVMRegCbs, 'post_write', self, rw)
-        yield self.post_write(rw)
+        await self.post_write(rw)
         #   endtask
 
 
@@ -139,8 +139,8 @@ class UVMRegBackdoor(UVMObject):
     #   // Returns an indication of the success of the operation.
     #   //
     #   extern def write(self,uvm_reg_item rw)
-    @cocotb.coroutine
-    def write(self, rw):  # task
+    
+    async def write(self, rw):  # task
         uvm_fatal("RegModel", "UVMRegBackdoor::write() method has not been overloaded")
     #endtask
 
@@ -161,11 +161,11 @@ class UVMRegBackdoor(UVMObject):
     #   // By default, calls <read_func()>.
     #   //
     #   extern def read(self,uvm_reg_item rw)
-    @cocotb.coroutine
-    def read(self, rw):  # task:
-        yield self.do_pre_read(rw)
+    
+    async def read(self, rw):  # task:
+        await self.do_pre_read(rw)
         self.read_func(rw)
-        yield self.do_post_read(rw)
+        await self.do_post_read(rw)
     #endtask
     #
 
@@ -206,8 +206,8 @@ class UVMRegBackdoor(UVMObject):
     #   // via a backdoor read operation.
     #   //
     #   extern virtual local def wait_for_change(self,uvm_object element)
-    @cocotb.coroutine
-    def wait_for_change(self, element):  # task
+    
+    async def wait_for_change(self, element):  # task
         uvm_fatal("RegModel", "UVMRegBackdoor::wait_for_change() method has not been overloaded")
 
 
@@ -225,9 +225,9 @@ class UVMRegBackdoor(UVMObject):
     #   // The registered callback methods are invoked after the invocation
     #   // of self method.
     #   //
-    @cocotb.coroutine
-    def pre_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_read(self, rw):
+        await uvm_empty_delay()
 
     #
     #
@@ -238,9 +238,9 @@ class UVMRegBackdoor(UVMObject):
     #   // The registered callback methods are invoked before the invocation
     #   // of self method.
     #   //
-    @cocotb.coroutine
-    def post_read(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_read(self, rw):
+        await uvm_empty_delay()
 
     #
     #
@@ -254,9 +254,9 @@ class UVMRegBackdoor(UVMObject):
     #   // The written value, if modified, modifies the actual value that
     #   // will be written.
     #   //
-    @cocotb.coroutine
-    def pre_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def pre_write(self, rw):
+        await uvm_empty_delay()
 
     #
     #
@@ -267,9 +267,9 @@ class UVMRegBackdoor(UVMObject):
     #   // The registered callback methods are invoked before the invocation
     #   // of self method.
     #   //
-    @cocotb.coroutine
-    def post_write(self, rw):
-        yield uvm_empty_delay()
+    
+    async def post_write(self, rw):
+        await uvm_empty_delay()
 
     #
     #`ifdef UVM_USE_PROCESS_CONTAINER

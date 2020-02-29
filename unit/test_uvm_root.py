@@ -16,9 +16,9 @@ class TestUVMRoot(unittest.TestCase):
         root2 = UVMRoot.m_uvm_get_root()
         self.assertEqual(root1, root2)
 
-    def test_run_phase(self):
+    async def test_run_phase(self):
         root = UVMRoot()
-        yield root.run_phase()
+        await root.run_phase()
 
 
 if __name__ == '__main__':

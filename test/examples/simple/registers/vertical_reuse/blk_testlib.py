@@ -48,21 +48,21 @@ class blk_R_test(UVMTest):
             else:
                 uvm_fatal("NO_ENV_ERR", "test_top unable to find 'env'")
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         reset_seq = None  # uvm_sequence_base
         seq = None  # blk_R_test_seq
         phase.raise_objection(self)
 
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)
         rst_seq.vif = self.env.apb.vif
-        yield rst_seq.start(None)
+        await rst_seq.start(None)
 
         self.env.model.reset()
 
         seq = blk_R_test_seq.type_id.create("blk_R_test_seq",self)
         seq.model = self.env.model
-        yield seq.start(None)
+        await seq.start(None)
 
         phase.drop_objection(self)
 

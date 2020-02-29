@@ -88,8 +88,8 @@ class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   //
     #   // Performs the walking-ones algorithm on each map of the memory
     #   // specified in <mem>.
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         maps = []  # uvm_reg_map [$]
         n_bits = 0
         mem = self.mem
@@ -133,7 +133,7 @@ class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             # - Read k and expect ~k if k == last address
             for k in range(mem.get_size()):
                 status = []
-                yield mem.write(status, k, ~k, UVM_FRONTDOOR, maps[j], self)
+                await mem.write(status, k, ~k, UVM_FRONTDOOR, maps[j], self)
                 status = status[0]
 
                 if status != UVM_IS_OK:
@@ -144,7 +144,7 @@ class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 if k > 0:
                     status = []
                     val = []
-                    yield mem.read(status, k-1, val, UVM_FRONTDOOR, maps[j], self)
+                    await mem.read(status, k-1, val, UVM_FRONTDOOR, maps[j], self)
                     status = status[0]
                     if status != UVM_IS_OK:
                        uvm_error("UVMMemWalkSeq", sv.sformatf(
@@ -159,7 +159,7 @@ class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                                 mem.get_full_name(), k, val, exp))
 
                     status = []
-                    yield mem.write(status, k-1, k-1, UVM_FRONTDOOR, maps[j], self)
+                    await mem.write(status, k-1, k-1, UVM_FRONTDOOR, maps[j], self)
                     status = status[0]
                     if status != UVM_IS_OK:
                         uvm_error("UVMMemWalkSeq", sv.sformatf(
@@ -169,7 +169,7 @@ class UVMMemSingleWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 if k == mem.get_size() - 1:
                     status = []
                     val = []
-                    yield mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
+                    await mem.read(status, k, val, UVM_FRONTDOOR, maps[j], self)
                     status = status[0]
                     if status != UVM_IS_OK:
                         uvm_error("UVMMemWalkSeq", sv.sformatf(
@@ -229,8 +229,8 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Executes the mem walk sequence, one block at a time.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         if self.model is None:
             uvm_error("UVMMemWalkSeq", "No register model specified to run sequence on")
             return
@@ -239,17 +239,17 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
         self.mem_seq = UVMMemSingleWalkSeq.type_id.create("single_mem_walk_seq")
 
-        yield self.reset_blk(self.model)
+        await self.reset_blk(self.model)
         self.model.reset()
-        yield self.do_block(self.model)
+        await self.do_block(self.model)
 
 
     #   // Task: do_block
     #   //
     #   // Test all of the memories in a given ~block~
     #   //
-    @cocotb.coroutine
-    def do_block(self, blk):
+    
+    async def do_block(self, blk):
         mems = []  # uvm_mem[$]
 
         if (UVMResourceDb.get_by_name("REG::" + blk.get_full_name(),
@@ -272,12 +272,12 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                     "NO_MEM_WALK_TEST", 0) is not None):
                 continue
             self.mem_seq.mem = mems[i]
-            yield self.mem_seq.start(None, self)
+            await self.mem_seq.start(None, self)
 
         blks = []  # uvm_reg_block [$]
         blk.get_blocks(blks)
         for i in range(len(blks)):
-            yield self.do_block(blks[i])
+            await self.do_block(blks[i])
 
 
     #   // Task: reset_blk
@@ -292,9 +292,9 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    @cocotb.coroutine
-    def reset_blk(self, blk):
-        yield Timer(0, "NS")
+    
+    async def reset_blk(self, blk):
+        await Timer(0, "NS")
 
     #endclass: UVMMemWalkSeq
 uvm_object_utils(UVMMemWalkSeq)

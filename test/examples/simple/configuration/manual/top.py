@@ -56,4 +56,4 @@ def module_top(dut):
 
     UVMConfigDb.set(uvm_top, "topenv", "should_match", 1234)
    
-    yield run_test()
+    await run_test()

@@ -52,10 +52,10 @@ class lower(UVMComponent):
         self.data = 0
         self.str = ""
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(10)
+        await Timer(10)
         print("{}: {} HI".format(get_sim_time(), self.get_full_name()))
         phase.drop_objection(self)
 
@@ -100,8 +100,8 @@ class myunit(UVMComponent):
         for i in range(5):
             self.a[i] = i*i
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         # Check config from initial block
         if self.l1.data != self.corr_data1:
             uvm_error("BADCFG", sv.sformatf("Expected l1.data = %0d, got %0d",
@@ -114,7 +114,7 @@ class myunit(UVMComponent):
                 "Expected l1.str = \"hi\" and l2.str = \"hi\", got l1.str = \"%s\" and l2.str = \"%s\"",
                 self.l1.str, self.l2.str))
         phase.raise_objection(self)
-        yield Timer(10)
+        await Timer(10)
         #10 $display("%0t: %s HI", $time, get_full_name());
         phase.drop_objection(self)
 
@@ -151,7 +151,7 @@ class mydata(UVMObject):
 #----------------------------------------------------------------------
 
 @cocotb.test()
-def test_module_top(dut):
+async def test_module_top(dut):
 
     mu = myunit("mu", None)
     bar = mydata()
@@ -162,5 +162,5 @@ def test_module_top(dut):
     UVMConfigDb.set(None, "mu.l1", "data", 55)
     UVMConfigDb.set(None, "mu.*", "obj", bar)
     mu.print()
-    yield run_test()
+    await run_test()
     mu.print()

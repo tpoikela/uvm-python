@@ -70,45 +70,45 @@ class ubus_master_driver(UVMDriver):
             self.master_id = arr[0]
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         #    fork
         fork_get = cocotb.fork(self.get_and_drive())
         fork_reset = cocotb.fork(self.reset_signals())
-        yield [fork_get, fork_reset.join()]
+        await [fork_get, fork_reset.join()]
         #    join
 
 
     #  // get_and_drive
     #  virtual protected task get_and_drive()g
-    @cocotb.coroutine
-    def get_and_drive(self):
+    
+    async def get_and_drive(self):
         _print(" get_and_drive started")
         # @(negedge vif.sig_reset)g
-        yield RisingEdge(self.vif.sig_reset)
+        await RisingEdge(self.vif.sig_reset)
         _print(" got posedge reset")
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             _print(" got rising edge of sig_clock")
             req = []
-            yield self.seq_item_port.get_next_item(req)
+            await self.seq_item_port.get_next_item(req)
             _print(" got item from seq port: " + req[0].convert2string())
             #$cast(rsp, req.clone())g
             rsp = req[0].clone()
             rsp.set_id_info(req[0])
-            yield self.drive_transfer(rsp)
+            await self.drive_transfer(rsp)
             self.seq_item_port.item_done()
             self.seq_item_port.put_response(rsp)
         #  endtask : get_and_drive
 
 
     #  // reset_signals
-    @cocotb.coroutine
-    def reset_signals(self):
+    
+    async def reset_signals(self):
         _id = str(self.master_id)
         print("RRR master_driver " + _id + " resetting signals")
         while True:
-            yield RisingEdge(self.vif.sig_reset)
+            await RisingEdge(self.vif.sig_reset)
             self.vif.rw = 0
             self.vif.sig_req[self.master_id] <= 0
             self.vif.sig_addr           <= 0
@@ -121,15 +121,15 @@ class ubus_master_driver(UVMDriver):
 
     #  // drive_transfer
     #  virtual protected task drive_transfer (ubus_transfer trans)g
-    @cocotb.coroutine
-    def drive_transfer(self, trans):
+    
+    async def drive_transfer(self, trans):
         if trans.transmit_delay > 0:
             for i in range(trans.transmit_delay):
-                yield RisingEdge(self.vif.sig_clock)
+                await RisingEdge(self.vif.sig_clock)
         _print("Drivin trans into DUT now: " + trans.convert2string())
-        yield self.arbitrate_for_bus()
-        yield self.drive_address_phase(trans)
-        yield self.drive_data_phase(trans)
+        await self.arbitrate_for_bus()
+        await self.drive_address_phase(trans)
+        await self.drive_data_phase(trans)
         #  endtask : drive_transfer
 
 
@@ -144,12 +144,12 @@ class ubus_master_driver(UVMDriver):
         #return req_val
 
     #  // arbitrate_for_bus
-    @cocotb.coroutine
-    def arbitrate_for_bus(self):
+    
+    async def arbitrate_for_bus(self):
         #self.vif.sig_request <= self.get_req_val(1)
         self.vif.sig_req[self.master_id] <= 1
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             #grant_val = self.vif.sig_grant.value[self.master_id]
             grant_val = int(self.vif.sig_gnt[self.master_id])
             if grant_val != 0:
@@ -166,12 +166,12 @@ class ubus_master_driver(UVMDriver):
 
     #
     #  // drive_address_phase
-    @cocotb.coroutine
-    def drive_address_phase(self, trans):
+    
+    async def drive_address_phase(self, trans):
         self.vif.sig_addr <= trans.addr
         self.drive_size(trans.size)
         self.drive_read_write(trans.read_write)
-        yield RisingEdge(self.vif.sig_clock)
+        await RisingEdge(self.vif.sig_clock)
         #self.vif.sig_addr <= 32'bzg
         self.vif.sig_addr <= 0
         self.vif.sig_size <= 0
@@ -181,8 +181,8 @@ class ubus_master_driver(UVMDriver):
 
     #
     #  // drive_data_phase
-    @cocotb.coroutine
-    def drive_data_phase(self, trans):
+    
+    async def drive_data_phase(self, trans):
         err = 0
         for i in range(trans.size):
             if (i == (trans.size - 1)):
@@ -192,10 +192,10 @@ class ubus_master_driver(UVMDriver):
 
             if trans.read_write == READ:
                 arr = []
-                yield self.read_byte(arr, err)
+                await self.read_byte(arr, err)
                 trans.data[i] = arr[0]
             else:
-                yield self.write_byte(trans.data[i], err)
+                await self.write_byte(trans.data[i], err)
 
         self.vif.sig_data_out <= 0
         self.vif.sig_bip <= 0
@@ -203,11 +203,11 @@ class ubus_master_driver(UVMDriver):
 
 
     #  // read_byte
-    @cocotb.coroutine
-    def read_byte(self, data, error):
+    
+    async def read_byte(self, data, error):
         self.vif.rw <= 0
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             if self.vif.sig_wait == 0:
                 break
         data.append(self.vif.sig_data.value)
@@ -215,13 +215,13 @@ class ubus_master_driver(UVMDriver):
 
 
     #  // write_byte
-    @cocotb.coroutine
-    def write_byte(self, data, error):
+    
+    async def write_byte(self, data, error):
         uvm_info("MASTER_DRV", "Setting rw to 1 now", UVM_LOW)
         self.vif.rw <= 1
         self.vif.sig_data_out <= data
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             if self.vif.sig_wait == 0:
                 break
         self.vif.rw <= 0

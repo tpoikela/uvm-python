@@ -55,8 +55,8 @@ class simple_test(UVMTest):
         self.proc_finished = {}
         self.largest_delay = 50
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         # Set a drain time on the objection if needed
         uvm_info("drain", "Setting drain time of 10", UVM_NONE)
 
@@ -73,14 +73,14 @@ class simple_test(UVMTest):
 
         # p4 runs longest, but does not raise objection, so simulation should
         # terminate at largest delay, not when p4 finishes
-        yield p4
+        await p4
         #yield [p0.join(), p1.join(), p2.join(), p3.join(), ]
         #join
 
     s_inst = 0
     # A simple task that consumes some time.
-    @cocotb.coroutine
-    def doit(self, delay, phase):
+    
+    async def doit(self, delay, phase):
         arr = []
         self.sem.get(arr)
         inst = simple_test.s_inst
@@ -92,7 +92,7 @@ class simple_test(UVMTest):
 
         uvm_info("doit", sv.sformatf("Starting doit (%0d) with delay %0t",
             inst, delay), UVM_NONE)
-        yield Timer(delay, "NS")
+        await Timer(delay, "NS")
         uvm_info("doit", sv.sformatf("Ending doit (%0d)", inst), UVM_NONE)
 
         # Drop the objection when done
@@ -102,9 +102,9 @@ class simple_test(UVMTest):
         self.proc_finished[inst] = True
         self.sem.put(1)
 
-    @cocotb.coroutine
-    def do_without_object(self, delay):
-        yield Timer(1, "NS")
+    
+    async def do_without_object(self, delay):
+        await Timer(1, "NS")
         arr = []
         self.sem.get(arr)
         inst = simple_test.s_inst
@@ -113,7 +113,7 @@ class simple_test(UVMTest):
 
         uvm_info("doit", sv.sformatf("Starting doit (%0d) with delay %0t",
             inst, delay), UVM_NONE)
-        yield Timer(delay, "NS")
+        await Timer(delay, "NS")
         uvm_info("doit", sv.sformatf("Ending doit (%0d)", inst), UVM_NONE)
 
         # Drop the objection when done
@@ -158,4 +158,4 @@ uvm_component_utils(simple_test)
 @cocotb.test()
 def initial(dut):
     # Run the test
-    yield run_test("simple_test")
+    await run_test("simple_test")

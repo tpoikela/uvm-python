@@ -140,8 +140,8 @@ class UVMRegSequence(UVMSequence):
     #  // super.body(), else a warning will be issued and the calling process
     #  // not return.
     #  //
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         if self.m_sequencer is None:
             uvm_fatal("NO_SEQR", "Sequence executing as translation sequence, " +
                "but is not associated with a sequencer (m_sequencer == null)")
@@ -152,17 +152,17 @@ class UVMRegSequence(UVMSequence):
                self.m_sequencer.get_full_name() + "' does not have an upstream sequencer defined. "
                + "Execution of register items available only via direct calls to 'do_reg_item'")
             #wait(0);
-            yield Timer(0, "NS")
+            await Timer(0, "NS")
         uvm_info("REG_XLATE_SEQ_START",
            "Starting RegModel translation sequence on sequencer " +
            self.m_sequencer.get_full_name() + "'", UVM_LOW)
         while True:
             reg_item = []  # uvm_reg_item reg_item;
-            yield self.reg_seqr.peek(reg_item)
-            yield self.do_reg_item(reg_item[0])
-            yield self.reg_seqr.get(reg_item)
+            await self.reg_seqr.peek(reg_item)
+            await self.do_reg_item(reg_item[0])
+            await self.reg_seqr.get(reg_item)
             #0;
-            yield Timer(0)
+            await Timer(0)
         #  endtask
 
     #
@@ -174,8 +174,8 @@ class UVMRegSequence(UVMSequence):
     #  // this sequencer.
     #  //
     #  virtual task do_reg_item(uvm_reg_item rw);
-    @cocotb.coroutine
-    def do_reg_item(self, rw):
+    
+    async def do_reg_item(self, rw):
         rws = rw.convert2string()
         if self.m_sequencer is None:
             uvm_fatal("REG/DO_ITEM/NULL","do_reg_item: m_sequencer is null")
@@ -189,9 +189,9 @@ class UVMRegSequence(UVMSequence):
             rw.parent = self
 
         if (rw.kind == UVM_WRITE):
-            yield rw.local_map.do_bus_write(rw, self.m_sequencer, self.adapter)
+            await rw.local_map.do_bus_write(rw, self.m_sequencer, self.adapter)
         else:
-            yield rw.local_map.do_bus_read(rw, self.m_sequencer, self.adapter)
+            await rw.local_map.do_bus_read(rw, self.m_sequencer, self.adapter)
 
         if (self.parent_select == LOCAL):
             rw.parent = self.upstream_parent

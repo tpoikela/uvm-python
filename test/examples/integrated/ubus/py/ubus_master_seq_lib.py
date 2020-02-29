@@ -58,22 +58,22 @@ class read_byte_seq(ubus_base_sequence):
 
     #  constraint transmit_del_ct { (transmit_del <= 10); }
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         self.req.data = [1234]
         self.req.addr = self.start_addr
         self.req.read_write = READ
         self.req.size = 1
         self.req.error_pos = 1000
         self.req.transmit_delay = self.transmit_delay
-        yield uvm_do_with(self, self.req, {})
+        await uvm_do_with(self, self.req, {})
         #      { req.addr == start_addr
         #        req.read_write == READ
         #        req.size == 1
         #        req.error_pos == 1000
         #        req.transmit_delay == transmit_del; } )
         rsp = []
-        yield self.get_response(rsp)
+        await self.get_response(rsp)
         self.rsp = rsp[0]
         uvm_info(self.get_type_name(),
             sv.sformatf("%s read : addr = `x{}, data[0] = `x{}",
@@ -209,8 +209,8 @@ class write_byte_seq(ubus_base_sequence):
 
     #  constraint transmit_del_ct { (transmit_del <= 10); }
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         req = ubus_transfer()
         req.data.append(self.data0)
         req.addr = self.start_addr
@@ -218,7 +218,7 @@ class write_byte_seq(ubus_base_sequence):
         req.error_pos = 1000
         req.read_write = WRITE
         req.transmit_delay = self.transmit_delay
-        yield uvm_do_with(self, req, {})
+        await uvm_do_with(self, req, {})
         #      { req.addr == start_addr
         #        req.read_write == WRITE
         #        req.size == 1

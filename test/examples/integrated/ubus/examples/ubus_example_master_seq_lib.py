@@ -186,13 +186,13 @@ class read_modify_write_seq(ubus_base_sequence):
         self.addr_check = 0
         self.m_data0_check = 0
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         uvm_info(self.get_type_name(), sv.sformatf("%s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
         # READ A RANDOM LOCATION
         self.read_byte_seq0 = read_byte_seq("read_byte_seq")
-        yield uvm_do_with(self, self.read_byte_seq0, {})
+        await uvm_do_with(self, self.read_byte_seq0, {})
         self.addr_check = self.read_byte_seq0.rsp.addr
         self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
 
@@ -200,13 +200,13 @@ class read_modify_write_seq(ubus_base_sequence):
         self.write_byte_seq0 = write_byte_seq("write_byte_seq")
         self.write_byte_seq0.start_addr = self.addr_check
         self.write_byte_seq0.data0 = self.m_data0_check
-        yield uvm_do_with(self, self.write_byte_seq0, {})
+        await uvm_do_with(self, self.write_byte_seq0, {})
         #      { write_byte_seq0.start_addr == addr_check;
         #        write_byte_seq0.data0 == m_data0_check; } )
 
         #    // READ MODIFIED WRITE DATA
         self.read_byte_seq0.start_addr = self.addr_check
-        yield uvm_do_with(self, self.read_byte_seq0, {})
+        await uvm_do_with(self, self.read_byte_seq0, {})
         #      { read_byte_seq0.start_addr == addr_check; } )
 
         if self.m_data0_check != int(self.read_byte_seq0.rsp.data[0]):

@@ -17,10 +17,10 @@ class master_slave_test(UVMTest):
     def build_phase(self, phase):
         self.env = env_top("env_master_slave", self)
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(test_dur, "NS")
+        await Timer(test_dur, "NS")
         phase.drop_objection(self)
 
 
@@ -34,4 +34,4 @@ uvm_component_utils(master_slave_test)
 
 @cocotb.test()
 def master_slave_top(dut):
-    yield run_test()
+    await run_test()

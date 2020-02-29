@@ -177,16 +177,16 @@ class UVMTLMFIFOBase(UVMComponent):
         uvm_report_error("size", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE)
         return 0
 
-    @cocotb.coroutine
-    def put(self, t):
+    
+    async def put(self, t):
         uvm_report_error("put", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE)
 
-    @cocotb.coroutine
-    def get(self,t):
+    
+    async def get(self,t):
         uvm_report_error("get", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE)
 
-    @cocotb.coroutine
-    def peek(self, t):
+    
+    async def peek(self, t):
         uvm_report_error("peek", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE)
 
     def try_put(self, t):

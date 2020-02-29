@@ -44,8 +44,8 @@ class tb_test(UVMTest):
         super().build_phase(phase)
         self.env = tb_env("env")
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         env = self.env
         phase.raise_objection(self)
 
@@ -54,13 +54,13 @@ class tb_test(UVMTest):
 
         seq = UVMRegBitBashSeq.type_id.create("seq")
         seq.model = env.regmodel
-        yield seq.start(env.bus.sqr)
-        yield seq.wait_for_sequence_state(UVM_FINISHED)
+        await seq.start(env.bus.sqr)
+        await seq.wait_for_sequence_state(UVM_FINISHED)
 
         seq = UVMMemWalkSeq.type_id.create("seq")
         seq.model = env.regmodel
-        yield seq.start(env.bus.sqr)
-        yield seq.wait_for_sequence_state(UVM_FINISHED)
+        await seq.start(env.bus.sqr)
+        await seq.wait_for_sequence_state(UVM_FINISHED)
 
 
         uvm_info("Test", "Generating and uploading 5 configurations...", UVM_LOW)
@@ -70,7 +70,7 @@ class tb_test(UVMTest):
             #env.regmodel.randomize_with({Ra.F2.value == Rb.F2.value}) # TODO
             env.regmodel.randomize()
             status = []
-            yield env.regmodel.update(status)
+            await env.regmodel.update(status)
             env.regmodel.sample_values()
 
         phase.drop_objection(self)
@@ -90,7 +90,7 @@ def initial_begin(dut):
     UVMConfigDb.set(None, "", "dut", dut)
 
     cocotb.fork(c.start())
-    yield run_test()
+    await run_test()
 
     def my_log(msg):
         uvm_info("COV_RPT", msg, UVM_LOW)

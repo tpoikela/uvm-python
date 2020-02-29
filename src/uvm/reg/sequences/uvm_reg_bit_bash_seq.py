@@ -75,8 +75,8 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         self.rg = None
 
 
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
         fields = []  # uvm_reg_field[$]
         mode = [""] * UVM_REG_DATA_WIDTH  # string [`UVM_REG_DATA_WIDTH]
         maps = []  # uvm_reg_map [$]
@@ -154,13 +154,13 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 for i in range(len(dc_mask)):
                     dc_mask_int |= (dc_mask[i] << i)
 
-                yield self.bash_kth_bit(rg, k, mode[k], maps[j], dc_mask_int)
+                await self.bash_kth_bit(rg, k, mode[k], maps[j], dc_mask_int)
 
     #   endtask: body
 
 
-    @cocotb.coroutine
-    def bash_kth_bit(self, rg, k, mode, _map, dc_mask):
+    
+    async def bash_kth_bit(self, rg, k, mode, _map, dc_mask):
         status = 0
         val = 0x0
         exp = 0x0
@@ -179,7 +179,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             bit_val = (val >> k) & 0x1
 
             status = []
-            yield rg.write(status, val, UVM_FRONTDOOR, _map, self)
+            await rg.write(status, val, UVM_FRONTDOOR, _map, self)
             status = status[0]
             if status != UVM_IS_OK:
                 uvm_error("UVMRegBitBashSeq",
@@ -189,7 +189,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             exp = rg.get() & ~dc_mask
             status = []
             out_val = []
-            yield rg.read(status, out_val, UVM_FRONTDOOR, _map, self)
+            await rg.read(status, out_val, UVM_FRONTDOOR, _map, self)
             status = status[0]
             val = out_val[0]
             if status != UVM_IS_OK:
@@ -248,8 +248,8 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Executes the Register Bit Bash sequence.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    @cocotb.coroutine
-    def body(self):
+    
+    async def body(self):
 
         if self.model is None:
             uvm_error("UVMRegBitBashSeq", "No register model specified to run sequence on")
@@ -258,17 +258,17 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         uvm_info("STARTING_SEQ","\n\nStarting " + self.get_name() + " sequence...\n",UVM_LOW)
         self.reg_seq = UVMRegSingleBitBashSeq.type_id.create("reg_single_bit_bash_seq")
 
-        yield self.reset_blk(self.model)
+        await self.reset_blk(self.model)
         self.model.reset()
-        yield self.do_block(self.model)
+        await self.do_block(self.model)
 
 
     #   // Task: do_block
     #   //
     #   // Test all of the registers in a given ~block~
     #   //
-    @cocotb.coroutine
-    def do_block(self, blk):
+    
+    async def do_block(self, blk):
         regs = []
 
         if (UVMResourceDb.get_by_name("REG::" + blk.get_full_name(),
@@ -288,12 +288,12 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 continue
 
             self.reg_seq.rg = regs[i]
-            yield self.reg_seq.start(None,self)
+            await self.reg_seq.start(None,self)
 
         blks = []
         blk.get_blocks(blks)
         for blk in blks:
-            yield self.do_block(blk)
+            await self.do_block(blk)
     #   endtask: do_block
 
 
@@ -309,9 +309,9 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    @cocotb.coroutine
-    def reset_blk(self, blk):
-        yield Timer(0, "NS")
+    
+    async def reset_blk(self, blk):
+        await Timer(0, "NS")
 
     #endclass: UVMRegBitBashSeq
 

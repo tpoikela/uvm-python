@@ -123,27 +123,27 @@ class ubus_master_monitor(UVMMonitor):
             self.master_id = arr[0]
 
 
-    @cocotb.coroutine
-    def run_phase(self, phase):
+    
+    async def run_phase(self, phase):
         self.uvm_report_info(self.get_full_name() + " MASTER ID", sv.sformatf(" = %0d",
             self.master_id), UVM_MEDIUM)
         #    fork
         forked_proc = cocotb.fork(self.collect_transactions())
         #    join
-        yield forked_proc
+        await forked_proc
         #  endtask : run_phase
 
     #  // collect_transactions
-    @cocotb.coroutine
-    def collect_transactions(self):
-        yield Timer(0, "NS")
+    
+    async def collect_transactions(self):
+        await Timer(0, "NS")
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             if (self.m_parent is not None):
                 self.trans_collected.master = self.m_parent.get_name()
-            yield self.collect_arbitration_phase()
-            yield self.collect_address_phase()
-            yield self.collect_data_phase()
+            await self.collect_arbitration_phase()
+            await self.collect_address_phase()
+            await self.collect_data_phase()
             uvm_info(self.get_full_name(), sv.sformatf("Transfer collected :\n%s",
                 self.trans_collected.sprint()), UVM_MEDIUM)
             if (self.checks_enable):
@@ -155,18 +155,18 @@ class ubus_master_monitor(UVMMonitor):
         #  endtask : collect_transactions
 
     #  // collect_arbitration_phase
-    @cocotb.coroutine
-    def collect_arbitration_phase(self):
+    
+    async def collect_arbitration_phase(self):
         #    @(posedge vif.sig_request[master_id])
         #    @(posedge vif.sig_clock iff vif.sig_grant[master_id] === 1)
         while True:
-            yield RisingEdge(self.vif.sig_request)
+            await RisingEdge(self.vif.sig_request)
             sig_req = self.vif.sig_req[self.master_id]
             if sig_req == 1:
                 break
 
         while True:
-            yield RisingEdge(self.vif.sig_clock)
+            await RisingEdge(self.vif.sig_clock)
             grant = int(self.vif.sig_gnt[self.master_id])
             if grant == 1:
                 break
@@ -175,9 +175,9 @@ class ubus_master_monitor(UVMMonitor):
 
     #  // collect_address_phase
     #  virtual protected task collect_address_phase()
-    @cocotb.coroutine
-    def collect_address_phase(self):
-        yield RisingEdge(self.vif.sig_clock)
+    
+    async def collect_address_phase(self):
+        await RisingEdge(self.vif.sig_clock)
         self.trans_collected.addr = int(self.vif.sig_addr.value)
         sig_size = int(self.vif.sig_size)
 
@@ -205,12 +205,12 @@ class ubus_master_monitor(UVMMonitor):
 
 
     #  // collect_data_phase
-    @cocotb.coroutine
-    def collect_data_phase(self):
+    
+    async def collect_data_phase(self):
         if (self.trans_collected.read_write != NOP):
             for i in range(self.trans_collected.size):
                 while True:
-                    yield RisingEdge(self.vif.sig_clock)
+                    await RisingEdge(self.vif.sig_clock)
                     if self.vif.sig_wait.value == 0:
                         break
                 self.trans_collected.data[i] = self.vif.sig_data.value

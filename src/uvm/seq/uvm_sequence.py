@@ -122,12 +122,12 @@ class UVMSequence(UVMSequenceBase):
     #  // unless the error reporting is disabled via
     #  // set_response_queue_error_report_disabled.
     #  virtual task get_response(output RSP response, input int transaction_id = -1)
-    @cocotb.coroutine
-    def get_response(self, response, transaction_id=-1):
+    
+    async def get_response(self, response, transaction_id=-1):
         if response is None:
             uvm_fatal("RESP IS NONE", "response arg must be an empty list")
         rsp = []
-        yield self.get_base_response(rsp, transaction_id)
+        await self.get_base_response(rsp, transaction_id)
         response.append(rsp[0])
         #  endtask
 
