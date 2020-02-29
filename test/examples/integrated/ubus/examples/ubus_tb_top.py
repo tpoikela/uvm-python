@@ -66,7 +66,7 @@ async def always_clk(dut, ncycles):
 
 #module ubus_tb_top;
 @cocotb.test()
-def module_ubus_tb(dut):
+async def module_ubus_tb(dut):
 
     vif = ubus_if(dut)
 
@@ -76,4 +76,5 @@ def module_ubus_tb(dut):
     proc_vif = cocotb.fork(vif.start())
 
     await Timer(999, "NS")
-    await [proc_run_test, proc_clk.join()]
+    #await [proc_run_test, proc_clk.join()]
+    await sv.fork_join([proc_run_test, proc_clk])

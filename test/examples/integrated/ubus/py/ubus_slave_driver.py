@@ -60,7 +60,8 @@ class ubus_slave_driver(UVMDriver):
         #    fork
         fork_get = cocotb.fork(self.get_and_drive())
         fork_reset = cocotb.fork(self.reset_signals())
-        await [fork_get.join(), fork_reset.join()]
+        #await [fork_get.join(), fork_reset.join()]
+        await sv.fork_join([fork_get, fork_reset])
         #    join
     #  endtask : run_phase
 

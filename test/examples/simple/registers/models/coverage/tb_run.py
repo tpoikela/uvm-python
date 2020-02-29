@@ -77,7 +77,7 @@ class tb_test(UVMTest):
 
 
 @cocotb.test()
-def initial_begin(dut):
+async def initial_begin(dut):
     cs_ = UVMCoreService.get()
 
     UVMReg.include_coverage("*", UVM_CVR_ALL)

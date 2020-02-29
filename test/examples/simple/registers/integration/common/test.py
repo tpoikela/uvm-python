@@ -33,7 +33,7 @@ from apb.apb_if import apb_if
 from tb_env import tb_env
 
 @cocotb.test()
-def initial_begin(dut):
+async def initial_begin(dut):
     cs_ = UVMCoreService.get()
     env = tb_env("env")
 

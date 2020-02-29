@@ -23,7 +23,7 @@
 import cocotb
 from cocotb.triggers import RisingEdge, Timer, Combine, Edge, FallingEdge
 
-from uvm.base.sv import sv_if
+from uvm.base.sv import sv_if, sv
 
 #/******************************************************************************
 #
@@ -63,7 +63,8 @@ class ubus_if(sv_if):
         a = cocotb.fork(self.drive_data())
         b = cocotb.fork(self.always())
         c = cocotb.fork(self.always_assertions())
-        await [a, b, c]
+        await sv.fork_join([a, b, c])
+        # await [a, b, c]
 
     
     async def drive_data(self):

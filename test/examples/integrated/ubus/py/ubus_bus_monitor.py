@@ -208,7 +208,8 @@ class ubus_bus_monitor(UVMMonitor):
         reset_proc = cocotb.fork(self.observe_reset())
         collect_proc = cocotb.fork(self.collect_transactions())
         #    join
-        await [reset_proc, collect_proc.join()]
+        #await [reset_proc, collect_proc.join()]
+        await sv.fork_join([reset_proc, collect_proc])
         #  endtask : run_phase
     #
 
@@ -233,7 +234,8 @@ class ubus_bus_monitor(UVMMonitor):
         start_proc = cocotb.fork(rst_start())
         stop_proc = cocotb.fork(rst_stop())
 
-        await [start_proc, stop_proc.join()]
+        #await [start_proc, stop_proc.join()]
+        await sv.fork_join([start_proc, stop_proc])
         #    join
         #  endtask : observe_reset
 

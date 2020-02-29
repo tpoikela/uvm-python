@@ -82,7 +82,7 @@ class myunit(UVMComponent):
         self.l1 = lower("l1", self)
         self.l1.comp_id = 1
         self.l2 = lower("l2", self)
-        self.l2.comp_id = 2
+        # TODO set this to cause fatal: self.l2.comp_id = 2
         UVMConfigDb.set(self, "l1", "str", "hi")
         UVMConfigDb.set(self, "*", "data", 0x100)
         self.l1.data = 0x30
