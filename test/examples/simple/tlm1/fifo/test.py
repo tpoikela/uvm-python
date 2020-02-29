@@ -102,17 +102,12 @@ class test(UVMTest):
     def __init__(self, name="", parent=None):
         super().__init__(name, parent)
 
-
-    
     async def run_phase(self, phase):
         phase.raise_objection(None)
         #5us
         await Timer(5, "US")
         phase.drop_objection(None)
 uvm_component_utils(test)
-
-#
-
 
 
 async def print_proc(fifo):
@@ -123,7 +118,7 @@ async def print_proc(fifo):
 
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     prod = producer("prod", None)
     cons = consumer("cons", None)
     fifo = UVMTLMFIFO("fifo", None, 10)
@@ -133,7 +128,7 @@ def module_top(dut):
 
     proc1 = cocotb.fork(run_test("test"))
     proc2 = cocotb.fork(print_proc(fifo))
-    await [proc1, proc2.join()]
+    await sv.fork_join([proc1, proc2])
 
 #  initial begin
 #    prod.data_out.connect(fifo.put_export)

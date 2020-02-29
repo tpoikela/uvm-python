@@ -34,7 +34,7 @@ from sys_testlib import *
 
 
 @cocotb.test()
-def initial(dut):
+async def initial(dut):
     print("dut parameter NUM_BLKS: " + str(dut.NUM_BLKS))
     env = sys_env("env")
     vif = apb_if(dut)

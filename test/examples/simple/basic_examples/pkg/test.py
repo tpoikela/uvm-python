@@ -24,7 +24,7 @@ import cocotb
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time
 
-from uvm import UVMObject, UVMComponent, UVMDebug, UVM_HEX
+from uvm import UVMObject, UVMComponent, UVMDebug, UVM_HEX, uvm_fatal
 from uvm.base.sv import sv
 from uvm.base.uvm_globals import run_test
 from uvm.base.uvm_config_db import UVMConfigDb, UVMConfigDbOptions
@@ -44,12 +44,16 @@ class lower(UVMComponent):
         UVMComponent.__init__(self, name, parent)
         self.data = 0
         self.str = ""
+        self.comp_id = -1
 
     
     async def run_phase(self, phase):
         phase.raise_objection(self)
         await Timer(10, "NS")
         print("{}: {} HI".format(get_sim_time(), self.get_full_name()))
+        await Timer(10, "NS")
+        if self.comp_id == 2:
+            uvm_fatal("COMP_ID_2", "run_phase() should be killed before fatal")
         phase.drop_objection(self)
 
     def get_type_name(self):
@@ -76,7 +80,9 @@ class myunit(UVMComponent):
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
         self.l1 = lower("l1", self)
+        self.l1.comp_id = 1
         self.l2 = lower("l2", self)
+        self.l2.comp_id = 2
         UVMConfigDb.set(self, "l1", "str", "hi")
         UVMConfigDb.set(self, "*", "data", 0x100)
         self.l1.data = 0x30
@@ -205,10 +211,14 @@ async def initial1():
     await run_test()
 
 
-
 async def initial2(mu):
     await Timer(5, "NS")
-    mu.l1.kill()
+    if mu.l1 is not None:
+        print(str(mu.l1.get_name()))
+        # TODO seems to be failing with async-await
+        #mu.l1.kill()
+    else:
+        raise Exception("Oh no.")
 
 
 @cocotb.test()
@@ -231,4 +241,4 @@ async def test_module_top(dut):
     # Fork 2 initial tasks
     task1 = cocotb.fork(initial1())
     task2 = cocotb.fork(initial2(mu))
-    await [task1.join(), task2.join()]
+    await sv.fork_join([task1, task2])

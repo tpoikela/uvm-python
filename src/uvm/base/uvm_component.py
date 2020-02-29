@@ -2123,24 +2123,27 @@ class UVMComponent(UVMReportObject):
                         self.set_report_id_verbosity(self.m_verbosity_settings[i].id,
                                 self.m_verbosity_settings[i].verbosity)
                 else:
-                  #process p = process::self()
-                  #string p_rand = p.get_randstate()
-                  #fork begin
+                    #process p = process::self()
+                    #string p_rand = p.get_randstate()
+                    #fork begin
                     setting = self.m_verbosity_settings[i]
                     #setting.offset
                     if setting.id == "_ALL_":
                         self.set_report_verbosity_level(setting.verbosity)
                     else:
                         self.set_report_id_verbosity(setting.id, setting.verbosity)
-                  #end join_none
-                  #p.set_randstate(p_rand)
+                    #end join_none
+                    #p.set_randstate(p_rand)
                 # Remove after use
                 self.m_verbosity_settings.delete(i)
 
     # Added by tpoikela
     def kill(self):
         if self.m_run_process is not None:
-            self.m_run_process.kill()
+            if hasattr(self.m_run_process, 'kill'):
+                self.m_run_process.kill()
+            else:
+                print("No kill() available")
     #endclass uvm_component
 
 

@@ -34,7 +34,7 @@ from testlib import *
 
 
 @cocotb.test()
-def initial(dut):
+async def initial(dut):
     env = tb_env("env", None)
     vif = apb_if(dut)
     UVMConfigDb.set(env, "apb", "vif", vif)

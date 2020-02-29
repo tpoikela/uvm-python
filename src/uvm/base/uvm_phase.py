@@ -1777,7 +1777,10 @@ class UVMPhase(UVMObject):
             self.set_state(UVM_PHASE_READY_TO_END)
             uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', self, state_chg)
             if self.m_imp is not None:
-                self.m_imp.traverse(top,self,UVM_PHASE_READY_TO_END)
+                if self.m_imp.is_task_phase():
+                    await self.m_imp.traverse(top, self, UVM_PHASE_READY_TO_END)
+                else:
+                    self.m_imp.traverse(top, self, UVM_PHASE_READY_TO_END)
 
             await uvm_wait_for_nba_region()  # Give traverse targets a chance to object
             await self.wait_for_self_and_siblings_to_drop()

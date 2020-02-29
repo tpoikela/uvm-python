@@ -35,7 +35,7 @@ from blk_testlib import *
 
 
 @cocotb.test()
-def initial(dut):
+async def initial(dut):
     env = blk_env("env")
     vif = apb_if(dut)
     UVMConfigDb.set(env, "apb", "vif", vif)

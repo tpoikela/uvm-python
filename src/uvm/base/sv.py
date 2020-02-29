@@ -24,7 +24,7 @@ import random
 import cocotb
 #from cocotb_coverage.coverage import *
 from cocotb_coverage import crv
-from cocotb.triggers import Lock, Timer
+from cocotb.triggers import Lock, Timer, Combine, First
 from cocotb.utils import get_sim_time, simulator
 from cocotb.bus import Bus
 from inspect import getframeinfo, stack
@@ -204,6 +204,23 @@ class sv:
                 elif i == len(full_arg) - 1:
                     arr.append(plusarg_dict[name])
                     return plusarg_dict[name]
+
+    @classmethod
+    async def fork_join(cls, forks):
+        join_list = list(map(lambda t: t.join(), forks))
+        await Combine(*join_list)
+
+    @classmethod
+    async def fork_join_any(cls, forks):
+        join_list = list(map(lambda t: t.join(), forks))
+        await First(*join_list)
+
+    @classmethod
+    async def fork_join_none(cls, procs):
+        res = []
+        for proc in procs:
+            res.append(cocotb.fork(proc))
+        return res
 
 
 random.seed(0)

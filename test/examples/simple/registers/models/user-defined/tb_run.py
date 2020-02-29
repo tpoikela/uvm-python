@@ -127,7 +127,7 @@ class tb_test(UVMTest):
 
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
 
     cs_ = UVMCoreService.get()
     test = tb_test("test")

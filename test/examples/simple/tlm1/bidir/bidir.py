@@ -55,7 +55,7 @@ class master(UVMComponent):
     async def run_phase(self, phase):
         req_proc = cocotb.fork(self.request_process())
         rsp_proc = cocotb.fork(self.response_process())
-        await [req_proc, rsp_proc.join()]
+        await sv.fork_join([req_proc, rsp_proc])
         #    fork
         #      request_process
         #      response_process
@@ -149,7 +149,7 @@ class bidir_env(UVMEnv):
 #//----------------------------------------------------------------------
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     env = bidir_env("env", None)
     uvm_info("TOP_ENV", "top-level env is " + env.get_name(), UVM_LOW)
     await run_test()
