@@ -35,7 +35,7 @@ from my_env_pkg import my_env
 
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     obj = UVMObject("my_conf_obj")
 
     # set configuration prior to creating the environment
@@ -51,4 +51,3 @@ def module_top(dut):
     UVMConfigDb.set(None, "topenv.inst1.u1", "tag", 'I am tagged')
     topenv = my_env("topenv", None)
     await run_test()
-

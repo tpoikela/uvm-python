@@ -29,11 +29,11 @@ from my_env_pkg import my_env
 
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     #  my_env topenv
     uvm_default_printer = uvm_default_table_printer
     uvm_top.enable_print_topology = 1
-    
+
     # set configuration prior to creating the environment
     UVMConfigDb.set(None, "topenv.*.u1", "v", 30)
     UVMConfigDb.set(None, "topenv.inst2.u1", "v", 10)
@@ -55,5 +55,5 @@ def module_top(dut):
     UVMConfigDb.set(topenv, "inst1.u1", "myaa[foobar]", "boobah")
 
     UVMConfigDb.set(uvm_top, "topenv", "should_match", 1234)
-   
+
     await run_test()

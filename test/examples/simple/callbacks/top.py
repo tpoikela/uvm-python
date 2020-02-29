@@ -94,7 +94,7 @@ class bus_driver_cb(UVMCallback):
         return 0
 
     #@cocotb.coroutine TODO fix this
-    def trans_executed(self, driver, tr):
+    async def trans_executed(self, driver, tr):
         await Timer(0, "NS")
 
     def __init__(self, name="bus_driver_cb_inst"):
@@ -253,7 +253,7 @@ class my_bus_driver_cb2(bus_driver_cb):
 #//------------------------------------------------------------------------------
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     tr     = bus_tr()
     driver = bus_driver("driver")
     cb1    = my_bus_driver_cb("cb1")
