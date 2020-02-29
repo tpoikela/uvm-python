@@ -273,6 +273,6 @@ class env(UVMEnv):
 #  // module test
 #  //----------------------------------------------------------------------
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     e = env("e")
     await run_test()

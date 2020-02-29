@@ -33,5 +33,5 @@ uvm_component_utils(master_slave_test)
 
 
 @cocotb.test()
-def master_slave_top(dut):
+async def master_slave_top(dut):
     await run_test()
