@@ -293,20 +293,16 @@ class UVMResourceDb:
     #  // other scopes which also match the resource.
     #  static function bit write_by_name(input string scope, input string name,
     #                                    input T val, input uvm_object accessor = null)
-    #
-    #    rsrc_t rsrc = get_by_name(scope, name)
-    #
-    #    if(UVMResourceDbOptions::is_tracing())
-    #      m_show_msg("RSRCDB/WR","Resource", "written", scope, name, accessor, rsrc)
-    #
-    #    if(rsrc == null)
-    #      return 0
-    #
-    #    rsrc.write(val, accessor)
-    #
-    #    return 1
-    #
-    #  endfunction
+    @classmethod
+    def write_by_name(cls, scope, name, val, accessor=None):
+        rsrc = cls.get_by_name(scope, name)
+        if (UVMResourceDbOptions.is_tracing()):
+            cls.m_show_msg("RSRCDB/WR","Resource", "written", scope, name, accessor, rsrc)
+
+        if rsrc is None:
+            return 0
+        rsrc.write(val, accessor)
+        return 1
 
     #  // function: write_by_type
     #  //
@@ -350,23 +346,24 @@ class UVMResourceDb:
 
     #endclass
 
-    #//----------------------------------------------------------------------
-    #// Class: UVMResourceDbOptions
-    #//
-    #// Provides a namespace for managing options for the
-    #// resources DB facility.  The only thing allowed in this class is static
-    #// local data members and static functions for manipulating and
-    #// retrieving the value of the data members.  The static local data
-    #// members represent options and settings that control the behavior of
-    #// the resources DB facility.
-    #
-    #// Options include:
-    #//
-    #//  * tracing:  on/off
-    #//
-    #//    The default for tracing is off.
-    #//
-    #//----------------------------------------------------------------------
+
+#//----------------------------------------------------------------------
+#// Class: UVMResourceDbOptions
+#//
+#// Provides a namespace for managing options for the
+#// resources DB facility.  The only thing allowed in this class is static
+#// local data members and static functions for manipulating and
+#// retrieving the value of the data members.  The static local data
+#// members represent options and settings that control the behavior of
+#// the resources DB facility.
+#
+#// Options include:
+#//
+#//  * tracing:  on/off
+#//
+#//    The default for tracing is off.
+#//
+#//----------------------------------------------------------------------
 
 
 class UVMResourceDbOptions:
