@@ -26,7 +26,9 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
-  - pip install cocotb cocotb-coverage
+  - git clone https://github.com/cocotb/cocotb.git
+  - pip install ./cocotb
+  - pip install cocotb-coverage
   - pip install python-constraint
   - pip install regex
   - apt-get update -qq
