@@ -83,6 +83,6 @@ uvm_component_utils(test_comp)
 
 
 @cocotb.test()
-def initial_begin(dut):
+async def initial_begin(dut):
     env = tb_env("env")
     await run_test("test_comp")

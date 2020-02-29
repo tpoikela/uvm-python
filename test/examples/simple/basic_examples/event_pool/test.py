@@ -32,7 +32,7 @@
 #
 
 import cocotb
-from cocotb.triggers import Timer, First, Combine
+from cocotb.triggers import Timer
 
 from uvm.base.uvm_coreservice import UVMCoreService
 from uvm.base.uvm_pool import UVMEventPool
@@ -56,6 +56,10 @@ async def trig_data_event(e):
     await Timer(1, "NS")
 
 
+async def wait_on_evt(e):
+    await e.wait_on()
+
+
 @cocotb.test()
 async def test_test(dut):
 
@@ -76,7 +80,8 @@ async def test_test(dut):
     e.reset()
     await Timer(1, "NS")
     trig_proc = cocotb.fork(trig_event(e))
-    await Combine(trig_proc.join(), e.wait_on().join())
+    evt_proc = cocotb.fork(wait_on_evt(e))
+    await sv.fork_join([trig_proc, evt_proc])
 
     svr = None  # uvm_report_server
     svr = cs_.get_report_server()

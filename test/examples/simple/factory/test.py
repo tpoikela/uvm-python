@@ -70,7 +70,7 @@ uvm_object_utils(mypacket)
 
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     cs_ = UVMCoreService.get()
     factory = cs_.get_factory()
     gen.type_id.set_inst_override(mygen.get_type(), "uvm_test_top.gen1")

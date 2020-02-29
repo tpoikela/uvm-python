@@ -55,7 +55,7 @@ class simple_test(UVMTest):
         self.proc_finished = {}
         self.largest_delay = 50
 
-    
+
     async def run_phase(self, phase):
         # Set a drain time on the objection if needed
         uvm_info("drain", "Setting drain time of 10", UVM_NONE)
@@ -79,7 +79,7 @@ class simple_test(UVMTest):
 
     s_inst = 0
     # A simple task that consumes some time.
-    
+
     async def doit(self, delay, phase):
         arr = []
         self.sem.get(arr)
@@ -102,7 +102,7 @@ class simple_test(UVMTest):
         self.proc_finished[inst] = True
         self.sem.put(1)
 
-    
+
     async def do_without_object(self, delay):
         await Timer(1, "NS")
         arr = []
@@ -156,6 +156,6 @@ uvm_component_utils(simple_test)
 
 
 @cocotb.test()
-def initial(dut):
+async def initial(dut):
     # Run the test
     await run_test("simple_test")

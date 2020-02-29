@@ -214,7 +214,7 @@ class top(UVMEnv):
 
 
 @cocotb.test()
-def initial_begin(dut):
+async def initial_begin(dut):
     t = top("top", None)
     # Randomize all of the delays
     t.randomize()  # cast to 'void' removed
