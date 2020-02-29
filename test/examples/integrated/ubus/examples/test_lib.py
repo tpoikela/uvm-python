@@ -124,7 +124,7 @@ class test_read_modify_write(ubus_example_base_test):
         slave_seq = slave_memory_seq("mem_seq")
         slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
         #await [slave_proc, master_proc.join()]
-        await sv.fork_join([slave_proc, master_proc])
+        await sv.fork_join_any([slave_proc, master_proc])
         phase.drop_objection(self, "test_read_modify_write drop objection")
 
     #endclass : test_read_modify_write
