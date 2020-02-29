@@ -125,7 +125,7 @@ class env(UVMEnv):
 
 
 @cocotb.test()
-def module_top(dut):
+async def module_top(dut):
     # Main body of module top:
     e = env("prod_cons_env")
     await run_test()
