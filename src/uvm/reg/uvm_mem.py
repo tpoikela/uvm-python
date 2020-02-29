@@ -834,7 +834,7 @@ class UVMMem(UVMObject):
     #                            input  string             fname = "",
     #                            input  int                lineno = 0)
     # 
-    async def peek(self, status, offset, value, kind="", parent=None, extension=None, fname="",
+    def peek(self, status, offset, value, kind="", parent=None, extension=None, fname="",
             lineno=0):
         uvm_check_output_args([status, value])
         bkdr = self.get_backdoor()  # uvm_reg_backdoor
