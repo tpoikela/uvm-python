@@ -1,7 +1,7 @@
 #
 #----------------------------------------------------------------------
 #   Copyright 2019      Tuomas Poikela
-#   
+#
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -41,7 +41,7 @@ class UVMMailbox():
         self.m_write_event = Event('mailbox_write_event')
         self.debug_enabled = False
 
-    
+
     async def put(self, item):
         _uvm_debug(self, 'put', 'Starting to check can_put()')
         can_put = self.can_put()
@@ -54,10 +54,9 @@ class UVMMailbox():
         self.m_queue.push_back(item)
         _uvm_debug(self, 'put', 'ZZZ pushed to queue, can_get is ' + str(self.can_get()))
         self.m_write_event.set()
-        await Timer(0)
         _uvm_debug(self, 'put', 'Finished')
 
-    
+
     async def get(self, itemq):
         can_get = self.can_get()
         while can_get is False:
@@ -76,9 +75,8 @@ class UVMMailbox():
         self.m_read_event.set()
         _uvm_debug(self, 'get', 'getting an item from mailbox now')
         itemq.append(item)
-        await Timer(0)
 
-    
+
     async def peek(self, itemq):
         """ Peeks (with blocking) next item from mailbox without removing it """
         if not self.can_get():
