@@ -1321,7 +1321,7 @@ class UVMReg(UVMObject):
         while cb is not None:
             cb.post_write(rw)
             cb = cbs.next()
-        self. post_write(rw)
+        await self.post_write(rw)
 
         # POST-WRITE CBS - FIELDS
         for i in range(len(self.m_fields)):
@@ -1335,7 +1335,7 @@ class UVMReg(UVMObject):
             while cb is not None:
                 cb.post_write(rw)
                 cb = cbs.next()
-            f.post_write(rw)
+            await f.post_write(rw)
 
         rw.value[0] = value
         rw.element = self
@@ -1381,7 +1381,7 @@ class UVMReg(UVMObject):
 
         map_info = []
         if not(self.Xcheck_accessX(rw,map_info,"read()")):
-            await uvm_empty_delay()
+            # await uvm_empty_delay()
             return
         # May be not be set for BACKDOOR, so check len
         if len(map_info) > 0:
@@ -1396,7 +1396,7 @@ class UVMReg(UVMObject):
             f = self.m_fields[i]  # uvm_reg_field
             rw.element = f
             rw.element_kind = UVM_FIELD
-            self.m_fields[i].pre_read(rw)
+            await self.m_fields[i].pre_read(rw)
             cb = cbs.first()
             while cb is not None:
                 cb.pre_read(rw)
@@ -1522,7 +1522,7 @@ class UVMReg(UVMObject):
         while (cb is not None):
             cb.post_read(rw)
             cb = cbs.next()
-        self.post_read(rw)
+        await self.post_read(rw)
 
         # POST-READ CBS - FIELDS
         for i in range(len(self.m_fields)):
@@ -1536,7 +1536,7 @@ class UVMReg(UVMObject):
             while (cb is not None):
                 cb.post_read(rw)
                 cb = cbs.next()
-            f.post_read(rw)
+            await f.post_read(rw)
 
         rw.value[0] = value  # restore
         rw.element = self
@@ -2155,7 +2155,8 @@ class UVMReg(UVMObject):
     #   //
     
     async def pre_write(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
 
     #   // Task: post_write
@@ -2174,7 +2175,8 @@ class UVMReg(UVMObject):
     #   virtual task post_write(uvm_reg_item rw); endtask
     
     async def post_write(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
 
     #   // Task: pre_read
@@ -2194,7 +2196,8 @@ class UVMReg(UVMObject):
     #   //
     
     async def pre_read(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
     #   // Task: post_read
     #   //
@@ -2212,7 +2215,8 @@ class UVMReg(UVMObject):
     #   virtual task post_read(uvm_reg_item rw)
     
     async def post_read(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
 
     #   extern virtual function void            do_print (uvm_printer printer)
