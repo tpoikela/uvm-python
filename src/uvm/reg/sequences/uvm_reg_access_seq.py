@@ -240,7 +240,7 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
 
         uvm_info("STARTING_SEQ","\n\nStarting " + self.get_name() + " sequence...\n", UVM_LOW)
         self.reg_seq = UVMRegSingleAccessSeq.type_id.create("single_reg_access_seq")
-        self.reset_blk(model)
+        await self.reset_blk(model)
         model.reset()
         await self.do_block(model)
 
