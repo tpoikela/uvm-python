@@ -20,7 +20,7 @@ setup(
     package_dir={"": "src"},
     setup_requires=["setuptools_scm",],
     python_requires=">=3.5",
-    install_requires=["cocotb>=1.2.0", "cocotb-coverage>=1.0.0", "regex>=2019.11.1"],
+    install_requires=["cocotb>=1.3.0", "cocotb-coverage>=1.0.0", "regex>=2019.11.1"],
     platforms="any",
     classifiers=[
         "Programming Language :: Python :: 3",
