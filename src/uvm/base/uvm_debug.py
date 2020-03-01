@@ -1,3 +1,22 @@
+#//
+#//------------------------------------------------------------------------------
+#//   Copyright 2019 Tuomas Poikela (tpoikela)
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//------------------------------------------------------------------------------
 
 import cocotb
 import inspect
@@ -28,7 +47,9 @@ class UVMDebug:
         UVMDebug.DEBUG = False
 
 
-def uvm_debug(self_or_cls, fname, msg):
+def uvm_debug(self_or_cls, fname, msg, logger=print):
+    """ Prints similar info as uvm_info etc functions, but is controlled by
+    UVMDebug.ENABLED. It is not advised to use this in user code """
     if UVMDebug.DEBUG is True:
         sup_caller = getframeinfo(stack()[1][0])
         filename = sup_caller.filename
@@ -46,10 +67,8 @@ def uvm_debug(self_or_cls, fname, msg):
         else:
             name = self_or_cls
         if UVMDebug.ONLY == "":
-            #cocotb.log.info("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
-            print("[DEBUG] {} L{} {} - {}() - {}".format(
+            logger("[DEBUG] {} L{} {} - {}() - {}".format(
                 filename, str(lineno), name, fname, msg) + caller)
         else:
             if re.search(UVMDebug.ONLY, name):
-                #cocotb.log.info("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
-                print("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
+                logger("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
