@@ -32,8 +32,6 @@ jobs:
         sudo bash ci/install_iverilog.sh
     - name: Install uvm-python package
       run: |
-        git clone https://github.com/cocotb/cocotb.git
-        pip install --user ./cocotb
         python -m pip install --user .
     - name: Lint with flake8
       run: |
