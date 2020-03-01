@@ -19,11 +19,8 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
-#`timescale 1ns/1ns
-#
-#module test
-#
+
+
 #  // This simple example shows how the uvm_test_done objection is
 #  // used to coordinate end of test activity. For an example of
 #  // using end of test coordination in the context of a full
@@ -52,6 +49,8 @@ class simple_test(UVMTest):
     def __init__(self, name, parent):
         super().__init__(name, parent)
         self.sem = UVMMailbox(1)
+        self.sem.try_put(1)
+        #self.sem.debug_enabled = True
         self.proc_finished = {}
         self.largest_delay = 50
 
@@ -65,14 +64,16 @@ class simple_test(UVMTest):
 
         # Run a bunch of processes in parallel
         #fork
-        p0 = cocotb.fork(self.doit(35, phase))
-        p1 = cocotb.fork(self.doit(25, phase))
-        p2 = cocotb.fork(self.doit(self.largest_delay, phase))
-        p3 = cocotb.fork(self.doit(15, phase))
-        p4 = cocotb.fork(self.do_without_object(self.largest_delay + 5))
+        p0 = cocotb.fork(self.doit(35, phase, 0))
+        p1 = cocotb.fork(self.doit(25, phase, 1))
+        p2 = cocotb.fork(self.doit(self.largest_delay, phase, 2))
+        p3 = cocotb.fork(self.doit(15, phase, 3))
+        p4 = cocotb.fork(self.do_without_object(self.largest_delay + 5, 4))
+
+        uvm_info("all_procs_forked", "Proceeding to await proc4", UVM_NONE)
 
         # p4 runs longest, but does not raise objection, so simulation should
-        # terminate at largest delay, not when p4 finishes
+        # terminate at largest_delay, not when p4 finishes (+5)
         await p4
         #yield [p0.join(), p1.join(), p2.join(), p3.join(), ]
         #join
@@ -80,36 +81,14 @@ class simple_test(UVMTest):
     s_inst = 0
     # A simple task that consumes some time.
 
-    async def doit(self, delay, phase):
+    async def doit(self, delay, phase, _id):
         arr = []
-        self.sem.get(arr)
-        inst = simple_test.s_inst
-        simple_test.s_inst += 1
-        self.sem.put(1)
-
         # Raise an objection before starting the activity
         phase.raise_objection(self)
-
-        uvm_info("doit", sv.sformatf("Starting doit (%0d) with delay %0t",
-            inst, delay), UVM_NONE)
-        await Timer(delay, "NS")
-        uvm_info("doit", sv.sformatf("Ending doit (%0d)", inst), UVM_NONE)
-
-        # Drop the objection when done
-        phase.drop_objection(self)
-        arr = []
-        self.sem.get(arr)
-        self.proc_finished[inst] = True
-        self.sem.put(1)
-
-
-    async def do_without_object(self, delay):
-        await Timer(1, "NS")
-        arr = []
-        self.sem.get(arr)
+        await self.sem.get(arr)
         inst = simple_test.s_inst
         simple_test.s_inst += 1
-        self.sem.put(1)
+        await self.sem.put(1)
 
         uvm_info("doit", sv.sformatf("Starting doit (%0d) with delay %0t",
             inst, delay), UVM_NONE)
@@ -118,9 +97,31 @@ class simple_test(UVMTest):
 
         # Drop the objection when done
         arr = []
-        self.sem.get(arr)
-        self.proc_finished[inst] = True
-        self.sem.put(1)
+        await self.sem.get(arr)
+        self.proc_finished[_id] = True
+        await self.sem.put(1)
+        phase.drop_objection(self)
+        uvm_info("doit", sv.sformatf("Really finished now (%0d)", inst), UVM_NONE)
+
+
+    async def do_without_object(self, delay, _id):
+        await Timer(1, "NS")
+        arr = []
+        await self.sem.get(arr)
+        inst = simple_test.s_inst
+        simple_test.s_inst += 1
+        await self.sem.put(1)
+
+        uvm_info("doit", sv.sformatf("Starting doit (%0d) with delay %0t",
+            inst, delay), UVM_NONE)
+        await Timer(delay, "NS")
+        uvm_info("doit", sv.sformatf("Ending doit (%0d)", inst), UVM_NONE)
+
+        # Drop the objection when done
+        arr = []
+        await self.sem.get(arr)
+        self.proc_finished[_id] = True
+        await self.sem.put(1)
 
     # Use an objection callback do something when objections are raised or
     # dropped (or all dropped). This example prints some information on each
