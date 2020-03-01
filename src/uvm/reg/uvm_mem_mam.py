@@ -50,7 +50,7 @@ import cocotb
 #//
 #// Memory allocation management utility class similar to C's malloc()
 #// and free().
-#// A single instance of self class is used to manage a single,
+#// A single instance of this class is used to manage a single,
 #// contiguous address space.
 #//------------------------------------------------------------------------------
 
@@ -282,8 +282,8 @@ class UVMMemMam:
 #//------------------------------------------------------------------------------
 #// Allocated memory region descriptor
 #//
-#// Each instance of self class describes an allocated memory region.
-#// Instances of self class are created only by
+#// Each instance of this class describes an allocated memory region.
+#// Instances of this class are created only by
 #// the memory manager, and returned by the
 #// <UVMMemMam::reserve_region()> and <UVMMemMam::request_region()>
 #// methods.
@@ -537,7 +537,7 @@ class UVMMemRegion:
 #// Class: UVMMemMamPolicy
 #//------------------------------------------------------------------------------
 #//
-#// An instance of self class is randomized to determine
+#// An instance of this class is randomized to determine
 #// the starting offset of a randomly allocated memory region.
 #// This class can be extended to provide additional constraints
 #// on the starting offset, such as word alignment or
