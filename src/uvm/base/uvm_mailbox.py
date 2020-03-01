@@ -27,8 +27,8 @@ from .uvm_debug import *
 
 
 def _uvm_debug(self, func, msg):
-    # uvm_debug(self, func, msg)
-    pass
+    if self.debug_enabled or UVMDebug.DEBUG:
+        uvm_debug(self, func, msg)
 
 
 class UVMMailbox():
@@ -39,14 +39,17 @@ class UVMMailbox():
         self.m_queue = UVMQueue()
         self.m_read_event = Event('mailbox_read_event')
         self.m_write_event = Event('mailbox_write_event')
+        self.debug_enabled = False
 
     
     async def put(self, item):
         _uvm_debug(self, 'put', 'Starting to check can_put()')
-        if not self.can_put():
+        can_put = self.can_put()
+        while can_put is False:
             self.m_read_event.clear()
             await self.m_read_event.wait()
             self.m_read_event.clear()
+            can_put = self.can_put()
         _uvm_debug(self, 'put', 'Putting an event into item queue')
         self.m_queue.push_back(item)
         _uvm_debug(self, 'put', 'ZZZ pushed to queue, can_get is ' + str(self.can_get()))
@@ -56,12 +59,14 @@ class UVMMailbox():
 
     
     async def get(self, itemq):
-        if not self.can_get():
+        can_get = self.can_get()
+        while can_get is False:
             _uvm_debug(self, 'get', 'waiting write event to get item')
             self.m_write_event.clear()
             await self.m_write_event.wait()
             self.m_write_event.clear()
             _uvm_debug(self, 'get', 'event cleared, can_get ' + str(self.can_get()))
+            can_get = self.can_get()
 
         _uvm_debug(self, 'get', 'wait write event DONE')
         if not self.can_get():
