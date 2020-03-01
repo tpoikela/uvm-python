@@ -1242,9 +1242,9 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_write  (uvm_reg_item rw); endtask
-    
     async def pre_write(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
     #   // Task: post_write
     #   //
@@ -1262,7 +1262,8 @@ class UVMRegField(UVMObject):
     #   virtual task post_write (uvm_reg_item rw); endtask
     
     async def post_write(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
     #   // Task: pre_read
     #   //
@@ -1281,7 +1282,8 @@ class UVMRegField(UVMObject):
     #   //
     
     async def pre_read(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
     #   // Task: post_read
     #   //
@@ -1299,7 +1301,8 @@ class UVMRegField(UVMObject):
     #   virtual task post_read  (uvm_reg_item rw); endtask
     
     async def post_read(self, rw):
-        await uvm_empty_delay()
+        #await uvm_empty_delay()
+        pass
 
     #   extern virtual function void do_print (uvm_printer printer)
 
@@ -1343,8 +1346,8 @@ class UVMRegField(UVMObject):
     #                                            uvm_comparer comparer)
     #   extern virtual function void do_pack (uvm_packer packer)
     #   extern virtual function void do_unpack (uvm_packer packer)
-    #
-    #endclass: uvm_reg_field
+
+
 uvm_object_utils(UVMRegField)
 
 #//------------------------------------------------------------------------------
@@ -1352,9 +1355,6 @@ uvm_object_utils(UVMRegField)
 #//------------------------------------------------------------------------------
 #
 #// m_predefined_policies
-#
-#
-#
 #
 #typedef class uvm_reg_map_info
 #
