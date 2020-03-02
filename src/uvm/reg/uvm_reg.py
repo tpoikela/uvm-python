@@ -694,15 +694,14 @@ class UVMReg(UVMObject):
     #   // was completed
     #   //
     #   extern virtual function void reset(string kind = "HARD")
-    
-    async def reset(self, kind="HARD"):
+    def reset(self, kind="HARD"):
         for i in range(len(self.m_fields)):
             self.m_fields[i].reset(kind)
         # Put back a key in the semaphore if it is checked out
         # in case a thread was killed during an operation
         q = []
         self.m_atomic.try_get(q)
-        await self.m_atomic.put(1)
+        self.m_atomic.try_put(1)
         self.m_process = None
         self.Xset_busyX(0)
         #endfunction: reset
@@ -1280,7 +1279,7 @@ class UVMReg(UVMObject):
             rw.kind = UVM_WRITE
             rw.value[0] = final_val
 
-            if (bkdr is not None):
+            if bkdr is not None:
                 bkdr.write(rw)
             else:
                 self.backdoor_write(rw)
@@ -1319,7 +1318,7 @@ class UVMReg(UVMObject):
         # POST-WRITE CBS - REG
         cb = cbs.first()
         while cb is not None:
-            cb.post_write(rw)
+            await cb.post_write(rw)
             cb = cbs.next()
         await self.post_write(rw)
 
@@ -1399,10 +1398,8 @@ class UVMReg(UVMObject):
             await self.m_fields[i].pre_read(rw)
             cb = cbs.first()
             while cb is not None:
-                cb.pre_read(rw)
+                await cb.pre_read(rw)
                 cb = cbs.next()
-            #for (uvm_reg_cbs cb=cbs.first(); cb!=None; cb=cbs.next())
-            #   cb.pre_read(rw)
 
         rw.element = self
         rw.element_kind = UVM_REG
@@ -1416,7 +1413,7 @@ class UVMReg(UVMObject):
             cb.pre_read(rw)
             cb = cbs.next()
 
-        if (rw.status != UVM_IS_OK):
+        if rw.status != UVM_IS_OK:
             self.m_read_in_progress = 0
             return
 
@@ -1426,7 +1423,7 @@ class UVMReg(UVMObject):
             #  ...VIA USER BACKDOOR
             bkdr = self.get_backdoor()
             _map = UVMRegMap.backdoor()
-            if (_map.get_check_on_read()):
+            if _map.get_check_on_read():
                 exp = self.get()
 
             if (bkdr is not None):
@@ -1845,8 +1842,8 @@ class UVMReg(UVMObject):
     #   // for this register type.
     #   //
     #   extern virtual task backdoor_write(uvm_reg_item rw)
-    # 
-    async def backdoor_write(self, rw):
+    #
+    def backdoor_write(self, rw):
         paths = []  # uvm_hdl_path_concat [$]
         ok = 1
         self.get_full_hdl_path(paths,rw.bd_kind)
