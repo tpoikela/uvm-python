@@ -1,5 +1,4 @@
 
-import cocotb
 from cocotb.triggers import Timer
 from .uvm_report_object import UVMReportObject
 from .uvm_object_globals import (UVM_NONE, UVM_MEDIUM, UVM_PHASE_DONE, UVM_INFO,

@@ -1,3 +1,26 @@
+#
+#-----------------------------------------------------------------------------
+#   Copyright 2007-2011 Mentor Graphics Corporation
+#   Copyright 2007-2011 Cadence Design Systems, Inc.
+#   Copyright 2010 Synopsys, Inc.
+#   Copyright 2013 NVIDIA Corporation
+#   Copyright 2019-2020 Tuomas Poikela (tpoikela)
+#   All Rights Reserved Worldwide
+#
+#   Licensed under the Apache License, Version 2.0 (the
+#   "License"); you may not use this file except in
+#   compliance with the License.  You may obtain a copy of
+#   the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in
+#   writing, software distributed under the License is
+#   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#   CONDITIONS OF ANY KIND, either express or implied.  See
+#   the License for the specific language governing
+#   permissions and limitations under the License.
+#-----------------------------------------------------------------------------
 
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
@@ -19,14 +42,12 @@ class UVMObject(sv_obj):
 
     uvm_global_copy_map = {}
 
-    # static uvm_status_container _m_uvm_status_container
     _m_uvm_status_container = UVMStatusContainer()
 
-    #  // Function: new
-    #  //
-    #  // Creates a new uvm_object with the given instance ~name~. If ~name~ is not
-    #  // supplied, the object is unnamed.
     def __init__(self, name):
+        """ Creates a new uvm_object with the given instance `name`. If ~name~ is not
+        supplied, the object is unnamed.
+        """
         sv_obj.__init__(self)
         self.name = name
         self.inst_id = UVMObject.inst_id_count
@@ -80,34 +101,40 @@ class UVMObject(sv_obj):
 
     #  // Function: get_full_name
     #  //
-    #  // Returns the full hierarchical name of this object. The default
-    #  // implementation is the same as <get_name>, as uvm_objects do not inherently
-    #  // possess hierarchy.
-    #  //
-    #  // Objects possessing hierarchy, such as <uvm_components>, override the default
-    #  // implementation. Other objects might be associated with component hierarchy
-    #  // but are not themselves components. For example, <uvm_sequence #(REQ,RSP)>
-    #  // classes are typically associated with a <uvm_sequencer #(REQ,RSP)>. In this
-    #  // case, it is useful to override get_full_name to return the sequencer's
-    #  // full name concatenated with the sequence's name. This provides the sequence
-    #  // a full context, which is useful when debugging.
     def get_full_name(self):
+        """ Objects possessing hierarchy, such as <uvm_components>, override the default
+            implementation. Other objects might be associated with component hierarchy
+            but are not themselves components. For example, <uvm_sequence #(REQ,RSP)>
+            classes are typically associated with a <uvm_sequencer #(REQ,RSP)>. In this
+            case, it is useful to override get_full_name to return the sequencer's
+            full name concatenated with the sequence's name. This provides the sequence
+            a full context, which is useful when debugging.
+
+            Returns:
+                str: The full hierarchical name of this object. The default
+                implementation is the same as <get_name>, as uvm_objects do not inherently
+                possess hierarchy.
+        """
         return self.get_name()
 
     #  // Function: get_inst_id
-    #  // Returns the object's unique, numeric instance identifier.
     def get_inst_id(self):
+        """
+            Returns:
+                int: The object's unique, numeric instance identifier.
+        """
         return self.inst_id
 
-    #  // Function: get_inst_count
-    #  //
-    #  // Returns the current value of the instance counter, which represents the
-    #  // total number of uvm_object-based objects that have been allocated in
-    #  // simulation. The instance counter is used to form a unique numeric instance
-    #  // identifier.
-    #
+
     @classmethod
     def get_inst_count(self):
+        """
+        Returns:
+            int: The current value of the instance counter, which represents the
+            total number of uvm_object-based objects that have been allocated in
+            simulation. The instance counter is used to form a unique numeric instance
+            identifier.
+        """
         return UVMObject.inst_id_count
 
     #  // Function: get_type
