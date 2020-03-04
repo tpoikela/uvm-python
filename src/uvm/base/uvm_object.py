@@ -36,6 +36,9 @@ class UVMObject(sv_obj):
     `copy`, `compare`, `print`, and `record`.
     Classes deriving from `UVMObject` must implement methods such as
     `create` and `get_type_name`.
+
+    :ivar: name Name of the object.
+    :ivar: inst_id Unique instance ID for this object.
     """
 
     inst_id_count = 0
