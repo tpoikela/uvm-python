@@ -17,7 +17,7 @@ class ABC():
     # Returns something.
     # Accepts nothing.
     async def my_func(self):
-        pass
+        return "Something"
 
     # Block before var, must preserve
     # var indent
@@ -34,13 +34,17 @@ class ABC():
         return 2 * some_args
 
     def has_existing_comment(self, a1, a2):
-        """ Should not do anything
+        """ Already docstring, Should not do anything
         """
         pass
 
     # Should convert into docstring
     def gets_docstring_too(self):
-        pass
+        raise Exception("Not done")
+
+    # Misc trailing class comments, keep this
+
+    # And also this
 
 # KEEP1
 # KEEP2
