@@ -283,7 +283,7 @@ class UVMObject(sv_obj):
     #  // custom information in the ~print~ and <sprint> operations, derived classes
     #  // must override the <do_print> method and use the provided printer policy
     #  // class to format the output.
-    def print(self, printer=None):
+    def print_obj(self, printer=None):
         if printer is None:
             from .uvm_global_vars import uvm_default_printer
             printer = uvm_default_printer

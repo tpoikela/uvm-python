@@ -1523,7 +1523,7 @@ class UVMResourcePool:
 
         for i in range(len(rq)):
             r = rq[i]
-            r.print(printer)
+            r.print_obj(printer)
             if audit is True:
                 r.print_accessors()
 
