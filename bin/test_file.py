@@ -1,4 +1,7 @@
+# File header
+# Header row2
 
+import_var = "ABC"
 
 class ABC():
 
@@ -16,6 +19,9 @@ class ABC():
     async def my_func(self):
         pass
 
+    # Block before var, must preserve
+    # var indent
+    my_arr = []
 
     #def no_comments(self, ok):
     #    ok = 2 * ok
@@ -26,3 +32,8 @@ class ABC():
     @classmethod
     def static_func(cls, some_args):
         return 2 * some_args
+
+
+# KEEP1
+# KEEP2
+# KEEP3
