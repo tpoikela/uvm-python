@@ -46,8 +46,12 @@ class CommentStruct():
         self.comments = comm
         self.no_funcs = no_funcs.copy()
         self.node = node
+        self.func_name = ""
         print("ComMStruct added no_funcs " + str(no_funcs) + ', node: '
                 + str(node))
+
+    def set_func(self, func):
+        self.func_name = func
 
 
 class FixFuncComments(fixer_base.BaseFix):
@@ -77,9 +81,11 @@ class FixFuncComments(fixer_base.BaseFix):
     def_name = ""
     func_name_seen = {}
 
+
     def reset_state(self):
         self.has_def = False
         self.has_name = False
+
 
     def get_func_name(self, node):
         for cc in node.children:
@@ -88,10 +94,12 @@ class FixFuncComments(fixer_base.BaseFix):
                     return cc.value
         raise Exception("No name found for " + str(node))
 
+
     def should_add_to(self, node):
         if node.type == self.syms.funcdef:
             func_name = self.get_func_name(node)
             return func_name in self.func_name_seen
+
 
     def match(self, node):
         prefix = node.prefix
@@ -124,6 +132,7 @@ class FixFuncComments(fixer_base.BaseFix):
             keep_prefix, comments = self.split_prefix(prefix)
             comm_struct = CommentStruct(comments,
                     list(self.func_name_seen.keys()), node)
+            comm_struct.set_func(self.def_name)
             self.comments.append(comm_struct)  # TODO strip comment signs #
             node.prefix = keep_prefix
             _debug("[match] Stored comments: " + comments)
@@ -173,7 +182,10 @@ class FixFuncComments(fixer_base.BaseFix):
                                     pytree.Node(syms.simple_stmt, suite_children))
                             self.comments.pop(0)
                         else:
-                            self.restore_last_comment()
+                            # If comment was found after current func, we want
+                            # to keep it for the next function, else restore
+                            if comm_struct.func_name != func_name:
+                                self.restore_last_comment()
                             self.reset_state()
                             return func_node
                         break
