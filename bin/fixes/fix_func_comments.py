@@ -81,6 +81,10 @@ class FixFuncComments(fixer_base.BaseFix):
     def_name = ""
     func_name_seen = {}
 
+    func_args = {}
+    func_return = {}
+    func_raises = {}
+
 
     def reset_state(self):
         self.has_def = False
@@ -118,6 +122,14 @@ class FixFuncComments(fixer_base.BaseFix):
                 _debug("[match]: Function " + node.value + " BEGIN")
                 # Check here if we have indent/dedent comment available
                 self.func_name_seen[node.value] = True
+
+        if node.type == self.syms.return_stmt:
+            self.get_func_return(node)
+        if node.type == self.syms.typedargslist:
+            self.func_args[self.def_name] = self.get_func_args(node)
+        if node.type == self.syms.raise_stmt:
+            self.func_raises[self.def_name] = True
+
 
         # Discard previous comments if required
         if self.has_def is False and self.has_name is False:
@@ -175,6 +187,8 @@ class FixFuncComments(fixer_base.BaseFix):
                         curr_comments = comm_struct.comments
                         if func_name not in comm_struct.no_funcs:
                             indented_text = curr_comments.replace('\n    ', '\n' + indent)
+                            indented_text = self.format_docstring(func_name,
+                                    indented_text, indent)
                             comments = (indent + '""" ' + indented_text +
                                 '\n' + indent + '"""')
                             suite_children = [String(comments), Newline()]
@@ -256,3 +270,37 @@ class FixFuncComments(fixer_base.BaseFix):
         node.prefix = new_prefix
         _debug("Recreated node.prefix as " +
             lined(comm_struct.node.prefix))
+
+
+    def get_func_args(self, node):
+        res = []
+        for child in node.children:
+            if child.type == token.NAME and child.value != 'self':
+                res.append(child.value)
+        return res
+
+
+    def get_func_return(self, node):
+        res = []
+        if self.def_name in self.func_return:
+            res = self.func_return[self.def_name]
+        else:
+            self.func_return[self.def_name] = res
+        res.append('Returns')
+
+
+    def format_docstring(self, func_name, text, indent):
+        indented_text = text.replace('# ', '')
+        indented_text = indented_text.replace('//', '')
+        split = indented_text.split("\n")
+
+        if func_name in self.func_args:
+            args = self.func_args[func_name]
+            split.append(indent + "Args:")
+            for arg in args:
+                split.append(indent + "    " + arg + ": ")
+        if func_name in self.func_return:
+            split.append(indent + "Returns:")
+        if func_name in self.func_raises:
+            split.append(indent + "Raises:")
+        return "\n".join(split)
