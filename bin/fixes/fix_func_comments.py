@@ -27,6 +27,27 @@ def _debug(*args):
     print(*args)
 
 
+def is_child_of(child, parent):
+    curr_node = child
+    print("child node is " + str(child))
+    while curr_node is not None:
+        curr_node = curr_node.getattr('parent')
+        if curr_node == parent:
+            return True
+    return False
+
+
+
+class CommentStruct():
+
+    def __init__(self, comm, no_funcs, node):
+        self.comments = comm
+        self.no_funcs = no_funcs.copy()
+        self.node = node
+        print("ComMStruct added no_funcs " + str(no_funcs) + ', node: '
+                + str(node))
+
+
 class FixFuncComments(fixer_base.BaseFix):
 
     explicit = False  # The user must ask for this fixers
@@ -44,34 +65,79 @@ class FixFuncComments(fixer_base.BaseFix):
     COMMENT = pytree.Leaf(token.COMMENT, '#')
     SEPS = (COMMA, COLON)
 
-    comments = None
+    comments = []
     re_comm = re.compile('#')
 
     printed = False
 
+    has_def = False
+    has_name = False
+    def_name = ""
+    func_has_comments = {}
+
+    def reset_state(self):
+        self.has_def = False
+        self.has_name = False
+
+    def get_func_name(self, node):
+        for cc in node.children:
+            if cc.type == token.NAME:
+                if cc.value != 'def':
+                    return cc.value
+        raise Exception("No name found for " + str(node))
+
+    def should_add_to(self, node):
+        if node.type == self.syms.funcdef:
+            func_name = self.get_func_name(node)
+            return func_name in self.func_has_comments
+
     def match(self, node):
         prefix = node.prefix
-        _debug("prefix is now |" + prefix + "|")
-        #_debug("type is now |" + self.syms[node.type] + "|")
-        _debug("Full node is **>" + str(node) + "<**")
+        if len(prefix) > 0:
+            _debug("[match]: prefix is now |" + prefix + "|")
+        _debug("[match]: Full node is **>" + str(node) + "<**")
 
+        # We detect function start here
+        if node.type == token.NAME:
+            if node.value == 'def':
+                _debug("[match]: NAME with value |" + node.value + "|")
+                self.has_def = True
+            elif self.has_def is True and self.has_name is False:
+                self.has_name = True
+                self.def_name = node.value
+                _debug("[match]: Function " + node.value + " BEGIN")
+                # Check here if we have indent/dedent comment available
+                self.func_has_comments[node.value] = True
+
+        # Discard previous comments if required
+        if self.has_def is False and self.has_name is False:
+            if node.type == self.syms.simple_stmt:
+                comm_struct = self.comments.pop(0)
+                comm_struct.node.prefix += comm_struct.comments + "\n"
+
+        # Store comments from prefix, if accepted token
         if len(prefix) > 0 and self.re_comm.search(prefix):
+            if self.check_node_type_for_comments(node) is False:
+                return False
             keep_prefix, comments = self.split_prefix(prefix)
-            self.comments = comments  # TODO strip comment signs #
-            node.prefix = keep_prefix + '\n'
-            _debug("Stored comments: " + self.comments)
-            _debug("Preserved prefix: " + keep_prefix)
+            comm_struct = CommentStruct(comments,
+                    list(self.func_has_comments.keys()), node)
+            self.comments.append(comm_struct)  # TODO strip comment signs #
+            node.prefix = keep_prefix
+            _debug("[match] Stored comments: " + comments)
+            _debug("[match] Preserved prefix: |" + keep_prefix + "|")
             return False
-        elif node.type == self.syms.funcdef:  # TODO match function type
-            _debug("Found funcdef |" + str(node) + "|")
+        elif self.should_add_to(node):  # TODO match function type
+            _debug("[match] Found funcdef |" + str(node) + "|")
             return True
+        return False
 
     count = 0
 
-    def transform(self, node, results):
-        new = node.clone()
-        _debug('results is ' + str(results))
-        _debug('transform() call ' + str(self.count))
+    def transform(self, func_node, results):
+        new = func_node.clone()
+        _debug('transform(): results is ' + str(results))
+        _debug('transform(): call ' + str(self.count))
         self.count += 1
         indent = ""
 
@@ -88,19 +154,22 @@ class FixFuncComments(fixer_base.BaseFix):
                             indent = cc2.value  # Preserve correct indent
                             found_ind = True
                     else:
-                        indented_text = self.comments.replace('\n    ', '\n' + indent)
-                        comments = (indent + '""" ' + indented_text +
-                            '\n' + indent + '"""')
-                        suite_children = [String(comments), Newline()]
-                        suite_node.insert_child(1,
-                                pytree.Node(syms.simple_stmt, suite_children))
-                        self.comments = ""
-                        break
+                        func_name = self.get_func_name(func_node)
+                        comm_struct = self.comments[0]
+                        curr_comments = comm_struct.comments
+                        if func_name not in comm_struct.no_funcs:
+                            indented_text = curr_comments.replace('\n    ', '\n' + indent)
+                            comments = (indent + '""" ' + indented_text +
+                                '\n' + indent + '"""')
+                            suite_children = [String(comments), Newline()]
+                            suite_node.insert_child(1,
+                                    pytree.Node(syms.simple_stmt, suite_children))
+                            self.comments.pop(0)
+                            break
                 _debug("Breaking outer for-loop after suite")
                 break
-        if self.comments != "":
-            raise Exception("self.comments != '', something went wrong badly")
         _debug("New node would be |" + str(new) + "|")
+        self.reset_state()
         return new
 
     def split_prefix(self, prefix):
@@ -109,8 +178,13 @@ class FixFuncComments(fixer_base.BaseFix):
         keep_prefix = ""
         comments = ""
         lines = prefix.split("\n")
-        _debug("split_prefix lines are " + str(lines))
+        _debug("split_prefix() lines are " + str(lines))
         before, after = self.split_empty(lines[0:-1])
+        last_line = lines[-1]
+        # last_line may contain indent for decorator for example
+        if len(last_line) > 0:
+            before.append('')
+            before.append(last_line)
         keep_prefix = "\n".join(before)
         comments = self.format_comments(after)
         return keep_prefix, comments
@@ -134,3 +208,7 @@ class FixFuncComments(fixer_base.BaseFix):
 
     def format_comments(self, lines):
         return "\n".join(lines)
+
+    def check_node_type_for_comments(self, node):
+        return (node.type == token.NAME or node.type == token.INDENT
+            or node.type == token.DEDENT)
