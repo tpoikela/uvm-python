@@ -37,6 +37,8 @@ def is_child_of(child, parent):
     return False
 
 
+def lined(msg):
+    return "|" + msg + "|"
 
 class CommentStruct():
 
@@ -73,7 +75,7 @@ class FixFuncComments(fixer_base.BaseFix):
     has_def = False
     has_name = False
     def_name = ""
-    func_has_comments = {}
+    func_name_seen = {}
 
     def reset_state(self):
         self.has_def = False
@@ -89,7 +91,7 @@ class FixFuncComments(fixer_base.BaseFix):
     def should_add_to(self, node):
         if node.type == self.syms.funcdef:
             func_name = self.get_func_name(node)
-            return func_name in self.func_has_comments
+            return func_name in self.func_name_seen
 
     def match(self, node):
         prefix = node.prefix
@@ -107,14 +109,13 @@ class FixFuncComments(fixer_base.BaseFix):
                 self.def_name = node.value
                 _debug("[match]: Function " + node.value + " BEGIN")
                 # Check here if we have indent/dedent comment available
-                self.func_has_comments[node.value] = True
+                self.func_name_seen[node.value] = True
 
         # Discard previous comments if required
         if self.has_def is False and self.has_name is False:
             if node.type == self.syms.simple_stmt:
                 if len(self.comments) > 0:
-                    comm_struct = self.comments.pop(0)
-                    comm_struct.node.prefix += comm_struct.comments + "\n"
+                    self.restore_last_comment()
 
         # Store comments from prefix, if accepted token
         if len(prefix) > 0 and self.re_comm.search(prefix):
@@ -122,7 +123,7 @@ class FixFuncComments(fixer_base.BaseFix):
                 return False
             keep_prefix, comments = self.split_prefix(prefix)
             comm_struct = CommentStruct(comments,
-                    list(self.func_has_comments.keys()), node)
+                    list(self.func_name_seen.keys()), node)
             self.comments.append(comm_struct)  # TODO strip comment signs #
             node.prefix = keep_prefix
             _debug("[match] Stored comments: " + comments)
@@ -136,7 +137,8 @@ class FixFuncComments(fixer_base.BaseFix):
     count = 0
 
     def transform(self, func_node, results):
-        new = func_node.clone()
+        #new = func_node.clone()
+        new = func_node
         _debug('transform(): results is ' + str(results))
         _debug('transform(): call ' + str(self.count))
         self.count += 1
@@ -170,7 +172,11 @@ class FixFuncComments(fixer_base.BaseFix):
                             suite_node.insert_child(1,
                                     pytree.Node(syms.simple_stmt, suite_children))
                             self.comments.pop(0)
-                            break
+                        else:
+                            self.restore_last_comment()
+                            self.reset_state()
+                            return func_node
+                        break
                 _debug("Breaking outer for-loop after suite")
                 break
         _debug("New node would be |" + str(new) + "|")
@@ -195,6 +201,10 @@ class FixFuncComments(fixer_base.BaseFix):
         return keep_prefix, comments
 
     def split_empty(self, lines):
+        """ If there are 2 sections of comments, need to split that into 2 or
+        more parts. FInd the last empty line, then use that line as split
+        point.
+        """
         re_empty = re.compile(r'^\s*$')
         before = []
         after = []
@@ -217,3 +227,16 @@ class FixFuncComments(fixer_base.BaseFix):
     def check_node_type_for_comments(self, node):
         return (node.type == token.NAME or node.type == token.INDENT
             or node.type == token.DEDENT)
+
+
+    def restore_last_comment(self):
+        comm_struct = self.comments.pop(0)
+        node = comm_struct.node
+        split = node.prefix.split("\n")
+        print("restore() split before merge " + str(split))
+        new_prefix = ("\n").join(split[0:-1])
+        new_prefix += comm_struct.comments
+        new_prefix += "\n" + split[-1]
+        node.prefix = new_prefix
+        _debug("Recreated node.prefix as " +
+            lined(comm_struct.node.prefix))
