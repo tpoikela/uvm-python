@@ -67,7 +67,7 @@ class tb_env(UVMComponent):
 
 
     def end_of_elaboration(self):
-        self.model.print()
+        self.model.print_obj()
 
 
 

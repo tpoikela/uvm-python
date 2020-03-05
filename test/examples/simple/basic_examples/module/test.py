@@ -161,6 +161,6 @@ async def test_module_top(dut):
     UVMConfigDb.set(None, "mu.*", "str", "hi")
     UVMConfigDb.set(None, "mu.l1", "data", 55)
     UVMConfigDb.set(None, "mu.*", "obj", bar)
-    mu.print()
+    mu.print_obj()
     await run_test()
-    mu.print()
+    mu.print_obj()

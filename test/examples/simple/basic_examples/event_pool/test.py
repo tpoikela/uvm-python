@@ -71,7 +71,7 @@ async def test_test(dut):
     e = ep.get("george")
     e_data = ep.get('evt_data')
     uvm_default_table_printer.knobs.reference = 0
-    ep.print()
+    ep.print_obj()
 
     trig_proc = cocotb.fork(trig_event(e))
     cocotb.fork(trig_data_event(e_data))

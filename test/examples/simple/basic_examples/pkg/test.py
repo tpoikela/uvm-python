@@ -234,9 +234,9 @@ async def test_module_top(dut):
     UVMConfigDb.set(None, "mu.*", "obj", bar)
     mu.print_config_settings("", None, 1)
     uvm_default_printer = uvm_default_tree_printer
-    mu.print()
-    factory.print(1)
-    mu.print()
+    mu.print_obj()
+    factory.print_factory(1)
+    mu.print_obj()
 
     # Fork 2 initial tasks
     task1 = cocotb.fork(initial1())

@@ -64,7 +64,7 @@ class consumer(UVMComponent):
         uvm_info("consumer", sv.sformatf("Received %0s local_count=%0d",
             p.get_name(),self.count), UVM_MEDIUM)
         if self.uvm_report_enabled(UVM_HIGH,UVM_INFO,""):
-             p.print()
+             p.print_obj()
         self.lock.put()
     #endclass
 

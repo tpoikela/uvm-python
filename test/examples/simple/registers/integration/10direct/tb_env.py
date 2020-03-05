@@ -88,7 +88,7 @@ class tb_env(UVMComponent):
                 self.apb.mon.ap.connect(self.apb2reg_predictor.bus_in)
             else:
                 self.regmodel.default_map.set_auto_predict(1)
-            self.regmodel.print()
+            self.regmodel.print_obj()
 
 
     

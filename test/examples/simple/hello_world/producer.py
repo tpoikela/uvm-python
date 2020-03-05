@@ -69,7 +69,7 @@ class producer(UVMComponent):
             uvm_info("producer", sv.sformatf("Sending %s",p.get_name()), UVM_MEDIUM)
 
             if self.uvm_report_enabled(UVM_HIGH,UVM_INFO,""):
-                p.print()
+                p.print_obj()
 
             await self.out.put(p)
             await Timer(10, "NS")

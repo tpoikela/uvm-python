@@ -75,7 +75,7 @@ async def module_top(dut):
     factory = cs_.get_factory()
     gen.type_id.set_inst_override(mygen.get_type(), "uvm_test_top.gen1")
     packet.type_id.set_type_override(mypacket.get_type())
-    factory.print(1)
+    factory.print_factory(1)
 
     # If a string is used to run_test, run_test will used the string based factory
     # create method to create an object of the desired type.
