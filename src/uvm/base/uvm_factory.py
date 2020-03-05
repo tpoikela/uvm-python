@@ -755,7 +755,7 @@ class UVMDefaultFactory(UVMFactory):
 
     # print
     # -----
-    def print(self, all_types=True):
+    def print_factory(self, all_types=True):
         fact_str = self.convert2string(all_types)
         uvm_info("UVM/FACTORY/PRINT", fact_str, UVM_NONE)
 
