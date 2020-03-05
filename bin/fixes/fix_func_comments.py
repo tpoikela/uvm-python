@@ -183,6 +183,7 @@ class FixFuncComments(fixer_base.BaseFix):
         self.reset_state()
         return new
 
+
     def split_prefix(self, prefix):
         """ Splits the prefix string in two parts, one will be preserved as
         original prefix, and 2nd part will be the new comments """
@@ -191,14 +192,15 @@ class FixFuncComments(fixer_base.BaseFix):
         lines = prefix.split("\n")
         _debug("split_prefix() lines are " + str(lines))
         before, after = self.split_empty(lines[0:-1])
+
         last_line = lines[-1]
-        # last_line may contain indent for decorator for example
-        if len(last_line) > 0:
-            before.append('')
-            before.append(last_line)
+        before.append('')
+        before.append(last_line)
+
         keep_prefix = "\n".join(before)
-        comments = self.format_comments(after)
+        comments = self.join_comments(after)
         return keep_prefix, comments
+
 
     def split_empty(self, lines):
         """ If there are 2 sections of comments, need to split that into 2 or
@@ -221,12 +223,14 @@ class FixFuncComments(fixer_base.BaseFix):
             after = lines
         return before, after
 
-    def format_comments(self, lines):
+
+    def join_comments(self, lines):
         return "\n".join(lines)
+
 
     def check_node_type_for_comments(self, node):
         return (node.type == token.NAME or node.type == token.INDENT
-            or node.type == token.DEDENT)
+            or node.type == token.DEDENT or node.type == token.AT)
 
 
     def restore_last_comment(self):
