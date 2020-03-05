@@ -33,6 +33,14 @@ class ABC():
     def static_func(cls, some_args):
         return 2 * some_args
 
+    def has_existing_comment(self, a1, a2):
+        """ Should not do anything
+        """
+        pass
+
+    # Should convert into docstring
+    def gets_docstring_too(self):
+        pass
 
 # KEEP1
 # KEEP2
