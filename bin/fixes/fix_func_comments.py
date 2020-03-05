@@ -22,14 +22,16 @@ from lib2to3.fixer_util import (Assign, Attr, Name, is_tuple, is_list, syms,
     String, Newline)
 from lib2to3.pygram import python_symbols
 
+DEBUG = False
 
 def _debug(*args):
-    print(*args)
+    if DEBUG is True:
+        print(*args)
 
 
 def is_child_of(child, parent):
     curr_node = child
-    print("child node is " + str(child))
+    _debug("child node is " + str(child))
     while curr_node is not None:
         curr_node = curr_node.getattr('parent')
         if curr_node == parent:
@@ -47,7 +49,7 @@ class CommentStruct():
         self.no_funcs = no_funcs.copy()
         self.node = node
         self.func_name = ""
-        print("ComMStruct added no_funcs " + str(no_funcs) + ', node: '
+        _debug("ComMStruct added no_funcs " + str(no_funcs) + ', node: '
                 + str(node))
 
     def set_func(self, func):
@@ -57,25 +59,17 @@ class CommentStruct():
 class FixFuncComments(fixer_base.BaseFix):
 
     explicit = False  # The user must ask for this fixers
-
-    #PATTERN = """
-    #any<(not(',') any)+ ',' ((not(',') any)+ ',')* [not(',') any]>
-    #"""
-
-    #PATTERN = """
-    #suite<text=(any)+>
-    #"""
+    printed = False
 
     COMMA = pytree.Leaf(token.COMMA, ",")
     COLON = pytree.Leaf(token.COLON, ":")
     COMMENT = pytree.Leaf(token.COMMENT, '#')
     SEPS = (COMMA, COLON)
 
-    comments = []
     re_comm = re.compile('#')
 
-    printed = False
 
+    comments = []
     has_def = False
     has_name = False
     def_name = ""
@@ -112,6 +106,10 @@ class FixFuncComments(fixer_base.BaseFix):
             _debug("[match]: prefix is now |" + prefix + "|")
         _debug("[match]: Full node is **>" + str(node) + "<**")
 
+        if node.type == self.syms.classdef:
+            self.reset_func_data()
+            return False
+
         # We detect function start here
         if node.type == token.NAME:
             if node.value == 'def':
@@ -139,6 +137,7 @@ class FixFuncComments(fixer_base.BaseFix):
                 if len(self.comments) > 0:
                     self.restore_last_comment()
 
+        # Keep track of function indent
         if self.has_def is True and self.has_name is True:
             if node.type == token.INDENT:
                 self.func_indent[self.def_name] += 1
@@ -277,7 +276,7 @@ class FixFuncComments(fixer_base.BaseFix):
         comm_struct = self.comments.pop(0)
         node = comm_struct.node
         split = node.prefix.split("\n")
-        print("restore() split before merge " + str(split))
+        _debug("restore() split before merge " + str(split))
         new_prefix = ("\n").join(split[0:-1])
         new_prefix += comm_struct.comments
         new_prefix += "\n" + split[-1]
@@ -318,3 +317,15 @@ class FixFuncComments(fixer_base.BaseFix):
         if func_name in self.func_raises:
             split.append(indent + "Raises:")
         return "\n".join(split)
+
+
+    def reset_func_data(self):
+        self.comments = []
+        self.reset_state()
+        self.def_name = ""
+        self.func_name_seen = {}
+        self.func_args = {}
+        self.func_return = {}
+        self.func_raises = {}
+        self.func_indent = {}
+
