@@ -2,16 +2,24 @@
 
 class ABC():
 
-    def __init__(self, name):
+    # Nothing to do here
+    test_var = ""
+
+    # Is this indent?
+    def __init__(self, name):  # EOL ignored
         self.name = name
 
     # Floating comments, not included
 
     # Returns something.
     # Accepts nothing.
-    def my_func(self):
+    async def my_func(self):
         pass
 
+
+    #def no_comments(self, ok):
+    #    ok = 2 * ok
+    #    return ok
 
     # This function does X and Y.
     # Plus Z also.
