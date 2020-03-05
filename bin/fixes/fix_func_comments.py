@@ -84,6 +84,7 @@ class FixFuncComments(fixer_base.BaseFix):
     func_args = {}
     func_return = {}
     func_raises = {}
+    func_indent = {}
 
 
     def reset_state(self):
@@ -119,6 +120,7 @@ class FixFuncComments(fixer_base.BaseFix):
             elif self.has_def is True and self.has_name is False:
                 self.has_name = True
                 self.def_name = node.value
+                self.func_indent[self.def_name] = 0
                 _debug("[match]: Function " + node.value + " BEGIN")
                 # Check here if we have indent/dedent comment available
                 self.func_name_seen[node.value] = True
@@ -137,10 +139,22 @@ class FixFuncComments(fixer_base.BaseFix):
                 if len(self.comments) > 0:
                     self.restore_last_comment()
 
+        if self.has_def is True and self.has_name is True:
+            if node.type == token.INDENT:
+                self.func_indent[self.def_name] += 1
+            if node.type == token.DEDENT:
+                self.func_indent[self.def_name] -= 1
+
         # Store comments from prefix, if accepted token
         if len(prefix) > 0 and self.re_comm.search(prefix):
             if self.check_node_type_for_comments(node) is False:
                 return False
+            if self.has_def is True and self.has_name is True:
+                if self.func_indent[self.def_name] != 0:
+                    _debug("[match]: Discard prefix, no indent match: " +
+                        str(prefix))
+                    return False
+
             keep_prefix, comments = self.split_prefix(prefix)
             comm_struct = CommentStruct(comments,
                     list(self.func_name_seen.keys()), node)
