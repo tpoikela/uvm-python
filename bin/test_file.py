@@ -31,6 +31,7 @@ class ABC():
     # Plus Z also.
     @classmethod
     def static_func(cls, some_args):
+        # Preserve this as line comment, DONT TOUCH
         return 2 * some_args
 
     def has_existing_comment(self, a1, a2):
