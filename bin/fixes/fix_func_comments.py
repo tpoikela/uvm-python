@@ -112,8 +112,9 @@ class FixFuncComments(fixer_base.BaseFix):
         # Discard previous comments if required
         if self.has_def is False and self.has_name is False:
             if node.type == self.syms.simple_stmt:
-                comm_struct = self.comments.pop(0)
-                comm_struct.node.prefix += comm_struct.comments + "\n"
+                if len(self.comments) > 0:
+                    comm_struct = self.comments.pop(0)
+                    comm_struct.node.prefix += comm_struct.comments + "\n"
 
         # Store comments from prefix, if accepted token
         if len(prefix) > 0 and self.re_comm.search(prefix):
@@ -140,6 +141,10 @@ class FixFuncComments(fixer_base.BaseFix):
         _debug('transform(): call ' + str(self.count))
         self.count += 1
         indent = ""
+
+        if len(self.comments) == 0:
+            self.reset_state()
+            return new
 
         for child in new.children:
             if child.type == self.syms.suite:
