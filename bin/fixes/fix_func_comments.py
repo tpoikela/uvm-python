@@ -24,6 +24,8 @@ from lib2to3.pygram import python_symbols
 
 DEBUG = True
 
+re_dedent = re.compile(r'\n    #')
+
 def _debug(*args):
     if DEBUG is True:
         print(*args)
@@ -112,7 +114,7 @@ class FixFuncComments(fixer_base.BaseFix):
 
         # We detect function start here
         if node.type == token.NAME:
-            if node.value == 'def':
+            if self.has_def is False and node.value == 'def':
                 _debug("[match]: NAME with value |" + node.value + "|")
                 self.has_def = True
             elif self.has_def is True and self.has_name is False:
@@ -148,8 +150,10 @@ class FixFuncComments(fixer_base.BaseFix):
         if len(prefix) > 0 and self.re_comm.search(prefix):
             if self.check_node_type_for_comments(node) is False:
                 return False
+
             if self.has_def is True and self.has_name is True:
-                if self.func_indent[self.def_name] != 0:
+                if (self.func_indent[self.def_name] != 0 and
+                        not re_dedent.search(prefix)):
                     _debug("[match]: Discard prefix, no indent match: " +
                         str(prefix))
                     return False
@@ -171,14 +175,11 @@ class FixFuncComments(fixer_base.BaseFix):
             return True
         return False
 
-    count = 0
 
     def transform(self, func_node, results):
         #new = func_node.clone()
         new = func_node
         _debug('transform(): results is ' + str(results))
-        _debug('transform(): call ' + str(self.count))
-        self.count += 1
         indent = ""
 
         if len(self.comments) == 0:
