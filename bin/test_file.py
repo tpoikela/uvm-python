@@ -42,6 +42,21 @@ class ABC():
     # Should convert into docstring
     def gets_docstring_too(self):
         raise Exception("Not done")
+        # Do not move this to next function
+    # Nor this one
+
+    def no_comments_here(self):
+        pass
+
+
+    def triple_dedent_at_end(self):
+        if 1 == 0:
+            if 2 == 3:
+                pass
+
+    # Move this to docstring of 'must_comment' function
+    def must_comment(self):
+        pass
 
     # Misc trailing class comments, keep this
 
