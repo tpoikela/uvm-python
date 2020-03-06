@@ -47,7 +47,7 @@ class UVMDebug:
         UVMDebug.DEBUG = False
 
 
-def uvm_debug(self_or_cls, fname, msg, logger=print):
+def uvm_debug(self_or_cls, fname, msg):
     """ Prints similar info as uvm_info etc functions, but is controlled by
     UVMDebug.ENABLED. It is not advised to use this in user code """
     if UVMDebug.DEBUG is True:
@@ -67,8 +67,8 @@ def uvm_debug(self_or_cls, fname, msg, logger=print):
         else:
             name = self_or_cls
         if UVMDebug.ONLY == "":
-            logger("[DEBUG] {} L{} {} - {}() - {}".format(
+            print("[DEBUG] {} L{} {} - {}() - {}".format(
                 filename, str(lineno), name, fname, msg) + caller)
         else:
             if re.search(UVMDebug.ONLY, name):
-                logger("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
+                print("[DEBUG] {} - {}() - {}".format(name, fname, msg) + caller)
