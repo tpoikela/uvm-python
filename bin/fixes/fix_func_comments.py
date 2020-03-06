@@ -22,7 +22,7 @@ from lib2to3.fixer_util import (Assign, Attr, Name, is_tuple, is_list, syms,
     String, Newline)
 from lib2to3.pygram import python_symbols
 
-DEBUG = True
+DEBUG = False
 
 re_dedent = re.compile(r'\n    #')
 
