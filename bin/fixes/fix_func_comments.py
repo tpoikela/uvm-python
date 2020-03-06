@@ -22,7 +22,7 @@ from lib2to3.fixer_util import (Assign, Attr, Name, is_tuple, is_list, syms,
     String, Newline)
 from lib2to3.pygram import python_symbols
 
-DEBUG = False
+DEBUG = True
 
 def _debug(*args):
     if DEBUG is True:
@@ -104,7 +104,7 @@ class FixFuncComments(fixer_base.BaseFix):
         prefix = node.prefix
         if len(prefix) > 0:
             _debug("[match]: prefix is now |" + prefix + "|")
-        _debug("[match]: Full node is **>" + str(node) + "<**")
+        #_debug("[match]: Full node is **>" + str(node) + "<**")
 
         if node.type == self.syms.classdef:
             self.reset_func_data()
@@ -155,13 +155,16 @@ class FixFuncComments(fixer_base.BaseFix):
                     return False
 
             keep_prefix, comments = self.split_prefix(prefix)
-            comm_struct = CommentStruct(comments,
-                    list(self.func_name_seen.keys()), node)
-            comm_struct.set_func(self.def_name)
-            self.comments.append(comm_struct)  # TODO strip comment signs #
-            node.prefix = keep_prefix
-            _debug("[match] Stored comments: " + comments)
-            _debug("[match] Preserved prefix: |" + keep_prefix + "|")
+            if len(comments) > 0:
+                comm_struct = CommentStruct(comments,
+                        list(self.func_name_seen.keys()), node)
+                comm_struct.set_func(self.def_name)
+                self.comments.append(comm_struct)  # TODO strip comment signs #
+                node.prefix = keep_prefix
+                _debug("[match] Stored comments: |" + comments + "|")
+                _debug("[match] Preserved prefix: |" + keep_prefix + "|")
+            else:
+                _debug("[match] Ignored empty comments: |" + comments + "|")
             return False
         elif self.should_add_to(node):  # TODO match function type
             _debug("[match] Found funcdef |" + str(node) + "|")
