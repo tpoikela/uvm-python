@@ -37,14 +37,26 @@ class UVMObject(sv_obj):
     Classes deriving from `UVMObject` must implement methods such as
     `create` and `get_type_name`.
 
-    :ivar: name Name of the object.
-    :ivar: inst_id Unique instance ID for this object.
+    :ivar str name: Name of the object
+    :ivar int inst_id: Unique instance ID for this object
+
+    Group: Seeding
+
+    :cvar bool use_uvm_seeding:
+
+    This bit enables or disables the UVM seeding mechanism. It globally affects
+    the operation of the <reseed> method.
+
+    When enabled, UVM-based objects are seeded based on their type and full
+    hierarchical name rather than allocation order. This improves random
+    stability for objects whose instance names are unique across each type.
+    The `UVMComponent` class is an example of a type that has a unique
+    instance name.
     """
 
     inst_id_count = 0
-
+    use_uvm_seeding = True
     uvm_global_copy_map = {}
-
     _m_uvm_status_container = UVMStatusContainer()
 
     def __init__(self, name):
@@ -57,20 +69,6 @@ class UVMObject(sv_obj):
         UVMObject.inst_id_count += 1
         self.leaf_name = name
 
-    #  // Group: Seeding
-    #
-    #  // Variable: use_uvm_seeding
-    #  //
-    #  // This bit enables or disables the UVM seeding mechanism. It globally affects
-    #  // the operation of the <reseed> method.
-    #  //
-    #  // When enabled, UVM-based objects are seeded based on their type and full
-    #  // hierarchical name rather than allocation order. This improves random
-    #  // stability for objects whose instance names are unique across each type.
-    #  // The <uvm_component> class is an example of a type that has a unique
-    #  // instance name.
-    #
-    use_uvm_seeding = True
 
     #  // Function: reseed
     #  //
