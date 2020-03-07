@@ -28,3 +28,4 @@ test-results.xml
 
 .eggs
 *egg-info*
+*.bak
