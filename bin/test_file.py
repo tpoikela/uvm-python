@@ -3,6 +3,14 @@
 
 import_var = "ABC"
 
+# Also move this as a comment
+# for 'comment_this_func.
+#
+# With extra empty line
+def comment_this_func(aaa):
+    return aaa * 2
+
+
 class ABC():
 
     # Nothing to do here
