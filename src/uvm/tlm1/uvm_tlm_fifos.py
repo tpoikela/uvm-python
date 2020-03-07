@@ -39,23 +39,29 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
     Class: UVMTLMFIFO
 
     This class provides storage of transactions between two independently running
-    processes. Transactions are put into the FIFO via the ~put_export~.
+    processes. Transactions are put into the FIFO via the `put_export`.
     transactions are fetched from the FIFO in the order they arrived via the
-    ~get_peek_export~. The ~put_export~ and ~get_peek_export~ are inherited from
-    the <uvm_tlm_fifo_base #(T)> super class, and the interface methods provided by
-    these exports are defined by the <uvm_tlm_if_base #(T1,T2)> class.
+    `get_peek_export`. The `put_export` and `get_peek_export` are inherited from
+    the `UVMTLMFIFOBase` super class, and the interface methods provided by
+    these exports are defined by the `TLMIFBaseClass` class.
     """
 
 
     type_name = "uvm_tlm_fifo #(T)"
 
-    #  // Function: new
-    #  //
-    #  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
-    #  // The ~parent~ should be ~null~ if the <uvm_tlm_fifo#(T)> is going to be used in a
-    #  // statically elaborated construct (e.g., a module). The ~size~ indicates the
-    #  // maximum size of the FIFO; a value of zero indicates no upper bound.
     def __init__(self, name, parent=None, size=1):
+        """
+          Function: new
+
+          The `name` and `parent` are the normal uvm_component constructor arguments.
+          The `parent` should be `null` if the <uvm_tlm_fifo#(T)> is going to be used in a
+          statically elaborated construct (e.g., a module). The `size` indicates the
+          maximum size of the FIFO; a value of zero indicates no upper bound.
+        Args:
+            name: Name of the component
+            parent: Parent of the component
+            size:
+        """
         UVMTLMFIFOBase.__init__(self, name, parent)
         self.m = UVMMailbox(size)
         self.m_size = size
@@ -64,31 +70,41 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
     def get_type_name(self):
         return UVMTLMFIFO.type_name
 
-    #  // Function: size
-    #  //
-    #  // Returns the capacity of the FIFO-- that is, the number of entries
-    #  // the FIFO is capable of holding. A return value of 0 indicates the
-    #  // FIFO capacity has no limit.
     def size(self):
+        """
+          Function: size
+
+          Returns the capacity of the FIFO, the number of entries
+          the FIFO is capable of holding. A return value of 0 indicates the
+          FIFO capacity has no limit.
+        Returns:
+            int: Capacity of the FIFO
+        """
         return self.m_size
 
-    #  // Function: used
-    #  //
-    #  // Returns the number of entries put into the FIFO.
     def used(self):
+        """
+          Function: used
+
+          Returns the number of entries put into the FIFO.
+        Returns:
+            int: Number of entries in the FIFO.
+        """
         return self.m.num()
 
-    #  // Function: is_empty
-    #  //
-    #  // Returns 1 when there are no entries in the FIFO, 0 otherwise.
     def is_empty(self):
-        return (self.m.num() == 0)
+        """
+          Returns 1 when there are no entries in the FIFO, 0 otherwise.
+        Returns:
+        """
+        return self.m.num() == 0
 
-    #  // Function: is_full
-    #  //
-    #  // Returns 1 when the number of entries in the FIFO is equal to its <size>,
-    #  // 0 otherwise.
     def is_full(self):
+        """
+          Returns 1 when the number of entries in the FIFO is equal to its <size>,
+          0 otherwise.
+        Returns:
+        """
         return (self.m_size != 0) and (self.m.num() == self.m_size)
 
 
@@ -131,12 +147,14 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
     def can_peek(self):
         return self.m.num() > 0
 
-    #  // Function: flush
-    #  //
-    #  // Removes all entries from the FIFO, after which <used> returns 0
-    #  // and <is_empty> returns 1.
-    #
     def flush(self):
+        """
+          Function: flush
+
+          Removes all entries from the FIFO, after which `used` returns 0
+          and `is_empty` returns 1.
+        #
+        """
         t = []
         r = 1
         while r:
@@ -152,8 +170,8 @@ class UVMTLMAnalysisFIFO(UVMTLMFIFO):
     """
     Class: UVMTLMAnalysisFIFO
 
-    An analysis_fifo is a <uvm_tlm_fifo#(T)> with an unbounded size and a write interface.
-    It can be used any place a <uvm_analysis_imp> is used. Typical usage is
+    An analysis_fifo is a `UVMTLMFIFO` with an unbounded size and a write interface.
+    It can be used any place a `UVMAnalysisImp` is used. Typical usage is
     as a buffer between a <uvm_analysis_port> in an initiator component
     and TLM1 target component.
     """
@@ -161,14 +179,17 @@ class UVMTLMAnalysisFIFO(UVMTLMFIFO):
     type_name = "uvm_tlm_analysis_fifo #(T)"
 
 
-
-    #  // Function: new
-    #  //
-    #  // This is the standard uvm_component constructor. ~name~ is the local name
-    #  // of this component. The ~parent~ should be left unspecified when this
-    #  // component is instantiated in statically elaborated constructs and must be
-    #  // specified when this component is a child of another UVM component.
     def __init__(self, name, parent=None):
+        """
+        This is the standard uvm_component constructor. `name` is the local name
+        of this component. The `parent` should be left unspecified when this
+        component is instantiated in statically elaborated constructs and must be
+        specified when this component is a child of another UVM component.
+
+        Args:
+            name: Name of the component
+            parent: Parent of the component
+        """
         UVMTLMFIFO.__init__(self, name, parent, 0)  # analysis fifo must be unbounded
         #  // Port: analysis_export #(T)
         #  //
