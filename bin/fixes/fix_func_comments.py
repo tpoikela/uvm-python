@@ -26,23 +26,15 @@ DEBUG = False
 
 re_dedent = re.compile(r'\n    #')
 
+
 def _debug(*args):
     if DEBUG is True:
         print(*args)
 
 
-def is_child_of(child, parent):
-    curr_node = child
-    _debug("child node is " + str(child))
-    while curr_node is not None:
-        curr_node = curr_node.getattr('parent')
-        if curr_node == parent:
-            return True
-    return False
-
-
 def lined(msg):
     return "|" + msg + "|"
+
 
 class CommentStruct():
 
@@ -52,7 +44,7 @@ class CommentStruct():
         self.node = node
         self.func_name = ""
         _debug("ComMStruct added no_funcs " + str(no_funcs) + ', node: '
-                + str(node))
+            + str(node))
 
     def set_func(self, func):
         self.func_name = func
@@ -69,6 +61,7 @@ class FixFuncComments(fixer_base.BaseFix):
     SEPS = (COMMA, COLON)
 
     re_comm = re.compile('#')
+    re_hash_space = re.compile(r'\n# ')
 
 
     comments = []
@@ -125,6 +118,7 @@ class FixFuncComments(fixer_base.BaseFix):
                 # Check here if we have indent/dedent comment available
                 self.func_name_seen[node.value] = True
 
+        # Extract Returns/Args/Raises for the docstring
         if node.type == self.syms.return_stmt:
             self.get_func_return(node)
         if node.type == self.syms.typedargslist:
@@ -179,7 +173,7 @@ class FixFuncComments(fixer_base.BaseFix):
     def transform(self, func_node, results):
         #new = func_node.clone()
         new = func_node
-        _debug('transform(): results is ' + str(results))
+        _debug('transform(): Started for function ' + lined(self.def_name))
         indent = ""
 
         if len(self.comments) == 0:
@@ -193,17 +187,23 @@ class FixFuncComments(fixer_base.BaseFix):
                 found_ind = False
 
                 for cc2 in suite_node.children:
-                    # Need to skip first NEWLINE
+                    # Need to skip first NEWLINE token
                     if found_ind is False:
                         if cc2.type == token.INDENT:
                             indent = cc2.value  # Preserve correct indent
+                            _debug("In suite.children! Updated indent to |" + indent + "|")
                             found_ind = True
                     else:
                         func_name = self.get_func_name(func_node)
                         comm_struct = self.comments[0]
                         curr_comments = comm_struct.comments
                         if func_name not in comm_struct.no_funcs:
-                            indented_text = curr_comments.replace('\n    ', '\n' + indent)
+                            print("XXX comments is " + lined(curr_comments))
+                            if self.re_hash_space.search(curr_comments):
+                                indented_text = curr_comments.replace('# ', indent)
+                                #indented_text = curr_comments.replace('^#$', indent)
+                            else:
+                                indented_text = curr_comments.replace('\n    ', '\n' + indent)
                             indented_text = self.format_docstring(func_name,
                                     indented_text, indent)
                             comments = (indent + '""" ' + indented_text +
@@ -310,6 +310,10 @@ class FixFuncComments(fixer_base.BaseFix):
         indented_text = text.replace('# ', '')
         indented_text = indented_text.replace('//', '')
         split = indented_text.split("\n")
+
+        for i, line in enumerate(split):
+            if len(line) < len(indent):
+                split[i] = indent + split[i]
 
         if func_name in self.func_args:
             args = self.func_args[func_name]
