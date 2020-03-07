@@ -36,26 +36,20 @@ class UVMTLMEvent:
     def __init__(self):
         self.event = Event()
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_tlm_fifo_base #(T)
-#
-# This class is the base for <uvm_tlm_fifo#(T)>. It defines the TLM exports
-# through which all transaction-based FIFO operations occur. It also defines
-# default implementations for each interface method provided by these exports.
-#
-# The interface methods provided by the <put_export> and the <get_peek_export>
-# are defined and described by <uvm_tlm_if_base #(T1,T2)>.  See the TLM Overview
-# section for a general discussion of TLM interface definition and usage.
-#
-# Parameter type
-#
-# T - The type of transactions to be stored by this FIFO.
-#
-#------------------------------------------------------------------------------
-
 
 class UVMTLMFIFOBase(UVMComponent):
+    """
+
+    This class is the base for `UVMTLMFIFO`. It defines the TLM exports
+    through which all transaction-based FIFO operations occur. It also defines
+    default implementations for each interface method provided by these exports.
+
+    The interface methods provided by the `put_export` and the `get_peek_export`
+    are defined and described by <uvm_tlm_if_base #(T1,T2)>.  See the TLM Overview
+    section for a general discussion of TLM interface definition and usage.
+
+    """
+
 
     #  // Port: put_export
     #  //
@@ -139,14 +133,17 @@ class UVMTLMFIFOBase(UVMComponent):
     #  uvm_get_peek_imp #(T, this_type) blocking_get_peek_export;
     #  uvm_get_peek_imp #(T, this_type) nonblocking_get_peek_export;
 
-    #  // Function: __init__
-    #  //
-    #  // The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
-    #  // The ~parent~ should be ~null~ if the uvm_tlm_fifo is going to be used in a
-    #  // statically elaborated construct (e.g., a module). The ~size~ indicates the
-    #  // maximum size of the FIFO. A value of zero indicates no upper bound.
-    #
     def __init__(self, name, parent=None):
+        """
+          The ~name~ and ~parent~ are the normal uvm_component constructor arguments.
+          The ~parent~ should be ~null~ if the uvm_tlm_fifo is going to be used in a
+          statically elaborated construct (e.g., a module). The ~size~ indicates the
+          maximum size of the FIFO. A value of zero indicates no upper bound.
+
+        Args:
+            name:
+            parent:
+        """
         UVMComponent.__init__(self, name, parent)
         self.put_export = UVMPutImp("put_export", self)
         self.blocking_put_export     = self.put_export
@@ -165,8 +162,11 @@ class UVMTLMFIFOBase(UVMComponent):
         self.put_ap = UVMAnalysisPort("put_ap", self)
         self.get_ap = UVMAnalysisPort("get_ap", self)
 
-    #  //turn off auto config
     def build_phase(self, phase):
+        """
+        Args:
+            phase:
+        """
         self.build()  # for backward compat, won't cause auto-config
         return
 
@@ -177,15 +177,15 @@ class UVMTLMFIFOBase(UVMComponent):
         uvm_report_error("size", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE)
         return 0
 
-    
+
     async def put(self, t):
         uvm_report_error("put", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE)
 
-    
+
     async def get(self,t):
         uvm_report_error("get", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE)
 
-    
+
     async def peek(self, t):
         uvm_report_error("peek", UVM_TLM_FIFO_TASK_ERROR, UVM_NONE)
 
