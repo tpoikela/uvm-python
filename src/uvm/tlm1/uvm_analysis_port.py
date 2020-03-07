@@ -24,39 +24,31 @@
 from ..base.uvm_port_base import *
 from .uvm_tlm_imps import *
 
-#------------------------------------------------------------------------------
-# Title: Analysis Ports
-#------------------------------------------------------------------------------
-#
-# This section defines the port, export, and imp classes used for transaction
-# analysis.
-#
-#------------------------------------------------------------------------------
+"""
+Analysis Ports
 
+This section defines the port, export, and imp classes used for transaction
+analysis.
+"""
 
-#------------------------------------------------------------------------------
-# Class: uvm_analysis_port
-#
-# Broadcasts a value to all subscribers implementing a <uvm_analysis_imp>.
-#
-#| class mon extends uvm_component
-#|   uvm_analysis_port#(trans) ap
-#|
-#|   function new(string name = "sb", uvm_component parent = null)
-#|      super.new(name, parent)
-#|      ap = new("ap", this)
-#|   endfunction
-#|
-#|   task run_phase(uvm_phase phase)
-#|       trans t
-#|       ...
-#|       ap.write(t)
-#|       ...
-#|   endfunction
-#| endclass
-#------------------------------------------------------------------------------
 
 class UVMAnalysisPort(UVMPortBase):
+    """
+    Broadcasts a value to all subscribers implementing a <uvm_analysis_imp>.
+
+    .. code-block:: python
+        class mon(UVMComponent):
+
+            def __init__(self, name="sb", parent=None):
+                super.new(name, parent)
+                self.ap = UVMAnalysisPort("ap", self)
+
+            async def run_phase(self, phase):
+                t = None
+                ...
+                self.ap.write(t)
+                ...
+    """
 
     def __init__(self, name, parent):
         UVMPortBase.__init__(self, name, parent, UVM_PORT, 0, UVM_UNBOUNDED_CONNECTIONS)
@@ -65,9 +57,13 @@ class UVMAnalysisPort(UVMPortBase):
     def get_type_name(self):
         return "uvm_analysis_port"
 
-    # Method: write
-    # Send specified value to all connected interface
     def write(self, t):
+        """
+        Method: write
+        Send specified value to all connected interface
+        Args:
+            t: Transaction to broadcast.
+        """
         for i in range(0, self.size()):
             tif = self.get_if(i)
             if tif is None:
@@ -77,37 +73,38 @@ class UVMAnalysisPort(UVMPortBase):
 
     #endclass
 
-#------------------------------------------------------------------------------
-# Class: uvm_analysis_imp
-#
-# Receives all transactions broadcasted by a <uvm_analysis_port>. It serves as
-# the termination point of an analysis port/export/imp connection. The component
-# attached to the ~imp~ class--called a ~subscriber~-- implements the analysis
-# interface.
-#
-# Will invoke the ~write(T)~ method in the parent component.
-# The implementation of the ~write(T)~ method must not modify
-# the value passed to it.
-#
-#| class sb extends uvm_component
-#|   uvm_analysis_imp#(trans, sb) ap
-#|
-#|   function new(string name = "sb", uvm_component parent = null)
-#|      super.new(name, parent)
-#|      ap = new("ap", this)
-#|   endfunction
-#|
-#|   function void write(trans t)
-#|       ...
-#|   endfunction
-#| endclass
-#------------------------------------------------------------------------------
 
 class UVMAnalysisImp:
-    #`UVM_IMP_COMMON(`UVM_TLM_ANALYSIS_MASK,"uvm_analysis_imp",IMP)
-    def write (self, t):
-        self.m_imp.write (t)
-    #endclass
+    """
+    Receives all transactions broadcasted by a <uvm_analysis_port>. It serves as
+    the termination point of an analysis port/export/imp connection. The component
+    attached to the `imp` class--called a `subscriber`-- implements the analysis
+    interface.
+
+    Will invoke the ~write(T)~ method in the parent component.
+    The implementation of the ~write(T)~ method must not modify
+    the value passed to it.
+
+    .. code-block:: python
+      class sb(UVMComponent):
+        uvm_analysis_imp#(trans, sb) ap
+
+        def __init__(self, name="sb", parent=None):
+           super().__init__(name, parent)
+           self.ap = UVMAnalysisImp("ap", self)
+
+        def write(self, t):
+            ...
+
+    """
+
+    def write(self, t):
+        """
+        Args:
+            t: Transaction to write.
+        """
+        self.m_imp.write(t)
+
 UVMAnalysisImp = UVM_IMP_COMMON(UVMAnalysisImp, UVM_TLM_ANALYSIS_MASK, "uvm_analysis_imp")
 
 #------------------------------------------------------------------------------
@@ -118,19 +115,27 @@ UVMAnalysisImp = UVM_IMP_COMMON(UVMAnalysisImp, UVM_TLM_ANALYSIS_MASK, "uvm_anal
 
 class UVMAnalysisExport(UVMPortBase):
 
-    # Function: new
-    # Instantiate the export.
     def __init__(self, name, parent=None):
+        """
+        Instantiate the export.
+        Args:
+            name: Name of the export.
+            parent: Parent component.
+        """
         UVMPortBase.__init__(self, name, parent, UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS)
         self.m_if_mask = UVM_TLM_ANALYSIS_MASK
 
     def get_type_name(self):
         return "uvm_analysis_export"
 
-    # analysis port differs from other ports in that it broadcasts
-    # to all connected interfaces. Ports only send to the interface
-    # at the index specified in a call to set_if (0 by default).
     def write(self, t):
+        """
+        Analysis port differs from other ports in that it broadcasts
+        to all connected interfaces. Ports only send to the interface
+        at the index specified in a call to set_if (0 by default).
+        Args:
+            t: Transaction to broadcast.
+        """
         for i in range(0, self.size()):
             tif = self.get_if(i)
             if tif is None:
@@ -138,7 +143,6 @@ class UVMAnalysisExport(UVMPortBase):
                     + self.get_full_name() + " for executing write()"), UVM_NONE)
             tif.write(t)
 
-    #endclass
 
 import unittest
 
