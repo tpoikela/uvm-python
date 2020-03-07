@@ -62,7 +62,8 @@ class FixFuncComments(fixer_base.BaseFix):
 
     re_comm = re.compile('#')
     re_hash_space = re.compile(r'\n# ')
-
+    re_link = re.compile(r'~(\w+)~')
+    re_link2 = re.compile(r'<(\w+)>')
 
     comments = []
     has_def = False
@@ -198,12 +199,12 @@ class FixFuncComments(fixer_base.BaseFix):
                         comm_struct = self.comments[0]
                         curr_comments = comm_struct.comments
                         if func_name not in comm_struct.no_funcs:
-                            print("XXX comments is " + lined(curr_comments))
+
                             if self.re_hash_space.search(curr_comments):
                                 indented_text = curr_comments.replace('# ', indent)
-                                #indented_text = curr_comments.replace('^#$', indent)
                             else:
                                 indented_text = curr_comments.replace('\n    ', '\n' + indent)
+
                             indented_text = self.format_docstring(func_name,
                                     indented_text, indent)
                             comments = (indent + '""" ' + indented_text +
@@ -312,6 +313,8 @@ class FixFuncComments(fixer_base.BaseFix):
         split = indented_text.split("\n")
 
         for i, line in enumerate(split):
+            split[i] = self.re_link.sub(r'`\1`', line)
+            split[i] = self.re_link2.sub(r'`\1`', line)
             if len(line) < len(indent):
                 split[i] = indent + split[i]
 
