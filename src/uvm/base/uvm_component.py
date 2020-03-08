@@ -41,6 +41,15 @@ from .uvm_links import (UVMRelatedLink, UVMParentChildLink)
 
 
 class VerbositySetting:
+    """
+    The verbosity settings may have a specific phase to start at.
+    We will do this work in the phase_started callback.
+    :ivar UVMComponent comp:
+    :ivar UVMPhase phase:
+    :ivar int id:
+    :ivar int offset:
+    :ivar int verbosity:
+    """
     def __init__(self):
         self.comp = ""
         self.phase = ""
@@ -48,17 +57,25 @@ class VerbositySetting:
         self.offset = 0
         self.verbosity = UVM_MEDIUM
 
+
 CLONE_ERR = ("Attempting to clone '%s'.  Clone cannot be called on a uvm_component. "
     + " The clone target variable will be set to None.")
 
 
 
 class uvm_cmdline_parsed_arg_t:
+    """
+    Class used to return arguments and associated data parsed from cmd line
+    arguments. These are usually plusargs given with +ARG_NAME=ARG_VALUE
+
+    :ivar str arg: Argument name
+    :ivar list args: Values of given argument.
+    :ivar int used: Logs how many times arg is used.
+    """
     def __init__(self):
         self.arg = ""
         self.args = []
         self.used = 0
-
 
 
 class UVMComponent(UVMReportObject):
@@ -101,18 +118,23 @@ class UVMComponent(UVMReportObject):
 
     print_config_matches = False
 
-    #  Creates a new component with the given leaf instance `name` and handle
-    #  to its `parent`.  If the component is a top-level component (i.e. it is
-    #  created in a static module or interface), `parent` should be `None`.
-    #
-    #  The component will be inserted as a child of the `parent` object, if any.
-    #  If `parent` already has a child by the given `name`, an error is produced.
-    #
-    #  If `parent` is `None`, then the component will become a child of the
-    #  implicit top-level component, `uvm_top`.
-    #
-    #  All classes derived from uvm_component must call super.new(name,parent).
     def __init__(self, name, parent):
+        """
+         Creates a new component with the given leaf instance `name` and handle
+         to its `parent`.  If the component is a top-level component (i.e. it is
+         created in a static module or interface), `parent` should be `None`.
+
+         The component will be inserted as a child of the `parent` object, if any.
+         If `parent` already has a child by the given `name`, an error is produced.
+
+         If `parent` is `None`, then the component will become a child of the
+         implicit top-level component, `uvm_top`.
+
+         All classes derived from uvm_component must call super.new(name,parent).
+        Args:
+            name:
+            parent:
+        """
         super().__init__(name)
         self.m_children = {}  # uvm_component[string]
 
@@ -236,83 +258,113 @@ class UVMComponent(UVMReportObject):
     #
     #----------------------------------------------------------------------------
 
-    # Function: get_parent
-    #
-    # Returns a handle to this component's parent, or `None` if it has no parent.
     def get_parent(self):
+        """
+        Function: get_parent
+
+        Returns a handle to this component's parent, or `None` if it has no parent.
+        Returns:
+            UVMComponent: Parent of this component.
+        """
         return self.m_parent
 
-    # Function: get_full_name
-    #
-    # Returns the full hierarchical name of this object. The default
-    # implementation concatenates the hierarchical name of the parent, if any,
-    # with the leaf name of this object, as given by <uvm_object::get_name>.
     def get_full_name(self):
-        """ Returns the full hierarchical name of component """
+        """
+        Returns the full hierarchical name of this object. The default
+        implementation concatenates the hierarchical name of the parent, if any,
+        with the leaf name of this object, as given by `UVMObject.get_name`.
+
+        Returns:
+            str: Full hierarchical name of this component.
+        """
         if self.m_name == "":
             return self.get_name()
         else:
             return self.m_name
 
-    # Function: get_children
-    #
-    # This function populates the end of the `children` array with the
-    # list of this component's children.
-    #
-    #|   uvm_component array[$]
-    #|   my_comp.get_children(array)
-    #|   foreach(array[i])
-    #|     do_something(array[i])
     def get_children(self, children):
+        """
+        This function populates the end of the `children` array with the
+        list of this component's children.
+
+        .. code-block:: python
+
+           array = []
+           my_comp.get_children(array)
+           for comp in array:
+               do_something(comp)
+
+        Args:
+            children (list): List into which child components are appended
+        """
         for name in self.m_children:
             children.append(self.m_children[name])
 
-    # Function: get_child
     def get_child(self, name):
+        """
+        Args:
+            name (str): Name of desired child
+        Returns:
+            UVMComponent: Child component matching name.
+        """
         if name in self.m_children:
             return self.m_children[name]
 
-    # Function: get_next_child
     def get_next_child(self):
+        """
+        Returns:
+            UVMComponent: Next child component.
+        """
         self.child_ptr += 1
         if (self.child_ptr < len(self.m_children_ordered)):
             return self.m_children_ordered[self.child_ptr]
         return None
 
-    # Function: get_first_child
-    #
-    # These methods are used to iterate through this component's children, if
-    # any. For example, given a component with an object handle, `comp`, the
-    # following code calls <uvm_object::print> for each child:
-    #
-    #|    string name
-    #|    uvm_component child
-    #|    if (comp.get_first_child(name))
-    #|      do begin
-    #|        child = comp.get_child(name)
-    #|        child.print()
-    #|      end while (comp.get_next_child(name))
     def get_first_child(self):
+        """
+        These methods are used to iterate through this component's children, if
+        any. For example, given a component with an object handle, `comp`, the
+        following code calls <uvm_object::print> for each child:
+
+        .. code-block:: python
+
+            string name
+            uvm_component child
+            if (comp.get_first_child(name))
+              do begin
+                child = comp.get_child(name)
+                child.print()
+              end while (comp.get_next_child(name))
+        Returns:
+            UVMComponent: First child component.
+        """
         self.child_ptr = 0
         return self.m_children_ordered[0]
 
-    # Function: get_num_children
-    #
-    # Returns the number of this component's children.
     def get_num_children(self):
+        """
+        Returns:
+            int: The number of this component's children.
+        """
         return len(self.m_children_ordered)
 
-    # Function: has_child
-    #
-    # Returns 1 if this component has a child with the given `name`, 0 otherwise.
     def has_child(self, name):
+        """
+        Args:
+            name (str): Desired child component name.
+        Returns:
+            bool: True if this component has a child with the given `name`,
+            False otherwise.
+        """
         return name in self.m_children
 
-    # Function - set_name
-    #
-    # Renames this component to `name` and recalculates all descendants'
-    # full names. This is an internal function for now.
     def set_name(self, name):
+        """
+        Renames this component to `name` and recalculates all descendants'
+        full names. This is an internal function for now.
+        Args:
+            name (str): New name
+        """
         if self.m_name != "":
             uvm_error("INVSTNM", ("It is illegal to change the name of a component."
                 + "The component name will not be changed to \"{}\"".format(name)))
@@ -320,15 +372,19 @@ class UVMComponent(UVMReportObject):
         super().set_name(name)
         self.m_set_full_name()
 
-    # Function: lookup
-    #
-    # Looks for a component with the given hierarchical `name` relative to this
-    # component. If the given `name` is preceded with a '.' (dot), then the search
-    # begins relative to the top level (absolute lookup). The handle of the
-    # matching component is returned, else `None`. The name must not contain
-    # wildcards.
-    # TODO extern function uvm_component lookup (string name)
     def lookup(self, name):
+        """
+        Looks for a component with the given hierarchical `name` relative to this
+        component. If the given `name` is preceded with a '.' (dot), then the search
+        begins relative to the top level (absolute lookup). The handle of the
+        matching component is returned, else `None`. The name must not contain
+        wildcards.
+
+        Args:
+            name:
+        Returns:
+            UVMComponent: Matching component, or None is no match is found.
+        """
         leaf = ""
         remainder = ""
         comp = None
@@ -352,16 +408,17 @@ class UVMComponent(UVMReportObject):
         if remainder != "":
             return comp.m_children[leaf].lookup(remainder)
         return comp.m_children[leaf]
-        #endfunction
 
 
-    # Function: get_depth
-    #
-    # Returns the component's depth from the root level. uvm_top has a
-    # depth of 0. The test and any other top level components have a depth
-    # of 1, and so on.
-    # TODO extern function int unsigned get_depth()
     def get_depth(self):
+        """
+        Returns the component's depth from the root level. uvm_top has a
+        depth of 0. The test and any other top level components have a depth
+        of 1, and so on.
+
+        Returns:
+            int: The component's depth from the root level
+        """
         if self.m_name == "":
             return 0
         get_depth = 1
@@ -369,8 +426,7 @@ class UVMComponent(UVMReportObject):
             if (self.m_name[i] == "."):
                 get_depth += 1
         return get_depth
-        #endfunction
-        #
+
 
     #----------------------------------------------------------------------------
     # Group: Phasing Interface
@@ -388,82 +444,94 @@ class UVMComponent(UVMReportObject):
     # ends. See <uvm_task_phase> for more details.
     #----------------------------------------------------------------------------
 
-    # Function: build_phase
-    #
-    # The <uvm_build_phase> phase implementation method.
-    #
-    # Any override should call super.build_phase(phase) to execute the automatic
-    # configuration of fields registered in the component by calling
-    # <apply_config_settings>.
-    # To turn off automatic configuration for a component,
-    # do not call super.build_phase(phase).
-    #
-    # This method should never be called directly.
     def build_phase(self, phase):
+        """
+        The `UVMBuildPhase` phase implementation method.
+
+        Any override should call super().build_phase(phase) to execute the automatic
+        configuration of fields registered in the component by calling
+        `apply_config_settings`.
+        To turn off automatic configuration for a component,
+        do not call super().build_phase(phase).
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         self.m_build_done = True
         self.build()
 
-    # For backward compatibility the base <build_phase> method calls <build>.
     def build(self):
+        """
+        For backward compatibility the base `build_phase` method calls `build`.
+        """
         self.m_build_done = True
         self.apply_config_settings(UVMComponent.print_config_matches)
         if self.m_phasing_active == 0:
             uvm_warning("UVM_DEPRECATED",
                     "build()/build_phase() has been called explicitly")
 
-    # Function: connect_phase
-    #
-    # The <uvm_connect_phase> phase implementation method.
-    #
-    # This method should never be called directly.
     def connect_phase(self, phase):
+        """
+        The `UVMConnectPhase` phase implementation method.
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         pass
 
     # For backward compatibility the base connect_phase method calls connect.
     # extern virtual function void connect()
 
-    # Function: end_of_elaboration_phase
-    #
-    # The <uvm_end_of_elaboration_phase> phase implementation method.
-    #
-    # This method should never be called directly.
     def end_of_elaboration_phase(self, phase):
+        """
+        The `UVMEndOfElaborationPhase` phase implementation method.
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         pass
 
     # For backward compatibility the base <end_of_elaboration_phase> method calls <end_of_elaboration>.
     # extern virtual function void end_of_elaboration()
 
-    # Function: start_of_simulation_phase
-    #
-    # The <uvm_start_of_simulation_phase> phase implementation method.
-    #
-    # This method should never be called directly.
 
     def start_of_simulation_phase(self, phase):
+        """
+        The `UVMStartOfSimulationPhase` phase implementation method.
+        #
+        # This method should never be called directly.
+        """
         self.start_of_simulation()
         return
 
-    # For backward compatibility the base <start_of_simulation_phase> method calls <start_of_simulation>.
-    # extern virtual function void start_of_simulation()
     def start_of_simulation(self):
+        """
+        For backward compatibility the base `start_of_simulation_phase` method calls `start_of_simulation`.
+        extern virtual function void start_of_simulation()
+        """
         return
 
-    # Task: run_phase
-    #
-    # The <uvm_run_phase> phase implementation method.
-    #
-    # This task returning or not does not indicate the end
-    # or persistence of this phase.
-    # Thus the phase will automatically
-    # end once all objections are dropped using ~phase.drop_objection()~.
-    #
-    # Any processes forked by this task continue to run
-    # after the task returns,
-    # but they will be killed once the phase ends.
-    #
-    # The run_phase task should never be called directly.
 
     async def run_phase(self, phase):
+        """
+        Task: run_phase
+        
+        The `UVMRunPhase` phase implementation method.
+        
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        Thus the phase will automatically
+        end once all objections are dropped using ~phase.drop_objection()~.
+        
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+        
+        The run_phase task should never be called directly.
+        """
         uvm_debug(self, 'run_phase', self.get_name() + ' yielding self.run()')
         # self.m_run_process = cocotb.fork(self.run())
         # yield self.m_run_process
@@ -493,8 +561,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task pre_reset_phase(uvm_phase phase)
-
     async def pre_reset_phase(self, phase):
         await Timer(0)
 
@@ -515,8 +581,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task reset_phase(uvm_phase phase)
-
     async def reset_phase(self, phase):
         await Timer(0)
 
@@ -537,8 +601,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task post_reset_phase(uvm_phase phase)
-
     async def post_reset_phase(self, phase):
         await Timer(0)
 
@@ -559,8 +621,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task pre_configure_phase(uvm_phase phase)
-
     async def pre_configure_phase(self, phase):
         await Timer(0)
 
@@ -581,8 +641,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task configure_phase(uvm_phase phase)
-
     async def configure_phase(self, phase):
         await Timer(0)
 
@@ -603,8 +661,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task post_configure_phase(uvm_phase phase)
-
     async def post_configure_phase(self, phase):
         await Timer(0)
 
@@ -625,8 +681,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task pre_main_phase(uvm_phase phase)
-
     async def pre_main_phase(self, phase):
         await Timer(0)
 
@@ -647,8 +701,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task main_phase(uvm_phase phase)
-
     async def main_phase(self, phase):
         await Timer(0)
 
@@ -669,8 +721,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task post_main_phase(uvm_phase phase)
-
     async def post_main_phase(self, phase):
         await Timer(0)
 
@@ -691,8 +741,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task pre_shutdown_phase(uvm_phase phase)
-
     async def pre_shutdown_phase(self, phase):
         await Timer(0)
 
@@ -713,8 +761,6 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task shutdown_phase(uvm_phase phase)
-
     async def shutdown_phase(self, phase):
         await Timer(0)
 
@@ -735,114 +781,126 @@ class UVMComponent(UVMReportObject):
     #// but they will be killed once the phase ends.
     #//
     #// This method should not be called directly.
-    #extern virtual task post_shutdown_phase(uvm_phase phase)
-
     async def post_shutdown_phase(self, phase):
         await Timer(0)
 
-    #// Function: extract_phase
-    #//
-    #// The <uvm_extract_phase> phase implementation method.
-    #//
-    #// This method should never be called directly.
     def extract_phase(self, phase):
+        """
+        The `UVMExtractPhase` phase implementation method.
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         pass
 
     #// For backward compatibility the base extract_phase method calls extract.
     #extern virtual function void extract()
 
-    #// Function: check_phase
-    #//
-    #// The <uvm_check_phase> phase implementation method.
-    #//
-    #// This method should never be called directly.
     def check_phase(self, phase):
+        """
+        The `UVMCheckPhase` phase implementation method.
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         pass
 
     #// For backward compatibility the base check_phase method calls check.
     #extern virtual function void check()
 
-    #// Function: report_phase
-    #//
-    #// The <uvm_report_phase> phase implementation method.
-    #//
-    #// This method should never be called directly.
     def report_phase(self, phase):
+        """
+        The `UVMReportPhase` phase implementation method.
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         pass
 
-    #// Function: final_phase
-    #//
-    #// The <uvm_final_phase> phase implementation method.
-    #//
-    #// This method should never be called directly.
     def final_phase(self, phase):
+        """
+        The `UVMFinalPhase` phase implementation method.
+
+        This method should never be called directly.
+        Args:
+            phase:
+        """
         self.m_rh._close_files()
 
-    #// Function: phase_started
-    #//
-    #// Invoked at the start of each phase. The `phase` argument specifies
-    #// the phase being started. Any threads spawned in this callback are
-    #// not affected when the phase ends.
     def phase_started(self, phase):
+        """
+        Invoked at the start of each phase. The `phase` argument specifies
+        the phase being started. Any threads spawned in this callback are
+        not affected when the phase ends.
+
+        Args:
+            phase:
+        """
         pass
 
-    #// Function: phase_ready_to_end
-    #//
-    #// Invoked when all objections to ending the given `phase` and all
-    #// sibling phases have been dropped, thus indicating that `phase` is
-    #// ready to begin a clean exit. Sibling phases are any phases that
-    #// have a common successor phase in the schedule plus any phases that
-    #// sync'd to the current phase. Components needing to consume delta
-    #// cycles or advance time to perform a clean exit from the phase
-    #// may raise the phase's objection.
-    #//
-    #// |phase.raise_objection(this,"Reason")
-    #//
-    #// It is the responsibility of this component to drop the objection
-    #// once it is ready for this phase to end (and processes killed).
-    #// If no objection to the given `phase` or sibling phases are raised,
-    #// then phase_ended() is called after a delta cycle.  If any objection
-    #// is raised, then when all objections to ending the given `phase`
-    #// and siblings are dropped, another iteration of phase_ready_to_end
-    #// is called.  To prevent endless iterations due to coding error,
-    #// after 20 iterations, phase_ended() is called regardless of whether
-    #// previous iteration had any objections raised.
-    #
-    #extern virtual function void phase_ready_to_end (uvm_phase phase)
 
-    #// Function: phase_ended
-    #//
-    #// Invoked at the end of each phase. The `phase` argument specifies
-    #// the phase that is ending.  Any threads spawned in this callback are
-    #// not affected when the phase ends.
     def phase_ended(self, phase):
+        """
+        Invoked at the end of each phase. The `phase` argument specifies
+        the phase that is ending.  Any threads spawned in this callback are
+        not affected when the phase ends.
+
+        Args:
+            phase:
+        """
         pass
 
     def phase_ready_to_end(self, phase):
+        """
+        Function: phase_ready_to_end
+        
+        Invoked when all objections to ending the given `phase` and all
+        sibling phases have been dropped, thus indicating that `phase` is
+        ready to begin a clean exit. Sibling phases are any phases that
+        have a common successor phase in the schedule plus any phases that
+        sync'd to the current phase. Components needing to consume delta
+        cycles or advance time to perform a clean exit from the phase
+        may raise the phase's objection.
+        
+        .. code-block:: python
+            phase.raise_objection(self, "Reason")
+        
+        It is the responsibility of this component to drop the objection
+        once it is ready for this phase to end (and processes killed).
+        If no objection to the given `phase` or sibling phases are raised,
+        then phase_ended() is called after a delta cycle.  If any objection
+        is raised, then when all objections to ending the given `phase`
+        and siblings are dropped, another iteration of phase_ready_to_end
+        is called.  To prevent endless iterations due to coding error,
+        after 20 iterations, phase_ended() is called regardless of whether
+        previous iteration had any objections raised.
+        """
         pass
 
     #//--------------------------------------------------------------------
     #// phase / schedule / domain API
     #//--------------------------------------------------------------------
 
-    #
-    #// Function: set_domain
-    #//
-    #// Apply a phase domain to this component and, if `hier` is set,
-    #// recursively to all its children.
-    #//
-    #// Calls the virtual <define_domain> method, which derived components can
-    #// override to augment or replace the domain definition of its base class.
-    #//
-    #extern function void set_domain(uvm_domain domain, int hier=1)
-    #// set_domain
-    #// ----------
-    #// assigns this component [tree] to a domain. adds required schedules into graph
-    #// If called from build, `hier` won't recurse into all chilren (which don't exist yet)
-    #// If we have components inherit their parent's domain by default, then `hier`
-    #// isn't needed and we need a way to prevent children from inheriting this component's domain
-    #
     def set_domain(self, domain, hier=True):
+        """
+        Apply a phase domain to this component and, if `hier` is set,
+        recursively to all its children.
+
+        Calls the virtual `define_domain` method, which derived components can
+        override to augment or replace the domain definition of its base class.
+
+        Assigns this component [tree] to a domain. adds required schedules into graph
+        If called from build, `hier` won't recurse into all chilren (which don't exist yet)
+        If we have components inherit their parent's domain by default, then `hier`
+        isn't needed and we need a way to prevent children from inheriting this component's domain
+
+        Args:
+            domain:
+            hier:
+        """
         # build and store the custom domain
         self.m_domain = domain
         self.define_domain(domain)
@@ -850,42 +908,46 @@ class UVMComponent(UVMReportObject):
             for c in self.m_children:
                 self.m_children[c].set_domain(domain)
 
-    # Function: get_domain
-    #
-    # Return handle to the phase domain set on this component
     def get_domain(self):
+        """
+        Return handle to the phase domain set on this component
+
+        Returns:
+        """
         return self.m_domain
 
-    #// Function: define_domain
-    #//
-    #// Builds custom phase schedules into the provided `domain` handle.
-    #//
-    #// This method is called by <set_domain>, which integrators use to specify
-    #// this component belongs in a domain apart from the default 'uvm' domain.
-    #//
-    #// Custom component base classes requiring a custom phasing schedule can
-    #// augment or replace the domain definition they inherit by overriding
-    #// their `defined_domain`. To augment, overrides would call super.define_domain().
-    #// To replace, overrides would not call super.define_domain().
-    #//
-    #// The default implementation adds a copy of the `uvm` phasing schedule to
-    #// the given `domain`, if one doesn't already exist, and only if the domain
-    #// is currently empty.
-    #//
-    #// Calling <set_domain>
-    #// with the default `uvm` domain (i.e. <uvm_domain::get_uvm_domain> ) on
-    #// a component with no `define_domain` override effectively reverts the
-    #// that component to using the default `uvm` domain. This may be useful
-    #// if a branch of the testbench hierarchy defines a custom domain, but
-    #// some child sub-branch should remain in the default `uvm` domain,
-    #// call <set_domain> with a new domain instance handle with `hier` set.
-    #// Then, in the sub-branch, call <set_domain> with the default `uvm` domain handle,
-    #// obtained via <uvm_domain::get_uvm_domain>.
-    #//
-    #// Alternatively, the integrator may define the graph in a new domain externally,
-    #// then call <set_domain> to apply it to a component.
-    #extern virtual protected function void define_domain(uvm_domain domain)
     def define_domain(self, domain):
+        """
+        Builds custom phase schedules into the provided `domain` handle.
+
+        This method is called by `set_domain`, which integrators use to specify
+        this component belongs in a domain apart from the default 'uvm' domain.
+
+        Custom component base classes requiring a custom phasing schedule can
+        augment or replace the domain definition they inherit by overriding
+        their `defined_domain`. To augment, overrides would call super.define_domain().
+        To replace, overrides would not call super.define_domain().
+
+        The default implementation adds a copy of the `uvm` phasing schedule to
+        the given `domain`, if one doesn't already exist, and only if the domain
+        is currently empty.
+
+        Calling `set_domain`
+        with the default `uvm` domain (i.e. <uvm_domain::get_uvm_domain> ) on
+        a component with no `define_domain` override effectively reverts the
+        that component to using the default `uvm` domain. This may be useful
+        if a branch of the testbench hierarchy defines a custom domain, but
+        some child sub-branch should remain in the default `uvm` domain,
+        call `set_domain` with a new domain instance handle with `hier` set.
+        Then, in the sub-branch, call `set_domain` with the default `uvm` domain handle,
+        obtained via <uvm_domain::get_uvm_domain>.
+
+        Alternatively, the integrator may define the graph in a new domain externally,
+        then call `set_domain` to apply it to a component.
+
+        Args:
+            domain:
+        """
         from .uvm_phase import UVMPhase
         from .uvm_common_phases import UVMRunPhase
         schedule = None  # uvm_phase
@@ -901,15 +963,20 @@ class UVMComponent(UVMReportObject):
                 common.add(domain, with_phase=UVMRunPhase.get())
 
 
-    #// Function: set_phase_imp
-    #//
-    #// Override the default implementation for a phase on this component (tree) with a
-    #// custom one, which must be created as a singleton object extending the default
-    #// one and implementing required behavior in exec and traverse methods
-    #//
-    #// The `hier` specifies whether to apply the custom functor to the whole tree or
-    #// just this component.
     def set_phase_imp(self, phase, imp, hier=1):
+        """
+        Override the default implementation for a phase on this component (tree) with a
+        custom one, which must be created as a singleton object extending the default
+        one and implementing required behavior in exec and traverse methods
+
+        The `hier` specifies whether to apply the custom functor to the whole tree or
+        just this component.
+
+        Args:
+            phase:
+            imp:
+            hier:
+        """
         self.m_phase_imps[phase] = imp
         if hier:
             for c in self.m_children:
@@ -937,15 +1004,15 @@ class UVMComponent(UVMReportObject):
     #extern virtual task resume ()
 
 
-    #// Function: resolve_bindings
-    #//
-    #// Processes all port, export, and imp connections. Checks whether each port's
-    #// min and max connection requirements are met.
-    #//
-    #// It is called just before the end_of_elaboration phase.
-    #//
-    #// Users should not call directly.
     def resolve_bindings(self):
+        """
+        Processes all port, export, and imp connections. Checks whether each port's
+        min and max connection requirements are met.
+
+        It is called just before the end_of_elaboration phase.
+
+        Users should not call directly.
+        """
         return
 
     #extern function string massage_scope(string scope)
@@ -963,20 +1030,25 @@ class UVMComponent(UVMReportObject):
     #//
     #//----------------------------------------------------------------------------
 
-    #// Function: check_config_usage
-    #//
-    #// Check all configuration settings in a components configuration table
-    #// to determine if the setting has been used, overridden or not used.
-    #// When `recurse` is 1 (default), configuration for this and all child
-    #// components are recursively checked. This function is automatically
-    #// called in the check phase, but can be manually called at any time.
-    #//
-    #// To get all configuration information prior to the run phase, do something
-    #// like this in your top object:
-    #//|  function void start_of_simulation_phase(uvm_phase phase)
-    #//|    check_config_usage()
-    #//|  endfunction
     def check_config_usage(self, recurse=1):
+        """
+        Check all configuration settings in a components configuration table
+        to determine if the setting has been used, overridden or not used.
+        When `recurse` is 1 (default), configuration for this and all child
+        components are recursively checked. This function is automatically
+        called in the check phase, but can be manually called at any time.
+
+        To get all configuration information prior to the run phase, do something
+        like this in your top object:
+
+        .. code-block:: python
+
+          def start_of_simulation_phase(self, phase):
+            self.check_config_usage()
+
+        Args:
+            recurse:
+        """
         from .uvm_resource import UVMResourcePool
         rp = UVMResourcePool.get()
         rq = rp.find_unused_resources()
@@ -985,33 +1057,36 @@ class UVMComponent(UVMReportObject):
         uvm_info("CFGNRD"," ::: The following resources have at least one write and no reads :::",UVM_INFO)
         rp.print_resources(rq, 1)
 
-    #// Function: apply_config_settings
-    #//
-    #// Searches for all config settings matching this component's instance path.
-    #// For each match, the appropriate set_*_local method is called using the
-    #// matching config setting's field_name and value. Provided the set_*_local
-    #// method is implemented, the component property associated with the
-    #// field_name is assigned the given value.
-    #//
-    #// This function is called by <uvm_component::build_phase>.
-    #//
-    #// The apply_config_settings method determines all the configuration
-    #// settings targeting this component and calls the appropriate set_*_local
-    #// method to set each one. To work, you must override one or more set_*_local
-    #// methods to accommodate setting of your component's specific properties.
-    #// Any properties registered with the optional `uvm_*_field macros do not
-    #// require special handling by the set_*_local methods; the macros provide
-    #// the set_*_local functionality for you.
-    #//
-    #// If you do not want apply_config_settings to be called for a component,
-    #// then the build_phase() method should be overloaded and you should not call
-    #// super.build_phase(phase). Likewise, apply_config_settings can be overloaded to
-    #// customize automated configuration.
-    #//
-    #// When the `verbose` bit is set, all overrides are printed as they are
-    #// applied. If the component's <print_config_matches> property is set, then
-    #// apply_config_settings is automatically called with `verbose` = 1.
     def apply_config_settings(self, verbose=0):
+        """
+        Searches for all config settings matching this component's instance path.
+        For each match, the appropriate set_*_local method is called using the
+        matching config setting's field_name and value. Provided the set_*_local
+        method is implemented, the component property associated with the
+        field_name is assigned the given value.
+
+        This function is called by <uvm_component::build_phase>.
+
+        The apply_config_settings method determines all the configuration
+        settings targeting this component and calls the appropriate set_*_local
+        method to set each one. To work, you must override one or more set_*_local
+        methods to accommodate setting of your component's specific properties.
+        Any properties registered with the optional `uvm_*_field macros do not
+        require special handling by the set_*_local methods; the macros provide
+        the set_*_local functionality for you.
+
+        If you do not want apply_config_settings to be called for a component,
+        then the build_phase() method should be overloaded and you should not call
+        super.build_phase(phase). Likewise, apply_config_settings can be overloaded to
+        customize automated configuration.
+
+        When the `verbose` bit is set, all overrides are printed as they are
+        applied. If the component's `print_config_matches` property is set, then
+        apply_config_settings is automatically called with `verbose` = 1.
+
+        Args:
+            verbose (bool): If true, prints more verbose information
+        """
         from .uvm_resource import UVMResourcePool
         rp = UVMResourcePool.get()  # uvm_resource_pool
         rq = UVMQueue()  # uvm_queue#(uvm_resource_base) rq
@@ -1084,24 +1159,30 @@ class UVMComponent(UVMReportObject):
         T_cont.field_array.clear()
 
 
-    #// Function: print_config_settings
-    #//
-    #// Called without arguments, print_config_settings prints all configuration
-    #// information for this component, as set by previous calls to <uvm_config_db::set()>.
-    #// The settings are printing in the order of their precedence.
-    #//
-    #// If `field` is specified and non-empty, then only configuration settings
-    #// matching that field, if any, are printed. The field may not contain
-    #// wildcards.
-    #//
-    #// If `comp` is specified and non-`None`, then the configuration for that
-    #// component is printed.
-    #//
-    #// If `recurse` is set, then configuration information for all `comp`'s
-    #// children and below are printed as well.
-    #//
-    #// This function has been deprecated.  Use print_config instead.
     def print_config_settings(self, field="", comp=None, recurse=False):
+        """
+        Function: print_config_settings
+
+        Called without arguments, print_config_settings prints all configuration
+        information for this component, as set by previous calls to <uvm_config_db::set()>.
+        The settings are printing in the order of their precedence.
+
+        If `field` is specified and non-empty, then only configuration settings
+        matching that field, if any, are printed. The field may not contain
+        wildcards.
+
+        If `comp` is specified and non-`None`, then the configuration for that
+        component is printed.
+
+        If `recurse` is set, then configuration information for all `comp`'s
+        children and below are printed as well.
+
+        This function has been deprecated.  Use print_config instead.
+        Args:
+            field (str): Print all config related to given field,
+            comp (UVMComponent): If given, print config only for that component.
+            recurse (bool): If true, recurse to all children
+        """
         UVMComponent.have_been_warned = False
         if not UVMComponent.have_been_warned:
             uvm_warning("deprecated",
@@ -1109,19 +1190,24 @@ class UVMComponent(UVMReportObject):
         UVMComponent.have_been_warned = True
         self.print_config(recurse, 1)
 
-    #// Function: print_config
-    #//
-    #// Print_config prints all configuration information for this
-    #// component, as set by previous calls to `UVMConfigDb.set` and exports to
-    #// the resources pool.  The settings are printing in the order of
-    #// their precedence.
-    #//
-    #// If `recurse` is set, then configuration information for all
-    #// children and below are printed as well.
-    #//
-    #// if `audit` is set then the audit trail for each resource is printed
-    #// along with the resource name and value
     def print_config(self, recurse=False, audit=False):
+        """
+        Function: print_config
+
+        Print_config prints all configuration information for this
+        component, as set by previous calls to `UVMConfigDb.set` and exports to
+        the resources pool.  The settings are printing in the order of
+        their precedence.
+
+        If `recurse` is set, then configuration information for all
+        children and below are printed as well.
+
+        if `audit` is set then the audit trail for each resource is printed
+        along with the resource name and value
+        Args:
+            recurse (bool): If true, recurse to child components
+            audit (bool): If true, print audit trail for each resource.
+        """
         from .uvm_resource import UVMResourcePool
         rp = UVMResourcePool.get()
         uvm_info("CFGPRT","visible resources:", UVM_INFO)
@@ -1168,34 +1254,39 @@ class UVMComponent(UVMReportObject):
     #endfunction
 
 
-    #// Function: dropped
-    #//
-    #// The `dropped` callback is called when this or a descendant of this component
-    #// instance drops the specified `objection`. The `source_obj` is the object
-    #// that originally dropped the objection.
-    #// The `description` is optionally provided by the `source_obj` to give a
-    #// reason for dropping the objection. The `count` indicates the number of
-    #// objections dropped by the `source_obj`.
 
-    #virtual function void dropped (uvm_objection objection, uvm_object source_obj,
-    #    string description, int count)
-    #endfunction
     def dropped(self, objection, source_obj, description, count):
+        """
+        The `dropped` callback is called when this or a descendant of this component
+        instance drops the specified `objection`. The `source_obj` is the object
+        that originally dropped the objection.
+        The `description` is optionally provided by the `source_obj` to give a
+        reason for dropping the objection. The `count` indicates the number of
+        objections dropped by the `source_obj`.
+
+        Args:
+            objection:
+            source_obj:
+            description:
+            count:
+        """
         pass
 
-    #// Task: all_dropped
-    #//
-    #// The `all_droppped` callback is called when all objections have been
-    #// dropped by this component and all its descendants.  The `source_obj` is the
-    #// object that dropped the last objection.
-    #// The `description` is optionally provided by the `source_obj` to give a
-    #// reason for raising the objection. The `count` indicates the number of
-    #// objections dropped by the `source_obj`.
-
-    #virtual task all_dropped (uvm_objection objection, uvm_object source_obj,
-    #    string description, int count)
-    #endtask
     def all_dropped(self, objection, source_obj, description, count):
+        """
+        The `all_droppped` callback is called when all objections have been
+        dropped by this component and all its descendants.  The `source_obj` is the
+        object that dropped the last objection.
+        The `description` is optionally provided by the `source_obj` to give a
+        reason for raising the objection. The `count` indicates the number of
+        objections dropped by the `source_obj`.
+
+        Args:
+            objection:
+            source_obj:
+            description:
+            count:
+        """
         pass
 
     #//----------------------------------------------------------------------------
@@ -1418,58 +1509,60 @@ class UVMComponent(UVMReportObject):
     #                                                        int verbosity)
 
 
-    #// Function: set_report_severity_action_hier
-
-    #extern function void set_report_severity_action_hier (uvm_severity severity,
-    #                                                      uvm_action action)
     def set_report_severity_action_hier(self, severity, action):
+        """
+        Args:
+            severity:
+            action:
+        """
         self.set_report_severity_action(severity, action)
         for c in self.m_children:
             self.m_children[c].set_report_severity_action_hier(severity, action)
-    #endfunction
+
 
 
     #// Function: set_report_id_action_hier
-
     #extern function void set_report_id_action_hier (string id,
     #                                                uvm_action action)
 
-    #// Function: set_report_severity_id_action_hier
-    #//
-    #// These methods recursively associate the specified action with reports of
-    #// the given `severity`, `id`, or ~severity-id~ pair. An action associated
-    #// with a particular severity-id pair takes precedence over an action
-    #// associated with id, which takes precedence over an action associated
-    #// with a severity.
-    #//
-    #// For a list of severities and their default actions, refer to
-    #// <uvm_report_handler>.
 
-    #extern function void set_report_severity_id_action_hier(uvm_severity severity,
-    #                                                        string id,
-    #                                                        uvm_action action)
     def set_report_id_action_hier(self, id, action):
+        """
+        These methods recursively associate the specified action with reports of
+        the given `severity`, `id`, or ~severity-id~ pair. An action associated
+        with a particular severity-id pair takes precedence over an action
+        associated with id, which takes precedence over an action associated
+        with a severity.
+
+        For a list of severities and their default actions, refer to
+        <uvm_report_handler>.
+
+        Args:
+            id (str): Message ID to use ('' = all)
+            action:
+        """
         self.set_report_id_action(id, action)
         for c in self.m_children:
             self.m_children[c].set_report_id_action_hier(id, action)
 
 
-    #// Function: set_report_default_file_hier
-
-    #extern function void set_report_default_file_hier (UVM_FILE file)
     def set_report_default_file_hier(self, file):
+        """
+        Sets default report file hierarchically. All `UVM_LOG` actions are
+        written into this file, unless more specific file is set.
+
+        Args:
+            file:
+        """
         self.set_report_default_file(file)
         for c in self.m_children:
             self.m_children[c].set_report_default_file_hier(file)
-    #endfunction
 
     #// Function: set_report_severity_file_hier
-
     #extern function void set_report_severity_file_hier (uvm_severity severity,
     #                                                    UVM_FILE file)
 
     #// Function: set_report_id_file_hier
-
     #extern function void set_report_id_file_hier (string id,
     #                                              UVM_FILE file)
 
@@ -1489,42 +1582,46 @@ class UVMComponent(UVMReportObject):
     #                                                      UVM_FILE file)
 
 
-    #// Function: set_report_verbosity_level_hier
-    #//
-    #// This method recursively sets the maximum verbosity level for reports for
-    #// this component and all those below it. Any report from this component
-    #// subtree whose verbosity exceeds this maximum will be ignored.
-    #//
-    #// See <uvm_report_handler> for a list of predefined message verbosity levels
-    #// and their meaning.
 
-    #  extern function void set_report_verbosity_level_hier (int verbosity)
     def set_report_verbosity_level_hier(self, verbosity):
+        """
+        This method recursively sets the maximum verbosity level for reports for
+        this component and all those below it. Any report from this component
+        subtree whose verbosity exceeds this maximum will be ignored.
+
+        See `UVMReportHandler` for a list of predefined message verbosity levels
+        and their meaning.
+
+        Args:
+            verbosity:
+        """
         self.set_report_verbosity_level(verbosity)
         for c in self.m_children:
             self.m_children[c].set_report_verbosity_level_hier(verbosity)
 
-    # Function: pre_abort
-    #
-    # This callback is executed when the message system is executing a
-    # <UVM_EXIT> action. The exit action causes an immediate termination of
-    # the simulation, but the pre_abort callback hook gives components an
-    # opportunity to provide additional information to the user before
-    # the termination happens. For example, a test may want to executed
-    # the report function of a particular component even when an error
-    # condition has happened to force a premature termination you would
-    # write a function like:
-    #
-    #| function void mycomponent::pre_abort()
-    #|   report()
-    #| endfunction
-    #
-    # The pre_abort() callback hooks are called in a bottom-up fashion.
     def pre_abort(self):
+        """
+        Function: pre_abort
+
+        This callback is executed when the message system is executing a
+        `UVM_EXIT` action. The exit action causes an immediate termination of
+        the simulation, but the pre_abort callback hook gives components an
+        opportunity to provide additional information to the user before
+        the termination happens. For example, a test may want to executed
+        the report function of a particular component even when an error
+        condition has happened to force a premature termination you would
+        write a function like:
+
+        .. code-block:: python
+
+            def pre_abort(self):
+               self.report()
+
+        The pre_abort() callback hooks are called in a bottom-up fashion.
+        """
         pass
 
-    # m_do_pre_abort
-    # --------------
+
     def m_do_pre_abort(self):
         for child in self.m_children:
             self.m_children[child].m_do_pre_abort()
@@ -1541,22 +1638,24 @@ class UVMComponent(UVMReportObject):
     #// use-model is determined.
     #//----------------------------------------------------------------------------
 
-    #// Function: accept_tr
-    #//
-    #// This function marks the acceptance of a transaction, `tr`, by this
-    #// component. Specifically, it performs the following actions:
-    #//
-    #// - Calls the `tr`'s <uvm_transaction::accept_tr> method, passing to it the
-    #//   `accept_time` argument.
-    #//
-    #// - Calls this component's <do_accept_tr> method to allow for any post-begin
-    #//   action in derived classes.
-    #//
-    #// - Triggers the component's internal accept_tr event. Any processes waiting
-    #//   on this event will resume in the next delta cycle.
 
-    #extern function void accept_tr (uvm_transaction tr, time accept_time = 0)
     def accept_tr(self, tr, accept_time=0):
+        """
+        This function marks the acceptance of a transaction, `tr`, by this
+        component. Specifically, it performs the following actions:
+
+        - Calls the `tr`'s <uvm_transaction::accept_tr> method, passing to it the
+          `accept_time` argument.
+
+        - Calls this component's <do_accept_tr> method to allow for any post-begin
+          action in derived classes.
+
+        - Triggers the component's internal accept_tr event. Any processes waiting
+          on this event will resume in the next delta cycle.
+        Args:
+            tr:
+            accept_time:
+        """
         e = None
         tr.accept_tr(accept_time)
         self.do_accept_tr(tr)
@@ -1565,111 +1664,122 @@ class UVMComponent(UVMReportObject):
             e.trigger()
 
 
-    #// Function: do_accept_tr
-    #//
-    #// The <accept_tr> method calls this function to accommodate any user-defined
-    #// post-accept action. Implementations should call super.do_accept_tr to
-    #// ensure correct operation.
-    #
-    #extern virtual protected function void do_accept_tr (uvm_transaction tr)
     def do_accept_tr(self, tr):
+        """
+        The `accept_tr` method calls this function to accommodate any user-defined
+        post-accept action. Implementations should call super.do_accept_tr to
+        ensure correct operation.
+
+        #extern virtual protected function void do_accept_tr (uvm_transaction tr)
+        Args:
+            tr:
+        """
         return
 
-    #// Function: begin_tr
-    #//
-    #// This function marks the start of a transaction, `tr`, by this component.
-    #// Specifically, it performs the following actions:
-    #//
-    #// - Calls `tr`'s <uvm_transaction::begin_tr> method, passing to it the
-    #//   `begin_time` argument. The `begin_time` should be greater than or equal
-    #//   to the accept time. By default, when `begin_time` = 0, the current
-    #//   simulation time is used.
-    #//
-    #//   If recording is enabled (recording_detail != UVM_OFF), then a new
-    #//   database-transaction is started on the component's transaction stream
-    #//   given by the stream argument. No transaction properties are recorded at
-    #//   this time.
-    #//
-    #// - Calls the component's <do_begin_tr> method to allow for any post-begin
-    #//   action in derived classes.
-    #//
-    #// - Triggers the component's internal begin_tr event. Any processes waiting
-    #//   on this event will resume in the next delta cycle.
-    #//
-    #// A handle to the transaction is returned. The meaning of this handle, as
-    #// well as the interpretation of the arguments `stream_name`, `label`, and
-    #// `desc` are vendor specific.
 
-    # extern function integer begin_tr (uvm_transaction tr,
-    #                                   string stream_name="main",
-    #                                   string label="",
-    #                                   string desc="",
-    #                                   time begin_time=0,
-    #                                   integer parent_handle=0)
     def begin_tr(self, tr, stream_name="main", label="", desc="", begin_time=0,
             parent_handle=0):
+        """
+        This function marks the start of a transaction, `tr`, by this component.
+        Specifically, it performs the following actions:
+
+        - Calls `tr`'s <uvm_transaction::begin_tr> method, passing to it the
+          `begin_time` argument. The `begin_time` should be greater than or equal
+          to the accept time. By default, when `begin_time` = 0, the current
+          simulation time is used.
+
+          If recording is enabled (recording_detail != UVM_OFF), then a new
+          database-transaction is started on the component's transaction stream
+          given by the stream argument. No transaction properties are recorded at
+          this time.
+
+        - Calls the component's <do_begin_tr> method to allow for any post-begin
+          action in derived classes.
+
+        - Triggers the component's internal begin_tr event. Any processes waiting
+          on this event will resume in the next delta cycle.
+
+        A handle to the transaction is returned. The meaning of this handle, as
+        well as the interpretation of the arguments `stream_name`, `label`, and
+        `desc` are vendor specific.
+        Args:
+            tr:
+            stream_name:
+            label:
+            desc:
+            begin_time:
+            parent_handle:
+        Returns:
+        """
         return self.m_begin_tr(tr, parent_handle, stream_name, label, desc, begin_time)
 
 
-    #// Function: begin_child_tr
-    #//
-    #// This function marks the start of a child transaction, `tr`, by this
-    #// component. Its operation is identical to that of <begin_tr>, except that
-    #// an association is made between this transaction and the provided parent
-    #// transaction. This association is vendor-specific.
 
-    #extern function integer begin_child_tr (uvm_transaction tr,
-    #                                        integer parent_handle=0,
-    #                                        string stream_name="main",
-    #                                        string label="",
-    #                                        string desc="",
-    #                                        time begin_time=0)
     def begin_child_tr(self, tr, parent_handle=0, stream_name="main", label="", desc="",
             begin_time=0):
+        """
+        This function marks the start of a child transaction, `tr`, by this
+        component. Its operation is identical to that of <begin_tr>, except that
+        an association is made between this transaction and the provided parent
+        transaction. This association is vendor-specific.
+
+        Args:
+            tr:
+            parent_handle:
+            stream_name:
+            label:
+            desc:
+            begin_time:
+        Returns:
+        """
         return self.m_begin_tr(tr, parent_handle, stream_name, label, desc, begin_time)
 
 
-    #// Function: do_begin_tr
-    #//
-    #// The <begin_tr> and <begin_child_tr> methods call this function to
-    #// accommodate any user-defined post-begin action. Implementations should call
-    #// super.do_begin_tr to ensure correct operation.
 
-    #extern virtual protected
-    #  function void do_begin_tr (uvm_transaction tr,
-    #                             string stream_name,
-    #                             integer tr_handle)
     def do_begin_tr(self, tr, stream_name, tr_handle):
+        """
+        The <begin_tr> and <begin_child_tr> methods call this function to
+        accommodate any user-defined post-begin action. Implementations should call
+        super.do_begin_tr to ensure correct operation.
+
+        Args:
+            tr:
+            stream_name:
+            tr_handle:
+        """
         return
 
-    #// Function: end_tr
-    #//
-    #// This function marks the end of a transaction, `tr`, by this component.
-    #// Specifically, it performs the following actions:
-    #//
-    #// - Calls `tr`'s <uvm_transaction::end_tr> method, passing to it the
-    #//   `end_time` argument. The `end_time` must at least be greater than the
-    #//   begin time. By default, when `end_time` = 0, the current simulation time
-    #//   is used.
-    #//
-    #//   The transaction's properties are recorded to the database-transaction on
-    #//   which it was started, and then the transaction is ended. Only those
-    #//   properties handled by the transaction's do_record method (and optional
-    #//   `uvm_*_field macros) are recorded.
-    #//
-    #// - Calls the component's <do_end_tr> method to accommodate any post-end
-    #//   action in derived classes.
-    #//
-    #// - Triggers the component's internal end_tr event. Any processes waiting on
-    #//   this event will resume in the next delta cycle.
-    #//
-    #// The `free_handle` bit indicates that this transaction is no longer needed.
-    #// The implementation of free_handle is vendor-specific.
 
-    #extern function void end_tr (uvm_transaction tr,
-    #                             time end_time=0,
-    #                             bit free_handle=1)
     def end_tr(self, tr, end_time=0, free_handle=1):
+        """
+        Function: end_tr
+
+        This function marks the end of a transaction, `tr`, by this component.
+        Specifically, it performs the following actions:
+
+        - Calls `tr`'s <uvm_transaction::end_tr> method, passing to it the
+          `end_time` argument. The `end_time` must at least be greater than the
+          begin time. By default, when `end_time` = 0, the current simulation time
+          is used.
+
+          The transaction's properties are recorded to the database-transaction on
+          which it was started, and then the transaction is ended. Only those
+          properties handled by the transaction's do_record method (and optional
+          `uvm_*_field macros) are recorded.
+
+        - Calls the component's <do_end_tr> method to accommodate any post-end
+          action in derived classes.
+
+        - Triggers the component's internal end_tr event. Any processes waiting on
+          this event will resume in the next delta cycle.
+
+        The `free_handle` bit indicates that this transaction is no longer needed.
+        The implementation of free_handle is vendor-specific.
+        Args:
+            tr:
+            end_time:
+            free_handle:
+        """
         e = None  # uvm_event#(uvm_object) e
         recorder = None  # uvm_recorder recorder
         # db: uvm_tr_database = self.m_get_tr_database()
@@ -1697,18 +1807,18 @@ class UVMComponent(UVMReportObject):
         e = self.event_pool.get("end_tr")
         if e is not None:
             e.trigger()
-        #endfunction
 
 
-    #// Function: do_end_tr
-    #//
-    #// The <end_tr> method calls this function to accommodate any user-defined
-    #// post-end action. Implementations should call super.do_end_tr to ensure
-    #// correct operation.
-
-    #extern virtual protected function void do_end_tr (uvm_transaction tr,
-    #                                                  integer tr_handle)
     def do_end_tr(self, tr, tr_handle):
+        """
+        The <end_tr> method calls this function to accommodate any user-defined
+        post-end action. Implementations should call super.do_end_tr to ensure
+        correct operation.
+
+        Args:
+            tr:
+            tr_handle:
+        """
         return
 
     #// Function: record_error_tr
@@ -1724,7 +1834,6 @@ class UVMComponent(UVMReportObject):
     #//
     #// Interpretation of this handle, as well as the strings `stream_name`,
     #// `label`, and `desc`, are vendor-specific.
-
     #extern function integer record_error_tr (string stream_name="main",
     #                                         uvm_object info=None,
     #                                         string label="error_tr",
@@ -1744,7 +1853,6 @@ class UVMComponent(UVMReportObject):
     #//
     #// The strings for `stream_name`, `label`, and `desc` are vendor-specific
     #// identifiers for the transaction.
-
     #extern function integer record_event_tr (string stream_name="main",
     #                                         uvm_object info=None,
     #                                         string label="event_tr",
@@ -1752,20 +1860,23 @@ class UVMComponent(UVMReportObject):
     #                                         time   event_time=0,
     #                                         bit    keep_active=0)
 
-    #// Function: get_tr_stream
-    #// Returns a tr stream with `this` component's full name as a scope.
-    #//
-    #// Streams which are retrieved via this method will be stored internally,
-    #// such that later calls to `get_tr_stream` will return the same stream
-    #// reference.
-    #//
-    #// The stream can be removed from the internal storage via a call
-    #// to <free_tr_stream>.
-    #//
-    #// Parameters:
-    #// name - Name for the stream
-    #// stream_type_name - Type name for the stream (Default = "")
     def get_tr_stream(self, name, stream_type_name=""):
+        """
+        Returns a tr stream with `this` component's full name as a scope.
+
+        Streams which are retrieved via this method will be stored internally,
+        such that later calls to `get_tr_stream` will return the same stream
+        reference.
+
+        The stream can be removed from the internal storage via a call
+        to `free_tr_stream`.
+
+        Parameters:
+        Args:
+            name (str):Name for the stream
+            stream_type_name: Type name for the stream (Default = "")
+        Returns:
+        """
         db = self.m_get_tr_database()  # uvm_tr_database
         if name not in self.m_streams:
             self.m_streams[name] = {}
@@ -1785,8 +1896,10 @@ class UVMComponent(UVMReportObject):
 
 
 
-    #extern virtual function uvm_tr_database m_get_tr_database()
     def m_get_tr_database(self):
+        """
+        Returns:
+        """
         if self.tr_database is None:
             from .uvm_coreservice import UVMCoreService
             cs = UVMCoreService.get()
@@ -1817,10 +1930,13 @@ class UVMComponent(UVMReportObject):
     #/*protected*/ bit  m_build_done
     #/*protected*/ int  m_phasing_active
 
-    #extern                   function void set_int_local(string field_name,
-    #                                                     uvm_bitstream_t value,
-    #                                                     bit recurse=1)
     def set_int_local(self, field_name, value, recurse=1):
+        """
+        Args:
+            field_name:
+            value:
+            recurse:
+        """
         #  // call the super function to get child recursion and any registered fields
         super().set_int_local(field_name, value, recurse)
 
@@ -1834,9 +1950,11 @@ class UVMComponent(UVMReportObject):
     #protected     uvm_component m_children_by_handle[uvm_component]
     #extern protected virtual function bit  m_add_child(uvm_component child)
 
-    #// m_set_full_name
-    #// ---------------
     def m_set_full_name(self):
+        """
+        m_set_full_name
+        ---------------
+        """
         #if self.m_parent is None:
         #    uvm_fatal("Should not be called with uvm_root")
 
@@ -1852,11 +1970,13 @@ class UVMComponent(UVMReportObject):
         for c in self.m_children:
             tmp = self.m_children[c]
             tmp.m_set_full_name()
-    #endfunction
 
-    #// do_resolve_bindings
-    #// -------------------
+
     def do_resolve_bindings(self):
+        """
+        do_resolve_bindings
+        -------------------
+        """
         for s in self.m_children:
             self.m_children[s].do_resolve_bindings()
         self.resolve_bindings()
@@ -1865,10 +1985,14 @@ class UVMComponent(UVMReportObject):
 
     #extern virtual           function void flush ()
 
-    #extern local             function void m_extract_name(string name ,
-    #                                                      output string leaf ,
-    #                                                      output string remainder )
     def m_extract_name(self, name, leaf, remainder):
+        """
+        Args:
+            name:
+            leaf:
+            remainder:
+        Returns:
+        """
         _len = len(name)
 
         i = 0
@@ -1888,27 +2012,39 @@ class UVMComponent(UVMReportObject):
         #endfunction
 
 
-    #// overridden to disable
-    #extern virtual function uvm_object create (string name="")
     def create(self, name=""):
+        """
+        Overridden to disable.
+        Args:
+            name:
+        Returns:
+        """
         uvm_error("ILLCRT",
             "create cannot be called on a uvm_component. Use create_component instead.")
         return None
 
 
-    #extern virtual function uvm_object clone  ()
     def clone(self):
+        """
+        Returns:
+        """
         uvm_error("ILLCLN", sv.sformatf(CLONE_ERR, self.get_full_name()))
         return None
 
     #local uvm_tr_stream m_main_stream
 
-    #extern protected function integer m_begin_tr (uvm_transaction tr,
-    #                                              integer parent_handle=0,
-    #                                              string stream_name="main", string label="",
-    #                                              string desc="", time begin_time=0)
     def m_begin_tr(self, tr, parent_handle=0, stream_name="main", label="",
             desc="", begin_time=0):
+        """
+        Args:
+            tr:
+            parent_handle:
+            stream_name:
+            label:
+            desc:
+            begin_time:
+        Returns:
+        """
         e = None  # uvm_event#(uvm_object) e
         name = ""
         kind = ""
@@ -1996,16 +2132,20 @@ class UVMComponent(UVMReportObject):
 
     #extern         function void   do_print(uvm_printer printer)
 
-    #// Internal methods for setting up command line messaging stuff
-    #extern function void m_set_cl_msg_args
     def m_set_cl_msg_args(self):
+        """
+        Internal methods for setting up command line messaging stuff
+        #extern function void m_set_cl_msg_args
+        """
         self.m_set_cl_verb()
         #self.m_set_cl_action() # TODO
         #self.m_set_cl_sev() # TODO
         #endfunction
 
-    #extern function void m_set_cl_verb
     def m_set_cl_verb(self):
+        """
+        #extern function void m_set_cl_verb
+        """
         #  // _ALL_ can be used for ids
         #  // +uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>
         #  // +uvm_set_verbosity=uvm_test_top.env0.agent1.*,_ALL_,UVM_FULL,time,800
@@ -2116,8 +2256,12 @@ class UVMComponent(UVMReportObject):
     def has_next_child(self):
         return len(self.m_children_ordered) > (self.child_ptr + 1)
 
-    #extern function void m_apply_verbosity_settings(uvm_phase phase)
     def m_apply_verbosity_settings(self, phase):
+        """
+        #extern function void m_apply_verbosity_settings(uvm_phase phase)
+        Args:
+            phase:
+        """
         pass
         for i in self.m_verbosity_settings:
             if phase.get_name() == self.m_verbosity_settings[i].phase:
@@ -2142,14 +2286,15 @@ class UVMComponent(UVMReportObject):
                 # Remove after use
                 self.m_verbosity_settings.delete(i)
 
-    # Added by tpoikela
     def kill(self):
+        """
+        Kill internal run process of this component.
+        """
         if self.m_run_process is not None:
             if hasattr(self.m_run_process, 'kill'):
                 self.m_run_process.kill()
             else:
                 print("No kill() available")
-    #endclass uvm_component
 
 
 #//------------------------------------------------------------------------------
@@ -2529,12 +2674,6 @@ class UVMComponent(UVMReportObject):
 #function void uvm_component::phase_ended(uvm_phase phase)
 #endfunction
 #
-#
-#// phase_ready_to_end
-#// ------------------
-#
-#function void uvm_component::phase_ready_to_end (uvm_phase phase)
-#endfunction
 #
 #//------------------------------
 #// phase / schedule / domain API
