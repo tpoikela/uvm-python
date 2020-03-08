@@ -22,7 +22,7 @@ from lib2to3.fixer_util import (Assign, Attr, Name, is_tuple, is_list, syms,
     String, Newline)
 from lib2to3.pygram import python_symbols
 
-DEBUG = False
+DEBUG = True
 
 re_empty = re.compile(r'^\s*$')
 re_dedent = re.compile(r'\n    #')
@@ -104,9 +104,10 @@ class FixFuncComments(fixer_base.BaseFix):
         prefix = node.prefix
         if len(prefix) > 0:
             _debug("[match]: prefix is now |" + prefix + "|")
-        #_debug("[match]: Full node is **>" + str(node) + "<**")
 
         if node.type == self.syms.classdef:
+            while len(self.comments) > 0:
+                self.restore_last_comment()
             self.reset_func_data()
             return False
 
@@ -115,6 +116,10 @@ class FixFuncComments(fixer_base.BaseFix):
             if self.has_def is False and node.value == 'def':
                 _debug("[match]: NAME with value |" + node.value + "|")
                 self.has_def = True
+            elif node.value == 'class':
+                if len(self.comments) > 0:
+                    self.restore_last_comment()
+                return False
             elif self.has_def is True and self.has_name is False:
                 self.has_name = True
                 self.def_name = node.value
