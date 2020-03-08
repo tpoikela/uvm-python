@@ -42,42 +42,49 @@ ERR_BD_READ = ("Backdoor read of register %s with multiple HDL copies: "
     + "values are not the same: %0h at path '%s', and %0h at path '%s'. "
     + "Returning first value.")
 
-#-----------------------------------------------------------------
-# CLASS: uvm_reg
-# Register abstraction base class
-#
-# A register represents a set of fields that are accessible
-# as a single entity.
-#
-# A register may be mapped to one or more address maps,
-# each with different access rights and policy.
-#-----------------------------------------------------------------
 
 
 class UVMReg(UVMObject):
+    """
+    Register abstraction base class
+
+    A register represents a set of fields that are accessible
+    as a single entity.
+
+    A register may be mapped to one or more address maps,
+    each with different access rights and policy.
+    """
+
     m_max_size = 0
 
-    #   //----------------------
-    #   // Group: Initialization
-    #   //----------------------
-    #
-    #   // Function: new
-    #   //
-    #   // Create a new instance and type-specific configuration
-    #   //
-    #   // Creates an instance of a register abstraction class with the specified
-    #   // name.
-    #   //
-    #   // ~n_bits~ specifies the total number of bits in the register.
-    #   // Not all bits need to be implemented.
-    #   // This value is usually a multiple of 8.
-    #   //
-    #   // ~has_coverage~ specifies which functional coverage models are present in
-    #   // the extension of the register abstraction class.
-    #   // Multiple functional coverage models may be specified by adding their
-    #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
-    #   //
     def __init__(self, name, n_bits, has_coverage=UVM_NO_COVERAGE):
+        """
+          ----------------------
+           Group: Initialization
+          ----------------------
+
+           Function: new
+
+           Create a new instance and type-specific configuration
+
+           Creates an instance of a register abstraction class with the specified
+           name.
+
+           `n_bits` specifies the total number of bits in the register.
+           Not all bits need to be implemented.
+           This value is usually a multiple of 8.
+
+           `has_coverage` specifies which functional coverage models are present in
+           the extension of the register abstraction class.
+           Multiple functional coverage models may be specified by adding their
+           symbolic names, as defined by the `uvm_coverage_model_e` type.
+
+        Args:
+            name:
+            n_bits:
+            has_coverage:
+            UVM_NO_COVERAGE:
+        """
         super().__init__(name)
         self.m_fields = []   # Fields in LSB to MSB order
         self.m_parent = None  # uvm_reg_block
@@ -113,21 +120,27 @@ class UVMReg(UVMObject):
         #endfunction: new
 
 
-    #   // Function: configure
-    #   //
-    #   // Instance-specific configuration
-    #   //
-    #   // Specify the parent block of this register.
-    #   // May also set a parent register file for this register,
-    #   //
-    #   // If the register is implemented in a single HDL variable,
-    #   // its name is specified as the ~hdl_path~.
-    #   // Otherwise, if the register is implemented as a concatenation
-    #   // of variables (usually one per field), then the HDL path
-    #   // must be specified using the <add_hdl_path()> or
-    #   // <add_hdl_path_slice> method.
-    #   //
     def configure(self, blk_parent, regfile_parent=None, hdl_path=""):
+        """
+           Function: configure
+
+           Instance-specific configuration
+
+           Specify the parent block of this register.
+           May also set a parent register file for this register,
+
+           If the register is implemented in a single HDL variable,
+           its name is specified as the `hdl_path`.
+           Otherwise, if the register is implemented as a concatenation
+           of variables (usually one per field), then the HDL path
+           must be specified using the <add_hdl_path()> or
+           `add_hdl_path_slice` method.
+
+        Args:
+            blk_parent:
+            regfile_parent:
+            hdl_path:
+        """
         if blk_parent is None:
             uvm_report_error("UVM/REG/CFG/NOBLK", (
                 "uvm_reg::configure() called without a parent block for instance \""
@@ -142,18 +155,24 @@ class UVMReg(UVMObject):
             self.add_hdl_path_slice(hdl_path, -1, -1)
 
 
-    #   // Function: set_offset
-    #   //
-    #   // Modify the offset of the register
-    #   //
-    #   // The offset of a register within an address map is set using the
-    #   // <uvm_reg_map::add_reg()> method.
-    #   // This method is used to modify that offset dynamically.
-    #   //
-    #   // Modifying the offset of a register will make the register model
-    #   // diverge from the specification that was used to create it.
-    #   //
     def set_offset(self, reg_map, offset, unmapped=0):
+        """
+           Function: set_offset
+
+           Modify the offset of the register
+
+           The offset of a register within an address map is set using the
+           <uvm_reg_map::add_reg()> method.
+           This method is used to modify that offset dynamically.
+
+           Modifying the offset of a register will make the register model
+           diverge from the specification that was used to create it.
+
+        Args:
+            reg_map:
+            offset:
+            unmapped:
+        """
         orig_map = reg_map
         if self.m_maps.num() > 1 and reg_map is None:
             uvm_report_error("RegModel", ("set_offset requires a non-None reg_map when register '"
@@ -165,16 +184,25 @@ class UVMReg(UVMObject):
             return
         reg_map.m_set_reg_offset(self, offset, unmapped)
 
-    #// set_parent
     def set_parent(self, blk_parent, regfile_parent):
+        """
+        set_parent
+        Args:
+            blk_parent:
+            regfile_parent:
+        """
         if self.m_parent is not None:
             pass
             # TODO: remove register from previous parent
         self.m_parent = blk_parent
         self.m_regfile_parent = regfile_parent
 
-    #   /*local*/ extern virtual function void add_field  (uvm_reg_field field)
     def add_field(self, field):
+        """
+          /*local*/ extern virtual function void add_field  (uvm_reg_field field)
+        Args:
+            field:
+        """
         offset = 0
         idx = 0
 
@@ -221,12 +249,18 @@ class UVMReg(UVMObject):
                     field.get_name(), self.m_fields[idx+1].get_name(), self.get_name()))
     #endfunction: add_field
 
-    #   /*local*/ extern virtual function void add_map    (uvm_reg_map map)
     def add_map(self, reg_map):
+        """
+          /*local*/ extern virtual function void add_map    (uvm_reg_map map)
+        Args:
+            reg_map:
+        """
         self.m_maps.add(reg_map, 1)
 
-    #   /*local*/ extern function void   Xlock_modelX
     def Xlock_modelX(self):
+        """
+          /*local*/ extern function void   Xlock_modelX
+        """
         if self.m_locked is True:
             return
         self.m_locked = True
@@ -241,14 +275,17 @@ class UVMReg(UVMObject):
     #   //
     #   // Return the simple object name of this register.
 
-    #   // Function: get_full_name
-    #   //
-    #   // Get the hierarchical name
-    #   //
-    #   // Return the hierarchal name of this register.
-    #   // The base of the hierarchical name is the root block.
-    #   //
     def get_full_name(self):
+        """
+           Function: get_full_name
+
+           Get the hierarchical name
+
+           Return the hierarchal name of this register.
+           The base of the hierarchical name is the root block.
+
+        Returns:
+        """
         if (self.m_regfile_parent is not None):
             return self.m_regfile_parent.get_full_name() + "." + self.get_name()
         if (self.m_parent is not None):
@@ -257,40 +294,57 @@ class UVMReg(UVMObject):
         return self.get_name()
 
 
-    #   // Function: get_parent
-    #   //
-    #   // Get the parent block
-    #   //
-    #   extern virtual function uvm_reg_block get_parent ()
     def get_parent(self):
+        """
+           Function: get_parent
+
+           Get the parent block
+
+          extern virtual function uvm_reg_block get_parent ()
+        Returns:
+        """
         return self.get_block()
 
-    #   extern virtual function uvm_reg_block get_block  ()
     def get_block(self):
+        """
+          extern virtual function uvm_reg_block get_block  ()
+        Returns:
+        """
         return self.m_parent
 
-    #   // Function: get_regfile
-    #   //
-    #   // Get the parent register file
-    #   //
-    #   // Returns ~None~ if this register is instantiated in a block.
-    #   //
     def get_regfile(self):
+        """
+           Function: get_regfile
+
+           Get the parent register file
+
+           Returns `None` if this register is instantiated in a block.
+
+        Returns:
+        """
         return self.m_regfile_parent
 
 
-    #   // Function: get_n_maps
-    #   //
-    #   // Returns the number of address maps this register is mapped in
-    #   //
     def get_n_maps(self):
+        """
+           Function: get_n_maps
+
+           Returns the number of address maps this register is mapped in
+
+        Returns:
+        """
         return self.m_maps.num()
 
-    #   // Function: is_in_map
-    #   //
-    #   // Returns 1 if this register is in the specified address ~map~
-    #   //
     def is_in_map(self, _map):
+        """
+           Function: is_in_map
+
+           Returns 1 if this register is in the specified address `map`
+
+        Args:
+            _map:
+        Returns:
+        """
         if _map in self.m_maps:
             return True
         for key in self.m_maps.key_list():
@@ -304,19 +358,30 @@ class UVMReg(UVMObject):
         return False
 
 
-    #   // Function: get_maps
-    #   //
-    #   // Returns all of the address ~maps~ where this register is mapped
-    #   //
-    #   extern virtual function void get_maps (ref uvm_reg_map maps[$])
     def get_maps(self, maps):
+        """
+           Function: get_maps
+
+           Returns all of the address `maps` where this register is mapped
+
+          extern virtual function void get_maps (ref uvm_reg_map maps[$])
+        Args:
+            maps:
+        Returns:
+        """
         for _map in self.m_maps.key_list():
             maps.append(_map)
         return maps
 
 
-    #// get_local_map
     def get_local_map(self, reg_map, caller=""):
+        """
+        get_local_map
+        Args:
+            reg_map:
+            caller:
+        Returns:
+        """
         if reg_map is None:
             return self.get_default_map()
         if reg_map in self.m_maps:
@@ -335,8 +400,13 @@ class UVMReg(UVMObject):
             + cname))
         return None
 
-    #// get_default_map
     def get_default_map(self, caller=""):
+        """
+        get_default_map
+        Args:
+            caller:
+        Returns:
+        """
         # if reg is not associated with any map, return ~None~
         if self.m_maps.num() == 0:
             cname = self._get_cname(caller)
@@ -366,75 +436,98 @@ class UVMReg(UVMObject):
             cname = " (called from " + caller + ")"
         return cname
 
-    #   // Function: get_rights
-    #   //
-    #   // Returns the accessibility ("RW, "RO", or "WO") of this register in the given ~map~.
-    #   //
-    #   // If no address map is specified and the register is mapped in only one
-    #   // address map, that address map is used. If the register is mapped
-    #   // in more than one address map, the default address map of the
-    #   // parent block is used.
-    #   //
-    #   // Whether a register field can be read or written depends on both the field's
-    #   // configured access policy (refer to <uvm_reg_field::configure>) and the register's
-    #   // accessibility rights in the map being used to access the field.
-    #   //
-    #   // If an address map is specified and
-    #   // the register is not mapped in the specified
-    #   // address map, an error message is issued
-    #   // and "RW" is returned.
-    #   //
     def get_rights(self, reg_map=None):
+        """
+           Function: get_rights
+
+           Returns the accessibility ("RW, "RO", or "WO") of this register in the given `map`.
+
+           If no address map is specified and the register is mapped in only one
+           address map, that address map is used. If the register is mapped
+           in more than one address map, the default address map of the
+           parent block is used.
+
+           Whether a register field can be read or written depends on both the field's
+           configured access policy (refer to <uvm_reg_field::configure>) and the register's
+           accessibility rights in the map being used to access the field.
+
+           If an address map is specified and
+           the register is not mapped in the specified
+           address map, an error message is issued
+           and "RW" is returned.
+
+        Args:
+            reg_map:
+        Returns:
+        """
         reg_map = self.get_local_map(reg_map,"get_rights()")
         if reg_map is None:
             return "RW"
         info = reg_map.get_reg_map_info(self)
         return info.rights
 
-    #   // Function: get_n_bits
-    #   //
-    #   // Returns the width, in bits, of this register.
-    #   //
     def get_n_bits(self):
+        """
+           Function: get_n_bits
+
+           Returns the width, in bits, of this register.
+
+        Returns:
+        """
         return self.m_n_bits
 
-    #   // Function: get_n_bytes
-    #   //
-    #   // Returns the width, in bytes, of this register. Rounds up to
-    #   // next whole byte if register is not a multiple of 8.
-    #   //
     def get_n_bytes(self):
+        """
+           Function: get_n_bytes
+
+           Returns the width, in bytes, of this register. Rounds up to
+           next whole byte if register is not a multiple of 8.
+
+        Returns:
+        """
         return int((self.m_n_bits-1) / 8) + 1
 
-    #   // Function: get_max_size
-    #   //
-    #   // Returns the maximum width, in bits, of all registers.
-    #   //
     @classmethod
     def get_max_size(cls):
+        """
+           Function: get_max_size
+
+           Returns the maximum width, in bits, of all registers.
+
+        Returns:
+        """
         return UVMReg.m_max_size
 
-    #   // Function: get_fields
-    #   //
-    #   // Return the fields in this register
-    #   //
-    #   // Fills the specified array with the abstraction class
-    #   // for all of the fields contained in this register.
-    #   // Fields are ordered from least-significant position to most-significant
-    #   // position within the register.
     def get_fields(self, fields):
+        """
+           Function: get_fields
+
+           Return the fields in this register
+
+           Fills the specified array with the abstraction class
+           for all of the fields contained in this register.
+           Fields are ordered from least-significant position to most-significant
+           position within the register.
+        Args:
+            fields:
+        """
         for f in self.m_fields:
             fields.append(f)
 
-    #   // Function: get_field_by_name
-    #   //
-    #   // Return the named field in this register
-    #   //
-    #   // Finds a field with the specified name in this register
-    #   // and returns its abstraction class.
-    #   // If no fields are found, returns ~None~.
-    #   //
     def get_field_by_name(self, name):
+        """
+           Function: get_field_by_name
+
+           Return the named field in this register
+
+           Finds a field with the specified name in this register
+           and returns its abstraction class.
+           If no fields are found, returns `None`.
+
+        Args:
+            name:
+        Returns:
+        """
         for f in self.m_fields:
             if f.get_name() == name:
                 return f
@@ -443,11 +536,16 @@ class UVMReg(UVMObject):
         return None
 
 
-    #   /*local*/ extern function string Xget_fields_accessX(uvm_reg_map map)
-    #// Returns "WO" if all of the fields in the registers are write-only
-    #// Returns "RO" if all of the fields in the registers are read-only
-    #// Returns "RW" otherwise.
     def Xget_fields_accessX(self, _map):
+        """
+          /*local*/ extern function string Xget_fields_accessX(uvm_reg_map map)
+        Returns "WO" if all of the fields in the registers are write-only
+        Returns "RO" if all of the fields in the registers are read-only
+        Returns "RW" otherwise.
+        Args:
+            _map:
+        Returns:
+        """
         is_R = False
         is_W = False
 
@@ -469,22 +567,27 @@ class UVMReg(UVMObject):
         return "RW"
 
 
-    #   // Function: get_offset
-    #   //
-    #   // Returns the offset of this register
-    #   //
-    #   // Returns the offset of this register in an address ~map~.
-    #   //
-    #   // If no address map is specified and the register is mapped in only one
-    #   // address map, that address map is used. If the register is mapped
-    #   // in more than one address map, the default address map of the
-    #   // parent block is used.
-    #   //
-    #   // If an address map is specified and
-    #   // the register is not mapped in the specified
-    #   // address map, an error message is issued.
-    #   //
     def get_offset(self, reg_map=None):
+        """
+           Function: get_offset
+
+           Returns the offset of this register
+
+           Returns the offset of this register in an address `map`.
+
+           If no address map is specified and the register is mapped in only one
+           address map, that address map is used. If the register is mapped
+           in more than one address map, the default address map of the
+           parent block is used.
+
+           If an address map is specified and
+           the register is not mapped in the specified
+           address map, an error message is issued.
+
+        Args:
+            reg_map:
+        Returns:
+        """
         orig_map = reg_map
         reg_map = self.get_local_map(reg_map,"get_offset()")
 
@@ -501,47 +604,58 @@ class UVMReg(UVMObject):
             return -1
         return map_info.offset
 
-    #   // Function: get_address
-    #   //
-    #   // Returns the base external physical address of this register
-    #   //
-    #   // Returns the base external physical address of this register
-    #   // if accessed through the specified address ~map~.
-    #   //
-    #   // If no address map is specified and the register is mapped in only one
-    #   // address map, that address map is used. If the register is mapped
-    #   // in more than one address map, the default address map of the
-    #   // parent block is used.
-    #   //
-    #   // If an address map is specified and
-    #   // the register is not mapped in the specified
-    #   // address map, a warning message is issued.
-    #   //
     def get_address(self, reg_map=None):
+        """
+           Function: get_address
+
+           Returns the base external physical address of this register
+
+           Returns the base external physical address of this register
+           if accessed through the specified address `map`.
+
+           If no address map is specified and the register is mapped in only one
+           address map, that address map is used. If the register is mapped
+           in more than one address map, the default address map of the
+           parent block is used.
+
+           If an address map is specified and
+           the register is not mapped in the specified
+           address map, a warning message is issued.
+
+        Args:
+            reg_map:
+        Returns:
+        """
         addr = []
         self.get_addresses(reg_map,addr)
         if len(addr) > 0:
             return addr[0]
 
-    #   // Function: get_addresses
-    #   //
-    #   // Identifies the external physical address(es) of this register
-    #   //
-    #   // Computes all of the external physical addresses that must be accessed
-    #   // to completely read or write this register. The addressed are specified in
-    #   // little endian order.
-    #   // Returns the number of bytes transferred on each access.
-    #   //
-    #   // If no address map is specified and the register is mapped in only one
-    #   // address map, that address map is used. If the register is mapped
-    #   // in more than one address map, the default address map of the
-    #   // parent block is used.
-    #   //
-    #   // If an address map is specified and
-    #   // the register is not mapped in the specified
-    #   // address map, an error message is issued.
-    #   //
     def get_addresses(self, reg_map, addr):
+        """
+           Function: get_addresses
+
+           Identifies the external physical address(es) of this register
+
+           Computes all of the external physical addresses that must be accessed
+           to completely read or write this register. The addressed are specified in
+           little endian order.
+           Returns the number of bytes transferred on each access.
+
+           If no address map is specified and the register is mapped in only one
+           address map, that address map is used. If the register is mapped
+           in more than one address map, the default address map of the
+           parent block is used.
+
+           If an address map is specified and
+           the register is not mapped in the specified
+           address map, an error message is issued.
+
+        Args:
+            reg_map:
+            addr:
+        Returns:
+        """
         map_info = None
         system_map = None
         orig_map = reg_map
@@ -565,32 +679,38 @@ class UVMReg(UVMObject):
     #   // Group: Access
     #   //--------------
 
-    #   // Function: set
-    #   //
-    #   // Set the desired value for this register
-    #   //
-    #   // Sets the desired value of the fields in the register
-    #   // to the specified value. Does not actually
-    #   // set the value of the register in the design,
-    #   // only the desired value in its corresponding
-    #   // abstraction class in the RegModel model.
-    #   // Use the <uvm_reg::update()> method to update the
-    #   // actual register with the mirrored value or
-    #   // the <uvm_reg::write()> method to set
-    #   // the actual register and its mirrored value.
-    #   //
-    #   // Unless this method is used, the desired value is equal to
-    #   // the mirrored value.
-    #   //
-    #   // Refer <uvm_reg_field::set()> for more details on the effect
-    #   // of setting mirror values on fields with different
-    #   // access policies.
-    #   //
-    #   // To modify the mirrored field values to a specific value,
-    #   // and thus use the mirrored as a scoreboard for the register values
-    #   // in the DUT, use the <uvm_reg::predict()> method.
-    #   //
     def set(self, value, fname="", lineno=0):
+        """
+           Function: set
+
+           Set the desired value for this register
+
+           Sets the desired value of the fields in the register
+           to the specified value. Does not actually
+           set the value of the register in the design,
+           only the desired value in its corresponding
+           abstraction class in the RegModel model.
+           Use the <uvm_reg::update()> method to update the
+           actual register with the mirrored value or
+           the <uvm_reg::write()> method to set
+           the actual register and its mirrored value.
+
+           Unless this method is used, the desired value is equal to
+           the mirrored value.
+
+           Refer <uvm_reg_field::set()> for more details on the effect
+           of setting mirror values on fields with different
+           access policies.
+
+           To modify the mirrored field values to a specific value,
+           and thus use the mirrored as a scoreboard for the register values
+           in the DUT, use the <uvm_reg::predict()> method.
+
+        Args:
+            value:
+            fname:
+            lineno:
+        """
         # Split the value into the individual fields
         self.m_fname = fname
         self.m_lineno = lineno
@@ -599,27 +719,33 @@ class UVMReg(UVMObject):
             field.set((value >> field.get_lsb_pos()) &
                     ((1 << field.get_n_bits()) - 1))
 
-    #   // Function: get
-    #   //
-    #   // Return the desired value of the fields in the register.
-    #   //
-    #   // Does not actually read the value
-    #   // of the register in the design, only the desired value
-    #   // in the abstraction class. Unless set to a different value
-    #   // using the <uvm_reg::set()>, the desired value
-    #   // and the mirrored value are identical.
-    #   //
-    #   // Use the <uvm_reg::read()> or <uvm_reg::peek()>
-    #   // method to get the actual register value.
-    #   //
-    #   // If the register contains write-only fields, the desired/mirrored
-    #   // value for those fields are the value last written and assumed
-    #   // to reside in the bits implementing these fields.
-    #   // Although a physical read operation would something different
-    #   // for these fields,
-    #   // the returned value is the actual content.
-    #   //
     def get(self, fname="", lineno=0):
+        """
+           Function: get
+
+           Return the desired value of the fields in the register.
+
+           Does not actually read the value
+           of the register in the design, only the desired value
+           in the abstraction class. Unless set to a different value
+           using the <uvm_reg::set()>, the desired value
+           and the mirrored value are identical.
+
+           Use the <uvm_reg::read()> or <uvm_reg::peek()>
+           method to get the actual register value.
+
+           If the register contains write-only fields, the desired/mirrored
+           value for those fields are the value last written and assumed
+           to reside in the bits implementing these fields.
+           Although a physical read operation would something different
+           for these fields,
+           the returned value is the actual content.
+
+        Args:
+            fname:
+            lineno:
+        Returns:
+        """
         # Concatenate the value of the individual fields
         # to form the register value
         self.m_fname = fname
@@ -631,20 +757,26 @@ class UVMReg(UVMObject):
         return get
 
 
-    #   // Function: get_mirrored_value
-    #   //
-    #   // Return the mirrored value of the fields in the register.
-    #   //
-    #   // Does not actually read the value
-    #   // of the register in the design
-    #   //
-    #   // If the register contains write-only fields, the desired/mirrored
-    #   // value for those fields are the value last written and assumed
-    #   // to reside in the bits implementing these fields.
-    #   // Although a physical read operation would something different
-    #   // for these fields, the returned value is the actual content.
-    #   //
     def get_mirrored_value(self, fname="", lineno=0):
+        """
+           Function: get_mirrored_value
+
+           Return the mirrored value of the fields in the register.
+
+           Does not actually read the value
+           of the register in the design
+
+           If the register contains write-only fields, the desired/mirrored
+           value for those fields are the value last written and assumed
+           to reside in the bits implementing these fields.
+           Although a physical read operation would something different
+           for these fields, the returned value is the actual content.
+
+        Args:
+            fname:
+            lineno:
+        Returns:
+        """
         # Concatenate the value of the individual fields
         # to form the register value
         self.m_fname = fname
@@ -658,35 +790,42 @@ class UVMReg(UVMObject):
         return get_mirrored_value
 
 
-    #   // Function: needs_update
-    #   //
-    #   // Returns 1 if any of the fields need updating
-    #   //
-    #   // See <uvm_reg_field::needs_update()> for details.
-    #   // Use the <uvm_reg::update()> to actually update the DUT register.
-    #   //
     def needs_update(self):
+        """
+           Function: needs_update
+
+           Returns 1 if any of the fields need updating
+
+           See <uvm_reg_field::needs_update()> for details.
+           Use the <uvm_reg::update()> to actually update the DUT register.
+
+        Returns:
+        """
         for i in range(len(self.m_fields)):
             if self.m_fields[i].needs_update():
                 return True
         return False
 
 
-    #   // Function: reset
-    #   //
-    #   // Reset the desired/mirrored value for this register.
-    #   //
-    #   // Sets the desired and mirror value of the fields in this register
-    #   // to the reset value for the specified reset ~kind~.
-    #   // See <uvm_reg_field.reset()> for more details.
-    #   //
-    #   // Also resets the semaphore that prevents concurrent access
-    #   // to the register.
-    #   // This semaphore must be explicitly reset if a thread accessing
-    #   // this register array was killed in before the access
-    #   // was completed
-    #   //
     def reset(self, kind="HARD"):
+        """
+           Function: reset
+
+           Reset the desired/mirrored value for this register.
+
+           Sets the desired and mirror value of the fields in this register
+           to the reset value for the specified reset `kind`.
+           See <uvm_reg_field.reset()> for more details.
+
+           Also resets the semaphore that prevents concurrent access
+           to the register.
+           This semaphore must be explicitly reset if a thread accessing
+           this register array was killed in before the access
+           was completed
+
+        Args:
+            kind:
+        """
         for i in range(len(self.m_fields)):
             self.m_fields[i].reset(kind)
         # Put back a key in the semaphore if it is checked out
@@ -732,34 +871,47 @@ class UVMReg(UVMObject):
     #
     #
 
-    #   // Task: write
-    #   //
-    #   // Write the specified value in this register
-    #   //
-    #   // Write ~value~ in the DUT register that corresponds to this
-    #   // abstraction class instance using the specified access
-    #   // ~path~.
-    #   // If the register is mapped in more than one address map,
-    #   // an address ~map~ must be
-    #   // specified if a physical access is used (front-door access).
-    #   // If a back-door access path is used, the effect of writing
-    #   // the register through a physical access is mimicked. For
-    #   // example, read-only bits in the registers will not be written.
-    #   //
-    #   // The mirrored value will be updated using the <uvm_reg::predict()>
-    #   // method.
-    #   //
-    #   extern virtual task write(output uvm_status_e      status,
-    #                             input  uvm_reg_data_t    value,
-    #                             input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                             input  uvm_reg_map       map = None,
-    #                             input  uvm_sequence_base parent = None,
-    #                             input  int               prior = -1,
-    #                             input  uvm_object        extension = None,
-    #                             input  string            fname = "",
-    #                             input  int               lineno = 0)
     async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
             extension=None, fname="", lineno=0):
+        """
+           Task: write
+
+           Write the specified value in this register
+
+           Write `value` in the DUT register that corresponds to this
+           abstraction class instance using the specified access
+           `path`.
+           If the register is mapped in more than one address map,
+           an address `map` must be
+           specified if a physical access is used (front-door access).
+           If a back-door access path is used, the effect of writing
+           the register through a physical access is mimicked. For
+           example, read-only bits in the registers will not be written.
+
+           The mirrored value will be updated using the <uvm_reg::predict()>
+           method.
+
+          extern virtual task write(output uvm_status_e      status,
+                                    input  uvm_reg_data_t    value,
+                                    input  uvm_path_e        path = UVM_DEFAULT_PATH,
+                                    input  uvm_reg_map       map = None,
+                                    input  uvm_sequence_base parent = None,
+                                    input  int               prior = -1,
+                                    input  uvm_object        extension = None,
+                                    input  string            fname = "",
+                                    input  int               lineno = 0)
+        Args:
+            status:
+            value:
+            path:
+            UVM_DEFAULT_PATH:
+            _map:
+            parent:
+            prior:
+            extension:
+            fname:
+            lineno:
+        """
 
         uvm_check_output_args([status])
         # create an abstract transaction for this operation
@@ -784,35 +936,48 @@ class UVMReg(UVMObject):
         await self.XatomicX(0)
 
 
-    #   // Task: read
-    #   //
-    #   // Read the current value from this register
-    #   //
-    #   // Read and return ~value~ from the DUT register that corresponds to this
-    #   // abstraction class instance using the specified access
-    #   // ~path~.
-    #   // If the register is mapped in more than one address map,
-    #   // an address ~map~ must be
-    #   // specified if a physical access is used (front-door access).
-    #   // If a back-door access path is used, the effect of reading
-    #   // the register through a physical access is mimicked. For
-    #   // example, clear-on-read bits in the registers will be set to zero.
-    #   //
-    #   // The mirrored value will be updated using the <uvm_reg::predict()>
-    #   // method.
-    #   //
-    #   extern virtual task read(output uvm_status_e      status,
-    #                            output uvm_reg_data_t    value,
-    #                            input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                            input  uvm_reg_map       map = None,
-    #                            input  uvm_sequence_base parent = None,
-    #                            input  int               prior = -1,
-    #                            input  uvm_object        extension = None,
-    #                            input  string            fname = "",
-    #                            input  int               lineno = 0)
-    #
     async def read(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
+        """
+           Task: read
+
+           Read the current value from this register
+
+           Read and return `value` from the DUT register that corresponds to this
+           abstraction class instance using the specified access
+           `path`.
+           If the register is mapped in more than one address map,
+           an address `map` must be
+           specified if a physical access is used (front-door access).
+           If a back-door access path is used, the effect of reading
+           the register through a physical access is mimicked. For
+           example, clear-on-read bits in the registers will be set to zero.
+
+           The mirrored value will be updated using the <uvm_reg::predict()>
+           method.
+
+          extern virtual task read(output uvm_status_e      status,
+                                   output uvm_reg_data_t    value,
+                                   input  uvm_path_e        path = UVM_DEFAULT_PATH,
+                                   input  uvm_reg_map       map = None,
+                                   input  uvm_sequence_base parent = None,
+                                   input  int               prior = -1,
+                                   input  uvm_object        extension = None,
+                                   input  string            fname = "",
+                                   input  int               lineno = 0)
+
+        Args:
+            status:
+            value:
+            path:
+            UVM_DEFAULT_PATH:
+            _map:
+            parent:
+            prior:
+            extension:
+            fname:
+            lineno:
+        """
         uvm_check_output_args([status, value])
         rw = UVMRegItem.type_id.create("pseudo-read_item", None, self.get_full_name())
         await self.XatomicX(1, rw)
@@ -864,33 +1029,45 @@ class UVMReg(UVMObject):
     #                            input  string            fname = "",
     #                            input  int               lineno = 0)
 
-    #   // Task: update
-    #   //
-    #   // Updates the content of the register in the design to match the
-    #   // desired value
-    #   //
-    #   // This method performs the reverse
-    #   // operation of <uvm_reg::mirror()>.
-    #   // Write this register if the DUT register is out-of-date with the
-    #   // desired/mirrored value in the abstraction class, as determined by
-    #   // the <uvm_reg::needs_update()> method.
-    #   //
-    #   // The update can be performed using the using the physical interfaces
-    #   // (frontdoor) or <uvm_reg::poke()> (backdoor) access.
-    #   // If the register is mapped in multiple address maps and physical access
-    #   // is used (front-door), an address ~map~ must be specified.
-    #   //
-    #   extern virtual task update(output uvm_status_e      status,
-    #                              input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                              input  uvm_reg_map       map = None,
-    #                              input  uvm_sequence_base parent = None,
-    #                              input  int               prior = -1,
-    #                              input  uvm_object        extension = None,
-    #                              input  string            fname = "",
-    #                              input  int               lineno = 0)
-    #
     async def update(self, status, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1, extension=None,
             fname="", lineno=0):
+        """
+           Task: update
+
+           Updates the content of the register in the design to match the
+           desired value
+
+           This method performs the reverse
+           operation of <uvm_reg::mirror()>.
+           Write this register if the DUT register is out-of-date with the
+           desired/mirrored value in the abstraction class, as determined by
+           the <uvm_reg::needs_update()> method.
+
+           The update can be performed using the using the physical interfaces
+           (frontdoor) or <uvm_reg::poke()> (backdoor) access.
+           If the register is mapped in multiple address maps and physical access
+           is used (front-door), an address `map` must be specified.
+
+          extern virtual task update(output uvm_status_e      status,
+                                     input  uvm_path_e        path = UVM_DEFAULT_PATH,
+                                     input  uvm_reg_map       map = None,
+                                     input  uvm_sequence_base parent = None,
+                                     input  int               prior = -1,
+                                     input  uvm_object        extension = None,
+                                     input  string            fname = "",
+                                     input  int               lineno = 0)
+
+        Args:
+            status:
+            path:
+            UVM_DEFAULT_PATH:
+            _map:
+            parent:
+            prior:
+            extension:
+            fname:
+            lineno:
+        """
         uvm_check_output_args([status])
         upd = 0x0
         # status = UVM_IS_OK
@@ -906,42 +1083,56 @@ class UVMReg(UVMObject):
         await self.write(status, upd, path, _map, parent, prior, extension, fname, lineno)
 
 
-    #   // Task: mirror
-    #   //
-    #   // Read the register and update/check its mirror value
-    #   //
-    #   // Read the register and optionally compared the readback value
-    #   // with the current mirrored value if ~check~ is <UVM_CHECK>.
-    #   // The mirrored value will be updated using the <uvm_reg::predict()>
-    #   // method based on the readback value.
-    #   //
-    #   // The mirroring can be performed using the physical interfaces (frontdoor)
-    #   // or <uvm_reg::peek()> (backdoor).
-    #   //
-    #   // If ~check~ is specified as UVM_CHECK,
-    #   // an error message is issued if the current mirrored value
-    #   // does not match the readback value. Any field whose check has been
-    #   // disabled with <uvm_reg_field::set_compare()> will not be considered
-    #   // in the comparison.
-    #   //
-    #   // If the register is mapped in multiple address maps and physical
-    #   // access is used (front-door access), an address ~map~ must be specified.
-    #   // If the register contains
-    #   // write-only fields, their content is mirrored and optionally
-    #   // checked only if a UVM_BACKDOOR
-    #   // access path is used to read the register.
-    #   //
-    #   extern virtual task mirror(output uvm_status_e      status,
-    #                              input uvm_check_e        check  = UVM_NO_CHECK,
-    #                              input uvm_path_e         path = UVM_DEFAULT_PATH,
-    #                              input uvm_reg_map        map = None,
-    #                              input uvm_sequence_base  parent = None,
-    #                              input int                prior = -1,
-    #                              input  uvm_object        extension = None,
-    #                              input string             fname = "",
-    #                              input int                lineno = 0)
     async def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
+        """
+           Task: mirror
+
+           Read the register and update/check its mirror value
+
+           Read the register and optionally compared the readback value
+           with the current mirrored value if `check` is `UVM_CHECK`.
+           The mirrored value will be updated using the <uvm_reg::predict()>
+           method based on the readback value.
+
+           The mirroring can be performed using the physical interfaces (frontdoor)
+           or <uvm_reg::peek()> (backdoor).
+
+           If `check` is specified as UVM_CHECK,
+           an error message is issued if the current mirrored value
+           does not match the readback value. Any field whose check has been
+           disabled with <uvm_reg_field::set_compare()> will not be considered
+           in the comparison.
+
+           If the register is mapped in multiple address maps and physical
+           access is used (front-door access), an address `map` must be specified.
+           If the register contains
+           write-only fields, their content is mirrored and optionally
+           checked only if a UVM_BACKDOOR
+           access path is used to read the register.
+
+          extern virtual task mirror(output uvm_status_e      status,
+                                     input uvm_check_e        check  = UVM_NO_CHECK,
+                                     input uvm_path_e         path = UVM_DEFAULT_PATH,
+                                     input uvm_reg_map        map = None,
+                                     input uvm_sequence_base  parent = None,
+                                     input int                prior = -1,
+                                     input  uvm_object        extension = None,
+                                     input string             fname = "",
+                                     input int                lineno = 0)
+        Args:
+            status:
+            check:
+            UVM_NO_CHECK:
+            path:
+            UVM_DEFAULT_PATH:
+            _map:
+            parent:
+            prior:
+            extension:
+            fname:
+            lineno:
+        """
         uvm_check_output_args([status])
         exp = 0  # uvm_reg_data_t  exp
         bkdr = self.get_backdoor()
@@ -980,20 +1171,33 @@ class UVMReg(UVMObject):
         await self.XatomicX(0)
 
 
-    #   // Function: predict
-    #   //
-    #   // Update the mirrored and desired value for this register.
-    #   //
-    #   // Predict the mirror (and desired) value of the fields in the register
-    #   // based on the specified observed ~value~ on a specified address ~map~,
-    #   // or based on a calculated value.
-    #   // See <uvm_reg_field::predict()> for more details.
-    #   //
-    #   // Returns TRUE if the prediction was successful for each field in the
-    #   // register.
-    #   //
     def predict(self, value, be=-1, kind=UVM_PREDICT_DIRECT, path=UVM_FRONTDOOR,
             reg_map=None, fname="", lineno=0):
+        """
+           Function: predict
+
+           Update the mirrored and desired value for this register.
+
+           Predict the mirror (and desired) value of the fields in the register
+           based on the specified observed `value` on a specified address `map`,
+           or based on a calculated value.
+           See <uvm_reg_field::predict()> for more details.
+
+           Returns TRUE if the prediction was successful for each field in the
+           register.
+
+        Args:
+            value:
+            be:
+            kind:
+            UVM_PREDICT_DIRECT:
+            path:
+            UVM_FRONTDOOR:
+            reg_map:
+            fname:
+            lineno:
+        Returns:
+        """
         rw = UVMRegItem()
         rw.value[0] = value
         rw.path = path
@@ -1006,29 +1210,48 @@ class UVMReg(UVMObject):
             predict = 0
         return predict
 
-    #   // Function: is_busy
-    #   //
-    #   // Returns 1 if register is currently being read or written.
-    #   //
     def is_busy(self):
+        """
+           Function: is_busy
+
+           Returns 1 if register is currently being read or written.
+
+        Returns:
+        """
         return self.m_is_busy
 
-    #   /*local*/ extern function void Xset_busyX(bit busy)
     def Xset_busyX(self, busy):
+        """
+          /*local*/ extern function void Xset_busyX(bit busy)
+        Args:
+            busy:
+        """
         self.m_is_busy = busy
 
 
-    #   /*local*/ extern task XreadX (output uvm_status_e      status,
-    #                                 output uvm_reg_data_t    value,
-    #                                 input  uvm_path_e        path,
-    #                                 input  uvm_reg_map       map,
-    #                                 input  uvm_sequence_base parent = None,
-    #                                 input  int               prior = -1,
-    #                                 input  uvm_object        extension = None,
-    #                                 input  string            fname = "",
-    #                                 input  int               lineno = 0)
     async def XreadX(self, status, value, path, _map,
             parent=None, prior=-1,extension=None,fname="", lineno=0):
+        """
+          /*local*/ extern task XreadX (output uvm_status_e      status,
+                                        output uvm_reg_data_t    value,
+                                        input  uvm_path_e        path,
+                                        input  uvm_reg_map       map,
+                                        input  uvm_sequence_base parent = None,
+                                        input  int               prior = -1,
+                                        input  uvm_object        extension = None,
+                                        input  string            fname = "",
+                                        input  int               lineno = 0)
+        Args:
+            status:
+            value:
+            path:
+            _map:
+            parent:
+            prior:
+            extension:
+            fname:
+            lineno:
+        """
         uvm_check_output_args([status, value])
 
         # create an abstract transaction for this operation
@@ -1051,8 +1274,14 @@ class UVMReg(UVMObject):
         value.append(rw.value[0])
         #endtask: XreadX
 
-    #   /*local*/ extern task XatomicX(bit on)
     async def XatomicX(self, on, rw=None):
+        """
+          /*local*/ extern task XatomicX(bit on)
+        Args:
+            on:
+            rw:
+        Raises:
+        """
         #   process m_reg_process
         #   m_reg_process=process::self()
         if on == 1:
@@ -1073,11 +1302,18 @@ class UVMReg(UVMObject):
 
 
 
-    #   /*local*/ extern virtual function bit Xcheck_accessX
-    #                                (input uvm_reg_item rw,
-    #                                 output uvm_reg_map_info map_info,
-    #                                 input string caller)
     def Xcheck_accessX(self, rw, map_info, caller):
+        """
+          /*local*/ extern virtual function bit Xcheck_accessX
+                                       (input uvm_reg_item rw,
+                                        output uvm_reg_map_info map_info,
+                                        input string caller)
+        Args:
+            rw:
+            map_info:
+            caller:
+        Returns:
+        """
         uvm_check_output_args([map_info])
         if (rw.path == UVM_DEFAULT_PATH):
             rw.path = self.m_parent.get_default_path()
@@ -1125,10 +1361,17 @@ class UVMReg(UVMObject):
     #
     #
 
-    #   extern virtual function bit do_check(uvm_reg_data_t expected,
-    #                                        uvm_reg_data_t actual,
-    #                                        uvm_reg_map    map)
     def do_check(self, expected, actual, _map):
+        """
+          extern virtual function bit do_check(uvm_reg_data_t expected,
+                                               uvm_reg_data_t actual,
+                                               uvm_reg_map    map)
+        Args:
+            expected:
+            actual:
+            _map:
+        Returns:
+        """
         dc = 0
 
         for i in range(len(self.m_fields)):
@@ -1168,9 +1411,13 @@ class UVMReg(UVMObject):
 
 
 
-    #   extern virtual task do_write(uvm_reg_item rw)
-    #
     async def do_write(self, rw):
+        """
+          extern virtual task do_write(uvm_reg_item rw)
+
+        Args:
+            rw:
+        """
         await uvm_empty_delay()
         # TODO finish this
         cbs = UVMRegCbIter(self)  # uvm_reg_cb_iter  cbs = new(this)
@@ -1345,8 +1592,12 @@ class UVMReg(UVMObject):
                     + self.get_full_name() + value_s, UVM_HIGH)
 
 
-    #   extern virtual task do_read(uvm_reg_item rw)
     async def do_read(self, rw):
+        """
+          extern virtual task do_read(uvm_reg_item rw)
+        Args:
+            rw:
+        """
         value = 0  # uvm_reg_data_t   value
         exp = 0  # uvm_reg_data_t   exp
 
@@ -1604,18 +1855,23 @@ class UVMReg(UVMObject):
     #                                     string          fname = "",
     #                                     int             lineno = 0)
 
-    #   // Function: get_backdoor
-    #   //
-    #   // Returns the user-defined backdoor for this register
-    #   //
-    #   // If ~None~, no user-defined backdoor has been defined.
-    #   // A user-defined backdoor is defined
-    #   // by using the <uvm_reg::set_backdoor()> method.
-    #   //
-    #   // If ~inherited~ is TRUE, returns the backdoor of the parent block
-    #   // if none have been specified for this register.
-    #   //
     def get_backdoor(self, inherited=True):
+        """
+           Function: get_backdoor
+
+           Returns the user-defined backdoor for this register
+
+           If `None`, no user-defined backdoor has been defined.
+           A user-defined backdoor is defined
+           by using the <uvm_reg::set_backdoor()> method.
+
+           If `inherited` is TRUE, returns the backdoor of the parent block
+           if none have been specified for this register.
+
+        Args:
+            inherited:
+        Returns:
+        """
         if (self.m_backdoor is None and inherited):
             blk = self.get_parent()
             bkdr = None  # uvm_reg_backdoor
@@ -1637,36 +1893,47 @@ class UVMReg(UVMObject):
     #   //
     #   extern function void clear_hdl_path (string kind = "RTL")
 
-    #   // Function: add_hdl_path
-    #   //
-    #   // Add an HDL path
-    #   //
-    #   // Add the specified HDL path to the register instance for the specified
-    #   // design abstraction. This method may be called more than once for the
-    #   // same design abstraction if the register is physically duplicated
-    #   // in the design abstraction
-    #   //
-    #   // For example, the following register
-    #   //
-    #   //|        1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0
-    #   //| Bits:  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
-    #   //|       +-+---+-------------+---+-------+
-    #   //|       |A|xxx|      B      |xxx|   C   |
-    #   //|       +-+---+-------------+---+-------+
-    #   //
-    #   // would be specified using the following literal value:
-    #   //
-    #   //| add_hdl_path([ ["A_reg", 15, 1],
-    #   //|                 ["B_reg",  6, 7],
-    #   //|                 ['C_reg",  0, 4] ] )
-    #   //
-    #   // If the register is implemented using a single HDL variable,
-    #   // The array should specify a single slice with its ~offset~ and ~size~
-    #   // specified as -1. For example:
-    #   //
-    #   //| r1.add_hdl_path('{ '{"r1", -1, -1} })
-    #   //
     def add_hdl_path(self, slices, kind="RTL"):
+        """
+           Function: add_hdl_path
+
+           Add an HDL path
+
+           Add the specified HDL path to the register instance for the specified
+           design abstraction. This method may be called more than once for the
+           same design abstraction if the register is physically duplicated
+           in the design abstraction
+
+           For example, the following register
+
+        .. code-block:: python
+
+          |        1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0
+          | Bits:  5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
+          |       +-+---+-------------+---+-------+
+          |       |A|xxx|      B      |xxx|   C   |
+          |       +-+---+-------------+---+-------+
+
+           would be specified using the following literal value:
+
+        .. code-block:: python
+
+          | add_hdl_path([ ["A_reg", 15, 1],
+          |                 ["B_reg",  6, 7],
+          |                 ['C_reg",  0, 4] ] )
+
+           If the register is implemented using a single HDL variable,
+           The array should specify a single slice with its `offset` and `size`
+           specified as -1. For example:
+
+        .. code-block:: python
+
+          | r1.add_hdl_path('{ '{"r1", -1, -1} })
+
+        Args:
+            slices:
+            kind:
+        """
         if not (self.m_hdl_paths_pool.exists(kind)):
             self.m_hdl_paths_pool[kind] = UVMQueue()
         paths = self.m_hdl_paths_pool.get(kind)  # uvm_queue #(uvm_hdl_path_concat)
@@ -1674,14 +1941,22 @@ class UVMReg(UVMObject):
         concat.set(slices)
         paths.push_back(concat)
 
-    #   // Function: add_hdl_path_slice
-    #   //
-    #   // Append the specified HDL slice to the HDL path of the register instance
-    #   // for the specified design abstraction.
-    #   // If ~first~ is TRUE, starts the specification of a duplicate
-    #   // HDL implementation of the register.
-    #   //
     def add_hdl_path_slice(self, name, offset, size, first=0, kind="RTL"):
+        """
+           Function: add_hdl_path_slice
+
+           Append the specified HDL slice to the HDL path of the register instance
+           for the specified design abstraction.
+           If `first` is TRUE, starts the specification of a duplicate
+           HDL implementation of the register.
+
+        Args:
+            name:
+            offset:
+            size:
+            first:
+            kind:
+        """
         if not (self.m_hdl_paths_pool.exists(kind)):
             self.m_hdl_paths_pool[kind] = UVMQueue()
         paths = self.m_hdl_paths_pool.get(kind)  # uvm_queue #(uvm_hdl_path_concat)
@@ -1695,15 +1970,20 @@ class UVMReg(UVMObject):
         concat.add_path(name, offset, size)
 
 
-    #   // Function: has_hdl_path
-    #   //
-    #   // Check if a HDL path is specified
-    #   //
-    #   // Returns TRUE if the register instance has a HDL path defined for the
-    #   // specified design abstraction. If no design abstraction is specified,
-    #   // uses the default design abstraction specified for the parent block.
-    #   //
     def has_hdl_path(self, kind=""):
+        """
+           Function: has_hdl_path
+
+           Check if a HDL path is specified
+
+           Returns TRUE if the register instance has a HDL path defined for the
+           specified design abstraction. If no design abstraction is specified,
+           uses the default design abstraction specified for the parent block.
+
+        Args:
+            kind:
+        Returns:
+        """
         if kind == "":
             if self.m_regfile_parent is not None:
                 kind = self.m_regfile_parent.get_default_hdl_path()
@@ -1737,21 +2017,27 @@ class UVMReg(UVMObject):
     #   extern function void get_hdl_path_kinds (ref string kinds[$])
 
 
-    #   // Function:  get_full_hdl_path
-    #   //
-    #   // Get the full hierarchical HDL path(s)
-    #   //
-    #   // Returns the full hierarchical HDL path(s) defined for the specified
-    #   // design abstraction in the register instance.
-    #   // There may be more than one path returned even
-    #   // if only one path was defined for the register instance, if any of the
-    #   // parent components have more than one path defined for the same design
-    #   // abstraction
-    #   //
-    #   // If no design abstraction is specified, the default design abstraction
-    #   // for each ancestor block is used to get each incremental path.
-    #   //
     def get_full_hdl_path(self, paths, kind="", separator="."):
+        """
+           Function:  get_full_hdl_path
+
+           Get the full hierarchical HDL path(s)
+
+           Returns the full hierarchical HDL path(s) defined for the specified
+           design abstraction in the register instance.
+           There may be more than one path returned even
+           if only one path was defined for the register instance, if any of the
+           parent components have more than one path defined for the same design
+           abstraction
+
+           If no design abstraction is specified, the default design abstraction
+           for each ancestor block is used to get each incremental path.
+
+        Args:
+            paths:
+            kind:
+            separator:
+        """
 
         if kind == "":
             if self.m_regfile_parent is not None:
@@ -1790,25 +2076,33 @@ class UVMReg(UVMObject):
         #endfunction
 
 
-    #   // Function: backdoor_read
-    #   //
-    #   // User-define backdoor read access
-    #   //
-    #   // Override the default string-based DPI backdoor access read
-    #   // for this register type.
-    #   // By default calls <uvm_reg::backdoor_read_func()>.
-    #   //
     def backdoor_read(self, rw):
+        """
+           Function: backdoor_read
+
+           User-define backdoor read access
+
+           Override the default string-based DPI backdoor access read
+           for this register type.
+           By default calls <uvm_reg::backdoor_read_func()>.
+
+        Args:
+            rw:
+        """
         rw.status = self.backdoor_read_func(rw)
 
-    #   // Function: backdoor_write
-    #   //
-    #   // User-defined backdoor read access
-    #   //
-    #   // Override the default string-based DPI backdoor access write
-    #   // for this register type.
-    #   //
     def backdoor_write(self, rw):
+        """
+           Function: backdoor_write
+
+           User-defined backdoor read access
+
+           Override the default string-based DPI backdoor access write
+           for this register type.
+
+        Args:
+            rw:
+        """
         paths = []  # uvm_hdl_path_concat [$]
         ok = 1
         self.get_full_hdl_path(paths,rw.bd_kind)
@@ -1833,14 +2127,19 @@ class UVMReg(UVMObject):
         #endtask
 
 
-    #   // Function: backdoor_read_func
-    #   //
-    #   // User-defined backdoor read access
-    #   //
-    #   // Override the default string-based DPI backdoor access read
-    #   // for this register type.
-    #   //
     def backdoor_read_func(self, rw):
+        """
+           Function: backdoor_read_func
+
+           User-defined backdoor read access
+
+           Override the default string-based DPI backdoor access read
+           for this register type.
+
+        Args:
+            rw:
+        Returns:
+        """
         paths = []  # uvm_hdl_path_concat [$]
         val = 0x0
         ok = 1
@@ -1888,73 +2187,87 @@ class UVMReg(UVMObject):
         return rw.status
 
 
-    #   // Function: backdoor_watch
-    #   //
-    #   // User-defined DUT register change monitor
-    #   //
-    #   // Watch the DUT register corresponding to this abstraction class
-    #   // instance for any change in value and return when a value-change occurs.
-    #   // This may be implemented a string-based DPI access if the simulation
-    #   // tool provide a value-change callback facility. Such a facility does
-    #   // not exists in the standard SystemVerilog DPI and thus no
-    #   // default implementation for this method can be provided.
-    #   //
-    #   virtual task  backdoor_watch(); endtask
-    #
-    #
-    #   //----------------
-    #   // Group: Coverage
-    #   //----------------
-    #
-    #   // Function: include_coverage
-    #   //
-    #   // Specify which coverage model that must be included in
-    #   // various block, register or memory abstraction class instances.
-    #   //
-    #   // The coverage models are specified by OR'ing or adding the
-    #   // <uvm_coverage_model_e> coverage model identifiers corresponding to the
-    #   // coverage model to be included.
-    #   //
-    #   // The scope specifies a hierarchical name or pattern identifying
-    #   // a block, memory or register abstraction class instances.
-    #   // Any block, memory or register whose full hierarchical name
-    #   // matches the specified scope will have the specified functional
-    #   // coverage models included in them.
-    #   //
-    #   // The scope can be specified as a POSIX regular expression
-    #   // or simple pattern.
-    #   // See <uvm_resource_base::Scope Interface> for more details.
-    #   //
-    #   //| uvm_reg::include_coverage("*", UVM_CVR_ALL)
-    #   //
-    #   // The specification of which coverage model to include in
-    #   // which abstraction class is stored in a <uvm_reg_cvr_t> resource in the
-    #   // <uvm_resource_db> resource database,
-    #   // in the "uvm_reg::" scope namespace.
-    #   //
-    #   extern static function void include_coverage(string scope,
-    #                                                uvm_reg_cvr_t models,
-    #                                                uvm_object accessor = None)
     @classmethod
     def include_coverage(cls, scope, models, accessor=None):
+        """
+           Function: backdoor_watch
+
+           User-defined DUT register change monitor
+
+           Watch the DUT register corresponding to this abstraction class
+           instance for any change in value and return when a value-change occurs.
+           This may be implemented a string-based DPI access if the simulation
+           tool provide a value-change callback facility. Such a facility does
+           not exists in the standard SystemVerilog DPI and thus no
+           default implementation for this method can be provided.
+
+          virtual task  backdoor_watch(); endtask
+
+
+          ----------------
+           Group: Coverage
+          ----------------
+
+           Function: include_coverage
+
+           Specify which coverage model that must be included in
+           various block, register or memory abstraction class instances.
+
+           The coverage models are specified by OR'ing or adding the
+           `uvm_coverage_model_e` coverage model identifiers corresponding to the
+           coverage model to be included.
+
+           The scope specifies a hierarchical name or pattern identifying
+           a block, memory or register abstraction class instances.
+           Any block, memory or register whose full hierarchical name
+           matches the specified scope will have the specified functional
+           coverage models included in them.
+
+           The scope can be specified as a POSIX regular expression
+           or simple pattern.
+           See <uvm_resource_base::Scope Interface> for more details.
+
+        .. code-block:: python
+
+          | uvm_reg::include_coverage("*", UVM_CVR_ALL)
+
+           The specification of which coverage model to include in
+           which abstraction class is stored in a `uvm_reg_cvr_t` resource in the
+           `uvm_resource_db` resource database,
+           in the "uvm_reg::" scope namespace.
+
+          extern static function void include_coverage(string scope,
+                                                       uvm_reg_cvr_t models,
+                                                       uvm_object accessor = None)
+        Args:
+            cls:
+            scope:
+            models:
+            accessor:
+        """
         uvm_reg_cvr_rsrc_db.set("uvm_reg::" + scope, "include_coverage",
             models, accessor)
 
 
-    #   // Function: build_coverage
-    #   //
-    #   // Check if all of the specified coverage models must be built.
-    #   //
-    #   // Check which of the specified coverage model must be built
-    #   // in this instance of the register abstraction class,
-    #   // as specified by calls to <uvm_reg::include_coverage()>.
-    #   //
-    #   // Models are specified by adding the symbolic value of individual
-    #   // coverage model as defined in <uvm_coverage_model_e>.
-    #   // Returns the sum of all coverage models to be built in the
-    #   // register model.
-    #   //
     def build_coverage(self, models):
+        """
+           Function: build_coverage
+
+           Check if all of the specified coverage models must be built.
+
+           Check which of the specified coverage model must be built
+           in this instance of the register abstraction class,
+           as specified by calls to <uvm_reg::include_coverage()>.
+
+           Models are specified by adding the symbolic value of individual
+           coverage model as defined in `uvm_coverage_model_e`.
+           Returns the sum of all coverage models to be built in the
+           register model.
+
+        Args:
+            models:
+        Returns:
+        """
         build_coverage = UVM_NO_COVERAGE
         cov_arr = []
         uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" + self.get_full_name(),
@@ -1963,58 +2276,72 @@ class UVMReg(UVMObject):
         return build_coverage & models
 
 
-    #   // Function: add_coverage
-    #   //
-    #   // Specify that additional coverage models are available.
-    #   //
-    #   // Add the specified coverage model to the coverage models
-    #   // available in this class.
-    #   // Models are specified by adding the symbolic value of individual
-    #   // coverage model as defined in <uvm_coverage_model_e>.
-    #   //
-    #   // This method shall be called only in the constructor of
-    #   // subsequently derived classes.
-    #   //
-    #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
     def add_coverage(self, models):
+        """
+           Function: add_coverage
+
+           Specify that additional coverage models are available.
+
+           Add the specified coverage model to the coverage models
+           available in this class.
+           Models are specified by adding the symbolic value of individual
+           coverage model as defined in `uvm_coverage_model_e`.
+
+           This method shall be called only in the constructor of
+           subsequently derived classes.
+
+          extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
+        Args:
+            models:
+        """
         self.m_has_cover |= models
 
-    #   // Function: has_coverage
-    #   //
-    #   // Check if register has coverage model(s)
-    #   //
-    #   // Returns TRUE if the register abstraction class contains a coverage model
-    #   // for all of the models specified.
-    #   // Models are specified by adding the symbolic value of individual
-    #   // coverage model as defined in <uvm_coverage_model_e>.
-    #   //
-    #   extern virtual function bit has_coverage(uvm_reg_cvr_t models)
     def has_coverage(self, models):
+        """
+           Function: has_coverage
+
+           Check if register has coverage model(s)
+
+           Returns TRUE if the register abstraction class contains a coverage model
+           for all of the models specified.
+           Models are specified by adding the symbolic value of individual
+           coverage model as defined in `uvm_coverage_model_e`.
+
+          extern virtual function bit has_coverage(uvm_reg_cvr_t models)
+        Args:
+            models:
+        Returns:
+        """
         return ((self.m_has_cover & models) == models)
 
 
-    #   // Function: set_coverage
-    #   //
-    #   // Turns on coverage measurement.
-    #   //
-    #   // Turns the collection of functional coverage measurements on or off
-    #   // for this register.
-    #   // The functional coverage measurement is turned on for every
-    #   // coverage model specified using <uvm_coverage_model_e> symbolic
-    #   // identifiers.
-    #   // Multiple functional coverage models can be specified by adding
-    #   // the functional coverage model identifiers.
-    #   // All other functional coverage models are turned off.
-    #   // Returns the sum of all functional
-    #   // coverage models whose measurements were previously on.
-    #   //
-    #   // This method can only control the measurement of functional
-    #   // coverage models that are present in the register abstraction classes,
-    #   // then enabled during construction.
-    #   // See the <uvm_reg::has_coverage()> method to identify
-    #   // the available functional coverage models.
-    #   //
     def set_coverage(self, is_on):
+        """
+           Function: set_coverage
+
+           Turns on coverage measurement.
+
+           Turns the collection of functional coverage measurements on or off
+           for this register.
+           The functional coverage measurement is turned on for every
+           coverage model specified using `uvm_coverage_model_e` symbolic
+           identifiers.
+           Multiple functional coverage models can be specified by adding
+           the functional coverage model identifiers.
+           All other functional coverage models are turned off.
+           Returns the sum of all functional
+           coverage models whose measurements were previously on.
+
+           This method can only control the measurement of functional
+           coverage models that are present in the register abstraction classes,
+           then enabled during construction.
+           See the <uvm_reg::has_coverage()> method to identify
+           the available functional coverage models.
+
+        Args:
+            is_on:
+        Returns:
+        """
         if is_on == UVM_NO_COVERAGE:
             self.m_cover_on = is_on
             return self.m_cover_on
@@ -2023,68 +2350,89 @@ class UVMReg(UVMObject):
         return self.m_cover_on
 
 
-    #   // Function: get_coverage
-    #   //
-    #   // Check if coverage measurement is on.
-    #   //
-    #   // Returns TRUE if measurement for all of the specified functional
-    #   // coverage models are currently on.
-    #   // Multiple functional coverage models can be specified by adding the
-    #   // functional coverage model identifiers.
-    #   //
-    #   // See <uvm_reg::set_coverage()> for more details.
-    #   //
     def get_coverage(self, is_on):
+        """
+           Function: get_coverage
+
+           Check if coverage measurement is on.
+
+           Returns TRUE if measurement for all of the specified functional
+           coverage models are currently on.
+           Multiple functional coverage models can be specified by adding the
+           functional coverage model identifiers.
+
+           See <uvm_reg::set_coverage()> for more details.
+
+        Args:
+            is_on:
+        Returns:
+        """
         if (self.has_coverage(is_on) == 0):
             return False
         return ((self.m_cover_on & is_on) == is_on)
 
 
-    #   // Function: sample
-    #   //
-    #   // Functional coverage measurement method
-    #   //
-    #   // This method is invoked by the register abstraction class
-    #   // whenever it is read or written with the specified ~data~
-    #   // via the specified address ~map~.
-    #   // It is invoked after the read or write operation has completed
-    #   // but before the mirror has been updated.
-    #   //
-    #   // Empty by default, this method may be extended by the
-    #   // abstraction class generator to perform the required sampling
-    #   // in any provided functional coverage model.
-    #   //
-    #   protected virtual function void sample(uvm_reg_data_t  data,
-    #                                          uvm_reg_data_t  byte_en,
-    #                                          bit             is_read,
-    #                                          uvm_reg_map     map)
     def sample(self, data, byte_en, is_read, _map):
+        """
+           Function: sample
+
+           Functional coverage measurement method
+
+           This method is invoked by the register abstraction class
+           whenever it is read or written with the specified `data`
+           via the specified address `map`.
+           It is invoked after the read or write operation has completed
+           but before the mirror has been updated.
+
+           Empty by default, this method may be extended by the
+           abstraction class generator to perform the required sampling
+           in any provided functional coverage model.
+
+          protected virtual function void sample(uvm_reg_data_t  data,
+                                                 uvm_reg_data_t  byte_en,
+                                                 bit             is_read,
+                                                 uvm_reg_map     map)
+        Args:
+            data:
+            byte_en:
+            is_read:
+            _map:
+        """
         pass
 
 
-    #   // Function: sample_values
-    #   //
-    #   // Functional coverage measurement method for field values
-    #   //
-    #   // This method is invoked by the user
-    #   // or by the <uvm_reg_block::sample_values()> method of the parent block
-    #   // to trigger the sampling
-    #   // of the current field values in the
-    #   // register-level functional coverage model.
-    #   //
-    #   // This method may be extended by the
-    #   // abstraction class generator to perform the required sampling
-    #   // in any provided field-value functional coverage model.
-    #   //
     def sample_values(self):
+        """
+           Function: sample_values
+
+           Functional coverage measurement method for field values
+
+           This method is invoked by the user
+           or by the <uvm_reg_block::sample_values()> method of the parent block
+           to trigger the sampling
+           of the current field values in the
+           register-level functional coverage model.
+
+           This method may be extended by the
+           abstraction class generator to perform the required sampling
+           in any provided field-value functional coverage model.
+
+        """
         pass
 
 
-    #   /*local*/ function void XsampleX(uvm_reg_data_t  data,
-    #                                    uvm_reg_data_t  byte_en,
-    #                                    bit             is_read,
-    #                                    uvm_reg_map     map)
     def XsampleX(self, data, byte_en, is_read, _map):
+        """
+          /*local*/ function void XsampleX(uvm_reg_data_t  data,
+                                           uvm_reg_data_t  byte_en,
+                                           bit             is_read,
+                                           uvm_reg_map     map)
+        Args:
+            data:
+            byte_en:
+            is_read:
+            _map:
+        """
         self.sample(data, byte_en, is_read, _map)
 
 
@@ -2109,72 +2457,90 @@ class UVMReg(UVMObject):
     #   // All register callbacks are executed before the corresponding
     #   // field callbacks
     #   //
-    
+
     async def pre_write(self, rw):
+        """
+        Args:
+            rw:
+        """
         #await uvm_empty_delay()
         pass
 
 
-    #   // Task: post_write
-    #   //
-    #   // Called after register write.
-    #   //
-    #   // If the specified ~status~ is modified,
-    #   // the updated status will be
-    #   // returned by the register operation.
-    #   //
-    #   // The registered callback methods are invoked before the invocation
-    #   // of this method.
-    #   // All register callbacks are executed before the corresponding
-    #   // field callbacks
-    #   //
     async def post_write(self, rw):
+        """
+           Task: post_write
+
+           Called after register write.
+
+           If the specified `status` is modified,
+           the updated status will be
+           returned by the register operation.
+
+           The registered callback methods are invoked before the invocation
+           of this method.
+           All register callbacks are executed before the corresponding
+           field callbacks
+
+        Args:
+            rw:
+        """
         #await uvm_empty_delay()
         pass
 
 
-    #   // Task: pre_read
-    #   //
-    #   // Called before register read.
-    #   //
-    #   // If the specified access ~path~ or address ~map~ are modified,
-    #   // the updated access path or address map will be used to perform
-    #   // the register operation.
-    #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-    #   // the operation is aborted.
-    #   //
-    #   // The registered callback methods are invoked after the invocation
-    #   // of this method.
-    #   // All register callbacks are executed before the corresponding
-    #   // field callbacks
-    #   //
     async def pre_read(self, rw):
+        """
+           Task: pre_read
+
+           Called before register read.
+
+           If the specified access `path` or address `map` are modified,
+           the updated access path or address map will be used to perform
+           the register operation.
+           If the `status` is modified to anything other than `UVM_IS_OK`,
+           the operation is aborted.
+
+           The registered callback methods are invoked after the invocation
+           of this method.
+           All register callbacks are executed before the corresponding
+           field callbacks
+
+        Args:
+            rw:
+        """
         #await uvm_empty_delay()
         pass
 
-    #   // Task: post_read
-    #   //
-    #   // Called after register read.
-    #   //
-    #   // If the specified readback data or ~status~ is modified,
-    #   // the updated readback data or status will be
-    #   // returned by the register operation.
-    #   //
-    #   // The registered callback methods are invoked before the invocation
-    #   // of this method.
-    #   // All register callbacks are executed before the corresponding
-    #   // field callbacks
-    #   //
-    #   virtual task post_read(uvm_reg_item rw)
     async def post_read(self, rw):
+        """
+        Called after register read.
+
+        If the specified readback data or `status` is modified,
+        the updated readback data or status will be
+        returned by the register operation.
+
+        The registered callback methods are invoked before the invocation
+        of this method.
+        All register callbacks are executed before the corresponding
+        field callbacks
+
+        Args:
+            rw:
+        """
         #await uvm_empty_delay()
         pass
 
 
     #   extern virtual function void            do_print (uvm_printer printer)
 
-    #   extern virtual function string          convert2string()
     def convert2string(self):
+        """
+        Converts this register into string.
+
+        Returns:
+            str: String representation of this register.
+        """
         prefix = ""
         convert2string = sv.sformatf("Register %s -- %0d bytes, mirror value:'h%h",
             self.get_full_name(), self.get_n_bytes(),self.get())
@@ -2521,8 +2887,6 @@ class UVMReg(UVMObject):
 #//-------------
 #// STANDARD OPS
 #//-------------
-#
-
 #
 #
 #// do_print
