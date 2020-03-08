@@ -215,16 +215,13 @@ class UVMParentChildLink(UVMLinkBase):
 
 
 class UVMCauseEffectLink(UVMLinkBase):
-    #
+
     #   // Variable- m_lhs,m_rhs
     #   // Implementation details
     #   local UVMObject m_lhs
     #   local UVMObject m_rhs
-    #
-    #   // Object utils
-    #   `uvm_object_utils_begin(UVMCauseEffectLink)
-    #   `uvm_object_utils_end
-    #
+
+
     #   // Function: new
     #   // Constructor
     #   //
@@ -260,29 +257,27 @@ class UVMCauseEffectLink(UVMLinkBase):
     def do_set_lhs(self, lhs):
         self.m_lhs = lhs
 
-    #
+
     #   // Function: do_get_lhs
     #   // Retrieves the left-hand-side (Cause)
     #   //
     def do_get_lhs(self):
         return self.m_lhs
 
-    #
+
     #   // Function: do_set_rhs
     #   // Sets the right-hand-side (Effect)
     #   //
     def do_set_rhs(self, rhs):
         self.m_rhs = rhs
 
-    #
+
     #   // Function: do_get_rhs
     #   // Retrieves the right-hand-side (Effect)
     #   //
     def do_get_rhs(self):
         return self.m_rhs
 
-    #
-    #endclass : UVMCauseEffectLink
 uvm_object_utils(UVMParentChildLink)
 
 #//------------------------------------------------------------------------------
@@ -335,7 +330,6 @@ class UVMRelatedLink(UVMLinkBase):
     #      m_lhs = lhs
     #   endfunction : do_set_lhs
 
-    #
     #   // Function: do_get_lhs
     #   // Retrieves the left-hand-side
     #   //
@@ -343,7 +337,6 @@ class UVMRelatedLink(UVMLinkBase):
     #      return m_lhs
     #   endfunction : do_get_lhs
 
-    #
     #   // Function: do_set_rhs
     #   // Sets the right-hand-side
     #   //
@@ -351,7 +344,6 @@ class UVMRelatedLink(UVMLinkBase):
     #      m_rhs = rhs
     #   endfunction : do_set_rhs
 
-    #
     #   // Function: do_get_rhs
     #   // Retrieves the right-hand-side
     #   //
@@ -359,6 +351,5 @@ class UVMRelatedLink(UVMLinkBase):
     #      return m_rhs
     #   endfunction : do_get_rhs
 
-    #
-    #endclass : UVMRelatedLink
+
 uvm_object_utils(UVMRelatedLink)
