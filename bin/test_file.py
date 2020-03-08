@@ -10,8 +10,12 @@ import_var = "ABC"
 def comment_this_func(aaa):
     return aaa * 2
 
-
+## Move this as class comment docstring
+## Add this to class
 class ABC():
+
+    def do_not_comment_this(self):
+        pass
 
     # Nothing to do here
     test_var = ""
@@ -61,6 +65,7 @@ class ABC():
         if 1 == 0:
             if 2 == 3:
                 pass
+    # Misc class comments
 
     # Move this to docstring of 'must_comment' function
     def must_comment(self):
