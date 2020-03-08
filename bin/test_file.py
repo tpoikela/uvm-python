@@ -60,6 +60,19 @@ class ABC():
     def no_comments_here(self):
         pass
 
+    # Should convert to docstring
+    def receives_docstring(self, a, b, c):
+        # Started comment
+        if a > b:
+            # Need to do something
+            c = b * a
+        # Closing comments
+        return (c * c)
+
+    # Get comment also
+    def short_func(self, k):
+        pass
+
 
     def triple_dedent_at_end(self):
         if 1 == 0:
