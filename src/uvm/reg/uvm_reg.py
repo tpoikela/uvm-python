@@ -83,7 +83,6 @@ class UVMReg(UVMObject):
             name:
             n_bits:
             has_coverage:
-            UVM_NO_COVERAGE:
         """
         super().__init__(name)
         self.m_fields = []   # Fields in LSB to MSB order
@@ -117,24 +116,21 @@ class UVMReg(UVMObject):
 
         if n_bits > UVMReg.m_max_size:
             UVMReg.m_max_size = n_bits
-        #endfunction: new
 
 
     def configure(self, blk_parent, regfile_parent=None, hdl_path=""):
         """
-           Function: configure
+        Instance-specific configuration
 
-           Instance-specific configuration
+        Specify the parent block of this register.
+        May also set a parent register file for this register,
 
-           Specify the parent block of this register.
-           May also set a parent register file for this register,
-
-           If the register is implemented in a single HDL variable,
-           its name is specified as the `hdl_path`.
-           Otherwise, if the register is implemented as a concatenation
-           of variables (usually one per field), then the HDL path
-           must be specified using the <add_hdl_path()> or
-           `add_hdl_path_slice` method.
+        If the register is implemented in a single HDL variable,
+        its name is specified as the `hdl_path`.
+        Otherwise, if the register is implemented as a concatenation
+        of variables (usually one per field), then the HDL path
+        must be specified using the <add_hdl_path()> or
+        `add_hdl_path_slice` method.
 
         Args:
             blk_parent:
@@ -157,16 +153,14 @@ class UVMReg(UVMObject):
 
     def set_offset(self, reg_map, offset, unmapped=0):
         """
-           Function: set_offset
+        Modify the offset of the register
 
-           Modify the offset of the register
+        The offset of a register within an address map is set using the
+        <uvm_reg_map::add_reg()> method.
+        This method is used to modify that offset dynamically.
 
-           The offset of a register within an address map is set using the
-           <uvm_reg_map::add_reg()> method.
-           This method is used to modify that offset dynamically.
-
-           Modifying the offset of a register will make the register model
-           diverge from the specification that was used to create it.
+        Modifying the offset of a register will make the register model
+        diverge from the specification that was used to create it.
 
         Args:
             reg_map:
@@ -201,7 +195,7 @@ class UVMReg(UVMObject):
         """
           /*local*/ extern virtual function void add_field  (uvm_reg_field field)
         Args:
-            field:
+            field (UVMRegField): Reg field to add into this register.
         """
         offset = 0
         idx = 0
@@ -247,13 +241,12 @@ class UVMReg(UVMObject):
                     self.m_fields[idx+1].get_lsb_pos()):
                 uvm_report_error("RegModel", "Field {} overlaps field {} in register \"{}\"".format(
                     field.get_name(), self.m_fields[idx+1].get_name(), self.get_name()))
-    #endfunction: add_field
+
 
     def add_map(self, reg_map):
         """
-          /*local*/ extern virtual function void add_map    (uvm_reg_map map)
         Args:
-            reg_map:
+            reg_map (UVMRegMap): Add a register map for this register.
         """
         self.m_maps.add(reg_map, 1)
 
@@ -277,14 +270,13 @@ class UVMReg(UVMObject):
 
     def get_full_name(self):
         """
-           Function: get_full_name
-
            Get the hierarchical name
 
            Return the hierarchal name of this register.
            The base of the hierarchical name is the root block.
 
         Returns:
+            str: The hierarchical name of this register.
         """
         if (self.m_regfile_parent is not None):
             return self.m_regfile_parent.get_full_name() + "." + self.get_name()
@@ -296,53 +288,46 @@ class UVMReg(UVMObject):
 
     def get_parent(self):
         """
-           Function: get_parent
-
            Get the parent block
 
-          extern virtual function uvm_reg_block get_parent ()
         Returns:
+            UVMRegBlock: Parent block of this register.
         """
         return self.get_block()
 
     def get_block(self):
         """
-          extern virtual function uvm_reg_block get_block  ()
         Returns:
+            UVMRegBlock: Parent block of this register.
         """
         return self.m_parent
 
     def get_regfile(self):
         """
-           Function: get_regfile
-
            Get the parent register file
-
            Returns `None` if this register is instantiated in a block.
 
         Returns:
+            UVMRegFile: Parent register file of this register.
         """
         return self.m_regfile_parent
 
 
     def get_n_maps(self):
         """
-           Function: get_n_maps
-
            Returns the number of address maps this register is mapped in
 
         Returns:
+            int: Number of address map this registers is mapped in
         """
         return self.m_maps.num()
 
     def is_in_map(self, _map):
         """
-           Function: is_in_map
-
            Returns 1 if this register is in the specified address `map`
 
         Args:
-            _map:
+            _map (UVMRegMap):
         Returns:
         """
         if _map in self.m_maps:
@@ -360,8 +345,6 @@ class UVMReg(UVMObject):
 
     def get_maps(self, maps):
         """
-           Function: get_maps
-
            Returns all of the address `maps` where this register is mapped
 
           extern virtual function void get_maps (ref uvm_reg_map maps[$])
