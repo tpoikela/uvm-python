@@ -56,7 +56,7 @@ class UVMEventBase(UVMObject):
         self.callbacks = UVMQueue()  # uvm_event_callback
         self.m_waiters = 0
         self.m_value_changed_event = Event("value_changed_event_" + name)
-    # endfunction
+
 
     def set_value(self, key, value):
         setattr(self, key, value)
@@ -94,7 +94,6 @@ class UVMEventBase(UVMObject):
     #    // Once an event has been triggered, it will be remain "on" until the event
     #    // is <reset>.
     #    virtual task wait_on (bit delta = 0)
-    
     async def wait_on(self, delta=False):
         if self.on is True:
             if delta is True:
@@ -104,12 +103,7 @@ class UVMEventBase(UVMObject):
             return
         self.num_waiters += 1
         await wait(lambda: self.on is True, self.m_value_changed_event)
-        #while True:
-        #    yield self.m_value_changed_event.wait()
-        #    self.m_value_changed_event.clear()
-        #    if self.on is True:
-        #        break
-        # endtask
+
 
     #    // Task: wait_off
     #    //
@@ -122,7 +116,6 @@ class UVMEventBase(UVMObject):
     #    // previously waiting processes have had a chance to resume.
     #
     #    virtual task wait_off (bit delta = 0)
-    
     async def wait_off(self, delta=False):
         if self.on is False:
             if delta is True:
@@ -142,12 +135,11 @@ class UVMEventBase(UVMObject):
     #    // occurs after the trigger, this method will not return until the next
     #    // trigger, which may never occur and thus cause deadlock.
     #
-    
     async def wait_trigger(self):
         self.num_waiters += 1
         await self.m_event.wait()
         self.m_event.clear()
-    # endtask
+
 
     #    // Task: wait_ptrigger
     #    //
@@ -155,8 +147,6 @@ class UVMEventBase(UVMObject):
     #    // views the trigger as persistent within a given time-slice and thus avoids
     #    // certain race conditions. If this method is called after the trigger but
     #    // within the same time-slice, the caller returns immediately.
-
-    
     async def wait_ptrigger(self):
         if self.m_event.fired:
             return
@@ -181,7 +171,6 @@ class UVMEventBase(UVMObject):
     #    // Indicates whether the event has been triggered since it was last reset.
     #    //
     #    // A return of 1 indicates that the event has triggered.
-    #
     def is_on(self):
         return self.on
 
@@ -190,7 +179,6 @@ class UVMEventBase(UVMObject):
     #    // Indicates whether the event has been triggered or been reset.
     #    //
     #    // A return of 1 indicates that the event has not been triggered.
-    #
     def is_off(self):
         return self.on is False
 
@@ -200,7 +188,6 @@ class UVMEventBase(UVMObject):
     #    // currently waiting for the event are activated before the reset.
     #    //
     #    // No self.callbacks are called during a reset.
-    #
     def reset(self, wakeup=False):
         if wakeup is True:
             self.m_event.set()
@@ -290,12 +277,10 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
         self.trigger_data = None
         self.T = None
 
-    #endfunction
 
     # Task: wait_trigger_data
     #
     # This method calls <uvm_event_base::wait_trigger> followed by <get_trigger_data>.
-    
     async def wait_trigger_data(self):  # output T data)
         await self.wait_trigger()
         return self.get_trigger_data()
@@ -306,7 +291,6 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #    // This method calls <uvm_event_base::wait_ptrigger> followed by <get_trigger_data>.
     #
     #    virtual task wait_ptrigger_data (output T data)
-    
     async def wait_ptrigger_data(self, data):
         await self.wait_ptrigger()
         trig_data = self.get_trigger_data()
@@ -323,7 +307,6 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #    //
     #    // An optional ~data~ argument can be supplied with the enable to provide
     #    // trigger-specific information.
-    #
     def trigger(self, data=None):
         skip = False
         if self.callbacks.size() > 0:
@@ -342,7 +325,6 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
             self.set_value("on", True)
             self.trigger_time = sv.realtime()
             self.trigger_data = data
-    # endfunction
 
 
     # Function: get_trigger_data
@@ -354,10 +336,7 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     def get_type_name(self):
         return UVMEvent.type_name
 
-    #     //-----------//
-    #    // callbacks //
-    #    //-----------//
-    #
+
     #    // Function: add_callback
     #    //
     #    // Registers a callback object, ~cb~, with this event. The callback object
@@ -406,5 +385,3 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #        v=new(name)
     #        return v
     #    endfunction
-
-    # endclass
