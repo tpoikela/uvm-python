@@ -20,12 +20,9 @@
 #   the License for the specific language governing
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
-#
+
 # File: Miscellaneous Structures
-#
-#------------------------------------------------------------------------------
-#
-# Class: uvm_void
+
 """
 The :class:`UVMVoid` class is the base class for all UVM classes. It is an abstract
 class with no data members or functions. It allows for generic containers of
@@ -34,8 +31,6 @@ language. User classes derived directly from :class:`UVMVoid` inherit none of th
 UVM functionality, but such classes may be placed in :class:`UVMVoid`-typed
 containers along with other UVM objects.
 """
-#
-#------------------------------------------------------------------------------
 
 import re
 from .uvm_object_globals import *
@@ -55,9 +50,8 @@ UVM_ENABLE_FIELD_CHECKS = 0
 def isunknown(value):
     return False
 
+
 # Function- uvm_get_array_index_string
-#
-#
 def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
     i = 0
     res = ""
@@ -74,27 +68,25 @@ def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
         is_wildcard = 0
     return res
 
+
 # Function- uvm_bitstream_to_string
-#
-#
 def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     # sign extend & don't show radix for negative values
-    if radix == UVM_DEC: # and value[size-1] == 1: TODO
+    if radix == UVM_DEC:  # and value[size-1] == 1: TODO
         return "{}".format(value)
 
     # TODO $countbits(value,'z) would be even better
     if isunknown(value):
-        _t=0;
+        _t = 0
         for idx in range(0, size):
             _t[idx] = value[idx]
-            value=_t
+            value = _t
     else:
         value &= (1 << size) - 1
     return num_with_radix(radix, radix_str, value)
 
+
 # Function- uvm_integral_to_string
-#
-#
 def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     # sign extend & don't show radix for negative values
     if radix == UVM_DEC and value[size-1] == 1:
@@ -105,7 +97,7 @@ def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
         _t = 0
         for idx in range(0, size):
             _t[idx] = value[idx]
-            value=_t;
+            value = _t
     else:
         value &= (1 << size) - 1
     return num_with_radix(radix, radix_str, value)
