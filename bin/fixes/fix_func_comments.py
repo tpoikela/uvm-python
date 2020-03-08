@@ -24,8 +24,12 @@ from lib2to3.pygram import python_symbols
 
 DEBUG = False
 
+re_empty = re.compile(r'^\s*$')
 re_dedent = re.compile(r'\n    #')
+re_code_block = re.compile(r'^\s+#?\|')
+re_hash_only = re.compile('^\s+#$')
 
+rst_code_block = '.. code-block:: python'
 
 def _debug(*args):
     if DEBUG is True:
@@ -251,7 +255,6 @@ class FixFuncComments(fixer_base.BaseFix):
         more parts. FInd the last empty line, then use that line as split
         point.
         """
-        re_empty = re.compile(r'^\s*$')
         before = []
         after = []
         last_empty = -1
@@ -308,29 +311,45 @@ class FixFuncComments(fixer_base.BaseFix):
 
 
     def format_docstring(self, func_name, text, indent):
-        indented_text = text.replace('# ', '')
-        indented_text = indented_text.replace('//', '')
+        indented_text = text.replace('//', '')
+        indented_text = indented_text.replace('# ', '')
         split = indented_text.split("\n")
 
+        new_split = []
+        in_code_block = False
         for i, line in enumerate(split):
             split[i] = self.re_link.sub(r'`\1`', line)
-            split[i] = self.re_link2.sub(r'`\1`', line)
-            if len(line) < len(indent):
+            split[i] = self.re_link2.sub(r'`\1`', split[i])
+
+            if re_code_block.search(split[i]):
+                split[i] = split[i].replace('#|', '')
+                if in_code_block is False:
+                    in_code_block = True
+                    new_split.append(indent + rst_code_block)
+                    new_split.append('')
+            else:
+                in_code_block = False
+
+            if len(split[i]) < len(indent):
                 split[i] = indent + split[i]
+            split[i] = re_hash_only.sub('', split[i])
+            new_split.append(split[i])
 
         if func_name in self.func_args:
             args = self.func_args[func_name]
-            split.append(indent + "Args:")
+            new_split.append(indent + "Args:")
             for arg in args:
-                split.append(indent + "    " + arg + ": ")
+                if arg not in ['None', 'True', 'False']:
+                    new_split.append(indent + "    " + arg + ": ")
         if func_name in self.func_return:
-            split.append(indent + "Returns:")
+            new_split.append(indent + "Returns:")
         if func_name in self.func_raises:
-            split.append(indent + "Raises:")
-        return "\n".join(split)
+            new_split.append(indent + "Raises:")
+        return "\n".join(new_split)
 
 
     def reset_func_data(self):
+        """ Resets all collected function data """
         self.comments = []
         self.reset_state()
         self.def_name = ""
@@ -339,4 +358,3 @@ class FixFuncComments(fixer_base.BaseFix):
         self.func_return = {}
         self.func_raises = {}
         self.func_indent = {}
-
