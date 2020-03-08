@@ -52,16 +52,15 @@ def o2str(ordering):
     return "<NO_ORDER_ADDED>"
 
 
-#
-# Class - UVMTypeIDBase
-#
-#------------------------------------------------------------------------------
-# Simple typeid interface. Need this to set up the base-super mapping.
-# This is similar to the factory, but much simpler. The idea of this
-# interface is that each object type T has a typeid that can be
-# used for mapping type relationships. This is not a user visible class.
 
 class UVMTypeIDBase:
+    """
+    Simple typeid interface. Need this to set up the base-super mapping.
+    This is similar to the factory, but much simpler. The idea of this
+    interface is that each object type T has a typeid that can be
+    used for mapping type relationships. This is not a user visible class.
+    """
+
     typename = ""
 
     # UVMTypeIDBase -> uvm_callbacks
@@ -70,11 +69,6 @@ class UVMTypeIDBase:
     # uvm_callbacks_base -> UVMTypeIDBase
     type_map = {}
 
-#------------------------------------------------------------------------------
-#
-# Class - uvm_typeid#(T)
-#
-#------------------------------------------------------------------------------
 
 class UVMTypeID(UVMTypeIDBase):
     m_b_inst = None
@@ -85,25 +79,24 @@ class UVMTypeID(UVMTypeIDBase):
             UVMTypeID.m_b_inst = UVMTypeID()
         return UVMTypeID.m_b_inst
 
-#------------------------------------------------------------------------------
-# Class - uvm_callbacks_base
-#
-# Base class singleton that holds generic queues for all instance
-# specific objects. This is an internal class. This class contains a
-# global pool that has all of the instance specific callback queues in it.
-# All of the typewide callback queues live in the derivative class
-# uvm_typed_callbacks#(T). This is not a user visible class.
-#
-# This class holds the class inheritance hierarchy information
-# (super types and derivative types).
-#
-# Note, all derivative uvm_callbacks#() class singletons access this
-# global m_pool object in order to get access to their specific
-# instance queue.
-#------------------------------------------------------------------------------
-
 
 class UVMCallbacksBase(UVMObject):
+    """
+    Class - uvm_callbacks_base
+
+    Base class singleton that holds generic queues for all instance
+    specific objects. This is an internal class. This class contains a
+    global pool that has all of the instance specific callback queues in it.
+    All of the typewide callback queues live in the derivative class
+    uvm_typed_callbacks#(T). This is not a user visible class.
+
+    This class holds the class inheritance hierarchy information
+    (super types and derivative types).
+
+    Note, all derivative uvm_callbacks#() class singletons access this
+    global m_pool object in order to get access to their specific
+    instance queue.
+    """
 
     m_b_inst = None
     m_pool = UVMPool()  # uvm_object -> uvm_queue#(uvm_callback)
@@ -141,10 +134,16 @@ class UVMCallbacksBase(UVMObject):
     def m_delete_tw_cbs(self, cb):
         return 0
 
-    # Check registration. To test registration, start at this class and
-    # work down the class hierarchy. If any class returns true then
-    # the pair is legal.
     def check_registration(self, obj, cb):
+        """
+        Check registration. To test registration, start at this class and
+        work down the class hierarchy. If any class returns true then
+        the pair is legal.
+        Args:
+            obj:
+            cb:
+        Returns:
+        """
         st = None
         dt = None
 
@@ -165,19 +164,25 @@ class UVMCallbacksBase(UVMObject):
 
         return False
 
-    # Function: get_first
-    #
-    # Returns the first enabled callback of type CB which resides in the queue for ~obj~.
-    # If ~obj~ is ~None~ then the typewide queue for T is searched. ~itr~ is the iterator
-    # it will be updated with a value that can be supplied to <get_next> to get the next
-    # callback object.
-    #
-    # If the queue is empty then ~None~ is returned.
-    #
-    # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
-    # iterator interface.
     @classmethod
     def get_first(cls, itr, obj, CB=None):
+        """
+        Returns the first enabled callback of type CB which resides in the queue for `obj`.
+        If `obj` is `None` then the typewide queue for T is searched. `itr` is the iterator
+        it will be updated with a value that can be supplied to `get_next` to get the next
+        callback object.
+
+        If the queue is empty then `None` is returned.
+
+        The iterator class `uvm_callback_iter` may be used as an alternative, simplified,
+        iterator interface.
+        Args:
+            cls:
+            itr:
+            obj:
+            CB:
+        Returns:
+        """
         cb = None
         cls.get()
         q = cls.m_get_q(obj, CB)
@@ -234,8 +239,13 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         return UVMTypedCallbacks.m_t_inst
 
 
-    # Type checking interface: is given ~obj~ of type T?
     def m_am_i_a(self, obj):
+        """
+        Type checking interface: is given `obj` of type T?
+        Args:
+            obj:
+        Returns:
+        """
         if obj is None:
             return True
         arr = []
@@ -244,8 +254,14 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         return True
 
 
-    # Getting the typewide queue
     def m_get_tw_cb_q(self, obj, CB=None):
+        """
+        Getting the typewide queue
+        Args:
+            obj:
+            CB:
+        Returns:
+        """
         if self.m_am_i_a(obj):
             for i in range(len(self.m_derived_types)):
                 #super_type dt
@@ -267,9 +283,17 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         return -1
 
 
-    #  static function int m_cb_find_name(uvm_queue#(uvm_callback) q, string name, string where)
     @classmethod
     def m_cb_find_name(cls, q, name, where):
+        """
+         static function int m_cb_find_name(uvm_queue#(uvm_callback) q, string name, string where)
+        Args:
+            cls:
+            q:
+            name:
+            where:
+        Returns:
+        """
         cb = None
         for i in range(len(q)):
             cb = q[i]
@@ -281,9 +305,14 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         #  endfunction
 
 
-    #  #For a typewide callback, need to add to derivative types as well.
-    #  virtual function void m_add_tw_cbs(uvm_callback cb, uvm_apprepend ordering)
     def m_add_tw_cbs(self, cb, ordering):
+        """
+         #For a typewide callback, need to add to derivative types as well.
+         virtual function void m_add_tw_cbs(uvm_callback cb, uvm_apprepend ordering)
+        Args:
+            cb:
+            ordering:
+        """
         cb_pair = None  # super_type
         obj = None  # uvm_object
         me = None  # T
@@ -367,9 +396,14 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
     #  endfunction
 
 
-    #  static function void display(T obj=None)
     @classmethod
     def display(cls, obj=None):
+        """
+         static function void display(T obj=None)
+        Args:
+            cls:
+            obj:
+        """
         #    T me
         #    super_type ib = m_t_inst
         cbq = []  # string [$]
@@ -551,11 +585,14 @@ class UVMCallbacks(UVMTypedCallbacks):
         self.CB = CB
 
 
-    #  # get
-    #  # ---
-    #
     @classmethod
     def get(cls):
+        """
+         get
+         ---
+
+        Returns:
+        """
 
         if cls.m_inst is None:
             cb_base_type = UVMTypeIDBase()
@@ -584,12 +621,21 @@ class UVMCallbacks(UVMTypedCallbacks):
         return cls.m_inst
 
 
-    #  # m_register_pair
-    #  # -------------
-    #  # Register valid callback type
-    #
     @classmethod
     def m_register_pair(cls, tname="", cbname="", T=ALL_TYPES):
+        """
+         m_register_pair
+         -------------
+         Register valid callback type
+
+        Args:
+            cls:
+            tname:
+            cbname:
+            T:
+            ALL_TYPES:
+        Returns:
+        """
         inst = cls.get()
         # tpoikela: mimics typed callbacks by creating one cbs-object
         # per registered pair
@@ -880,15 +926,22 @@ class UVMCallbacks(UVMTypedCallbacks):
     #  endfunction
 
 
-    #--------------------------
-    # Group: Iterator Interface
-    #--------------------------
-    #
-    # This set of functions provide an iterator interface for callback queues.
-    # A facade class, <uvm_callback_iter> is also available, and is the generally
-    # preferred way to iterate over callback queues.
     @classmethod
     def m_get_q(cls, obj, CB=None):
+        """
+        #--------------------------
+        Group: Iterator Interface
+        #--------------------------
+
+        This set of functions provide an iterator interface for callback queues.
+        A facade class, `uvm_callback_iter` is also available, and is the generally
+        preferred way to iterate over callback queues.
+        Args:
+            cls:
+            obj:
+            CB:
+        Returns:
+        """
         q = None
         if not cls.m_base_inst.m_pool.exists(obj):  # no instance specific
             if obj is None:
@@ -902,20 +955,28 @@ class UVMCallbacks(UVMTypedCallbacks):
                 cls.m_base_inst.m_pool.add(obj, q)
         return q
 
-    #  # Function: get_first
-    #  #
-    #  # Returns the first enabled callback of type CB which resides in the queue for ~obj~.
-    #  # If ~obj~ is ~None~ then the typewide queue for T is searched. ~itr~ is the iterator
-    #  # it will be updated with a value that can be supplied to <get_next> to get the next
-    #  # callback object.
-    #  #
-    #  # If the queue is empty then ~None~ is returned.
-    #  #
-    #  # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
-    #  # iterator interface.
-    #
     @classmethod
     def get_first(cls, itr, obj, CB=None):
+        """
+         Function: get_first
+
+         Returns the first enabled callback of type CB which resides in the queue for `obj`.
+         If `obj` is `None` then the typewide queue for T is searched. `itr` is the iterator
+         it will be updated with a value that can be supplied to `get_next` to get the next
+         callback object.
+
+         If the queue is empty then `None` is returned.
+
+         The iterator class `uvm_callback_iter` may be used as an alternative, simplified,
+         iterator interface.
+
+        Args:
+            cls:
+            itr:
+            obj:
+            CB:
+        Returns:
+        """
         cls.get()
         # tpoikela: added to mimic typed cbs
         typed_cls = cls._get_typed_cbs(obj, CB)
@@ -933,21 +994,29 @@ class UVMCallbacks(UVMTypedCallbacks):
         #  endfunction
 
 
-    #  # Function: get_last
-    #  #
-    #  # Returns the last enabled callback of type CB which resides in the queue for ~obj~.
-    #  # If ~obj~ is ~None~ then the typewide queue for T is searched. ~itr~ is the iterator
-    #  # it will be updated with a value that can be supplied to <get_prev> to get the previous
-    #  # callback object.
-    #  #
-    #  # If the queue is empty then ~None~ is returned.
-    #  #
-    #  # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
-    #  # iterator interface.
-    #
-    #  static function CB get_last (ref int itr, input T obj)
     @classmethod
     def get_last(cls, itr, obj, CB=None):
+        """
+         Function: get_last
+
+         Returns the last enabled callback of type CB which resides in the queue for `obj`.
+         If `obj` is `None` then the typewide queue for T is searched. `itr` is the iterator
+         it will be updated with a value that can be supplied to `get_prev` to get the previous
+         callback object.
+
+         If the queue is empty then `None` is returned.
+
+         The iterator class `uvm_callback_iter` may be used as an alternative, simplified,
+         iterator interface.
+
+         static function CB get_last (ref int itr, input T obj)
+        Args:
+            cls:
+            itr:
+            obj:
+            CB:
+        Returns:
+        """
         cls.get()
         # tpoikela: added to mimic typed cbs
         typed_cls = cls._get_typed_cbs(obj, CB)
@@ -963,23 +1032,31 @@ class UVMCallbacks(UVMTypedCallbacks):
                 return q[itr.m_i]  # Just return 1st index without type match
         return None
 
-    #  # Function: get_next
-    #  #
-    #  # Returns the next enabled callback of type CB which resides in the queue for ~obj~,
-    #  # using ~itr~ as the starting point. If ~obj~ is ~None~ then the typewide queue for T
-    #  # is searched. ~itr~ is the iterator; it will be updated with a value that can be
-    #  # supplied to <get_next> to get the next callback object.
-    #  #
-    #  # If no more callbacks exist in the queue, then ~None~ is returned. <get_next> will
-    #  # continue to return ~None~ in this case until <get_first> or <get_last> has been used to reset
-    #  # the iterator.
-    #  #
-    #  # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
-    #  # iterator interface.
-    #
-    #  static function CB get_next (ref int itr, input T obj)
     @classmethod
     def get_next(cls, itr, obj, CB=None):
+        """
+         Function: get_next
+
+         Returns the next enabled callback of type CB which resides in the queue for `obj`,
+         using `itr` as the starting point. If `obj` is `None` then the typewide queue for T
+         is searched. `itr` is the iterator; it will be updated with a value that can be
+         supplied to `get_next` to get the next callback object.
+
+         If no more callbacks exist in the queue, then `None` is returned. `get_next` will
+         continue to return `None` in this case until `get_first` or `get_last` has been used to reset
+         the iterator.
+
+         The iterator class `uvm_callback_iter` may be used as an alternative, simplified,
+         iterator interface.
+
+         static function CB get_next (ref int itr, input T obj)
+        Args:
+            cls:
+            itr:
+            obj:
+            CB:
+        Returns:
+        """
         cls.get()
         # tpoikela: added to mimic typed cbs
         typed_cls = cls._get_typed_cbs(obj, CB)
@@ -996,25 +1073,33 @@ class UVMCallbacks(UVMTypedCallbacks):
         return None
         #  endfunction
 
-    #
-    #
-    #  # Function: get_prev
-    #  #
-    #  # Returns the previous enabled callback of type CB which resides in the queue for ~obj~,
-    #  # using ~itr~ as the starting point. If ~obj~ is ~None~ then the typewide queue for T
-    #  # is searched. ~itr~ is the iterator; it will be updated with a value that can be
-    #  # supplied to <get_prev> to get the previous callback object.
-    #  #
-    #  # If no more callbacks exist in the queue, then ~None~ is returned. <get_prev> will
-    #  # continue to return ~None~ in this case until <get_first> or <get_last> has been used to reset
-    #  # the iterator.
-    #  #
-    #  # The iterator class <uvm_callback_iter> may be used as an alternative, simplified,
-    #  # iterator interface.
-    #
-    #  static function CB get_prev (ref int itr, input T obj)
     @classmethod
     def get_prev(cls, itr, obj, CB=None):
+        """
+
+
+         Function: get_prev
+
+         Returns the previous enabled callback of type CB which resides in the queue for `obj`,
+         using `itr` as the starting point. If `obj` is `None` then the typewide queue for T
+         is searched. `itr` is the iterator; it will be updated with a value that can be
+         supplied to `get_prev` to get the previous callback object.
+
+         If no more callbacks exist in the queue, then `None` is returned. `get_prev` will
+         continue to return `None` in this case until `get_first` or `get_last` has been used to reset
+         the iterator.
+
+         The iterator class `uvm_callback_iter` may be used as an alternative, simplified,
+         iterator interface.
+
+         static function CB get_prev (ref int itr, input T obj)
+        Args:
+            cls:
+            itr:
+            obj:
+            CB:
+        Returns:
+        """
         cls.get()
         # tpoikela: added to mimic typed cbs
         typed_cls = cls._get_typed_cbs(obj, CB)
@@ -1032,19 +1117,24 @@ class UVMCallbacks(UVMTypedCallbacks):
         return None
 
 
-    #  #-------------
-    #  # Group: Debug
-    #  #-------------
-    #
-    #  # Function: display
-    #  #
-    #  # This function displays callback information for ~obj~. If ~obj~ is
-    #  # ~None~, then it displays callback information for all objects
-    #  # of type ~T~, including typewide callbacks.
-    #
-    #  static function void display(T obj=None)
     @classmethod
     def display(cls, obj=None):
+        """
+         #-------------
+         Group: Debug
+         #-------------
+
+         Function: display
+
+         This function displays callback information for `obj`. If `obj` is
+         `None`, then it displays callback information for all objects
+         of type `T`, including typewide callbacks.
+
+         static function void display(T obj=None)
+        Args:
+            cls:
+            obj:
+        """
         # For documentation purposes, need a function wrapper here.
         cls.get()
         super().display(obj)
@@ -1114,30 +1204,27 @@ class UVMCallbacks(UVMTypedCallbacks):
 #
 #endclass
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_callback_iter
-#
-#------------------------------------------------------------------------------
-# The ~uvm_callback_iter~ class is an iterator class for iterating over
-# callback queues of a specific callback type. The typical usage of
-# the class is:
-#
-#| uvm_callback_iter#(mycomp,mycb) iter = new(this)
-#| for(mycb cb = iter.first(); cb is not None; cb = iter.next())
-#|    cb.dosomething()
-#
-# The callback iteration macros, <`uvm_do_callbacks> and
-# <`uvm_do_callbacks_exit_on> provide a simple method for iterating
-# callbacks and executing the callback methods.
-#------------------------------------------------------------------------------
 class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
+    """
+    The ~uvm_callback_iter~ class is an iterator class for iterating over
+    callback queues of a specific callback type. The typical usage of
+    the class is:
+
+    .. code-block:: python
+
+      uvm_callback_iter#(mycomp,mycb) iter = new(this)
+      for(mycb cb = iter.first(); cb is not None; cb = iter.next())
+        cb.dosomething()
+
+    The callback iteration macros, <`uvm_do_callbacks> and
+    <`uvm_do_callbacks_exit_on> provide a simple method for iterating
+    callbacks and executing the callback methods.
+    """
 
     # Function: new
     #
     # Creates a new callback iterator object. It is required that the object
     # context be provided.
-
     def __init__(self, obj, CB=None):
         self.m_i = 0
         self.m_cb = None  # UVMCallback
@@ -1149,43 +1236,51 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     # Returns the first valid (enabled) callback of the callback type (or
     # a derivative) that is in the queue of the context object. If the
     # queue is empty then ~None~ is returned.
-
     def first(self):
         self.m_cb = UVMCallbacks.get_first(self, self.m_obj, self.CB)
         return self.m_cb
 
-    # Function: last
-    #
-    # Returns the last valid (enabled) callback of the callback type (or
-    # a derivative) that is in the queue of the context object. If the
-    # queue is empty then ~None~ is returned.
     def last(self):
+        """
+        Function: last
+
+        Returns the last valid (enabled) callback of the callback type (or
+        a derivative) that is in the queue of the context object. If the
+        queue is empty then `None` is returned.
+        Returns:
+        """
         self.m_cb = UVMCallbacks.get_last(self, self.m_obj, self.CB)
         return self.m_cb
 
-    # Function: next
-    #
-    # Returns the next valid (enabled) callback of the callback type (or
-    # a derivative) that is in the queue of the context object. If there
-    # are no more valid callbacks in the queue, then ~None~ is returned.
     def next(self):
+        """
+        Returns the next valid (enabled) callback of the callback type (or
+        a derivative) that is in the queue of the context object. If there
+        are no more valid callbacks in the queue, then `None` is returned.
+
+        Returns:
+        """
         self.m_cb = UVMCallbacks.get_next(self, self.m_obj, self.CB)
         return self.m_cb
 
-    # Function: prev
-    #
-    # Returns the previous valid (enabled) callback of the callback type (or
-    # a derivative) that is in the queue of the context object. If there
-    # are no more valid callbacks in the queue, then ~None~ is returned.
     def prev(self):
+        """
+        Returns the previous valid (enabled) callback of the callback type (or
+        a derivative) that is in the queue of the context object. If there
+        are no more valid callbacks in the queue, then `None` is returned.
+
+        Returns:
+        """
         self.m_cb = UVMCallbacks.get_prev(self, self.m_obj, self.CB)
         return self.m_cb
 
-    # Function: get_cb
-    #
-    # Returns the last callback accessed via a first() or next()
-    # call.
     def get_cb(self):
+        """
+        Returns the last callback accessed via a first() or next()
+        call.
+
+        Returns:
+        """
         return self.m_cb
 
     #function void trace(uvm_object obj = None)
@@ -1202,39 +1297,42 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     #endfunction
     #endclass
 
-#------------------------------------------------------------------------------
-# CLASS: uvm_callback
-#
-# The ~uvm_callback~ class is the base class for user-defined callback classes.
-# Typically, the component developer defines an application-specific callback
-# class that extends from this class. In it, he defines one or more virtual
-# methods, called a ~callback interface~, that represent the hooks available
-# for user override.
-#
-# Methods intended for optional override should not be declared ~pure.~ Usually,
-# all the callback methods are defined with empty implementations so users have
-# the option of overriding any or all of them.
-#
-# The prototypes for each hook method are completely application specific with
-# no restrictions.
-#------------------------------------------------------------------------------
-
 
 class UVMCallback(UVMObject):
+    """
+    The ~uvm_callback~ class is the base class for user-defined callback classes.
+    Typically, the component developer defines an application-specific callback
+    class that extends from this class. In it, he defines one or more virtual
+    methods, called a ~callback interface~, that represent the hooks available
+    for user override.
+    
+    Methods intended for optional override should not be declared ~pure.~ Usually,
+    all the callback methods are defined with empty implementations so users have
+    the option of overriding any or all of them.
+    
+    The prototypes for each hook method are completely application specific with
+    no restrictions.
+    """
+
 
     reporter = UVMReportObject("cb_tracer")
 
-    # Function: new
-    #
-    # Creates a new uvm_callback object, giving it an optional ~name~.
     def __init__(self, name="uvm_callback"):
+        """
+        Creates a new uvm_callback object, giving it an optional `name`.
+        Args:
+            name:
+        """
         super().__init__(name)
         self.m_enabled = True
 
-    # Function: callback_mode
-    #
-    # Enable/disable callbacks (modeled like rand_mode and constraint_mode).
     def callback_mode(self, on=-1):
+        """
+        Enable/disable callbacks (modeled like rand_mode and constraint_mode).
+        Args:
+            on:
+        Returns:
+        """
         if on == 0 or on == 1:
             is_en = "DISABLED"
             if on == 1:
@@ -1254,18 +1352,18 @@ class UVMCallback(UVMObject):
             self.m_enabled = True
         return callback_mode
 
-    # Function: is_enabled
-    #
-    # Returns 1 if the callback is enabled, 0 otherwise.
     def is_enabled(self):
+        """
+        Returns 1 if the callback is enabled, 0 otherwise.
+        Returns:
+            bool:  1 if the callback is enabled, 0 otherwise.
+        """
         return self.callback_mode()
-
 
     type_name = "uvm_callback"
 
-    # Function: get_type_name
-    #
-    # Returns the type name of this callback object.
-
     def get_type_name(self):
+        """
+        Returns the type name of this callback object.
+        """
         return UVMCallback.type_name
