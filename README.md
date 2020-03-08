@@ -18,6 +18,12 @@ testbenches can be written in Python as well. `uvm-python` tries to offer
 an API similar to the original SV version. This means that many UVM verificaton
 skills are transferable from SV to Python very easily.
 
+Documentation
+-------------
+
+The documentation is available on `readthedocs.io` in
+[uvm-python HTML documentation](https://uvm-python.readthedocs.io/).
+
 Installation
 ------------
 
