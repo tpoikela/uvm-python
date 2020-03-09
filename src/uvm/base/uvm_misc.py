@@ -21,7 +21,6 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
-# File: Miscellaneous Structures
 
 """
 The :class:`UVMVoid` class is the base class for all UVM classes. It is an abstract
@@ -35,6 +34,7 @@ containers along with other UVM objects.
 import re
 from .uvm_object_globals import *
 from .uvm_scope_stack import UVMScopeStack
+from .sv import sv
 
 
 class UVMVoid(object):
@@ -51,8 +51,12 @@ def isunknown(value):
     return False
 
 
-# Function- uvm_get_array_index_string
 def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
+    """     
+    Function- uvm_get_array_index_string
+    Args:
+    Returns:
+    """
     i = 0
     res = ""
     is_wildcard = 1
@@ -69,8 +73,17 @@ def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
     return res
 
 
-# Function- uvm_bitstream_to_string
 def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
+    """     
+    Function- uvm_bitstream_to_string
+    Args:
+        value: 
+        size: 
+        radix: 
+        UVM_NORADIX: 
+        radix_str: 
+    Returns:
+    """
     # sign extend & don't show radix for negative values
     if radix == UVM_DEC:  # and value[size-1] == 1: TODO
         return "{}".format(value)
@@ -86,8 +99,17 @@ def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     return num_with_radix(radix, radix_str, value)
 
 
-# Function- uvm_integral_to_string
 def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
+    """     
+    Function- uvm_integral_to_string
+    Args:
+        value: 
+        size: 
+        radix: 
+        UVM_NORADIX: 
+        radix_str: 
+    Returns:
+    """
     # sign extend & don't show radix for negative values
     if radix == UVM_DEC and value[size-1] == 1:
         return "{}".format(value)
@@ -103,19 +125,26 @@ def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     return num_with_radix(radix, radix_str, value)
 
 
-# Function- uvm_object_value_str
-#
 def uvm_object_value_str(v):
+    """     
+    Function- uvm_object_value_str
+    Returns:
+    """
     if v is None:
         return "<null>"
     res = "{}".format(v.get_inst_id())
     res = "@" + res
     return res
 
-# Function- uvm_leaf_scope
-#
-#
+
 def uvm_leaf_scope(full_name, scope_separator="."):
+    """     
+    Function- uvm_leaf_scope
+    Args:
+        full_name: 
+        scope_separator: 
+    Returns:
+    """
     bmatches = 0
 
     bracket_match = ""
@@ -177,27 +206,26 @@ def num_with_radix(radix, radix_str, value):
         return "{}{}".format(radix_str, value)
     return "{}{}".format(radix_str, value)
 
+
 class ProcessContainerC:
     def __init__(self, p_):
         self.p = p_
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS- uvm_status_container
-#//
-#// Internal class to contain status information for automation methods.
-#//
-#//------------------------------------------------------------------------------
-#
+
 class UVMStatusContainer:
+    """
+    Internal class to contain status information for automation methods.
+    """
 
     #  static bit field_array[string];
     field_array = {}
     #  static bit print_matches;
     print_matches = False
 
-    #  //The clone setting is used by the set/get config to know if cloning is on.
     def __init__(self):
+        """         
+         The clone setting is used by the set/get config to know if cloning is on.
+        """
         self.clone = True
         # Information variables used by the macro functions for storage.
         self.warning = False
@@ -253,10 +281,12 @@ class UVMStatusContainer:
             return "set_string"
         else:
             return "unknown"
-    #  endfunction
 
-    #
     def get_full_scope_arg(self):
+        """         
+
+        Returns:
+        """
         return self.scope.get();
 
 
@@ -300,9 +330,6 @@ class UVMStatusContainer:
                 self.m_uvm_cycle_scopes.append(scope)
                 return 0
 
-        #  endfunction
-    #endclass
-
 
 def m_uvm_string_queue_join(i):
     res = ""
@@ -321,34 +348,36 @@ def m_uvm_string_queue_join(i):
 class UVMUtils():  # (type TYPE=int, string FIELD="config")
 
     #  typedef TYPE types_t[$]
-    #
-    #  // Function: find_all
-    #  //
-    #  // Recursively finds all component instances of the parameter type ~TYPE~,
-    #  // starting with the component given by ~start~. Uses <uvm_root::find_all>.
-    #
 
-    #  static def find_all(self,uvm_component start):
-    #    uvm_component list[$]
-    #    types_t types
-    #    uvm_root top
-    #    uvm_coreservice_t cs
-    #    cs = uvm_coreservice_t::get()
-    #    top = cs.get_root()
-    #    top.find_all("*",list,start)
-    #    foreach (list[i]):
-    #      TYPE typ
-    #      if (sv.cast(typ,list[i]))
-    #        types.push_back(typ)
-    #    end
-    #    if (types.size() == 0):
-    #      uvm_warning("find_type-no match",{"Instance of type '",TYPE::type_name,
-    #         " not found in component hierarchy beginning at ",start.get_full_name()})
-    #    end
-    #    return types
-    #  endfunction
 
-    #
+    def find_all(cls, start, TYPE):
+        """         
+          Function: find_all
+         
+          Recursively finds all component instances of the parameter type `TYPE`,
+          starting with the component given by `start`. Uses <uvm_root::find_all>.
+        Args:
+            cls: 
+            start: 
+            TYPE: 
+        Returns:
+        """
+        comp_list = []
+        types = []
+        cs = UVMCoreService.get()
+        top = cs.get_root()
+        top.find_all("*",comp_list,start)
+        for comp in comp_list:
+            typ = []
+            if sv.cast(typ, comp, TYPE):
+                types.push_back(typ[0])
+
+        if len(types) == 0:
+            uvm_warning("find_type-no match", "Instance of type '" + TYPE.type_name
+                + " not found in component hierarchy beginning at " + start.get_full_name())
+        return types
+
+
     #  static def find(self,uvm_component start):
     #    types_t types = find_all(start)
     #    if (types.size() == 0)
@@ -377,43 +406,50 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
         #     uvm_report_error("WRONG_TYPE",{"The type_name given '",type_name,
         #            "' with context '",contxt,"' did not produce the expected type."})
         return typ
-        #  endfunction
 
 
-    #  // Function: get_config
-    #  //
-    #  // This method gets the object config of type ~TYPE~
-    #  // associated with component ~comp~.
-    #  // We check for the two kinds of error which may occur with this kind of
-    #  // operation.
-    #
-    #  static def get_config(self,uvm_component comp, bit is_fatal):
-    #    uvm_object obj
-    #    TYPE cfg
-    #
-    #    if (!m_uvm_config_obj_misc::get(comp,"",FIELD, obj)):
-    #      if (is_fatal)
-    #        comp.uvm_report_fatal("NO_SET_CFG", {"no set_config to field '", FIELD,
-    #                           "' for component '",comp.get_full_name(),"'"},
-    #                           UVM_MEDIUM, `uvm_file , `uvm_line  )
-    #      else
-    #        comp.uvm_report_warning("NO_SET_CFG", {"no set_config to field '", FIELD,
-    #                           "' for component '",comp.get_full_name(),"'"},
-    #                           UVM_MEDIUM, `uvm_file , `uvm_line  )
-    #      return None
-    #    end
-    #
-    #    if (!sv.cast(cfg, obj)):
-    #      if (is_fatal)
-    #        comp.uvm_report_fatal( "GET_CFG_TYPE_FAIL",
-    #                          {"set_config_object with field name ",FIELD,
-    #                          " is not of type '",TYPE::type_name,"'"},
-    #                          UVM_NONE , `uvm_file , `uvm_line )
-    #      else
-    #        comp.uvm_report_warning( "GET_CFG_TYPE_FAIL",
-    #                          {"set_config_object with field name ",FIELD,
-    #                          " is not of type '",TYPE::type_name,"'"},
-    #                          UVM_NONE , `uvm_file , `uvm_line )
-    #    end
-    #
-    #    return cfg
+    @classmethod
+    def get_config(cls, comp, is_fatal):
+        """         
+          Function: get_config
+         
+          This method gets the object config of type `TYPE`
+          associated with component `comp`.
+          We check for the two kinds of error which may occur with this kind of
+          operation.
+        Args:
+            cls: 
+            comp: 
+            is_fatal: 
+        Returns:
+        """
+        obj = None
+        cfg = None
+        # TODO
+        #
+        #    if (!m_uvm_config_obj_misc::get(comp,"",FIELD, obj)):
+        #      if (is_fatal)
+        #        comp.uvm_report_fatal("NO_SET_CFG", {"no set_config to field '", FIELD,
+        #                           "' for component '",comp.get_full_name(),"'"},
+        #                           UVM_MEDIUM, `uvm_file , `uvm_line  )
+        #      else
+        #        comp.uvm_report_warning("NO_SET_CFG", {"no set_config to field '", FIELD,
+        #                           "' for component '",comp.get_full_name(),"'"},
+        #                           UVM_MEDIUM, `uvm_file , `uvm_line  )
+        #      return None
+        #    end
+        #
+        #    if (!sv.cast(cfg, obj)):
+        #      if (is_fatal)
+        #        comp.uvm_report_fatal( "GET_CFG_TYPE_FAIL",
+        #                          {"set_config_object with field name ",FIELD,
+        #                          " is not of type '",TYPE::type_name,"'"},
+        #                          UVM_NONE , `uvm_file , `uvm_line )
+        #      else
+        #        comp.uvm_report_warning( "GET_CFG_TYPE_FAIL",
+        #                          {"set_config_object with field name ",FIELD,
+        #                          " is not of type '",TYPE::type_name,"'"},
+        #                          UVM_NONE , `uvm_file , `uvm_line )
+        #    end
+        #
+        return cfg
