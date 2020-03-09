@@ -59,89 +59,109 @@ class uvm_tr_database(UVMObject):
     #
     #   // Variable- m_streams
 
-    #   // Function: new
-    #   // Constructor
-    #   //
-    #   // Parameters:
-    #   // name - Instance name
     def __init__(self, name="unnamed-uvm_tr_database"):
+        """         
+           Function: new
+           Constructor
+          
+           Parameters:
+           name - Instance name
+        Args:
+            name: 
+        """
         UVMObject.__init__(self, name)
         # Tracks the opened state of the database
         self.m_is_opened = False
         # Used for tracking streams which are between the open and closed states
         self.m_streams = {}  # bit m_streams[uvm_tr_stream]
 
-    #   // Group: Database API
-    #
-    #   // Function: open_db
-    #   // Open the backend connection to the database.
-    #   //
-    #   // If the database is already open, then this
-    #   // method will return 1.
-    #   //
-    #   // Otherwise, the method will call <do_open_db>,
-    #   // and return the result.
     def open_db(self):
+        """         
+           Group: Database API
+
+           Function: open_db
+           Open the backend connection to the database.
+          
+           If the database is already open, then this
+           method will return 1.
+          
+           Otherwise, the method will call `do_open_db`,
+           and return the result.
+        Returns:
+        """
         if self.m_is_opened is False:
             self.m_is_opened = self.do_open_db()
         return self.m_is_opened
 
-    #
-    #   // Function: close_db
-    #   // Closes the backend connection to the database.
-    #   //
-    #   // Closing a database implicitly closes and
-    #   // frees all <uvm_tr_streams> within the database.
-    #   //
-    #   // If the database is already closed, then this
-    #   // method will return 1.
-    #   //
-    #   // Otherwise, this method will trigger a <do_close_db>
-    #   // call, and return the result.
     def close_db(self):
+        """         
+
+           Function: close_db
+           Closes the backend connection to the database.
+          
+           Closing a database implicitly closes and
+           frees all `uvm_tr_streams` within the database.
+          
+           If the database is already closed, then this
+           method will return 1.
+          
+           Otherwise, this method will trigger a `do_close_db`
+           call, and return the result.
+        Returns:
+        """
         if self.m_is_opened:
             if self.do_close_db():
                 self.m_is_opened = 0
         return self.m_is_opened == 0
 
-    #   // Function: is_open
-    #   // Returns the open/closed status of the database.
-    #   //
-    #   // This method returns 1 if the database has been
-    #   // successfully opened, but not yet closed.
-    #   //
     def is_open(self):
+        """         
+           Function: is_open
+           Returns the open/closed status of the database.
+          
+           This method returns 1 if the database has been
+           successfully opened, but not yet closed.
+          
+        Returns:
+        """
         return self.m_is_opened
 
 
     #   // Group: Stream API
     #
 
-    #   // Function: open_stream
-    #   // Provides a reference to a ~stream~ within the
-    #   // database.
-    #   //
-    #   // Parameters:
-    #   //   name - A string name for the stream.  This is the name associated
-    #   //          with the stream in the database.
-    #   //   scope - An optional scope for the stream.
-    #   //   type_name - An optional name describing the type of records which
-    #   //               will be created in this stream.
-    #   //
-    #   // The method returns a reference to a <uvm_tr_stream>
-    #   // object if successful, ~null~ otherwise.
-    #   //
-    #   // This method will trigger a <do_open_stream> call, and if a
-    #   // non ~null~ stream is returned, then <uvm_tr_stream::do_open>
-    #   // will be called.
-    #   //
-    #   // Streams can only be opened if the database is
-    #   // open (per <is_open>).  Otherwise the request will
-    #   // be ignored, and ~null~ will be returned.
-    #   function uvm_tr_stream open_stream(string name,
-    #                                      string scope="",
-    #                                      string type_name="")
     def open_stream(self, name, scope="", type_name=""):
+        """         
+           Function: open_stream
+           Provides a reference to a `stream` within the
+           database.
+          
+           Parameters:
+             name - A string name for the stream.  This is the name associated
+                    with the stream in the database.
+             scope - An optional scope for the stream.
+             type_name - An optional name describing the type of records which
+                         will be created in this stream.
+          
+           The method returns a reference to a `uvm_tr_stream`
+           object if successful, `null` otherwise.
+          
+           This method will trigger a `do_open_stream` call, and if a
+           non `null` stream is returned, then <uvm_tr_stream::do_open>
+           will be called.
+          
+           Streams can only be opened if the database is
+           open (per `is_open`).  Otherwise the request will
+           be ignored, and `null` will be returned.
+          function uvm_tr_stream open_stream(string name,
+                                             string scope="",
+                                             string type_name="")
+        Args:
+            name: 
+            scope: 
+            type_name: 
+        Returns:
+        """
         if not self.open_db():
             return None
         else:
@@ -163,9 +183,13 @@ class uvm_tr_database(UVMObject):
             return open_stream
 
 
-    #   // Function- m_free_stream
-    #   // Removes stream from the internal array
     def m_free_stream(self, stream):
+        """         
+           Function- m_free_stream
+           Removes stream from the internal array
+        Args:
+            stream: 
+        """
         if stream in self.m_streams:
             del self.m_streams[stream]
     #   endfunction : m_free_stream
@@ -196,14 +220,18 @@ class uvm_tr_database(UVMObject):
     #
     #   // Group: Link API
 
-    #   // Function: establish_link
-    #   // Establishes a ~link~ between two elements in the database
-    #   //
-    #   // Links are only supported between ~streams~ and ~records~
-    #   // within a single database.
-    #   //
-    #   // This method will trigger a <do_establish_link> call.
     def establish_link(self, link):
+        """         
+           Function: establish_link
+           Establishes a `link` between two elements in the database
+          
+           Links are only supported between `streams` and `records`
+           within a single database.
+          
+           This method will trigger a `do_establish_link` call.
+        Args:
+            link: 
+        """
         s_lhs = []  # uvm_tr_stream 
         s_rhs = []  # uvm_tr_stream 
         r_lhs = []  # uvm_recorder 
@@ -308,47 +336,57 @@ class uvm_text_tr_database(uvm_tr_database):
     #   // Variable- m_file
     #   UVM_FILE m_file
 
-    #   // Function: new
-    #   // Constructor
-    #   //
-    #   // Parameters:
-    #   // name - Instance name
     def __init__(self, name="unnamed-uvm_text_tr_database"):
+        """         
+           Function: new
+           Constructor
+          
+           Parameters:
+           name - Instance name
+        Args:
+            name: 
+        """
         uvm_tr_database.__init__(self, name)
         self.m_filename_dap = uvm_simple_lock_dap("filename_dap")
         self.m_filename_dap.set("tr_db.log")
         self.m_file = NO_FILE_OPEN
 
-    #   // Group: Implementation Agnostic API
-    #
-    #   // Function: do_open_db
-    #   // Open the backend connection to the database.
-    #   //
-    #   // Text-Backend implementation of <uvm_tr_database::open_db>.
-    #   //
-    #   // The text-backend will open a text file to dump all records in to.  The name
-    #   // of this text file is controlled via <set_file_name>.
-    #   //
-    #   // This will also lock the ~file_name~, so that it cannot be
-    #   // modified while the connection is open.
     def do_open_db(self):
+        """         
+           Group: Implementation Agnostic API
+
+           Function: do_open_db
+           Open the backend connection to the database.
+          
+           Text-Backend implementation of <uvm_tr_database::open_db>.
+          
+           The text-backend will open a text file to dump all records in to.  The name
+           of this text file is controlled via `set_file_name`.
+          
+           This will also lock the `file_name`, so that it cannot be
+           modified while the connection is open.
+        Returns:
+        """
         if self.m_file == NO_FILE_OPEN:
             self.m_file = sv.fopen(self.m_filename_dap.get(), "a")
             if self.m_file != NO_FILE_OPEN:
                 self.m_filename_dap.lock()
         return (self.m_file != NO_FILE_OPEN)
 
-    #
-    #   // Function: do_close_db
-    #   // Close the backend connection to the database.
-    #   //
-    #   // Text-Backend implementation of <uvm_tr_database::close_db>.
-    #   //
-    #   // The text-backend will close the text file used to dump all records in to,
-    #   // if it is currently opened.
-    #   //
-    #   // This unlocks the ~file_name~, allowing it to be modified again.
     def do_close_db(self):
+        """         
+
+           Function: do_close_db
+           Close the backend connection to the database.
+          
+           Text-Backend implementation of <uvm_tr_database::close_db>.
+          
+           The text-backend will close the text file used to dump all records in to,
+           if it is currently opened.
+          
+           This unlocks the `file_name`, allowing it to be modified again.
+        Returns:
+        """
         if self.m_file != NO_FILE_OPEN:
             #fork // Needed because $fclose is a task
             sv.fclose(self.m_file)
@@ -356,25 +394,36 @@ class uvm_text_tr_database(uvm_tr_database):
             self.m_filename_dap.unlock()
         return 1
 
-    #   // Function: do_open_stream
-    #   // Provides a reference to a ~stream~ within the
-    #   // database.
-    #   //
-    #   // Text-Backend implementation of <uvm_tr_database::open_stream>
-    #   protected virtual function uvm_tr_stream do_open_stream(string name,
-    #                                                           string scope,
-    #                                                           string type_name)
     def do_open_stream(self, name, scope, typename):
+        """         
+           Function: do_open_stream
+           Provides a reference to a `stream` within the
+           database.
+          
+           Text-Backend implementation of <uvm_tr_database::open_stream>
+          protected virtual function uvm_tr_stream do_open_stream(string name,
+                                                                  string scope,
+                                                                  string type_name)
+        Args:
+            name: 
+            scope: 
+            typename: 
+        Returns:
+        """
         # puvm_text_tr_stream 
         m_stream = uvm_text_tr_stream.type_id.create(name)
         return m_stream
 
 
-    #   // Function: do_establish_link
-    #   // Establishes a ~link~ between two elements in the database
-    #   //
-    #   // Text-Backend implementation of <uvm_tr_database::establish_link>.
     def do_establish_link(self, link):
+        """         
+           Function: do_establish_link
+           Establishes a `link` between two elements in the database
+          
+           Text-Backend implementation of <uvm_tr_database::establish_link>.
+        Args:
+            link: 
+        """
         r_lhs = None
         r_rhs = None  # uvm_recorder 
         lhs = link.get_lhs()

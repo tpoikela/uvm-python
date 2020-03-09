@@ -395,8 +395,13 @@ def get_cs():
 #----------------------------------------------------------------------------
 
 
-# Returns current simtime in the given units (default: NS)
 def uvm_sim_time(units='NS'):
+    """     
+    Returns current simtime in the given units (default: NS)
+    Args:
+        units: 
+    Returns:
+    """
     if simulator is not None:
         return get_sim_time(units=units)
     return 0
@@ -407,8 +412,11 @@ async def uvm_empty_delay():
     await Timer(0, "NS")
 
 
-# Check that all args in the arr are lists to emulate the SV inout/output/ref args
 def uvm_check_output_args(arr):
+    """     
+    Check that all args in the arr are lists to emulate the SV inout/output/ref args
+    Raises:
+    """
     for item in arr:
         if not isinstance(item, list):
             raise Exception('All output args must be given as empty arrays. Got: '

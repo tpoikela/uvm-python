@@ -1221,22 +1221,30 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     callbacks and executing the callback methods.
     """
 
-    # Function: new
-    #
-    # Creates a new callback iterator object. It is required that the object
-    # context be provided.
     def __init__(self, obj, CB=None):
+        """         
+        Function: new
+
+        Creates a new callback iterator object. It is required that the object
+        context be provided.
+        Args:
+            obj: 
+            CB: 
+        """
         self.m_i = 0
         self.m_cb = None  # UVMCallback
         self.m_obj = obj
         self.CB = CB
 
-    # Function: first
-    #
-    # Returns the first valid (enabled) callback of the callback type (or
-    # a derivative) that is in the queue of the context object. If the
-    # queue is empty then ~None~ is returned.
     def first(self):
+        """         
+        Function: first
+
+        Returns the first valid (enabled) callback of the callback type (or
+        a derivative) that is in the queue of the context object. If the
+        queue is empty then `None` is returned.
+        Returns:
+        """
         self.m_cb = UVMCallbacks.get_first(self, self.m_obj, self.CB)
         return self.m_cb
 

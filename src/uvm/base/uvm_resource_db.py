@@ -371,45 +371,54 @@ class UVMResourceDbOptions:
     ready = False
     tracing = False
 
-    #  // Function: turn_on_tracing
-    #  //
-    #  // Turn tracing on for the resource database. This causes all
-    #  // reads and writes to the database to display information about
-    #  // the accesses. Tracing is off by default.
-    #  //
-    #  // This method is implicitly called by the ~+UVM_RESOURCE_DB_TRACE~.
     @classmethod
     def turn_on_tracing(cls):
+        """         
+          Function: turn_on_tracing
+         
+          Turn tracing on for the resource database. This causes all
+          reads and writes to the database to display information about
+          the accesses. Tracing is off by default.
+         
+          This method is implicitly called by the ~+UVM_RESOURCE_DB_TRACE~.
+        """
         if cls.ready is False:
             cls.init()
         cls.tracing = True
 
-    #  // Function: turn_off_tracing
-    #  //
-    #  // Turn tracing off for the resource database.
-    #
     @classmethod
     def turn_off_tracing(cls):
+        """         
+          Function: turn_off_tracing
+         
+          Turn tracing off for the resource database.
+
+        """
         if cls.ready is False:
             cls.init()
         cls.tracing = False
 
 
-    #  // Function: is_tracing
-    #  //
-    #  // Returns 1 if the tracing facility is on and 0 if it is off.
-    #  static function bit is_tracing()
     @classmethod
     def is_tracing(cls):
+        """         
+          Function: is_tracing
+         
+          Returns 1 if the tracing facility is on and 0 if it is off.
+         static function bit is_tracing()
+        Returns:
+        """
         if cls.ready is False:
             cls.init()
         return cls.tracing
     #  endfunction
 
 
-    #  static local function void init()
     @classmethod
     def init(cls):
+        """         
+         static local function void init()
+        """
         trace_args = []
         from .uvm_cmdline_processor import UVMCmdlineProcessor
         clp = UVMCmdlineProcessor.get_inst()

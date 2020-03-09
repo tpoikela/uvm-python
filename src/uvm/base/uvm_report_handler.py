@@ -76,27 +76,33 @@ class UVMReportHandler(UVMObject):
         self.severity_id_file_handles = {}  # severity -> UVMPool
         self.initialize()
 
-    #// Function: print
-    #//
-    #// The uvm_report_handler implements the <uvm_object::do_print()> such that
-    #// ~print~ method provides UVM printer formatted output
-    #// of the current configuration.  A snippet of example output is shown here:
-    #//
-    #// |uvm_test_top                uvm_report_handler  -     @555
-    #// |  max_verbosity_level       uvm_verbosity       32    UVM_FULL
-    #// |  id_verbosities            uvm_pool            3     -
-    #// |    [ID1]                   uvm_verbosity       32    UVM_LOW
-    #// |  severity_id_verbosities   array               4     -
-    #// |    [UVM_INFO:ID4]          int                 32    501
-    #// |  id_actions                uvm_pool            2     -
-    #// |    [ACT_ID]                uvm_action          32    DISPLAY LOG COUNT
-    #// |  severity_actions          array               4     -
-    #// |    [UVM_INFO]              uvm_action          32    DISPLAY
-    #// |    [UVM_WARNING]           uvm_action          32    DISPLAY RM_RECORD COUNT
-    #// |    [UVM_ERROR]             uvm_action          32    DISPLAY COUNT
-    #// |    [UVM_FATAL]             uvm_action          32    DISPLAY EXIT
-    #// |  default_file_handle       int                 32    'h1
     def do_print(self, printer):
+        """         
+        Function: print
+
+        The uvm_report_handler implements the <uvm_object::do_print()> such that
+        `print` method provides UVM printer formatted output
+        of the current configuration.  A snippet of example output is shown here:
+
+        .. code-block:: python
+
+        |uvm_test_top                uvm_report_handler  -     @555
+        |  max_verbosity_level       uvm_verbosity       32    UVM_FULL
+        |  id_verbosities            uvm_pool            3     -
+        |    [ID1]                   uvm_verbosity       32    UVM_LOW
+        |  severity_id_verbosities   array               4     -
+        |    [UVM_INFO:ID4]          int                 32    501
+        |  id_actions                uvm_pool            2     -
+        |    [ACT_ID]                uvm_action          32    DISPLAY LOG COUNT
+        |  severity_actions          array               4     -
+        |    [UVM_INFO]              uvm_action          32    DISPLAY
+        |    [UVM_WARNING]           uvm_action          32    DISPLAY RM_RECORD COUNT
+        |    [UVM_ERROR]             uvm_action          32    DISPLAY COUNT
+        |    [UVM_FATAL]             uvm_action          32    DISPLAY EXIT
+        |  default_file_handle       int                 32    'h1
+        Args:
+            printer: 
+        """
         print("UVMReportHandler do_print() TODO")
         #  virtual def void do_print (self,uvm_printer printer):
         #
@@ -289,11 +295,15 @@ class UVMReportHandler(UVMObject):
     #  //----------------------------------------------------------------------------
 
 
-    #  // Function: process_report_message
-    #  //
-    #  // This is the common handler method used by the four core reporting methods
-    #  // (e.g. <uvm_report_error>) in <uvm_report_object>.
     def process_report_message(self, report_message):
+        """         
+          Function: process_report_message
+         
+          This is the common handler method used by the four core reporting methods
+          (e.g. `uvm_report_error`) in `uvm_report_object`.
+        Args:
+            report_message: 
+        """
         from .uvm_report_server import UVMReportServer
         srvr = UVMReportServer.get_server()
         id = report_message.get_id()
@@ -318,11 +328,17 @@ class UVMReportHandler(UVMObject):
     #  // Group: Convenience Methods
     #  //----------------------------------------------------------------------------
 
-    #  // Function: format_action
-    #  //
-    #  // Returns a string representation of the ~action~, e.g., "DISPLAY".
     @classmethod
     def format_action(cls, action):
+        """         
+          Function: format_action
+         
+          Returns a string representation of the `action`, e.g., "DISPLAY".
+        Args:
+            cls: 
+            action: 
+        Returns:
+        """
         s = ""
         if action == UVM_NO_ACTION:
             s = "UVM_NO_ACTION"
@@ -343,10 +359,12 @@ class UVMReportHandler(UVMObject):
                 s = s + "STOP "
         return s
 
-    #  // Function- initialize
-    #  //
-    #  // Internal method for initializing report handler.
     def initialize(self):
+        """         
+          Function- initialize
+         
+          Internal method for initializing report handler.
+        """
         self.set_default_file(0)
         self.m_max_verbosity_level = UVM_MEDIUM
         self.set_severity_action(UVM_INFO,    UVM_DISPLAY)
@@ -359,10 +377,16 @@ class UVMReportHandler(UVMObject):
         self.set_severity_file(UVM_ERROR,   self.default_file_handle)
         self.set_severity_file(UVM_FATAL,   self.default_file_handle)
 
-    #  // Function- get_severity_id_file
-    #  //
-    #  // Return the file id based on the severity and the id
     def get_severity_id_file(self, severity, id):
+        """         
+          Function- get_severity_id_file
+         
+          Return the file id based on the severity and the id
+        Args:
+            severity: 
+            id: 
+        Returns:
+        """
         """ Return the file id based on the severity and the id """
         if severity in self.severity_id_file_handles:
             array = self.severity_id_file_handles[severity]
@@ -376,20 +400,31 @@ class UVMReportHandler(UVMObject):
             return self.severity_file_handles[severity]
         return self.default_file_handle
 
-    #  // Function- set_verbosity_level
-    #  //
-    #  // Internal method called by uvm_report_object.
     def set_verbosity_level(self, verbosity_level):
+        """         
+          Function- set_verbosity_level
+         
+          Internal method called by uvm_report_object.
+        Args:
+            verbosity_level: 
+        """
         self.m_max_verbosity_level = verbosity_level
 
-    # Function- get_verbosity_level
-    #
-    # Returns the verbosity associated with the given ~severity~ and ~id~.
-    #
-    # First, if there is a verbosity associated with the ~(severity,id)~ pair,
-    # return that.  Else, if there is a verbosity associated with the ~id~, return
-    # that.  Else, return the max verbosity setting.
     def get_verbosity_level(self, severity=UVM_INFO, id=""):
+        """         
+        Function- get_verbosity_level
+
+        Returns the verbosity associated with the given `severity` and `id`.
+
+        First, if there is a verbosity associated with the ~(severity,id)~ pair,
+        return that.  Else, if there is a verbosity associated with the `id`, return
+        that.  Else, return the max verbosity setting.
+        Args:
+            severity: 
+            UVM_INFO: 
+            id: 
+        Returns:
+        """
         if severity in self.severity_id_verbosities:
             array = self.severity_id_verbosities[severity]
             if array.exists(id):
@@ -400,15 +435,21 @@ class UVMReportHandler(UVMObject):
 
         return self.m_max_verbosity_level
 
-    # Function- get_action
-    #
-    # Returns the action associated with the given ~severity~ and ~id~.
-    #
-    # First, if there is an action associated with the ~(severity,id)~ pair,
-    # return that.  Else, if there is an action associated with the ~id~, return
-    # that.  Else, if there is an action associated with the ~severity~, return
-    # that. Else, return the default action associated with the ~severity~.
     def get_action(self, severity, id):
+        """         
+        Function- get_action
+
+        Returns the action associated with the given `severity` and `id`.
+
+        First, if there is an action associated with the ~(severity,id)~ pair,
+        return that.  Else, if there is an action associated with the `id`, return
+        that.  Else, if there is an action associated with the `severity`, return
+        that. Else, return the default action associated with the `severity`.
+        Args:
+            severity: 
+            id: 
+        Returns:
+        """
         if severity in self.severity_id_actions:
             array = self.severity_id_actions[severity]
             if array.exists(id):
@@ -418,15 +459,21 @@ class UVMReportHandler(UVMObject):
             return self.id_actions.get(id)
         return self.severity_actions.get(severity)
 
-    # Function- get_file_handle
-    #
-    # Returns the file descriptor associated with the given ~severity~ and ~id~.
-    #
-    # First, if there is a file handle associated with the ~(severity,id)~ pair,
-    # return that. Else, if there is a file handle associated with the ~id~, return
-    # that. Else, if there is an file handle associated with the ~severity~, return
-    # that. Else, return the default file handle.
     def get_file_handle(self, severity, id):
+        """         
+        Function- get_file_handle
+
+        Returns the file descriptor associated with the given `severity` and `id`.
+
+        First, if there is a file handle associated with the ~(severity,id)~ pair,
+        return that. Else, if there is a file handle associated with the `id`, return
+        that. Else, if there is an file handle associated with the `severity`, return
+        that. Else, return the default file handle.
+        Args:
+            severity: 
+            id: 
+        Returns:
+        """
         _file = self.get_severity_id_file(severity, id)
         if _file != 0:
             return _file
@@ -443,44 +490,91 @@ class UVMReportHandler(UVMObject):
         return self.default_file_handle
 
 
-    #  // Function- set_severity_action
     def set_severity_action(self, severity, action):
+        """         
+          Function- set_severity_action
+        Args:
+            severity: 
+            action: 
+        """
         self.severity_actions.add(severity, action)
 
-    #  // Function- set_id_action
     def set_id_action(self, id, action):
+        """         
+          Function- set_id_action
+        Args:
+            id: 
+            action: 
+        """
         self.id_actions.add(id, action)
 
-    #  // Function- set_severity_id_action
     def set_severity_id_action(self, severity, id, action):
+        """         
+          Function- set_severity_id_action
+        Args:
+            severity: 
+            id: 
+            action: 
+        """
         if severity not in self.severity_id_actions:
             self.severity_id_actions[severity] = UVMPool()
         self.severity_id_actions[severity].add(id, action)
 
-    #  // Function- set_id_verbosity
     def set_id_verbosity(self, id, verbosity):
+        """         
+          Function- set_id_verbosity
+        Args:
+            id: 
+            verbosity: 
+        """
         self.id_verbosities.add(id, verbosity)
 
-    #  // Function- set_severity_id_verbosity
     def set_severity_id_verbosity(self, severity, id, verbosity):
+        """         
+          Function- set_severity_id_verbosity
+        Args:
+            severity: 
+            id: 
+            verbosity: 
+        """
         if severity not in self.severity_id_verbosities:
             self.severity_id_verbosities[severity] = UVMPool()
         self.severity_id_verbosities[severity].add(id,verbosity)
 
-    #  // Function- set_default_file
     def set_default_file(self, file):
+        """         
+          Function- set_default_file
+        Args:
+            file: 
+        """
         self.default_file_handle = file
 
-    #  // Function- set_severity_file
     def set_severity_file(self, severity, file):
+        """         
+          Function- set_severity_file
+        Args:
+            severity: 
+            file: 
+        """
         self.severity_file_handles[severity] = file
 
-    #  // Function- set_id_file
     def set_id_file(self, id, file):
+        """         
+          Function- set_id_file
+        Args:
+            id: 
+            file: 
+        """
         self.id_file_handles.add(id, file)
 
-    #  // Function- set_severity_id_file
     def set_severity_id_file(self, severity, id, file):
+        """         
+          Function- set_severity_id_file
+        Args:
+            severity: 
+            id: 
+            file: 
+        """
         if severity not in self.severity_id_file_handles:
             self.severity_id_file_handles[severity] = UVMPool()
         self.severity_id_file_handles[severity].add(id, file)
@@ -495,13 +589,25 @@ class UVMReportHandler(UVMObject):
             self.sev_id_overrides[id] = UVMPool()
         self.sev_id_overrides[id].add(cur_severity, new_severity)
 
-    # Function- report
-    #
-    # This is the common handler method used by the four core reporting methods
-    # (e.g., uvm_report_error) in <uvm_report_object>.
     def report(self, severity, name, id, message,
       verbosity_level=UVM_MEDIUM, filename="", line=0,
       client=None):
+        """         
+        Function- report
+
+        This is the common handler method used by the four core reporting methods
+        (e.g., uvm_report_error) in `uvm_report_object`.
+        Args:
+            severity: 
+            name: 
+            id: 
+            message: 
+            verbosity_level: 
+            UVM_MEDIUM: 
+            filename: 
+            line: 
+            client: 
+        """
 
         l_report_enabled = False
         l_report_message = None

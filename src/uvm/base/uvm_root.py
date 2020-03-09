@@ -153,10 +153,13 @@ class UVMRoot(UVMComponent):
 
 
     m_called_get_common_domain = False
-    #   // internal function not to be used
-    #   // get the initialized singleton instance of uvm_root
+
     @classmethod
     def m_uvm_get_root(cls):
+        """        internal function not to be used
+           get the initialized singleton instance of uvm_root
+        Returns:
+        """
         from .uvm_domain import UVMDomain
         if UVMRoot.m_inst is None:
             UVMRoot.m_inst = UVMRoot()
@@ -198,8 +201,12 @@ class UVMRoot(UVMComponent):
     # variable, finish_on_completion, is set, then $finish is called after
     # phasing completes.
 
-    
+
     async def run_test(self, test_name=""):
+        """             
+        Args:
+            test_name: 
+        """
         uvm_debug(self, 'run_test', 'Called with testname |' + test_name + '|')
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
@@ -302,17 +309,20 @@ class UVMRoot(UVMComponent):
         await self.m_phase_all_done_event.wait()
         #wait (m_phase_all_done == 1)
 
-    # Function: die
-    #
-    # This method is called by the report server if a report reaches the maximum
-    # quit count or has a UVM_EXIT action associated with it, e.g., as with
-    # fatal errors.
-    #
-    # Calls the <uvm_component::pre_abort()> method
-    # on the entire <uvm_component> hierarchy in a bottom-up fashion.
-    # It then calls <uvm_report_server::report_summarize> and terminates the simulation
-    # with ~$finish~.
     def die(self):
+        """         
+        Function: die
+
+        This method is called by the report server if a report reaches the maximum
+        quit count or has a UVM_EXIT action associated with it, e.g., as with
+        fatal errors.
+
+        Calls the <uvm_component::pre_abort()> method
+        on the entire `uvm_component` hierarchy in a bottom-up fashion.
+        It then calls <uvm_report_server::report_summarize> and terminates the simulation
+        with ~$finish~.
+        Raises:
+        """
         l_rs = get_report_server()
         # do the pre_abort callbacks
         self.m_do_pre_abort()
@@ -360,10 +370,15 @@ class UVMRoot(UVMComponent):
     #
 
 
-    #  // Function: find
-    #
-    #  extern function uvm_component find (string comp_match)
     def find(self, comp_match):
+        """         
+          Function: find
+
+         extern function uvm_component find (string comp_match)
+        Args:
+            comp_match: 
+        Returns:
+        """
         comp_list = []
 
         self.find_all(comp_match, comp_list)
@@ -381,33 +396,43 @@ class UVMRoot(UVMComponent):
 
         return comp_list[0]
 
-    #
-    #  // Function: find_all
-    #  //
-    #  // Returns the component handle (find) or list of components handles
-    #  // (find_all) matching a given string. The string may contain the wildcards,
-    #  // * and ?. Strings beginning with '.' are absolute path names. If the optional
-    #  // argument comp is provided, then search begins from that component down
-    #  // (default=all components).
-    #
-    #  extern function void find_all (string comp_match,
-    #                                 ref uvm_component comps[$],
-    #                                 input uvm_component comp=None)
-    #
     def find_all(self, comp_match, comps, comp=None):
+        """         
+
+          Function: find_all
+         
+          Returns the component handle (find) or list of components handles
+          (find_all) matching a given string. The string may contain the wildcards,
+          * and ?. Strings beginning with '.' are absolute path names. If the optional
+          argument comp is provided, then search begins from that component down
+          (default=all components).
+
+         extern function void find_all (string comp_match,
+                                        ref uvm_component comps[$],
+                                        input uvm_component comp=None)
+
+        Args:
+            comp_match: 
+            comps: 
+            comp: 
+        """
         if (comp is None):
             comp = self
         self.m_find_all_recurse(comp_match, comps, comp)
 
-    #  // Function: print_topology
-    #  //
-    #  // Print the verification environment's component topology. The
-    #  // ~printer~ is a <uvm_printer> object that controls the format
-    #  // of the topology printout; a ~None~ printer prints with the
-    #  // default output.
-    #
-    #function void uvm_root::print_topology(uvm_printer printer=None)
     def print_topology(self, printer=None):
+        """         
+          Function: print_topology
+         
+          Print the verification environment's component topology. The
+          `printer` is a `uvm_printer` object that controls the format
+          of the topology printout; a `None` printer prints with the
+          default output.
+
+        #function void uvm_root::print_topology(uvm_printer printer=None)
+        Args:
+            printer: 
+        """
         s = ""
         if (len(self.m_children) == 0):
             self.uvm_report_warning("EMTCOMP", "print_topology - No UVM components to print.", UVM_NONE)
@@ -432,11 +457,17 @@ class UVMRoot(UVMComponent):
     #
     #
 
-    #  // PRIVATE members
-    #  extern function void m_find_all_recurse(string comp_match,
-    #                                          ref uvm_component comps[$],
-    #                                          input uvm_component comp=None);
     def m_find_all_recurse(self, comp_match, comps, comp=None):
+        """         
+          PRIVATE members
+         extern function void m_find_all_recurse(string comp_match,
+                                                 ref uvm_component comps[$],
+                                                 input uvm_component comp=None);
+        Args:
+            comp_match: 
+            comps: 
+            comp: 
+        """
         child_comp = None
 
         if comp.has_first_child():
@@ -454,9 +485,14 @@ class UVMRoot(UVMComponent):
 
     #  extern protected function new ()
 
-    #  extern protected virtual function bit m_add_child (uvm_component child)
-    #// Add to the top levels array
     def m_add_child(self, child):
+        """         
+         extern protected virtual function bit m_add_child (uvm_component child)
+        Add to the top levels array
+        Args:
+            child: 
+        Returns:
+        """
         if (super().m_add_child(child)):
             if child.get_name() == "uvm_test_top":
                 top_levels.insert(0, child)
@@ -468,8 +504,12 @@ class UVMRoot(UVMComponent):
         #endfunction
         #
 
-    #  extern function void build_phase(uvm_phase phase)
     def build_phase(self, phase):
+        """         
+         extern function void build_phase(uvm_phase phase)
+        Args:
+            phase: 
+        """
         UVMComponent.build_phase(self, phase)
         #self.m_set_cl_msg_args()
         self.m_do_verbosity_settings()
@@ -480,8 +520,10 @@ class UVMRoot(UVMComponent):
         self.m_do_dump_args()
         #endfunction
 
-    #  extern local function void m_do_verbosity_settings()
     def m_do_verbosity_settings(self):
+        """         
+         extern local function void m_do_verbosity_settings()
+        """
         set_verbosity_settings = []
         split_vals = []
         tmp_verb = 0
@@ -504,8 +546,10 @@ class UVMRoot(UVMComponent):
         #
         #
 
-    #  extern local function void m_do_timeout_settings()
     def m_do_timeout_settings(self):
+        """         
+         extern local function void m_do_timeout_settings()
+        """
         timeout_settings = []
         timeout = ""
         timeout_int = 0
@@ -541,8 +585,10 @@ class UVMRoot(UVMComponent):
         #endfunction
         #
 
-    #  extern local function void m_do_factory_settings()
     def m_do_factory_settings(self):
+        """         
+         extern local function void m_do_factory_settings()
+        """
         args = []
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_INST_OVERRIDE|uvm_set_inst_override)=/",args)
@@ -557,8 +603,12 @@ class UVMRoot(UVMComponent):
         #endfunction
         #
 
-    #  extern local function void m_process_inst_override(string ovr)
     def m_process_inst_override(self, ovr):
+        """         
+         extern local function void m_process_inst_override(string ovr)
+        Args:
+            ovr: 
+        """
         from .uvm_coreservice import UVMCoreService
         split_val = []
         cs = UVMCoreService.get()
@@ -578,13 +628,19 @@ class UVMRoot(UVMComponent):
         #endfunction
         #
 
-    #  extern local function void m_process_type_override(string ovr)
     def m_process_type_override(self, ovr):
+        """         
+         extern local function void m_process_type_override(string ovr)
+        Args:
+            ovr: 
+        """
         pass  # TODO
 
 
-    #  extern local function void m_do_config_settings()
     def m_do_config_settings(self):
+        """         
+         extern local function void m_do_config_settings()
+        """
         args = []
         
         self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/", args)
@@ -605,8 +661,10 @@ class UVMRoot(UVMComponent):
         
     #  extern local function void m_do_max_quit_settings()
 
-    #  extern local function void m_do_dump_args()
     def m_do_dump_args(self):
+        """         
+         extern local function void m_do_dump_args()
+        """
         dump_args = []
         all_args = []
         out_string = ""
@@ -619,8 +677,13 @@ class UVMRoot(UVMComponent):
             uvm_info("DUMPARGS", out_string, UVM_NONE)
         #endfunction
 
-    #  extern local function void m_process_config(string cfg, bit is_int)
     def m_process_config(self, cfg, is_int):
+        """         
+         extern local function void m_process_config(string cfg, bit is_int)
+        Args:
+            cfg: 
+            is_int: 
+        """
         v = 0
         split_val = []
         cs = UVMCoreService.get()
@@ -678,8 +741,10 @@ class UVMRoot(UVMComponent):
 
     #  extern local function void m_process_default_sequence(string cfg)
 
-    #  extern function void m_check_verbosity()
     def m_check_verbosity(self):
+        """         
+         extern function void m_check_verbosity()
+        """
         verb_string = ""
         verb_settings = []
         verb_count = 0
@@ -752,8 +817,12 @@ class UVMRoot(UVMComponent):
 
         #endfunction
 
-    #  extern virtual function void report_header(UVM_FILE file = 0)
     def report_header(self, _file=0):
+        """         
+         extern virtual function void report_header(UVM_FILE file = 0)
+        Args:
+            _file: 
+        """
         q = []
         args = []
 
@@ -794,10 +863,14 @@ class UVMRoot(UVMComponent):
     #  // For error checking
     #  extern virtual task run_phase (uvm_phase phase)
 
-    #   phase_started
-    #   -------------
-    #  At end of elab phase we need to do tlm binding resolution.
     def phase_started(self, phase):
+        """         
+          phase_started
+          -------------
+         At end of elab phase we need to do tlm binding resolution.
+        Args:
+            phase: 
+        """
         eof_elab_phase = UVMEndOfElaborationPhase.get()
         uvm_debug(self, 'phase_started', phase.get_name())
         #if phase == end_of_elaboration_ph:

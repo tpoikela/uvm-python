@@ -544,244 +544,292 @@ class UVMComponent(UVMReportObject):
         uvm_debug(self, 'run', self.get_name() + ' yield Timer(0) in self.run()')
         await Timer(0)
 
-    #// Task: pre_reset_phase
-    #//
-    #// The <uvm_pre_reset_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def pre_reset_phase(self, phase):
+        """         
+        Task: pre_reset_phase
+
+        The `uvm_pre_reset_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: reset_phase
-    #//
-    #// The <uvm_reset_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def reset_phase(self, phase):
+        """         
+        Task: reset_phase
+
+        The `uvm_reset_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: post_reset_phase
-    #//
-    #// The <uvm_post_reset_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def post_reset_phase(self, phase):
+        """         
+        Task: post_reset_phase
+
+        The `uvm_post_reset_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: pre_configure_phase
-    #//
-    #// The <uvm_pre_configure_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def pre_configure_phase(self, phase):
+        """         
+        Task: pre_configure_phase
+
+        The `uvm_pre_configure_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: configure_phase
-    #//
-    #// The <uvm_configure_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def configure_phase(self, phase):
+        """         
+        Task: configure_phase
+
+        The `uvm_configure_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: post_configure_phase
-    #//
-    #// The <uvm_post_configure_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def post_configure_phase(self, phase):
+        """         
+        Task: post_configure_phase
+
+        The `uvm_post_configure_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: pre_main_phase
-    #//
-    #// The <uvm_pre_main_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def pre_main_phase(self, phase):
+        """         
+        Task: pre_main_phase
+
+        The `uvm_pre_main_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: main_phase
-    #//
-    #// The <uvm_main_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def main_phase(self, phase):
+        """         
+        Task: main_phase
+
+        The `uvm_main_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: post_main_phase
-    #//
-    #// The <uvm_post_main_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def post_main_phase(self, phase):
+        """         
+        Task: post_main_phase
+
+        The `uvm_post_main_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: pre_shutdown_phase
-    #//
-    #// The <uvm_pre_shutdown_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def pre_shutdown_phase(self, phase):
+        """         
+        Task: pre_shutdown_phase
+
+        The `uvm_pre_shutdown_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: shutdown_phase
-    #//
-    #// The <uvm_shutdown_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def shutdown_phase(self, phase):
+        """         
+        Task: shutdown_phase
+
+        The `uvm_shutdown_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
-    #// Task: post_shutdown_phase
-    #//
-    #// The <uvm_post_shutdown_phase> phase implementation method.
-    #//
-    #// This task returning or not does not indicate the end
-    #// or persistence of this phase.
-    #// It is necessary to raise an objection
-    #// using ~phase.raise_objection()~ to cause the phase to persist.
-    #// Once all components have dropped their respective objection
-    #// using ~phase.drop_objection()~, or if no components raises an
-    #// objection, the phase is ended.
-    #//
-    #// Any processes forked by this task continue to run
-    #// after the task returns,
-    #// but they will be killed once the phase ends.
-    #//
-    #// This method should not be called directly.
     async def post_shutdown_phase(self, phase):
+        """         
+        Task: post_shutdown_phase
+
+        The `uvm_post_shutdown_phase` phase implementation method.
+
+        This task returning or not does not indicate the end
+        or persistence of this phase.
+        It is necessary to raise an objection
+        using ~phase.raise_objection()~ to cause the phase to persist.
+        Once all components have dropped their respective objection
+        using ~phase.drop_objection()~, or if no components raises an
+        objection, the phase is ended.
+
+        Any processes forked by this task continue to run
+        after the task returns,
+        but they will be killed once the phase ends.
+
+        This method should not be called directly.
+        Args:
+            phase: 
+        """
         await Timer(0)
 
     def extract_phase(self, phase):

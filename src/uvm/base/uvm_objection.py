@@ -1349,21 +1349,25 @@ class UVMObjection(UVMReportObject):
 #class uvm_objection_context_object
 class UVMObjectionContextObject:
 
-    #    uvm_object obj
-    #    uvm_object source_obj
-    #    string description
-    #    int    count
-    #    uvm_objection objection
     def __init__(self):
+        """         
+           uvm_object obj
+           uvm_object source_obj
+           string description
+           int    count
+           uvm_objection objection
+        """
         self.obj = None
         self.source_obj = None
         self.description = ""
         self.count = 0
         self.objection = None
 
-    # Clears the values stored within the object,
-    # preventing memory leaks from reused objects
     def clear(self):
+        """         
+        Clears the values stored within the object,
+        preventing memory leaks from reused objects
+        """
         self.obj = None
         self.source_obj = None
         self.description = ""

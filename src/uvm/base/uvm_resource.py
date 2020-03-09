@@ -228,12 +228,18 @@ class UVMResourceBase(UVMObject):
     #//
     default_precedence = 1000
 
-    #// Function: new
-    #//
-    #// constructor for uvm_resource_base.  The constructor takes two
-    #// arguments, the name of the resource and a regular expression which
-    #// represents the set of scopes over which this resource is visible.
     def __init__(self, name="", s="*"):
+        """         
+        Function: new
+
+        constructor for uvm_resource_base.  The constructor takes two
+        arguments, the name of the resource and a regular expression which
+        represents the set of scopes over which this resource is visible.
+        Args:
+            name: 
+            s: 
+        Raises:
+        """
         UVMObject.__init__(self, name)
         if s is None:
             raise TypeError('s/scope must be string (or use "*" default) ' 
@@ -251,11 +257,14 @@ class UVMResourceBase(UVMObject):
         # and may be set to a higher or lower precedence as desired.
         self.precedence = UVMResourceBase.default_precedence
 
-    #// Function: get_type_handle
-    #//
-    #// Pure virtual function that returns the type handle of the resource
-    #// container.
     def get_type_handle(self):
+        """         
+        Function: get_type_handle
+
+        Pure virtual function that returns the type handle of the resource
+        container.
+        Raises:
+        """
         raise Exception('get_type_handle: pure virtual method')
 
     #//---------------------------
@@ -282,11 +291,14 @@ class UVMResourceBase(UVMObject):
     def set_read_write(self):
         self.read_only = False
 
-    #// Function: is_read_only
-    #//
-    #// Returns one if this resource has been set to read-only, zero
-    #// otherwise
     def is_read_only(self):
+        """         
+        Function: is_read_only
+
+        Returns one if this resource has been set to read-only, zero
+        otherwise
+        Returns:
+        """
         return self.read_only
 
     #//--------------------
@@ -301,8 +313,10 @@ class UVMResourceBase(UVMObject):
     #// releases the block.  Wait_modified() then clears the modified bit so
     #// it can be called repeatedly.
 
-    
+
     async def wait_modified(self):
+        """             
+        """
         await wait(lambda: self.modified is True, self.event_modified)
         self.modified = False
 
@@ -385,31 +399,43 @@ class UVMResourceBase(UVMObject):
     #// converted to regular expressions and then processed.
 
 
-    #// Function: set_scope
-    #//
-    #// Set the value of the regular expression that identifies the set of
-    #// scopes over which this resource is visible.  If the supplied
-    #// argument is a glob it will be converted to a regular expression
-    #// before it is stored.
-    #//
     def set_scope(self, s):
+        """         
+        Function: set_scope
+
+        Set the value of the regular expression that identifies the set of
+        scopes over which this resource is visible.  If the supplied
+        argument is a glob it will be converted to a regular expression
+        before it is stored.
+
+        Args:
+            s: 
+        """
         scope = uvm_glob_to_re(s)
         self.scope = scope
 
-    #// Function: get_scope
-    #//
-    #// Retrieve the regular expression string that identifies the set of
-    #// scopes over which this resource is visible.
-    #//
     def get_scope(self):
+        """         
+        Function: get_scope
+
+        Retrieve the regular expression string that identifies the set of
+        scopes over which this resource is visible.
+
+        Returns:
+        """
         return self.scope
 
-    #// Function: match_scope
-    #//
-    #// Using the regular expression facility, determine if this resource
-    #// is visible in a scope.  Return one if it is, zero otherwise.
-    #//
     def match_scope(self, s):
+        """         
+        Function: match_scope
+
+        Using the regular expression facility, determine if this resource
+        is visible in a scope.  Return one if it is, zero otherwise.
+
+        Args:
+            s: 
+        Returns:
+        """
         err = uvm_re_match(self.scope, s)
         return (err == 0)
 
@@ -453,39 +479,47 @@ class UVMResourceBase(UVMObject):
     #endfunction
 
 
-    #//-------------------
-    #// Group: Audit Trail
-    #//-------------------
-    #//
-    #// To find out what is happening as the simulation proceeds, an audit
-    #// trail of each read and write is kept. The <uvm_resource#(T)::read> and
-    #// <uvm_resource#(T)::write> methods each take an accessor argument.  This is a
-    #// handle to the object that performed that resource access.
-    #//
-    #//|    function T read(uvm_object accessor = None)
-    #//|    function void write(T t, uvm_object accessor = None)
-    #//
-    #// The accessor can by anything as long as it is derived from
-    #// uvm_object.  The accessor object can be a component or a sequence
-    #// or whatever object from which a read or write was invoked.
-    #// Typically the ~this~ handle is used as the
-    #// accessor.  For example:
-    #//
-    #//|    uvm_resource#(int) rint
-    #//|    int i
-    #//|    ...
-    #//|    rint.write(7, this)
-    #//|    i = rint.read(this)
-    #//
-    #// The accessor's ~get_full_name()~ is stored as part of the audit trail.
-    #// This way you can find out what object performed each resource access.
-    #// Each audit record also includes the time of the access (simulation time)
-    #// and the particular operation performed (read or write).
-    #//
-    #// Auditing is controlled through the <uvm_resource_options> class.
-    #// function: record_read_access
-    #function void record_read_access(uvm_object accessor = None)
     def record_read_access(self, accessor=None):
+        """         
+        #-------------------
+        Group: Audit Trail
+        #-------------------
+
+        To find out what is happening as the simulation proceeds, an audit
+        trail of each read and write is kept. The <uvm_resource#(T)::read> and
+        <uvm_resource#(T)::write> methods each take an accessor argument.  This is a
+        handle to the object that performed that resource access.
+
+        .. code-block:: python
+
+            function T read(uvm_object accessor = None)
+            function void write(T t, uvm_object accessor = None)
+
+        The accessor can by anything as long as it is derived from
+        uvm_object.  The accessor object can be a component or a sequence
+        or whatever object from which a read or write was invoked.
+        Typically the `this` handle is used as the
+        accessor.  For example:
+
+        .. code-block:: python
+
+            uvm_resource#(int) rint
+            int i
+            ...
+            rint.write(7, this)
+            i = rint.read(this)
+
+        The accessor's ~get_full_name()~ is stored as part of the audit trail.
+        This way you can find out what object performed each resource access.
+        Each audit record also includes the time of the access (simulation time)
+        and the particular operation performed (read or write).
+
+        Auditing is controlled through the `uvm_resource_options` class.
+        function: record_read_access
+        #function void record_read_access(uvm_object accessor = None)
+        Args:
+            accessor: 
+        """
         _str = ""
         access_record = None  # uvm_resource_types::access_t access_record
         #  // If an accessor object is supplied then get the accessor record.
@@ -515,9 +549,13 @@ class UVMResourceBase(UVMObject):
         # TODO access_record.read_time = $realtime
         self.access[_str] = access_record
 
-    #// function: record_write_access
-    #
     def record_write_access(self, accessor=None):
+        """         
+        function: record_write_access
+
+        Args:
+            accessor: 
+        """
         # If an accessor object is supplied then get the accessor record.
         # Otherwise create a new access record.  In either case populate
         # the access record with information about this access.  Check
@@ -563,11 +601,15 @@ class UVMResourceBase(UVMObject):
 
     #endfunction
 
-    #// Function: init_access_record
-    #//
-    #// Initialize a new access record
-    #//
     def init_access_record(self, access_record):
+        """         
+        Function: init_access_record
+
+        Initialize a new access record
+
+        Args:
+            access_record: 
+        """
         # inout uvm_resource_types::access_t access_record)
         access_record.read_time = 0
         access_record.write_time = 0
@@ -619,13 +661,16 @@ class UVMResource(UVMResourceBase):
         else:
             return UVMResource.my_type
 
-    #// Function: get_type_handle
-    #//
-    #// Returns the static type handle of this resource in a polymorphic
-    #// fashion.  The return type of get_type_handle() is
-    #// uvm_resource_base.  This function is not static and therefore can
-    #// only be used by instances of a parameterized resource.
     def get_type_handle(self):
+        """         
+        Function: get_type_handle
+
+        Returns the static type handle of this resource in a polymorphic
+        fashion.  The return type of get_type_handle() is
+        uvm_resource_base.  This function is not static and therefore can
+        only be used by instances of a parameterized resource.
+        Returns:
+        """
         return UVMResource.get_type()
 
     #//-------------------------
@@ -640,38 +685,53 @@ class UVMResource(UVMResourceBase):
     #// obviates the need for the user to get a handle to the global
     #// resource pool as this is done for him here.
 
-    #// Function: set
-    #//
-    #// Simply put this resource into the global resource pool
     def set(self):
+        """         
+        Function: set
+
+        Simply put this resource into the global resource pool
+        """
         """ Simply put this resource into the global resource pool"""
         pool = UVMResourcePool.get()
         pool.set(self)
 
-    #// Function: set_override
-    #//
-    #// Put a resource into the global resource pool as an override.  This
-    #// means it gets put at the head of the list and is searched before
-    #// other existing resources that occupy the same position in the name
-    #// map or the type map.  The default is to override both the name and
-    #// type maps.  However, using the ~override~ argument you can specify
-    #// that either the name map or type map is overridden.
     def set_override(self, override=NAME_OVERRIDE):
+        """         
+        Function: set_override
+
+        Put a resource into the global resource pool as an override.  This
+        means it gets put at the head of the list and is searched before
+        other existing resources that occupy the same position in the name
+        map or the type map.  The default is to override both the name and
+        type maps.  However, using the `override` argument you can specify
+        that either the name map or type map is overridden.
+        Args:
+            override: 
+            NAME_OVERRIDE: 
+        """
         rp = UVMResourcePool.get()
         rp.set(self, override)
 
-    # Function: get_by_name
-    #
-    # looks up a resource by ~name~ in the name map. The first resource
-    # with the specified name, whose type is the current type, and is
-    # visible in the specified ~scope~ is returned, if one exists.  The
-    # ~rpterr~ flag indicates whether or not an error should be reported
-    # if the search fails.  If ~rpterr~ is set to one then a failure
-    # message is issued, including suggested spelling alternatives, based
-    # on resource names that exist in the database, gathered by the spell
-    # checker.
     @classmethod
     def get_by_name(cls, scope, name, rpterr=True):
+        """         
+        Function: get_by_name
+
+        looks up a resource by `name` in the name map. The first resource
+        with the specified name, whose type is the current type, and is
+        visible in the specified `scope` is returned, if one exists.  The
+        `rpterr` flag indicates whether or not an error should be reported
+        if the search fails.  If `rpterr` is set to one then a failure
+        message is issued, including suggested spelling alternatives, based
+        on resource names that exist in the database, gathered by the spell
+        checker.
+        Args:
+            cls: 
+            scope: 
+            name: 
+            rpterr: 
+        Returns:
+        """
         rp = UVMResourcePool.get()
         #rsrc = None
         rsrc_base = rp.get_by_name(scope, name, cls.get_type(), rpterr)
@@ -733,19 +793,24 @@ class UVMResource(UVMResourceBase):
         self.record_read_access(accessor)
         return self.val
 
-    # Function: write
-    # Modify the object stored in this resource container.  If the
-    # resource is read-only then issue an error message and return
-    # without modifying the object in the container.  If the resource is
-    # not read-only and an ~accessor~ object has been supplied then also
-    # update the accessor record.  Lastly, replace the object value in
-    # the container with the value supplied as the argument, ~t~, and
-    # release any processes blocked on
-    # <uvm_resource_base::wait_modified>.  If the value to be written is
-    # the same as the value already present in the resource then the
-    # write is not done.  That also means that the accessor record is not
-    # updated and the modified bit is not set.
     def write(self, t, accessor=None):
+        """         
+        Function: write
+        Modify the object stored in this resource container.  If the
+        resource is read-only then issue an error message and return
+        without modifying the object in the container.  If the resource is
+        not read-only and an `accessor` object has been supplied then also
+        update the accessor record.  Lastly, replace the object value in
+        the container with the value supplied as the argument, `t`, and
+        release any processes blocked on
+        <uvm_resource_base::wait_modified>.  If the value to be written is
+        the same as the value already present in the resource then the
+        write is not done.  That also means that the accessor record is not
+        updated and the modified bit is not set.
+        Args:
+            t: 
+            accessor: 
+        """
         if self.is_read_only():
             uvm_report_error("resource", sv.sformatf("resource %s is read only -- cannot modify",
                 self.get_name()))
@@ -781,14 +846,21 @@ class UVMResource(UVMResourceBase):
     #  rp.set_priority(this, pri)
     #endfunction
 
-    #// Function: get_highest_precedence
-    #//
-    #// In a queue of resources, locate the first one with the highest
-    #// precedence whose type is T.  This function is static so that it can
-    #// be called from anywhere.
-    #static function this_type get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
     @classmethod
     def get_highest_precedence(cls, q, T=None):
+        """         
+        Function: get_highest_precedence
+
+        In a queue of resources, locate the first one with the highest
+        precedence whose type is T.  This function is static so that it can
+        be called from anywhere.
+        #static function this_type get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
+        Args:
+            cls: 
+            q: 
+            T: 
+        Returns:
+        """
         rsrc = None
         r = None
         i = 0
@@ -904,46 +976,59 @@ class UVMResourcePool:
         self.ttab = {}
         self.get_record = []  # History of gets
 
-    #// Function: get
-    #//
-    #// Returns the singleton handle to the resource pool
     @classmethod
     def get(cls):
+        """         
+        Function: get
+
+        Returns the singleton handle to the resource pool
+        Returns:
+        """
         if UVMResourcePool.rp is None:
             UVMResourcePool.rp = UVMResourcePool()
         return UVMResourcePool.rp
 
-    #// Function: spell_check
-    #//
-    #// Invokes the spell checker for a string s.  The universe of
-    #// correctly spelled strings -- i.e. the dictionary -- is the name
-    #// map.
     def spell_check(self, s):
+        """         
+        Function: spell_check
+
+        Invokes the spell checker for a string s.  The universe of
+        correctly spelled strings -- i.e. the dictionary -- is the name
+        map.
+        Args:
+            s: 
+        Returns:
+        """
         return UVMSpellChkr.check(self.rtab, s)
 
     #-----------
     # Group: Set
     #-----------
 
-    # Function: set
-    #
-    # Add a new resource to the resource pool.  The resource is inserted
-    # into both the name map and type map so it can be located by
-    # either.
-    #
-    # An object creates a resources and ~sets~ it into the resource pool.
-    # Later, other objects that want to access the resource must ~get~ it
-    # from the pool
-    #
-    # Overrides can be specified using this interface.  Either a name
-    # override, a type override or both can be specified.  If an
-    # override is specified then the resource is entered at the front of
-    # the queue instead of at the back.  It is not recommended that users
-    # specify the override parameter directly, rather they use the
-    # <set_override>, <set_name_override>, or <set_type_override>
-    # functions.
-    #
     def set(self, rsrc, override=False):
+        """         
+        Function: set
+
+        Add a new resource to the resource pool.  The resource is inserted
+        into both the name map and type map so it can be located by
+        either.
+
+        An object creates a resources and `sets` it into the resource pool.
+        Later, other objects that want to access the resource must `get` it
+        from the pool
+
+        Overrides can be specified using this interface.  Either a name
+        override, a type override or both can be specified.  If an
+        override is specified then the resource is entered at the front of
+        the queue instead of at the back.  It is not recommended that users
+        specify the override parameter directly, rather they use the
+        `set_override`, `set_name_override`, or `set_type_override`
+        functions.
+
+        Args:
+            rsrc: 
+            override: 
+        """
         rq = list()
         name = ""
         type_handle = None
@@ -1017,12 +1102,18 @@ class UVMResourcePool:
     #endfunction
 
 
-    #// function - push_get_record
-    #//
-    #// Insert a new record into the get history list.
-    #function void push_get_record(string name, string scope,
-    #                                uvm_resource_base rsrc)
     def push_get_record(self, name, scope, rsrc):
+        """         
+        function - push_get_record
+
+        Insert a new record into the get history list.
+        #function void push_get_record(string name, string scope,
+                                       uvm_resource_base rsrc)
+        Args:
+            name: 
+            scope: 
+            rsrc: 
+        """
         impt = None  # get_t impt
 
         #  // if auditing is turned off then there is no reason
@@ -1081,16 +1172,24 @@ class UVMResourcePool:
     # the highest priority that matches the other search criteria.
 
 
-    # Function: lookup_name
-    #
-    # Lookup resources by ~name~.  Returns a queue of resources that
-    # match the ~name~, ~scope~, and ~type_handle~.  If no resources
-    # match the queue is returned empty. If ~rpterr~ is set then a
-    # warning is issued if no matches are found, and the spell checker is
-    # invoked on ~name~.  If ~type_handle~ is ~None~ then a type check is
-    # not made and resources are returned that match only ~name~ and
-    # ~scope~.
     def lookup_name(self, scope, name, type_handle=None, rpterr=True):
+        """         
+        Function: lookup_name
+
+        Lookup resources by `name`.  Returns a queue of resources that
+        match the `name`, `scope`, and `type_handle`.  If no resources
+        match the queue is returned empty. If `rpterr` is set then a
+        warning is issued if no matches are found, and the spell checker is
+        invoked on `name`.  If `type_handle` is `None` then a type check is
+        not made and resources are returned that match only `name` and
+        `scope`.
+        Args:
+            scope: 
+            name: 
+            type_handle: 
+            rpterr: 
+        Returns:
+        """
         rq = list()
         q = list()
         # rsrc = None
@@ -1124,15 +1223,20 @@ class UVMResourcePool:
 
         return q
 
-    #// Function: get_highest_precedence
-    #//
-    #// Traverse a queue, ~q~, of resources and return the one with the highest
-    #// precedence.  In the case where there exists more than one resource
-    #// with the highest precedence value, the first one that has that
-    #// precedence will be the one that is returned.
-    #
-    #function uvm_resource_base get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
     def get_highest_precedence(self, q):
+        """         
+        Function: get_highest_precedence
+
+        Traverse a queue, `q`, of resources and return the one with the highest
+        precedence.  In the case where there exists more than one resource
+        with the highest precedence value, the first one that has that
+        precedence will be the one that is returned.
+
+        #function uvm_resource_base get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
+        Args:
+            q: 
+        Returns:
+        """
 
         rsrc = None  # uvm_resource_base
         r = None  # uvm_resource_base
@@ -1156,16 +1260,22 @@ class UVMResourcePool:
         #
         #endfunction
 
-    #// Function: sort_by_precedence
-    #//
-    #// Given a list of resources, obtained for example from <lookup_scope>,
-    #// sort the resources in  precedence order. The highest precedence
-    #// resource will be first in the list and the lowest precedence will
-    #// be last. Resources that have the same precedence and the same name
-    #// will be ordered by most recently set first.
-    #static function queue sort_by_precedence(ref uvm_resource_types::rsrc_q_t q)
     @classmethod
     def sort_by_precedence(cls, q):
+        """         
+        Function: sort_by_precedence
+
+        Given a list of resources, obtained for example from `lookup_scope`,
+        sort the resources in  precedence order. The highest precedence
+        resource will be first in the list and the lowest precedence will
+        be last. Resources that have the same precedence and the same name
+        will be ordered by most recently set first.
+        #static function queue sort_by_precedence(ref uvm_resource_types::rsrc_q_t q)
+        Args:
+            cls: 
+            q: 
+        Returns:
+        """
         #  uvm_resource_types::rsrc_q_t all[int]
         _all = {}
         r = None  # uvm_resource_base
@@ -1184,20 +1294,28 @@ class UVMResourcePool:
         return qq
         #endfunction
 
-    #// Function: get_by_name
-    #//
-    #// Lookup a resource by ~name~, ~scope~, and ~type_handle~.  Whether
-    #// the get succeeds or fails, save a record of the get attempt.  The
-    #// ~rpterr~ flag indicates whether to report errors or not.
-    #// Essentially, it serves as a verbose flag.  If set then the spell
-    #// checker will be invoked and warnings about multiple resources will
-    #// be produced.
-    #
-    #function uvm_resource_base get_by_name(string scope = "",
-    #                                       string name,
-    #                                       uvm_resource_base type_handle,
-    #                                       bit rpterr = 1)
     def get_by_name(self, scope, name, type_handle, rpterr=True):
+        """         
+        Function: get_by_name
+
+        Lookup a resource by `name`, `scope`, and `type_handle`.  Whether
+        the get succeeds or fails, save a record of the get attempt.  The
+        `rpterr` flag indicates whether to report errors or not.
+        Essentially, it serves as a verbose flag.  If set then the spell
+        checker will be invoked and warnings about multiple resources will
+        be produced.
+
+        #function uvm_resource_base get_by_name(string scope = "",
+                                              string name,
+                                              uvm_resource_base type_handle,
+                                              bit rpterr = 1)
+        Args:
+            scope: 
+            name: 
+            type_handle: 
+            rpterr: 
+        Returns:
+        """
         q = []  # uvm_resource_types::rsrc_q_t q
         rsrc = None  # uvm_resource_base rsrc
         q = self.lookup_name(scope, name, type_handle, rpterr)
@@ -1266,17 +1384,24 @@ class UVMResourcePool:
     #endfunction
 
 
-    #// Function: lookup_regex_names
-    #//
-    #// This utility function answers the question, for a given ~name~,
-    #// ~scope~, and ~type_handle~, what are all of the resources with requested name,
-    #// a matching scope (where the resource scope may be a
-    #// regular expression), and a matching type?
-    #// ~name~ and ~scope~ are explicit values.
-    #function uvm_resource_types::rsrc_q_t lookup_regex_names(string scope,
-    #                                                         string name,
-    #                                                         uvm_resource_base type_handle = None)
     def lookup_regex_names(self, scope, name, type_handle=None):
+        """         
+        Function: lookup_regex_names
+
+        This utility function answers the question, for a given `name`,
+        `scope`, and `type_handle`, what are all of the resources with requested name,
+        a matching scope (where the resource scope may be a
+        regular expression), and a matching type?
+        `name` and `scope` are explicit values.
+        #function uvm_resource_types::rsrc_q_t lookup_regex_names(string scope,
+                                                                string name,
+                                                                uvm_resource_base type_handle = None)
+        Args:
+            scope: 
+            name: 
+            type_handle: 
+        Returns:
+        """
         return self.lookup_name(scope, name, type_handle, 0)
 
     #// Function: lookup_regex
@@ -1307,15 +1432,20 @@ class UVMResourcePool:
     #  return result_q
     #endfunction
 
-    #// Function: lookup_scope
-    #//
-    #// This is a utility function that answers the question: For a given
-    #// ~scope~, what resources are visible to it?  Locate all the resources
-    #// that are visible to a particular scope.  This operation could be
-    #// quite expensive, as it has to traverse all of the resources in the
-    #// database.
-    #function uvm_resource_types::rsrc_q_t lookup_scope(string scope)
     def lookup_scope(self, scope):
+        """         
+        Function: lookup_scope
+
+        This is a utility function that answers the question: For a given
+        `scope`, what resources are visible to it?  Locate all the resources
+        that are visible to a particular scope.  This operation could be
+        quite expensive, as it has to traverse all of the resources in the
+        database.
+        #function uvm_resource_types::rsrc_q_t lookup_scope(string scope)
+        Args:
+            scope: 
+        Returns:
+        """
         rq = None  # uvm_resource_types::rsrc_q_t rq
         r = None  # uvm_resource_base r
         i = 0
@@ -1357,10 +1487,16 @@ class UVMResourcePool:
     #// This function handles the mechanics of moving a resource to either
     #// the front or back of the queue.
 
-    #local function void set_priority_queue(uvm_resource_base rsrc,
-    #                                       ref uvm_resource_types::rsrc_q_t q,
-    #                                       uvm_resource_types::priority_e pri)
     def set_priority_queue(self, rsrc, q, pri):
+        """         
+        #local function void set_priority_queue(uvm_resource_base rsrc,
+                                              ref uvm_resource_types::rsrc_q_t q,
+                                              uvm_resource_types::priority_e pri)
+        Args:
+            rsrc: 
+            q: 
+            pri: 
+        """
         r = None  # uvm_resource_base
         i = 0
 
@@ -1424,9 +1560,14 @@ class UVMResourcePool:
     #// priority enum argument.  This function changes the priority only in
     #// the name map, leaving the type map untouched.
 
-    #function void set_priority_name(uvm_resource_base rsrc,
-    #                                uvm_resource_types::priority_e pri)
     def set_priority_name(self, rsrc, pri):
+        """         
+        #function void set_priority_name(uvm_resource_base rsrc,
+                                       uvm_resource_types::priority_e pri)
+        Args:
+            rsrc: 
+            pri: 
+        """
         name = ""
         msg = ""
         q = []
@@ -1499,14 +1640,19 @@ class UVMResourcePool:
 
     #// Function: print_resources
 
-    #//
-    #// Print the resources that are in a single queue, ~rq~.  This is a utility
-    #// function that can be used to print any collection of resources
-    #// stored in a queue.  The ~audit~ flag determines whether or not the
-    #// audit trail is printed for each resource along with the name,
-    #// value, and scope regular expression.
-    #function void print_resources(uvm_resource_types::rsrc_q_t rq, bit audit = 0)
     def print_resources(self, rq, audit=False):
+        """         
+
+        Print the resources that are in a single queue, `rq`.  This is a utility
+        function that can be used to print any collection of resources
+        stored in a queue.  The `audit` flag determines whether or not the
+        audit trail is printed for each resource along with the name,
+        value, and scope regular expression.
+        #function void print_resources(uvm_resource_types::rsrc_q_t rq, bit audit = 0)
+        Args:
+            rq: 
+            audit: 
+        """
         i = 0
         r = None  # uvm_resource_base r
         UVMResourcePool.printer = UVMLinePrinter()

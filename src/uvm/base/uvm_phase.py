@@ -89,28 +89,37 @@ class UVMPhaseStateChange(UVMObject):
         self.m_prev_state = None
         self.m_jump_to = None
 
-    # Function: get_state()
-    #
-    # Returns the state the phase just transitioned to.
-    # Functionally equivalent to <uvm_phase::get_state()>.
-    #
     def get_state(self):
+        """         
+        Function: get_state()
+
+        Returns the state the phase just transitioned to.
+        Functionally equivalent to <uvm_phase::get_state()>.
+
+        Returns:
+        """
         return self.m_phase.get_state()
 
-    # Function: get_prev_state()
-    #
-    # Returns the state the phase just transitioned from.
-    #
     def get_prev_state(self):
+        """         
+        Function: get_prev_state()
+
+        Returns the state the phase just transitioned from.
+
+        Returns:
+        """
         return self.m_prev_state
 
-    # Function: jump_to()
-    #
-    # If the current state is ~UVM_PHASE_ENDED~ or ~UVM_PHASE_JUMPING~ because of
-    # a phase jump, returns the phase that is the target of jump.
-    # Returns ~null~ otherwise.
-    #
     def jump_to(self):
+      """       
+      Function: jump_to()
+
+      If the current state is `UVM_PHASE_ENDED` or `UVM_PHASE_JUMPING` because of
+      a phase jump, returns the phase that is the target of jump.
+      Returns `null` otherwise.
+
+      Returns:
+      """
       return self.m_jump_to
 uvm_object_utils(UVMPhaseStateChange)
 
@@ -1638,27 +1647,36 @@ class UVMPhase(UVMObject):
 
 class UVMPhaseCb(UVMCallback):
 
-    # Function: new
-    # Constructor
     def __init__(self, name="unnamed-uvm_phase_cb"):
+        """         
+        Function: new
+        Constructor
+        Args:
+            name: 
+        """
         UVMCallback.__init__(self)
 
-    # Function: phase_state_change
-    #
-    # Called whenever a ~phase~ changes state.
-    # The ~change~ descriptor describes the transition that was just completed.
-    # The callback method is invoked immediately after the phase state has changed,
-    # but before the phase implementation is executed.
-    #
-    # An extension may interact with the phase,
-    # such as raising the phase objection to prolong the phase,
-    # in a manner that is consistent with the current phase state.
-    #
-    # By default, the callback method does nothing.
-    # Unless otherwise specified, modifying the  phase transition descriptor has
-    # no effect on the phasing schedule or execution.
-    #
     def phase_state_change(self, phase, change):
+        """         
+        Function: phase_state_change
+
+        Called whenever a `phase` changes state.
+        The `change` descriptor describes the transition that was just completed.
+        The callback method is invoked immediately after the phase state has changed,
+        but before the phase implementation is executed.
+
+        An extension may interact with the phase,
+        such as raising the phase objection to prolong the phase,
+        in a manner that is consistent with the current phase state.
+
+        By default, the callback method does nothing.
+        Unless otherwise specified, modifying the  phase transition descriptor has
+        no effect on the phasing schedule or execution.
+
+        Args:
+            phase: 
+            change: 
+        """
         pass
 
 

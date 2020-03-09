@@ -143,17 +143,20 @@ class UVMRecorder(UVMObject):
         self.policy = UVM_DEFAULT_POLICY
         #
 
-    #
-    #   // Group: Configuration API
-    #
-    #   // Function: get_stream
-    #   // Returns a reference to the stream which created
-    #   // this record.
-    #   //
-    #   // A warning will be asserted if get_stream is called prior
-    #   // to the record being initialized via <do_open>.
-    #   //
     def get_stream(self):
+        """         
+
+           Group: Configuration API
+
+           Function: get_stream
+           Returns a reference to the stream which created
+           this record.
+          
+           A warning will be asserted if get_stream is called prior
+           to the record being initialized via `do_open`.
+          
+        Returns:
+        """
         astr = []
         if not self.m_stream_dap.try_get(astr):
             if self.m_warn_null_stream == 1:
@@ -177,16 +180,20 @@ class UVMRecorder(UVMObject):
     #   //
 
 
-    #   // Function: close
-    #   // Closes this recorder.
-    #   //
-    #   // Closing a recorder marks the end of the transaction in the stream.
-    #   //
-    #   // Parameters:
-    #   // close_time - Optional time to record as the closing time of this transaction.
-    #   //
-    #   // This method will trigger a <do_close> call.
     def close(self, close_time=0):
+        """         
+           Function: close
+           Closes this recorder.
+          
+           Closing a recorder marks the end of the transaction in the stream.
+          
+           Parameters:
+           close_time - Optional time to record as the closing time of this transaction.
+          
+           This method will trigger a `do_close` call.
+        Args:
+            close_time: 
+        """
         if (close_time == 0):
             close_time = sv.realtime()
 
@@ -200,21 +207,25 @@ class UVMRecorder(UVMObject):
         self.m_close_time = close_time
 
 
-    #   // Function: free
-    #   // Frees this recorder
-    #   //
-    #   // Freeing a recorder indicates that the stream and database can release
-    #   // any references to the recorder.
-    #   //
-    #   // Parameters:
-    #   // close_time - Optional time to record as the closing time of this transaction.
-    #   //
-    #   // If a recorder has not yet been closed (via a call to <close>), then
-    #   // <close> will automatically be called, and passed the ~close_time~.  If the recorder
-    #   // has already been closed, then the ~close_time~ will be ignored.
-    #   //
-    #   // This method will trigger a <do_free> call.
     def free(self, close_time=0):
+        """         
+           Function: free
+           Frees this recorder
+          
+           Freeing a recorder indicates that the stream and database can release
+           any references to the recorder.
+          
+           Parameters:
+           close_time - Optional time to record as the closing time of this transaction.
+          
+           If a recorder has not yet been closed (via a call to `close`), then
+           `close` will automatically be called, and passed the `close_time`.  If the recorder
+           has already been closed, then the `close_time` will be ignored.
+          
+           This method will trigger a `do_free` call.
+        Args:
+            close_time: 
+        """
         # process p=process::self()
         p = None
         s = ""
@@ -245,49 +256,67 @@ class UVMRecorder(UVMObject):
         if stream is not None:
             stream.m_free_recorder(self)
 
-    #   // Function: is_open
-    #   // Returns true if this ~uvm_recorder~ was opened on its stream,
-    #   // but has not yet been closed.
-    #   //
     def is_open(self):
+        """         
+           Function: is_open
+           Returns true if this `uvm_recorder` was opened on its stream,
+           but has not yet been closed.
+          
+        Returns:
+        """
         return self.m_is_opened
 
 
-    #
-    #   // Function: get_open_time
-    #   // Returns the ~open_time~
-    #   //
     def get_open_time(self):
+        """         
+
+           Function: get_open_time
+           Returns the `open_time`
+          
+        Returns:
+        """
         return self.m_open_time
 
 
-    #   // Function: is_closed
-    #   // Returns true if this ~uvm_recorder~ was closed on its stream,
-    #   // but has not yet been freed.
-    #   //
     def is_closed(self):
+        """         
+           Function: is_closed
+           Returns true if this `uvm_recorder` was closed on its stream,
+           but has not yet been freed.
+          
+        Returns:
+        """
         return self.m_is_closed
 
 
-    #   // Function: get_close_time
-    #   // Returns the ~close_time~
-    #   //
     def get_close_time(self):
+        """         
+           Function: get_close_time
+           Returns the `close_time`
+          
+        Returns:
+        """
         return self.m_close_time
 
-    #  // Function- m_do_open
-    #  // Initializes the internal state of the recorder.
-    #  //
-    #  // Parameters:
-    #  // stream - The stream which spawned this recorder
-    #  //
-    #  // This method will trigger a <do_open> call.
-    #  //
-    #  // An error will be asserted if:
-    #  // - ~m_do_open~ is called more than once without the
-    #  //  recorder being ~freed~ in between.
-    #  // - ~stream~ is ~null~
     def m_do_open(self, stream, open_time, type_name):
+        """         
+          Function- m_do_open
+          Initializes the internal state of the recorder.
+         
+          Parameters:
+          stream - The stream which spawned this recorder
+         
+          This method will trigger a `do_open` call.
+         
+          An error will be asserted if:
+          - `m_do_open` is called more than once without the
+           recorder being `freed` in between.
+          - `stream` is `null`
+        Args:
+            stream: 
+            open_time: 
+            type_name: 
+        """
         m_stream = []
         if stream is None:
             uvm_error("UVM/REC/NULL_STREAM",
@@ -323,10 +352,15 @@ class UVMRecorder(UVMObject):
     #   local static integer m_id
 
 
-    #   // Function- m_free_id
-    #   // Frees the id/recorder link (memory cleanup)
     @classmethod
     def m_free_id(cls, id):
+        """         
+           Function- m_free_id
+           Frees the id/recorder link (memory cleanup)
+        Args:
+            cls: 
+            id: 
+        """
         recorder = None  # uvm_recorder
         if ((not sv.isunknown(id)) and (id in cls.m_recorders_by_id)):
             recorder = cls.m_recorders_by_id[id]
@@ -335,13 +369,16 @@ class UVMRecorder(UVMObject):
             del cls.m_recorders_by_id[id]
             del cls.m_ids_by_recorder[recorder]
 
-    #   // Function: get_handle
-    #   // Returns a unique ID for this recorder.
-    #   //
-    #   // A value of ~0~ indicates that the recorder has been ~freed~,
-    #   // and no longer has a valid ID.
-    #   //
     def get_handle(self):
+        """         
+           Function: get_handle
+           Returns a unique ID for this recorder.
+          
+           A value of `0` indicates that the recorder has been `freed`,
+           and no longer has a valid ID.
+          
+        Returns:
+        """
         if (self.is_open() is False and self.is_closed() is False):
             return 0
         else:
@@ -359,24 +396,32 @@ class UVMRecorder(UVMObject):
         #   endfunction : get_handle
 
 
-    #   // Function: get_recorder_from_handle
-    #   // Static accessor, returns a recorder reference for a given unique id.
-    #   //
-    #   // If no recorder exists with the given ~id~, or if the
-    #   // recorder with that ~id~ has been freed, then ~null~ is
-    #   // returned.
-    #   //
-    #   // This method can be used to access the recorder associated with a
-    #   // call to <uvm_transaction::begin_tr> or <uvm_component::begin_tr>.
-    #   //
-    #   // | integer handle = tr.begin_tr()
-    #   // | uvm_recorder recorder = uvm_recorder::get_recorder_from_handle(handle)
-    #   // | if (recorder != null):
-    #   // |   recorder.record_string("begin_msg", "Started recording transaction!")
-    #   // | end
-    #   //
     @classmethod
     def get_recorder_from_handle(cls, id):
+        """         
+           Function: get_recorder_from_handle
+           Static accessor, returns a recorder reference for a given unique id.
+          
+           If no recorder exists with the given `id`, or if the
+           recorder with that `id` has been freed, then `null` is
+           returned.
+          
+           This method can be used to access the recorder associated with a
+           call to <uvm_transaction::begin_tr> or <uvm_component::begin_tr>.
+          
+        .. code-block:: python
+
+           | integer handle = tr.begin_tr()
+           | uvm_recorder recorder = uvm_recorder::get_recorder_from_handle(handle)
+           | if (recorder != null):
+           |   recorder.record_string("begin_msg", "Started recording transaction!")
+           | end
+          
+        Args:
+            cls: 
+            id: 
+        Returns:
+        """
         if (id == 0):
             return None
         if sv.isunknown(id) or id not in cls.m_recorders_by_id:
@@ -545,13 +590,19 @@ class UVMRecorder(UVMObject):
     #   // Group: Implementation Agnostic API
     #
 
-    #   // Function: do_open
-    #   // Callback triggered via <uvm_tr_stream::open_recorder>.
-    #   //
-    #   // The ~do_open~ callback can be used to initialize any internal
-    #   // state within the recorder, as well as providing a location to
-    #   // record any initial information.
     def do_open(self, stream, open_time, type_name):
+        """         
+           Function: do_open
+           Callback triggered via <uvm_tr_stream::open_recorder>.
+          
+           The `do_open` callback can be used to initialize any internal
+           state within the recorder, as well as providing a location to
+           record any initial information.
+        Args:
+            stream: 
+            open_time: 
+            type_name: 
+        """
         pass
 
     #
@@ -737,12 +788,16 @@ class UVMRecorder(UVMObject):
 
 class UVMTextRecorder(UVMRecorder):
 
-    #   // Function: new
-    #   // Constructor
-    #   //
-    #   // Parameters:
-    #   // name - Instance name
     def __init__(self, name="unnamed-uvm_text_recorder"):
+        """         
+           Function: new
+           Constructor
+          
+           Parameters:
+           name - Instance name
+        Args:
+            name: 
+        """
         super().__init__(name)
         # Variable- m_text_db
         # Reference to the text database backend
@@ -754,13 +809,19 @@ class UVMTextRecorder(UVMRecorder):
         #   endfunction : new
 
 
-    #   // Group: Implementation Agnostic API
-    #
-    #   // Function: do_open
-    #   // Callback triggered via <uvm_tr_stream::open_recorder>.
-    #   //
-    #   // Text-backend specific implementation.
     def do_open(self, stream, open_time, type_name):
+        """         
+           Group: Implementation Agnostic API
+
+           Function: do_open
+           Callback triggered via <uvm_tr_stream::open_recorder>.
+          
+           Text-backend specific implementation.
+        Args:
+            stream: 
+            open_time: 
+            type_name: 
+        """
         self. m_text_db = stream.get_db()
         if self.m_text_db.open_db():
             sv.fdisplay(self.m_text_db.m_file,
@@ -769,11 +830,15 @@ class UVMTextRecorder(UVMRecorder):
                 self.get_name(), open_time, type_name)
 
 
-    #   // Function: do_close
-    #   // Callback triggered via <uvm_recorder::close>.
-    #   //
-    #   // Text-backend specific implementation.
     def do_close(self, close_time):
+        """         
+           Function: do_close
+           Callback triggered via <uvm_recorder::close>.
+          
+           Text-backend specific implementation.
+        Args:
+            close_time: 
+        """
         if self.m_text_db.open_db():
             sv.fdisplay(self.m_text_db.m_file,
                  "    CLOSE_RECORDER @%0t {{TXH:%0d TIME=%0t}}",
@@ -781,12 +846,14 @@ class UVMTextRecorder(UVMRecorder):
                  self.get_handle(),
                  close_time)
 
-    #
-    #   // Function: do_free
-    #   // Callback triggered via <uvm_recorder::free>.
-    #   //
-    #   // Text-backend specific implementation.
     def do_free(self):
+        """         
+
+           Function: do_free
+           Callback triggered via <uvm_recorder::free>.
+          
+           Text-backend specific implementation.
+        """
         if self.m_text_db.open_db():
             sv.fdisplay(self.m_text_db.m_file,
                 "    FREE_RECORDER @%0t {{TXH:%0d}}",

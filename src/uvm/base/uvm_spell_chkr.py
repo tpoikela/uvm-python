@@ -36,45 +36,52 @@ class UVMSpellChkr:
     #typedef T tab_t[string];
     #static const int unsigned max = '1;
 
-    #--------------------------------------------------------------------
-    # check
-    #
-    # primary interface to the spell checker.  The function takes two
-    # arguments, a table of strings and a string to check.  The table is
-    # organized as an associative array of type T.  E.g.
-    #
-    #    T strtab[string]
-    #
-    # It does not matter what T is since we are only concerned with the
-    # string keys. However, we need T in order to make argument types
-    # match.
-    #
-    # First, we do the simple thing and see if the string already is in
-    # the string table by calling the ~exists()~ method.  If it does exist
-    # then there is a match and we're done.  If the string doesn't exist
-    # in the table then we invoke the spell checker algorithm to see if
-    # our string is a misspelled variation on a string that does exist in
-    # the table.
-    #
-    # The main loop traverses the string table computing the levenshtein
-    # distance between each string and the string we are checking.  The
-    # strings in the table with the minimum distance are considered
-    # possible alternatives.  There may be more than one string in the
-    # table with a minimum distance. So all the alternatives are stored
-    # in a queue.
-    #
-    # Note: This is not a particularly efficient algorithm.  It requires
-    # computing the levenshtein distance for every string in the string
-    # table.  If that list were very large the run time could be long.
-    # For the resources application in UVM probably the size of the
-    # string table is not excessive and run times will be fast enough.
-    # If, on average, that proves to be an invalid assumption then we'll
-    # have to find ways to optimize this algorithm.
-    #
-    # note: strtab should not be modified inside check()
-    #--------------------------------------------------------------------
     @classmethod
     def check(cls, strtab, s):
+        """         
+        #--------------------------------------------------------------------
+        check
+
+        primary interface to the spell checker.  The function takes two
+        arguments, a table of strings and a string to check.  The table is
+        organized as an associative array of type T.  E.g.
+
+           T strtab[string]
+
+        It does not matter what T is since we are only concerned with the
+        string keys. However, we need T in order to make argument types
+        match.
+
+        First, we do the simple thing and see if the string already is in
+        the string table by calling the ~exists()~ method.  If it does exist
+        then there is a match and we're done.  If the string doesn't exist
+        in the table then we invoke the spell checker algorithm to see if
+        our string is a misspelled variation on a string that does exist in
+        the table.
+
+        The main loop traverses the string table computing the levenshtein
+        distance between each string and the string we are checking.  The
+        strings in the table with the minimum distance are considered
+        possible alternatives.  There may be more than one string in the
+        table with a minimum distance. So all the alternatives are stored
+        in a queue.
+
+        Note: This is not a particularly efficient algorithm.  It requires
+        computing the levenshtein distance for every string in the string
+        table.  If that list were very large the run time could be long.
+        For the resources application in UVM probably the size of the
+        string table is not excessive and run times will be fast enough.
+        If, on average, that proves to be an invalid assumption then we'll
+        have to find ways to optimize this algorithm.
+
+        note: strtab should not be modified inside check()
+        #--------------------------------------------------------------------
+        Args:
+            cls: 
+            strtab: 
+            s: 
+        Returns:
+        """
         key = ""
         distance = 0
         min_val = 0
@@ -122,25 +129,32 @@ class UVMSpellChkr:
 
         return False
 
-    #--------------------------------------------------------------------
-    # levenshtein_distance
-    #
-    # Compute levenshtein distance between s and t
-    # The Levenshtein distance is defined as The smallest number of
-    # insertions, deletions, and substitutions required to change one
-    # string into another.  There is a tremendous amount of information
-    # available on Levenshtein distance on the internet.  Two good
-    # sources are wikipedia and nist.gov.  A nice, simple explanation of
-    # the algorithm is at
-    # http:#www.codeproject.com/KB/recipes/Levenshtein.aspx.  Use google
-    # to find others.
-    #
-    # This implementation of the Levenshtein
-    # distance computation algorithm is a SystemVerilog adaptation of the
-    # C implementatiion located at http:#www.merriampark.com/ldc.htm.
-    #--------------------------------------------------------------------
     @classmethod
     def levenshtein_distance(cls, s, t):
+        """         
+        #--------------------------------------------------------------------
+        levenshtein_distance
+
+        Compute levenshtein distance between s and t
+        The Levenshtein distance is defined as The smallest number of
+        insertions, deletions, and substitutions required to change one
+        string into another.  There is a tremendous amount of information
+        available on Levenshtein distance on the internet.  Two good
+        sources are wikipedia and nist.gov.  A nice, simple explanation of
+        the algorithm is at
+        http:#www.codeproject.com/KB/recipes/Levenshtein.aspx.  Use google
+        to find others.
+
+        This implementation of the Levenshtein
+        distance computation algorithm is a SystemVerilog adaptation of the
+        C implementatiion located at http:#www.merriampark.com/ldc.htm.
+        #--------------------------------------------------------------------
+        Args:
+            cls: 
+            s: 
+            t: 
+        Returns:
+        """
         k        = 0
         i        = 0
         j        = 0
@@ -178,11 +192,19 @@ class UVMSpellChkr:
         distance = d[n*m-1]
         return distance
 
-    #--------------------------------------------------------------------
-    # Gets the minimum of three values
-    #--------------------------------------------------------------------
     @classmethod
     def minimum(cls, a, b, c):
+        """         
+        #--------------------------------------------------------------------
+        Gets the minimum of three values
+        #--------------------------------------------------------------------
+        Args:
+            cls: 
+            a: 
+            b: 
+            c: 
+        Returns:
+        """
         return min(a, b, c)
         #min_val = a
         #if b < min_val:

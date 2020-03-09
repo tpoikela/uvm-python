@@ -100,23 +100,34 @@ class UVMReportObject(UVMObject):
     # Group: Reporting
     #----------------------------------------------------------------------------
 
-    # Function: uvm_get_report_object
-    #
-    # Returns the nearest uvm_report_object when called.  From inside a
-    # uvm_component, the method simply returns ~this~.
-    #
-    # See also the global version of <uvm_get_report_object>.
     def uvm_get_report_object(self):
+        """         
+        Function: uvm_get_report_object
+
+        Returns the nearest uvm_report_object when called.  From inside a
+        uvm_component, the method simply returns `this`.
+
+        See also the global version of `uvm_get_report_object`.
+        Returns:
+        """
         return self
 
-    # Function: uvm_report_enabled
-    #
-    # Returns 1 if the configured verbosity for this severity/id is greater than
-    # or equal to ~verbosity~ else returns 0.
-    #
-    # See also <get_report_verbosity_level> and the global version of
-    # <uvm_report_enabled>.
     def uvm_report_enabled(self, verbosity, severity=UVM_INFO, id=""):
+        """         
+        Function: uvm_report_enabled
+
+        Returns 1 if the configured verbosity for this severity/id is greater than
+        or equal to `verbosity` else returns 0.
+
+        See also `get_report_verbosity_level` and the global version of
+        `uvm_report_enabled`.
+        Args:
+            verbosity: 
+            severity: 
+            UVM_INFO: 
+            id: 
+        Returns:
+        """
         if self.get_report_verbosity_level(severity, id) >= verbosity:
             return True
         return False
@@ -139,36 +150,84 @@ class UVMReportObject(UVMObject):
                                             verbosity, filename, line, context_name)
         self.uvm_process_report_message(l_report_message)
 
-    # Function: uvm_report_info
     def uvm_report_info(self, id, message, verbosity=UVM_MEDIUM, filename="",
             line=0, context_name="", report_enabled_checked=False):
+        """         
+        Function: uvm_report_info
+        Args:
+            id: 
+            message: 
+            verbosity: 
+            UVM_MEDIUM: 
+            filename: 
+            line: 
+            context_name: 
+            report_enabled_checked: 
+        """
         self.uvm_report(UVM_INFO, id, message, verbosity,
                   filename, line, context_name, report_enabled_checked)
 
-    # Function: uvm_report_warning
     def uvm_report_warning(self, id, message, verbosity=UVM_MEDIUM, filename="",
             line=0, context_name="", report_enabled_checked=False):
+        """         
+        Function: uvm_report_warning
+        Args:
+            id: 
+            message: 
+            verbosity: 
+            UVM_MEDIUM: 
+            filename: 
+            line: 
+            context_name: 
+            report_enabled_checked: 
+        """
         self.uvm_report(UVM_WARNING, id, message, verbosity,
                 filename, line, context_name, report_enabled_checked)
 
-    # Function: uvm_report_error
     def uvm_report_error(self, id, message, verbosity = UVM_LOW, filename = "",
             line = 0, context_name = "", report_enabled_checked = False):
+        """         
+        Function: uvm_report_error
+        Args:
+            id: 
+            message: 
+            verbosity: 
+            UVM_LOW: 
+            filename: 
+            line: 
+            context_name: 
+            report_enabled_checked: 
+        """
         self.uvm_report (UVM_ERROR, id, message, verbosity,
                 filename, line, context_name, report_enabled_checked)
 
-    # Function: uvm_report_fatal
     def uvm_report_fatal(self, id, message, verbosity = UVM_NONE, filename = "",
             line = 0, context_name = "", report_enabled_checked = False):
+        """         
+        Function: uvm_report_fatal
+        Args:
+            id: 
+            message: 
+            verbosity: 
+            UVM_NONE: 
+            filename: 
+            line: 
+            context_name: 
+            report_enabled_checked: 
+        """
         self.uvm_report (UVM_FATAL, id, message, verbosity,
                 filename, line, context_name, report_enabled_checked)
 
-    # Function: uvm_process_report_message
-    #
-    # This method takes a preformed uvm_report_message, populates it with
-    # the report object and passes it to the report handler for processing.
-    # It is expected to be checked for verbosity and populated.
     def uvm_process_report_message(self, report_message):
+        """         
+        Function: uvm_process_report_message
+
+        This method takes a preformed uvm_report_message, populates it with
+        the report object and passes it to the report handler for processing.
+        It is expected to be checked for verbosity and populated.
+        Args:
+            report_message: 
+        """
         report_message.set_report_object(self)
         self.m_rh.process_report_message(report_message)
 
@@ -176,34 +235,53 @@ class UVMReportObject(UVMObject):
     # Group: Verbosity Configuration
     #----------------------------------------------------------------------------
 
-    # Function: get_report_verbosity_level
-    #
-    # Gets the verbosity level in effect for this object. Reports issued
-    # with verbosity greater than this will be filtered out. The severity
-    # and tag arguments check if the verbosity level has been modified for
-    # specific severity/tag combinations.
     def get_report_verbosity_level(self, severity=UVM_INFO, id=""):
+        """         
+        Function: get_report_verbosity_level
+
+        Gets the verbosity level in effect for this object. Reports issued
+        with verbosity greater than this will be filtered out. The severity
+        and tag arguments check if the verbosity level has been modified for
+        specific severity/tag combinations.
+        Args:
+            severity: 
+            UVM_INFO: 
+            id: 
+        Returns:
+        """
         return self.m_rh.get_verbosity_level(severity, id)
 
-    # Function: get_report_max_verbosity_level
-    #
-    # Gets the maximum verbosity level in effect for this report object.
-    # Any report from this component whose verbosity exceeds this maximum will
-    # be ignored.
     def get_report_max_verbosity_level(self):
+        """         
+        Function: get_report_max_verbosity_level
+
+        Gets the maximum verbosity level in effect for this report object.
+        Any report from this component whose verbosity exceeds this maximum will
+        be ignored.
+        Returns:
+        """
         return self.m_rh.m_max_verbosity_level
 
-    # Function: set_report_verbosity_level
-    #
-    # This method sets the maximum verbosity level for reports for this component.
-    # Any report from this component whose verbosity exceeds this maximum will
-    # be ignored.
     def set_report_verbosity_level(self, verbosity_level):
+        """         
+        Function: set_report_verbosity_level
+
+        This method sets the maximum verbosity level for reports for this component.
+        Any report from this component whose verbosity exceeds this maximum will
+        be ignored.
+        Args:
+            verbosity_level: 
+        """
         self.m_rh.set_verbosity_level(verbosity_level)
 
-    # Function: set_report_id_verbosity
-    #
     def set_report_id_verbosity(self, id, verbosity):
+        """         
+        Function: set_report_id_verbosity
+
+        Args:
+            id: 
+            verbosity: 
+        """
         self.m_rh.set_id_verbosity(id, verbosity)
 
     # Function: set_report_severity_id_verbosity
@@ -234,51 +312,87 @@ class UVMReportObject(UVMObject):
     def get_report_action(self, severity, id):
         return self.m_rh.get_action(severity,id)
 
-    # Function: set_report_severity_action
-    #
     def set_report_severity_action(self, severity, action):
+        """         
+        Function: set_report_severity_action
+
+        Args:
+            severity: 
+            action: 
+        """
         self.m_rh.set_severity_action(severity, action)
 
-    # Function: set_report_id_action
-    #
     def set_report_id_action(self, id, action):
+        """         
+        Function: set_report_id_action
+
+        Args:
+            id: 
+            action: 
+        """
         self.m_rh.set_id_action(id, action)
 
-    # Function: set_report_severity_id_action
-    #
-    # These methods associate the specified action or actions with reports of the
-    # given ~severity~, ~id~, or ~severity-id~ pair. An action associated with a
-    # particular ~severity-id~ pair takes precedence over an action associated with
-    # ~id~, which takes precedence over an action associated with a ~severity~.
-    #
-    # The ~action~ argument can take the value <UVM_NO_ACTION>, or it can be a
-    # bitwise OR of any combination of <UVM_DISPLAY>, <UVM_LOG>, <UVM_COUNT>,
-    # <UVM_STOP>, <UVM_EXIT>, and <UVM_CALL_HOOK>.
     def set_report_severity_id_action(self, severity, id, action):
+        """         
+        Function: set_report_severity_id_action
+
+        These methods associate the specified action or actions with reports of the
+        given `severity`, `id`, or ~severity-id~ pair. An action associated with a
+        particular ~severity-id~ pair takes precedence over an action associated with
+        `id`, which takes precedence over an action associated with a `severity`.
+
+        The `action` argument can take the value `UVM_NO_ACTION`, or it can be a
+        bitwise OR of any combination of `UVM_DISPLAY`, `UVM_LOG`, `UVM_COUNT`,
+        `UVM_STOP`, `UVM_EXIT`, and `UVM_CALL_HOOK`.
+        Args:
+            severity: 
+            id: 
+            action: 
+        """
         self.m_rh.set_severity_id_action(severity, id, action)
 
     #----------------------------------------------------------------------------
     # Group: File Configuration
     #----------------------------------------------------------------------------
 
-    # Function: get_report_file_handle
-    #
-    # Gets the file descriptor associated with reports having the given
-    # ~severity~ and ~id~.
     def get_report_file_handle(self, severity, id):
+        """         
+        Function: get_report_file_handle
+
+        Gets the file descriptor associated with reports having the given
+        `severity` and `id`.
+        Args:
+            severity: 
+            id: 
+        Returns:
+        """
         return self.m_rh.get_file_handle(severity,id)
 
-    # Function: set_report_default_file
     def set_report_default_file(self, file):
+        """         
+        Function: set_report_default_file
+        Args:
+            file: 
+        """
         self.m_rh.set_default_file(file)
 
-    # Function: set_report_id_file
     def set_report_id_file(self, id, file):
+        """         
+        Function: set_report_id_file
+        Args:
+            id: 
+            file: 
+        """
         self.m_rh.set_id_file(id, file)
 
-    # Function: set_report_severity_file
-    #
     def set_report_severity_file(self, severity, file):
+        """         
+        Function: set_report_severity_file
+
+        Args:
+            severity: 
+            file: 
+        """
         self.m_rh.set_severity_file(severity, file)
 
     # Function: set_report_severity_id_file
@@ -304,43 +418,63 @@ class UVMReportObject(UVMObject):
     # Group: Override Configuration
     #----------------------------------------------------------------------------
 
-    # Function: set_report_severity_override
-    #
     def set_report_severity_override(self, cur_severity, new_severity):
+        """         
+        Function: set_report_severity_override
+
+        Args:
+            cur_severity: 
+            new_severity: 
+        """
         self.m_rh.set_severity_override(cur_severity, new_severity)
 
-    # Function: set_report_severity_id_override
-    #
-    # These methods provide the ability to upgrade or downgrade a message in
-    # terms of severity given ~severity~ and ~id~.    An upgrade or downgrade for
-    # a specific ~id~ takes precedence over an upgrade or downgrade associated
-    # with a ~severity~.
     def set_report_severity_id_override(self, cur_severity, id, new_severity):
+        """         
+        Function: set_report_severity_id_override
+
+        These methods provide the ability to upgrade or downgrade a message in
+        terms of severity given `severity` and `id`.    An upgrade or downgrade for
+        a specific `id` takes precedence over an upgrade or downgrade associated
+        with a `severity`.
+        Args:
+            cur_severity: 
+            id: 
+            new_severity: 
+        """
         self. m_rh.set_severity_id_override(cur_severity, id, new_severity)
 
     #----------------------------------------------------------------------------
     # Group: Report Handler Configuration
     #----------------------------------------------------------------------------
 
-    # Function: set_report_handler
-    #
-    # Sets the report handler, overwriting the default instance. This allows
-    # more than one component to share the same report handler.
     def set_report_handler(self, handler):
+        """         
+        Function: set_report_handler
+
+        Sets the report handler, overwriting the default instance. This allows
+        more than one component to share the same report handler.
+        Args:
+            handler: 
+        """
         self.m_rh = handler
 
-    # Function: get_report_handler
-    #
-    # Returns the underlying report handler to which most reporting tasks
-    # are delegated.
     def get_report_handler(self):
+        """         
+        Function: get_report_handler
+
+        Returns the underlying report handler to which most reporting tasks
+        are delegated.
+        Returns:
+        """
         return self.m_rh
 
-    # Function: reset_report_handler
-    #
-    # Resets the underlying report handler to its default settings. This clears
-    # any settings made with the ~set_report_*~ methods (see below).
     def reset_report_handler(self):
+        """         
+        Function: reset_report_handler
+
+        Resets the underlying report handler to its default settings. This clears
+        any settings made with the ~set_report_*~ methods (see below).
+        """
         self.m_rh.initialize()
 
 

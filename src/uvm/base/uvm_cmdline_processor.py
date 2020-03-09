@@ -90,67 +90,87 @@ class UVMCmdlineProcessor(UVMReportObject):
 
     # Group: Singleton
 
-    # Function: get_inst
-    #
-    # Returns the singleton instance of the UVM command line processor.
     @classmethod
     def get_inst(cls):
+        """         
+        Function: get_inst
+
+        Returns the singleton instance of the UVM command line processor.
+        Returns:
+        """
         if UVMCmdlineProcessor.m_inst is None:
             UVMCmdlineProcessor.m_inst = UVMCmdlineProcessor("uvm_cmdline_proc")
         return UVMCmdlineProcessor.m_inst
 
     # Group: Basic Arguments
 
-    # Function: get_args
-    #
-    # This function returns a queue with all of the command line
-    # arguments that were used to start the simulation. Note that
-    # element 0 of the array will always be the name of the
-    # executable which started the simulation.
     def get_args(self):
+        """         
+        Function: get_args
+
+        This function returns a queue with all of the command line
+        arguments that were used to start the simulation. Note that
+        element 0 of the array will always be the name of the
+        executable which started the simulation.
+        Returns:
+        """
         return self.m_argv
 
-    # Function: get_plusargs
-    #
-    # This function returns a queue with all of the plus arguments
-    # that were used to start the simulation. Plusarguments may be
-    # used by the simulator vendor, or may be specific to a company
-    # or individual user. Plusargs never have extra arguments
-    # (i.e. if there is a plusarg as the second argument on the
-    # command line, the third argument is unrelated); this is not
-    # necessarily the case with vendor specific dash arguments.
     def get_plusargs(self):
+        """         
+        Function: get_plusargs
+
+        This function returns a queue with all of the plus arguments
+        that were used to start the simulation. Plusarguments may be
+        used by the simulator vendor, or may be specific to a company
+        or individual user. Plusargs never have extra arguments
+        (i.e. if there is a plusarg as the second argument on the
+        command line, the third argument is unrelated); this is not
+        necessarily the case with vendor specific dash arguments.
+        Returns:
+        """
         return self.m_plus_argv
 
-    # Function: get_uvmargs
-    #
-    # This function returns a queue with all of the uvm arguments
-    # that were used to start the simulation. A UVM argument is
-    # taken to be any argument that starts with a - or + and uses
-    # the keyword UVM (case insensitive) as the first three
-    # letters of the argument.
     def get_uvm_args(self):
+        """         
+        Function: get_uvmargs
+
+        This function returns a queue with all of the uvm arguments
+        that were used to start the simulation. A UVM argument is
+        taken to be any argument that starts with a - or + and uses
+        the keyword UVM (case insensitive) as the first three
+        letters of the argument.
+        Returns:
+        """
         return self.m_uvm_argv
 
-    # Function: get_arg_matches
-    #
-    # This function loads a queue with all of the arguments that
-    # match the input expression and returns the number of items
-    # that matched. If the input expression is bracketed
-    # with #, then it is taken as an extended regular expression
-    # otherwise, it is taken as the beginning of an argument to match.
-    # For example:
-    #
-    #| string myargs[$]
-    #| initial begin
-    #|    void'(uvm_cmdline_proc.get_arg_matches("+foo",myargs)); #matches +foo, +foobar
-    #|                                                            #doesn't match +barfoo
-    #|    void'(uvm_cmdline_proc.get_arg_matches("/foo/",myargs)); #matches +foo, +foobar,
-    #|                                                             #foo.sv, barfoo, etc.
-    #|    void'(uvm_cmdline_proc.get_arg_matches("/^foo.*\.sv",myargs)); #matches foo.sv
-    #|                                                                   #and foo123.sv,
-    #|                                                                   #not barfoo.sv.
     def get_arg_matches(self, match, args):
+        """         
+        Function: get_arg_matches
+
+        This function loads a queue with all of the arguments that
+        match the input expression and returns the number of items
+        that matched. If the input expression is bracketed
+        with #, then it is taken as an extended regular expression
+        otherwise, it is taken as the beginning of an argument to match.
+        For example:
+
+        .. code-block:: python
+
+         string myargs[$]
+         initial begin
+            void'(uvm_cmdline_proc.get_arg_matches("+foo",myargs)); #matches +foo, +foobar
+                                                                    #doesn't match +barfoo
+            void'(uvm_cmdline_proc.get_arg_matches("/foo/",myargs)); #matches +foo, +foobar,
+                                                                     #foo.sv, barfoo, etc.
+            void'(uvm_cmdline_proc.get_arg_matches("/^foo.*\.sv",myargs)); #matches foo.sv
+                                                                           #and foo123.sv,
+                                                                           #not barfoo.sv.
+        Args:
+            match: 
+            args: 
+        Returns:
+        """
         exp_h = None
         match_len = len(match)
         args.clear()
@@ -173,14 +193,20 @@ class UVMCmdlineProcessor(UVMReportObject):
 
     # Group: Argument Values
 
-    # Function: get_arg_value
-    #
-    # This function finds the first argument which matches the ~match~ arg and
-    # returns the suffix of the argument. This is similar to the $value$plusargs
-    # system task, but does not take a formatting string. The return value is
-    # the number of command line arguments that match the ~match~ string, and
-    # ~value~ is the value of the first match.
     def get_arg_value(self, match, value):
+        """         
+        Function: get_arg_value
+
+        This function finds the first argument which matches the `match` arg and
+        returns the suffix of the argument. This is similar to the $value$plusargs
+        system task, but does not take a formatting string. The return value is
+        the number of command line arguments that match the `match` string, and
+        `value` is the value of the first match.
+        Args:
+            match: 
+            value: 
+        Returns:
+        """
         uvm_check_output_args([value])
         chars = len(match)
         get_arg_value = 0
@@ -194,29 +220,37 @@ class UVMCmdlineProcessor(UVMReportObject):
                         value.append(self.m_argv[i][chars:len(self.m_argv[i])])
         return get_arg_value
 
-    # Function: get_arg_values
-    #
-    # This function finds all the arguments which matches the ~match~ arg and
-    # returns the suffix of the arguments in a list of values. The return
-    # value is the number of matches that were found (it is the same as
-    # values.size() ).
-    # For example if '+foo=1,yes,on +foo=5,no,off' was provided on the command
-    # line and the following code was executed:
-    #
-    #| string foo_values[$]
-    #| initial begin
-    #|    void'(uvm_cmdline_proc.get_arg_values("+foo=",foo_values))
-    #|
-    #
-    # The foo_values queue would contain two entries.  These entries are shown
-    # here:
-    #
-    #   0 - "1,yes,on"
-    #   1 - "5,no,off"
-    #
-    # Splitting the resultant string is left to user but using the
-    # uvm_split_string() function is recommended.
     def get_arg_values(self, match, values):
+        """         
+        Function: get_arg_values
+
+        This function finds all the arguments which matches the `match` arg and
+        returns the suffix of the arguments in a list of values. The return
+        value is the number of matches that were found (it is the same as
+        values.size() ).
+        For example if '+foo=1,yes,on +foo=5,no,off' was provided on the command
+        line and the following code was executed:
+
+        .. code-block:: python
+
+         string foo_values[$]
+         initial begin
+            void'(uvm_cmdline_proc.get_arg_values("+foo=",foo_values))
+        
+
+        The foo_values queue would contain two entries.  These entries are shown
+        here:
+
+          0 - "1,yes,on"
+          1 - "5,no,off"
+
+        Splitting the resultant string is left to user but using the
+        uvm_split_string() function is recommended.
+        Args:
+            match: 
+            values: 
+        Returns:
+        """
         values.clear()
         #if match[0] == '+':
         #    match = match[1:]
@@ -238,22 +272,32 @@ class UVMCmdlineProcessor(UVMReportObject):
 
     # Group: Tool information
 
-    # Function: get_tool_name
-    #
-    # Returns the simulation tool that is executing the simulation.
-    # This is a vendor specific string.
     def get_tool_name(self):
+        """         
+        Function: get_tool_name
+
+        Returns the simulation tool that is executing the simulation.
+        This is a vendor specific string.
+        Returns:
+        """
         return uvm_dpi_get_tool_name()
 
-    # Function: get_tool_version
-    #
-    # Returns the version of the simulation tool that is executing the simulation.
-    # This is a vendor specific string.
     def get_tool_version(self):
+        """         
+        Function: get_tool_version
+
+        Returns the version of the simulation tool that is executing the simulation.
+        This is a vendor specific string.
+        Returns:
+        """
         return uvm_dpi_get_tool_version()
 
-    # constructor
     def __init__(self, name=""):
+        """         
+        constructor
+        Args:
+            name: 
+        """
         UVMReportObject.__init__(self,name)
         self.m_argv = []
         self.m_plus_argv = []

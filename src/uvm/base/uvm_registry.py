@@ -77,41 +77,61 @@ class UVMComponentRegistry(UVMObjectWrapper):
         UVMComponentRegistry.registered.clear()
         UVMComponentRegistry.comps.clear()
 
-    # Function: create_component
-    #
-    # Creates a component of type T having the provided ~name~ and ~parent~.
-    # This is an override of the method in <uvm_object_wrapper>. It is
-    # called by the factory after determining the type of object to create.
-    # You should not call this method directly. Call <create> instead.
     def create_component(self, name, parent):
+        """         
+        Function: create_component
+
+        Creates a component of type T having the provided `name` and `parent`.
+        This is an override of the method in `uvm_object_wrapper`. It is
+        called by the factory after determining the type of object to create.
+        You should not call this method directly. Call `create` instead.
+        Args:
+            name: 
+            parent: 
+        Returns:
+        """
         return UVMComponentRegistry.comps[self.tname](name, parent)
 
-    # Function: get_type_name
-    #
-    # Returns the value given by the string parameter, ~Tname~. This method
-    # overrides the method in <uvm_object_wrapper>.
     def get_type_name(self):
+        """         
+        Function: get_type_name
+
+        Returns the value given by the string parameter, `Tname`. This method
+        overrides the method in `uvm_object_wrapper`.
+        Returns:
+        """
         return self.tname
 
-    # Function: get
-    #
-    # Returns the singleton instance of this type. Type-based factory operation
-    # depends on there being a single proxy instance for each registered type.
     def get(self):
+        """         
+        Function: get
+
+        Returns the singleton instance of this type. Type-based factory operation
+        depends on there being a single proxy instance for each registered type.
+        Returns:
+        """
         if UVMComponentRegistry.registered[self.tname] is False:
             factory = get_factory()
             factory.register(self)
             UVMComponentRegistry.registered[self.tname] = True
         return self
 
-    # Function: create
-    #
-    # Returns an instance of the component type, ~T~, represented by this proxy,
-    # subject to any factory overrides based on the context provided by the
-    # ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
-    # ~parent~'s context. The new instance will have the given leaf ~name~
-    # and ~parent~.
     def create(self, name, parent, contxt=""):
+        """         
+        Function: create
+
+        Returns an instance of the component type, `T`, represented by this proxy,
+        subject to any factory overrides based on the context provided by the
+        `parent`'s full name. The `contxt` argument, if supplied, supersedes the
+        `parent`'s context. The new instance will have the given leaf `name`
+        and `parent`.
+        Args:
+            name: 
+            parent: 
+            contxt: 
+        Returns:
+        Raises:
+        """
         factory = get_factory()
 
         if contxt == "" and parent is not None:
@@ -142,31 +162,42 @@ class UVMComponentRegistry(UVMObjectWrapper):
         msg += " contxt=" + contxt
         uvm_report_fatal("FCTTYP", msg, UVM_NONE)
 
-    # Function: set_type_override
-    #
-    # Configures the factory to create an object of the type represented by
-    # ~override_type~ whenever a request is made to create an object of the type,
-    # ~T~, represented by this proxy, provided no instance override applies. The
-    # original type, ~T~, is typically a super class of the override type.
     def set_type_override(self, override_type, replace=True):
+        """         
+        Function: set_type_override
+
+        Configures the factory to create an object of the type represented by
+        `override_type` whenever a request is made to create an object of the type,
+        `T`, represented by this proxy, provided no instance override applies. The
+        original type, `T`, is typically a super class of the override type.
+        Args:
+            override_type: 
+            replace: 
+        """
         factory = get_factory()
         factory.set_type_override_by_type(self.get(),override_type,replace)
 
-    # Function: set_inst_override
-    #
-    # Configures the factory to create a component of the type represented by
-    # ~override_type~ whenever a request is made to create an object of the type,
-    # ~T~, represented by this proxy,  with matching instance paths. The original
-    # type, ~T~, is typically a super class of the override type.
-    #
-    # If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
-    # instance path, which enables instance overrides to be set from outside
-    # component classes. If ~parent~ is specified, ~inst_path~ is interpreted
-    # as being relative to the ~parent~'s hierarchical instance path, i.e.
-    # ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
-    # registered with the override. The ~inst_path~ may contain wildcards for
-    # matching against multiple contexts.
     def set_inst_override(self, override_type, inst_path, parent=None):
+        """         
+        Function: set_inst_override
+
+        Configures the factory to create a component of the type represented by
+        `override_type` whenever a request is made to create an object of the type,
+        `T`, represented by this proxy,  with matching instance paths. The original
+        type, `T`, is typically a super class of the override type.
+
+        If `parent` is not specified, `inst_path` is interpreted as an absolute
+        instance path, which enables instance overrides to be set from outside
+        component classes. If `parent` is specified, `inst_path` is interpreted
+        as being relative to the `parent`'s hierarchical instance path, i.e.
+        ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
+        registered with the override. The `inst_path` may contain wildcards for
+        matching against multiple contexts.
+        Args:
+            override_type: 
+            inst_path: 
+            parent: 
+        """
         if parent is not None:
             if inst_path == "":
                 inst_path = parent.get_full_name()
@@ -213,32 +244,45 @@ class UVMObjectRegistry(UVMObjectWrapper):
     def create_object(self, name=""):
         return UVMObjectRegistry.objs[self.tname](name)
 
-    # Function: get_type_name
-    #
-    # Returns the value given by the string parameter, ~Tname~. This method
-    # overrides the method in <uvm_object_wrapper>.
     def get_type_name(self):
+        """         
+        Function: get_type_name
+
+        Returns the value given by the string parameter, `Tname`. This method
+        overrides the method in `uvm_object_wrapper`.
+        Returns:
+        """
         return self.type_name
 
-    # Function: get
-    #
-    # Returns the singleton instance of this type. Type-based factory operation
-    # depends on there being a single proxy instance for each registered type.
     def get(self):
+        """         
+        Function: get
+
+        Returns the singleton instance of this type. Type-based factory operation
+        depends on there being a single proxy instance for each registered type.
+        Returns:
+        """
         if UVMObjectRegistry.registered[self.tname] is False:
             factory = get_factory()
             factory.register(self)
             UVMObjectRegistry.registered[self.tname] = True
         return self
 
-    # Function: create
-    #
-    # Returns an instance of the object type, ~T~, represented by this proxy,
-    # subject to any factory overrides based on the context provided by the
-    # ~parent~'s full name. The ~contxt~ argument, if supplied, supersedes the
-    # ~parent~'s context. The new instance will have the given leaf ~name~,
-    # if provided.
     def create(self, name, parent=None, contxt=""):
+        """         
+        Function: create
+
+        Returns an instance of the object type, `T`, represented by this proxy,
+        subject to any factory overrides based on the context provided by the
+        `parent`'s full name. The `contxt` argument, if supplied, supersedes the
+        `parent`'s context. The new instance will have the given leaf `name`,
+        if provided.
+        Args:
+            name: 
+            parent: 
+            contxt: 
+        Returns:
+        """
         factory = get_factory()
 
         if contxt == "" and parent is not None:
@@ -257,31 +301,42 @@ class UVMObjectRegistry(UVMObjectWrapper):
         #    uvm_report_fatal("FCTTYP", msg, UVM_NONE)
         return create
 
-    # Function: set_type_override
-    #
-    # Configures the factory to create an object of the type represented by
-    # ~override_type~ whenever a request is made to create an object of the type
-    # represented by this proxy, provided no instance override applies. The
-    # original type, ~T~, is typically a super class of the override type.
     def set_type_override(self, override_type, replace=True):
+        """         
+        Function: set_type_override
+
+        Configures the factory to create an object of the type represented by
+        `override_type` whenever a request is made to create an object of the type
+        represented by this proxy, provided no instance override applies. The
+        original type, `T`, is typically a super class of the override type.
+        Args:
+            override_type: 
+            replace: 
+        """
         factory = get_factory()
         factory.set_type_override_by_type(self.get(),override_type,replace)
 
-    # Function: set_inst_override
-    #
-    # Configures the factory to create an object of the type represented by
-    # ~override_type~ whenever a request is made to create an object of the type
-    # represented by this proxy, with matching instance paths. The original
-    # type, ~T~, is typically a super class of the override type.
-    #
-    # If ~parent~ is not specified, ~inst_path~ is interpreted as an absolute
-    # instance path, which enables instance overrides to be set from outside
-    # component classes. If ~parent~ is specified, ~inst_path~ is interpreted
-    # as being relative to the ~parent~'s hierarchical instance path, i.e.
-    # ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
-    # registered with the override. The ~inst_path~ may contain wildcards for
-    # matching against multiple contexts.
     def set_inst_override(self, override_type, inst_path, parent=None):
+        """         
+        Function: set_inst_override
+
+        Configures the factory to create an object of the type represented by
+        `override_type` whenever a request is made to create an object of the type
+        represented by this proxy, with matching instance paths. The original
+        type, `T`, is typically a super class of the override type.
+
+        If `parent` is not specified, `inst_path` is interpreted as an absolute
+        instance path, which enables instance overrides to be set from outside
+        component classes. If `parent` is specified, `inst_path` is interpreted
+        as being relative to the `parent`'s hierarchical instance path, i.e.
+        ~{parent.get_full_name(),".",inst_path}~ is the instance path that is
+        registered with the override. The `inst_path` may contain wildcards for
+        matching against multiple contexts.
+        Args:
+            override_type: 
+            inst_path: 
+            parent: 
+        """
         factory = get_factory()
 
         if parent is not None:

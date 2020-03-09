@@ -43,19 +43,29 @@ from .uvm_globals import *
 
 class UVMBottomupPhase(UVMPhase):
 
-    # Function: new
-    #
-    # Create a new instance of a bottom-up phase.
-    #
     def __init__(self, name):
+        """         
+        Function: new
+
+        Create a new instance of a bottom-up phase.
+
+        Args:
+            name: 
+        """
         UVMPhase.__init__(self, name,UVM_PHASE_IMP)
 
-    # Function: traverse
-    #
-    # Traverses the component tree in bottom-up order, calling <execute> for
-    # each component.
-    #
     def traverse(self, comp, phase, state):
+        """         
+        Function: traverse
+
+        Traverses the component tree in bottom-up order, calling `execute` for
+        each component.
+
+        Args:
+            comp: 
+            phase: 
+            state: 
+        """
         uvm_debug(self, 'traverse', self.get_name() + ' traversing bottomup phase now with ' +
                 comp.get_name())
         name = ""
@@ -94,11 +104,16 @@ class UVMBottomupPhase(UVMPhase):
             else:
                 uvm_report_fatal("PH_BADEXEC","bottomup phase traverse internal error")
 
-    # Function: execute
-    #
-    # Executes the bottom-up phase ~phase~ for the component ~comp~.
-    #
     def execute(self, comp, phase):
+        """         
+        Function: execute
+
+        Executes the bottom-up phase `phase` for the component `comp`.
+
+        Args:
+            comp: 
+            phase: 
+        """
         # reseed this process for random stability
         #process proc = process::self();
         #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()));

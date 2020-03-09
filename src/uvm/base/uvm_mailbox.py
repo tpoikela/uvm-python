@@ -99,9 +99,14 @@ class UVMMailbox():
             return True
         return False
 
-    # Tries to retrieve an item and append it to given list.
-    # Returns True if success, False otherwise.
     def try_get(self, itemq):
+        """         
+        Tries to retrieve an item and append it to given list.
+        Returns True if success, False otherwise.
+        Args:
+            itemq: 
+        Returns:
+        """
         if self.can_get() is True:
             item = self.m_queue.pop_front()
             itemq.append(item)

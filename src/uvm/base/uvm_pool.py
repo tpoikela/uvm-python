@@ -47,34 +47,48 @@ class UVMPool(UVMObject):
         self.ptr = -1
         self.T = T
 
-    #// Function: get_global_pool
-    #//
-    #// Returns the singleton global pool for the item type, T.
-    #//
-    #// This allows items to be shared amongst components throughout the
-    #// verification environment.
     @classmethod
     def get_global_pool(cls):
+        """         
+        Function: get_global_pool
+
+        Returns the singleton global pool for the item type, T.
+
+        This allows items to be shared amongst components throughout the
+        verification environment.
+        Returns:
+        """
         """ Returns the singleton global pool """
         if UVMPool.m_global_pool is None:
             UVMPool.m_global_pool = UVMPool("pool")
         return UVMPool.m_global_pool
 
-    #// Function: get_global
-    #//
-    #// Returns the specified item instance from the global item pool. 
     @classmethod
     def get_global(cls, key):
+        """         
+        Function: get_global
+
+        Returns the specified item instance from the global item pool. 
+        Args:
+            cls: 
+            key: 
+        Returns:
+        """
         gpool = UVMPool.get_global_pool()
         return gpool.get(key)
 
-    #// Function: get
-    #//
-    #// Returns the item with the given ~key~.
-    #//
-    #// If no item exists by that key, a new item is created with that key
-    #// and returned.
     def get(self, key):
+        """         
+        Function: get
+
+        Returns the item with the given `key`.
+
+        If no item exists by that key, a new item is created with that key
+        and returned.
+        Args:
+            key: 
+        Returns:
+        """
         if key in self.pool:
             return self.pool[key]
         elif self.T is not None:
@@ -165,20 +179,39 @@ class UVMPool(UVMObject):
                     name = key.get_name()
                 printer.print_generic(name, '', 0, str(item))
 
-    # len() operator
     def __len__(self):
+        """         
+        len() operator
+        Returns:
+        """
         return self.num()
 
-    # Implements X in Y operator
     def __contains__(self, key):
+        """         
+        Implements X in Y operator
+        Args:
+            key: 
+        Returns:
+        """
         return key in self.pool
 
-    # Implements aa[x] = y
     def __setitem__(self, key, value):
+        """         
+        Implements aa[x] = y
+        Args:
+            key: 
+            value: 
+        """
         self.pool[key] = value
 
-    # Implements aa[x]
     def __getitem__(self, key):
+        """         
+        Implements aa[x]
+        Args:
+            key: 
+        Returns:
+        Raises:
+        """
         if key in self.pool:
             return self.pool[key]
         else:
@@ -203,71 +236,102 @@ class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(st
     m_global_pool = None
     type_name = "uvm_obj_str_pool"
 
-    #  // Function: new
-    #  //
-    #  // Creates a new pool with the given ~name~.
     def __init__(self, name="", Constr=UVMObject):
+        """         
+          Function: new
+         
+          Creates a new pool with the given `name`.
+        Args:
+            name: 
+            Constr: 
+            UVMObject: 
+        """
         UVMPool.__init__(self, name)
         self.Constructor = Constr
     #  endfunction
 
-    #  // Function: get_type_name
-    #  //
-    #  // Returns the type name of this object.
-    #
     def get_type_name(self):
+        """         
+          Function: get_type_name
+         
+          Returns the type name of this object.
+
+        Returns:
+        """
         return UVMObjectStringPool.type_name
     # endfunction
 
-    #  // Function: get_global_pool
-    #  //
-    #  // Returns the singleton global pool for the item type, T.
-    #  //
-    #  // This allows items to be shared amongst components throughout the
-    #  // verification environment.
     @classmethod
     def get_global_pool(cls):
+        """         
+          Function: get_global_pool
+         
+          Returns the singleton global pool for the item type, T.
+         
+          This allows items to be shared amongst components throughout the
+          verification environment.
+        Returns:
+        """
         if UVMObjectStringPool.m_global_pool is None:
             UVMObjectStringPool.m_global_pool = UVMObjectStringPool("global_pool")
         return UVMObjectStringPool.m_global_pool
     #  endfunction
 
-    #  // Function: get_global
-    #  //
-    #  // Returns the specified item instance from the global item pool.
     @classmethod
     def get_global(cls, key):
+        """         
+          Function: get_global
+         
+          Returns the specified item instance from the global item pool.
+        Args:
+            cls: 
+            key: 
+        Returns:
+        """
         gpool = UVMObjectStringPool.get_global_pool()
         return gpool.get(key)
     # endfunction
 
-    #
-    #  // Function: get
-    #  //
-    #  // Returns the object item at the given string ~key~.
-    #  //
-    #  // If no item exists by the given ~key~, a new item is created for that key
-    #  // and returned.
-    #
     def get(self, key):
+        """         
+
+          Function: get
+         
+          Returns the object item at the given string `key`.
+         
+          If no item exists by the given `key`, a new item is created for that key
+          and returned.
+
+        Args:
+            key: 
+        Returns:
+        """
         if key not in self.pool:
             self.pool[key] = self.Constructor(key)
         return self.pool[key]
     #  endfunction
 
-    #  // Function: delete
-    #  //
-    #  // Removes the item with the given string ~key~ from the pool.
-    #
     def delete(self, key):
+        """         
+          Function: delete
+         
+          Removes the item with the given string `key` from the pool.
+
+        Args:
+            key: 
+        """
         if not self.exists(key):
             uvm_warning("POOLDEL", "delete: key '{}' doesn't exist".format(key))
             return
         self.delete(key)
     #  endfunction
 
-    #  // Function- do_print
     def do_print(self, printer):
+        """         
+          Function- do_print
+        Args:
+            printer: 
+        """
         key = ""
         num_keys = len(list(self.pool.keys()))
         printer.print_array_header("pool", num_keys,"aa_object_string")

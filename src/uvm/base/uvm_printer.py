@@ -91,25 +91,39 @@ class UVMPrinter():
         self.m_string = ""
         self.m_rows = []
 
-    # emit
-    # ----
     def emit(self):
+        """         
+        emit
+        ----
+        Returns:
+        """
         uvm_report_error("NO_OVERRIDE","emit() method not overridden in printer subtype")
         return ""
 
-    # format_row
-    # ----------
     def format_row(self, row):
+        """         
+        format_row
+        ----------
+        Args:
+            row: 
+        Returns:
+        """
         return ""
 
-    # format_header
-    # ----------
     def format_header(self):
+        """         
+        format_header
+        ----------
+        Returns:
+        """
         return ""
 
-    # format_footer
-    # ----------
     def format_footer(self):
+        """         
+        format_footer
+        ----------
+        Returns:
+        """
         return ""
 
     # print_array_header
@@ -142,9 +156,14 @@ class UVMPrinter():
             self.m_array_stack.pop()
 
 
-    # print_array_range
-    # -----------------
     def print_array_range(self, min_val, max_val):
+        """         
+        print_array_range
+        -----------------
+        Args:
+            min_val: 
+            max_val: 
+        """
         tmpstr = ""
         if min_val == -1 and max_val == -1:
             return
@@ -156,9 +175,15 @@ class UVMPrinter():
             return
         self.print_generic("...", "...", -2, "...")
 
-    # print_object_header
-    # -------------------
     def print_object_header(self, name, value, scope_separator="."):
+        """         
+        print_object_header
+        -------------------
+        Args:
+            name: 
+            value: 
+            scope_separator: 
+        """
         row_info = UVMPrinterRowInfo()
         comp = None
         if name == "":
@@ -194,9 +219,15 @@ class UVMPrinter():
 
         self.m_rows.append(row_info)
 
-    # print_object
-    # ------------
     def print_object(self, name, value, scope_separator="."):
+        """         
+        print_object
+        ------------
+        Args:
+            name: 
+            value: 
+            scope_separator: 
+        """
         comp = None
         child_comp = None
         self.print_object_header(name,value,scope_separator)
@@ -234,14 +265,23 @@ class UVMPrinter():
                     self.m_scope.up(".")
                 del value._m_uvm_status_container.cycle_check[value]
 
-    # istop
-    # -----
     def istop(self):
+        """         
+        istop
+        -----
+        Returns:
+        """
         return self.m_scope.depth() == 0
 
-    #self.adjust_name
-    # -----------
     def adjust_name(self, id, scope_separator="."):
+        """         
+        #self.adjust_name
+        -----------
+        Args:
+            id: 
+            scope_separator: 
+        Returns:
+        """
         knobs_ok = self.knobs.show_root and self.m_scope.depth() == 0
         if knobs_ok or self.knobs.full_name or id == "...":
             return id
@@ -276,10 +316,20 @@ class UVMPrinter():
             scope_separator=".", type_name=""):
         self.print_field(name, value, size, radix, scope_separator, type_name)
 
-    # print_field
-    # ---------
     def print_field(self, name, value, size, radix=UVM_NORADIX,
             scope_separator=".", type_name=""):
+        """         
+        print_field
+        ---------
+        Args:
+            name: 
+            value: 
+            size: 
+            radix: 
+            UVM_NORADIX: 
+            scope_separator: 
+            type_name: 
+        """
         row_info = UVMPrinterRowInfo()
         sz_str = ""
         val_str = ""
@@ -349,9 +399,15 @@ class UVMPrinter():
 
         self.m_rows.append(row_info)
 
-    # print_time
-    # ----------
     def print_time(self, name, value, scope_separator="."):
+        """         
+        print_time
+        ----------
+        Args:
+            name: 
+            value: 
+            scope_separator: 
+        """
         self.print_field_int(name, value, 64, UVM_TIME, scope_separator)
 
     # print_string
@@ -389,9 +445,14 @@ class UVMPrinter():
         row_info.val = "{}".format(value)
         self.m_rows.append(row_info)
 
-    # index_string
-    # ------------
     def index_string(self, index, name=""):
+        """         
+        index_string
+        ------------
+        Args:
+            index: 
+            name: 
+        """
         res = "{}".index
         res = name + "[" + res + "]"
 
@@ -609,12 +670,15 @@ class UVMTablePrinter(UVMPrinter):
             if len(row.val) > self.m_max_value:
                 self.m_max_value = len(row.val)
 
-    # Function: emit
-    #
-    # Formats the collected information from prior calls to ~print_*~
-    # into table format.
-    #
     def emit(self):
+        """         
+        Function: emit
+
+        Formats the collected information from prior calls to ~print_*~
+        into table format.
+
+        Returns:
+        """
         s = ""
         user_format = ""
         dash = "" # = "---------------------------------------------------------------------------------------------------"

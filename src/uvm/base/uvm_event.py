@@ -44,9 +44,13 @@ class UVMEventBase(UVMObject):
     #const static string type_name = "uvm_event_base"
     type_name = "uvm_event_base"
 
-    # Function: new
-    # Creates a new event object.
     def __init__(self, name=""):
+        """         
+        Function: new
+        Creates a new event object.
+        Args:
+            name: 
+        """
         UVMObject.__init__(self, name)
         self.m_event = Event()
         self.num_waiters = 0
@@ -78,23 +82,27 @@ class UVMEventBase(UVMObject):
             self.on_event.clear()
         # else-branch needed with Timer(0)
 
-    #    //---------//
-    #    // waiting //
-    #    //---------//
-    #
-    #    // Task: wait_on
-    #    //
-    #    // Waits for the event to be activated for the first time.
-    #    //
-    #    // If the event has already been triggered, this task returns immediately.
-    #    // If ~delta~ is set, the caller will be forced to wait a single delta #0
-    #    // before returning. This prevents the caller from returning before
-    #    // previously waiting processes have had a chance to resume.
-    #    //
-    #    // Once an event has been triggered, it will be remain "on" until the event
-    #    // is <reset>.
-    #    virtual task wait_on (bit delta = 0)
     async def wait_on(self, delta=False):
+        """         
+           ---------
+            waiting 
+           ---------
+
+            Task: wait_on
+           
+            Waits for the event to be activated for the first time.
+           
+            If the event has already been triggered, this task returns immediately.
+            If `delta` is set, the caller will be forced to wait a single delta #0
+            before returning. This prevents the caller from returning before
+            previously waiting processes have had a chance to resume.
+           
+            Once an event has been triggered, it will be remain "on" until the event
+            is `reset`.
+           virtual task wait_on (bit delta = 0)
+        Args:
+            delta: 
+        """
         if self.on is True:
             if delta is True:
                 #0
@@ -105,18 +113,22 @@ class UVMEventBase(UVMObject):
         await wait(lambda: self.on is True, self.m_value_changed_event)
 
 
-    #    // Task: wait_off
-    #    //
-    #    // If the event has already triggered and is "on", this task waits for the
-    #    // event to be turned "off" via a call to <reset>.
-    #    //
-    #    // If the event has not already been triggered, this task returns immediately.
-    #    // If ~delta~ is set, the caller will be forced to wait a single delta #0
-    #    // before returning. This prevents the caller from returning before
-    #    // previously waiting processes have had a chance to resume.
-    #
-    #    virtual task wait_off (bit delta = 0)
     async def wait_off(self, delta=False):
+        """         
+            Task: wait_off
+           
+            If the event has already triggered and is "on", this task waits for the
+            event to be turned "off" via a call to `reset`.
+           
+            If the event has not already been triggered, this task returns immediately.
+            If `delta` is set, the caller will be forced to wait a single delta #0
+            before returning. This prevents the caller from returning before
+            previously waiting processes have had a chance to resume.
+
+           virtual task wait_off (bit delta = 0)
+        Args:
+            delta: 
+        """
         if self.on is False:
             if delta is True:
                 await Timer(0)  #0
@@ -125,70 +137,87 @@ class UVMEventBase(UVMObject):
         await wait(lambda: self.on is False, self.m_value_changed_event)
         #    endtask
 
-    #    // Task: wait_trigger
-    #    //
-    #    // Waits for the event to be triggered.
-    #    //
-    #    // If one process calls wait_trigger in the same delta as another process
-    #    // calls <uvm_event#(T)::trigger>, a race condition occurs. If the call to wait occurs
-    #    // before the trigger, this method will return in this delta. If the wait
-    #    // occurs after the trigger, this method will not return until the next
-    #    // trigger, which may never occur and thus cause deadlock.
-    #
     async def wait_trigger(self):
+        """         
+            Task: wait_trigger
+           
+            Waits for the event to be triggered.
+           
+            If one process calls wait_trigger in the same delta as another process
+            calls <uvm_event#(T)::trigger>, a race condition occurs. If the call to wait occurs
+            before the trigger, this method will return in this delta. If the wait
+            occurs after the trigger, this method will not return until the next
+            trigger, which may never occur and thus cause deadlock.
+
+        """
         self.num_waiters += 1
         await self.m_event.wait()
         self.m_event.clear()
 
 
-    #    // Task: wait_ptrigger
-    #    //
-    #    // Waits for a persistent trigger of the event. Unlike <wait_trigger>, this
-    #    // views the trigger as persistent within a given time-slice and thus avoids
-    #    // certain race conditions. If this method is called after the trigger but
-    #    // within the same time-slice, the caller returns immediately.
     async def wait_ptrigger(self):
+        """         
+            Task: wait_ptrigger
+           
+            Waits for a persistent trigger of the event. Unlike `wait_trigger`, this
+            views the trigger as persistent within a given time-slice and thus avoids
+            certain race conditions. If this method is called after the trigger but
+            within the same time-slice, the caller returns immediately.
+        """
         if self.m_event.fired:
             return
         self.num_waiters += 1
         await self.m_event.wait()
         self.m_event.clear()
 
-    #    // Function: get_trigger_time
-    #    //
-    #    // Gets the time that this event was last triggered. If the event has not bee
-    #    // triggered, or the event has been reset, then the trigger time will be 0.
-    #
     def get_trigger_time(self):
+        """         
+            Function: get_trigger_time
+           
+            Gets the time that this event was last triggered. If the event has not bee
+            triggered, or the event has been reset, then the trigger time will be 0.
+
+        Returns:
+        """
         return self.trigger_time
 
     #    //-------//
     #    // state //
     #    //-------//
 
-    #    // Function: is_on
-    #    //
-    #    // Indicates whether the event has been triggered since it was last reset.
-    #    //
-    #    // A return of 1 indicates that the event has triggered.
     def is_on(self):
+        """         
+            Function: is_on
+           
+            Indicates whether the event has been triggered since it was last reset.
+           
+            A return of 1 indicates that the event has triggered.
+        Returns:
+        """
         return self.on
 
-    #    // Function: is_off
-    #    //
-    #    // Indicates whether the event has been triggered or been reset.
-    #    //
-    #    // A return of 1 indicates that the event has not been triggered.
     def is_off(self):
+        """         
+            Function: is_off
+           
+            Indicates whether the event has been triggered or been reset.
+           
+            A return of 1 indicates that the event has not been triggered.
+        Returns:
+        """
         return self.on is False
 
-    #    // Function: reset
-    #    //
-    #    // Resets the event to its off state. If ~wakeup~ is set, then all processes
-    #    // currently waiting for the event are activated before the reset.
-    #    //
-    #    // No self.callbacks are called during a reset.
     def reset(self, wakeup=False):
+        """         
+            Function: reset
+           
+            Resets the event to its off state. If `wakeup` is set, then all processes
+            currently waiting for the event are activated before the reset.
+           
+            No self.callbacks are called during a reset.
+        Args:
+            wakeup: 
+        """
         if wakeup is True:
             self.m_event.set()
         self.m_event = Event()
@@ -269,29 +298,42 @@ class UVMEventBase(UVMObject):
 class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     type_name = "uvm_event"
 
-    # Function: __init__
-    #
-    # Creates a new event object.
     def __init__(self, name="", T=None):
+        """         
+        Function: __init__
+
+        Creates a new event object.
+        Args:
+            name: 
+            T: 
+        """
         UVMEventBase.__init__(self, name)
         self.trigger_data = None
         self.T = None
 
 
-    # Task: wait_trigger_data
-    #
-    # This method calls <uvm_event_base::wait_trigger> followed by <get_trigger_data>.
     async def wait_trigger_data(self):  # output T data)
+        """         
+        Task: wait_trigger_data
+
+        This method calls <uvm_event_base::wait_trigger> followed by `get_trigger_data`.
+        Returns:
+        """
         await self.wait_trigger()
         return self.get_trigger_data()
 
 
-    #    // Task: wait_ptrigger_data
-    #    //
-    #    // This method calls <uvm_event_base::wait_ptrigger> followed by <get_trigger_data>.
-    #
-    #    virtual task wait_ptrigger_data (output T data)
     async def wait_ptrigger_data(self, data):
+        """         
+            Task: wait_ptrigger_data
+           
+            This method calls <uvm_event_base::wait_ptrigger> followed by `get_trigger_data`.
+
+           virtual task wait_ptrigger_data (output T data)
+        Args:
+            data: 
+        Returns:
+        """
         await self.wait_ptrigger()
         trig_data = self.get_trigger_data()
         data.append(trig_data)
@@ -301,13 +343,17 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
     #    // triggering //
     #    //------------//
 
-    #    // Function: trigger
-    #    //
-    #    // Triggers the event, resuming all waiting processes.
-    #    //
-    #    // An optional ~data~ argument can be supplied with the enable to provide
-    #    // trigger-specific information.
     def trigger(self, data=None):
+        """         
+            Function: trigger
+           
+            Triggers the event, resuming all waiting processes.
+           
+            An optional `data` argument can be supplied with the enable to provide
+            trigger-specific information.
+        Args:
+            data: 
+        """
         skip = False
         if self.callbacks.size() > 0:
             for i in range(0, self.callbacks.size()):
@@ -327,24 +373,32 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
             self.trigger_data = data
 
 
-    # Function: get_trigger_data
-    #
-    # Gets the data, if any, provided by the last call to <trigger>.
     def get_trigger_data(self):
+        """         
+        Function: get_trigger_data
+
+        Gets the data, if any, provided by the last call to `trigger`.
+        Returns:
+        """
         return self.trigger_data
 
     def get_type_name(self):
         return UVMEvent.type_name
 
 
-    #    // Function: add_callback
-    #    //
-    #    // Registers a callback object, ~cb~, with this event. The callback object
-    #    // may include pre_trigger and post_trigger functionality. If ~append~ is set
-    #    // to 1, the default, ~cb~ is added to the back of the callback list. Otherwise,
-    #    // ~cb~ is placed at the front of the callback list.
-    #
     def add_callback(self, cb, append=True):
+        """         
+            Function: add_callback
+           
+            Registers a callback object, `cb`, with this event. The callback object
+            may include pre_trigger and post_trigger functionality. If `append` is set
+            to 1, the default, `cb` is added to the back of the callback list. Otherwise,
+            `cb` is placed at the front of the callback list.
+
+        Args:
+            cb: 
+            append: 
+        """
         if cb in self.callbacks:
             uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE)
             return

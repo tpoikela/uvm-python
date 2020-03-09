@@ -45,8 +45,13 @@ from .uvm_debug import uvm_debug
 
 
 class m_uvm_waiter:
-    #  function new (string inst_name, string field_name);
+
     def __init__(self, inst_name, field_name):
+        """      function new (string inst_name, string field_name);
+        Args:
+            inst_name: 
+            field_name: 
+        """
         self.inst_name = inst_name
         self.field_name = field_name
         self.trigger = Event()
@@ -82,27 +87,40 @@ class UVMConfigDb(UVMResourceDb):
     #  static local uvm_queue#(m_uvm_waiter) m_waiters[string];
     m_waiters = {}
 
-    #
-    #  // function: get
-    #  //
-    #  // Get the value for ~field_name~ in ~inst_name~, using component ~cntxt~ as
-    #  // the starting search point. ~inst_name~ is an explicit instance name
-    #  // relative to ~cntxt~ and may be an empty string if the ~cntxt~ is the
-    #  // instance that the configuration object applies to. ~field_name~
-    #  // is the specific field in the scope that is being searched for.
-    #  //
-    #  // The basic ~get_config_*~ methods from <uvm_component> are mapped to
-    #  // this function as:
-    #  //
-    #  //| get_config_int(...) => uvm_config_db#(uvm_bitstream_t)::get(cntxt,...)
-    #  //| get_config_string(...) => uvm_config_db#(string)::get(cntxt,...)
-    #  //| get_config_object(...) => uvm_config_db#(uvm_object)::get(cntxt,...)
-    #  static function bit get(uvm_component cntxt,
-    #                          string inst_name,
-    #                          string field_name,
-    #                          inout T value);
     @classmethod
     def get(cls, cntxt, inst_name, field_name, value, T=None):
+        """         
+
+          function: get
+         
+          Get the value for `field_name` in `inst_name`, using component `cntxt` as
+          the starting search point. `inst_name` is an explicit instance name
+          relative to `cntxt` and may be an empty string if the `cntxt` is the
+          instance that the configuration object applies to. `field_name`
+          is the specific field in the scope that is being searched for.
+         
+          The basic ~get_config_*~ methods from `uvm_component` are mapped to
+          this function as:
+         
+        .. code-block:: python
+
+         | get_config_int(...) => uvm_config_db#(uvm_bitstream_t)::get(cntxt,...)
+         | get_config_string(...) => uvm_config_db#(string)::get(cntxt,...)
+         | get_config_object(...) => uvm_config_db#(uvm_object)::get(cntxt,...)
+         static function bit get(uvm_component cntxt,
+                                 string inst_name,
+                                 string field_name,
+                                 inout T value);
+        Args:
+            cls: 
+            cntxt: 
+            inst_name: 
+            field_name: 
+            value: 
+            T: 
+        Returns:
+        Raises:
+        """
         #//TBD: add file/line
         # p = 0
         r = None  # uvm_resource#(T) r, rt;
@@ -135,43 +153,54 @@ class UVMConfigDb(UVMResourceDb):
             raise Exception('value must be a list-like with append')
         return True
 
-    #  // function: set
-    #  //
-    #  // Create a new or update an existing configuration setting for
-    #  // ~field_name~ in ~inst_name~ from ~cntxt~.
-    #  // The setting is made at ~cntxt~, with the full scope of the set
-    #  // being {~cntxt~,".",~inst_name~}. If ~cntxt~ is ~null~ then ~inst_name~
-    #  // provides the complete scope information of the setting.
-    #  // ~field_name~ is the target field. Both ~inst_name~ and ~field_name~
-    #  // may be glob style or regular expression style expressions.
-    #  //
-    #  // If a setting is made at build time, the ~cntxt~ hierarchy is
-    #  // used to determine the setting's precedence in the database.
-    #  // Settings from hierarchically higher levels have higher
-    #  // precedence. Settings from the same level of hierarchy have
-    #  // a last setting wins semantic. A precedence setting of
-    #  // <uvm_resource_base::default_precedence>  is used for uvm_top, and
-    #  // each hierarchical level below the top is decremented by 1.
-    #  //
-    #  // After build time, all settings use the default precedence and thus
-    #  // have a last wins semantic. So, if at run time, a low level
-    #  // component makes a runtime setting of some field, that setting
-    #  // will have precedence over a setting from the test level that was
-    #  // made earlier in the simulation.
-    #  //
-    #  // The basic ~set_config_*~ methods from <uvm_component> are mapped to
-    #  // this function as:
-    #  //
-    #  //| set_config_int(...) => uvm_config_db#(uvm_bitstream_t)::set(cntxt,...)
-    #  //| set_config_string(...) => uvm_config_db#(string)::set(cntxt,...)
-    #  //| set_config_object(...) => uvm_config_db#(uvm_object)::set(cntxt,...)
-    #
-    #  static function void set(uvm_component cntxt,
-    #                           string inst_name,
-    #                           string field_name,
-    #                           T value);
     @classmethod
     def set(cls, cntxt, inst_name, field_name, value, T=None):
+        """         
+          function: set
+         
+          Create a new or update an existing configuration setting for
+          `field_name` in `inst_name` from `cntxt`.
+          The setting is made at `cntxt`, with the full scope of the set
+          being {`cntxt`,".",`inst_name`}. If `cntxt` is `null` then `inst_name`
+          provides the complete scope information of the setting.
+          `field_name` is the target field. Both `inst_name` and `field_name`
+          may be glob style or regular expression style expressions.
+         
+          If a setting is made at build time, the `cntxt` hierarchy is
+          used to determine the setting's precedence in the database.
+          Settings from hierarchically higher levels have higher
+          precedence. Settings from the same level of hierarchy have
+          a last setting wins semantic. A precedence setting of
+          <uvm_resource_base::default_precedence>  is used for uvm_top, and
+          each hierarchical level below the top is decremented by 1.
+         
+          After build time, all settings use the default precedence and thus
+          have a last wins semantic. So, if at run time, a low level
+          component makes a runtime setting of some field, that setting
+          will have precedence over a setting from the test level that was
+          made earlier in the simulation.
+         
+          The basic ~set_config_*~ methods from `uvm_component` are mapped to
+          this function as:
+         
+        .. code-block:: python
+
+         | set_config_int(...) => uvm_config_db#(uvm_bitstream_t)::set(cntxt,...)
+         | set_config_string(...) => uvm_config_db#(string)::set(cntxt,...)
+         | set_config_object(...) => uvm_config_db#(uvm_object)::set(cntxt,...)
+
+         static function void set(uvm_component cntxt,
+                                  string inst_name,
+                                  string field_name,
+                                  T value);
+        Args:
+            cls: 
+            cntxt: 
+            inst_name: 
+            field_name: 
+            value: 
+            T: 
+        """
         p = None
         curr_phase = None
         exists = False
@@ -244,20 +273,29 @@ class UVMConfigDb(UVMResourceDb):
         if UVMConfigDbOptions.is_tracing():
             UVMResourceDb.m_show_msg("CFGDB/SET", "Configuration","set", inst_name, field_name, cntxt, r)
 
-    #  // function: exists
-    #  //
-    #  // Check if a value for ~field_name~ is available in ~inst_name~, using
-    #  // component ~cntxt~ as the starting search point. ~inst_name~ is an explicit
-    #  // instance name relative to ~cntxt~ and may be an empty string if the
-    #  // ~cntxt~ is the instance that the configuration object applies to.
-    #  // ~field_name~ is the specific field in the scope that is being searched for.
-    #  // The ~spell_chk~ arg can be set to 1 to turn spell checking on if it
-    #  // is expected that the field should exist in the database. The function
-    #  // returns 1 if a config parameter exists and 0 if it doesn't exist.
-    #  //
-    #
     @classmethod
     def exists(cls, cntxt, inst_name, field_name, spell_chk=False):
+        """         
+          function: exists
+         
+          Check if a value for `field_name` is available in `inst_name`, using
+          component `cntxt` as the starting search point. `inst_name` is an explicit
+          instance name relative to `cntxt` and may be an empty string if the
+          `cntxt` is the instance that the configuration object applies to.
+          `field_name` is the specific field in the scope that is being searched for.
+          The `spell_chk` arg can be set to 1 to turn spell checking on if it
+          is expected that the field should exist in the database. The function
+          returns 1 if a config parameter exists and 0 if it doesn't exist.
+         
+
+        Args:
+            cls: 
+            cntxt: 
+            inst_name: 
+            field_name: 
+            spell_chk: 
+        Returns:
+        """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         if cntxt is None:
@@ -374,36 +412,43 @@ class UVMConfigDbOptions:
     ready = False
     #  static local bit tracing;
     tracing = False
-    #  // Function: turn_on_tracing
-    #  //
-    #  // Turn tracing on for the configuration database. This causes all
-    #  // reads and writes to the database to display information about
-    #  // the accesses. Tracing is off by default.
-    #  //
-    #  // This method is implicitly called by the ~+UVM_CONFIG_DB_TRACE~.
-    #
+
     @classmethod
     def turn_on_tracing(cls):
+        """       Function: turn_on_tracing
+         
+          Turn tracing on for the configuration database. This causes all
+          reads and writes to the database to display information about
+          the accesses. Tracing is off by default.
+         
+          This method is implicitly called by the ~+UVM_CONFIG_DB_TRACE~.
+
+        """
         if not UVMConfigDbOptions.ready:
             UVMConfigDbOptions.init()
         UVMConfigDbOptions.tracing = True
 
-    #  // Function: turn_off_tracing
-    #  //
-    #  // Turn tracing off for the configuration database.
-    #
     @classmethod
     def turn_off_tracing(cls):
+        """         
+          Function: turn_off_tracing
+         
+          Turn tracing off for the configuration database.
+
+        """
         if not UVMConfigDbOptions.ready:
             UVMConfigDbOptions.init()
         UVMConfigDbOptions.tracing = False
 
-    #  // Function: is_tracing
-    #  //
-    #  // Returns 1 if the tracing facility is on and 0 if it is off.
-    #  static function bit is_tracing();
     @classmethod
     def is_tracing(cls):
+        """         
+          Function: is_tracing
+         
+          Returns 1 if the tracing facility is on and 0 if it is off.
+         static function bit is_tracing();
+        Returns:
+        """
         if not UVMConfigDbOptions.ready:
             UVMConfigDbOptions.init()
         return UVMConfigDbOptions.tracing

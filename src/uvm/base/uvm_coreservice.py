@@ -38,29 +38,39 @@ class UVMCoreService:
         from .uvm_root import UVMRoot
         return UVMRoot.m_uvm_get_root()
 
-    # Function: get_factory
-    #
-    # Returns the currently enabled uvm factory.
-    # When no factory has been set before, instantiates a uvm_default_factory
     def get_factory(self):
+        """         
+        Function: get_factory
+
+        Returns the currently enabled uvm factory.
+        When no factory has been set before, instantiates a uvm_default_factory
+        Returns:
+        """
         if self.factory is None:
             self.factory = UVMDefaultFactory()
         return self.factory
 
-    # Function: set_factory
-    #
-    # Sets the current uvm factory.
-    # Please note: it is up to the user to preserve the contents of the original factory or
-    # delegate calls to the original factory
     def set_factory(self, factory):
+        """         
+        Function: set_factory
+
+        Sets the current uvm factory.
+        Please note: it is up to the user to preserve the contents of the original factory or
+        delegate calls to the original factory
+        Args:
+            factory: 
+        """
         self.factory = factory
 
-    # Function: get_default_tr_database
-    # returns the current default record database
-    #
-    # If no default record database has been set before this method
-    # is called, returns an instance of <uvm_text_tr_database>
     def get_default_tr_database(self):
+        """         
+        Function: get_default_tr_database
+        returns the current default record database
+
+        If no default record database has been set before this method
+        is called, returns an instance of `uvm_text_tr_database`
+        Returns:
+        """
         if self.tr_database is None:
             #process p = process::self();
             p = None
@@ -78,9 +88,13 @@ class UVMCoreService:
         return self.tr_database
         #endfunction : get_default_tr_database
 
-    #// Function: set_default_tr_database
-    #// Sets the current default record database to ~db~
     def set_default_tr_database(self, db):
+        """         
+        Function: set_default_tr_database
+        Sets the current default record database to `db`
+        Args:
+            db: 
+        """
         self.tr_database = db
 
     def get_report_server(self):

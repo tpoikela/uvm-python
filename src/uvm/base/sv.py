@@ -155,10 +155,17 @@ class sv:
     formats = ["%b", "%0b", "%0d", "%d", "%s", "%0s", "%h", "%0h", "%f",
             "%p", "%0t", "%t", "%x"]
 
-    # This is to make porting faster, but should be switched to native python
-    # formatting inside UVM code
     @classmethod
     def sformatf(cls, msg, *args):
+        """         
+        This is to make porting faster, but should be switched to native python
+        formatting inside UVM code
+        Args:
+            cls: 
+            msg: 
+            args: 
+        Returns:
+        """
         #formats = {"%t": "%d", "%0t": "%0d"}
         #for s in formats:
         #    msg = msg.replace(s, formats[s])

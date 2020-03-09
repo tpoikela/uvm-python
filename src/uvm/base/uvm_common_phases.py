@@ -81,11 +81,14 @@ class UVMBuildPhase(UVMTopdownPhase):
     m_inst = None
     type_name = "uvm_build_phase"
 
-    # Function: get
-    # Returns the singleton phase handle
-    #
     @classmethod
     def get(cls):
+        """         
+        Function: get
+        Returns the singleton phase handle
+
+        Returns:
+        """
         uvm_debug(cls, 'get', 'called with ' + str(cls))
         if UVMBuildPhase.m_inst is None:
             uvm_debug(cls, 'get', "UVMBuildPhase is none. Returning new class")
@@ -125,10 +128,13 @@ class UVMConnectPhase(UVMBottomupPhase):
     m_inst = None
     type_name = "uvm_connect_phase"
 
-    # Function: get
-    # Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+        Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMConnectPhase.m_inst is None:
             UVMConnectPhase.m_inst = UVMConnectPhase()
         return UVMConnectPhase.m_inst
@@ -167,10 +173,13 @@ class UVMEndOfElaborationPhase(UVMBottomupPhase):
     m_inst = None
     type_name = "uvm_end_of_elaboration_phase"
 
-    # Function: get
-    # Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+        Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMEndOfElaborationPhase.m_inst is None:
             UVMEndOfElaborationPhase.m_inst = UVMEndOfElaborationPhase()
         return UVMEndOfElaborationPhase.m_inst
@@ -215,10 +224,13 @@ class UVMStartofSimulationPhase(UVMBottomupPhase):
     m_inst  = None  # static uvm_start_of_simulation_phase m_inst
     type_name = "uvm_start_of_simulation_phase"
 
-    # Function: get
-    # Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+        Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMStartofSimulationPhase.m_inst is None:
             UVMStartofSimulationPhase.m_inst  = UVMStartofSimulationPhase()
         return UVMStartofSimulationPhase.m_inst
@@ -299,10 +311,13 @@ class UVMRunPhase(UVMTaskPhase):
     m_inst = None  # static uvm_run_phase
     type_name = "uvm_run_phase"
 
-    #   # Function: get
-    #   # Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+          Function: get
+          Returns the singleton phase handle
+        Returns:
+        """
         if UVMRunPhase.m_inst is None:
             UVMRunPhase.m_inst = UVMRunPhase()
         return UVMRunPhase.m_inst
@@ -346,10 +361,13 @@ class UVMExtractPhase(UVMBottomupPhase):
     m_inst = None #   local static uvm_extract_phase
     type_name = "uvm_extract_phase"
 
-    # Function: get
-    # Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+        Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMExtractPhase.m_inst is None:
             UVMExtractPhase.m_inst = UVMExtractPhase()
         return UVMExtractPhase.m_inst
@@ -384,10 +402,13 @@ class UVMCheckPhase(UVMBottomupPhase):
     m_inst = None #   local static uvm_check_phase
 
     type_name = "uvm_check_phase"
-    # Function: get
-    # Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """     Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMCheckPhase.m_inst is None:
             UVMCheckPhase.m_inst = UVMCheckPhase()
         return UVMCheckPhase.m_inst
@@ -422,10 +443,13 @@ class UVMReportPhase(UVMBottomupPhase):
     m_inst = None #   local static uvm_report_phase
 
     type_name = "uvm_report_phase"
-    # Function: get
-    # Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """     Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMReportPhase.m_inst is None:
             UVMReportPhase.m_inst = UVMReportPhase()
         return UVMReportPhase.m_inst
@@ -459,10 +483,13 @@ class UVMFinalPhase(UVMBottomupPhase):
     m_inst = None  # static uvm_final_phase
 
     type_name = "uvm_final_phase"
-    # Function: get
-    # Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """     Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if UVMFinalPhase.m_inst is None:
             UVMFinalPhase.m_inst = UVMFinalPhase()
         return UVMFinalPhase.m_inst

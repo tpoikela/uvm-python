@@ -82,14 +82,18 @@ class UVMPortComponentBase(UVMComponent):
     def get_provided_to(self, port_list):
         pass  # pure virtual
 
-    # Function: is_port
-    #
     def is_port(self):
+        """         
+        Function: is_port
+
+        """
         pass  # pure virtual
 
-    # Function: is_export
-    #
     def is_export(self):
+        """         
+        Function: is_export
+
+        """
         pass  # pure virtual
 
     # Function: is_imp
@@ -101,8 +105,12 @@ class UVMPortComponentBase(UVMComponent):
     def is_imp(self):
         pass  # pure virtual
 
-    # Turn off auto config by not calling build_phase()
     def build_phase(self, phase):
+        """         
+        Turn off auto config by not calling build_phase()
+        Args:
+            phase: 
+        """
         self.build()  # for backward compat
         return
 
@@ -135,10 +143,13 @@ class UVMPortComponent(UVMPortComponentBase):
     def resolve_bindings(self):
         self.m_port.resolve_bindings()
 
-    # Function: get_port
-    #
-    # Retrieve the actual port object that this proxy refers to.
     def get_port(self):
+        """         
+        Function: get_port
+
+        Retrieve the actual port object that this proxy refers to.
+        Returns:
+        """
         return self.m_port
 
     def get_connected_to(self, port_list):
@@ -273,19 +284,25 @@ class UVMPortBase():
         else:
             return "implementation"
 
-    # Function: max_size
-    #
-    # Returns the maximum number of implementation ports that must
-    # be connected to this port by the end_of_elaboration phase.
     def max_size(self):
+        """         
+        Function: max_size
+
+        Returns the maximum number of implementation ports that must
+        be connected to this port by the end_of_elaboration phase.
+        Returns:
+        """
         return self.m_max_size
 
 
-    # Function: min_size
-    #
-    # Returns the minimum number of implementation ports that must
-    # be connected to this port by the end_of_elaboration phase.
     def min_size(self):
+        """         
+        Function: min_size
+
+        Returns the minimum number of implementation ports that must
+        be connected to this port by the end_of_elaboration phase.
+        Returns:
+        """
         return self.m_min_size
 
     # Function: is_unbounded
@@ -342,46 +359,50 @@ class UVMPortBase():
     def set_default_index(self, index):
         self.m_def_index = index
 
-    # Function: connect
-    #
-    # Connects this port to the given ~provider~ port. The ports must be
-    # compatible in the following ways
-    #
-    # - Their type parameters must match
-    #
-    # - The ~provider~'s interface type (blocking, non-blocking, analysis, etc.)
-    #     must be compatible. Each port has an interface mask that encodes the
-    #     interface(s) it supports. If the bitwise AND of these masks is equal to
-    #     the this port's mask, the requirement is met and the ports are
-    #     compatible. For example, a uvm_blocking_put_port #(T) is compatible with
-    #     a uvm_put_export #(T) and uvm_blocking_put_imp #(T) because the export
-    #     and imp provide the interface required by the uvm_blocking_put_port.
-    #
-    # - Ports of type <UVM_EXPORT> can only connect to other exports or imps.
-    #
-    # - Ports of type <UVM_IMPLEMENTATION> cannot be connected, as they are
-    #     bound to the component that implements the interface at time of
-    #     construction.
-    #
-    # In addition to type-compatibility checks, the relationship between this
-    # port and the ~provider~ port will also be checked if the port's
-    # ~check_connection_relationships~ configuration has been set. (See <new>
-    # for more information.)
-    #
-    # Relationships, when enabled, are checked are as follows:
-    #
-    # - If this port is a UVM_PORT type, the ~provider~ can be a parent port,
-    #     or a sibling export or implementation port.
-    #
-    # - If this port is a <UVM_EXPORT> type, the provider can be a child
-    #     export or implementation port.
-    #
-    # If any relationship check is violated, a warning is issued.
-    #
-    # Note- the <uvm_component::connect_phase> method is related to but not the same
-    # as this method. The component's ~connect~ method is a phase callback where
-    # port's ~connect~ method calls are made.
     def connect(self, provider):
+        """         
+        Function: connect
+
+        Connects this port to the given `provider` port. The ports must be
+        compatible in the following ways
+
+        - Their type parameters must match
+
+        - The `provider`'s interface type (blocking, non-blocking, analysis, etc.)
+            must be compatible. Each port has an interface mask that encodes the
+            interface(s) it supports. If the bitwise AND of these masks is equal to
+            the this port's mask, the requirement is met and the ports are
+            compatible. For example, a uvm_blocking_put_port #(T) is compatible with
+            a uvm_put_export #(T) and uvm_blocking_put_imp #(T) because the export
+            and imp provide the interface required by the uvm_blocking_put_port.
+
+        - Ports of type `UVM_EXPORT` can only connect to other exports or imps.
+
+        - Ports of type `UVM_IMPLEMENTATION` cannot be connected, as they are
+            bound to the component that implements the interface at time of
+            construction.
+
+        In addition to type-compatibility checks, the relationship between this
+        port and the `provider` port will also be checked if the port's
+        `check_connection_relationships` configuration has been set. (See `new`
+        for more information.)
+
+        Relationships, when enabled, are checked are as follows:
+
+        - If this port is a UVM_PORT type, the `provider` can be a parent port,
+            or a sibling export or implementation port.
+
+        - If this port is a `UVM_EXPORT` type, the provider can be a child
+            export or implementation port.
+
+        If any relationship check is violated, a warning is issued.
+
+        Note- the <uvm_component::connect_phase> method is related to but not the same
+        as this method. The component's `connect` method is a phase callback where
+        port's `connect` method calls are made.
+        Args:
+            provider: 
+        """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         top = cs.get_root()
@@ -628,10 +649,14 @@ class UVMPortBase():
             return 0
         return 1
 
-    # m_add_list
-    #
-    # Internal method.
     def m_add_list(self, provider):
+        """         
+        m_add_list
+
+        Internal method.
+        Args:
+            provider: 
+        """
         sz = ""
         for i in range(0, provider.size()):
             imp = provider.get_if(i)

@@ -41,19 +41,29 @@ from .uvm_object_globals import UVM_PHASE_IMP, UVM_PHASE_STARTED
 
 class UVMTopdownPhase(UVMPhase):
 
-    # Function: new
-    #
-    # Create a new instance of a top-down phase
-    #
     def __init__(self, name):
+        """         
+        Function: new
+
+        Create a new instance of a top-down phase
+
+        Args:
+            name: 
+        """
         UVMPhase.__init__(self, name, UVM_PHASE_IMP)
 
-    # Function: traverse
-    #
-    # Traverses the component tree in top-down order, calling <execute> for
-    # each component.
-    #
     def traverse(self, comp, phase, state):
+        """         
+        Function: traverse
+
+        Traverses the component tree in top-down order, calling `execute` for
+        each component.
+
+        Args:
+            comp: 
+            phase: 
+            state: 
+        """
         uvm_debug(self, 'traverse', self.get_name() +
             ' traversing topdown phase now with comp' + comp.get_name())
         name = ""
@@ -97,11 +107,16 @@ class UVMTopdownPhase(UVMPhase):
                 self.traverse(child, phase, state)
                 child = comp.get_next_child()
 
-    # Function: execute
-    #
-    # Executes the top-down phase ~phase~ for the component ~comp~.
-    #
     def execute(self, comp, phase):
+        """         
+        Function: execute
+
+        Executes the top-down phase `phase` for the component `comp`.
+
+        Args:
+            comp: 
+            phase: 
+        """
         # reseed this process for random stability
         #process proc = process::self();
         #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()));

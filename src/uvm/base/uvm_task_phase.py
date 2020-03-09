@@ -63,23 +63,31 @@ from .uvm_globals import *
 
 class UVMTaskPhase(UVMPhase):
 
-    #  // Function: new
-    #  //
-    #  // Create a new instance of a task-based phase
-    #  //
     def __init__(self, name):
+        """         
+          Function: new
+         
+          Create a new instance of a task-based phase
+         
+        Args:
+            name: 
+        """
         UVMPhase.__init__(self, name, UVM_PHASE_IMP)
         self.m_is_task_phase = True
 
-    #  // Function: traverse
-    #  //
-    #  // Traverses the component tree in bottom-up order, calling <execute> for
-    #  // each component. The actual order for task-based phases doesn't really
-    #  // matter, as each component task is executed in a separate process whose
-    #  // starting order is not deterministic.
-    #  //
-    
     async def traverse(self, comp, phase, state):
+        """         
+          Function: traverse
+         
+          Traverses the component tree in bottom-up order, calling `execute` for
+          each component. The actual order for task-based phases doesn't really
+          matter, as each component task is executed in a separate process whose
+          starting order is not deterministic.
+        Args:
+            comp: 
+            phase: 
+            state: 
+        """
         phase.m_num_procs_not_yet_returned = 0
         await self.m_traverse(comp, phase, state)
         uvm_debug(self, 'traverse', 'Finished self.m_traverse for comp ' +
@@ -164,16 +172,19 @@ class UVMTaskPhase(UVMPhase):
         uvm_debug(self, "m_traverse", "END OF m_traverse, comp: " +
                 comp.get_name())
 
-    #  // Function: execute
-    #  //
-    #  // Fork the task-based phase ~phase~ for the component ~comp~.
-    #  //
-    
     async def execute(self, comp, phase):
+        """         
+          Function: execute
+         
+          Fork the task-based phase `phase` for the component `comp`.
+         
+        Args:
+            comp: 
+            phase: 
+        """
         uvm_debug(self, 'execute', 'exec task_phase |' + self.get_name() + '| with comp: ' +
                 comp.get_name())
         #fork
-        #begin
         #process proc
         # reseed this process for random stability
         #proc = process::self()
@@ -182,14 +193,15 @@ class UVMTaskPhase(UVMPhase):
         proc = cocotb.fork(self._execute_fork_join_none(comp,phase))
         #phase.m_num_procs_not_yet_returned -= 1
         await Timer(0)
-        #end
         #join_none
-        #endfunction
-    #endclass
 
 
-    
     async def _execute_fork_join_none(self, comp, phase):
+        """             
+        Args:
+            comp: 
+            phase: 
+        """
         phase.m_num_procs_not_yet_returned += 1
         uvm_debug(self, '_execute_fork_join_none', 'exec task_phase |' + self.get_name()
                 + '| yielding comp: ' + comp.get_name())

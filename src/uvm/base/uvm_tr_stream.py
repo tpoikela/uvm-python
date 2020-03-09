@@ -89,12 +89,16 @@ class uvm_tr_stream(UVMObject):
     #   // !m_is_opened && !m_is_closed == m_is_freed
     #
 
-    #   // Function: new
-    #   // Constructor
-    #   //
-    #   // Parameters:
-    #   // name - Stream instance name
     def __init__(self, name="unnamed-uvm_tr_stream"):
+        """         
+           Function: new
+           Constructor
+          
+           Parameters:
+           name - Stream instance name
+        Args:
+            name: 
+        """
         UVMObject.__init__(self, name)
         self.m_cfg_dap = uvm_set_before_get_dap("cfg_dap")
         #   // Variable- m_records
@@ -115,16 +119,19 @@ class uvm_tr_stream(UVMObject):
     #   local static integer m_ids_by_stream[uvm_tr_stream]
     m_ids_by_stream = {}
 
-    #
-    #   // Group: Configuration API
-    #
-    #   // Function: get_db
-    #   // Returns a reference to the database which contains this
-    #   // stream.
-    #   //
-    #   // A warning will be asserted if get_db is called prior to
-    #   // the stream being initialized via <do_open>.
     def get_db(self):
+        """         
+
+           Group: Configuration API
+
+           Function: get_db
+           Returns a reference to the database which contains this
+           stream.
+          
+           A warning will be asserted if get_db is called prior to
+           the stream being initialized via `do_open`.
+        Returns:
+        """
         m_cfg = []  # m_uvm_tr_stream_cfg m_cfg
         if not self.m_cfg_dap.try_get(m_cfg):
             if self.m_warn_null_cfg == 1:
@@ -252,24 +259,30 @@ class uvm_tr_stream(UVMObject):
     #        db.m_free_stream(this)
     #   endfunction : free
 
-    #   // Function- m_do_open
-    #   // Initializes the state of the stream
-    #   //
-    #   // Parameters-
-    #   // db - Database which the stream belongs to
-    #   // scope - Optional scope
-    #   // stream_type_name - Optional type name for the stream
-    #   //
-    #   // This method will trigger a <do_open> call.
-    #   //
-    #   // An error will be asserted if-
-    #   // - m_do_open is called more than once without the stream
-    #   //   being ~freed~ between.
-    #   // - m_do_open is passed a ~None~ db
-    #   function void m_do_open(uvm_tr_database db,
-    #                           string scope="",
-    #                           string stream_type_name="")
     def m_do_open(self, db, scope="", stream_type_name=""):
+        """         
+           Function- m_do_open
+           Initializes the state of the stream
+          
+           Parameters-
+           db - Database which the stream belongs to
+           scope - Optional scope
+           stream_type_name - Optional type name for the stream
+          
+           This method will trigger a `do_open` call.
+          
+           An error will be asserted if-
+           - m_do_open is called more than once without the stream
+             being `freed` between.
+           - m_do_open is passed a `None` db
+          function void m_do_open(uvm_tr_database db,
+                                  string scope="",
+                                  string stream_type_name="")
+        Args:
+            db: 
+            scope: 
+            stream_type_name: 
+        """
         m_cfg = []  # m_uvm_tr_stream_cfg
         m_db = None  # uvm_tr_database
         if db is None:
@@ -294,19 +307,25 @@ class uvm_tr_stream(UVMObject):
             self.do_open(db, scope, stream_type_name)
         #   endfunction : m_do_open
 
-    #
-    #   // Function: is_open
-    #   // Returns true if this ~uvm_tr_stream~ was opened on the database,
-    #   // but has not yet been closed.
-    #   //
     def is_open(self):
+        """         
+
+           Function: is_open
+           Returns true if this `uvm_tr_stream` was opened on the database,
+           but has not yet been closed.
+          
+        Returns:
+        """
         return self.m_is_opened
 
-    #   // Function: is_closed
-    #   // Returns true if this ~uvm_tr_stream~ was closed on the database,
-    #   // but has not yet been freed.
-    #   //
     def is_closed(self):
+        """         
+           Function: is_closed
+           Returns true if this `uvm_tr_stream` was closed on the database,
+           but has not yet been freed.
+          
+        Returns:
+        """
         return self.m_is_closed
 
     #   // Group: Transaction Recorder API
@@ -318,25 +337,32 @@ class uvm_tr_stream(UVMObject):
     #   //
     #
 
-    #   // Function: open_recorder
-    #   // Marks the opening of a new transaction recorder on the stream.
-    #   //
-    #   // Parameters:
-    #   // name - A name for the new transaction
-    #   // open_time - Optional time to record as the opening of this transaction
-    #   // type_name - Optional type name for the transaction
-    #   //
-    #   // If ~open_time~ is omitted (or set to 0), then the stream will use
-    #   // the current time.
-    #   //
-    #   // This method will trigger a <do_open_recorder> call.  If ~do_open_recorder~
-    #   // returns a non-~None~ value, then the <uvm_recorder::do_open> method will
-    #   // be called in the recorder.
-    #   //
-    #   // Transaction recorders can only be opened if the stream is
-    #   // ~open~ on the database (per <is_open>).  Otherwise the
-    #   // request will be ignored, and ~None~ will be returned.
     def open_recorder(self, name, open_time=0, type_name=""):
+        """         
+           Function: open_recorder
+           Marks the opening of a new transaction recorder on the stream.
+          
+           Parameters:
+           name - A name for the new transaction
+           open_time - Optional time to record as the opening of this transaction
+           type_name - Optional type name for the transaction
+          
+           If `open_time` is omitted (or set to 0), then the stream will use
+           the current time.
+          
+           This method will trigger a `do_open_recorder` call.  If `do_open_recorder`
+           returns a non-`None` value, then the <uvm_recorder::do_open> method will
+           be called in the recorder.
+          
+           Transaction recorders can only be opened if the stream is
+           `open` on the database (per `is_open`).  Otherwise the
+           request will be ignored, and `None` will be returned.
+        Args:
+            name: 
+            open_time: 
+            type_name: 
+        Returns:
+        """
         m_time = open_time
         if open_time == 0:
             m_time = sv.time()
@@ -362,9 +388,13 @@ class uvm_tr_stream(UVMObject):
         #   endfunction : open_recorder
 
 
-    #   // Function- m_free_recorder
-    #   // Removes recorder from the internal array
     def m_free_recorder(self, recorder):
+        """         
+           Function- m_free_recorder
+           Removes recorder from the internal array
+        Args:
+            recorder: 
+        """
         if recorder in self.m_records:
             del self.m_records[recorder]
 
@@ -403,13 +433,16 @@ class uvm_tr_stream(UVMObject):
     m_streams_by_id = {}
 
 
-    #   // Function: get_handle
-    #   // Returns a unique ID for this stream.
-    #   //
-    #   // A value of ~0~ indicates that the recorder has been ~freed~,
-    #   // and no longer has a valid ID.
-    #   //
     def get_handle(self):
+        """         
+           Function: get_handle
+           Returns a unique ID for this stream.
+          
+           A value of `0` indicates that the recorder has been `freed`,
+           and no longer has a valid ID.
+          
+        Returns:
+        """
         m_streams_by_id = uvm_tr_stream.m_streams_by_id
         m_ids_by_stream = uvm_tr_stream.m_ids_by_stream
 
@@ -548,13 +581,19 @@ class uvm_text_tr_stream(uvm_tr_stream):
 
     #   // Group: Implementation Agnostic API
 
-    #   // Function: do_open
-    #   // Callback triggered via <uvm_tr_database::open_stream>.
-    #   //
-    #   protected virtual function void do_open(uvm_tr_database db,
-    #                                           string scope,
-    #                                           string stream_type_name)
     def do_open(self, db, scope, stream_type_name):
+        """         
+           Function: do_open
+           Callback triggered via <uvm_tr_database::open_stream>.
+          
+          protected virtual function void do_open(uvm_tr_database db,
+                                                  string scope,
+                                                  string stream_type_name)
+        Args:
+            db: 
+            scope: 
+            stream_type_name: 
+        """
         # $cast(m_text_db, db)
         self.m_text_db = db
         if self.m_text_db.open_db():
@@ -597,11 +636,18 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #   endfunction : do_free
     #
 
-    #   // Function: do_open_recorder
-    #   // Marks the beginning of a new record in the stream
-    #   //
-    #   // Text-backend specific implementation.
     def do_open_recorder(self, name, open_time, type_name):
+        """         
+           Function: do_open_recorder
+           Marks the beginning of a new record in the stream
+          
+           Text-backend specific implementation.
+        Args:
+            name: 
+            open_time: 
+            type_name: 
+        Returns:
+        """
         if self.m_text_db.open_db():
             return UVMTextRecorder.type_id.create(name)
         return None

@@ -11,8 +11,12 @@ from ..macros.uvm_message_defines import uvm_info
 
 
 
-# TODO
 def ename(sever):
+    """     
+    TODO
+    Returns:
+    Raises:
+    """
     if isinstance(sever, str):
         raise Exception("str was given to ename(). Expected int. Got: " + sever)
     if sever == UVM_INFO:
@@ -86,8 +90,12 @@ class UVMReportServer(UVMObject):
     # of the current configuration.    A snippet of example output is shown here:
     #
 
-    # Print to show report server state
     def do_print(self, printer):
+        """         
+        Print to show report server state
+        Args:
+            printer: 
+        """
         l_severity_count_index = 0
         l_id_count_index = ""
 
@@ -135,8 +143,11 @@ class UVMReportServer(UVMObject):
     # Group: Quit Count
     #----------------------------------------------------------------------------
 
-    # Function: get_max_quit_count
     def get_max_quit_count(self):
+        """         
+        Function: get_max_quit_count
+        Returns:
+        """
         return self.m_max_quit_count
 
     # Function: set_max_quit_count
@@ -157,41 +168,60 @@ class UVMReportServer(UVMObject):
         else:
             self.m_max_quit_count = count
 
-    # Function: get_quit_count
     def get_quit_count(self):
+        """         
+        Function: get_quit_count
+        Returns:
+        """
         return self.m_quit_count
 
-    # Function: set_quit_count
     def set_quit_count(self, quit_count):
+        """         
+        Function: set_quit_count
+        Args:
+            quit_count: 
+        """
         if quit_count < 0:
             self.m_quit_count = 0
         else:
             self.m_quit_count = quit_count
 
-    # Function: incr_quit_count
     def incr_quit_count(self):
+        """         
+        Function: incr_quit_count
+        """
         self.m_quit_count += 1
 
-    # Function: reset_quit_count
-    #
-    # Set, get, increment, or reset to 0 the quit count, i.e., the number of
-    # COUNT actions issued.
     def reset_quit_count(self):
+        """         
+        Function: reset_quit_count
+
+        Set, get, increment, or reset to 0 the quit count, i.e., the number of
+        COUNT actions issued.
+        """
         self.m_quit_count = 0
 
-    # Function: is_quit_count_reached
-    #
-    # If is_quit_count_reached returns 1, then the quit counter has reached
-    # the maximum.
     def is_quit_count_reached(self):
+        """         
+        Function: is_quit_count_reached
+
+        If is_quit_count_reached returns 1, then the quit counter has reached
+        the maximum.
+        Returns:
+        """
         return self.m_quit_count >= self.m_max_quit_count
 
     #----------------------------------------------------------------------------
     # Group: Severity Count
     #----------------------------------------------------------------------------
 
-    # Function: get_severity_count
     def get_severity_count(self, severity):
+        """         
+        Function: get_severity_count
+        Args:
+            severity: 
+        Returns:
+        """
         if self.m_severity_count.exists(severity):
             return self.m_severity_count.get(severity)
         return 0
@@ -261,15 +291,22 @@ class UVMReportServer(UVMObject):
     #
     #----------------------------------------------------------------------------
 
-    # Function: set_message_database
-    # sets the <uvm_tr_database> used for recording messages
     def set_message_database(self, database):
+        """         
+        Function: set_message_database
+        sets the `uvm_tr_database` used for recording messages
+        Args:
+            database: 
+        """
         self.m_message_db = database
 
-    # Function: get_message_database
-    # returns the <uvm_tr_database> used for recording messages
-    #
     def get_message_database(self):
+        """         
+        Function: get_message_database
+        returns the `uvm_tr_database` used for recording messages
+
+        Returns:
+        """
         return self.m_message_db
 
     def get_severity_set(self, q):
@@ -280,11 +317,16 @@ class UVMReportServer(UVMObject):
         while self.m_id_count.has_next():
             q.append(self.m_id_count.next())
 
-    # Function- f_display
-    #
-    # This method sends string severity to the command line if file is 0 and to
-    # the file(s) specified by file if it is not 0.
     def f_display(self, file, _str):
+        """         
+        Function- f_display
+
+        This method sends string severity to the command line if file is 0 and to
+        the file(s) specified by file if it is not 0.
+        Args:
+            file: 
+            _str: 
+        """
         if file == 0:
             #import logging
             #logging.info("%s", str)
@@ -403,13 +445,19 @@ class UVMReportServer(UVMObject):
             raise Exception("$stop from uvm_report_server, msg: " +
                     report_message.sprint())
 
-    # Function: compose_report_message
-    #
-    # Constructs the actual string sent to the file or command line
-    # from the severity, component name, report id, and the message itself.
-    #
-    # Expert users can overload this method to customize report formatting.
     def compose_report_message(self, report_message, report_object_name=""):
+        """         
+        Function: compose_report_message
+
+        Constructs the actual string sent to the file or command line
+        from the severity, component name, report id, and the message itself.
+
+        Expert users can overload this method to customize report formatting.
+        Args:
+            report_message: 
+            report_object_name: 
+        Returns:
+        """
         sev_string = ""
         l_severity = UVM_INFO
         l_verbosity = UVM_MEDIUM
@@ -479,11 +527,14 @@ class UVMReportServer(UVMObject):
         rpt = self.get_summary_string()
         uvm_info("UVM/REPORT/SERVER", rpt, UVM_LOW)
 
-    # Function: get_summary_string
-    #
-    # Returns the statistical information on the reports issued by this central report
-    # server as multi-line string.
     def get_summary_string(self):
+        """         
+        Function: get_summary_string
+
+        Returns the statistical information on the reports issued by this central report
+        server as multi-line string.
+        Returns:
+        """
         id = ""
         q = []
 

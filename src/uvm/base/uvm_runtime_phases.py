@@ -88,10 +88,13 @@ class UVMPreResetPhase(UVMTaskPhase):
     m_inst = None
     type_name = "uvm_pre_reset_phase"
 
-    #   // Function: get
-    #   // Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if cls.m_inst is None:
             cls.m_inst = UVMPreResetPhase()
             return cls.m_inst
@@ -138,10 +141,13 @@ class UVMResetPhase(UVMTaskPhase):
     m_inst = None
     type_name = "uvm_reset_phase"
 
-    #   // Function: get
-    #   // Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if cls.m_inst is None:
             cls.m_inst = UVMResetPhase()
             return cls.m_inst
@@ -180,11 +186,14 @@ class UVMPostResetPhase(UVMTaskPhase):
 
     m_inst = None
     type_name = "uvm_post_reset_phase"
-    #
-    #   // Function: get
-    #   // Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """ 
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMPostResetPhase()
             return cls.m_inst
@@ -225,11 +234,14 @@ class UVMPreConfigurePhase(UVMTaskPhase):
 
     m_inst = None
     type_name = "uvm_pre_configure_phase"
-    #
-    #   // Function: get
-    #   // Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """ 
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMPreConfigurePhase()
             return cls.m_inst
@@ -269,11 +281,14 @@ class UVMConfigurePhase(UVMTaskPhase):
 
     m_inst = None
     type_name = "uvm_configure_phase"
-    #
-    #   // Function: get
-    #   // Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """ 
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMConfigurePhase()
             return cls.m_inst
@@ -311,11 +326,14 @@ class UVMPostConfigurePhase(UVMTaskPhase):
 
     m_inst = None
     type_name = "uvm_post_configure_phase"
-    #
-    #   // Function: get
-    #   // Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """ 
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMPostConfigurePhase()
             return cls.m_inst
@@ -353,10 +371,13 @@ class UVMPreMainPhase(UVMTaskPhase):
     m_inst = None
     type_name = "uvm_pre_main_phase"
 
-    #   // Function: get
-    #   // Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMPreMainPhase()
             return cls.m_inst
@@ -400,10 +421,13 @@ class UVMMainPhase(UVMTaskPhase):
     m_inst = None  # local static UVMMainPhase
     type_name = "UVMMainPhase"
 
-    # Function: get
-    # Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+        Function: get
+        Returns the singleton phase handle
+        Returns:
+        """
         if cls.m_inst is None:
             cls.m_inst = UVMMainPhase()
         return cls.m_inst
@@ -440,11 +464,14 @@ class UVMPostMainPhase(UVMTaskPhase):
 
     m_inst = None
     type_name = "uvm_post_main_phase"
-    #
-    #   // Function: get
-    #   // Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """ 
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMPostMainPhase()
             return cls.m_inst
@@ -480,10 +507,13 @@ class UVMPreShutdownPhase(UVMTaskPhase):
     m_inst = None
     type_name = "uvm_pre_shutdown_phase"
 
-    #   // Function: get
-    #   // Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMPreShutdownPhase()
             return cls.m_inst
@@ -523,10 +553,13 @@ class UVMShutdownPhase(UVMTaskPhase):
     m_inst = None
     type_name = "uvm_shutdown_phase"
 
-    #   // Function: get
-    #   // Returns the singleton phase handle
     @classmethod
     def get(cls):
+        """         
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if(cls.m_inst is None):
             cls.m_inst = UVMShutdownPhase()
             return cls.m_inst
@@ -565,11 +598,14 @@ class UVMPostShutdownPhase(UVMTaskPhase):
 
     m_inst = None
     type_name = "uvm_post_shutdown_phase"
-    #
-    #   // Function: get
-    #   // Returns the singleton phase handle
+
     @classmethod
     def get(cls):
+        """ 
+           Function: get
+           Returns the singleton phase handle
+        Returns:
+        """
         if cls.m_inst is None:
             cls.m_inst = UVMPostShutdownPhase()
             return cls.m_inst

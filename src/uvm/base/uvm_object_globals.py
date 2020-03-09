@@ -93,8 +93,11 @@ UVM_RADIX_TO_STRING_DICT = {
     UVM_REAL_EXP: "e"
 }
 
-# Function- uvm_radix_to_string
 def uvm_radix_to_string(radix):
+    """     
+    Function- uvm_radix_to_string
+    Returns:
+    """
     if radix in UVM_RADIX_TO_STRING_DICT:
         return UVM_RADIX_TO_STRING_DICT[radix]
     return "x"
