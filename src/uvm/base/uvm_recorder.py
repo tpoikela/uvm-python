@@ -321,10 +321,10 @@ class UVMRecorder(UVMObject):
     #   // Variable- m_id
     #   // Static int marking the last assigned id.
     #   local static integer m_id
-    #
+
+
     #   // Function- m_free_id
     #   // Frees the id/recorder link (memory cleanup)
-    #   //
     @classmethod
     def m_free_id(cls, id):
         recorder = None  # uvm_recorder
@@ -358,7 +358,7 @@ class UVMRecorder(UVMObject):
             return handle
         #   endfunction : get_handle
 
-    #
+
     #   // Function: get_recorder_from_handle
     #   // Static accessor, returns a recorder reference for a given unique id.
     #   //
@@ -406,7 +406,8 @@ class UVMRecorder(UVMObject):
     #      end
     #      do_record_field(name, value, size, radix)
     #   endfunction : record_field
-    #
+
+
     #   // Function: record_field_int
     #   // Records an integral field (less than or equal to 64 bits).
     #   //
@@ -733,7 +734,7 @@ class UVMRecorder(UVMObject):
 #// The ~uvm_text_recorder~ is the default recorder implementation for the
 #// <uvm_text_tr_database>.
 #//
-#
+
 class UVMTextRecorder(UVMRecorder):
 
     #   // Function: new
@@ -1141,6 +1142,6 @@ class UVMTextRecorder(UVMRecorder):
     #        end
     #     end
     #  endfunction // free_tr
-    #
-    #endclass : uvm_text_recorder
+
+
 uvm_object_utils(UVMTextRecorder)
