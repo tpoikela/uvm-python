@@ -26,24 +26,21 @@ from ..base.uvm_component import UVMComponent
 from ..base.uvm_resource import UVMResourcePool
 from ..base.uvm_queue import UVMQueue
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_agent
-#
-# The uvm_agent virtual class should be used as the base class for the user-
-# defined agents. Deriving from uvm_agent will allow you to distinguish agents
-# from other component types also using its inheritance. Such agents will
-# automatically inherit features that may be added to uvm_agent in the future.
-#
-# While an agent's build function, inherited from <uvm_component>, can be
-# implemented to define any agent topology, an agent typically contains three
-# subcomponents: a driver, sequencer, and monitor. If the agent is active,
-# subtypes should contain all three subcomponents. If the agent is passive,
-# subtypes should contain only the monitor.
-#------------------------------------------------------------------------------
 
 
 class UVMAgent(UVMComponent):
+    """
+    The uvm_agent virtual class should be used as the base class for the user-
+    defined agents. Deriving from uvm_agent will allow you to distinguish agents
+    from other component types also using its inheritance. Such agents will
+    automatically inherit features that may be added to uvm_agent in the future.
+    
+    While an agent's build function, inherited from `UVMComponent`, can be
+    implemented to define any agent topology, an agent typically contains three
+    subcomponents: a driver, sequencer, and monitor. If the agent is active,
+    subtypes should contain all three subcomponents. If the agent is passive,
+    subtypes should contain only the monitor.
+    """
 
     # Function: new
     #
@@ -57,10 +54,10 @@ class UVMAgent(UVMComponent):
     #
     #| uvm_config_int::set(this, "<relative_path_to_agent>,
     #|   "is_active", UVM_ACTIVE)
-
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
         self.is_active = UVM_ACTIVE
+
 
     def build_phase(self, phase):
         active = 0
@@ -75,9 +72,9 @@ class UVMAgent(UVMComponent):
         rq = rp.lookup_name(self.get_full_name(), "is_active", None, 0)
         rq = UVMResourcePool.sort_by_precedence(rq)
         for i in range(len(rq)):
-           rsrc = rq[i]  # uvm_resource_base
-           rap = rsrc
-           self.is_active = rap.read(self)
+            rsrc = rq[i]  # uvm_resource_base
+            rap = rsrc
+            self.is_active = rap.read(self)
 
     type_name = "uvm_agent"
 
@@ -93,4 +90,3 @@ class UVMAgent(UVMComponent):
     # the active/passive nature of the agent.
     def get_is_active(self):
         return self.is_active
-#endclass

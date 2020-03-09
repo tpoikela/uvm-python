@@ -162,9 +162,11 @@ class bfm(UVMComponent):
 class listener(UVMSubscriber): #(transaction)
     def __init__(self, name, parent):
         super().__init__(name,parent)
+        self.num_items = 0
 
     def write(self, t):
-        uvm_info(m_name, sv.sformatf("Received: %s", t.convert2string()), UVM_MEDIUM)
+        uvm_info(self.m_name, sv.sformatf("Received: %s", t.convert2string()), UVM_MEDIUM)
+        self.num_items += 1
 
 
 #  //----------------------------------------------------------------------
@@ -218,8 +220,6 @@ class consumer(UVMComponent):
        self.put_export.connect(self.f.blocking_put_export)
        self.b.get_port.connect(self.f.blocking_get_export)
 
-    #  endclass
-
 
 #  //----------------------------------------------------------------------
 #  // componenet top
@@ -240,7 +240,6 @@ class top(UVMEnv):
         # Connections may also be done in the constructor, if you wish
         self.p.put_port.connect(self.c.put_export)
         self.p.ap.connect(self.list.analysis_export)
-        #    endfunction
 
     
     async def run_phase(self, phase):
@@ -248,6 +247,11 @@ class top(UVMEnv):
         uvm_info("ENV_TOP", "run_phase started", UVM_MEDIUM)
         await Timer(100, "NS")
         phase.drop_objection(self)
+
+
+    def check_phase(self, phase):
+        if self.list.num_items == 0:
+            uvm_fatal("TOP_ENV", "Listener got 0 items")
 
 
 #  //----------------------------------------------------------------------
@@ -260,13 +264,10 @@ class env(UVMEnv):
         self.t = top("top", self)
 
 
-    
     async def run_phase(self, phase):
         phase.raise_objection(self)
         await Timer(900, "NS")
         phase.drop_objection(self)
-
-    #  endclass
 
 
 #  //----------------------------------------------------------------------

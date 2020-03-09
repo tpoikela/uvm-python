@@ -24,43 +24,33 @@ from ..base.uvm_component import UVMComponent
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullPort
 from ..tlm1.uvm_analysis_port import UVMAnalysisPort
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_driver #(REQ,RSP)
-#
-# The base class for drivers that initiate requests for new transactions via
-# a uvm_seq_item_pull_port. The ports are typically connected to the exports of
-# an appropriate sequencer component.
-#
-# This driver operates in pull mode. Its ports are typically connected to the
-# corresponding exports in a pull sequencer as follows:
-#
-#|    driver.seq_item_port.connect(sequencer.seq_item_export);
-#|    driver.rsp_port.connect(sequencer.rsp_export);
-#
-# The ~rsp_port~ needs connecting only if the driver will use it to write
-# responses to the analysis export in the sequencer.
-#
-#------------------------------------------------------------------------------
 
-#class uvm_driver #(type REQ=uvm_sequence_item,
-#                   type RSP=REQ) extends uvm_component;
-#
 class UVMDriver(UVMComponent):
-    # Port: seq_item_port
-    #
-    # Derived driver classes should use this port to request items from the
-    # sequencer. They may also use it to send responses back.
+    """
+    The base class for drivers that initiate requests for new transactions via
+    a uvm_seq_item_pull_port. The ports are typically connected to the exports of
+    an appropriate sequencer component.
 
-    #uvm_seq_item_pull_port #(REQ, RSP) seq_item_port;
+    This driver operates in pull mode. Its ports are typically connected to the
+    corresponding exports in a pull sequencer as follows:
 
-    #uvm_seq_item_pull_port #(REQ, RSP) seq_item_prod_if; // alias
+    .. code-block:: python
+        driver.seq_item_port.connect(sequencer.seq_item_export);
+        driver.rsp_port.connect(sequencer.rsp_export);
 
-    # Port: rsp_port
-    #
-    # This port provides an alternate way of sending responses back to the
-    # originating sequencer. Which port to use depends on which export the
-    # sequencer provides for connection.
+    The ~rsp_port~ needs connecting only if the driver will use it to write
+    responses to the analysis export in the sequencer.
+
+    :ivar UVMSeqItemPullPort seq_item_port: Derived driver classes should use
+        this port to request items from the sequencer. They may also use it to
+        send responses back.
+
+    :ivar UVMAnalysisPort rst_port: This port provides an alternate way of
+        sending responses back to the originating sequencer. Which port to
+        use depends on which export the sequencer provides for connection.
+    """
+
+
 
     #uvm_analysis_port #(RSP) rsp_port;
 
@@ -69,7 +59,6 @@ class UVMDriver(UVMComponent):
     # Creates and initializes an instance of this class using the normal
     # constructor arguments for <uvm_component>: ~name~ is the name of the
     # instance, and ~parent~ is the handle to the hierarchical parent, if any.
-
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
         self.seq_item_port    = UVMSeqItemPullPort("seq_item_port", self)
@@ -82,5 +71,3 @@ class UVMDriver(UVMComponent):
 
     def get_type_name(self):
         return UVMDriver.type_name
-#endclass
-#

@@ -23,23 +23,20 @@
 
 from ..base.uvm_component import UVMComponent
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_env
-#
-# The base class for hierarchical containers of other components that
-# together comprise a complete environment. The environment may
-# initially consist of the entire testbench. Later, it can be reused as
-# a sub-environment in even larger system-level environments.
-#------------------------------------------------------------------------------
 
 
 class UVMEnv(UVMComponent):
+    """
+    The base class for hierarchical containers of other components that
+    together comprise a complete environment. The environment may
+    initially consist of the entire testbench. Later, it can be reused as
+    a sub-environment in even larger system-level environments.
+    """
 
     # Function: new
     #
     # Creates and initializes an instance of this class using the normal
-    # constructor arguments for <uvm_component>: ~name~ is the name of the
+    # constructor arguments for `UVMComponent`: ~name~ is the name of the
     # instance, and ~parent~ is the handle to the hierarchical parent, if any.
     def __init__(self, name="env", parent=None):
         UVMComponent.__init__(self, name, parent)
@@ -48,4 +45,3 @@ class UVMEnv(UVMComponent):
 
     def get_type_name(self):
         return UVMEnv.type_name
-#endclass
