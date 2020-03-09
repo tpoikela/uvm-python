@@ -442,48 +442,44 @@ class UVMReportHandler(UVMObject):
                 return _file
         return self.default_file_handle
 
-    #  // Function- set_severity_action
-    #  // Function- set_id_action
-    #  // Function- set_severity_id_action
-    #  // Function- set_id_verbosity
-    #  // Function- set_severity_id_verbosity
-    #  //
-    #  // Internal methods called by uvm_report_object.
 
+    #  // Function- set_severity_action
     def set_severity_action(self, severity, action):
         self.severity_actions.add(severity, action)
 
+    #  // Function- set_id_action
     def set_id_action(self, id, action):
         self.id_actions.add(id, action)
 
+    #  // Function- set_severity_id_action
     def set_severity_id_action(self, severity, id, action):
         if severity not in self.severity_id_actions:
             self.severity_id_actions[severity] = UVMPool()
         self.severity_id_actions[severity].add(id, action)
 
+    #  // Function- set_id_verbosity
     def set_id_verbosity(self, id, verbosity):
         self.id_verbosities.add(id, verbosity)
 
+    #  // Function- set_severity_id_verbosity
     def set_severity_id_verbosity(self, severity, id, verbosity):
         if severity not in self.severity_id_verbosities:
             self.severity_id_verbosities[severity] = UVMPool()
         self.severity_id_verbosities[severity].add(id,verbosity)
 
     #  // Function- set_default_file
-    #  // Function- set_severity_file
-    #  // Function- set_id_file
-    #  // Function- set_severity_id_file
-    #  //
-    #  // Internal methods called by uvm_report_object.
     def set_default_file(self, file):
         self.default_file_handle = file
 
+    #  // Function- set_severity_file
     def set_severity_file(self, severity, file):
         self.severity_file_handles[severity] = file
 
+    #  // Function- set_id_file
     def set_id_file(self, id, file):
         self.id_file_handles.add(id, file)
 
+    #  // Function- set_severity_id_file
     def set_severity_id_file(self, severity, id, file):
         if severity not in self.severity_id_file_handles:
             self.severity_id_file_handles[severity] = UVMPool()
@@ -503,7 +499,6 @@ class UVMReportHandler(UVMObject):
     #
     # This is the common handler method used by the four core reporting methods
     # (e.g., uvm_report_error) in <uvm_report_object>.
-
     def report(self, severity, name, id, message,
       verbosity_level=UVM_MEDIUM, filename="", line=0,
       client=None):
@@ -526,7 +521,6 @@ class UVMReportHandler(UVMObject):
         l_report_message.set_action(self.get_action(severity, id))
         self.process_report_message(l_report_message)
 
-    # tpoikela: Removed ifndef UVM_NO_DEPRECATED
 
     def _close_files(self):
         if self.default_file_handle != 0:
