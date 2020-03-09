@@ -23,27 +23,23 @@
 
 from ..base.uvm_component import UVMComponent
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_scoreboard
-#//
-#// The uvm_scoreboard virtual class should be used as the base class for
-#// user-defined scoreboards.
-#//
-#// Deriving from uvm_scoreboard will allow you to distinguish scoreboards from
-#// other component types inheriting directly from uvm_component. Such
-#// scoreboards will automatically inherit and benefit from features that may be
-#// added to uvm_scoreboard in the future.
-#//------------------------------------------------------------------------------
 
 class UVMScoreboard(UVMComponent):
-    #
+    """
+    The uvm_scoreboard virtual class should be used as the base class for
+    user-defined scoreboards.
+
+    Deriving from uvm_scoreboard will allow you to distinguish scoreboards from
+    other component types inheriting directly from uvm_component. Such
+    scoreboards will automatically inherit and benefit from features that may be
+    added to uvm_scoreboard in the future.
+    """
+
     #  // Function: new
     #  //
     #  // Creates and initializes an instance of this class using the normal
     #  // constructor arguments for <uvm_component>: ~name~ is the name of the
     #  // instance, and ~parent~ is the handle to the hierarchical parent, if any.
-    #
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
 
@@ -51,4 +47,3 @@ class UVMScoreboard(UVMComponent):
 
     def get_type_name(self):
         return UVMScoreboard.type_name
-    #endclass
