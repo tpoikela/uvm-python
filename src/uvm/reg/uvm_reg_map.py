@@ -527,8 +527,8 @@ class UVMRegMap(UVMObject):
     #   // Function: set_base_addr
     #   //
     #   // Set the base address of this map.
-    #
     #   extern virtual function void   set_base_addr (uvm_reg_addr_t  offset)
+
 
     #   // Function: reset
     #   //
@@ -545,6 +545,12 @@ class UVMRegMap(UVMObject):
     #   // reset event for this method is "SOFT".
     #   //
     #   extern virtual function void reset(string kind = "SOFT")
+    def reset(self, kind="SOFT"):
+        regs = []
+        self.get_registers(regs)
+        for reg in regs:
+            reg.reset(kind)
+
 
     #   /*local*/ extern virtual function void add_parent_map(uvm_reg_map  parent_map,
     #                                                         uvm_reg_addr_t offset)
@@ -569,9 +575,8 @@ class UVMRegMap(UVMObject):
         #
         #endfunction: add_parent_map
 
-    #
     #   /*local*/ extern virtual function void Xverify_map_configX()
-    #
+
 
     # m_set_reg_offset
     def m_set_reg_offset(self, rg, offset, unmapped):
@@ -667,7 +672,8 @@ class UVMRegMap(UVMObject):
     #                                                           uvm_reg_addr_t offset,
     #                                                           bit unmapped)
     #
-    #
+
+
     #   //---------------------
     #   // Group: Introspection
     #   //---------------------
@@ -678,7 +684,6 @@ class UVMRegMap(UVMObject):
     #   //
     #   // Return the simple object name of this address map.
     #   //
-    #
 
     #   // Function: get_full_name
     #   //
@@ -762,8 +767,7 @@ class UVMRegMap(UVMObject):
             return self.m_n_bytes
         return self.m_system_n_bytes
 
-    #
-    #
+
     #   // Function: get_addr_unit_bytes
     #   //
     #   // Get the number of bytes in the smallest addressable unit in the map.
@@ -905,6 +909,7 @@ class UVMRegMap(UVMObject):
     #                                                     input uvm_hier_e hier=UVM_HIER)
     #
 
+
     # get_reg_map_info
     def get_reg_map_info(self, rg, error=1):
         result = None
@@ -931,6 +936,7 @@ class UVMRegMap(UVMObject):
 
 
     #   extern virtual function int unsigned get_size()
+
 
     #
     #   // Function: get_physical_addresses
@@ -1089,7 +1095,8 @@ class UVMRegMap(UVMObject):
     #   //------------------
     #   // Group: Bus Access
     #   //------------------
-    #
+
+
     #   // Function: set_auto_predict
     #   //
     #   // Sets the auto-predict mode for his map.
@@ -1126,8 +1133,7 @@ class UVMRegMap(UVMObject):
     def get_auto_predict(self):
         return self.m_auto_predict
 
-    #
-    #
+
     #   // Function: set_check_on_read
     #   //
     #   // Sets the check-on-read mode for his map
@@ -1148,14 +1154,11 @@ class UVMRegMap(UVMObject):
     #   //
     #   // By default, auto-prediction is turned off.
     #   //
-    #   function void set_check_on_read(bit on=1)
-    #      self.m_check_on_read = on
-    #      foreach (self.m_submaps[submap]):
-    #         submap.set_check_on_read(on)
-    #      end
-    #   endfunction
-    #
-    #
+    def set_check_on_read(self, on=1):
+        self.m_check_on_read = on
+        for submap in self.m_submaps:
+            submap.set_check_on_read(on)
+
 
     #   // Function: get_check_on_read
     #   //
@@ -1164,6 +1167,7 @@ class UVMRegMap(UVMObject):
     def get_check_on_read(self):
         return self.m_check_on_read
 
+
     #   // Task: do_bus_write
     #   //
     #   // Perform a bus write operation.
@@ -1171,7 +1175,6 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_bus_write (uvm_reg_item rw,
     #                                     uvm_sequencer_base sequencer,
     #                                     uvm_reg_adapter adapter)
-    
     async def do_bus_write(self, rw, sequencer, adapter):
         addrs = []
         system_map = self.get_root_map()
@@ -1322,7 +1325,6 @@ class UVMRegMap(UVMObject):
     #   extern virtual task do_bus_read (uvm_reg_item rw,
     #                                    uvm_sequencer_base sequencer,
     #                                    uvm_reg_adapter adapter)
-    
     async def do_bus_read(self, rw, sequencer, adapter):
         addrs = []  # uvm_reg_addr_t[$]
         system_map = self.get_root_map()
@@ -1467,14 +1469,12 @@ class UVMRegMap(UVMObject):
                 rw.value[val_idx] = (rw.value[val_idx] >> (n_access_extra)) & ((1<<size)-1)
         #endtask: do_bus_read
 
-    #
-    #
+
     #   // Task: do_write
     #   //
     #   // Perform a write operation.
     #   //
     #   extern virtual task do_write(uvm_reg_item rw)
-    
     async def do_write(self, rw):
         tmp_parent_seq = None  # uvm_sequence_base
         system_map = self.get_root_map()
@@ -1518,7 +1518,6 @@ class UVMRegMap(UVMObject):
     #   // Perform a read operation.
     #   //
     #   extern virtual task do_read(uvm_reg_item rw)
-    
     async def do_read(self, rw):
         tmp_parent_seq = None  # uvm_sequence_base
         system_map = self.get_root_map()
@@ -1550,9 +1549,8 @@ class UVMRegMap(UVMObject):
         if tmp_parent_seq is not None:
             sequencer.m_sequence_exiting(tmp_parent_seq)
 
-        #endtask
 
-    #
+
     #   extern function void Xget_bus_infoX (uvm_reg_item rw,
     #                                        output UVMRegMapInfo map_info,
     #                                        output int size,
@@ -1721,19 +1719,6 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-#
-#
-# reset
-#
-#function void uvm_reg_map::reset(string kind = "SOFT")
-#   uvm_reg regs[$]
-#
-#   get_registers(regs)
-#
-#   foreach (regs[i]):
-#      regs[i].reset(kind)
-#   end
-#endfunction
 #
 #------------
 # get methods

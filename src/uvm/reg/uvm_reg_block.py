@@ -543,8 +543,8 @@ class UVMRegBlock(UVMObject):
                 blk = blk_
                 blk.get_memories(mems)
 
-    #
-    #
+
+
     #   // Function: get_virtual_registers
     #   //
     #   // Get the virtual registers
@@ -617,10 +617,9 @@ class UVMRegBlock(UVMObject):
 
         uvm_warning("RegModel", "Map with name '" + name + "' does not exist in block")
         return None
-        #endfunction
 
-    #
-    #
+
+
     #   // Function: get_reg_by_name
     #   //
     #   // Finds a register with the specified simple name.
@@ -716,12 +715,12 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function uvm_vreg_field get_vfield_by_name (string name)
     #
-    #
+
     #   //----------------
     #   // Group: Coverage
     #   //----------------
-    #
-    #
+
+
     #   // Function: build_coverage
     #   //
     #   // Check if all of the specified coverage model must be built.
@@ -744,10 +743,8 @@ class UVMRegBlock(UVMObject):
                 cov_arr, self)
         build_coverage = cov_arr[0]
         return build_coverage & models
-    #endfunction: build_coverage
 
-    #
-    #
+
     #   // Function: add_coverage
     #   //
     #   // Specify that additional coverage models are available.
@@ -816,10 +813,8 @@ class UVMRegBlock(UVMObject):
             blk.set_coverage(is_on)
 
         return self.cover_on
-    #endfunction: set_coverage
 
-    #
-    #
+
     #   // Function: get_coverage
     #   //
     #   // Check if coverage measurement is on.

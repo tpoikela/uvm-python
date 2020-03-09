@@ -230,7 +230,8 @@ class UVMMem(UVMObject):
     #   //
     #   // Return the simple object name of this memory.
     #   //
-    #
+
+
     #   // Function: get_full_name
     #   //
     #   // Get the hierarchical name
@@ -244,11 +245,8 @@ class UVMMem(UVMObject):
             return self.get_name()
 
         return self.m_parent.get_full_name() + "." + self.get_name()
-        #
-        #endfunction: get_full_name
 
-    #
-    #
+
     #   // Function: get_parent
     #   //
     #   // Get the parent block
@@ -270,8 +268,8 @@ class UVMMem(UVMObject):
     def get_n_maps(self):
         return self.m_maps.num()
 
-    #
-    #
+
+
     #   // Function: is_in_map
     #   //
     #   // Return TRUE if this memory is in the specified address ~map~
@@ -349,11 +347,7 @@ class UVMMem(UVMObject):
         get_default_map = self.m_maps.first()
         return get_default_map
 
-        #
-        #endfunction
 
-    #
-    #
     #   // Function: get_rights
     #   //
     #   // Returns the access rights of this memory.
@@ -471,13 +465,11 @@ class UVMMem(UVMObject):
     #   //
     #   // Returns the maximum width, in number of bits, of all memories
     #   //
-    #   extern static function int unsigned    get_max_size()
     @classmethod
     def get_max_size(cls):
         return UVMMem.m_max_size
 
-    #
-    #
+
     #   // Function: get_virtual_registers
     #   //
     #   // Return the virtual registers in this memory
@@ -601,11 +593,12 @@ class UVMMem(UVMObject):
     #                                             uvm_reg_map        map=None,
     #                                             ref uvm_reg_addr_t addr[])
     #
-    #
+
     #   //------------------
     #   // Group: HDL Access
     #   //------------------
-    #
+
+
     #   // Task: write
     #   //
     #   // Write the specified value in a memory location
@@ -630,9 +623,6 @@ class UVMMem(UVMObject):
     #                             input  uvm_object         extension = None,
     #                             input  string             fname = "",
     #                             input  int                lineno = 0)
-    #
-    #
-    
     async def write(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None, parent=None,
             prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
@@ -654,7 +644,7 @@ class UVMMem(UVMObject):
 
         await self.do_write(rw)
         status.append(rw.status)
-        #endtask: write
+
 
     #   // Task: read
     #   //
@@ -677,7 +667,6 @@ class UVMMem(UVMObject):
     #                            input  uvm_object          extension = None,
     #                            input  string              fname = "",
     #                            input  int                 lineno = 0)
-    
     async def read(self, status, offset, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status, value])
@@ -700,12 +689,9 @@ class UVMMem(UVMObject):
 
         status.append(rw.status)
         value.append(rw.value[0])
-    #
-    #endtask: read
 
 
-    #
-    #
+
     #   // Task: burst_write
     #   //
     #   // Write the specified values in memory locations
@@ -728,9 +714,28 @@ class UVMMem(UVMObject):
     #                                   input  uvm_object        extension = None,
     #                                   input  string            fname = "",
     #                                   input  int               lineno = 0)
+    async def burst_write(self, status, offset, value, path=UVM_DEFAULT_PATH,
+        _map=None, parent=None, prior=-1, extension=None, fname="",
+            lineno=0):
+        uvm_check_output_args([status])
+        rw = UVMRegItem.type_id.create("mem_burst_write", None, self.get_full_name())
+        rw.element      = self
+        rw.element_kind = UVM_MEM
+        rw.kind         = UVM_BURST_WRITE
+        rw.offset       = offset
+        rw.value        = value
+        rw.path         = path
+        rw.map          = _map
+        rw.parent       = parent
+        rw.prior        = prior
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
+        await self.do_write(rw)
+        status.append(rw.status)
 
-    #
-    #
+
+
     #   // Task: burst_read
     #   //
     #   // Read values from memory locations
@@ -753,9 +758,30 @@ class UVMMem(UVMObject):
     #                                  input  uvm_object        extension = None,
     #                                  input  string            fname = "",
     #                                  input  int               lineno = 0)
-    #
+    async def burst_read(self, status, offset,
+    value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1, extension=None, fname="",
+            lineno=0):
+        uvm_check_output_args([status, value])
+        rw = UVMRegItem.type_id.create("mem_burst_read", None, self.get_full_name())
+        rw.element      = self
+        rw.element_kind = UVM_MEM
+        rw.kind         = UVM_BURST_READ
+        rw.offset       = offset
+        rw.value        = value
+        rw.path         = path
+        rw.map          = _map
+        rw.parent       = parent
+        rw.prior        = prior
+        rw.extension    = extension
+        rw.fname        = fname
+        rw.lineno       = lineno
 
-    #
+        await self.do_read(rw)
+        status.append(rw.status)
+        for val in rw.value:
+            value.append(val)
+
+
     #   // Task: poke
     #   //
     #   // Deposit the specified value in a memory location
@@ -788,8 +814,8 @@ class UVMMem(UVMObject):
                       + self.get_full_name() + "'")
             status.append(UVM_NOT_OK)
             return
-        #
-        #   // create an abstract transaction for this operation
+
+        # create an abstract transaction for this operation
         rw = UVMRegItem.type_id.create("mem_poke_item", None, self.get_full_name())
         rw.element      = self
         rw.path         = UVM_BACKDOOR
@@ -802,7 +828,7 @@ class UVMMem(UVMObject):
         rw.extension    = extension
         rw.fname        = fname
         rw.lineno       = lineno
-        #
+
         if bkdr is not None:
             bkdr.write(rw)
         else:
@@ -833,7 +859,6 @@ class UVMMem(UVMObject):
     #                            input  uvm_object         extension = None,
     #                            input  string             fname = "",
     #                            input  int                lineno = 0)
-    # 
     def peek(self, status, offset, value, kind="", parent=None, extension=None, fname="",
             lineno=0):
         uvm_check_output_args([status, value])
@@ -848,7 +873,6 @@ class UVMMem(UVMObject):
                       + self.get_full_name() + "'")
             status.append(UVM_NOT_OK)
             return
-
 
         # create an abstract transaction for this operation
         rw = UVMRegItem.type_id.create("mem_peek_item", None, self.get_full_name())
@@ -940,10 +964,9 @@ class UVMMem(UVMObject):
                 rw.map = rw.local_map
 
         return 1
-        #endfunction
+
 
     #   extern virtual task do_write (uvm_reg_item rw)
-    
     async def do_write(self, rw):  # task
         cbs = UVMMemCbIter(self)
         map_info = []  # uvm_reg_map_info
@@ -1043,11 +1066,9 @@ class UVMMem(UVMObject):
             uvm_report_info("RegModel", pre_s + "Wrote memory via " + path_s + ": " +
                     self.get_full_name() + range_s + value_s, UVM_HIGH)
         self.m_write_in_progress = False
-        #
-        #endtask: do_write
+
 
     #   extern virtual task do_read  (uvm_reg_item rw)
-    
     async def do_read(self, rw):  # task
         cbs = UVMMemCbIter(self)
         map_info = []  # uvm_reg_map_info
@@ -1144,12 +1165,11 @@ class UVMMem(UVMObject):
         #
         #endtask: do_read
 
-    #
-    #
+
     #   //-----------------
     #   // Group: Frontdoor
     #   //-----------------
-    #
+
 
     #   // Function: set_frontdoor
     #   //
@@ -1212,10 +1232,8 @@ class UVMMem(UVMObject):
         self.m_fname = fname
         self.m_lineno = lineno
         self.m_backdoor = bkdr
-        #endfunction: set_backdoor
 
 
-    #
     #   // Function: get_backdoor
     #   //
     #   // Returns the user-defined backdoor for this memory
@@ -1243,8 +1261,8 @@ class UVMMem(UVMObject):
         return self.m_backdoor
         #endfunction: get_backdoor
 
-    #
-    #
+
+
     #   // Function: clear_hdl_path
     #   //
     #   // Delete HDL paths
@@ -1313,8 +1331,7 @@ class UVMMem(UVMObject):
         return self.m_hdl_paths_pool.exists(kind)
         #endfunction
 
-    #
-    #
+
     #   // Function: get_hdl_path
     #   //
     #   // Get the incremental HDL path(s)
@@ -1503,8 +1520,8 @@ class UVMMem(UVMObject):
     #   // Group: Callbacks
     #   //-----------------
     #   `uvm_register_cb(uvm_mem, uvm_reg_cbs)
-    #
-    #
+
+
     #   // Task: pre_write
     #   //
     #   // Called before memory write.
@@ -1518,8 +1535,6 @@ class UVMMem(UVMObject):
     #   // The registered callback methods are invoked after the invocation
     #   // of this method.
     #   //
-    #   virtual task pre_write(uvm_reg_item rw); endtask
-    
     async def pre_write(self, rw):
         await uvm_empty_delay()
 
@@ -1534,12 +1549,10 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
-    
     async def post_write(self, rw):
         await uvm_empty_delay()
 
-    #
-    #
+
     #   // Task: pre_read
     #   //
     #   // Called before memory read.
@@ -1554,11 +1567,10 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
-    
     async def pre_read(self, rw):
         await uvm_empty_delay()
-    #
-    #
+
+
     #   // Task: post_read
     #   //
     #   // Called after memory read.
@@ -1571,17 +1583,14 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_read(uvm_reg_item rw); endtask
-    
     async def post_read(self, rw):
         await uvm_empty_delay()
 
 
-    #
-    #
     #   //----------------
     #   // Group: Coverage
     #   //----------------
-    #
+
     #   // Function: build_coverage
     #   //
     #   // Check if all of the specified coverage model must be built.
@@ -1604,8 +1613,7 @@ class UVMMem(UVMObject):
         build_coverage = cov_arr[0]
         return build_coverage & models
 
-    #
-    #
+
     #   // Function: add_coverage
     #   //
     #   // Specify that additional coverage models are available.
@@ -1956,84 +1964,9 @@ class UVMMem(UVMObject):
 #// HDL ACCESS
 #//-----------
 #
-#// write
-#//------
 #
 #
 #
-#// read
-#
-#
-#
-#// burst_write
-#
-#task uvm_mem::burst_write(output uvm_status_e       status,
-#                          input  uvm_reg_addr_t     offset,
-#                          input  uvm_reg_data_t     value[],
-#                          input  uvm_path_e         path = UVM_DEFAULT_PATH,
-#                          input  uvm_reg_map        map = None,
-#                          input  uvm_sequence_base  parent = None,
-#                          input  int                prior = -1,
-#                          input  uvm_object         extension = None,
-#                          input  string             fname = "",
-#                          input  int                lineno = 0)
-#
-#   uvm_reg_item rw
-#   rw = uvm_reg_item::type_id::create("mem_burst_write",,get_full_name())
-#   rw.element      = this
-#   rw.element_kind = UVM_MEM
-#   rw.kind         = UVM_BURST_WRITE
-#   rw.offset       = offset
-#   rw.value        = value
-#   rw.path         = path
-#   rw.map          = map
-#   rw.parent       = parent
-#   rw.prior        = prior
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   do_write(rw)
-#
-#   status = rw.status
-#
-#endtask: burst_write
-#
-#
-#// burst_read
-#
-#task uvm_mem::burst_read(output uvm_status_e       status,
-#                         input  uvm_reg_addr_t     offset,
-#                         ref    uvm_reg_data_t     value[],
-#                         input  uvm_path_e         path = UVM_DEFAULT_PATH,
-#                         input  uvm_reg_map        map = None,
-#                         input  uvm_sequence_base  parent = None,
-#                         input  int                prior = -1,
-#                         input  uvm_object         extension = None,
-#                         input  string             fname = "",
-#                         input  int                lineno = 0)
-#
-#   uvm_reg_item rw
-#   rw = uvm_reg_item::type_id::create("mem_burst_read",,get_full_name())
-#   rw.element      = this
-#   rw.element_kind = UVM_MEM
-#   rw.kind         = UVM_BURST_READ
-#   rw.offset       = offset
-#   rw.value        = value
-#   rw.path         = path
-#   rw.map          = map
-#   rw.parent       = parent
-#   rw.prior        = prior
-#   rw.extension    = extension
-#   rw.fname        = fname
-#   rw.lineno       = lineno
-#
-#   do_read(rw)
-#
-#   status = rw.status
-#   value  = rw.value
-#
-#endtask: burst_read
 #
 #
 #//-------

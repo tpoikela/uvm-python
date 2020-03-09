@@ -239,8 +239,8 @@ class UVMRegItem(UVMSequenceItem):
     #    fname = rhs_.fname
     #    lineno = rhs_.lineno
     #  endfunction
-    #
-    #endclass
+
+
 uvm_object_utils(UVMRegItem)
 
 #//------------------------------------------------------------------------------
@@ -315,6 +315,8 @@ class UVMRegBusOp():
     #  uvm_status_e status
     #
     #} uvm_reg_bus_op
+
+    # Constructor
     def __init__(self):
         self.kind = UVM_READ
         self.addr = 0
@@ -322,5 +324,3 @@ class UVMRegBusOp():
         self.n_bits = 0
         self.byte_en = 0x0
         self.status = UVM_NOT_OK
-
-

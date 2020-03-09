@@ -114,8 +114,7 @@ class UVMRegPredictor(UVMComponent):
         #  // or memory handle. Must be configured before the run phase.
         self.map = None
 
-    #  // This method is documented in uvm_object
-    #  static string type_name = ""
+
     type_name = ""
 
     #  virtual function string get_type_name()
@@ -126,7 +125,7 @@ class UVMRegPredictor(UVMComponent):
     #    end
     #    return type_name
     #  endfunction
-    #
+
 
     #  // Function: pre_predict
     #  //
@@ -136,7 +135,7 @@ class UVMRegPredictor(UVMComponent):
     #  virtual function void pre_predict(uvm_reg_item rw)
     def pre_predict(self, rw):
         pass
-        #  endfunction
+
 
     #  // Function- write
     #  //

@@ -578,6 +578,8 @@ class UVMMemMamPolicy:
     #           start_offset + len - 1 >= in_use[i].Xstart_offsetX)
     #      }
     #   }
+
+    # Constructor
     def __init__(self):
         self.len = 0
         self.start_offset = 0
@@ -586,11 +588,9 @@ class UVMMemMamPolicy:
         self.in_use = []
 
 
-#//
 #// CLASS: UVMMemMamCfg
 #// Specifies the memory managed by an instance of a <UVMMemMam> memory
 #// allocation manager class.
-#//
 class UVMMemMamCfg:
     #   // variable: n_bytes
     #   // Number of bytes in each memory location
@@ -617,6 +617,8 @@ class UVMMemMamCfg:
     #      end_offset > start_offset
     #      n_bytes < 64
     #   }
+
+    # Constructor
     def __init__(self):
         self.n_bytes = 0
         self.start_offset = 0
@@ -629,8 +631,6 @@ class UVMMemMamCfg:
 #//------------------------------------------------------------------
 #//  Implementation
 #//------------------------------------------------------------------
-#
-#
 #
 #def bit [63:0] UVMMemRegion::get_start_offset(self):
 #   return self.Xstart_offsetX

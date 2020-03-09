@@ -91,7 +91,6 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task pre_write(uvm_reg_item rw); endtask
-    
     async def pre_write(self, rw):
         await Timer(0, "NS")
 
@@ -132,7 +131,6 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
-    
     async def post_write(self, rw):
         await Timer(0, "NS")
 
@@ -178,9 +176,9 @@ class UVMRegCbs(UVMCallback):
     #   // See <uvm_reg_item> for details on ~rw~ information.
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
-    
     async def pre_read(self, rw):
         await Timer(0, "NS")
+
 
     #   // Task: post_read
     #   //
@@ -221,8 +219,7 @@ class UVMRegCbs(UVMCallback):
     def post_read(self, rw):
         pass
 
-    #
-    #
+
     #   // Task: post_predict
     #   //
     #   // Called by the <uvm_reg_field::predict()> method
@@ -239,7 +236,7 @@ class UVMRegCbs(UVMCallback):
     #                                      input uvm_path_e     path,
     #                                      input uvm_reg_map    map)
     #   endfunction
-    #
+
 
     #   // Function: encode
     #   //
@@ -252,8 +249,8 @@ class UVMRegCbs(UVMCallback):
     #   //
     #   // By default, the data is not modified.
     #   //
-    #   virtual function void encode(ref uvm_reg_data_t data[])
-    #   endfunction
+    def encode(self, data):
+        pass
 
 
     #   // Function: decode
@@ -271,19 +268,15 @@ class UVMRegCbs(UVMCallback):
     #   //
     #   // By default, the data is not modified.
     #   //
-    #   virtual function void decode(ref uvm_reg_data_t data[])
-    #   endfunction
-    #
-    #
-    #
-    #endclass
+    def decode(self, data):
+        pass
 
-#
+
 #//------------------
 #// Section: Typedefs
 #//------------------
-#
-#
+
+
 #// Type: uvm_reg_cb
 #//
 #// Convenience callback type declaration for registers
@@ -304,8 +297,8 @@ UVMRegCb = UVMCallbacks
 #typedef uvm_callback_iter#(uvm_reg, uvm_reg_cbs) uvm_reg_cb_iter
 UVMRegCbIter = UVMCallbackIter
 
-#
-#
+
+
 #// Type: uvm_reg_bd_cb
 #//
 #// Convenience callback type declaration for backdoor
@@ -315,17 +308,16 @@ UVMRegCbIter = UVMCallbackIter
 #//
 #typedef uvm_callbacks#(uvm_reg_backdoor, uvm_reg_cbs) uvm_reg_bd_cb
 
-#
+
 #// Type: uvm_reg_bd_cb_iter
 #// Convenience callback iterator type declaration for backdoor
 #//
 #// Use this declaration to iterate over registered register backdoor callbacks
 #// rather than the more verbose parameterized class
 #//
-#
 #typedef uvm_callback_iter#(uvm_reg_backdoor, uvm_reg_cbs) uvm_reg_bd_cb_iter
 
-#
+
 #// Type: uvm_mem_cb
 #//
 #// Convenience callback type declaration for memories
@@ -345,7 +337,7 @@ UVMRegCbIter = UVMCallbackIter
 #//
 #typedef uvm_callback_iter#(uvm_mem, uvm_reg_cbs) uvm_mem_cb_iter
 UVMMemCbIter = UVMCallbackIter
-    
+
 #
 #// Type: uvm_reg_field_cb
 #//

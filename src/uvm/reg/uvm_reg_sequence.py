@@ -140,7 +140,6 @@ class UVMRegSequence(UVMSequence):
     #  // super.body(), else a warning will be issued and the calling process
     #  // not return.
     #  //
-    
     async def body(self):
         if self.m_sequencer is None:
             uvm_fatal("NO_SEQR", "Sequence executing as translation sequence, " +
@@ -163,9 +162,8 @@ class UVMRegSequence(UVMSequence):
             await self.reg_seqr.get(reg_item)
             #0;
             await Timer(0)
-        #  endtask
 
-    #
+
     #  // Function: do_reg_item
     #  //
     #  // Executes the given register transaction, ~rw~, via the sequencer on
@@ -174,7 +172,6 @@ class UVMRegSequence(UVMSequence):
     #  // this sequencer.
     #  //
     #  virtual task do_reg_item(uvm_reg_item rw);
-    
     async def do_reg_item(self, rw):
         rws = rw.convert2string()
         if self.m_sequencer is None:
@@ -213,7 +210,7 @@ class UVMRegSequence(UVMSequence):
     #   //| write_reg(model.regA, status, value);
     #   //
 
-    #
+
     #   // Task: write_reg
     #   //
     #   // Writes the given register ~rg~ using <uvm_reg::write>, supplying 'this' as

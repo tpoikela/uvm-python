@@ -173,11 +173,8 @@ class UVMRegIndirectData(UVMReg):
     #      return(m_tbl[idx])
     #   endfunction
 
-    #
-    #   virtual function bit needs_update()
-    #      return 0
-    #   endfunction
-
+    def needs_update(self):
+        return 0
 
     #   virtual task write(output uvm_status_e      status,
     #                      input  uvm_reg_data_t    value,
@@ -188,7 +185,6 @@ class UVMRegIndirectData(UVMReg):
     #                      input  uvm_object        extension = None,
     #                      input  string            fname = "",
     #                      input  int               lineno = 0)
-    
     async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         uvm_check_output_args([status])
@@ -251,7 +247,7 @@ class UVMRegIndirectData(UVMReg):
     #      super.read(status, value, path, map, parent, prior, extension, fname, lineno)
     #   endtask
 
-    #
+
     #   virtual task poke(output uvm_status_e      status,
     #                     input  uvm_reg_data_t    value,
     #                     input  string            kind = "",
@@ -308,17 +304,17 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
     #   local uvm_reg m_addr_reg
     #   local uvm_reg m_data_reg
     #   local int     m_idx
-    #
+
+    # Constructor
     def __init__(self, addr_reg, idx, data_reg):
         super().__init__("uvm_reg_indirect_ftdr_seq")
         self.m_addr_reg = addr_reg  # uvm_reg
         self.m_data_reg = data_reg  # uvm_reg
         self.m_idx      = idx       # int
-        #   endfunction: new
 
     
+    # Body of indirect sequence
     async def body(self):
-
         rw = None  # uvm_reg_item
 
         arr = []
@@ -356,5 +352,3 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
         await self.m_data_reg.XatomicX(0)
 
         self.rw_info.status = rw.status
-        #   endtask
-        #
