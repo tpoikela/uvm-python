@@ -90,24 +90,30 @@ class UVMMemMam:
     BROAD = 0
     NEARBY = 1
 
-    #   // Function: new
-    #   //
-    #   // Create a new manager instance
-    #   //
-    #   // Create an instance of a memory allocation manager
-    #   // with the specified name and configuration.
-    #   // This instance manages all memory region allocation within
-    #   // the address range specified in the configuration descriptor.
-    #   //
-    #   // If a reference to a memory abstraction class is provided, the memory
-    #   // locations within the regions can be accessed through the region
-    #   // descriptor, using the <UVMMemRegion::read()> and
-    #   // <UVMMemRegion::write()> methods.
-    #   //
-    #   extern def __init__(self, name,
-    #                       UVMMemMamCfg cfg,
-    #                       uvm_mem mem=None)
     def __init__(self, name, cfg, mem=None):
+        """         
+           Function: new
+          
+           Create a new manager instance
+          
+           Create an instance of a memory allocation manager
+           with the specified name and configuration.
+           This instance manages all memory region allocation within
+           the address range specified in the configuration descriptor.
+          
+           If a reference to a memory abstraction class is provided, the memory
+           locations within the regions can be accessed through the region
+           descriptor, using the <UVMMemRegion::read()> and
+           <UVMMemRegion::write()> methods.
+          
+          extern def __init__(self, name,
+                              UVMMemMamCfg cfg,
+                              uvm_mem mem=None)
+        Args:
+            name: 
+            cfg: 
+            mem: 
+        """
         self.cfg           = cfg
         self.memory        = mem
         self.in_use = []  # UVMMemRegion
@@ -304,12 +310,20 @@ class UVMMemRegion:
     #   /*local*/ uvm_vreg XvregX
     #
 
-    #   extern /*local*/ function new(bit [63:0]   start_offset,
-    #                                 bit [63:0]   end_offset,
-    #                                 int unsigned len,
-    #                                 int unsigned n_bytes,
-    #                                 UVMMemMam      parent)
     def __init__(self, start_offset, end_offset, _len, n_bytes, parent):
+        """         
+          extern /*local*/ function new(bit [63:0]   start_offset,
+                                        bit [63:0]   end_offset,
+                                        int unsigned len,
+                                        int unsigned n_bytes,
+                                        UVMMemMam      parent)
+        Args:
+            start_offset: 
+            end_offset: 
+            _len: 
+            n_bytes: 
+            parent: 
+        """
         self.Xstart_offsetX = start_offset
         self.Xend_offsetX   = end_offset
         self.len            = _len
@@ -579,8 +593,10 @@ class UVMMemMamPolicy:
     #      }
     #   }
 
-    # Constructor
     def __init__(self):
+        """         
+        Constructor
+        """
         self.len = 0
         self.start_offset = 0
         self.min_offset = 0
@@ -618,8 +634,10 @@ class UVMMemMamCfg:
     #      n_bytes < 64
     #   }
 
-    # Constructor
     def __init__(self):
+        """         
+        Constructor
+        """
         self.n_bytes = 0
         self.start_offset = 0
         self.end_offset = 0

@@ -120,11 +120,15 @@ class UVMRegItem(UVMSequenceItem):
     #  //
     #  int lineno
 
-    #  // Function: new
-    #  //
-    #  // Create a new instance of this type, giving it the optional ~name~.
-    #  //
     def __init__(self, name=""):
+        """         
+          Function: new
+         
+          Create a new instance of this type, giving it the optional `name`.
+         
+        Args:
+            name: 
+        """
         UVMSequenceItem.__init__(self, name)
         #  // Variable: value
         #  //
@@ -173,11 +177,14 @@ class UVMRegItem(UVMSequenceItem):
 
         self.local_map = None
 
-    #  // Function: convert2string
-    #  //
-    #  // Returns a string showing the contents of this transaction.
-    #  //
     def convert2string(self):
+        """         
+          Function: convert2string
+         
+          Returns a string showing the contents of this transaction.
+         
+        Returns:
+        """
         value_s = ""
         ele_name = "null"
         if self.element is not None:
@@ -316,8 +323,10 @@ class UVMRegBusOp():
     #
     #} uvm_reg_bus_op
 
-    # Constructor
     def __init__(self):
+        """         
+        Constructor
+        """
         self.kind = UVM_READ
         self.addr = 0
         self.data = 0

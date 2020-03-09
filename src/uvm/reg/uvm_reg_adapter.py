@@ -41,11 +41,15 @@ from ..macros.uvm_message_defines import *
 #virtual class uvm_reg_adapter extends uvm_object
 
 class UVMRegAdapter(UVMObject):
-    #
-    #  // Function: new
-    #  //
-    #  // Create a new instance of this type, giving it the optional ~name~.
+
     def __init__(self, name=""):
+        """ 
+          Function: new
+         
+          Create a new instance of this type, giving it the optional `name`.
+        Args:
+            name: 
+        """
         UVMObject.__init__(self, name)
         self.supports_byte_enable = False
         self.provides_responses = False
@@ -74,35 +78,46 @@ class UVMRegAdapter(UVMObject):
     #
     #  uvm_sequence_base parent_sequence
 
-    #  // Function: reg2bus
-    #  //
-    #  // Extensions of this class ~must~ implement this method to convert the specified
-    #  // <uvm_reg_bus_op> to a corresponding <uvm_sequence_item> subtype that defines the bus
-    #  // transaction.
-    #  //
-    #  // The method must allocate a new bus-specific <uvm_sequence_item>,
-    #  // assign its members from
-    #  // the corresponding members from the given generic ~rw~ bus operation, then
-    #  // return it.
-    #
-    #  pure virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw)
     def reg2bus(self, rw):
+        """         
+          Function: reg2bus
+         
+          Extensions of this class `must` implement this method to convert the specified
+          `uvm_reg_bus_op` to a corresponding `uvm_sequence_item` subtype that defines the bus
+          transaction.
+         
+          The method must allocate a new bus-specific `uvm_sequence_item`,
+          assign its members from
+          the corresponding members from the given generic `rw` bus operation, then
+          return it.
+
+         pure virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw)
+        Args:
+            rw: 
+        Raises:
+        """
         raise Exception("Pure virtual function")
 
 
-    #  // Function: bus2reg
-    #  //
-    #  // Extensions of this class ~must~ implement this method to copy members
-    #  // of the given bus-specific ~bus_item~ to corresponding members of the provided
-    #  // ~bus_rw~ instance. Unlike <reg2bus>, the resulting transaction
-    #  // is not allocated from scratch. This is to accommodate applications
-    #  // where the bus response must be returned in the original request.
-    #
-    #  pure virtual function void bus2reg(uvm_sequence_item bus_item,
-    #                                     ref uvm_reg_bus_op rw)
-    #
-    #
     def bus2reg(self, bus_item, rw):
+        """         
+          Function: bus2reg
+         
+          Extensions of this class `must` implement this method to copy members
+          of the given bus-specific `bus_item` to corresponding members of the provided
+          `bus_rw` instance. Unlike `reg2bus`, the resulting transaction
+          is not allocated from scratch. This is to accommodate applications
+          where the bus response must be returned in the original request.
+
+         pure virtual function void bus2reg(uvm_sequence_item bus_item,
+                                            ref uvm_reg_bus_op rw)
+
+
+        Args:
+            bus_item: 
+            rw: 
+        Raises:
+        """
         raise Exception("Pure virtual function")
 
     #  // function: get_item
@@ -120,8 +135,12 @@ class UVMRegAdapter(UVMObject):
     #  endfunction
 
 
-    #  virtual function void m_set_item(uvm_reg_item item)
     def m_set_item(self, item):
+        """         
+         virtual function void m_set_item(uvm_reg_item item)
+        Args:
+            item: 
+        """
         if item is not None and isinstance(item.offset, int) is False:
             uvm_fatal("OFFSET/NOT_INT", "Item offset must be int. Got: {}"
                 .format(item.offset))

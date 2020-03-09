@@ -43,39 +43,51 @@ from .uvm_reg_cbs import UVMRegCbs
 
 class UVMRegBackdoor(UVMObject):
 
-    #   // Function: new
-    #   //
-    #   // Create an instance of self class
-    #   //
-    #   // Create an instance of the user-defined backdoor class
-    #   // for the specified register or memory
-    #   //
     def __init__(self, name=""):
+        """         
+           Function: new
+          
+           Create an instance of self class
+          
+           Create an instance of the user-defined backdoor class
+           for the specified register or memory
+          
+        Args:
+            name: 
+        """
         super().__init__(name)
         self.fname = ""
         self.lineno = 0
 
-    #
-    #   // Task: do_pre_read
-    #   //
-    #   // Execute the pre-read callbacks
-    #   //
-    #   // This method ~must~ be called as the first statement in
-    #   // a user extension of the <read()> method.
-    #   //
     async def do_pre_read(self, rw):
+        """         
+
+           Task: do_pre_read
+          
+           Execute the pre-read callbacks
+          
+           This method `must` be called as the first statement in
+           a user extension of the <read()> method.
+          
+        Args:
+            rw: 
+        """
         await self.pre_read(rw)
         uvm_do_obj_callbacks(self, UVMRegCbs, 'pre_read', self, rw)
 
-    #
-    #   // Task: do_post_read
-    #   //
-    #   // Execute the post-read callbacks
-    #   //
-    #   // This method ~must~ be called as the last statement in
-    #   // a user extension of the <read()> method.
-    #   //
     async def do_post_read(self, rw):
+        """         
+
+           Task: do_post_read
+          
+           Execute the post-read callbacks
+          
+           This method `must` be called as the last statement in
+           a user extension of the <read()> method.
+          
+        Args:
+            rw: 
+        """
         iter = UVMCallbackIter(self)
         # for(uvm_reg_cbs cb = iter.last(); cb is not None; cb=iter.prev())
         #     cb.decode(rw.value)
@@ -87,14 +99,18 @@ class UVMRegBackdoor(UVMObject):
         await self.post_read(rw)
 
 
-    #   // Task: do_pre_write
-    #   //
-    #   // Execute the pre-write callbacks
-    #   //
-    #   // This method ~must~ be called as the first statement in
-    #   // a user extension of the <write()> method.
-    #   //
     async def do_pre_write(self, rw):
+        """         
+           Task: do_pre_write
+          
+           Execute the pre-write callbacks
+          
+           This method `must` be called as the first statement in
+           a user extension of the <write()> method.
+          
+        Args:
+            rw: 
+        """
         #uvm_callback_iter#(UVMRegBackdoor, uvm_reg_cbs) iter = new(self)
         iter = UVMCallbackIter(self)
         await self.pre_write(rw)
@@ -107,89 +123,114 @@ class UVMRegBackdoor(UVMObject):
             cb = iter.next()
 
 
-    #   // Task: do_post_write
-    #   //
-    #   // Execute the post-write callbacks
-    #   //
-    #   // This method ~must~ be called as the last statement in
-    #   // a user extension of the <write()> method.
     async def do_post_write(self, rw):
+        """         
+           Task: do_post_write
+          
+           Execute the post-write callbacks
+          
+           This method `must` be called as the last statement in
+           a user extension of the <write()> method.
+        Args:
+            rw: 
+        """
         uvm_do_obj_callbacks(self, UVMRegCbs, 'post_write', self, rw)
         await self.post_write(rw)
 
 
 
-    #   // Task: write
-    #   //
-    #   // User-defined backdoor write operation.
-    #   //
-    #   // Call <do_pre_write()>.
-    #   // Deposit the specified value in the specified register HDL implementation.
-    #   // Call <do_post_write()>.
-    #   // Returns an indication of the success of the operation.
-    #   //
-    #   extern def write(self,uvm_reg_item rw)
     async def write(self, rw):  # task
+        """         
+           Task: write
+          
+           User-defined backdoor write operation.
+          
+           Call <do_pre_write()>.
+           Deposit the specified value in the specified register HDL implementation.
+           Call <do_post_write()>.
+           Returns an indication of the success of the operation.
+          
+          extern def write(self,uvm_reg_item rw)
+        Args:
+            rw: 
+        """
         uvm_fatal("RegModel", "UVMRegBackdoor::write() method has not been overloaded")
 
 
-    #   // Task: read
-    #   //
-    #   // User-defined backdoor read operation.
-    #   //
-    #   // Overload self method only if the backdoor requires the use of task.
-    #   //
-    #   // Call <do_pre_read()>.
-    #   // Peek the current value of the specified HDL implementation.
-    #   // Call <do_post_read()>.
-    #   // Returns the current value and an indication of the success of
-    #   // the operation.
-    #   //
-    #   // By default, calls <read_func()>.
-    #   //
     async def read(self, rw):  # task:
+        """         
+           Task: read
+          
+           User-defined backdoor read operation.
+          
+           Overload self method only if the backdoor requires the use of task.
+          
+           Call <do_pre_read()>.
+           Peek the current value of the specified HDL implementation.
+           Call <do_post_read()>.
+           Returns the current value and an indication of the success of
+           the operation.
+          
+           By default, calls <read_func()>.
+          
+        Args:
+            rw: 
+        """
         await self.do_pre_read(rw)
         self.read_func(rw)
         await self.do_post_read(rw)
 
 
-    #   // Function: read_func
-    #   //
-    #   // User-defined backdoor read operation.
-    #   //
-    #   // Peek the current value in the HDL implementation.
-    #   // Returns the current value and an indication of the success of
-    #   // the operation.
-    #   //
-    #   extern virtual def void read_func(self,uvm_reg_item rw):
     def read_func(self, rw):
+        """         
+           Function: read_func
+          
+           User-defined backdoor read operation.
+          
+           Peek the current value in the HDL implementation.
+           Returns the current value and an indication of the success of
+           the operation.
+          
+          extern virtual def void read_func(self,uvm_reg_item rw):
+        Args:
+            rw: 
+        """
         uvm_fatal("RegModel", "UVMRegBackdoor::read_func() method has not been overloaded")
         rw.status = UVM_NOT_OK
         #endfunction
 
 
-    #   // Function: is_auto_updated
-    #   //
-    #   // Indicates if wait_for_change() method is implemented
-    #   //
-    #   // Implement to return TRUE if and only if
-    #   // <wait_for_change()> is implemented to watch for changes
-    #   // in the HDL implementation of the specified field
-    #   //
-    #   extern virtual def bit is_auto_updated(self,uvm_reg_field field):
     def is_auto_updated(self, field):
+        """         
+           Function: is_auto_updated
+          
+           Indicates if wait_for_change() method is implemented
+          
+           Implement to return TRUE if and only if
+           <wait_for_change()> is implemented to watch for changes
+           in the HDL implementation of the specified field
+          
+          extern virtual def bit is_auto_updated(self,uvm_reg_field field):
+        Args:
+            field: 
+        Returns:
+        """
         return False
 
-    #   // Task: wait_for_change
-    #   //
-    #   // Wait for a change in the value of the register or memory
-    #   // element in the DUT.
-    #   //
-    #   // When self method returns, the mirror value for the register
-    #   // corresponding to self instance of the backdoor class will be updated
-    #   // via a backdoor read operation.
-    #   //
     async def wait_for_change(self, element):  # task
+        """         
+           Task: wait_for_change
+          
+           Wait for a change in the value of the register or memory
+           element in the DUT.
+          
+           When self method returns, the mirror value for the register
+           corresponding to self instance of the backdoor class will be updated
+           via a backdoor read operation.
+          
+        Args:
+            element: 
+        """
         uvm_fatal("RegModel", "UVMRegBackdoor::wait_for_change() method has not been overloaded")
 
 
@@ -199,47 +240,63 @@ class UVMRegBackdoor(UVMObject):
     #   /*local*/ extern def bit has_update_threads(self):
 
 
-    #   // Task: pre_read
-    #   //
-    #   // Called before user-defined backdoor register read.
-    #   //
-    #   // The registered callback methods are invoked after the invocation
-    #   // of self method.
-    #   //
     async def pre_read(self, rw):
+        """         
+           Task: pre_read
+          
+           Called before user-defined backdoor register read.
+          
+           The registered callback methods are invoked after the invocation
+           of self method.
+          
+        Args:
+            rw: 
+        """
         await uvm_empty_delay()
 
 
-    #   // Task: post_read
-    #   //
-    #   // Called after user-defined backdoor register read.
-    #   //
-    #   // The registered callback methods are invoked before the invocation
-    #   // of self method.
     async def post_read(self, rw):
+        """         
+           Task: post_read
+          
+           Called after user-defined backdoor register read.
+          
+           The registered callback methods are invoked before the invocation
+           of self method.
+        Args:
+            rw: 
+        """
         await uvm_empty_delay()
 
 
-    #   // Task: pre_write
-    #   //
-    #   // Called before user-defined backdoor register write.
-    #   //
-    #   // The registered callback methods are invoked after the invocation
-    #   // of self method.
-    #   //
-    #   // The written value, if modified, modifies the actual value that
-    #   // will be written.
     async def pre_write(self, rw):
+        """         
+           Task: pre_write
+          
+           Called before user-defined backdoor register write.
+          
+           The registered callback methods are invoked after the invocation
+           of self method.
+          
+           The written value, if modified, modifies the actual value that
+           will be written.
+        Args:
+            rw: 
+        """
         await uvm_empty_delay()
 
 
-    #   // Task: post_write
-    #   //
-    #   // Called after user-defined backdoor register write.
-    #   //
-    #   // The registered callback methods are invoked before the invocation
-    #   // of self method.
     async def post_write(self, rw):
+        """         
+           Task: post_write
+          
+           Called after user-defined backdoor register write.
+          
+           The registered callback methods are invoked before the invocation
+           of self method.
+        Args:
+            rw: 
+        """
         await uvm_empty_delay()
 
 

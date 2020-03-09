@@ -50,17 +50,23 @@ from ..macros import uvm_fatal, uvm_error
 class UVMRegIndirectData(UVMReg):
 
 
-    #   // Function: new
-    #   // Create an instance of this class
-    #   //
-    #   // Should not be called directly,
-    #   // other than via super.new().
-    #   // The value of ~n_bits~ must match the number of bits
-    #   // in the indirect register array.
-    #   function new(string name = "uvm_reg_indirect",
-    #                int unsigned n_bits,
-    #                int has_cover)
     def __init__(self, name="uvm_reg_indirect", n_bits=0, has_cover=False):
+        """         
+           Function: new
+           Create an instance of this class
+          
+           Should not be called directly,
+           other than via super.new().
+           The value of `n_bits` must match the number of bits
+           in the indirect register array.
+          function new(string name = "uvm_reg_indirect",
+                       int unsigned n_bits,
+                       int has_cover)
+        Args:
+            name: 
+            n_bits: 
+            has_cover: 
+        """
         UVMReg.__init__(self, name,n_bits,has_cover)
         self.m_idx = None
         self.m_tbl = []
@@ -70,24 +76,31 @@ class UVMRegIndirectData(UVMReg):
         pass
 
 
-    #   // Function: configure
-    #   // Configure the indirect data register.
-    #   //
-    #   // The ~idx~ register specifies the index,
-    #   // in the ~reg_a~ register array, of the register to access.
-    #   // The ~idx~ must be written to first.
-    #   // A read or write operation to this register will subsequently
-    #   // read or write the indexed register in the register array.
-    #   //
-    #   // The number of bits in each register in the register array must be
-    #   // equal to ~n_bits~ of this register.
-    #   //
-    #   // See <uvm_reg::configure()> for the remaining arguments.
-    #   function void configure (uvm_reg idx,
-    #                            uvm_reg reg_a[],
-    #                            uvm_reg_block blk_parent,
-    #                            uvm_reg_file regfile_parent = None)
     def configure(self, idx, reg_a, blk_parent, regfile_parent=None):
+        """         
+           Function: configure
+           Configure the indirect data register.
+          
+           The `idx` register specifies the index,
+           in the `reg_a` register array, of the register to access.
+           The `idx` must be written to first.
+           A read or write operation to this register will subsequently
+           read or write the indexed register in the register array.
+          
+           The number of bits in each register in the register array must be
+           equal to `n_bits` of this register.
+          
+           See <uvm_reg::configure()> for the remaining arguments.
+          function void configure (uvm_reg idx,
+                                   uvm_reg reg_a[],
+                                   uvm_reg_block blk_parent,
+                                   uvm_reg_file regfile_parent = None)
+        Args:
+            idx: 
+            reg_a: 
+            blk_parent: 
+            regfile_parent: 
+        """
         super().configure(blk_parent, regfile_parent, "")
         self.m_idx = idx
         self.m_tbl = reg_a
@@ -102,15 +115,23 @@ class UVMRegIndirectData(UVMReg):
             self.add_frontdoors(_map)
 
 
-    #   /*local*/ virtual function void add_map(uvm_reg_map map)
     def add_map(self, _map):
+        """         
+          /*local*/ virtual function void add_map(uvm_reg_map map)
+        Args:
+            _map: 
+        """
         super().add_map(_map)
         self.add_frontdoors(_map)
     #   endfunction
 
 
-    #   local function void add_frontdoors(uvm_reg_map map)
     def add_frontdoors(self, _map):
+        """         
+          local function void add_frontdoors(uvm_reg_map map)
+        Args:
+            _map: 
+        """
         for i in range(len(self.m_tbl)):
             fd = None  # uvm_reg_indirect_ftdr_seq
             if self.m_tbl[i] is None:
@@ -124,10 +145,17 @@ class UVMRegIndirectData(UVMReg):
                 _map.add_reg(self.m_tbl[i], -1, "RW", 1, fd)
 
 
-    #   virtual function void do_predict (uvm_reg_item      rw,
-    #                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-    #                                     uvm_reg_byte_en_t be = -1)
     def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
+        """         
+          virtual function void do_predict (uvm_reg_item      rw,
+                                            uvm_predict_e     kind = UVM_PREDICT_DIRECT,
+                                            uvm_reg_byte_en_t be = -1)
+        Args:
+            rw: 
+            kind: 
+            UVM_PREDICT_DIRECT: 
+            be: 
+        """
         if self.m_idx.get() >= len(self.m_tbl):
             uvm_error(self.get_full_name(), sv.sformatf(
                 "Address register %s has a value (%0d) greater than the maximum indirect register array size (%0d)",
@@ -139,17 +167,27 @@ class UVMRegIndirectData(UVMReg):
         idx = self.m_idx.get()
         self.m_tbl[idx].do_predict(rw, kind, be)
 
-    #
-    #   virtual function uvm_reg_map get_local_map(uvm_reg_map map, string caller="")
     def get_local_map(self, _map, caller=""):
+        """         
+
+          virtual function uvm_reg_map get_local_map(uvm_reg_map map, string caller="")
+        Args:
+            _map: 
+            caller: 
+        Returns:
+        """
         return self.m_idx.get_local_map(_map,caller)
 
-    #
-    #   //
-    #   // Just for good measure, to catch and short-circuit non-sensical uses
-    #   //
-    #   virtual function void add_field  (uvm_reg_field field)
     def add_field(self, field):
+        """         
+
+          
+           Just for good measure, to catch and short-circuit non-sensical uses
+          
+          virtual function void add_field  (uvm_reg_field field)
+        Args:
+            field: 
+        """
         uvm_error(self.get_full_name(), "Cannot add field to an indirect data access register")
 
 
@@ -176,17 +214,30 @@ class UVMRegIndirectData(UVMReg):
     def needs_update(self):
         return 0
 
-    #   virtual task write(output uvm_status_e      status,
-    #                      input  uvm_reg_data_t    value,
-    #                      input  uvm_path_e        path = UVM_DEFAULT_PATH,
-    #                      input  uvm_reg_map       map = None,
-    #                      input  uvm_sequence_base parent = None,
-    #                      input  int               prior = -1,
-    #                      input  uvm_object        extension = None,
-    #                      input  string            fname = "",
-    #                      input  int               lineno = 0)
     async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
+        """         
+          virtual task write(output uvm_status_e      status,
+                             input  uvm_reg_data_t    value,
+                             input  uvm_path_e        path = UVM_DEFAULT_PATH,
+                             input  uvm_reg_map       map = None,
+                             input  uvm_sequence_base parent = None,
+                             input  int               prior = -1,
+                             input  uvm_object        extension = None,
+                             input  string            fname = "",
+                             input  int               lineno = 0)
+        Args:
+            status: 
+            value: 
+            path: 
+            UVM_DEFAULT_PATH: 
+            _map: 
+            parent: 
+            prior: 
+            extension: 
+            fname: 
+            lineno: 
+        """
         uvm_check_output_args([status])
 
         if path == UVM_DEFAULT_PATH:
@@ -305,16 +356,24 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
     #   local uvm_reg m_data_reg
     #   local int     m_idx
 
-    # Constructor
     def __init__(self, addr_reg, idx, data_reg):
+        """         
+        Constructor
+        Args:
+            addr_reg: 
+            idx: 
+            data_reg: 
+        """
         super().__init__("uvm_reg_indirect_ftdr_seq")
         self.m_addr_reg = addr_reg  # uvm_reg
         self.m_data_reg = data_reg  # uvm_reg
         self.m_idx      = idx       # int
 
-    
-    # Body of indirect sequence
+
     async def body(self):
+        """             
+        Body of indirect sequence
+        """
         rw = None  # uvm_reg_item
 
         arr = []

@@ -88,12 +88,17 @@ class UVMRegPredictor(UVMComponent):
     #  //
     #  uvm_analysis_imp #(BUSTYPE, uvm_reg_predictor #(BUSTYPE)) bus_in
 
-    #  // Function: new
-    #  //
-    #  // Create a new instance of this type, giving it the optional ~name~
-    #  // and ~parent~.
-    #  //
     def __init__(self, name, parent):
+        """         
+          Function: new
+         
+          Create a new instance of this type, giving it the optional `name`
+          and `parent`.
+         
+        Args:
+            name: 
+            parent: 
+        """
         super().__init__(name, parent)
         self.bus_in = UVMAnalysisImp("bus_in", self)
         #  // Variable: reg_ap

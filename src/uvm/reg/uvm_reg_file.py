@@ -48,16 +48,20 @@ class UVMRegFile(UVMObject):
     #   // Group: Initialization
     #   //----------------------
 
-    #   //
-    #   // Function: new
-    #   //
-    #   // Create a new instance
-    #   //
-    #   // Creates an instance of a register file abstraction class
-    #   // with the specified name.
-    #   //
-    #   extern def                  new        (self,string name=""):
     def __init__(self, name=""):
+        """         
+          
+           Function: new
+          
+           Create a new instance
+          
+           Creates an instance of a register file abstraction class
+           with the specified name.
+          
+          extern def                  new        (self,string name=""):
+        Args:
+            name: 
+        """
         super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
         self.parent = None  # uvm_reg_block
@@ -66,28 +70,34 @@ class UVMRegFile(UVMObject):
         #    self.l = None  # type: hdl_paths_poo
 
 
-    #   //
-    #   // Function: configure
-    #   // Configure a register file instance
-    #   //
-    #   // Specify the parent block and register file of the register file
-    #   // instance.
-    #   // If the register file is instantiated in a block,
-    #   // ~regfile_parent~ is specified as ~None~.
-    #   // If the register file is instantiated in a register file,
-    #   // ~blk_parent~ must be the block parent of that register file and
-    #   // ~regfile_parent~ is specified as that register file.
-    #   //
-    #   // If the register file corresponds to a hierarchical RTL structure,
-    #   // its contribution to the HDL path is specified as the ~hdl_path~.
-    #   // Otherwise, the register file does not correspond to a hierarchical RTL
-    #   // structure (e.g. it is physically flattened) and does not contribute
-    #   // to the hierarchical HDL path of any contained registers.
-    #   //
-    #   extern function void     configure  (uvm_reg_block blk_parent,
-    #                                        uvm_reg_file regfile_parent,
-    #                                        string hdl_path = "")
     def configure(self, blk_parent, regfile_parent, hdl_path=""):
+        """         
+          
+           Function: configure
+           Configure a register file instance
+          
+           Specify the parent block and register file of the register file
+           instance.
+           If the register file is instantiated in a block,
+           `regfile_parent` is specified as `None`.
+           If the register file is instantiated in a register file,
+           `blk_parent` must be the block parent of that register file and
+           `regfile_parent` is specified as that register file.
+          
+           If the register file corresponds to a hierarchical RTL structure,
+           its contribution to the HDL path is specified as the `hdl_path`.
+           Otherwise, the register file does not correspond to a hierarchical RTL
+           structure (e.g. it is physically flattened) and does not contribute
+           to the hierarchical HDL path of any contained registers.
+          
+          extern function void     configure  (uvm_reg_block blk_parent,
+                                               uvm_reg_file regfile_parent,
+                                               string hdl_path = "")
+        Args:
+            blk_parent: 
+            regfile_parent: 
+            hdl_path: 
+        """
         if blk_parent is None:
             uvm_error("UVM/RFILE/CFG/NOBLK", 
                 ("UVMRegFile::configure() called without a parent block for instance '"
@@ -100,26 +110,29 @@ class UVMRegFile(UVMObject):
         self.add_hdl_path(hdl_path)
 
 
-    #   //---------------------
-    #   // Group: Introspection
-    #   //---------------------
-    #
-    #   //
-    #   // Function: get_name
-    #   // Get the simple name
-    #   //
-    #   // Return the simple object name of self register file.
-    #   //
-    #
-    #   //
-    #   // Function: get_full_name
-    #   // Get the hierarchical name
-    #   //
-    #   // Return the hierarchal name of self register file.
-    #   // The base of the hierarchical name is the root block.
-    #   //
-    #   extern virtual def string        get_full_name(self):
     def get_full_name(self):
+        """         
+          ---------------------
+           Group: Introspection
+          ---------------------
+
+          
+           Function: get_name
+           Get the simple name
+          
+           Return the simple object name of self register file.
+          
+
+          
+           Function: get_full_name
+           Get the hierarchical name
+          
+           Return the hierarchal name of self register file.
+           The base of the hierarchical name is the root block.
+          
+          extern virtual def string        get_full_name(self):
+        Returns:
+        """
         blk = None  # uvm_reg_block 
         get_full_name = self.get_name()
      
@@ -141,8 +154,11 @@ class UVMRegFile(UVMObject):
     #   //
     #   extern virtual def uvm_reg_block get_parent (self):
 
-    #   extern virtual def uvm_reg_block get_block  (self):
     def get_block(self):
+        """         
+          extern virtual def uvm_reg_block get_block  (self):
+        Returns:
+        """
         return self.parent
 
     #   //
@@ -168,17 +184,22 @@ class UVMRegFile(UVMObject):
     #   extern def void clear_hdl_path    (self,string kind = "RTL"):
     #
 
-    #   //
-    #   // Function:  add_hdl_path
-    #   // Add an HDL path
-    #   //
-    #   // Add the specified HDL path to the register file instance for the specified
-    #   // design abstraction. This method may be called more than once for the
-    #   // same design abstraction if the register file is physically duplicated
-    #   // in the design abstraction
-    #   //
-    #   extern def void add_hdl_path      (self,string path, string kind = "RTL"):
     def add_hdl_path(self, path, kind="RTL"):
+        """         
+          
+           Function:  add_hdl_path
+           Add an HDL path
+          
+           Add the specified HDL path to the register file instance for the specified
+           design abstraction. This method may be called more than once for the
+           same design abstraction if the register file is physically duplicated
+           in the design abstraction
+          
+          extern def void add_hdl_path      (self,string path, string kind = "RTL"):
+        Args:
+            path: 
+            kind: 
+        """
         paths = self.hdl_paths_pool.get(kind)
         paths.push_back(path)
 

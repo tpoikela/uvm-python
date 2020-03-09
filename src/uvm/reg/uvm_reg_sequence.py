@@ -118,11 +118,15 @@ class UVMRegSequence(UVMSequence):
     #  //
     #  uvm_sequencer #(uvm_reg_item) reg_seqr;
 
-    #  // Function: new
-    #  //
-    #  // Create a new instance, giving it the optional ~name~.
-    #  //
     def __init__(self, name="uvm_reg_sequence_inst"):
+        """         
+          Function: new
+         
+          Create a new instance, giving it the optional `name`.
+         
+        Args:
+            name: 
+        """
         super().__init__(name)
         self.reg_seqr = None
         self.adapter = None
@@ -130,17 +134,19 @@ class UVMRegSequence(UVMSequence):
         self.parent_select = LOCAL
         self.upstream_parent = None
 
-    #  // Task: body
-    #  //
-    #  // Continually gets a register transaction from the configured upstream
-    #  // sequencer, <reg_seqr>, and executes the corresponding bus transaction
-    #  // via <do_reg_item>.
-    #  //
-    #  // User-defined RegModel test sequences must override body() and not call
-    #  // super.body(), else a warning will be issued and the calling process
-    #  // not return.
-    #  //
     async def body(self):
+        """         
+          Task: body
+         
+          Continually gets a register transaction from the configured upstream
+          sequencer, `reg_seqr`, and executes the corresponding bus transaction
+          via `do_reg_item`.
+         
+          User-defined RegModel test sequences must override body() and not call
+          super.body(), else a warning will be issued and the calling process
+          not return.
+         
+        """
         if self.m_sequencer is None:
             uvm_fatal("NO_SEQR", "Sequence executing as translation sequence, " +
                "but is not associated with a sequencer (m_sequencer == null)")
@@ -164,15 +170,19 @@ class UVMRegSequence(UVMSequence):
             await Timer(0)
 
 
-    #  // Function: do_reg_item
-    #  //
-    #  // Executes the given register transaction, ~rw~, via the sequencer on
-    #  // which this sequence was started (i.e. m_sequencer). Uses the configured
-    #  // <adapter> to convert the register transaction into the type expected by
-    #  // this sequencer.
-    #  //
-    #  virtual task do_reg_item(uvm_reg_item rw);
     async def do_reg_item(self, rw):
+        """         
+          Function: do_reg_item
+         
+          Executes the given register transaction, `rw`, via the sequencer on
+          which this sequence was started (i.e. m_sequencer). Uses the configured
+          `adapter` to convert the register transaction into the type expected by
+          this sequencer.
+         
+         virtual task do_reg_item(uvm_reg_item rw);
+        Args:
+            rw: 
+        """
         rws = rw.convert2string()
         if self.m_sequencer is None:
             uvm_fatal("REG/DO_ITEM/NULL","do_reg_item: m_sequencer is null")
@@ -507,11 +517,15 @@ uvm_object_utils(UVMRegSequence)
 
 class UVMRegFrontdoor(UVMRegSequence):  # (uvm_sequence #(uvm_sequence_item));
 
-    #   // Function: new
-    #   //
-    #   // Constructor, new object given optional ~name~.
-    #   //
     def __init__(self, name="reg_frontdoor_seq"):
+        """         
+           Function: new
+          
+           Constructor, new object given optional `name`.
+          
+        Args:
+            name: 
+        """
         super().__init__(name)
         #
         #   // Variable: rw_info
