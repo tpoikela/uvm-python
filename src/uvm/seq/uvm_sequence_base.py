@@ -162,11 +162,15 @@ class UVMSequenceBase(UVMSequenceItem):
     #  static string type_name = "uvm_sequence_base"
     type_name = "uvm_sequence_base"
 
-    #  // Function: __init__
-    #  //
-    #  // The constructor for uvm_sequence_base.
-    #  //
     def __init__(self, name="uvm_sequence"):
+        """         
+          Function: __init__
+         
+          The constructor for uvm_sequence_base.
+         
+        Args:
+            name: 
+        """
         UVMSequenceItem.__init__(self, name)
         self.m_sequence_state = UVM_CREATED
         self.m_wait_for_grant_semaphore = 0
@@ -194,32 +198,47 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_events = {}
         self.m_events[UVM_FINISHED] = Event("UVM_FINISHED")
 
-    #  // Function: is_item
-    #  //
-    #  // Returns 1 on items and 0 on sequences. As this object is a sequence,
-    #  // ~is_item~ will always return 0.
-    #  //
     def is_item(self):
+        """         
+          Function: is_item
+         
+          Returns 1 on items and 0 on sequences. As this object is a sequence,
+          `is_item` will always return 0.
+         
+        Returns:
+        """
         return False
 
 
-    #  // Function: get_sequence_state
-    #  //
-    #  // Returns the sequence state as an enumerated value. Can use to wait on
-    #  // the sequence reaching or changing from one or more states.
-    #  //
-    #  //| wait(get_sequence_state() & (UVM_STOPPED|UVM_FINISHED))
-    #
     def get_sequence_state(self):
+        """         
+          Function: get_sequence_state
+         
+          Returns the sequence state as an enumerated value. Can use to wait on
+          the sequence reaching or changing from one or more states.
+         
+        .. code-block:: python
+
+         | wait(get_sequence_state() & (UVM_STOPPED|UVM_FINISHED))
+
+        Returns:
+        """
         return self.m_sequence_state
 
-    #  // Task: wait_for_sequence_state
-    #  //
-    #  // Waits until the sequence reaches one of the given ~state~. If the sequence
-    #  // is already in one of the state, this method returns immediately.
-    #  //
-    #  //| wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED)
     async def wait_for_sequence_state(self, state_mask):
+        """         
+          Task: wait_for_sequence_state
+         
+          Waits until the sequence reaches one of the given `state`. If the sequence
+          is already in one of the state, this method returns immediately.
+         
+        .. code-block:: python
+
+         | wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED)
+        Args:
+            state_mask: 
+        Raises:
+        """
         state = self.m_sequence_state & state_mask
         if state in self.m_events:
             await self.m_events[state].wait()
@@ -227,51 +246,61 @@ class UVMSequenceBase(UVMSequenceItem):
             raise Exception("Cannot wait for state " + str(state)
                     + " - not implemented")
 
-    #  // Function: get_tr_handle
-    #  //
-    #  // Returns the integral recording transaction handle for this sequence.
-    #  // Can be used to associate sub-sequences and sequence items as
-    #  // child transactions when calling <uvm_component::begin_child_tr>.
     def get_tr_handle(self):
+        """         
+          Function: get_tr_handle
+         
+          Returns the integral recording transaction handle for this sequence.
+          Can be used to associate sub-sequences and sequence items as
+          child transactions when calling <uvm_component::begin_child_tr>.
+        Returns:
+        """
         if (self.m_tr_recorder is not None):
             return self.m_tr_recorder.get_handle()
         else:
             return 0
 
 
-    #  //--------------------------
-    #  // Group: Sequence Execution
-    #  //--------------------------
-    #
-    #
-    #  // Task: start
-    #  //
-    #  // Executes this sequence, returning when the sequence has completed.
-    #  //
-    #  // The ~sequencer~ argument specifies the sequencer on which to run this
-    #  // sequence. The sequencer must be compatible with the sequence.
-    #  //
-    #  // If ~parent_sequence~ is ~None~, then this sequence is a root parent,
-    #  // otherwise it is a child of ~parent_sequence~. The ~parent_sequence~'s
-    #  // pre_do, mid_do, and post_do methods will be called during the execution
-    #  // of this sequence.
-    #  //
-    #  // By default, the ~priority~ of a sequence
-    #  // is the priority of its parent sequence.
-    #  // If it is a root sequence, its default priority is 100.
-    #  // A different priority may be specified by ~this_priority~.
-    #  // Higher numbers indicate higher priority.
-    #  //
-    #  // If ~call_pre_post~ is set to 1 (default), then the <pre_body> and
-    #  // <post_body> tasks will be called before and after the sequence
-    #  // <body> is called.
-    #
-    #  virtual task start (uvm_sequencer_base sequencer,
-    #                      uvm_sequence_base parent_sequence = None,
-    #                      int this_priority = -1,
-    #                      bit call_pre_post = 1)
     async def start(self, sequencer, parent_sequence=None, this_priority=-1,
             call_pre_post=1):
+        """         
+         --------------------------
+          Group: Sequence Execution
+         --------------------------
+
+
+          Task: start
+         
+          Executes this sequence, returning when the sequence has completed.
+         
+          The `sequencer` argument specifies the sequencer on which to run this
+          sequence. The sequencer must be compatible with the sequence.
+         
+          If `parent_sequence` is `None`, then this sequence is a root parent,
+          otherwise it is a child of `parent_sequence`. The `parent_sequence`'s
+          pre_do, mid_do, and post_do methods will be called during the execution
+          of this sequence.
+         
+          By default, the `priority` of a sequence
+          is the priority of its parent sequence.
+          If it is a root sequence, its default priority is 100.
+          A different priority may be specified by `this_priority`.
+          Higher numbers indicate higher priority.
+         
+          If `call_pre_post` is set to 1 (default), then the `pre_body` and
+          `post_body` tasks will be called before and after the sequence
+          `body` is called.
+
+         virtual task start (uvm_sequencer_base sequencer,
+                             uvm_sequence_base parent_sequence = None,
+                             int this_priority = -1,
+                             bit call_pre_post = 1)
+        Args:
+            sequencer: 
+            parent_sequence: 
+            this_priority: 
+            call_pre_post: 
+        """
         old_automatic_phase_objection = False
         self.set_item_context(parent_sequence, sequencer)
 
@@ -408,87 +437,109 @@ class UVMSequenceBase(UVMSequenceItem):
         #join
 
 
-    #  // Task: pre_start
-    #  //
-    #  // This task is a user-definable callback that is called before the
-    #  // optional execution of <pre_body>.
-    #  // This method should not be called directly by the user.
-    #
-    #  virtual task pre_start()
     def pre_start(self):
+        """         
+          Task: pre_start
+         
+          This task is a user-definable callback that is called before the
+          optional execution of `pre_body`.
+          This method should not be called directly by the user.
+
+         virtual task pre_start()
+        """
         return
 
-    #  // Task: pre_body
-    #  //
-    #  // This task is a user-definable callback that is called before the
-    #  // execution of <body> ~only~ when the sequence is started with <start>.
-    #  // If <start> is called with ~call_pre_post~ set to 0, ~pre_body~ is not
-    #  // called.
-    #  // This method should not be called directly by the user.
-    #  virtual task pre_body()
     def pre_body(self):
+        """         
+          Task: pre_body
+         
+          This task is a user-definable callback that is called before the
+          execution of `body` `only` when the sequence is started with `start`.
+          If `start` is called with `call_pre_post` set to 0, `pre_body` is not
+          called.
+          This method should not be called directly by the user.
+         virtual task pre_body()
+        """
         return
 
-    #  // Task: pre_do
-    #  //
-    #  // This task is a user-definable callback task that is called ~on the
-    #  // parent sequence~, if any
-    #  // sequence has issued a wait_for_grant() call and after the sequencer has
-    #  // selected this sequence, and before the item is randomized.
-    #  //
-    #  // Although pre_do is a task, consuming simulation cycles may result in
-    #  // unexpected behavior on the driver.
-    #  //
-    #  // This method should not be called directly by the user.
     def pre_do(self, is_item):
+        """         
+          Task: pre_do
+         
+          This task is a user-definable callback task that is called ~on the
+          parent sequence~, if any
+          sequence has issued a wait_for_grant() call and after the sequencer has
+          selected this sequence, and before the item is randomized.
+         
+          Although pre_do is a task, consuming simulation cycles may result in
+          unexpected behavior on the driver.
+         
+          This method should not be called directly by the user.
+        Args:
+            is_item: 
+        """
         return
 
 
-    #  // Function: mid_do
-    #  //
-    #  // This function is a user-definable callback function that is called after
-    #  // the sequence item has been randomized, and just before the item is sent
-    #  // to the driver.  This method should not be called directly by the user.
-    #
     def mid_do(self, this_item):
+        """         
+          Function: mid_do
+         
+          This function is a user-definable callback function that is called after
+          the sequence item has been randomized, and just before the item is sent
+          to the driver.  This method should not be called directly by the user.
+
+        Args:
+            this_item: 
+        """
         return
 
-    #  // Task: body
-    #  //
-    #  // This is the user-defined task where the main sequence code resides.
-    #  // This method should not be called directly by the user.
     async def body(self):
+        """         
+          Task: body
+         
+          This is the user-defined task where the main sequence code resides.
+          This method should not be called directly by the user.
+        """
         uvm_warning("uvm_sequence_base", "Body definition undefined")
         await Timer(0, "NS")
 
-    #  // Function: post_do
-    #  //
-    #  // This function is a user-definable callback function that is called after
-    #  // the driver has indicated that it has completed the item, using either
-    #  // this item_done or put methods. This method should not be called directly
-    #  // by the user.
     def post_do(self, this_item):
+        """         
+          Function: post_do
+         
+          This function is a user-definable callback function that is called after
+          the driver has indicated that it has completed the item, using either
+          this item_done or put methods. This method should not be called directly
+          by the user.
+        Args:
+            this_item: 
+        """
         return
 
-    #  // Task: post_body
-    #  //
-    #  // This task is a user-definable callback task that is called after the
-    #  // execution of <body> ~only~ when the sequence is started with <start>.
-    #  // If <start> is called with ~call_pre_post~ set to 0, ~post_body~ is not
-    #  // called.
-    #  // This task is a user-definable callback task that is called after the
-    #  // execution of the body, unless the sequence is started with call_pre_post=0.
-    #  // This method should not be called directly by the user.
     def post_body(self):
+        """         
+          Task: post_body
+         
+          This task is a user-definable callback task that is called after the
+          execution of `body` `only` when the sequence is started with `start`.
+          If `start` is called with `call_pre_post` set to 0, `post_body` is not
+          called.
+          This task is a user-definable callback task that is called after the
+          execution of the body, unless the sequence is started with call_pre_post=0.
+          This method should not be called directly by the user.
+        """
         return
 
-    #
-    #  // Task: post_start
-    #  //
-    #  // This task is a user-definable callback that is called after the
-    #  // optional execution of <post_body>.
-    #  // This method should not be called directly by the user.
     def post_start(self):
+        """         
+
+          Task: post_start
+         
+          This task is a user-definable callback that is called after the
+          optional execution of `post_body`.
+          This method should not be called directly by the user.
+        """
         return
 
     #  // Group: Run-Time Phasing
@@ -499,9 +550,13 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Starting Phase DAP
     #  local uvm_get_to_lock_dap#(uvm_phase) m_starting_phase_dap
 
-    #  // Function- m_init_phase_daps
-    #  // Either creates or renames DAPS
     def m_init_phase_daps(self, create):
+        """         
+          Function- m_init_phase_daps
+          Either creates or renames DAPS
+        Args:
+            create: 
+        """
         apo_name = sv.sformatf("%s.automatic_phase_objection", self.get_full_name())
         sp_name = sv.sformatf("%s.starting_phase", self.get_full_name())
 
@@ -515,174 +570,216 @@ class UVMSequenceBase(UVMSequenceItem):
             self.m_starting_phase_dap.set_name(sp_name)
 
 
-    #  // Function: get_starting_phase
-    #  // Returns the 'starting phase'.
-    #  //
-    #  // If non-~None~, the starting phase specifies the phase in which this
-    #  // sequence was started.  The starting phase is set automatically when
-    #  // this sequence is started as the default sequence on a sequencer.
-    #  // See <uvm_sequencer_base::start_phase_sequence> for more information.
-    #  //
-    #  // Internally, the <uvm_sequence_base> uses an <uvm_get_to_lock_dap> to
-    #  // protect the starting phase value from being modified
-    #  // after the reference has been read.  Once the sequence has ended
-    #  // its execution (either via natural termination, or being killed),
-    #  // then the starting phase value can be modified again.
-    #  //
     def get_starting_phase(self):
+        """         
+          Function: get_starting_phase
+          Returns the 'starting phase'.
+         
+          If non-`None`, the starting phase specifies the phase in which this
+          sequence was started.  The starting phase is set automatically when
+          this sequence is started as the default sequence on a sequencer.
+          See <uvm_sequencer_base::start_phase_sequence> for more information.
+         
+          Internally, the `uvm_sequence_base` uses an `uvm_get_to_lock_dap` to
+          protect the starting phase value from being modified
+          after the reference has been read.  Once the sequence has ended
+          its execution (either via natural termination, or being killed),
+          then the starting phase value can be modified again.
+         
+        Returns:
+        """
         return self.m_starting_phase_dap.get()
 
-    #
-    #  // Function: set_starting_phase
-    #  // Sets the 'starting phase'.
-    #  //
-    #  // Internally, the <uvm_sequence_base> uses a <uvm_get_to_lock_dap> to
-    #  // protect the starting phase value from being modified
-    #  // after the reference has been read.  Once the sequence has ended
-    #  // its execution (either via natural termination, or being killed),
-    #  // then the starting phase value can be modified again.
-    #  //
     def set_starting_phase(self, phase):
+        """         
+
+          Function: set_starting_phase
+          Sets the 'starting phase'.
+         
+          Internally, the `uvm_sequence_base` uses a `uvm_get_to_lock_dap` to
+          protect the starting phase value from being modified
+          after the reference has been read.  Once the sequence has ended
+          its execution (either via natural termination, or being killed),
+          then the starting phase value can be modified again.
+         
+        Args:
+            phase: 
+        """
         self.m_starting_phase_dap.set(phase)
 
-    #  // Function: set_automatic_phase_objection
-    #  // Sets the 'automatically object to starting phase' bit.
-    #  //
-    #  // The most common interaction with the starting phase
-    #  // within a sequence is to simply ~raise~ the phase's objection
-    #  // prior to executing the sequence, and ~drop~ the objection
-    #  // after ending the sequence (either naturally, or
-    #  // via a call to <kill>). In order to
-    #  // simplify this interaction for the user, the UVM
-    #  // provides the ability to perform this functionality
-    #  // automatically.
-    #  //
-    #  // For example:
-    #  //| function my_sequence::new(string name="unnamed")
-    #  //|   super.new(name)
-    #  //|   set_automatic_phase_objection(1)
-    #  //| endfunction : new
-    #  //
-    #  // From a timeline point of view, the automatic phase objection
-    #  // looks like:
-    #  //| start() is executed
-    #  //|   --! Objection is raised !--
-    #  //|   pre_start() is executed
-    #  //|   pre_body() is optionally executed
-    #  //|   body() is executed
-    #  //|   post_body() is optionally executed
-    #  //|   post_start() is executed
-    #  //|   --! Objection is dropped !--
-    #  //| start() unblocks
-    #  //
-    #  // This functionality can also be enabled in sequences
-    #  // which were not written with UVM Run-Time Phasing in mind:
-    #  //| my_legacy_seq_type seq = new("seq")
-    #  //| seq.set_automatic_phase_objection(1)
-    #  //| seq.start(my_sequencer)
-    #  //
-    #  // Internally, the <uvm_sequence_base> uses a <uvm_get_to_lock_dap> to
-    #  // protect the ~automatic_phase_objection~ value from being modified
-    #  // after the reference has been read.  Once the sequence has ended
-    #  // its execution (either via natural termination, or being killed),
-    #  // then the ~automatic_phase_objection~ value can be modified again.
-    #  //
-    #  // NEVER set the automatic phase objection bit to 1 if your sequence
-    #  // runs with a forever loop inside of the body, as the objection will
-    #  // never get dropped!
     def set_automatic_phase_objection(self, value):
+        """         
+          Function: set_automatic_phase_objection
+          Sets the 'automatically object to starting phase' bit.
+         
+          The most common interaction with the starting phase
+          within a sequence is to simply `raise` the phase's objection
+          prior to executing the sequence, and `drop` the objection
+          after ending the sequence (either naturally, or
+          via a call to `kill`). In order to
+          simplify this interaction for the user, the UVM
+          provides the ability to perform this functionality
+          automatically.
+         
+          For example:
+        .. code-block:: python
+
+         | function my_sequence::new(string name="unnamed")
+         |   super.new(name)
+         |   set_automatic_phase_objection(1)
+         | endfunction : new
+         
+          From a timeline point of view, the automatic phase objection
+          looks like:
+        .. code-block:: python
+
+         | start() is executed
+         |   --! Objection is raised !--
+         |   pre_start() is executed
+         |   pre_body() is optionally executed
+         |   body() is executed
+         |   post_body() is optionally executed
+         |   post_start() is executed
+         |   --! Objection is dropped !--
+         | start() unblocks
+         
+          This functionality can also be enabled in sequences
+          which were not written with UVM Run-Time Phasing in mind:
+        .. code-block:: python
+
+         | my_legacy_seq_type seq = new("seq")
+         | seq.set_automatic_phase_objection(1)
+         | seq.start(my_sequencer)
+         
+          Internally, the `uvm_sequence_base` uses a `uvm_get_to_lock_dap` to
+          protect the `automatic_phase_objection` value from being modified
+          after the reference has been read.  Once the sequence has ended
+          its execution (either via natural termination, or being killed),
+          then the `automatic_phase_objection` value can be modified again.
+         
+          NEVER set the automatic phase objection bit to 1 if your sequence
+          runs with a forever loop inside of the body, as the objection will
+          never get dropped!
+        Args:
+            value: 
+        """
         self.m_automatic_phase_objection_dap.set(value)
 
-    #  // Function: get_automatic_phase_objection
-    #  // Returns (and locks) the value of the 'automatically object to
-    #  // starting phase' bit.
-    #  //
-    #  // If 1, then the sequence will automatically raise an objection
-    #  // to the starting phase (if the starting phase is not ~None~) immediately
-    #  // prior to <pre_start> being called.  The objection will be dropped
-    #  // after <post_start> has executed, or <kill> has been called.
-    #  //
     def get_automatic_phase_objection(self):
+        """         
+          Function: get_automatic_phase_objection
+          Returns (and locks) the value of the 'automatically object to
+          starting phase' bit.
+         
+          If 1, then the sequence will automatically raise an objection
+          to the starting phase (if the starting phase is not `None`) immediately
+          prior to `pre_start` being called.  The objection will be dropped
+          after `post_start` has executed, or `kill` has been called.
+         
+        Returns:
+        """
         return self.m_automatic_phase_objection_dap.get()
 
-    #  // m_safe_raise_starting_phase
-    #  function void m_safe_raise_starting_phase(string description = "",
-    #                                            int count = 1)
     def m_safe_raise_starting_phase(self, description="", count=1):
+        """         
+          m_safe_raise_starting_phase
+         function void m_safe_raise_starting_phase(string description = "",
+                                                   int count = 1)
+        Args:
+            description: 
+            count: 
+        """
         starting_phase = self.get_starting_phase()
         if (starting_phase is not None):
             starting_phase.raise_objection(self, description, count)
 
-    #
-    #  // m_safe_drop_starting_phase
-    #  function void m_safe_drop_starting_phase(string description = "",
-    #                                           int count = 1)
     def m_safe_drop_starting_phase(self, description="", count=1):
+        """         
+
+          m_safe_drop_starting_phase
+         function void m_safe_drop_starting_phase(string description = "",
+                                                  int count = 1)
+        Args:
+            description: 
+            count: 
+        """
         starting_phase = self.get_starting_phase()
         if (starting_phase is not None):
             starting_phase.drop_objection(self, description, count)
         #  endfunction : m_safe_drop_starting_phase
 
-    #  //------------------------
-    #  // Group: Sequence Control
-    #  //------------------------
-    #
-    #  // Function: set_priority
-    #  //
-    #  // The priority of a sequence may be changed at any point in time.  When the
-    #  // priority of a sequence is changed, the new priority will be used by the
-    #  // sequencer the next time that it arbitrates between sequences.
-    #  //
-    #  // The default priority value for a sequence is 100.  Higher values result
-    #  // in higher priorities.
     def set_priority(self, value):
+        """         
+         ------------------------
+          Group: Sequence Control
+         ------------------------
+
+          Function: set_priority
+         
+          The priority of a sequence may be changed at any point in time.  When the
+          priority of a sequence is changed, the new priority will be used by the
+          sequencer the next time that it arbitrates between sequences.
+         
+          The default priority value for a sequence is 100.  Higher values result
+          in higher priorities.
+        Args:
+            value: 
+        """
         self.m_priority = value
 
-    #  // Function: get_priority
-    #  //
-    #  // This function returns the current priority of the sequence.
-    #
     def get_priority(self):
+        """         
+          Function: get_priority
+         
+          This function returns the current priority of the sequence.
+
+        Returns:
+        """
         return self.m_priority
 
-    #  // Function: is_relevant
-    #  //
-    #  // The default is_relevant implementation returns 1, indicating that the
-    #  // sequence is always relevant.
-    #  //
-    #  // Users may choose to override with their own virtual function to indicate
-    #  // to the sequencer that the sequence is not currently relevant after a
-    #  // request has been made.
-    #  //
-    #  // When the sequencer arbitrates, it will call is_relevant on each requesting,
-    #  // unblocked sequence to see if it is relevant. If a 0 is returned, then the
-    #  // sequence will not be chosen.
-    #  //
-    #  // If all requesting sequences are not relevant, then the sequencer will call
-    #  // wait_for_relevant on all sequences and re-arbitrate upon its return.
-    #  //
-    #  // Any sequence that implements is_relevant must also implement
-    #  // wait_for_relevant so that the sequencer has a way to wait for a
-    #  // sequence to become relevant.
-    #
     def is_relevant(self):
+        """         
+          Function: is_relevant
+         
+          The default is_relevant implementation returns 1, indicating that the
+          sequence is always relevant.
+         
+          Users may choose to override with their own virtual function to indicate
+          to the sequencer that the sequence is not currently relevant after a
+          request has been made.
+         
+          When the sequencer arbitrates, it will call is_relevant on each requesting,
+          unblocked sequence to see if it is relevant. If a 0 is returned, then the
+          sequence will not be chosen.
+         
+          If all requesting sequences are not relevant, then the sequencer will call
+          wait_for_relevant on all sequences and re-arbitrate upon its return.
+         
+          Any sequence that implements is_relevant must also implement
+          wait_for_relevant so that the sequencer has a way to wait for a
+          sequence to become relevant.
+
+        Returns:
+        """
         self.is_rel_default = True
         return 1
 
-    #  // Task: wait_for_relevant
-    #  //
-    #  // This method is called by the sequencer when all available sequences are
-    #  // not relevant.  When wait_for_relevant returns the sequencer attempt to
-    #  // re-arbitrate.
-    #  //
-    #  // Returning from this call does not guarantee a sequence is relevant,
-    #  // although that would be the ideal. The method provide some delay to
-    #  // prevent an infinite loop.
-    #  //
-    #  // If a sequence defines is_relevant so that it is not always relevant (by
-    #  // default, a sequence is always relevant), then the sequence must also supply
-    #  // a wait_for_relevant method.
     async def wait_for_relevant(self):
+        """         
+          Task: wait_for_relevant
+         
+          This method is called by the sequencer when all available sequences are
+          not relevant.  When wait_for_relevant returns the sequencer attempt to
+          re-arbitrate.
+         
+          Returning from this call does not guarantee a sequence is relevant,
+          although that would be the ideal. The method provide some delay to
+          prevent an infinite loop.
+         
+          If a sequence defines is_relevant so that it is not always relevant (by
+          default, a sequence is always relevant), then the sequence must also supply
+          a wait_for_relevant method.
+        """
         e = Event('e')
         wait_rel_default = True
         if (is_rel_default != wait_rel_default):
@@ -767,27 +864,33 @@ class UVMSequenceBase(UVMSequenceItem):
     #  endfunction
 
 
-    #  // Function: is_blocked
-    #  //
-    #  // Returns a bit indicating whether this sequence is currently prevented from
-    #  // running due to another lock or grab. A 1 is returned if the sequence is
-    #  // currently blocked. A 0 is returned if no lock or grab prevents this
-    #  // sequence from executing. Note that even if a sequence is not blocked, it
-    #  // is possible for another sequence to issue a lock or grab before this
-    #  // sequence can issue a request.
-    #
     def is_blocked(self):
+        """         
+          Function: is_blocked
+         
+          Returns a bit indicating whether this sequence is currently prevented from
+          running due to another lock or grab. A 1 is returned if the sequence is
+          currently blocked. A 0 is returned if no lock or grab prevents this
+          sequence from executing. Note that even if a sequence is not blocked, it
+          is possible for another sequence to issue a lock or grab before this
+          sequence can issue a request.
+
+        Returns:
+        """
         return self.m_sequencer.is_blocked(self)
 
 
-    #  // Function: has_lock
-    #  //
-    #  // Returns 1 if this sequence has a lock, 0 otherwise.
-    #  //
-    #  // Note that even if this sequence has a lock, a child sequence may also have
-    #  // a lock, in which case the sequence is still blocked from issuing
-    #  // operations on the sequencer.
     def has_lock(self):
+        """         
+          Function: has_lock
+         
+          Returns 1 if this sequence has a lock, 0 otherwise.
+         
+          Note that even if this sequence has a lock, a child sequence may also have
+          a lock, in which case the sequence is still blocked from issuing
+          operations on the sequencer.
+        Returns:
+        """
         return self.m_sequencer.has_lock(self)
 
 
@@ -827,12 +930,14 @@ class UVMSequenceBase(UVMSequenceItem):
     #  endfunction
 
 
-    #  // Function: do_kill
-    #  //
-    #  // This function is a user hook that is called whenever a sequence is
-    #  // terminated by using either sequence.kill() or sequencer.stop_sequences()
-    #  // (which effectively calls sequence.kill()).
     def do_kill(self):
+        """         
+          Function: do_kill
+         
+          This function is a user hook that is called whenever a sequence is
+          terminated by using either sequence.kill() or sequencer.stop_sequences()
+          (which effectively calls sequence.kill()).
+        """
         return
 
 
@@ -856,15 +961,22 @@ class UVMSequenceBase(UVMSequenceItem):
     #  //-------------------------------
 
 
-    #  // Function: create_item
-    #  //
-    #  // Create_item will create and initialize a sequence_item or sequence
-    #  // using the factory.  The sequence_item or sequence will be initialized
-    #  // to communicate with the specified sequencer.
-    #
-    #  protected function uvm_sequence_item create_item(uvm_object_wrapper type_var,
-    #                                                   uvm_sequencer_base l_sequencer, string name)
     def create_item(self, type_var, l_sequencer, name):
+        """         
+          Function: create_item
+         
+          Create_item will create and initialize a sequence_item or sequence
+          using the factory.  The sequence_item or sequence will be initialized
+          to communicate with the specified sequencer.
+
+         protected function uvm_sequence_item create_item(uvm_object_wrapper type_var,
+                                                          uvm_sequencer_base l_sequencer, string name)
+        Args:
+            type_var: 
+            l_sequencer: 
+            name: 
+        Returns:
+        """
         from ..base.uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         factory = cs.get_factory()
@@ -873,18 +985,24 @@ class UVMSequenceBase(UVMSequenceItem):
         return item
 
 
-    #  // Function: start_item
-    #  //
-    #  // ~start_item~ and <finish_item> together will initiate operation of
-    #  // a sequence item.  If the item has not already been
-    #  // initialized using create_item, then it will be initialized here to use
-    #  // the default sequencer specified by self.m_sequencer.  Randomization
-    #  // may be done between start_item and finish_item to ensure late generation
-    #  //
-    #  virtual task start_item (uvm_sequence_item item,
-    #                           int set_priority = -1,
-    #                           uvm_sequencer_base sequencer=None)
     async def start_item(self, item, set_priority=-1, sequencer=None):
+        """         
+          Function: start_item
+         
+          `start_item` and `finish_item` together will initiate operation of
+          a sequence item.  If the item has not already been
+          initialized using create_item, then it will be initialized here to use
+          the default sequencer specified by self.m_sequencer.  Randomization
+          may be done between start_item and finish_item to ensure late generation
+         
+         virtual task start_item (uvm_sequence_item item,
+                                  int set_priority = -1,
+                                  uvm_sequencer_base sequencer=None)
+        Args:
+            item: 
+            set_priority: 
+            sequencer: 
+        """
         seq = None
 
         if item is None:
@@ -926,16 +1044,21 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.pre_do(1)
 
-    #  // Function: finish_item
-    #  //
-    #  // finish_item, together with start_item together will initiate operation of
-    #  // a sequence_item.  Finish_item must be called
-    #  // after start_item with no delays or delta-cycles.  Randomization, or other
-    #  // functions may be called between the start_item and finish_item calls.
-    #  //
-    #  virtual task finish_item (uvm_sequence_item item,
-    #                            int set_priority = -1)
     async def finish_item(self, item, set_priority=-1):
+        """         
+          Function: finish_item
+         
+          finish_item, together with start_item together will initiate operation of
+          a sequence_item.  Finish_item must be called
+          after start_item with no delays or delta-cycles.  Randomization, or other
+          functions may be called between the start_item and finish_item calls.
+         
+         virtual task finish_item (uvm_sequence_item item,
+                                   int set_priority = -1)
+        Args:
+            item: 
+            set_priority: 
+        """
         sequencer = item.get_sequencer()
 
         if sequencer is None:
@@ -1008,86 +1131,117 @@ class UVMSequenceBase(UVMSequenceItem):
 
 
 
-    #  // Group: Response API
-    #  //--------------------
-    #
-    #  // Function: use_response_handler
-    #  //
-    #  // When called with enable set to 1, responses will be sent to the response
-    #  // handler. Otherwise, responses must be retrieved using get_response.
-    #  //
-    #  // By default, responses from the driver are retrieved in the sequence by
-    #  // calling get_response.
-    #  //
-    #  // An alternative method is for the sequencer to call the response_handler
-    #  // function with each response.
     def use_response_handler(self, enable):
+        """         
+          Group: Response API
+         --------------------
+
+          Function: use_response_handler
+         
+          When called with enable set to 1, responses will be sent to the response
+          handler. Otherwise, responses must be retrieved using get_response.
+         
+          By default, responses from the driver are retrieved in the sequence by
+          calling get_response.
+         
+          An alternative method is for the sequencer to call the response_handler
+          function with each response.
+        Args:
+            enable: 
+        """
         self.m_use_response_handler = enable
 
 
-    #  // Function: get_use_response_handler
-    #  //
-    #  // Returns the state of the use_response_handler bit.
-    #
     def get_use_response_handler(self):
+        """         
+          Function: get_use_response_handler
+         
+          Returns the state of the use_response_handler bit.
+
+        Returns:
+        """
         return self.m_use_response_handler
 
-    #  // Function: response_handler
-    #  //
-    #  // When the use_response_handler bit is set to 1, this virtual task is called
-    #  // by the sequencer for each response that arrives for this sequence.
-    #
     def response_handler(self, response):
+        """         
+          Function: response_handler
+         
+          When the use_response_handler bit is set to 1, this virtual task is called
+          by the sequencer for each response that arrives for this sequence.
+
+        Args:
+            response: 
+        """
         return
 
 
-    #  // Function: set_response_queue_error_report_disabled
-    #  //
-    #  // By default, if the self.response_queue overflows, an error is reported. The
-    #  // self.response_queue will overflow if more responses are sent to this sequence
-    #  // from the driver than get_response calls are made. Setting value to 0
-    #  // disables these errors, while setting it to 1 enables them.
-    #
     def set_response_queue_error_report_disabled(self, value):
+        """         
+          Function: set_response_queue_error_report_disabled
+         
+          By default, if the self.response_queue overflows, an error is reported. The
+          self.response_queue will overflow if more responses are sent to this sequence
+          from the driver than get_response calls are made. Setting value to 0
+          disables these errors, while setting it to 1 enables them.
+
+        Args:
+            value: 
+        """
         self.response_queue_error_report_disabled = value
 
-    #  // Function: get_response_queue_error_report_disabled
-    #  //
-    #  // When this bit is 0 (default value), error reports are generated when
-    #  // the response queue overflows. When this bit is 1, no such error
-    #  // reports are generated.
-    #
     def get_response_queue_error_report_disabled(self):
+        """         
+          Function: get_response_queue_error_report_disabled
+         
+          When this bit is 0 (default value), error reports are generated when
+          the response queue overflows. When this bit is 1, no such error
+          reports are generated.
+
+        Returns:
+        """
         return self.response_queue_error_report_disabled
 
-    #  // Function: set_response_queue_depth
-    #  //
-    #  // The default maximum depth of the response queue is 8. These method is used
-    #  // to examine or change the maximum depth of the response queue.
-    #  //
-    #  // Setting the response_queue_depth to -1 indicates an arbitrarily deep
-    #  // response queue.  No checking is done.
-    #
     def set_response_queue_depth(self, value):
+        """         
+          Function: set_response_queue_depth
+         
+          The default maximum depth of the response queue is 8. These method is used
+          to examine or change the maximum depth of the response queue.
+         
+          Setting the response_queue_depth to -1 indicates an arbitrarily deep
+          response queue.  No checking is done.
+
+        Args:
+            value: 
+        """
         self.response_queue_depth = value
 
-    #  // Function: get_response_queue_depth
-    #  //
-    #  // Returns the current depth setting for the response queue.
-    #
     def get_response_queue_depth(self):
+        """         
+          Function: get_response_queue_depth
+         
+          Returns the current depth setting for the response queue.
+
+        Returns:
+        """
         return self.response_queue_depth
 
-    #  // Function: clear_response_queue
-    #  //
-    #  // Empties the response queue for this sequence.
-    #
     def clear_response_queue(self):
+        """         
+          Function: clear_response_queue
+         
+          Empties the response queue for this sequence.
+
+        """
         self.response_queue.delete()
         self.m_resp_queue_event.set()
 
-    #  virtual function void put_base_response(input uvm_sequence_item response)
     def put_base_response(self, response):
+        """         
+         virtual function void put_base_response(input uvm_sequence_item response)
+        Args:
+            response: 
+        """
         if ((self.response_queue_depth == -1) or
                 (self.response_queue.size() < self.response_queue_depth)):
             self.response_queue.push_back(response)
@@ -1096,16 +1250,25 @@ class UVMSequenceBase(UVMSequenceItem):
         if self.response_queue_error_report_disabled == 0:
             uvm_report_error(self.get_full_name(), "Response queue overflow, response was dropped", UVM_NONE)
 
-    #  // Function- put_response
-    #  //
-    #  // Internal method.
-    #  virtual function void put_response (uvm_sequence_item response_item)
     def put_response(self, response_item):
+        """         
+          Function- put_response
+         
+          Internal method.
+         virtual function void put_response (uvm_sequence_item response_item)
+        Args:
+            response_item: 
+        """
         self.put_base_response(response_item)
 
-    #  // Function- get_base_response
-    #  virtual task get_base_response(output uvm_sequence_item response, input int transaction_id = -1)
     async def get_base_response(self, response, transaction_id=-1):
+        """         
+          Function- get_base_response
+         virtual task get_base_response(output uvm_sequence_item response, input int transaction_id = -1)
+        Args:
+            response: 
+            transaction_id: 
+        """
         queue_size = 0
         i = 0
 
@@ -1135,10 +1298,16 @@ class UVMSequenceBase(UVMSequenceItem):
     #  // Misc Internal methods
     #  //----------------------
 
-    #  // m_get_sqr_sequence_id
-    #  // ---------------------
-    #  function int m_get_sqr_sequence_id(int sequencer_id, bit update_sequence_id)
     def m_get_sqr_sequence_id(self, sequencer_id, update_sequence_id):
+        """         
+          m_get_sqr_sequence_id
+          ---------------------
+         function int m_get_sqr_sequence_id(int sequencer_id, bit update_sequence_id)
+        Args:
+            sequencer_id: 
+            update_sequence_id: 
+        Returns:
+        """
         if self.m_sqr_seq_ids.exists(sequencer_id):
             if update_sequence_id == 1:
                 self.set_sequence_id(self.m_sqr_seq_ids[sequencer_id])
@@ -1149,9 +1318,14 @@ class UVMSequenceBase(UVMSequenceItem):
         return -1
 
 
-    #  // m_set_sqr_sequence_id
-    #  // ---------------------
-    #  function void m_set_sqr_sequence_id(int sequencer_id, int sequence_id)
     def m_set_sqr_sequence_id(self, sequencer_id, sequence_id):
+        """         
+          m_set_sqr_sequence_id
+          ---------------------
+         function void m_set_sqr_sequence_id(int sequencer_id, int sequence_id)
+        Args:
+            sequencer_id: 
+            sequence_id: 
+        """
         self.m_sqr_seq_ids[sequencer_id] = sequence_id
         self.set_sequence_id(sequence_id)

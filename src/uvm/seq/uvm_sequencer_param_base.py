@@ -44,13 +44,18 @@ INFO_MSG1 = "Dropping response for sequence %0d, sequence not found.  Probable c
 class UVMSequencerParamBase(UVMSequencerBase):
 
 
-    #  // Function: new
-    #  //
-    #  // Creates and initializes an instance of this class using the normal
-    #  // constructor arguments for uvm_component: name is the name of the instance,
-    #  // and parent is the handle to the hierarchical parent, if any.
-    #  //
     def __init__(self, name, parent):
+        """         
+          Function: new
+         
+          Creates and initializes an instance of this class using the normal
+          constructor arguments for uvm_component: name is the name of the instance,
+          and parent is the handle to the hierarchical parent, if any.
+         
+        Args:
+            name: 
+            parent: 
+        """
         UVMSequencerBase.__init__(self, name, parent)
         self.m_last_req_buffer = UVMQueue()
         self.m_last_rsp_buffer = UVMQueue()
@@ -70,17 +75,23 @@ class UVMSequencerParamBase(UVMSequencerBase):
         self.sqr_rsp_analysis_fifo.print_enabled = 0
 
 
-    #  // Function: send_request
-    #  //
-    #  // The send_request function may only be called after a wait_for_grant call.
-    #  // This call will send the request item, t,  to the sequencer pointed to by
-    #  // sequence_ptr. The sequencer will forward it to the driver. If rerandomize
-    #  // is set, the item will be randomized before being sent to the driver.
-    #  //
-    #  extern virtual function void send_request(uvm_sequence_base sequence_ptr,
-    #                                            uvm_sequence_item t,
-    #                                            bit rerandomize = 0)
     def send_request(self, sequence_ptr, t, rerandomize = False):
+        """         
+          Function: send_request
+         
+          The send_request function may only be called after a wait_for_grant call.
+          This call will send the request item, t,  to the sequencer pointed to by
+          sequence_ptr. The sequencer will forward it to the driver. If rerandomize
+          is set, the item will be randomized before being sent to the driver.
+         
+         extern virtual function void send_request(uvm_sequence_base sequence_ptr,
+                                                   uvm_sequence_item t,
+                                                   bit rerandomize = 0)
+        Args:
+            sequence_ptr: 
+            t: 
+            rerandomize: 
+        """
         param_t = None  # REQ
 
         if sequence_ptr is None:
@@ -113,33 +124,39 @@ class UVMSequencerParamBase(UVMSequencerBase):
         self.grant_queued_locks()
 
 
-    #  // Function: get_current_item
-    #  //
-    #  // Returns the request_item currently being executed by the sequencer. If the
-    #  // sequencer is not currently executing an item, this method will return ~null~.
-    #  //
-    #  // The sequencer is executing an item from the time that get_next_item or peek
-    #  // is called until the time that get or item_done is called.
-    #  //
-    #  // Note that a driver that only calls get() will never show a current item,
-    #  // since the item is completed at the same time as it is requested.
-    #  //
     def get_current_item(self):
+        """         
+          Function: get_current_item
+         
+          Returns the request_item currently being executed by the sequencer. If the
+          sequencer is not currently executing an item, this method will return `null`.
+         
+          The sequencer is executing an item from the time that get_next_item or peek
+          is called until the time that get or item_done is called.
+         
+          Note that a driver that only calls get() will never show a current item,
+          since the item is completed at the same time as it is requested.
+         
+        Returns:
+        """
         t = []
         if (m_req_fifo.try_peek(t) == 0):
             return None
         return t[0]
 
 
-    #  //----------------
-    #  // Group: Requests
-    #  //----------------
-    #
-    #  // Function: get_num_reqs_sent
-    #  //
-    #  // Returns the number of requests that have been sent by this sequencer.
-    #  //
     def get_num_reqs_sent(self):
+        """         
+         ----------------
+          Group: Requests
+         ----------------
+
+          Function: get_num_reqs_sent
+         
+          Returns the number of requests that have been sent by this sequencer.
+         
+        Returns:
+        """
         return self.m_num_reqs_sent
 
 
@@ -152,12 +169,15 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  extern function void set_num_last_reqs(int unsigned max)
 
 
-    #  // Function: get_num_last_reqs
-    #  //
-    #  // Returns the size of the last requests buffer, as set by set_num_last_reqs.
-    #
-    #  extern function int unsigned get_num_last_reqs()
     def get_num_last_reqs(self):
+        """         
+          Function: get_num_last_reqs
+         
+          Returns the size of the last requests buffer, as set by set_num_last_reqs.
+
+         extern function int unsigned get_num_last_reqs()
+        Returns:
+        """
         return self.m_num_last_reqs
 
 
@@ -203,12 +223,15 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #
     #
 
-    #  // Function: get_num_rsps_received
-    #  //
-    #  // Returns the number of responses received thus far by this sequencer.
-    #
-    #  extern function int get_num_rsps_received()
     def get_num_rsps_received(self):
+        """         
+          Function: get_num_rsps_received
+         
+          Returns the number of responses received thus far by this sequencer.
+
+         extern function int get_num_rsps_received()
+        Returns:
+        """
         return self.m_num_rsps_received
 
 
@@ -222,13 +245,16 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  extern function void set_num_last_rsps(int unsigned max)
 
 
-    #  // Function: get_num_last_rsps
-    #  //
-    #  // Returns the max size of the last responses buffer, as set by
-    #  // set_num_last_rsps.
-    #  //
-    #  extern function int unsigned get_num_last_rsps()
     def get_num_last_rsps(self):
+        """         
+          Function: get_num_last_rsps
+         
+          Returns the max size of the last responses buffer, as set by
+          set_num_last_rsps.
+         
+         extern function int unsigned get_num_last_rsps()
+        Returns:
+        """
         return self.m_num_last_rsps
 
 
@@ -255,8 +281,12 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  // Internal methods and variables; do not use directly, not part of standard
 
 
-    #  /* local */ extern function void m_last_rsp_push_front(RSP item)
     def m_last_rsp_push_front(self, item):
+        """         
+         /* local */ extern function void m_last_rsp_push_front(RSP item)
+        Args:
+            item: 
+        """
         if self.m_num_last_rsps == 0:
             return
 
@@ -265,8 +295,12 @@ class UVMSequencerParamBase(UVMSequencerBase):
         #
         self.m_last_rsp_buffer.push_front(item)
 
-    #  /* local */ extern function void put_response (RSP t)
     def put_response(self, t):
+        """         
+         /* local */ extern function void put_response (RSP t)
+        Args:
+            t: 
+        """
         sequence_ptr = None  # #  uvm_sequence_base 
 
         if t is None:
@@ -294,13 +328,21 @@ class UVMSequencerParamBase(UVMSequencerBase):
             self.uvm_report_info("Sequencer", sv.sformatf(INFO_MSG1, t.get_sequence_id()))
         #endfunction
 
-    #  /* local */ extern virtual function void build_phase(uvm_phase phase)
     def build_phase(self, phase):
+        """         
+         /* local */ extern virtual function void build_phase(uvm_phase phase)
+        Args:
+            phase: 
+        """
         super().build_phase(phase)
         self.sqr_rsp_analysis_fifo.sequencer_ptr = self
 
-    #  /* local */ extern virtual function void connect_phase(uvm_phase phase)
     def connect_phase(self, phase):
+        """         
+         /* local */ extern virtual function void connect_phase(uvm_phase phase)
+        Args:
+            phase: 
+        """
         super().connect_phase(phase)
         self.rsp_export.connect(self.sqr_rsp_analysis_fifo.analysis_export)
 
@@ -309,8 +351,12 @@ class UVMSequencerParamBase(UVMSequencerBase):
 
     #  /* local */ extern virtual function void analysis_write(uvm_sequence_item t)
 
-    #  /* local */ extern function void m_last_req_push_front(REQ item)
     def m_last_req_push_front(self, item):
+        """         
+         /* local */ extern function void m_last_req_push_front(REQ item)
+        Args:
+            item: 
+        """
         if self.m_num_last_reqs == 0:
             return
 

@@ -43,14 +43,19 @@ FATAL_MSG1 = ("Item_done() called with no outstanding requests." +
 #                                   extends uvm_sequencer_param_base #(REQ, RSP)
 
 class UVMSequencer(UVMSequencerParamBase):
-    #  typedef uvm_sequencer #( REQ , RSP) this_type
-    #  // Function: new
-    #  //
-    #  // Standard component constructor that creates an instance of this class
-    #  // using the given ~name~ and ~parent~, if any.
-    #  //
-    #  extern function new (string name, uvm_component parent=null)
+
     def __init__(self, name, parent=None):
+        """      typedef uvm_sequencer #( REQ , RSP) this_type
+          Function: new
+         
+          Standard component constructor that creates an instance of this class
+          using the given `name` and `parent`, if any.
+         
+         extern function new (string name, uvm_component parent=null)
+        Args:
+            name: 
+            parent: 
+        """
         UVMSequencerParamBase.__init__(self, name, parent)
         #  // Variable: seq_item_export
         #  // This export provides access to this sequencer's implementation of the
@@ -93,8 +98,12 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Retrieves the next available item from a sequence.
     #  //
     #  extern virtual task          get_next_item (output REQ t)
-    
+
     async def get_next_item(self, t):
+        """             
+        Args:
+            t: 
+        """
         uvm_check_output_args([t])
         # req_item = None
 
@@ -120,12 +129,16 @@ class UVMSequencer(UVMSequencerParamBase):
     #  //
     #  extern virtual task          try_next_item (output REQ t)
 
-    #
-    #  // Function: item_done
-    #  // Indicates that the request is completed.
-    #  //
-    #  extern virtual function void item_done     (RSP item = null)
     def item_done(self, item=None):
+        """         
+
+          Function: item_done
+          Indicates that the request is completed.
+         
+         extern virtual function void item_done     (RSP item = null)
+        Args:
+            item: 
+        """
         t = []
         # Set flag to allow next get_next_item or peek to get a new sequence_item
         self.sequence_item_requested = False
@@ -149,16 +162,24 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Sends a response back to the sequence that issued the request.
     #  //
     #  extern virtual task          put           (RSP t)
-    
+
     async def put(self, t):
+        """             
+        Args:
+            t: 
+        """
         self.put_response(t)
         await Timer(0)
 
 
     #  // Task: get
     #  // Retrieves the next available item from a sequence.
-    
+
     async def get(self, t):
+        """             
+        Args:
+            t: 
+        """
         print("Called get in sequencer " + self.get_name())
         if self.sequence_item_requested == 0:
             await self.m_select_sequence()
@@ -171,8 +192,12 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Returns the current request item if one is in the FIFO.
     #  //
     #  extern task                  peek          (output REQ t)
-    
+
     async def peek(self, t):
+        """             
+        Args:
+            t: 
+        """
         if self.sequence_item_requested == 0:
             await self.m_select_sequence()
        

@@ -49,11 +49,15 @@ class UVMSequenceItem(UVMTransaction):
     issued1 = False
     issued2 = False
 
-    # Function: new
-    #
-    # The constructor method for UVMSequenceItem.
-    #
     def __init__(self, name="UVMSequenceItem"):
+        """         
+        Function: new
+
+        The constructor method for UVMSequenceItem.
+
+        Args:
+            name: 
+        """
         UVMTransaction.__init__(self, name)
         self.m_sequence_id = -1
         self.m_use_sequence_info = False
@@ -67,48 +71,60 @@ class UVMSequenceItem(UVMTransaction):
     def get_type_name(self):
         return "UVMSequenceItem"
 
-    #  // Function- set_sequence_id
     def set_sequence_id(self, id):
+        """         
+          Function- set_sequence_id
+        Args:
+            id: 
+        """
         self.m_sequence_id = id
 
-    #  // Function: get_sequence_id
-    #  //
-    #  // private
-    #  //
-    #  // Get_sequence_id is an internal method that is not intended for user code.
-    #  // The sequence_id is not a simple integer.  The get_transaction_id is meant
-    #  // for users to identify specific transactions.
-    #  //
-    #  // These methods allow access to the sequence_item sequence and transaction
-    #  // IDs. get_transaction_id and set_transaction_id are methods on the
-    #  // uvm_transaction base_class. These IDs are used to identify sequences to
-    #  // the sequencer, to route responses back to the sequence that issued a
-    #  // request, and to uniquely identify transactions.
-    #  //
-    #  // The sequence_id is assigned automatically by a sequencer when a sequence
-    #  // initiates communication through any sequencer calls (i.e. `uvm_do_*,
-    #  // wait_for_grant).  A sequence_id will remain unique for this sequence
-    #  // until it ends or it is killed.  However, a single sequence may have
-    #  // multiple valid sequence ids at any point in time.  Should a sequence
-    #  // start again after it has ended, it will be given a new unique sequence_id.
-    #  //
-    #  // The transaction_id is assigned automatically by the sequence each time a
-    #  // transaction is sent to the sequencer with the transaction_id in its
-    #  // default (-1) value.  If the user sets the transaction_id to any non-default
-    #  // value, that value will be maintained.
-    #  //
-    #  // Responses are routed back to this sequences based on sequence_id. The
-    #  // sequence may use the transaction_id to correlate responses with their
-    #  // requests.
     def get_sequence_id(self):
+        """         
+          Function: get_sequence_id
+         
+          private
+         
+          Get_sequence_id is an internal method that is not intended for user code.
+          The sequence_id is not a simple integer.  The get_transaction_id is meant
+          for users to identify specific transactions.
+         
+          These methods allow access to the sequence_item sequence and transaction
+          IDs. get_transaction_id and set_transaction_id are methods on the
+          uvm_transaction base_class. These IDs are used to identify sequences to
+          the sequencer, to route responses back to the sequence that issued a
+          request, and to uniquely identify transactions.
+         
+          The sequence_id is assigned automatically by a sequencer when a sequence
+          initiates communication through any sequencer calls (i.e. `uvm_do_*,
+          wait_for_grant).  A sequence_id will remain unique for this sequence
+          until it ends or it is killed.  However, a single sequence may have
+          multiple valid sequence ids at any point in time.  Should a sequence
+          start again after it has ended, it will be given a new unique sequence_id.
+         
+          The transaction_id is assigned automatically by the sequence each time a
+          transaction is sent to the sequencer with the transaction_id in its
+          default (-1) value.  If the user sets the transaction_id to any non-default
+          value, that value will be maintained.
+         
+          Responses are routed back to this sequences based on sequence_id. The
+          sequence may use the transaction_id to correlate responses with their
+          requests.
+        Returns:
+        """
         return (self.m_sequence_id)
     # endfunction
 
-    #  // Function: set_item_context
-    #  //
-    #  // Set the sequence and sequencer execution context for a sequence item
-    #
     def set_item_context(self, parent_seq, sequencer=None):
+        """         
+          Function: set_item_context
+         
+          Set the sequence and sequencer execution context for a sequence item
+
+        Args:
+            parent_seq: 
+            sequencer: 
+        """
         self.set_use_sequence_info(1)
         if parent_seq is not None:
             self.set_parent_sequence(parent_seq)
@@ -119,10 +135,14 @@ class UVMSequenceItem(UVMTransaction):
             self.set_depth(self.m_parent_sequence.get_depth() + 1)
         self.reseed()
 
-    #  // Function: set_use_sequence_info
-    #  //
-    #
     def set_use_sequence_info(self, value):
+        """         
+          Function: set_use_sequence_info
+         
+
+        Args:
+            value: 
+        """
         self.m_use_sequence_info = value
     #  endfunction
 
@@ -140,12 +160,16 @@ class UVMSequenceItem(UVMTransaction):
     #  endfunction
 
 
-    #  // Function: set_id_info
-    #  //
-    #  // Copies the sequence_id and transaction_id from the referenced item into
-    #  // the calling item.  This routine should always be used by drivers to
-    #  // initialize responses for future compatibility.
     def set_id_info(self, item):
+        """         
+          Function: set_id_info
+         
+          Copies the sequence_id and transaction_id from the referenced item into
+          the calling item.  This routine should always be used by drivers to
+          initialize responses for future compatibility.
+        Args:
+            item: 
+        """
         if item is None:
             uvm_report_fatal(self.get_full_name(), "set_id_info called with None parameter", UVM_NONE)
         self.set_transaction_id(item.get_transaction_id())
@@ -181,33 +205,43 @@ class UVMSequenceItem(UVMTransaction):
     #  endfunction
 
 
-    #  // Function: get_parent_sequence
-    #  //
-    #  // Returns a reference to the parent sequence of any sequence on which this
-    #  // method was called. If this is a parent sequence, the method returns ~None~.
-    #
     def get_parent_sequence(self):
+        """         
+          Function: get_parent_sequence
+         
+          Returns a reference to the parent sequence of any sequence on which this
+          method was called. If this is a parent sequence, the method returns `None`.
+
+        Returns:
+        """
         return (self.m_parent_sequence)
     #  endfunction
 
-    #  // Function: set_depth
-    #  //
-    #  // The depth of any sequence is calculated automatically.  However, the user
-    #  // may use  set_depth to specify the depth of a particular sequence. This
-    #  // method will override the automatically calculated depth, even if it is
-    #  // incorrect.
-    #
     def set_depth(self, value):
+        """         
+          Function: set_depth
+         
+          The depth of any sequence is calculated automatically.  However, the user
+          may use  set_depth to specify the depth of a particular sequence. This
+          method will override the automatically calculated depth, even if it is
+          incorrect.
+
+        Args:
+            value: 
+        """
         self.m_depth = value
     #  endfunction
 
-    #  // Function: get_depth
-    #  //
-    #  // Returns the depth of a sequence from its parent.  A  parent sequence will
-    #  // have a depth of 1, its child will have a depth  of 2, and its grandchild
-    #  // will have a depth of 3.
-    #
     def get_depth(self):
+        """         
+          Function: get_depth
+         
+          Returns the depth of a sequence from its parent.  A  parent sequence will
+          have a depth of 1, its child will have a depth  of 2, and its grandchild
+          will have a depth of 3.
+
+        Returns:
+        """
 
         # If depth has been set or calculated, then use that
         if self.m_depth != -1:
@@ -223,19 +257,25 @@ class UVMSequenceItem(UVMTransaction):
     #  endfunction
 
 
-    #  // Function: is_item
-    #  //
-    #  // This function may be called on any sequence_item or sequence. It will
-    #  // return 1 for items and 0 for sequences (which derive from this class).
     def is_item(self):
+        """         
+          Function: is_item
+         
+          This function may be called on any sequence_item or sequence. It will
+          return 1 for items and 0 for sequences (which derive from this class).
+        Returns:
+        """
         return True
     #  endfunction
 
-    #  // Function- get_full_name
-    #  //
-    #  // Internal method; overrides must follow same naming convention
-    #
     def get_full_name(self):
+        """         
+          Function- get_full_name
+         
+          Internal method; overrides must follow same naming convention
+
+        Returns:
+        """
         get_full_name = ""
         if self.m_parent_sequence is not None:
             get_full_name = self.m_parent_sequence.get_full_name() + "."
@@ -248,11 +288,14 @@ class UVMSequenceItem(UVMTransaction):
         return get_full_name
     #  endfunction
 
-    #  // Function: get_root_sequence_name
-    #  //
-    #  // Provides the name of the root sequence (the top-most parent sequence).
-    #
     def get_root_sequence_name(self):
+        """         
+          Function: get_root_sequence_name
+         
+          Provides the name of the root sequence (the top-most parent sequence).
+
+        Returns:
+        """
         #uvm_sequence_base root_seq
         root_seq = self.get_root_sequence()
         if root_seq is None:
@@ -261,17 +304,22 @@ class UVMSequenceItem(UVMTransaction):
             return root_seq.get_name()
     #  endfunction
 
-    #  // Function- m_set_p_sequencer
-    #  //
-    #  // Internal method
     def m_set_p_sequencer(self):
+        """         
+          Function- m_set_p_sequencer
+         
+          Internal method
+        """
         self.p_sequencer = self.m_sequencer
 
-    #  // Function: get_root_sequence
-    #  //
-    #  // Provides a reference to the root sequence (the top-most parent sequence).
-    #
     def get_root_sequence(self):
+        """         
+          Function: get_root_sequence
+         
+          Provides a reference to the root sequence (the top-most parent sequence).
+
+        Returns:
+        """
         root_seq_base = None  # UVMSequenceItem
         root_seq = None
         root_seq_base = self
@@ -284,11 +332,14 @@ class UVMSequenceItem(UVMTransaction):
                 return root_seq
         #  endfunction
 
-    #  // Function: get_sequence_path
-    #  //
-    #  // Provides a string of names of each sequence in the full hierarchical
-    #  // path. A "." is used as the separator between each sequence.
     def get_sequence_path(self):
+        """         
+          Function: get_sequence_path
+         
+          Provides a string of names of each sequence in the full hierarchical
+          path. A "." is used as the separator between each sequence.
+        Returns:
+        """
         this_item = None  # UVMSequenceItem
         seq_path = ""
         this_item = self

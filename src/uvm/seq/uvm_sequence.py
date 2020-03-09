@@ -38,29 +38,33 @@ from ..macros.uvm_message_defines import uvm_fatal
 
 
 class UVMSequence(UVMSequenceBase):
-    #  typedef uvm_sequencer_param_base #(REQ, RSP) sequencer_t
-    #
-    #  sequencer_t        param_sequencer
-    #
-    #  // Variable: req
-    #  //
-    #  // The sequence contains a field of the request type called req.  The user
-    #  // can use this field, if desired, or create another field to use.  The
-    #  // default ~do_print~ will print this field.
-    #  REQ                req
-    #
-    #  // Variable: rsp
-    #  //
-    #  // The sequence contains a field of the response type called rsp.  The user
-    #  // can use this field, if desired, or create another field to use.   The
-    #  // default ~do_print~ will print this field.
-    #  RSP                rsp
-    #
-    #  // Function: new
-    #  //
-    #  // Creates and initializes a new sequence object.
-    #
+
     def __init__(self, name="uvm_sequence"):
+        """      typedef uvm_sequencer_param_base #(REQ, RSP) sequencer_t
+
+         sequencer_t        param_sequencer
+
+          Variable: req
+         
+          The sequence contains a field of the request type called req.  The user
+          can use this field, if desired, or create another field to use.  The
+          default `do_print` will print this field.
+         REQ                req
+
+          Variable: rsp
+         
+          The sequence contains a field of the response type called rsp.  The user
+          can use this field, if desired, or create another field to use.   The
+          default `do_print` will print this field.
+         RSP                rsp
+
+          Function: new
+         
+          Creates and initializes a new sequence object.
+
+        Args:
+            name: 
+        """
         UVMSequenceBase.__init__(self, name)
         self.req = None
         self.rsp = None
@@ -122,8 +126,13 @@ class UVMSequence(UVMSequenceBase):
     #  // unless the error reporting is disabled via
     #  // set_response_queue_error_report_disabled.
     #  virtual task get_response(output RSP response, input int transaction_id = -1)
-    
+
     async def get_response(self, response, transaction_id=-1):
+        """             
+        Args:
+            response: 
+            transaction_id: 
+        """
         if response is None:
             uvm_fatal("RESP IS NONE", "response arg must be an empty list")
         rsp = []
@@ -131,21 +140,29 @@ class UVMSequence(UVMSequenceBase):
         response.append(rsp[0])
         #  endtask
 
-    #  // Function- put_response
-    #  //
-    #  // Internal method.
-    #
-    # virtual function void put_response(uvm_sequence_item response_item)
     def put_response(self, response_item):
+        """         
+          Function- put_response
+         
+          Internal method.
+
+        virtual function void put_response(uvm_sequence_item response_item)
+        Args:
+            response_item: 
+        """
         #response
         #if (!$cast(response, response_item)) begin
         #    uvm_report_fatal("PUTRSP", "Failure to cast response in put_response", UVM_NONE)
         self.put_base_response(response_item)
 
 
-    #  // Function- do_print
-    #  //
     def do_print(self, printer):
+        """         
+          Function- do_print
+         
+        Args:
+            printer: 
+        """
         super().do_print(printer)
         printer.print_object("req", self.req)
         printer.print_object("rsp", self.rsp)
