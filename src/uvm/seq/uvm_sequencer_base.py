@@ -70,14 +70,6 @@ class uvm_sequence_process_wrapper:
         self.seq = None
     #endclass : uvm_sequence_process_wrapper
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_sequencer_base
-#//
-#// Controls the flow of sequences, which generate the stimulus (sequence item
-#// transactions) that is passed on to drivers for execution.
-#//
-#//------------------------------------------------------------------------------
 
 #  typedef enum {SEQ_TYPE_REQ,
 #                SEQ_TYPE_LOCK,
@@ -89,6 +81,10 @@ SEQ_TYPE_GRAB = 2
 
 
 class UVMSequencerBase(UVMComponent):
+    """
+    Controls the flow of sequences, which generate the stimulus (sequence item
+    transactions) that is passed on to drivers for execution.
+    """ 
 
     g_request_id = 0
     g_sequence_id = 1
@@ -99,7 +95,6 @@ class UVMSequencerBase(UVMComponent):
     #  // Creates and initializes an instance of this class using the normal
     #  // constructor arguments for uvm_component: name is the name of the
     #  // instance, and parent is the handle to the hierarchical parent.
-    #  extern function new (string name, uvm_component parent)
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
         self.m_sequencer_id = UVMSequencerBase.g_sequencer_id
@@ -169,7 +164,8 @@ class UVMSequencerBase(UVMComponent):
     #  // The default implementation behaves like UVM_SEQ_ARB_FIFO, which returns the
     #  // entry at avail_sequences[0].
     #  //
-    #  extern virtual function integer user_priority_arbitration(integer avail_sequences[$])
+    def user_priority_arbitration(self, avail_sequences):
+        return avail_sequences[0]
 
 
     #  // Task: execute_item
@@ -179,9 +175,13 @@ class UVMSequencerBase(UVMComponent):
     #  // retrieve responses. If the driver returns responses, they will accumulate in the
     #  // sequencer, eventually causing response overflow unless
     #  // <uvm_sequence_base::set_response_queue_error_report_disabled> is called.
-    #
-    #  extern virtual task execute_item(uvm_sequence_item item)
-
+    async def execute_item(self, item):
+        seq = UVMSequenceBase()
+        item.set_sequencer(self)
+        item.set_parent_sequence(seq)
+        seq.set_sequencer(self)
+        await seq.start_item(item)
+        await seq.finish_item(item)
 
 
     #  // Function: start_phase_sequence
@@ -235,9 +235,6 @@ class UVMSequencerBase(UVMComponent):
     #  //|                                            this )
     #  //
     #  //
-    #
-    #  extern virtual function void start_phase_sequence(uvm_phase phase)
-    
     async def start_phase_sequence(self, phase):
         rp = UVMResourcePool.get()  # uvm_resource_pool
         rq = []  # uvm_resource_types::rsrc_q_t
@@ -315,7 +312,6 @@ class UVMSequencerBase(UVMComponent):
 
         cocotb.fork(self.c_seq_fork_proc(seq, phase))
         await Timer(0, "NS")
-        #endfunction
 
     
     async def _seq_fork_proc(self, seq, phase):
@@ -332,7 +328,6 @@ class UVMSequencerBase(UVMComponent):
         #join_none
 
 
-    #
     #  // Function: stop_phase_sequence
     #  //
     #  // Stop the default sequence for this phase, if any exists, and it
@@ -364,11 +359,6 @@ class UVMSequencerBase(UVMComponent):
     #  // sequence must call send_request without inserting any simulation delay
     #  // other than delta cycles.  The driver is currently waiting for the next
     #  // item to be sent via the send_request call.
-    #
-    #  extern virtual task wait_for_grant(uvm_sequence_base sequence_ptr,
-    #                                     int item_priority = -1,
-    #                                     bit lock_request = 0)
-    
     async def wait_for_grant(self, sequence_ptr, item_priority=-1, lock_request=0):
         req_s = None  # uvm_sequence_request
         my_seq_id = 0
@@ -413,9 +403,8 @@ class UVMSequencerBase(UVMComponent):
         # is only called after wait_for_grant.  This is not a complete check, since
         # requests might be done in parallel, but it will catch basic errors
         req_s.sequence_ptr.m_wait_for_grant_semaphore += 1
-        #endtask
 
-    #
+
     #  // Task: wait_for_item_done
     #  //
     #  // A sequence may optionally call wait_for_item_done.  This task will block
@@ -429,9 +418,6 @@ class UVMSequencerBase(UVMComponent):
     #  // has already issued an item_done or put for that transaction, then the call
     #  // will hang waiting for that specific transaction_id.
     #  //
-    #  extern virtual task wait_for_item_done(uvm_sequence_base sequence_ptr,
-    #                                         int transaction_id)
-    
     async def wait_for_item_done(self, sequence_ptr, transaction_id):
         sequence_id = sequence_ptr.m_get_sqr_sequence_id(self.m_sequencer_id, 1)
         self.m_wait_for_item_sequence_id = -1
@@ -458,7 +444,6 @@ class UVMSequencerBase(UVMComponent):
     #  // sequence to issue a lock before this sequence is able to issue a request
     #  // or lock.
     #  //
-    #  extern function bit is_blocked(uvm_sequence_base sequence_ptr)
     def is_blocked(self, sequence_ptr):
         if sequence_ptr is None:
             uvm_report_fatal("uvm_sequence_controller",
@@ -470,7 +455,7 @@ class UVMSequencerBase(UVMComponent):
                  (self.is_child(self.lock_list[i], sequence_ptr) == 0)):
                 return 1
         return 0
-        #endfunction
+
 
     #  // Function: has_lock
     #  //
@@ -576,7 +561,8 @@ class UVMSequencerBase(UVMComponent):
     #  //
     #  // The default user function specifies FIFO order.
     #  //
-    #  extern function void set_arbitration(UVM_SEQ_ARB_TYPE val)
+    def set_arbitration(self, val):
+        self.m_arbitration = val
 
 
     #  // Function: get_arbitration
@@ -585,18 +571,18 @@ class UVMSequencerBase(UVMComponent):
     #  // <set_arbitration> for a list of possible modes.
     #  //
     #  extern function UVM_SEQ_ARB_TYPE get_arbitration()
+    def get_arbitration(self):
+        return self.m_arbitration
+
 
     #  // Task: wait_for_sequences
     #  //
     #  // Waits for a sequence to have a new item available. Uses
     #  // <uvm_wait_for_nba_region> to give a sequence as much time as
     #  // possible to deliver an item before advancing time.
-    #
-    #  extern virtual task wait_for_sequences()
-    #// ------------------
-    
     async def wait_for_sequences(self):
         await uvm_wait_for_nba_region()
+
 
     #  // Function: send_request
     #  //
@@ -609,15 +595,20 @@ class UVMSequencerBase(UVMComponent):
     #  extern virtual function void send_request(uvm_sequence_base sequence_ptr,
     #                                            uvm_sequence_item t,
     #                                            bit rerandomize = 0)
-    #
+    def send_request(self, sequence_ptr, t, rerandomize=0):
+        return
+
+
     #  // Function: set_max_zero_time_wait_relevant_count
     #  //
     #  // Can be called at any time to change the maximum number of times
     #  // wait_for_relevant() can be called by the sequencer in zero time before
     #  // an error is declared.  The default maximum is 10.
     #  extern virtual function void set_max_zero_time_wait_relevant_count(int new_val)
-    #
-    #
+    def set_max_zero_time_wait_relevant_count(self, new_val):
+        self.m_max_zero_time_wait_relevant_count = new_val
+
+
     #  //----------------------------------------------------------------------------
     #  // INTERNAL METHODS - DO NOT CALL DIRECTLY, ONLY OVERLOAD IF VIRTUAL
     #  //----------------------------------------------------------------------------
@@ -682,7 +673,6 @@ class UVMSequencerBase(UVMComponent):
                 self.m_update_lists()
 
     #  extern protected task          m_select_sequence()
-    
     async def m_select_sequence(self):
         selected_sequence = 0
 
@@ -701,8 +691,7 @@ class UVMSequencerBase(UVMComponent):
             self.m_set_arbitration_completed(self.arb_sequence_q[selected_sequence].request_id)
             self.arb_sequence_q.delete(selected_sequence)
             self.m_update_lists()
-    #endtask
-    #
+
 
     #  extern protected function int  m_choose_next_request()
     #// When a driver requests an operation, this function must find the next
@@ -761,7 +750,7 @@ class UVMSequencerBase(UVMComponent):
             if (avail_sequences.size() == 1):
                 return avail_sequences[0]
 
-    #
+    # TODO finish this function
     #  //  Weighted Priority Distribution
     #  // Pick an available sequence based on weighted priorities of available sequences
     #  if (self.m_arbitration == UVM_SEQ_ARB_WEIGHTED):
@@ -833,7 +822,6 @@ class UVMSequencerBase(UVMComponent):
     #endfunction
 
     #  extern           task          m_wait_for_arbitration_completed(int request_id)
-    
     async def m_wait_for_arbitration_completed(self, request_id):
         lock_arb_size = 0
 
@@ -848,17 +836,13 @@ class UVMSequencerBase(UVMComponent):
             await wait(lambda : lock_arb_size != self.m_lock_arb_size,
                 self.m_event_value_changed)
 
-        #endtask
-        #
 
     #  extern           function void m_set_arbitration_completed(int request_id)
     def m_set_arbitration_completed(self, request_id):
         self.arb_completed[request_id] = 1
 
-    #
-    #
     #  extern local task m_lock_req(uvm_sequence_base sequence_ptr, bit lock)
-    #
+
     #
     #  // Task- m_unlock_req
     #  //
@@ -866,8 +850,7 @@ class UVMSequencerBase(UVMComponent):
     #  // will remove a lock for this sequence if it exists
     #
     #  extern function void m_unlock_req(uvm_sequence_base sequence_ptr)
-    #
-    #
+
 
     #  extern local function void remove_sequence_from_queues(uvm_sequence_base sequence_ptr)
     def remove_sequence_from_queues(self, sequence_ptr):
@@ -913,19 +896,28 @@ class UVMSequencerBase(UVMComponent):
         self.remove_sequence_from_queues(sequence_ptr)
 
     #  extern function void kill_sequence(uvm_sequence_base sequence_ptr)
-    #
+
+
     #  extern virtual function void analysis_write(uvm_sequence_item t)
-    #
-    #
-    #  extern virtual   function void   build()
+    def analysis_write(self, t):
+        return
+
+
     #  extern virtual   function void   build_phase(uvm_phase phase)
+    def build_phase(self, phase):
+        #  // For mantis 3402, the config stuff must be done in the deprecated
+        #  // build() phase in order for a manual build call to work. Both
+        #  // the manual build call and the config settings in build() are
+        #  // deprecated.
+        super().build_phase(phase)
+
+
+    #  extern virtual   function void   build()
     def build(self):
         dummy = 0
         UVMComponent.build(self)
 
     #  extern           function void   do_print (uvm_printer printer)
-    #
-    #
 
     #  extern virtual   function int    m_register_sequence(uvm_sequence_base sequence_ptr)
     def m_register_sequence(self, sequence_ptr):
@@ -1114,16 +1106,6 @@ class UVMSequencerBase(UVMComponent):
 #// IMPLEMENTATION
 #//------------------------------------------------------------------------------
 #
-#// build_phase
-#// -----------
-#
-#function void uvm_sequencer_base::build_phase(uvm_phase phase)
-#  // For mantis 3402, the config stuff must be done in the deprecated
-#  // build() phase in order for a manual build call to work. Both
-#  // the manual build call and the config settings in build() are
-#  // deprecated.
-#  super.build_phase(phase)
-#endfunction
 #
 #
 #
@@ -1179,12 +1161,6 @@ class UVMSequencerBase(UVMComponent):
 #
 #
 #
-#// user_priority_arbitration
-#// -------------------------
-#
-#function integer uvm_sequencer_base::user_priority_arbitration(integer avail_sequences[$])
-#  return avail_sequences[0]
-#endfunction
 #
 #
 #// m_get_seq_item_priority
@@ -1217,19 +1193,6 @@ class UVMSequencerBase(UVMComponent):
 #
 #
 #
-#// execute_item
-#// ------------
-#
-#task uvm_sequencer_base::execute_item(uvm_sequence_item item)
-#  uvm_sequence_base seq
-#
-#  seq = new()
-#  item.set_sequencer(this)
-#  item.set_parent_sequence(seq)
-#  seq.set_sequencer(this)
-#  seq.start_item(item)
-#  seq.finish_item(item)
-#endtask
 #
 #
 #
@@ -1409,55 +1372,11 @@ class UVMSequencerBase(UVMComponent):
 #  end
 #  return 0
 #endfunction
-#
-#
-#// set_arbitration
-#// ---------------
-#
-#function void uvm_sequencer_base::set_arbitration(UVM_SEQ_ARB_TYPE val)
-#  self.m_arbitration = val
-#endfunction
-#
-#
-#// get_arbitration
-#// ---------------
-#
-#function UVM_SEQ_ARB_TYPE uvm_sequencer_base::get_arbitration()
-#  return self.m_arbitration
-#endfunction
-#
-#
-#// analysis_write
-#// --------------
-#
-#function void uvm_sequencer_base::analysis_write(uvm_sequence_item t)
-#  return
-#endfunction
-#
-#
-#
-#// send_request
-#// ------------
-#
-#function void uvm_sequencer_base::send_request(uvm_sequence_base sequence_ptr,
-#                                               uvm_sequence_item t,
-#                                               bit rerandomize = 0)
-#  return
-#endfunction
-#
-#
-#// set_max_zero_time_wait_relevant_count
-#// ------------
-#
-#function void uvm_sequencer_base::set_max_zero_time_wait_relevant_count(int new_val)
-#   m_max_zero_time_wait_relevant_count = new_val
-#endfunction
+
 
 
 #//------------------------------------------------------------------------------
-#//
 #// Class- uvm_sequence_request
-#//
 #//------------------------------------------------------------------------------
 
 #class uvm_sequence_request

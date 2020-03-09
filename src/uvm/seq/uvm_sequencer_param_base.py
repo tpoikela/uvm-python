@@ -21,8 +21,10 @@
 #//------------------------------------------------------------------------------
 
 from .uvm_sequencer_base import UVMSequencerBase
+from .uvm_sequencer_analysis_fifo import UVMSequencerAnalysisFIFO
 from ..base.uvm_queue import UVMQueue
 from ..tlm1.uvm_tlm_fifos import UVMTLMFIFO
+from ..tlm1 import (UVMAnalysisExport)
 from ..macros.uvm_message_defines import uvm_fatal
 from ..base.uvm_globals import *
 
@@ -38,22 +40,16 @@ INFO_MSG1 = "Dropping response for sequence %0d, sequence not found.  Probable c
 #// request (REQ) and response (RSP) types.
 #//------------------------------------------------------------------------------
 
-#class uvm_sequencer_param_base #(type REQ = uvm_sequence_item,
-#                                 type RSP = REQ) extends uvm_sequencer_base
-#
 
 class UVMSequencerParamBase(UVMSequencerBase):
-    #  typedef uvm_sequencer_param_base #( REQ , RSP) this_type
-    #  typedef REQ req_type
-    #  typedef RSP rsp_type
-    #
+
+
     #  // Function: new
     #  //
     #  // Creates and initializes an instance of this class using the normal
     #  // constructor arguments for uvm_component: name is the name of the instance,
     #  // and parent is the handle to the hierarchical parent, if any.
     #  //
-    #  extern function new (string name, uvm_component parent)
     def __init__(self, name, parent):
         UVMSequencerBase.__init__(self, name, parent)
         self.m_last_req_buffer = UVMQueue()
@@ -69,9 +65,10 @@ class UVMSequencerParamBase(UVMSequencerBase):
         #self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo", None)
         self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo", self)  # uvm_tlm_fifo
         self.m_req_fifo.print_enabled = False
-        #  rsp_export              = new("rsp_export", this)
-        #  sqr_rsp_analysis_fifo   = new("sqr_rsp_analysis_fifo", this)
-        #  sqr_rsp_analysis_fifo.print_enabled = 0
+        self.rsp_export = UVMAnalysisExport("rsp_export", self)
+        self.sqr_rsp_analysis_fifo = UVMSequencerAnalysisFIFO("sqr_rsp_analysis_fifo", self)
+        self.sqr_rsp_analysis_fifo.print_enabled = 0
+
 
     #  // Function: send_request
     #  //
@@ -114,9 +111,8 @@ class UVMSequencerParamBase(UVMSequencerBase):
         self.m_num_reqs_sent += 1
         # Grant any locks as soon as possible
         self.grant_queued_locks()
-        #endfunction
 
-    #
+
     #  // Function: get_current_item
     #  //
     #  // Returns the request_item currently being executed by the sequencer. If the
@@ -128,15 +124,13 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  // Note that a driver that only calls get() will never show a current item,
     #  // since the item is completed at the same time as it is requested.
     #  //
-    #  function REQ get_current_item()
-    #    REQ t
-    #    if (m_req_fifo.try_peek(t) == 0)
-    #      return null
-    #    return t
-    #  endfunction
+    def get_current_item(self):
+        t = []
+        if (m_req_fifo.try_peek(t) == 0):
+            return None
+        return t[0]
 
-    #
-    #
+
     #  //----------------
     #  // Group: Requests
     #  //----------------
@@ -145,9 +139,10 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  //
     #  // Returns the number of requests that have been sent by this sequencer.
     #  //
-    #  extern function int get_num_reqs_sent()
-    #
-    #
+    def get_num_reqs_sent(self):
+        return self.m_num_reqs_sent
+
+
     #  // Function: set_num_last_reqs
     #  //
     #  // Sets the size of the last_requests buffer.  Note that the maximum buffer
@@ -155,15 +150,17 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  // buffer is set to 1024.  The default value is 1.
     #  //
     #  extern function void set_num_last_reqs(int unsigned max)
-    #
-    #
+
+
     #  // Function: get_num_last_reqs
     #  //
     #  // Returns the size of the last requests buffer, as set by set_num_last_reqs.
     #
     #  extern function int unsigned get_num_last_reqs()
-    #
-    #
+    def get_num_last_reqs(self):
+        return self.m_num_last_reqs
+
+
     #  // Function: last_req
     #  //
     #  // Returns the last request item by default.  If n is not 0, then it will get
@@ -205,13 +202,17 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  uvm_analysis_export #(RSP) rsp_export
     #
     #
+
     #  // Function: get_num_rsps_received
     #  //
     #  // Returns the number of responses received thus far by this sequencer.
     #
     #  extern function int get_num_rsps_received()
-    #
-    #
+    def get_num_rsps_received(self):
+        return self.m_num_rsps_received
+
+
+
     #  // Function: set_num_last_rsps
     #  //
     #  // Sets the size of the last_responses buffer.  The maximum buffer size is
@@ -219,16 +220,18 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #  // set to 1024.  The default value is 1.
     #  //
     #  extern function void set_num_last_rsps(int unsigned max)
-    #
-    #
+
+
     #  // Function: get_num_last_rsps
     #  //
     #  // Returns the max size of the last responses buffer, as set by
     #  // set_num_last_rsps.
     #  //
     #  extern function int unsigned get_num_last_rsps()
-    #
-    #
+    def get_num_last_rsps(self):
+        return self.m_num_last_rsps
+
+
     #  // Function: last_rsp
     #  //
     #  // Returns the last response item by default.  If n is not 0, then it will
@@ -247,11 +250,11 @@ class UVMSequencerParamBase(UVMSequencerBase):
     #
     #    return m_last_rsp_buffer[n]
     #  endfunction
-    #
-    #
-    #
+
+
     #  // Internal methods and variables; do not use directly, not part of standard
-    #
+
+
     #  /* local */ extern function void m_last_rsp_push_front(RSP item)
     def m_last_rsp_push_front(self, item):
         if self.m_num_last_rsps == 0:
@@ -292,8 +295,18 @@ class UVMSequencerParamBase(UVMSequencerBase):
         #endfunction
 
     #  /* local */ extern virtual function void build_phase(uvm_phase phase)
+    def build_phase(self, phase):
+        super().build_phase(phase)
+        self.sqr_rsp_analysis_fifo.sequencer_ptr = self
+
     #  /* local */ extern virtual function void connect_phase(uvm_phase phase)
+    def connect_phase(self, phase):
+        super().connect_phase(phase)
+        self.rsp_export.connect(self.sqr_rsp_analysis_fifo.analysis_export)
+
+
     #  /* local */ extern virtual function void do_print (uvm_printer printer)
+
     #  /* local */ extern virtual function void analysis_write(uvm_sequence_item t)
 
     #  /* local */ extern function void m_last_req_push_front(REQ item)
@@ -305,9 +318,6 @@ class UVMSequencerParamBase(UVMSequencerBase):
             self.m_last_req_buffer.pop_back()
 
         self.m_last_req_buffer.push_front(item)
-        #endfunction
-
-    #endclass
 
 
 #//------------------------------------------------------------------------------
@@ -324,27 +334,6 @@ class UVMSequencerParamBase(UVMSequencerBase):
 #endfunction
 #
 #
-#// connect_phase
-#// -------------
-#
-#function void uvm_sequencer_param_base::connect_phase(uvm_phase phase)
-#  super.connect_phase(phase)
-#  rsp_export.connect(sqr_rsp_analysis_fifo.analysis_export)
-#endfunction
-#
-#
-#// build_phase
-#// -----------
-#
-#function void uvm_sequencer_param_base::build_phase(uvm_phase phase)
-#  super.build_phase(phase)
-#  sqr_rsp_analysis_fifo.sequencer_ptr = this
-#endfunction
-#
-#
-#
-#
-#
 #
 #// analysis_write
 #// --------------
@@ -358,21 +347,6 @@ class UVMSequencerParamBase(UVMSequencerBase):
 #  put_response(response)
 #endfunction
 #
-#
-#// get_num_reqs_sent
-#// -----------------
-#
-#function int uvm_sequencer_param_base::get_num_reqs_sent()
-#  return m_num_reqs_sent
-#endfunction
-#
-#
-#// get_num_rsps_received
-#// ---------------------
-#
-#function int uvm_sequencer_param_base::get_num_rsps_received()
-#  return m_num_rsps_received
-#endfunction
 #
 #
 #// set_num_last_reqs
@@ -395,15 +369,6 @@ class UVMSequencerParamBase(UVMSequencerBase):
 #endfunction
 #
 #
-#// get_num_last_reqs
-#// -----------------
-#
-#function int unsigned uvm_sequencer_param_base::get_num_last_reqs()
-#  return m_num_last_reqs
-#endfunction
-#
-#
-#
 #
 #// set_num_last_rsps
 #// -----------------
@@ -423,15 +388,3 @@ class UVMSequencerParamBase(UVMSequencerBase):
 #  m_num_last_rsps = max
 #
 #endfunction
-#
-#
-#// get_num_last_rsps
-#// -----------------
-#
-#function int unsigned uvm_sequencer_param_base::get_num_last_rsps()
-#  return m_num_last_rsps
-#endfunction
-#
-#
-#
-#

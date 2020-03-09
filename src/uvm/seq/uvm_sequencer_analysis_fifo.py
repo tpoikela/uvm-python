@@ -2,6 +2,7 @@
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2010 Cadence Design Systems, Inc. 
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -18,21 +19,24 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-#
-#
-#class uvm_sequencer_analysis_fifo #(type RSP = uvm_sequence_item) extends uvm_tlm_fifo #(RSP);
-#
-#  uvm_analysis_imp #(RSP, uvm_sequencer_analysis_fifo #(RSP)) analysis_export;
-#  uvm_sequencer_base sequencer_ptr;
-#
-#  function new (string name, uvm_component parent = null);
-#    super.new(name, parent, 0);
-#    analysis_export = new ("analysis_export", this);
-#  endfunction
-#
-#  function void write(input RSP t);
-#    if (sequencer_ptr == null)
-#      uvm_report_fatal ("SEQRNULL", "The sequencer pointer is null when attempting a write", UVM_NONE);
-#    sequencer_ptr.analysis_write(t);
-#  endfunction // void
-#endclass
+
+from ..tlm1 import (UVMTLMFIFO, UVMAnalysisImp)
+from ..macros import (uvm_fatal)
+
+
+class UVMSequencerAnalysisFIFO(UVMTLMFIFO):
+
+    #  uvm_analysis_imp #(RSP, UVMSequencerAnalysisFIFO #(RSP)) analysis_export
+    #  uvm_sequencer_base sequencer_ptr
+
+
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent, 0)
+        self.analysis_export = UVMAnalysisImp("analysis_export", self)
+        self.sequencer_ptr = None
+
+
+    def write(self, t):
+        if self.sequencer_ptr is None:
+            uvm_fatal("SEQRNULL", "The sequencer pointer is None when attempting a write")
+        self.sequencer_ptr.analysis_write(t)
