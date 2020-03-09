@@ -42,10 +42,8 @@ class UVMObject(sv_obj):
 
     Group: Seeding
 
-    :cvar bool use_uvm_seeding:
-
-    This bit enables or disables the UVM seeding mechanism. It globally affects
-    the operation of the <reseed> method.
+    :cvar bool use_uvm_seeding: This bit enables or disables the UVM seeding
+    mechanism. It globally affects the operation of the `reseed` method.
 
     When enabled, UVM-based objects are seeded based on their type and full
     hierarchical name rather than allocation order. This improves random
@@ -95,11 +93,11 @@ class UVMObject(sv_obj):
 
     def get_name(self):
         """
-          Function: get_name
+        Returns the name of the object, as provided by the `name` argument in the
+        `new` constructor or `set_name` method.
 
-          Returns the name of the object, as provided by the `name` argument in the
-          `new` constructor or `set_name` method.
         Returns:
+            str: Name of the object.
         """
         return self.leaf_name
 
@@ -157,7 +155,7 @@ class UVMObject(sv_obj):
         .. code-block:: python
 
           class cmd(UVMObject):
-            type_id =None
+            type_id = None
 
             @classmethod
             def get_type(cls):
@@ -167,9 +165,9 @@ class UVMObject(sv_obj):
 
         .. code-block:: python
 
-            factory.set_type_override(cmd::get_type(),subcmd::get_type())
+            factory.set_type_override(cmd.get_type(), subcmd.get_type())
 
-        This function is implemented by the `uvm_*_utils macros, if employed.
+        This function is implemented by the uvm_*_utils functions, if employed.
 
         Returns:
         """
@@ -198,14 +196,13 @@ class UVMObject(sv_obj):
         .. code-block:: python
 
           class cmd (UVMObject):
-            typedef uvm_object_registry #(cmd) type_id
-            static function type_id get_type()
-              return type_id::get()
-            endfunction
-            virtual function type_id get_object_type()
-              return type_id::get()
-            endfunction
-          endclass
+            type_id = UVMObjectRegistry()
+            @classmethod
+            def type_id get_type(cls):
+              return type_id.get()
+            def get_object_type(self):
+              return cmd.type_id.get()
+
 
         This function is implemented by the `uvm_*_utils macros, if employed.
 
@@ -220,29 +217,31 @@ class UVMObject(sv_obj):
 
     def get_type_name(self):
         """
-          Function: get_type_name
+        Function: get_type_name
 
-          This function returns the type name of the object, which is typically the
-          type identifier enclosed in quotes. It is used for various debugging
-          functions in the library, and it is used by the factory for creating
-          objects.
+        This function returns the type name of the object, which is typically the
+        type identifier enclosed in quotes. It is used for various debugging
+        functions in the library, and it is used by the factory for creating
+        objects.
 
-          This function must be defined in every derived class.
+        This function must be defined in every derived class.
 
-          A typical implementation is as follows:
+        A typical implementation is as follows:
 
-         |  class mytype (UVMObject):
-         |    ...
-         |    const static string type_name = "mytype"
-         |
-         |    virtual function string get_type_name()
-         |      return type_name
-         |    endfunction
+        .. code-block:: python
+          class mytype (UVMObject):
+            ...
+            type_name = "mytype"
+
+            def get_type_name(self):
+              return my_type.type_name
+
 
           We define the `type_name` static variable to enable access to the type name
           without need of an object of the class, i.e., to enable access via the
           scope operator, ~mytype::type_name~.
         Returns:
+            str: Type name of the object.
         """
         return "<unknown>"
 
@@ -260,13 +259,14 @@ class UVMObject(sv_obj):
 
           class mytype (UVMObject):
             ...
-            virtual function uvm_object create(string name="")
-              mytype t = new(name)
+            def create(self, name=""):
+              mytype t = mytype(name)
               return t
 
         Args:
             name:
         Returns:
+            obj: New object.
         """
         return None
 
@@ -307,8 +307,7 @@ class UVMObject(sv_obj):
         class to format the output.
 
         Args:
-            printer:
-            None:
+            printer (UVMPrinter): Printer that is used in printing.
         """
         if printer is None:
             from .uvm_global_vars import uvm_default_printer
@@ -319,8 +318,6 @@ class UVMObject(sv_obj):
 
     def sprint(self, printer=None):
         """
-          Function: sprint
-
           The `sprint` method works just like the `print` method, except the output
           is returned in a string rather than displayed.
 
@@ -330,9 +327,9 @@ class UVMObject(sv_obj):
           class to format the output. The printer policy will manage all string
           concatenations and provide the string to `sprint` to return to the caller.
         Args:
-            printer:
-            None:
+            printer (UVMPrinter): Printer that is used in printing.
         Returns:
+            str: String representation of the object.
         """
         if printer is None:
             from .uvm_global_vars import uvm_default_printer
@@ -381,9 +378,9 @@ class UVMObject(sv_obj):
          | t.print()
          | uvm_report_info("Received",t.sprint())
 
-          See `uvm_printer` for information about the printer API.
+          See `UVMPrinter` for information about the printer API.
         Args:
-            printer:
+            printer (UVMPrinter): Printer that is used in printing.
         """
         return
 
