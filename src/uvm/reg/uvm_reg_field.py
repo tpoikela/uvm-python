@@ -45,20 +45,20 @@ KNOWN_ACCESSES = ["RO", "RW", "RC", "RS", "WC", "WS", "W1C", "W1S", "W1T",
         "W0C", "W0S", "W0T", "WRC", "WRS", "W1SRC", "W1CRS", "W0SRC", "W0CRS",
         "WSRC", "WCRS", "WO", "WOC", "WOS", "W1", "WO1"]
 
-#-----------------------------------------------------------------
-# CLASS: uvm_reg_field
-# Field abstraction class
-#
-# A field represents a set of bits that behave consistently
-# as a single entity.
-#
-# A field is contained within a single register, but may
-# have different access policies depending on the address map
-# use the access the register (thus the field).
-#-----------------------------------------------------------------
 
 
 class UVMRegField(UVMObject):
+    """
+    Field abstraction class
+
+    A field represents a set of bits that behave consistently
+    as a single entity.
+
+    A field is contained within a single register, but may
+    have different access policies depending on the address map
+    use the access the register (thus the field).
+    """
+
     m_max_size = 0
     m_policy_names = {}  # string -> bit
     m_predefined = False
@@ -167,12 +167,10 @@ class UVMRegField(UVMObject):
         #if not is_rand:
         #    self.value.rand_mode(0)
 
-    #endfunction: configure
-
     #---------------------
     # Group: Introspection
     #---------------------
-    #
+
     # Function: get_full_name
     #
     # Get the hierarchical name
@@ -292,7 +290,6 @@ class UVMRegField(UVMObject):
     #   // defined.
     #   // Returns FALSE otherwise but does not issue an error message.
     #   //
-    #   extern static function bit define_access(string name)
     @classmethod
     def define_access(cls, name):
         if not UVMRegField.m_predefined:
@@ -355,7 +352,6 @@ class UVMRegField(UVMObject):
     #   // If the field access contradicts the map's access value
     #   // (field access of WO, and map access value of RO, etc), the
     #   // method's return value is NOACCESS.
-
     def get_access(self, reg_map=None):
         field_access = self.m_access
         from .uvm_reg_map import UVMRegMap
@@ -399,7 +395,6 @@ class UVMRegField(UVMObject):
     #   // when written and read through the specified address ~map~,
     #   // is a built-in access policy.
     #   //
-    #   extern virtual function bit is_known_access(uvm_reg_map map = null)
     def is_known_access(self, _map=None):
         acc = self.get_access(_map)
         if acc in KNOWN_ACCESSES:
@@ -407,7 +402,6 @@ class UVMRegField(UVMObject):
         return 0
 
 
-    #   //
     #   // Function: set_volatility
     #   // Modify the volatility of the field to the specified one.
     #   //
@@ -415,11 +409,9 @@ class UVMRegField(UVMObject):
     #   // will make the register model diverge from the specification
     #   // that was used to create it.
     #   //
-    #   extern virtual function void set_volatility(bit volatile)
+    def set_volatility(self, volatile):
+        self.m_volatile = volatile
 
-    #function void uvm_reg_field::set_volatility(bit volatile)
-    #   self.m_volatile = volatile
-    #endfunction
 
     #   // Function: is_volatile
     #   // Indicates if the field value is volatile
@@ -432,11 +424,9 @@ class UVMRegField(UVMObject):
     #   // If FALSE, the value of the register is not modified between
     #   // consecutive accesses.
     #   //
-    #   extern virtual function bit is_volatile()
+    def is_volatile(self):
+        return self.m_volatile
 
-    #function bit uvm_reg_field::is_volatile()
-    #   return self.m_volatile
-    #endfunction
 
     #   //--------------
     #   // Group: Access
@@ -469,7 +459,6 @@ class UVMRegField(UVMObject):
     #   // the field.
     #   // Function: set
     #   //
-
     def set(self, value, fname="", lineno=0):
         mask = (1 << self.m_size)-1
         self.m_fname = fname
@@ -547,7 +536,7 @@ class UVMRegField(UVMObject):
             self.m_desired = value
         self.value = self.m_desired
 
-    #
+
     #   // Function: get
     #   //
     #   // Return the desired value of the field
@@ -853,8 +842,8 @@ class UVMRegField(UVMObject):
     def set_compare(self, check=UVM_CHECK):
         self.m_check = check
 
-    #
-    #
+
+
     #   // Function: get_compare
     #   //
     #   // Returns the compare policy for this field.
@@ -1015,17 +1004,16 @@ class UVMRegField(UVMObject):
         rw.fname = fname
         rw.lineno = lineno
         self.do_predict(rw, kind, be)
+        # predict = (rw.status == UVM_NOT_OK) ? 0 : 1
         if rw.status == UVM_NOT_OK:
             return 0
         return 1
-        # predict = (rw.status == UVM_NOT_OK) ? 0 : 1
-    #endfunction: predict
 
     def _get_mask(self):
         return ((1 << self.m_size)-1)
-    #
-    #
-    #
+
+
+
     #   /*local*/
     #   extern virtual function uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
     #                                                     uvm_reg_data_t wr_val,
@@ -1137,7 +1125,7 @@ class UVMRegField(UVMObject):
             XupdateX = self.m_desired
         XupdateX = XupdateX & self._get_mask()
         return XupdateX
-    #endfunction: XupdateX
+
 
     #   /*local*/
     #   extern function bit Xcheck_accessX (input uvm_reg_item rw,
@@ -1218,12 +1206,10 @@ class UVMRegField(UVMObject):
     def post_randomize(self):
         self.m_desired = self.value
 
-    #   extern function void post_randomize()
 
     #   //-----------------
     #   // Group: Callbacks
     #   //-----------------
-    #
     #   `uvm_register_cb(uvm_reg_field, uvm_reg_cbs)
 
     #   // Task: pre_write
@@ -1260,7 +1246,6 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_write (uvm_reg_item rw); endtask
-    
     async def post_write(self, rw):
         #await uvm_empty_delay()
         pass
@@ -1280,7 +1265,6 @@ class UVMRegField(UVMObject):
     #   // The registered callback methods are invoked after the invocation
     #   // of this method.
     #   //
-    
     async def pre_read(self, rw):
         #await uvm_empty_delay()
         pass
@@ -1299,7 +1283,6 @@ class UVMRegField(UVMObject):
     #   // of this method.
     #   //
     #   virtual task post_read  (uvm_reg_item rw); endtask
-    
     async def post_read(self, rw):
         #await uvm_empty_delay()
         pass
