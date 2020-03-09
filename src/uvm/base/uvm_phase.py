@@ -70,96 +70,6 @@ async def my_combine(events):
 # The following class are used to specify a phase and its implied functionality.
 #
 
-#------------------------------------------------------------------------------
-#
-# Class: uvm_phase
-#
-#------------------------------------------------------------------------------
-#
-# This base class defines everything about a phase: behavior, state, and context.
-#
-# To define behavior, it is extended by UVM or the user to create singleton
-# objects which capture the definition of what the phase does and how it does it.
-# These are then cloned to produce multiple nodes which are hooked up in a graph
-# structure to provide context: which phases follow which, and to hold the state
-# of the phase throughout its lifetime.
-# UVM provides default extensions of this class for the standard runtime phases.
-# VIP Providers can likewise extend this class to define the phase functor for a
-# particular component context as required.
-#
-# This base class defines everything about a phase: behavior, state, and context.
-#
-# To define behavior, it is extended by UVM or the user to create singleton
-# objects which capture the definition of what the phase does and how it does it.
-# These are then cloned to produce multiple nodes which are hooked up in a graph
-# structure to provide context: which phases follow which, and to hold the state
-# of the phase throughout its lifetime.
-# UVM provides default extensions of this class for the standard runtime phases.
-# VIP Providers can likewise extend this class to define the phase functor for a
-# particular component context as required.
-#
-# *Phase Definition*
-#
-# Singleton instances of those extensions are provided as package variables.
-# These instances define the attributes of the phase (not what state it is in)
-# They are then cloned into schedule nodes which point back to one of these
-# implementations, and calls its virtual task or function methods on each
-# participating component.
-# It is the base class for phase functors, for both predefined and
-# user-defined phases. Per-component overrides can use a customized imp.
-#
-# To create custom phases, do not extend uvm_phase directly: see the
-# three predefined extended classes below which encapsulate behavior for
-# different phase types: task, bottom-up function and top-down function.
-#
-# Extend the appropriate one of these to create a uvm_YOURNAME_phase class
-# (or YOURPREFIX_NAME_phase class) for each phase, containing the default
-# implementation of the new phase, which must be a uvm_component-compatible
-# delegate, and which may be a ~null~ implementation. Instantiate a singleton
-# instance of that class for your code to use when a phase handle is required.
-# If your custom phase depends on methods that are not in uvm_component, but
-# are within an extended class, then extend the base YOURPREFIX_NAME_phase
-# class with parameterized component class context as required, to create a
-# specialized functor which calls your extended component class methods.
-# This scheme ensures compile-safety for your extended component classes while
-# providing homogeneous base types for APIs and underlying data structures.
-#
-# *Phase Context*
-#
-# A schedule is a coherent group of one or more phase/state nodes linked
-# together by a graph structure, allowing arbitrary linear/parallel
-# relationships to be specified, and executed by stepping through them in
-# the graph order.
-# Each schedule node points to a phase and holds the execution state of that
-# phase, and has optional links to other nodes for synchronization.
-#
-# The main operations are: construct, add phases, and instantiate
-# hierarchically within another schedule.
-#
-# Structure is a DAG (Directed Acyclic Graph). Each instance is a node
-# connected to others to form the graph. Hierarchy is overlaid with self.m_parent.
-# Each node in the graph has zero or more successors, and zero or more
-# predecessors. No nodes are completely isolated from others. Exactly
-# one node has zero predecessors. This is the root node. Also the graph
-# is acyclic, meaning for all nodes in the graph, by following the forward
-# arrows you will never end up back where you started but you will eventually
-# reach a node that has no successors.
-#
-# *Phase State*
-#
-# A given phase may appear multiple times in the complete phase graph, due
-# to the multiple independent domain feature, and the ability for different
-# VIP to customize their own phase schedules perhaps reusing existing phases.
-# Each node instance in the graph maintains its own state of execution.
-#
-# *Phase Handle*
-#
-# Handles of this type uvm_phase are used frequently in the API, both by
-# the user, to access phasing-specific API, and also as a parameter to some
-# APIs. In many cases, the singleton phase handles can be
-# used (eg. <uvm_run_phase::get()>) in APIs. For those APIs that need to look
-# up that phase in the graph, this is done automatically.
-
 
 #------------------------------------------------------------------------------
 #
@@ -381,6 +291,7 @@ class UVMPhase(UVMObject):
     def get_phase_synced_event(self):
         return self.m_phase_synced_event
 
+
     def set_state(self, state):
         if state is None:
             raise Exception('Proper state not given. Must be ' + str(UVM_PHASE2STR))
@@ -392,8 +303,8 @@ class UVMPhase(UVMObject):
             self.m_phase_done_event.set()
         if self.m_state >= UVM_PHASE_SYNCING:
             self.m_phase_synced_event.set()
-    #
-    #
+
+
     #  //-------------
     #  // Group: State
     #  //-------------
@@ -407,7 +318,9 @@ class UVMPhase(UVMObject):
     #  //
     #  // Accessor to return the integer number of times this phase has executed
     #  //
-    #  extern function int get_run_count()
+    def get_run_count(self):
+        return self.m_run_count
+
 
     #  // Function: find_by_name
     #  //
@@ -1134,9 +1047,8 @@ class UVMPhase(UVMObject):
     #  endfunction
 
     #  // Provide the required per-component execution flow. Called by traverse()
-    #  virtual function void execute(uvm_component comp,
-    #                                 uvm_phase phase)
-    #  endfunction
+    def execute(self, comp, phase):
+        pass
 
     #
     #  // Implementation - Schedule
@@ -1190,8 +1102,6 @@ class UVMPhase(UVMObject):
         # remove ourselves from the list
         if self.get_name() != 'final':
             del pred_of_succ[self]
-    #endfunction
-
 
     
     async def m_wait_for_pred(self):
@@ -1233,7 +1143,6 @@ class UVMPhase(UVMObject):
         await Timer(0, "NS")
 
 
-    #
     #  // Implementation - Jumping
     #  //-------------------------
     #  local bit                m_jump_bkwd
@@ -1248,7 +1157,6 @@ class UVMPhase(UVMObject):
     #  // Implementation - Overall Control
     #  //---------------------------------
     #  local static mailbox #(uvm_phase) self.m_phase_hopper = new()
-    #
 
     # m_run_phases
     # ------------
@@ -1282,10 +1190,9 @@ class UVMPhase(UVMObject):
             await Timer(0)
             #0;  // let the process start running
 
+
     # execute_phase
     # -------------
-
-    
     async def execute_phase(self):
         task_phase = None
         state_chg = None
@@ -1567,6 +1474,7 @@ class UVMPhase(UVMObject):
             await Timer(0)
             uvm_debug(self, '_wait_all_predecessors_done', nn + '| after yield Timer(0)')
 
+
     async def _wait_phases_synced(self):
         events = []
         for phase in self.m_sync:
@@ -1583,12 +1491,9 @@ class UVMPhase(UVMObject):
     #//---------------------------------
     #// Implementation - Overall Control
     #//---------------------------------
-    #// wait_for_self_and_siblings_to_drop
-    #// -----------------------------
+
     #// This task loops until this phase instance and all its siblings, either
     #// sync'd or sharing a common successor, have all objections dropped.
-    #task uvm_phase::wait_for_self_and_siblings_to_drop() 
-    
     async def wait_for_self_and_siblings_to_drop(self):
         need_to_check_all = True
         top = None
@@ -1628,7 +1533,8 @@ class UVMPhase(UVMObject):
 
     #  extern function void kill()
     #  extern function void kill_successors()
-    #
+
+
     def convert2string(self):
         #return $sformatf("PHASE %s = %p",get_name(),this)
         par_str = 'null'
@@ -1671,76 +1577,7 @@ class UVMPhase(UVMObject):
 
     
     async def wait_for_criterion_for_end_phase(self, state_chg):
-        #yield Timer(0)
         await self._wait_for_all_dropped(state_chg)
-        # Now wait for one of three criterion for end-of-phase.
-        #        fork
-        #          begin // guard
-        #
-        #           fork
-        #             // JUMP
-        #             begin
-        #                wait (self.m_premature_end)
-        #                `UVM_PH_TRACE("PH/TRC/EXE/JUMP","PHASE EXIT ON JUMP REQUEST",this,UVM_DEBUG)
-        #             end
-        #
-        #             // TIMEOUT
-        #             begin
-        #               if (this.get_name() == "run") begin
-        #                  if (top.phase_timeout == 0)
-        #                    wait(top.phase_timeout != 0)
-        #                  if (UVMPhase.m_phase_trace)
-        #                    `UVM_PH_TRACE("PH/TRC/TO_WAIT", $sformatf("STARTING PHASE TIMEOUT WATCHDOG (timeout == %t)", top.phase_timeout), this, UVM_HIGH)
-        #                  `uvm_delay(top.phase_timeout)
-        #                  if ($time == `UVM_DEFAULT_TIMEOUT) begin
-        #                     if (UVMPhase.m_phase_trace)
-        #                       `UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG EXPIRED", this, UVM_LOW)
-        #                     foreach (m_executing_phases[p]) begin
-        #                        if ((p.phase_done != null) && (p.phase_done.get_objection_total() > 0)) begin
-        #                           if (UVMPhase.m_phase_trace)
-        #                             `UVM_PH_TRACE("PH/TRC/TIMEOUT/OBJCTN",
-        #                                           $sformatf("Phase '%s' has outstanding objections:\n%s", p.get_full_name(), p.phase_done.convert2string()),
-        #                                           this,
-        #                                           UVM_LOW)
-        #                        end
-        #                     end
-        #
-        #                     `uvm_fatal("PH_TIMEOUT",
-        #                                $sformatf("Default timeout of %0t hit, indicating a probable testbench issue",
-        #                                          `UVM_DEFAULT_TIMEOUT))
-        #                  end
-        #                  else begin
-        #                     if (UVMPhase.m_phase_trace)
-        #                       `UVM_PH_TRACE("PH/TRC/TIMEOUT", "PHASE TIMEOUT WATCHDOG EXPIRED", this, UVM_LOW)
-        #                     foreach (m_executing_phases[p]) begin
-        #                        if ((p.phase_done != null) && (p.phase_done.get_objection_total() > 0)) begin
-        #                           if (UVMPhase.m_phase_trace)
-        #                             `UVM_PH_TRACE("PH/TRC/TIMEOUT/OBJCTN",
-        #                                           $sformatf("Phase '%s' has outstanding objections:\n%s", p.get_full_name(), p.phase_done.convert2string()),
-        #                                           this,
-        #                                           UVM_LOW)
-        #                        end
-        #                     end
-        #
-        #                     `uvm_fatal("PH_TIMEOUT",
-        #                                $sformatf("Explicit timeout of %0t hit, indicating a probable testbench issue",
-        #                                          top.phase_timeout))
-        #                  end
-        #                  if (UVMPhase.m_phase_trace)
-        #                    `UVM_PH_TRACE("PH/TRC/EXE/3","PHASE EXIT TIMEOUT",this,UVM_DEBUG)
-        #               end // if (this.get_name() == "run")
-        #               else begin
-        #                  wait (0); // never unblock for non-run phase
-        #               end
-        #             end // if (UVMPhase.m_phase_trace)
-        #
-        #
-        #           join_any
-        #           disable fork
-        #
-        #          end
-        #
-        #        join // guard
 
     
     async def _wait_for_all_dropped(self, state_chg):
@@ -1823,7 +1660,7 @@ class UVMPhaseCb(UVMCallback):
     #
     def phase_state_change(self, phase, change):
         pass
-#endclass
+
 
 #------------------------------------------------------------------------------
 #
@@ -1832,6 +1669,7 @@ class UVMPhaseCb(UVMCallback):
 #------------------------------------------------------------------------------
 # Convenience type for the uvm_callbacks#(uvm_phase, uvm_phase_cb) class.
 #typedef uvm_callbacks#(uvm_phase, uvm_phase_cb) uvm_phase_cb_pool
+
 
     ##------------------------------------------------------------------------------
     ##                               IMPLEMENTATION
@@ -1853,12 +1691,6 @@ class UVMPhaseCb(UVMCallback):
     #
     #
     #
-    #// get_run_count
-    #// -------------
-    #
-    #function int uvm_phase::get_run_count()
-    #  return self.m_run_count
-    #endfunction
     #
     #// m_print_successors
     #// ------------------
@@ -2273,8 +2105,7 @@ class UVMPhaseCb(UVMCallback):
     #              UVM_DEBUG)
     #  end
 
+
 def ph2str(state):
     if state is not None:
         return UVM_PHASE2STR[state]
-
-
