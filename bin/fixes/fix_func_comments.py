@@ -22,10 +22,11 @@ from lib2to3.fixer_util import (Assign, Attr, Name, is_tuple, is_list, syms,
     String, Newline)
 from lib2to3.pygram import python_symbols
 
-DEBUG = True
+DEBUG = False
 
 re_empty = re.compile(r'^\s*$')
 re_dedent = re.compile(r'\n    #')
+re_dedent2 = re.compile(r'\n#')
 re_code_block = re.compile(r'^\s+#?\|')
 re_hash_only = re.compile('^\s+#$')
 
@@ -75,6 +76,8 @@ class FixFuncComments(fixer_base.BaseFix):
     def_name = ""
     func_name_seen = {}
 
+    class_stack = []
+
     func_args = {}
     func_return = {}
     func_raises = {}
@@ -106,13 +109,23 @@ class FixFuncComments(fixer_base.BaseFix):
             _debug("[match]: prefix is now |" + prefix + "|")
 
         if node.type == self.syms.classdef:
+            self.class_stack.pop()
             while len(self.comments) > 0:
                 self.restore_last_comment()
             self.reset_func_data()
             return False
 
+        # Ignore nested classes
+        if len(self.class_stack) > 1:
+            return False
+
         # We detect function start here
         if node.type == token.NAME:
+            if node.value == 'class':
+                # TODO extract name properly
+                self.class_stack.append('class')
+                if len(self.class_stack) > 1:
+                    print("WARN. Ignoring nested classes")
             if self.has_def is False and node.value == 'def':
                 _debug("[match]: NAME with value |" + node.value + "|")
                 self.has_def = True
@@ -155,12 +168,19 @@ class FixFuncComments(fixer_base.BaseFix):
             if self.check_node_type_for_comments(node) is False:
                 return False
 
+            # We're inside a function
             if self.has_def is True and self.has_name is True:
                 if (self.func_indent[self.def_name] != 0 and
                         not re_dedent.search(prefix)):
                     _debug("[match]: Discard prefix, no indent match: " +
                         str(prefix))
                     return False
+                if len(self.class_stack) == 0:
+                    if (self.func_indent[self.def_name] != 0 and
+                            not re_dedent2.search(prefix)):
+                        _debug("[match]: Discard prefix (not in class), no indent match: " +
+                            str(prefix))
+                        return False
 
             keep_prefix, comments = self.split_prefix(prefix)
             if len(comments) > 0:
