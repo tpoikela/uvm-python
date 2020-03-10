@@ -22,11 +22,7 @@
 #   permissions and limitations under the License.
 #    TODO add modifications
 #-------------------------------------------------------------
-#typedef class uvm_reg_cbs
 
-
-
-import cocotb
 
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import *
@@ -45,6 +41,11 @@ KNOWN_ACCESSES = ["RO", "RW", "RC", "RS", "WC", "WS", "W1C", "W1S", "W1T",
         "W0C", "W0S", "W0T", "WRC", "WRS", "W1SRC", "W1CRS", "W0SRC", "W0CRS",
         "WSRC", "WCRS", "WO", "WOC", "WOS", "W1", "WO1"]
 
+#constraint uvm_reg_field_valid {
+#   if (`UVM_REG_DATA_WIDTH > self.m_size) {
+#      value < (`UVM_REG_DATA_WIDTH'h1 << self.m_size)
+#   }
+#}
 
 
 class UVMRegField(UVMObject):
@@ -63,23 +64,16 @@ class UVMRegField(UVMObject):
     m_policy_names = {}  # string -> bit
     m_predefined = False
 
-    #constraint uvm_reg_field_valid {
-    #   if (`UVM_REG_DATA_WIDTH > self.m_size) {
-    #      value < (`UVM_REG_DATA_WIDTH'h1 << self.m_size)
-    #   }
-    #}
 
-    #----------------------
-    # Group: Initialization
-    #----------------------
 
-    # Function: new
-    #
-    # This method should not be used directly.
-    # The ~uvm_reg_field::type_id::create()~ factory method
-    # should be used instead.
     def __init__(self, name='uvm_reg_field'):
-        """ Create a new field instance """
+        """
+        This method should not be used directly.
+        The `UVMRegField.type_id.create()` factory method
+        should be used instead.
+        Args:
+            name: (str): Name of the register field
+        """
         UVMObject.__init__(self, name)
         self.value = 0  # Mirrored after randomize()
         self.m_mirrored = 0  # What we think is in the HW
@@ -101,30 +95,41 @@ class UVMRegField(UVMObject):
         if UVMRegField.m_predefined is False:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
 
-    # Function: configure
-    #
-    # Instance-specific configuration
-    #
-    # Specify the ~parent~ register of this field, its
-    # ~size~ in bits, the position of its least-significant bit
-    # within the register relative to the least-significant bit
-    # of the register, its ~access~ policy, volatility,
-    # "HARD" ~reset~ value,
-    # whether the field value is actually reset
-    # (the ~reset~ value is ignored if ~FALSE~),
-    # whether the field value may be randomized and
-    # whether the field is the only one to occupy a byte lane in the register.
-    #
-    # See <set_access> for a specification of the pre-defined
-    # field access policies.
-    #
-    # If the field access policy is a pre-defined policy and NOT one of
-    # "RW", "WRC", "WRS", "WO", "W1", or "WO1",
-    # the value of ~is_rand~ is ignored and the rand_mode() for the
-    # field instance is turned off since it cannot be written.
-    #
+
     def configure(self, parent, size, lsb_pos, access, volatile, reset, has_reset, is_rand,
             individually_accessible):
+        """
+        Instance-specific configuration
+
+        Specify the `parent` register of this field, its
+        `size` in bits, the position of its least-significant bit
+        within the register relative to the least-significant bit
+        of the register, its `access` policy, volatility,
+        "HARD" `reset` value,
+        whether the field value is actually reset
+        (the `reset` value is ignored if `FALSE`),
+        whether the field value may be randomized and
+        whether the field is the only one to occupy a byte lane in the register.
+
+        See `set_access` for a specification of the pre-defined
+        field access policies.
+
+        If the field access policy is a pre-defined policy and NOT one of
+        "RW", "WRC", "WRS", "WO", "W1", or "WO1",
+        the value of `is_rand` is ignored and the rand_mode() for the
+        field instance is turned off since it cannot be written.
+
+        Args:
+            parent (UVMReg): Parent register.
+            size (int): Size of the field in bits
+            lsb_pos (int): LSB position of the field.
+            access (str): Access of the fields (ie "RW" or "RO")
+            volatile (bool):
+            reset:
+            has_reset (bool):
+            is_rand (bool):
+            individually_accessible (bool)
+        """
         self.m_parent = parent
         if size == 0:
             uvm_report_error("RegModel",
@@ -171,99 +176,119 @@ class UVMRegField(UVMObject):
     # Group: Introspection
     #---------------------
 
-    # Function: get_full_name
-    #
-    # Get the hierarchical name
-    #
-    # Return the hierarchal name of this field
-    # The base of the hierarchical name is the root block.
-    #
     def get_full_name(self):
+        """
+        Get the hierarchical name
+
+        Return the hierarchal name of this field
+        The base of the hierarchical name is the root block.
+
+        Returns:
+            str: Full hier name (including parent's name)
+        """
         return self.m_parent.get_full_name() +  "." + self.get_name()
 
-    # Function: get_parent
-    # Get the parent register
-    #
     def get_parent(self):
+        """
+        Get the parent register
+
+        Returns:
+            UVMReg: Parent register of this field
+        """
         return self.m_parent
 
     def get_register(self):
+        """
+        Get the parent register
+
+        Returns:
+            UVMReg: Parent register of this field
+        """
         return self.m_parent
 
-    # Function: get_lsb_pos
-    #
-    # Return the position of the field
-    #
-    # Returns the index of the least significant bit of the field
-    # in the register that instantiates it.
-    # An offset of 0 indicates a field that is aligned with the
-    # least-significant bit of the register.
     def get_lsb_pos(self):
+        """
+        Return the position of the field
+
+        Returns the index of the least significant bit of the field
+        in the register that instantiates it.
+        An offset of 0 indicates a field that is aligned with the
+        least-significant bit of the register.
+
+        Returns:
+            int: LSB position of this field
+        """
         return self.m_lsb
 
-    #   // Function: get_n_bits
-    #   //
-    #   // Returns the width, in number of bits, of the field.
-    #   //
     def get_n_bits(self):
+        """
+           Returns the width, in number of bits, of the field.
+
+        Returns:
+            int: Width of the field in bits
+        """
         return self.m_size
 
-    #   //
-    #   // Function: get_max_size
-    #   // Returns the width, in number of bits, of the largest field.
-    #   //
-    #   extern static function int unsigned get_max_size()
     @classmethod
     def get_max_size(cls):
+        """
+        Function: get_max_size
+        Returns the width, in number of bits, of the largest field.
+
+        Returns:
+            int: Width of largest field
+        """
         return UVMRegField.m_max_size
 
 
-    #   // Function: set_access
-    #   //
-    #   // Modify the access policy of the field
-    #   //
-    #   // Modify the access policy of the field to the specified one and
-    #   // return the previous access policy.
-    #   //
-    #   // The pre-defined access policies are as follows.
-    #   // The effect of a read operation are applied after the current
-    #   // value of the field is sampled.
-    #   // The read operation will return the current value,
-    #   // not the value affected by the read operation (if any).
-    #   //
-    #   // "RO"       - W: no effect, R: no effect
-    #   // "RW"       - W: as-is, R: no effect
-    #   // "RC"       - W: no effect, R: clears all bits
-    #   // "RS"       - W: no effect, R: sets all bits
-    #   // "WRC"      - W: as-is, R: clears all bits
-    #   // "WRS"      - W: as-is, R: sets all bits
-    #   // "WC"       - W: clears all bits, R: no effect
-    #   // "WS"       - W: sets all bits, R: no effect
-    #   // "WSRC"     - W: sets all bits, R: clears all bits
-    #   // "WCRS"     - W: clears all bits, R: sets all bits
-    #   // "W1C"      - W: 1/0 clears/no effect on matching bit, R: no effect
-    #   // "W1S"      - W: 1/0 sets/no effect on matching bit, R: no effect
-    #   // "W1T"      - W: 1/0 toggles/no effect on matching bit, R: no effect
-    #   // "W0C"      - W: 1/0 no effect on/clears matching bit, R: no effect
-    #   // "W0S"      - W: 1/0 no effect on/sets matching bit, R: no effect
-    #   // "W0T"      - W: 1/0 no effect on/toggles matching bit, R: no effect
-    #   // "W1SRC"    - W: 1/0 sets/no effect on matching bit, R: clears all bits
-    #   // "W1CRS"    - W: 1/0 clears/no effect on matching bit, R: sets all bits
-    #   // "W0SRC"    - W: 1/0 no effect on/sets matching bit, R: clears all bits
-    #   // "W0CRS"    - W: 1/0 no effect on/clears matching bit, R: sets all bits
-    #   // "WO"       - W: as-is, R: error
-    #   // "WOC"      - W: clears all bits, R: error
-    #   // "WOS"      - W: sets all bits, R: error
-    #   // "W1"       - W: first one after ~HARD~ reset is as-is, other W have no effects, R: no effect
-    #   // "WO1"      - W: first one after ~HARD~ reset is as-is, other W have no effects, R: error
-    #   // "NOACCESS" - W: no effect, R: no effect
-    #   //
-    #   // It is important to remember that modifying the access of a field
-    #   // will make the register model diverge from the specification
-    #   // that was used to create it.
-    #   //
-    #   extern virtual function string set_access(string mode)
     def set_access(self, mode):
+        """
+        Modify the access policy of the field
+
+        Modify the access policy of the field to the specified one and
+        return the previous access policy.
+
+        The pre-defined access policies are as follows.
+        The effect of a read operation are applied after the current
+        value of the field is sampled.
+        The read operation will return the current value,
+        not the value affected by the read operation (if any)::
+
+            "RO"       - W: no effect, R: no effect
+            "RW"       - W: as-is, R: no effect
+            "RC"       - W: no effect, R: clears all bits
+            "RS"       - W: no effect, R: sets all bits
+            "WRC"      - W: as-is, R: clears all bits
+            "WRS"      - W: as-is, R: sets all bits
+            "WC"       - W: clears all bits, R: no effect
+            "WS"       - W: sets all bits, R: no effect
+            "WSRC"     - W: sets all bits, R: clears all bits
+            "WCRS"     - W: clears all bits, R: sets all bits
+            "W1C"      - W: 1/0 clears/no effect on matching bit, R: no effect
+            "W1S"      - W: 1/0 sets/no effect on matching bit, R: no effect
+            "W1T"      - W: 1/0 toggles/no effect on matching bit, R: no effect
+            "W0C"      - W: 1/0 no effect on/clears matching bit, R: no effect
+            "W0S"      - W: 1/0 no effect on/sets matching bit, R: no effect
+            "W0T"      - W: 1/0 no effect on/toggles matching bit, R: no effect
+            "W1SRC"    - W: 1/0 sets/no effect on matching bit, R: clears all bits
+            "W1CRS"    - W: 1/0 clears/no effect on matching bit, R: sets all bits
+            "W0SRC"    - W: 1/0 no effect on/sets matching bit, R: clears all bits
+            "W0CRS"    - W: 1/0 no effect on/clears matching bit, R: sets all bits
+            "WO"       - W: as-is, R: error
+            "WOC"      - W: clears all bits, R: error
+            "WOS"      - W: sets all bits, R: error
+            "W1"       - W: 1st W after ``HARD`` reset is as-is, other W have no effects, R: no effect
+            "WO1"      - W: 1st W after ``HARD`` reset is as-is, other W have no effects, R: error
+            "NOACCESS" - W: no effect, R: no effect
+
+        It is important to remember that modifying the access of a field
+        will make the register model diverge from the specification
+        that was used to create it.
+
+        Args:
+            mode (str): Mode from the list above.
+        Returns:
+        """
         set_access = self.m_access
         self.m_access = mode.upper()
         if self.m_access not in UVMRegField.m_policy_names:
@@ -273,39 +298,45 @@ class UVMRegField(UVMObject):
         return set_access
 
 
-    #   // Function: define_access
-    #   //
-    #   // Define a new access policy value
-    #   //
-    #   // Because field access policies are specified using string values,
-    #   // there is no way for SystemVerilog to verify if a specific access
-    #   // value is valid or not.
-    #   // To help catch typing errors, user-defined access values
-    #   // must be defined using this method to avoid begin reported as an
-    #   // invalid access policy.
-    #   //
-    #   // The name of field access policies are always converted to all uppercase.
-    #   //
-    #   // Returns TRUE if the new access policy was not previously
-    #   // defined.
-    #   // Returns FALSE otherwise but does not issue an error message.
-    #   //
     @classmethod
     def define_access(cls, name):
+        """
+        Define a new access policy value
+
+        Because field access policies are specified using string values,
+        there is no way for SystemVerilog to verify if a specific access
+        value is valid or not.
+        To help catch typing errors, user-defined access values
+        must be defined using this method to avoid begin reported as an
+        invalid access policy.
+
+        The name of field access policies are always converted to all uppercase.
+
+        Returns TRUE if the new access policy was not previously
+        defined.
+        Returns FALSE otherwise but does not issue an error message.
+
+        Args:
+            cls:
+            name:
+        Returns:
+            bool: False if name already exists, True on success.
+        """
         if not UVMRegField.m_predefined:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
 
         name = name.upper()
         if name in UVMRegField.m_policy_names:
-            return 0
+            return False
 
         UVMRegField.m_policy_names[name] = 1
         return True
 
-    #   local static bit m_predefined = m_predefine_policies()
-    #   extern local static function bit m_predefine_policies()
     @classmethod
     def m_predefine_policies(cls):
+        """
+        Internal function which creates the predefines policies.
+        """
         if UVMRegField.m_predefined is True:
             return True
         UVMRegField.m_predefined = True
@@ -336,23 +367,26 @@ class UVMRegField(UVMObject):
         UVMRegField.define_access("WO1")
         return True
 
-    #   // Function: get_access
-    #   //
-    #   // Get the access policy of the field
-    #   //
-    #   // Returns the current access policy of the field
-    #   // when written and read through the specified address ~map~.
-    #   // If the register containing the field is mapped in multiple
-    #   // address map, an address map must be specified.
-    #   // The access policy of a field from a specific
-    #   // address map may be restricted by the register's access policy in that
-    #   // address map.
-    #   // For example, a RW field may only be writable through one of
-    #   // the address maps and read-only through all of the other maps.
-    #   // If the field access contradicts the map's access value
-    #   // (field access of WO, and map access value of RO, etc), the
-    #   // method's return value is NOACCESS.
     def get_access(self, reg_map=None):
+        """
+           Get the access policy of the field
+
+           Returns the current access policy of the field
+           when written and read through the specified address `map`.
+           If the register containing the field is mapped in multiple
+           address map, an address map must be specified.
+           The access policy of a field from a specific
+           address map may be restricted by the register's access policy in that
+           address map.
+           For example, a RW field may only be writable through one of
+           the address maps and read-only through all of the other maps.
+           If the field access contradicts the map's access value
+           (field access of WO, and map access value of RO, etc), the
+           method's return value is NOACCESS.
+        Args:
+            reg_map:
+        Returns:
+        """
         field_access = self.m_access
         from .uvm_reg_map import UVMRegMap
         if reg_map == UVMRegMap.backdoor():
@@ -387,79 +421,96 @@ class UVMRegField(UVMObject):
                 + self.m_parent.get_rights(reg_map) + "'"))
         return field_access
 
-    #   // Function: is_known_access
-    #   //
-    #   // Check if access policy is a built-in one.
-    #   //
-    #   // Returns TRUE if the current access policy of the field,
-    #   // when written and read through the specified address ~map~,
-    #   // is a built-in access policy.
-    #   //
     def is_known_access(self, _map=None):
+        """
+           Check if access policy is a built-in one.
+
+           Returns TRUE if the current access policy of the field,
+           when written and read through the specified address `map`,
+           is a built-in access policy.
+
+        Args:
+            _map:
+        Returns:
+        """
         acc = self.get_access(_map)
         if acc in KNOWN_ACCESSES:
             return 1
         return 0
 
 
-    #   // Function: set_volatility
-    #   // Modify the volatility of the field to the specified one.
-    #   //
-    #   // It is important to remember that modifying the volatility of a field
-    #   // will make the register model diverge from the specification
-    #   // that was used to create it.
-    #   //
     def set_volatility(self, volatile):
+        """
+           Function: set_volatility
+           Modify the volatility of the field to the specified one.
+
+           It is important to remember that modifying the volatility of a field
+           will make the register model diverge from the specification
+           that was used to create it.
+
+        Args:
+            volatile:
+        """
         self.m_volatile = volatile
 
 
-    #   // Function: is_volatile
-    #   // Indicates if the field value is volatile
-    #   //
-    #   // UVM uses the IEEE 1685-2009 IP-XACT definition of "volatility".
-    #   // If TRUE, the value of the register is not predictable because it
-    #   // may change between consecutive accesses.
-    #   // This typically indicates a field whose value is updated by the DUT.
-    #   // The nature or cause of the change is not specified.
-    #   // If FALSE, the value of the register is not modified between
-    #   // consecutive accesses.
-    #   //
     def is_volatile(self):
+        """
+           Function: is_volatile
+           Indicates if the field value is volatile
+
+           UVM uses the IEEE 1685-2009 IP-XACT definition of "volatility".
+           If TRUE, the value of the register is not predictable because it
+           may change between consecutive accesses.
+           This typically indicates a field whose value is updated by the DUT.
+           The nature or cause of the change is not specified.
+           If FALSE, the value of the register is not modified between
+           consecutive accesses.
+
+        Returns:
+            bool: True if field volatile (see the definition above)
+        """
         return self.m_volatile
 
 
-    #   //--------------
-    #   // Group: Access
-    #   //--------------
-    #
-    #   //
-    #   // Set the desired value for this field
-    #   //
-    #   // It sets the desired value of the field to the specified ~value~
-    #   // modified by the field access policy.
-    #   // It does not actually set the value of the field in the design,
-    #   // only the desired value in the abstraction class.
-    #   // Use the <uvm_reg::update()> method to update the actual register
-    #   // with the desired value or the <uvm_reg_field::write()> method
-    #   // to actually write the field and update its mirrored value.
-    #   //
-    #   // The final desired value in the mirror is a function of the field access
-    #   // policy and the set value, just like a normal physical write operation
-    #   // to the corresponding bits in the hardware.
-    #   // As such, this method (when eventually followed by a call to
-    #   // <uvm_reg::update()>)
-    #   // is a zero-time functional replacement for the <uvm_reg_field::write()>
-    #   // method.
-    #   // For example, the desired value of a read-only field is not modified
-    #   // by this method and the desired value of a write-once field can only
-    #   // be set if the field has not yet been
-    #   // written to using a physical (for example, front-door) write operation.
-    #   //
-    #   // Use the <uvm_reg_field::predict()> to modify the mirrored value of
-    #   // the field.
-    #   // Function: set
-    #   //
     def set(self, value, fname="", lineno=0):
+        """
+          --------------
+           Group: Access
+          --------------
+
+
+           Set the desired value for this field
+
+           It sets the desired value of the field to the specified `value`
+           modified by the field access policy.
+           It does not actually set the value of the field in the design,
+           only the desired value in the abstraction class.
+           Use the `UVMReg.update` method to update the actual register
+           with the desired value or the `UVMRegField.write` method
+           to actually write the field and update its mirrored value.
+
+           The final desired value in the mirror is a function of the field access
+           policy and the set value, just like a normal physical write operation
+           to the corresponding bits in the hardware.
+           As such, this method (when eventually followed by a call to
+           `UVMReg.update`)
+           is a zero-time functional replacement for the `UVMRegField.write`
+           method.
+           For example, the desired value of a read-only field is not modified
+           by this method and the desired value of a write-once field can only
+           be set if the field has not yet been
+           written to using a physical (for example, front-door) write operation.
+
+           Use the `UVMRegField.predict` to modify the mirrored value of
+           the field.
+           Function: set
+
+        Args:
+            value:
+            fname:
+            lineno:
+        """
         mask = (1 << self.m_size)-1
         self.m_fname = fname
         self.m_lineno = lineno
@@ -537,64 +588,80 @@ class UVMRegField(UVMObject):
         self.value = self.m_desired
 
 
-    #   // Function: get
-    #   //
-    #   // Return the desired value of the field
-    #   //
-    #   // It does not actually read the value
-    #   // of the field in the design, only the desired value
-    #   // in the abstraction class. Unless set to a different value
-    #   // using the <set()>, the desired value
-    #   // and the mirrored value are identical.
-    #   //
-    #   // Use the <uvm_reg_field::read()> or <uvm_reg_field::peek()>
-    #   // method to get the actual field value.
-    #   //
-    #   // If the field is write-only, the desired/mirrored
-    #   // value is the value last written and assumed
-    #   // to reside in the bits implementing it.
-    #   // Although a physical read operation would something different,
-    #   // the returned value is the actual content.
     def get(self, fname="", lineno=0):
+        """
+           Function: get
+
+           Return the desired value of the field
+
+           It does not actually read the value
+           of the field in the design, only the desired value
+           in the abstraction class. Unless set to a different value
+           using the `UVMRegField.set`, the desired value
+           and the mirrored value are identical.
+
+           Use the `UVMRegField.read` or `UVMRegField.peek`
+           method to get the actual field value.
+
+           If the field is write-only, the desired/mirrored
+           value is the value last written and assumed
+           to reside in the bits implementing it.
+           Although a physical read operation would something different,
+           the returned value is the actual content.
+        Args:
+            fname:
+            lineno:
+        Returns:
+        """
         self.m_fname = fname
         self.m_lineno = lineno
         return self.m_desired
 
-    #
-    #   // Function: get_mirrored_value
-    #   //
-    #   // Return the mirrored value of the field
-    #   //
-    #   // It does not actually read the value of the field in the design, only the mirrored value
-    #   // in the abstraction class.
-    #   //
-    #   // If the field is write-only, the desired/mirrored
-    #   // value is the value last written and assumed
-    #   // to reside in the bits implementing it.
-    #   // Although a physical read operation would something different,
-    #   // the returned value is the actual content.
-    #   //
     def get_mirrored_value(self, fname="", lineno=0):
+        """
+
+           Function: get_mirrored_value
+
+           Return the mirrored value of the field
+
+           It does not actually read the value of the field in the design, only the mirrored value
+           in the abstraction class.
+
+           If the field is write-only, the desired/mirrored
+           value is the value last written and assumed
+           to reside in the bits implementing it.
+           Although a physical read operation would something different,
+           the returned value is the actual content.
+
+        Args:
+            fname:
+            lineno:
+        Returns:
+        """
         self.m_fname = fname
         self.m_lineno = lineno
         return self.m_mirrored
 
-    #   // Function: reset
-    #   //
-    #   // Reset the desired/mirrored value for this field.
-    #   //
-    #   // It sets the desired and mirror value of the field
-    #   // to the reset event specified by ~kind~.
-    #   // If the field does not have a reset value specified for the
-    #   // specified reset ~kind~ the field is unchanged.
-    #   //
-    #   // It does not actually reset the value of the field in the design,
-    #   // only the value mirrored in the field abstraction class.
-    #   //
-    #   // Write-once fields can be modified after
-    #   // a "HARD" reset operation.
-    #   //
     def reset(self, kind = "HARD"):
+        """
+           Function: reset
+
+           Reset the desired/mirrored value for this field.
+
+           It sets the desired and mirror value of the field
+           to the reset event specified by `kind`.
+           If the field does not have a reset value specified for the
+           specified reset `kind` the field is unchanged.
+
+           It does not actually reset the value of the field in the design,
+           only the value mirrored in the field abstraction class.
+
+           Write-once fields can be modified after
+           a "HARD" reset operation.
+
+        Args:
+            kind:
+        """
         if not kind in self.m_reset:
             return
         self.m_mirrored = self.m_reset[kind]
@@ -603,63 +670,81 @@ class UVMRegField(UVMObject):
         if kind == "HARD":
             self.m_written  = False
 
-    #
-    #   // Function: get_reset
-    #   //
-    #   // Get the specified reset value for this field
-    #   //
-    #   // Return the reset value for this field
-    #   // for the specified reset ~kind~.
-    #   // Returns the current field value is no reset value has been
-    #   // specified for the specified reset event.
-    #   //
     def get_reset(self, kind="HARD"):
+        """
+
+           Function: get_reset
+
+           Get the specified reset value for this field
+
+           Return the reset value for this field
+           for the specified reset `kind`.
+           Returns the current field value is no reset value has been
+           specified for the specified reset event.
+
+        Args:
+            kind:
+        Returns:
+        """
         if not kind in self.m_reset:
             return self.m_desired
         return self.m_reset[kind]
 
-    #
-    #
-    #   // Function: has_reset
-    #   //
-    #   // Check if the field has a reset value specified
-    #   //
-    #   // Return TRUE if this field has a reset value specified
-    #   // for the specified reset ~kind~.
-    #   // If ~delete~ is TRUE, removes the reset value, if any.
-    #   //
+
     def has_reset(self, kind="HARD", delete=False):
+        """
+           Function: has_reset
+
+           Check if the field has a reset value specified
+
+           Return TRUE if this field has a reset value specified
+           for the specified reset `kind`.
+           If `delete` is TRUE, removes the reset value, if any.
+
+        Args:
+            kind:
+            delete:
+        Returns:
+        """
         if kind not in self.m_reset:
             return False
         if delete:
             del self.m_reset[kind]
         return True
 
-    #   // Function: set_reset
-    #   //
-    #   // Specify or modify the reset value for this field
-    #   //
-    #   // Specify or modify the reset value for this field corresponding
-    #   // to the cause specified by ~kind~.
-    #   //
     def set_reset(self, value,kind="HARD"):
+        """
+           Function: set_reset
+
+           Specify or modify the reset value for this field
+
+           Specify or modify the reset value for this field corresponding
+           to the cause specified by `kind`.
+
+        Args:
+            value:
+            kind:
+        """
         self.m_reset[kind] = value & ((1 << self.m_size) - 1)
 
-    #   // Function: needs_update
-    #   //
-    #   // Check if the abstract model contains different desired and mirrored values.
-    #   //
-    #   // If a desired field value has been modified in the abstraction class
-    #   // without actually updating the field in the DUT,
-    #   // the state of the DUT (more specifically what the abstraction class
-    #   // ~thinks~ the state of the DUT is) is outdated.
-    #   // This method returns TRUE
-    #   // if the state of the field in the DUT needs to be updated
-    #   // to match the desired value.
-    #   // The mirror values or actual content of DUT field are not modified.
-    #   // Use the <uvm_reg::update()> to actually update the DUT field.
-    #   //
     def needs_update(self):
+        """
+           Function: needs_update
+
+           Check if the abstract model contains different desired and mirrored values.
+
+           If a desired field value has been modified in the abstraction class
+           without actually updating the field in the DUT,
+           the state of the DUT (more specifically what the abstraction class
+           `thinks` the state of the DUT is) is outdated.
+           This method returns TRUE
+           if the state of the field in the DUT needs to be updated
+           to match the desired value.
+           The mirror values or actual content of DUT field are not modified.
+           Use the `UVMReg.update` to actually update the DUT field.
+
+        Returns:
+        """
         return (self.m_mirrored != self.m_desired) or self.m_volatile
 
     #
@@ -678,7 +763,7 @@ class UVMRegField(UVMObject):
     #   // the field through a physical access is mimicked. For
     #   // example, read-only bits in the field will not be written.
     #   //
-    #   // The mirrored value will be updated using the <uvm_reg_field::predict()>
+    #   // The mirrored value will be updated using the `UVMRegField.predict`
     #   // method.
     #   //
     #   // If a front-door access is used, and
@@ -720,7 +805,7 @@ class UVMRegField(UVMObject):
     #   // the field through a physical access is mimicked. For
     #   // example, clear-on-read bits in the field will be set to zero.
     #   //
-    #   // The mirrored value will be updated using the <uvm_reg_field::predict()>
+    #   // The mirrored value will be updated using the `UVMRegField.predict`
     #   // method.
     #   //
     #   // If a front-door access is used, and
@@ -757,7 +842,7 @@ class UVMRegField(UVMObject):
     #   // in a best-effort not to modify the value of the other fields in the
     #   // register.
     #   //
-    #   // The mirrored value will be updated using the <uvm_reg_field::predict()>
+    #   // The mirrored value will be updated using the `UVMRegField.predict`
     #   // method.
     #   //
     #   extern virtual task poke  (output uvm_status_e       status,
@@ -782,7 +867,7 @@ class UVMRegField(UVMObject):
     #   //
     #   // The entire containing register is peeked
     #   // and the mirrored value of the other fields in the register
-    #   // are updated using the <uvm_reg_field::predict()> method.
+    #   // are updated using the `UVMRegField.predict` method.
     #   //
     #   //
     #   extern virtual task peek  (output uvm_status_e       status,
@@ -831,24 +916,31 @@ class UVMRegField(UVMObject):
     #
     #
 
-    #   // Function: set_compare
-    #   //
-    #   // Sets the compare policy during a mirror update.
-    #   // The field value is checked against its mirror only when both the
-    #   // ~check~ argument in <uvm_reg_block::mirror>, <uvm_reg::mirror>,
-    #   // or <uvm_reg_field::mirror> and the compare policy for the
-    #   // field is <UVself.m_check>.
-    #   //
     def set_compare(self, check=UVM_CHECK):
+        """
+           Function: set_compare
+
+           Sets the compare policy during a mirror update.
+           The field value is checked against its mirror only when both the
+           `check` argument in <uvm_reg_block::mirror>, `UVMReg.mirror`,
+           or <uvm_reg_field::mirror> and the compare policy for the
+           field is <UVself.m_check>.
+
+        Args:
+            check:
+        """
         self.m_check = check
 
 
 
-    #   // Function: get_compare
-    #   //
-    #   // Returns the compare policy for this field.
-    #   //
     def get_compare(self):
+        """
+           Function: get_compare
+
+           Returns the compare policy for this field.
+
+        Returns:
+        """
         return self.m_check
 
     #   // Function: is_indv_accessible
@@ -962,41 +1054,50 @@ class UVMRegField(UVMObject):
     #
     #endfunction
 
-    #
-    #   // Function: predict
-    #   //
-    #   // Update the mirrored and desired value for this field.
-    #   //
-    #   // Predict the mirror and desired value of the field based on the specified
-    #   // observed ~value~ on a bus using the specified address ~map~.
-    #   //
-    #   // If ~kind~ is specified as <UVM_PREDICT_READ>, the value
-    #   // was observed in a read transaction on the specified address ~map~ or
-    #   // backdoor (if ~path~ is <UVM_BACKDOOR>).
-    #   // If ~kind~ is specified as <UVM_PREDICT_WRITE>, the value
-    #   // was observed in a write transaction on the specified address ~map~ or
-    #   // backdoor (if ~path~ is <UVM_BACKDOOR>).
-    #   // If ~kind~ is specified as <UVM_PREDICT_DIRECT>, the value
-    #   // was computed and is updated as-is, without regard to any access policy.
-    #   // For example, the mirrored value of a read-only field is modified
-    #   // by this method if ~kind~ is specified as <UVM_PREDICT_DIRECT>.
-    #   //
-    #   // This method does not allow an update of the mirror (or desired)
-    #   // when the register containing this field is busy executing
-    #   // a transaction because the results are unpredictable and
-    #   // indicative of a race condition in the testbench.
-    #   //
-    #   // Returns TRUE if the prediction was successful.
-    #   //
-    #function bit uvm_reg_field::predict (uvm_reg_data_t    value,
-    #                                     uvm_reg_byte_en_t be = -1,
-    #                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-    #                                     uvm_path_e        path = UVM_FRONTDOOR,
-    #                                     uvm_reg_map       map = null,
-    #                                     string            fname = "",
-    #                                     int               lineno = 0)
+
     def predict(self, value, be=-1, kind=UVM_PREDICT_DIRECT, path=UVM_FRONTDOOR,
             _map=None, fname="", lineno=0):
+        """
+        Update the mirrored and desired value for this field.
+
+        Predict the mirror and desired value of the field based on the specified
+        observed `value` on a bus using the specified address `map`.
+
+        If `kind` is specified as `UVM_PREDICT_READ`, the value
+        was observed in a read transaction on the specified address `map` or
+        backdoor (if `path` is `UVM_BACKDOOR`).
+        If `kind` is specified as `UVM_PREDICT_WRITE`, the value
+        was observed in a write transaction on the specified address `map` or
+        backdoor (if `path` is `UVM_BACKDOOR`).
+        If `kind` is specified as `UVM_PREDICT_DIRECT`, the value
+        was computed and is updated as-is, without regard to any access policy.
+        For example, the mirrored value of a read-only field is modified
+        by this method if `kind` is specified as `UVM_PREDICT_DIRECT`.
+
+        This method does not allow an update of the mirror (or desired)
+        when the register containing this field is busy executing
+        a transaction because the results are unpredictable and
+        indicative of a race condition in the testbench.
+
+        Returns TRUE if the prediction was successful.
+
+        #function bit uvm_reg_field::predict (uvm_reg_data_t    value,
+                                            uvm_reg_byte_en_t be = -1,
+                                            uvm_predict_e     kind = UVM_PREDICT_DIRECT,
+                                            uvm_path_e        path = UVM_FRONTDOOR,
+                                            uvm_reg_map       map = null,
+                                            string            fname = "",
+                                            int               lineno = 0)
+        Args:
+            value:
+            be (int): Byte-enable
+            kind:
+            path: 
+            _map (UVMRegMap):
+            fname (str):
+            lineno (int):
+        Returns:
+        """
         rw = UVMRegItem()
         rw.value[0] = value
         rw.path = path
@@ -1014,11 +1115,18 @@ class UVMRegField(UVMObject):
 
 
 
-    #   /*local*/
-    #   extern virtual function uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
-    #                                                     uvm_reg_data_t wr_val,
-    #                                                     uvm_reg_map    map)
     def XpredictX(self, cur_val, wr_val, _map):
+        """
+          /*local*/
+          extern virtual function uvm_reg_data_t XpredictX (uvm_reg_data_t cur_val,
+                                                            uvm_reg_data_t wr_val,
+                                                            uvm_reg_map    map)
+        Args:
+            cur_val:
+            wr_val:
+            _map:
+        Returns:
+        """
         mask = self._get_mask()
         acc = self.get_access(_map)
         #   case (get_access(map))
@@ -1088,8 +1196,11 @@ class UVMRegField(UVMObject):
         #endfunction: XpredictX
 
 
-    #// XupdateX
     def XupdateX(self):
+        """
+        XupdateX
+        Returns:
+        """
         #   Figure out which value must be written to get the desired value
         #   given what we think is the current value in the hardware
         XupdateX = self.m_desired  # default action
@@ -1135,8 +1246,15 @@ class UVMRegField(UVMObject):
     #   extern virtual task do_write(uvm_reg_item rw)
     #   extern virtual task do_read(uvm_reg_item rw)
 
-    #// do_predict
     def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
+        """
+        do_predict
+        Args:
+            rw (UVMRegItem):
+            kind:
+            be (int): Byte-enable
+        Raises:
+        """
         field_val = rw.value[0] & self._get_mask()
         if rw.status != UVM_NOT_OK:
             rw.status = UVM_IS_OK
@@ -1212,85 +1330,97 @@ class UVMRegField(UVMObject):
     #   //-----------------
     #   `uvm_register_cb(uvm_reg_field, uvm_reg_cbs)
 
-    #   // Task: pre_write
-    #   //
-    #   // Called before field write.
-    #   //
-    #   // If the specified data value, access ~path~ or address ~map~ are modified,
-    #   // the updated data value, access path or address map will be used
-    #   // to perform the register operation.
-    #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-    #   // the operation is aborted.
-    #   //
-    #   // The field callback methods are invoked after the callback methods
-    #   // on the containing register.
-    #   // The registered callback methods are invoked after the invocation
-    #   // of this method.
-    #   //
-    #   virtual task pre_write  (uvm_reg_item rw); endtask
     async def pre_write(self, rw):
+        """
+           Called before field write.
+
+           If the specified data value, access `path` or address `map` are modified,
+           the updated data value, access path or address map will be used
+           to perform the register operation.
+           If the `status` is modified to anything other than `UVM_IS_OK`,
+           the operation is aborted.
+
+           The field callback methods are invoked after the callback methods
+           on the containing register.
+           The registered callback methods are invoked after the invocation
+           of this method.
+
+        Args:
+            rw (UVMRegItem): Reg item associated with write.
+        """
         #await uvm_empty_delay()
         pass
 
-    #   // Task: post_write
-    #   //
-    #   // Called after field write.
-    #   //
-    #   // If the specified ~status~ is modified,
-    #   // the updated status will be
-    #   // returned by the register operation.
-    #   //
-    #   // The field callback methods are invoked after the callback methods
-    #   // on the containing register.
-    #   // The registered callback methods are invoked before the invocation
-    #   // of this method.
-    #   //
-    #   virtual task post_write (uvm_reg_item rw); endtask
     async def post_write(self, rw):
+        """
+           Called after field write.
+
+           If the specified `status` is modified,
+           the updated status will be
+           returned by the register operation.
+
+           The field callback methods are invoked after the callback methods
+           on the containing register.
+           The registered callback methods are invoked before the invocation
+           of this method.
+
+        Args:
+            rw (UVMRegItem): Reg item associated with write.
+        """
         #await uvm_empty_delay()
         pass
 
-    #   // Task: pre_read
-    #   //
-    #   // Called before field read.
-    #   //
-    #   // If the access ~path~ or address ~map~ in the ~rw~ argument are modified,
-    #   // the updated access path or address map will be used to perform
-    #   // the register operation.
-    #   // If the ~status~ is modified to anything other than <UVM_IS_OK>,
-    #   // the operation is aborted.
-    #   //
-    #   // The field callback methods are invoked after the callback methods
-    #   // on the containing register.
-    #   // The registered callback methods are invoked after the invocation
-    #   // of this method.
-    #   //
     async def pre_read(self, rw):
+        """
+           Called before field read.
+
+           If the access `path` or address `map` in the `rw` argument are modified,
+           the updated access path or address map will be used to perform
+           the register operation.
+           If the `status` is modified to anything other than `UVM_IS_OK`,
+           the operation is aborted.
+
+           The field callback methods are invoked after the callback methods
+           on the containing register.
+           The registered callback methods are invoked after the invocation
+           of this method.
+
+        Args:
+            rw (UVMRegItem): Reg item associated with read.
+        """
         #await uvm_empty_delay()
         pass
 
-    #   // Task: post_read
-    #   //
-    #   // Called after field read.
-    #   //
-    #   // If the specified readback data or~status~ in the ~rw~ argument is
-    #   // modified, the updated readback data or status will be
-    #   // returned by the register operation.
-    #   //
-    #   // The field callback methods are invoked after the callback methods
-    #   // on the containing register.
-    #   // The registered callback methods are invoked before the invocation
-    #   // of this method.
-    #   //
-    #   virtual task post_read  (uvm_reg_item rw); endtask
     async def post_read(self, rw):
+        """
+           Task: post_read
+
+           Called after field read.
+
+           If the specified readback data or`status` in the `rw` argument is
+           modified, the updated readback data or status will be
+           returned by the register operation.
+
+           The field callback methods are invoked after the callback methods
+           on the containing register.
+           The registered callback methods are invoked before the invocation
+           of this method.
+
+        Args:
+            rw (UVMRegItem): Reg item associated with read.
+        """
         #await uvm_empty_delay()
         pass
 
     #   extern virtual function void do_print (uvm_printer printer)
 
-    #// convert2string
     def convert2string(self):
+        """
+        convert2string
+
+        Returns:
+            str:
+        """
         fmt = ""
         res_str = ""
         t_str = ""
@@ -1321,7 +1451,7 @@ class UVMRegField(UVMObject):
                 res_str += " from {}:{}".format(self.m_fname, self.m_lineno)
             convert2string = convert2string + "\n" + res_str + "currently being written"
         return convert2string
-    #endfunction: convert2string
+
 
     #   extern virtual function uvm_object clone()
     #   extern virtual function void do_copy   (uvm_object rhs)

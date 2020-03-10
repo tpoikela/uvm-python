@@ -17,7 +17,11 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-""" Some SystemVerilog system functions mocked here """
+"""
+Contains SystemVerilog (SV) system functions mocked/added
+to make the porting SV to Python faster.
+
+"""
 
 import re
 import random
@@ -43,6 +47,13 @@ def uvm_re_match(rex, _str):
 
 
 def uvm_glob_to_re(_str):
+    """
+    Converts a glob-style pattern to Python
+    regular expression syntax.
+
+    Returns:
+        str: Glob converted to regular expression syntax.
+    """
     if _str is None or _str == "":
         return ""
     if _str[0] == "/" and _str[-1] == "/":
@@ -161,10 +172,10 @@ class sv:
         This is to make porting faster, but should be switched to native python
         formatting inside UVM code
         Args:
-            cls: 
-            msg: 
-            args: 
+            msg: String to format containing format specifiers.
+            args: Values that are used in formatting.
         Returns:
+            str: Formatted string
         """
         #formats = {"%t": "%d", "%0t": "%0d"}
         #for s in formats:
@@ -247,11 +258,19 @@ class sv_obj(crv.Randomized):
         self._sv_rand_state = random.getstate()
 
     def constraint(self, c):
-        """ Adds a contraint into the object """
+        """ Adds a constraint into the object """
         self.add_constraint(c)
 
 
     def rand(self, key, val_list=None):
+        """
+        Mark given class property as randomized. A call to `sv_obj.randomize()`
+        will then randomize this value.
+
+        Args:
+            key (str): Name of the property.
+            val_list (list|range): Optional constraints for randomisation.
+        """
         if hasattr(key, "randomize"):
             if val_list is None:
                 self._sv_rand_obj.append(key)
@@ -262,7 +281,10 @@ class sv_obj(crv.Randomized):
 
 
     def randomize(self, recurse=True):
-        """ Randomizes values in object marked with rand() """
+        """ 
+        Randomizes values in object marked with rand(). Recurses to sub-objects
+        randomizing them as well.
+        """
         try:
             ok = True
             if recurse:
