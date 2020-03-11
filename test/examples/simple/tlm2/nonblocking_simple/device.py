@@ -18,102 +18,83 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+import cocotb
+from cocotb.triggers import Timer
+
 from uvm.base.uvm_component import *
 from uvm.macros import *
-from usb_xfer import usb_xfer
-from uvm.tlm2 import UVMTLMNbTargetSocket
+from usb_xfer import usb_xfer, USB_TLM_HANDSHAKE, USB_TLM_TOKEN, USB_TLM_DATA
+from uvm.tlm2 import UVMTLMNbTargetSocket, uvm_tlm_sync_e
 
 
 class device(UVMComponent):
-    #
-    #   uvm_tlm_nb_target_socket#(device, usb_xfer, usb_tlm_phase) sock
-    #
-    #
+
+
     def __init__(self, name="device", parent=None):
         super().__init__(name, parent)
         self.sock = UVMTLMNbTargetSocket("sock", self)
         self.data = []
 
 
+    async def fork_proc(self, xf, dl):
+        ph = USB_TLM_HANDSHAKE
+        await Timer(100, "NS")
+        xf.status = usb_xfer.ACK
+        assert(sock.nb_transport_bw(xf, ph, dl) == UVM_TLM_COMPLETED)
+        uvm_info("USB/DEV/OUT/DONE", xf.convert2string(),
+            UVM_NONE)
+
+
     #   // Forward path
     async def nb_transport_fw(self, xfer, ph, delay):
         uvm_info("USB/DEV/FWD", sv.sformatf("%s @%0d: %s",
-            int(ph), delay.get_realtime(1, "NS"),
+            int(ph), delay.get_realtime(1),
             xfer.convert2string()), UVM_LOW)
         # This device?
         if xfer.addr != 0x7A:
-            return UVM_TLM_COMPLETED
+            return uvm_tlm_sync_e.UVM_TLM_COMPLETED
         
         # Valid endpoint in the device?
         if xfer.endp != 0x5:
-            return UVM_TLM_COMPLETED
+            return uvm_tlm_sync_e.UVM_TLM_COMPLETED
 
         if xfer.kind == usb_xfer.OUT:
-            pass
-            #          case (ph)
-            #           USB_TLM_TOKEN: begin
-            #              return UVM_TLM_ACCEPTED
-            #           end
-            #
-            #           USB_TLM_DATA: begin
-            #              data = xfer.data
-            #
-            #              // Could complete transfer early here
-            #              fork: out_ack
-            #                 automatic usb_xfer     xf = xfer
-            #                 automatic uvm_tlm_time dl = delay
-            #                 begin
-            #                    usb_tlm_phase ph = USB_TLM_HANDSHAKE
-            #                    yield Timer(100, )
-            #                    xf.status = usb_xfer::ACK
-            #                    assert(sock.nb_transport_bw(xf, ph, dl) ==
-            #                           UVM_TLM_COMPLETED)
-            #
-            #                    uvm_info("USB/DEV/OUT/DONE", xf.convert2string(),
-            #                              UVM_NONE)
-            #                    
-            #                 end
-            #              join_none
-            #
-            #              return UVM_TLM_ACCEPTED
-            #           end
-            #           
-            #          endcase
-            #       end
-        elif xfer.kind == usb_xfer.IN:
-            pass
-            #          case (ph)
-            #           USB_TLM_TOKEN: begin
-            #              // Could return the data early here
-            #              fork: in_data
-            #                 automatic usb_xfer     xf = xfer
-            #                 automatic uvm_tlm_time dl = delay
-            #                 begin
-            #                    usb_tlm_phase ph = USB_TLM_DATA
-            #                    yield Timer(150, )
-            #		    begin
-            #			byte tdata[2]='{ 0xAB,  0xCD}
-            #                    	xf.data = tdata
-            #		    end
-            #                    sock.nb_transport_bw(xf, ph, dl)  # cast to 'void' removed
-            #                 end
-            #              join_none
-            #
-            #              return UVM_TLM_ACCEPTED
-            #           end
-            #
-            #           USB_TLM_HANDSHAKE: begin
-            #              uvm_info("USB/DEV/IN/DONE", xfer.convert2string(),
-            #                        UVM_NONE)
-            #              
-            #              return UVM_TLM_COMPLETED
-            #           end
-            #           
-            #          endcase
-            #       end
-            #      endcase
+            if ph == USB_TLM_TOKEN:
+                return uvm_tlm_sync_e.UVM_TLM_ACCEPTED
+            elif ph == USB_TLM_DATA:
+                data = xfer.data
+                xf = xfer
+                dl = delay
 
-        return UVM_TLM_COMPLETED
-        #   endfunction
-    #
+                # Could complete transfer early here
+                #fork: out_ack
+                cocotb.fork(self.fork_proc(xf, dl))
+                #join_none
+                return uvm_tlm_sync_e.UVM_TLM_ACCEPTED
+
+        elif xfer.kind == usb_xfer.IN:
+            if ph == USB_TLM_TOKEN:
+                # Could return the data early here
+                #fork: in_data
+                xf = xfer
+                dl = delay
+                cocotb.fork(self.fork_proc2(xf, dl))
+                #join_none
+                return uvm_tlm_sync_e.UVM_TLM_ACCEPTED
+            elif ph == USB_TLM_HANDSHAKE:
+                uvm_info("USB/DEV/IN/DONE", xfer.convert2string(),
+                    UVM_NONE)
+                return uvm_tlm_sync_e.UVM_TLM_COMPLETED
+
+        return uvm_tlm_sync_e.UVM_TLM_COMPLETED
+
+
+    async def fork_proc2(self, xf, dl):
+        ph = USB_TLM_DATA
+        await Timer(150, )
+        tdata = [0xAB, 0xCD]
+        xf.data = tdata
+        self.sock.nb_transport_bw(xf, ph, dl)  # cast to 'void' removed
+
+
 uvm_component_utils(device)
