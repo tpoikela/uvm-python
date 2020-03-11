@@ -262,19 +262,17 @@ def uvm_error_context(ID, MSG, RO):
 #     if (RO.uvm_report_enabled(UVM_NONE,UVM_FATAL,ID)) \
 #       RO.uvm_report_fatal (ID, MSG, UVM_NONE, uvm_file(), uvm_line(), "", 1); \
 #   end
-#
-#
-#
-#
+
+
 #//----------------------------------------------------------------------------
 #// Group:  Message Trace Macros
 #//----------------------------------------------------------------------------
-#
+
 #// MACRO- `uvm_message_begin
 #//
 #// Undocumented. Library internal use.
 #//
-#
+
 #`define uvm_message_begin(SEVERITY, ID, MSG, VERBOSITY, FILE, LINE, RM) \
 #   begin \
 #     if (uvm_report_enabled(VERBOSITY,SEVERITY,ID)) begin \
@@ -282,24 +280,24 @@ def uvm_error_context(ID, MSG, RO):
 #       if (RM == null) RM = uvm_report_message::new_report_message(); \
 #       __uvm_msg = RM; \
 #       __uvm_msg.set_report_message(SEVERITY, ID, MSG, VERBOSITY, FILE, LINE, "");
-#
-#
+
+
 #// MACRO- `uvm_message_end
 #//
 #// Undocumented. Library internal use.
 #//
 #//
-#
+
 #`define uvm_message_end \
 #       uvm_process_report_message(__uvm_msg); \
 #     end \
 #   end
-#
+
 #// MACRO- `uvm_message_context_begin
 #//
 #// Undocumented. Library internal use.
 #//
-#
+
 #`define uvm_message_context_begin(SEVERITY, ID, MSG, VERBOSITY, FILE, LINE, RO, RM) \
 #   begin \
 #     uvm_report_object __report_object; \
@@ -316,13 +314,13 @@ def uvm_error_context(ID, MSG, RO):
 #// Undocumented. Library internal use.
 #//
 #//
-#
+
 #`define uvm_message_context_end \
 #       __report_object.uvm_process_report_message(__uvm_msg); \
 #     end \
 #   end
-#
-#
+
+
 #// MACRO: `uvm_info_begin
 #//
 #// |`uvm_info_begin(ID, MSG, VERBOSITY, RM = __uvm_msg)
