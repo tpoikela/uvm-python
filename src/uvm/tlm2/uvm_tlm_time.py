@@ -110,7 +110,7 @@ class UVMTime:
     #   //| #(delay.get_realtime(1ns));
     #   //| #(delay.get_realtime(1fs, 1.0e-15));
     #   //
-    def get_realtime(self, scaled, secs = 1.0e-9):
+    def get_realtime(self, scaled, secs=1.0e-9):
         return self.m_time * float(scaled) * self.m_res / secs
 
     #   // Function -- NODOCS -- incr
