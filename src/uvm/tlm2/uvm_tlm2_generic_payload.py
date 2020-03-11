@@ -26,13 +26,14 @@ from ..seq.uvm_sequence_item import *
 from ..macros import *
 from ..base.uvm_object import UVMObject
 
-#//----------------------------------------------------------------------
-#// Title -- NODOCS -- TLM Generic Payload & Extensions
-#//----------------------------------------------------------------------
-#// The Generic Payload transaction represents a generic
-#// bus read/write access. It is used as the default transaction in
-#// TLM2 blocking and nonblocking transport interfaces.
-#//----------------------------------------------------------------------
+"""
+TLM Generic Payload & Extensions
+
+ The Generic Payload transaction represents a generic
+ bus read/write access. It is used as the default transaction in
+ TLM2 blocking and nonblocking transport interfaces.
+"""
+
 from enum import Enum, auto, IntEnum
 from uvm.seq.uvm_sequence_item import UVMSequenceItem
 from uvm.base.uvm_object import UVMObject
@@ -44,45 +45,49 @@ from uvm.base.uvm_object import UVMObject
 #// Defines, Constants, enums.
 
 
-#// Enum -- NODOCS -- uvm_tlm_command_e
-#//
-#// Command attribute type definition
-#//
-#// UVM_TLM_READ_COMMAND      - Bus read operation
-#//
-#// UVM_TLM_WRITE_COMMAND     - Bus write operation
-#//
-#// UVM_TLM_IGNORE_COMMAND    - No bus operation.
 
 class uvm_tlm_command_e(Enum):
-    UVM_TLM_READ_COMMAND = auto
-    UVM_TLM_WRITE_COMMAND = auto
-    UVM_TLM_IGNORE_COMMAND = auto
+    """
+     Enum uvm_tlm_command_e
+
+    Command attribute type definition
+
+    UVM_TLM_READ_COMMAND      - Bus read operation
+
+    UVM_TLM_WRITE_COMMAND     - Bus write operation
+
+    UVM_TLM_IGNORE_COMMAND    - No bus operation.
+    """
+    UVM_TLM_READ_COMMAND = auto()
+    UVM_TLM_WRITE_COMMAND = auto()
+    UVM_TLM_IGNORE_COMMAND = auto()
 
 UVM_TLM_READ_COMMAND = uvm_tlm_command_e.UVM_TLM_READ_COMMAND
 UVM_TLM_WRITE_COMMAND = uvm_tlm_command_e.UVM_TLM_WRITE_COMMAND
 UVM_TLM_IGNORE_COMMAND = uvm_tlm_command_e.UVM_TLM_IGNORE_COMMAND
 
-#// Enum -- NODOCS -- uvm_tlm_response_status_e
-#//
-#// Response status attribute type definition
-#//
-#// UVM_TLM_OK_RESPONSE                - Bus operation completed successfully
-#//
-#// UVM_TLM_INCOMPLETE_RESPONSE        - Transaction was not delivered to target
-#//
-#// UVM_TLM_GENERIC_ERROR_RESPONSE     - Bus operation had an error
-#//
-#// UVM_TLM_ADDRESS_ERROR_RESPONSE     - Invalid address specified
-#//
-#// UVM_TLM_COMMAND_ERROR_RESPONSE     - Invalid command specified
-#//
-#// UVM_TLM_BURST_ERROR_RESPONSE       - Invalid burst specified
-#//
-#// UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE - Invalid byte enabling specified
-#//
-#
+
 class uvm_tlm_response_status_e(IntEnum):
+    """
+    Enum uvm_tlm_response_status_e
+
+    Response status attribute type definition
+
+    UVM_TLM_OK_RESPONSE                - Bus operation completed successfully
+
+    UVM_TLM_INCOMPLETE_RESPONSE        - Transaction was not delivered to target
+
+    UVM_TLM_GENERIC_ERROR_RESPONSE     - Bus operation had an error
+
+    UVM_TLM_ADDRESS_ERROR_RESPONSE     - Invalid address specified
+
+    UVM_TLM_COMMAND_ERROR_RESPONSE     - Invalid command specified
+
+    UVM_TLM_BURST_ERROR_RESPONSE       - Invalid burst specified
+
+    UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE - Invalid byte enabling specified
+    """
+
     OK_RESPONSE = 1
     INCOMPLETE_RESPONSE = 0
     GENERIC_ERROR_RESPONSE = -1
@@ -106,28 +111,34 @@ UVM_TLM_BYTE_ENABLE_ERROR_RESPONSE=uvm_tlm_response_status_e.BYTE_ENABLE_ERROR_R
 
 #// @uvm-ieee 1800.2-2017 auto 12.3.4.2.1
 class UVMTLMGenericPayload(UVMSequenceItem):
-    #
-    #   // Variable -- NODOCS -- m_address
-    #   //
-    #   // Address for the bus operation.
-    #   // Should be set or read using the <set_address> and <get_address>
-    #   // methods. The variable should be used only when constraining.
-    #   //
-    #   // For a read command or a write command, the target shall
-    #   // interpret the current value of the address attribute as the start
-    #   // address in the system memory map of the contiguous block of data
-    #   // being read or written.
-    #   // The address associated with any given byte in the data array is
-    #   // dependent upon the address attribute, the array index, the
-    #   // streaming width attribute, the endianness and the width of the physical bus.
-    #   //
-    #   // If the target is unable to execute the transaction with
-    #   // the given address attribute (because the address is out-of-range,
-    #   // for example) it shall generate a standard error response. The
-    #   // recommended response status is ~UVM_TLM_ADDRESS_ERROR_RESPONSE~.
-    #   //
-    #   rand bit [63:0]             m_address
+    """
+    This class provides a transaction definition commonly used in
+    memory-mapped bus-based systems.  It's intended to be a general
+    purpose transaction class that lends itself to many applications. The
+    class is derived from uvm_sequence_item which enables it to be
+    generated in sequences and transported to drivers through sequencers.
+    """
 
+    """
+    :ivar int m_address: Address for the bus operation.
+      Should be set or read using the <set_address> and <get_address>
+      methods. The variable should be used only when constraining.
+
+      For a read command or a write command, the target shall
+      interpret the current value of the address attribute as the start
+      address in the system memory map of the contiguous block of data
+      being read or written.
+      The address associated with any given byte in the data array is
+      dependent upon the address attribute, the array index, the
+      streaming width attribute, the endianness and the width of the physical bus.
+
+      If the target is unable to execute the transaction with
+      the given address attribute (because the address is out-of-range,
+      for example) it shall generate a standard error response. The
+      recommended response status is ~UVM_TLM_ADDRESS_ERROR_RESPONSE~.
+    """
+
+    #   rand bit [63:0]             m_address
 
 
     #   // Variable -- NODOCS -- m_command
@@ -389,7 +400,6 @@ class UVMTLMGenericPayload(UVMSequenceItem):
         self.m_streaming_width = 0
         self.m_data = []
         #self.rand('m_data')
-    #  endfunction
 
 
     #  // Function- do_print
@@ -427,8 +437,9 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #    printer.print_array_footer()
     #    end
     #  endfunction
-    #
-    #
+
+
+
     #  // Function- do_copy
     #  //
     #  def void do_copy(self,uvm_object rhs):
@@ -450,14 +461,16 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #       sv.cast(m_extensions[ext], gp.m_extensions[ext].clone())
     #
     #  endfunction
-    #
+
+
     #`define m_uvm_tlm_fast_compare_int(VALUE,RADIX,NAME="") \
     #  if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and  \
     #      ((VALUE) != (gp.VALUE)) ): \
     #     string name = (NAME == "") ? `"VALUE`" : NAME; \
     #        comparer.compare_field_int(name , VALUE, gp.VALUE, sv.bits(VALUE), RADIX)  # cast to 'void' removed \
     #  end
-    #
+
+
     #`define m_uvm_tlm_fast_compare_enum(VALUE,TYPE,NAME="") \
     #  if ( (!comparer.get_threshold()  or  (comparer.get_result() < comparer.get_threshold()))  and  \
     #      ((VALUE) != (gp.VALUE)) ): \
@@ -466,7 +479,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #				sv.sformatf("%s'(%s)", `"TYPE`", VALUE.name()), \
     #				sv.sformatf("%%s)", `"TYPE`", gp.VALUE.name()))   # cast to 's' removed \
     #  end
-    #
+
     #  // Function: do_compare
     #  // Compares this generic payload to ~rhs~.
     #  //
@@ -536,7 +549,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #
     #`undef m_uvm_tlm_fast_compare_int
     #`undef m_uvm_tlm_fast_compare_enum
-    #
+
+
     #  // Function: do_pack
     #  // Packs the fields of the payload in ~packer~.
     #  //
@@ -580,8 +594,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #    `uvm_pack_intN  (m_streaming_width,32)
     #
     #  endfunction
-    #
-    #
+
+
     #  // Function: do_unpack
     #  // Unpacks the fields of the payload from ~packer~.
     #  //
@@ -609,8 +623,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #    `uvm_unpack_intN  (m_streaming_width,32)
     #
     #  endfunction
-    #
-    #
+
+
     #  // Function- do_record
     #  //
     #  def void do_record(self,uvm_recorder recorder):
@@ -633,8 +647,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #    foreach (m_extensions[ext])
     #      recorder.record_object(ext.get_name(),m_extensions[ext])
     #  endfunction
-    #
-    #
+
+
     #// Function- convert2string
     #//
     def convert2string(self):
@@ -648,9 +662,9 @@ class UVMTLMGenericPayload(UVMSequenceItem):
             msg += s
 
         msg += " (status=" + self.get_response_string() + ")"
-        
+
         return msg;
-    #
+
     #  //--------------------------------------------------------------------
     #  // Group -- NODOCS -- Accessors
     #  //
@@ -662,79 +676,66 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  // uvm_tlm_generic_payload. Instead, you would use the extensions mechanism.
     #  // Thus in SystemC none of the accessors are virtual.
     #  //--------------------------------------------------------------------
-    #
-    #   // Function -- NODOCS -- get_command
-    #   //
-    #   // Get the value of the <m_command> variable
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.13
-    #  def get_command(self):
-    #    return m_command
-    #  endfunction
-    #
-    #   // Function -- NODOCS -- set_command
-    #   //
-    #   // Set the value of the <m_command> variable
-    #
-    #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.14
-    #  def set_command(self,uvm_tlm_command_e command):
-    #    m_command = command
-    #  endfunction
-    #
+
+
+    #  // Get the value of the <m_command> variable
+    def get_command(self):
+        return self.m_command
+
+
+    #  // Set the value of the <m_command> variable
+    def set_command(self, command):
+        self.m_command = command
+
+
     #   // Function -- NODOCS -- is_read
     #   //
     #   // Returns true if the current value of the <m_command> variable
     #   // is ~UVM_TLM_READ_COMMAND~.
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.15
-    #  def is_read(self):
-    #    return (m_command == UVM_TLM_READ_COMMAND)
-    #  endfunction
-    #
+    def is_read(self):
+        return (self.m_command == UVM_TLM_READ_COMMAND)
+
     #   // Function -- NODOCS -- set_read
     #   //
     #   // Set the current value of the <m_command> variable
     #   // to ~UVM_TLM_READ_COMMAND~.
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.16
-    #  def set_read(self):
-    #    set_command(UVM_TLM_READ_COMMAND)
-    #  endfunction
-    #
+    def set_read(self):
+        self.set_command(UVM_TLM_READ_COMMAND)
+
     #   // Function -- NODOCS -- is_write
     #   //
     #   // Returns true if the current value of the <m_command> variable
     #   // is ~UVM_TLM_WRITE_COMMAND~.
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.17
-    #  def is_write(self):
-    #    return (m_command == UVM_TLM_WRITE_COMMAND)
-    #  endfunction
-    #
+    def is_write(self):
+        return (self.m_command == UVM_TLM_WRITE_COMMAND)
+
     #   // Function -- NODOCS -- set_write
     #   //
     #   // Set the current value of the <m_command> variable
     #   // to ~UVM_TLM_WRITE_COMMAND~.
     #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.18
-    #  def set_write(self):
-    #    set_command(UVM_TLM_WRITE_COMMAND)
-    #  endfunction
-    #
-    #
+    def set_write(self):
+        self.set_command(UVM_TLM_WRITE_COMMAND)
+
+
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.20
-    #  def set_address(self,bit [63:0] addr):
-    #    m_address = addr
-    #  endfunction
-    #
+    def set_address(self, addr):
+        self.m_address = addr
+
     #   // Function -- NODOCS -- get_address
     #   //
     #   // Get the value of the <m_address> variable
     #
-    #  virtual def bit [63:0] get_address(self):
-    #    return m_address
-    #  endfunction
-    #
+    def get_address(self):
+        return self.m_address
+
     #   // Function -- NODOCS -- get_data
     #   //
     #   // Return the value of the <m_data> array
@@ -743,7 +744,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  virtual def void get_data (self,output byte unsigned p []):
     #    p = m_data
     #  endfunction
-    #
+
     #   // Function -- NODOCS -- set_data
     #   //
     #   // Set the value of the <m_data> array
@@ -752,7 +753,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  def set_data(self,ref byte unsigned p []):
     #    m_data = p
     #  endfunction
-    #
+
     #   // Function -- NODOCS -- get_data_length
     #   //
     #   // Return the current size of the <m_data> array
@@ -760,7 +761,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  virtual def int unsigned get_data_length(self):
     #    return m_length
     #  endfunction
-    #
+
     #  // Function -- NODOCS -- set_data_length
     #  // Set the value of the <m_length>
     #
@@ -768,7 +769,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #   def set_data_length(self,int unsigned length):
     #    m_length = length
     #  endfunction
-    #
+
     #   // Function -- NODOCS -- get_streaming_width
     #   //
     #   // Get the value of the <m_streaming_width> array
@@ -776,8 +777,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  virtual def int unsigned get_streaming_width(self):
     #    return m_streaming_width
     #  endfunction
-    #
-    #
+
+
     #   // Function -- NODOCS -- set_streaming_width
     #   //
     #   // Set the value of the <m_streaming_width> array
@@ -786,8 +787,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  def set_streaming_width(self,int unsigned width):
     #    m_streaming_width = width
     #  endfunction
-    #
-    #
+
+
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.27
     #  def get_byte_enable(self,output byte unsigned p[]):
     #    p = m_byte_enable
@@ -875,7 +876,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #  def is_response_error(self):
     #    return !is_response_ok()
     #  endfunction
-    #
+
+
     #   // Function -- NODOCS -- get_response_string
     #   //
     #   // Return the current value of the <m_response_status> variable
@@ -898,19 +900,18 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #    return "UNKNOWN_RESPONSE"
     #
     #  endfunction
-    #
+
     #  //--------------------------------------------------------------------
     #  // Group -- NODOCS -- Extensions Mechanism
     #  //
     #  //--------------------------------------------------------------------
-    #
+
     #  // Function -- NODOCS -- set_extension
     #  //
     #  // Add an instance-specific extension. Only one instance of any given
     #  // extension type is allowed. If there is an existing extension
     #  // instance of the type of ~ext~, ~ext~ replaces it and its handle
     #  // is returned. Otherwise, ~null~ is returned.
-    #
     #  // @uvm-ieee 1800.2-2017 auto 12.3.4.2.41
     #  def uvm_tlm_extension_base set_extension(self,uvm_tlm_extension_base ext):
     #    uvm_tlm_extension_base ext_handle = ext.get_type_handle()
@@ -920,8 +921,8 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     #      set_extension = m_extensions[ext_handle]
     #    m_extensions[ext_handle] = ext
     #  endfunction
-    #
-    #
+
+
     #  // Function -- NODOCS -- get_num_extensions
     #  //
     #  // Return the current number of instance specific extensions.
@@ -1000,7 +1001,7 @@ uvm_object_utils(UVMTLMGenericPayload)
 #// This typedef provides a short, more convenient name for the
 #// <uvm_tlm_generic_payload> type.
 #//----------------------------------------------------------------------
-#
+
 
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_extension_base
@@ -1016,37 +1017,35 @@ uvm_object_utils(UVMTLMGenericPayload)
 #//
 class UVMTLMExtensionBase(UVMObject):
 
-#  // Function: new
-#  //
+    #  // Function: new
+    #  //
     def __init__(self, name = ""):
         super().__init__(name)
 
-#  // Function: get_type_handle
-#  //
-#  // An interface to polymorphically retrieve a handle that uniquely
-#  // identifies the type of the sub-class
-#
-#  pure virtual function uvm_tlm_extension_base get_type_handle();
-#
-#  // Function: get_type_handle_name
-#  //
-#  // An interface to polymorphically retrieve the name that uniquely
-#  // identifies the type of the sub-class
-#
-#  pure virtual function string get_type_handle_name();
-#
+    #  // Function: get_type_handle
+    #  //
+    #  // An interface to polymorphically retrieve a handle that uniquely
+    #  // identifies the type of the sub-class
+    #
+    #  pure virtual function uvm_tlm_extension_base get_type_handle();
+
+
+    #  // Function: get_type_handle_name
+    #  //
+    #  // An interface to polymorphically retrieve the name that uniquely
+    #  // identifies the type of the sub-class
+    #
+    #  pure virtual function string get_type_handle_name();
+
+
     def do_copy(self, rhs):
         super().do_copy(rhs)
 
-#  // Function: create
-#  //
-
+    #  // Function: create
     def create(self, name=""):
         return None
-#
-#endclass
-#
-#
+
+
 #//----------------------------------------------------------------------
 #// Class: uvm_tlm_extension
 #//
@@ -1078,41 +1077,36 @@ class UVMTLMExtensionBase(UVMObject):
 #
 class UVMTLMExtension(UVMTLMExtensionBase):
 
-#   typedef uvm_tlm_extension#(T) this_type;
-#
-#   local static this_type m_my_tlm_ext_type = ID();
-#
-#   // Function: new
-#   //
-#   // creates a new extension object.
-#
+    #   local static this_type m_my_tlm_ext_type = ID();
+
+    #   // Function: new
+    #   //
+    #   // creates a new extension object.
+    #
     def __init__(self, name=""):
         super().__init__(name)
 
-#   // Function: ID()
-#   //
-#   // Return the unique ID of this TLM extension type.
-#   // This method is used to identify the type of the extension to retrieve
-#   // from a <uvm_tlm_generic_payload> instance,
-#   // using the <uvm_tlm_generic_payload::get_extension()> method.
-#   //
-#  static function this_type ID();
-#    if (m_my_tlm_ext_type == null)
-#      m_my_tlm_ext_type = new();
-#    return m_my_tlm_ext_type;
-#  endfunction
-#
-#  virtual function uvm_tlm_extension_base get_type_handle();
-#     return ID();
-#  endfunction
-#
-#  virtual function string get_type_handle_name();
-#    return `uvm_typename(T);
-#  endfunction
-#
-#  virtual function uvm_object create (string name="");
-#    return null;
-#  endfunction
-#
-#endclass
-#
+    #   // Function: ID()
+    #   //
+    #   // Return the unique ID of this TLM extension type.
+    #   // This method is used to identify the type of the extension to retrieve
+    #   // from a <uvm_tlm_generic_payload> instance,
+    #   // using the <uvm_tlm_generic_payload::get_extension()> method.
+    #   //
+    #  static function this_type ID();
+    #    if (m_my_tlm_ext_type == null)
+    #      m_my_tlm_ext_type = new();
+    #    return m_my_tlm_ext_type;
+    #  endfunction
+    #
+    #  virtual function uvm_tlm_extension_base get_type_handle();
+    #     return ID();
+    #  endfunction
+    #
+    #  virtual function string get_type_handle_name();
+    #    return `uvm_typename(T);
+    #  endfunction
+    #
+    #  virtual function uvm_object create (string name="");
+    #    return null;
+    #  endfunction
