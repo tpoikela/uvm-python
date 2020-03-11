@@ -50,7 +50,7 @@ class host(UVMComponent):
         self.ph    = ph
         self.delay = delay
 
-        if (xfer.kind == usb_xfer.OUT):
+        if xfer.kind == usb_xfer.OUT:
             assert(ph == USB_TLM_HANDSHAKE)
             self.sync = uvm_tlm_sync_e.UVM_TLM_COMPLETED
             return uvm_tlm_sync_e.UVM_TLM_COMPLETED
@@ -77,13 +77,14 @@ class host(UVMComponent):
             self.xfer.endp = 0x5
 
             self.ph = USB_TLM_TOKEN
-            self.sync = self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
+            self.sync = await self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
+            print("self.sync is " + self.sync.name)
             if self.sync == uvm_tlm_sync_e.UVM_TLM_COMPLETED:
                 uvm_info("USB/HST/OUT/REFUSED", "Device refused the transfer",
                     UVM_LOW)
                 break
 
-            ph = USB_TLM_DATA
+            self.ph = USB_TLM_DATA
             tdata = [0xDE, 0xAD, 0xBE, 0xEF]
             self.xfer.data = tdata
             self.sync = await self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
@@ -112,7 +113,7 @@ class host(UVMComponent):
             self.xfer.data = []
 
             self.ph = USB_TLM_TOKEN
-            self.sync = self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
+            self.sync = await self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
             if self.sync == uvm_tlm_sync_e.UVM_TLM_COMPLETED:
                 uvm_info("USB/HST/IN/REFUSED", "Device refused the transfer",
                         UVM_LOW)
@@ -128,7 +129,7 @@ class host(UVMComponent):
 
             self.ph = USB_TLM_HANDSHAKE
             self.xfer.status = usb_xfer.ACK
-            self.sync = self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
+            self.sync = await self.sock.nb_transport_fw(self.xfer, self.ph, self.delay)
             assert(self.sync == uvm_tlm_sync_e.UVM_TLM_COMPLETED)
             done = True
 
