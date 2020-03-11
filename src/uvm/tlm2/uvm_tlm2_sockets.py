@@ -31,45 +31,41 @@
 #from uvm.base.uvm_tlm_nb_passthrough_initiator_socket_base import *
 #from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
 
-from ..macros.uvm_message_defines import (uvm_error_context, uvm_error)
+from ..macros.uvm_message_defines import (uvm_error_context, uvm_error,
+    uvm_fatal)
 from .uvm_tlm2_sockets_base import (UVMTLMBInitiatorSocketBase,
     UVMTLMBTargetSocketBase)
 from .uvm_tlm2_imps import (UVM_TLM_B_TRANSPORT_IMP)
+from ..base.sv import sv
 
-#//----------------------------------------------------------------------
-#// Title -- NODOCS -- TLM Sockets
-#//
-#// Each uvm_tlm_*_socket class is derived from a corresponding
-#// uvm_tlm_*_socket_base class.  The base class contains most of the
-#// implementation of the class, The derived classes (in this file)
-#// contain the connection semantics.
-#//
-#// Sockets come in several flavors: Each socket is either an initiator or a
-#// target, a pass-through or a terminator. Further, any particular socket
-#// implements either the blocking interfaces or the nonblocking interfaces.
-#// Terminator sockets are used on initiators and targets as well as
-#// interconnect components as shown in the figure above. Pass-through
-#//  sockets are used to enable connections to cross hierarchical boundaries.
-#//
-#// There are eight socket types: the cross of blocking and nonblocking,
-#// pass-through and termination, target and initiator
-#//
-#// Sockets are specified based on what they are (IS-A)
-#// and what they contains (HAS-A).
-#// IS-A and HAS-A are types of object relationships.
-#// IS-A refers to the inheritance relationship and
-#//  HAS-A refers to the ownership relationship.
-#// For example if you say D is a B that means that D is derived from base B.
-#// If you say object A HAS-A B that means that B is a member of A.
-#//----------------------------------------------------------------------
-#
-#
-#//----------------------------------------------------------------------
-#// Class -- NODOCS -- UVMTLMBInitiatorSocket
-#//
-#// IS-A forward port; has no backward path except via the payload
-#// contents
-#//----------------------------------------------------------------------
+"""
+TLM2 Sockets
+
+Each uvm_tlm_*_socket class is derived from a corresponding
+uvm_tlm_*_socket_base class.  The base class contains most of the
+implementation of the class, The derived classes (in this file)
+contain the connection semantics.
+
+Sockets come in several flavors: Each socket is either an initiator or a
+target, a pass-through or a terminator. Further, any particular socket
+implements either the blocking interfaces or the nonblocking interfaces.
+Terminator sockets are used on initiators and targets as well as
+interconnect components as shown in the figure above. Pass-through
+ sockets are used to enable connections to cross hierarchical boundaries.
+
+There are eight socket types: the cross of blocking and nonblocking,
+pass-through and termination, target and initiator
+
+Sockets are specified based on what they are (IS-A)
+and what they contains (HAS-A).
+IS-A and HAS-A are types of object relationships.
+IS-A refers to the inheritance relationship and
+ HAS-A refers to the ownership relationship.
+For example if you say D is a B that means that D is derived from base B.
+If you say object A HAS-A B that means that B is a member of A.
+"""
+
+
 from uvm.tlm2.uvm_tlm2_sockets_base import UVMTLMBPassthroughInitiatorSocketBase,\
     UVMTLMBPassthroughTargetSocketBase, UVMTLMBTargetSocketBase,\
     UVMTLMBInitiatorSocketBase, UVMTLMNbInitiatorSocketBase,\
@@ -81,28 +77,33 @@ from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_NB_TRANSPORT_FW_IMP,\
     UVM_TLM_B_TRANSPORT_IMP, UVMTLMNbTransportBwImp
 from uvm.tlm2.uvm_tlm2_ports import UVMTLMNbTransportBwPort
 
+
+#//----------------------------------------------------------------------
+#// Class -- NODOCS -- UVMTLMBInitiatorSocket
+#//
+#// IS-A forward port; has no backward path except via the payload
+#// contents
+#//----------------------------------------------------------------------
 class UVMTLMBInitiatorSocket(UVMTLMBInitiatorSocketBase):
 
     #  // Function: new
     #  // Construct a new instance of this socket
     def __init__(self, name, parent):
         super().__init__(name, parent)
-  
+
     #// Function: Connect
     #//
     #// Connect this socket to the specified <uvm_tlm_b_target_socket>
     def connect(self, provider):
-        valid_providers = (UVMTLMBPassthroughInitiatorSocketBase, 
+        valid_providers = (UVMTLMBPassthroughInitiatorSocketBase,
             UVMTLMBPassthroughTargetSocketBase, UVMTLMBTargetSocketBase)
-        
+
         super().connect(provider)
-       
+
         if not isinstance(provider, valid_providers):
-            print("TODO: uvm_error_context")
-#             c = self.get_comp();
-#             uvm_error_context(self.get_type_name(),
-#                           "type mismatch in connect -- connection cannot be completed", c)
-            pass
+            c = self.get_comp()
+            uvm_error_context(self.get_type_name(),
+                "type mismatch in connect -- connection cannot be completed", c)
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_b_target_socket
@@ -164,7 +165,7 @@ class UVMTLMNbInitiatorSocket(UVMTLMNbInitiatorSocketBase):
     #// If not specified, it is assume to be the same as ~parent~.
     def __init__(self, name, parent, imp=None):
         super().__init__(name, parent)
-        
+
         if (imp is None):
             imp = parent
         else:
@@ -177,19 +178,34 @@ class UVMTLMNbInitiatorSocket(UVMTLMNbInitiatorSocketBase):
     #// Connect this socket to the specified <uvm_tlm_nb_target_socket>
     def connect(self, provider):
         valid_providers = (UVMTLMNbPassthroughInitiatorSocketBase,
-            UVMTLMNbPassthroughInitiatorSocketBase, UVMTLMNbPassthroughTargetSocketBase)
-        
+            UVMTLMNbPassthroughTargetSocketBase,
+            UVMTLMNbTargetSocketBase)
+
         super().connect(provider)
 
         if not isinstance(provider, valid_providers):
-            # TODO:
-#             uvm_error_context(self.get_type_name(),
-#                 "type mismatch in connect -- connection cannot be completed", 
-#                self.get_comp())
-            pass
+            msg = 'Req type: ' + str(valid_providers) + ' Got: ' + str(provider)
+            uvm_error_context(self.get_type_name(),
+                "type mismatch in connect -- connection cannot be done: " + msg,
+                self.get_comp())
+            return
 
+        sock = []
+        if sv.cast(sock, provider, UVMTLMNbPassthroughInitiatorSocketBase):
+            sock[0].bw_export.connect(self.bw_imp)
+            return
 
-#
+        if sv.cast(sock, provider, UVMTLMNbPassthroughTargetSocketBase):
+            sock[0].bw_port.connect(self.bw_imp)
+            return
+
+        if sv.cast(sock, provider, UVMTLMNbTargetSocketBase):
+            sock[0].bw_port.connect(self.bw_imp)
+            return
+        uvm_fatal("UVMTLMNbInitiatorSocket",
+            "UVM Internal error. Should not go here")
+        
+
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_target_socket
 #//
@@ -213,8 +229,8 @@ class UVMTLMNbTargetSocket(UVMTLMNbTargetSocketBase):
         super().__init__(name, parent)
         self.m_imp = parent if imp is None else imp
         self.bw_port = UVMTLMNbTransportBwPort("bw_port", self.get_comp())
-        
-        if (self.m_imp is None):
+
+        if self.m_imp is None:
             uvm_error("UVM/TLM2/NOIMP", cat("nb_target socket ", name,
                                      " has no implementation"))
 
@@ -225,7 +241,7 @@ class UVMTLMNbTargetSocket(UVMTLMNbTargetSocketBase):
         super().connect(provider)
         # TODO:
         #uvm_error_context(self.get_type_name(),
-        #    "You cannot call connect() on a target termination socket", 
+        #    "You cannot call connect() on a target termination socket",
         #    self.get_comp())
 
 UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTLMNbTargetSocket)
@@ -253,8 +269,8 @@ class UVMTLMBPassthroughInitiatorSocket(UVMTLMBPassthroughInitiatorSocketBase):
 
         if not isinstance(provider, valid_providers):
             # TODO:
-#            uvm_error_context(get_type_name(), 
-#                "type mismatch in connect -- connection cannot be completed", 
+#            uvm_error_context(get_type_name(),
+#                "type mismatch in connect -- connection cannot be completed",
 #                self.get_comp())
             pass
 
@@ -267,7 +283,7 @@ class UVMTLMBPassthroughTargetSocket(UVMTLMBPassthroughTargetSocketBase):
 
     def __init__(self, name, parent):
         super().__init__(name, parent)
-   
+
     #// Function : connect
     #//
     #// Connect this socket to the specified <uvm_tlm_b_initiator_socket>
@@ -276,11 +292,11 @@ class UVMTLMBPassthroughTargetSocket(UVMTLMBPassthroughTargetSocketBase):
             UVMTLMBTargetSocketBase)
 
         super().connect(provider)
-        
+
         if not isinstance(provider, valid_providers):
             # TODO:
 #            uvm_error_context(self.get_type_name(),
-#               "type mismatch in connect -- connection cannot be completed", 
+#               "type mismatch in connect -- connection cannot be completed",
 #               self.get_comp())
             pass
 
@@ -309,7 +325,7 @@ class UVMTLMNbPassthroughInitiatorSocket(UVMTLMNbPassthroughInitiatorSocketBase)
         if not isinstance(provider, valid_providers):
             # TODO:
 #             uvm_error_context(self.get_type_name(),
-#                 "type mismatch in connect -- connection cannot be completed", 
+#                 "type mismatch in connect -- connection cannot be completed",
 #                 self.get_comp())
             pass
 
@@ -332,11 +348,11 @@ class UVMTLMNbPassthroughTargetSocket(UVMTLMNbPassthroughTargetSocketBase):
             UVMTLMNbTargetSocketBase)
 
         super().connect(provider)
-        
+
         if not isinstance(provider, valid_providers):
             # TODO:
 #             uvm_error_context(self.get_type_name(),
-#                 "type mismatch in connect -- connection cannot be completed", 
+#                 "type mismatch in connect -- connection cannot be completed",
 #                 self.get_comp())
             pass
 
