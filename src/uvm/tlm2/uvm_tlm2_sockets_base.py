@@ -78,7 +78,7 @@ UVM_TLM_GET_TYPE_NAME(UVMTLMBTargetSocketBase)
 class UVMTLMBInitiatorSocketBase(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTLMBInitiatorSocketBase, UVM_TLM_B_MASK, "UVMTLMBInitiatorSocketBase")
+UVMTLMBInitiatorSocketBase = UVM_PORT_COMMON(UVMTLMBInitiatorSocketBase, UVM_TLM_B_MASK, "UVMTLMBInitiatorSocketBase")
 UVM_TLM_B_TRANSPORT_IMP("m_if", UVMTLMBInitiatorSocketBase)
 
 #
@@ -152,7 +152,7 @@ UVM_TLM_NB_TRANSPORT_BW_IMP('bw_port', UVMTLMNbPassthroughTargetSocketBase)
 class UVMTLMBPassthroughInitiatorSocketBase(UVMPortBase):
     pass
 
-UVM_PORT_COMMON(UVMTLMBPassthroughInitiatorSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_initiator_socket")
+UVMTLMBPassthroughInitiatorSocketBase = UVM_PORT_COMMON(UVMTLMBPassthroughInitiatorSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_initiator_socket")
 UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBPassthroughInitiatorSocketBase)
 
 #//----------------------------------------------------------------------
@@ -163,6 +163,6 @@ UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBPassthroughInitiatorSocketBase)
 class UVMTLMBPassthroughTargetSocketBase(UVMPortBase):
     pass
 
-UVM_EXPORT_COMMON(UVMTLMBPassthroughTargetSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
+UVMTLMBPassthroughTargetSocketBase = UVM_EXPORT_COMMON(UVMTLMBPassthroughTargetSocketBase, UVM_TLM_B_MASK, "uvm_tlm_b_passthrough_target_socket")
 UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBPassthroughTargetSocketBase)
 
