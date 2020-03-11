@@ -44,9 +44,9 @@ import cocotb
 class uvm_tlm_phase_e(Enum):
     UNINITIALIZED_PHASE = auto()
     BEGIN_REQ = auto()
-    END_REQ = auto
-    BEGIN_RESP = auto
-    END_RESP = auto
+    END_REQ = auto()
+    BEGIN_RESP = auto()
+    END_RESP = auto()
 
 
 #// Enum -- NODOCS -- uvm_tlm_sync_e
@@ -59,9 +59,9 @@ class uvm_tlm_phase_e(Enum):
 #// UVM_TLM_COMPLETED     - Execution of transaction is complete
 
 class uvm_tlm_sync_e(Enum):
-    UVM_TLM_ACCEPTED = auto
-    UVM_TLM_UPDATED = auto
-    UVM_TLM_COMPLETED = auto
+    UVM_TLM_ACCEPTED = auto()
+    UVM_TLM_UPDATED = auto()
+    UVM_TLM_COMPLETED = auto()
 
 #// Defines Not-Yet-Implemented TLM tasks
 UVM_TLM_TASK_ERROR="TLM-2 interface task not implemented"
