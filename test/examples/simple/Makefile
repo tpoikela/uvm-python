@@ -36,6 +36,7 @@ test-tlm1:
 
 test-tlm2:
 	make -C tlm2/blocking_simple/
+	make -C tlm2/nonblocking_simple/
 
 test-callbacks:
 	make -C callbacks/
