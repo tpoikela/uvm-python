@@ -22,6 +22,8 @@
 
 from uvm.seq.uvm_sequence_item import *
 from uvm.macros import *
+from uvm.base import sv
+from enum import Enum, auto
 
 #typedef enum {USB_TLM_TOKEN, USB_TLM_DATA, USB_TLM_HANDSHAKE} usb_tlm_phase
 USB_TLM_TOKEN = 0
@@ -29,21 +31,23 @@ USB_TLM_DATA = 1
 USB_TLM_HANDSHAKE = 2
 
 
-class usb_xfer(UVMSequenceItem):
+class status_e(Enum):
+    ACK = auto()
+    NAK = auto()
+    STALL = auto()
+    NYET = auto()
 
-    #   typedef enum {IN, OUT} kind_e
-    #   typedef enum {ACK, NAK, STALL, NYET} status_e
+
+class usb_xfer(UVMSequenceItem):
 
     IN = 10
     OUT = 20
 
-    ACK = 0
-    NAK = 1
-    STALL = 2
-    NYET = 3
+    ACK = status_e.ACK
+    NAK = status_e.NAK
+    STALL = status_e.STALL
+    NYET = status_e.NYET
 
-    #   rand bit [6:0] addr
-    #   rand bit [3:0] endp
     #   rand kind_e   kind;  
     #   rand byte      data[]
     #   rand status_e  status
@@ -52,29 +56,33 @@ class usb_xfer(UVMSequenceItem):
     def __init__(self, name="usb_xfer"):
         super().__init__(name)
         self.addr = 0
+        self.rand('addr', range(0, (1 << 7) - 1))
         self.endp = 0x0
+        self.rand('endp', range(0, (1 << 4) - 1))
         self.kind = usb_xfer.IN
+        self.rand('kind', [usb_xfer.IN, usb_xfer.OUT])
         self.data = []
         self.status = usb_xfer.ACK
 
     def convert2string(self):
         convert2string = sv.sformatf("dev=%h.%h kind=%s hndsk=%s data=h",
-            self.addr, self.endp, int(self.kind), int(self.status))
+            self.addr, self.endp, int(self.kind), self.status.name)
+        ndata = len(self.data)
 
-        #      case (data.size())
-        #       0: return {convert2string, "[]"}
-        #       1: return sv.sformatf("%s0x%h", convert2string, data[0])
-        #       2: return sv.sformatf("%s0x%h 0x%h", convert2string, data[0], data[1])
-        #       3: return sv.sformatf("%s0x%h 0x%h 0x%h", convert2string,
-        #                           data[0], data[1], data[2])
-        #
-        #       default:
-        #          return sv.sformatf("%s0x%h 0x%h .. 0x%h (%0d bytes)", convert2string,
-        #                           data[0], data[1], data[data.size()-1],
-        #                           data.size())
-        #      endcase
-        return convert2string
+        if ndata == 0:
+            return convert2string + "[]"
+        if ndata == 1:
+            return sv.sformatf("%s0x%h", convert2string, self.data[0])
+        if ndata == 2:
+            return sv.sformatf("%s0x%h 0x%h", convert2string, self.data[0],
+                    self.data[1])
+        if ndata == 3:
+            return sv.sformatf("%s0x%h 0x%h 0x%h", convert2string,
+                self.data[0], self.data[1], self.data[2])
 
+        return sv.sformatf("%s0x%h 0x%h .. 0x%h (%0d bytes)", convert2string,
+            self.data[0], self.data[1], self.data[-1],
+            len(self.data))
 
 uvm_object_utils_begin(usb_xfer)
 #     `uvm_field_enum(kind_e, kind, UVM_ALL_ON | UVM_NOPACK)
