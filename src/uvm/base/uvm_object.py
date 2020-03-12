@@ -990,6 +990,7 @@ class UVMObject(sv_obj):
         if packer is not None:
             UVMObject._m_uvm_status_container.packer = packer
         else:
+            from .uvm_global_vars import uvm_default_packer
             UVMObject._m_uvm_status_container.packer = uvm_default_packer
         packer = UVMObject._m_uvm_status_container.packer
 
