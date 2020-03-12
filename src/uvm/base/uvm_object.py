@@ -54,7 +54,7 @@ class UVMObject(sv_obj):
 
     inst_id_count = 0
     use_uvm_seeding = True
-    uvm_global_copy_map = {}
+    uvm_global_copy_map = {}  # dict UVMObject[UVMObject]
     _m_uvm_status_container = UVMStatusContainer()
 
     def __init__(self, name):
@@ -386,58 +386,55 @@ class UVMObject(sv_obj):
 
     def convert2string(self):
         """
-          Function: convert2string
+        This virtual function is a user-definable hook, called directly by the
+        user, that allows users to provide object information in the form of
+        a string. Unlike `sprint`, there is no requirement to use a `uvm_printer`
+        policy object. As such, the format and content of the output is fully
+        customizable, which may be suitable for applications not requiring the
+        consistent formatting offered by the `print`/`sprint`/`do_print`
+        API.
 
-          This virtual function is a user-definable hook, called directly by the
-          user, that allows users to provide object information in the form of
-          a string. Unlike `sprint`, there is no requirement to use a `uvm_printer`
-          policy object. As such, the format and content of the output is fully
-          customizable, which may be suitable for applications not requiring the
-          consistent formatting offered by the `print`/`sprint`/`do_print`
-          API.
+        Fields declared in <Utility Macros> macros (`uvm_field_*), if used, will
+        not automatically appear in calls to convert2string.
 
-          Fields declared in <Utility Macros> macros (`uvm_field_*), if used, will
-          not automatically appear in calls to convert2string.
+        An example implementation of convert2string follows.
 
-          An example implementation of convert2string follows.
+        .. code-block:: python
 
-         | class base (UVMObject):
-         |   string field = "foo"
-         |   virtual function string convert2string()
-         |     convert2string = {"base_field=",field}
-         |   endfunction
-         | endclass
-         |
-         | class obj2 (UVMObject):
-         |   string field = "bar"
-         |   virtual function string convert2string()
-         |     convert2string = {"child_field=",field}
-         |   endfunction
-         | endclass
-         |
-         | class obj extends base
-         |   int addr = 'h123
-         |   int data = 'h456
-         |   bit write = 1
-         |   obj2 child = new
-         |   virtual function string convert2string()
-         |      convert2string = {super.convert2string(),
-         |        $sformatf(" write=%0d addr=%8h data=%8h ",write,addr,data),
-         |        child.convert2string()}
-         |   endfunction
-         | endclass
+          class Base(UVMObject):
+            field = "foo"
+            def convert2string(self):
+              return "base_field=" + self.field
 
-          Then, to display an object, you could write:
+          class Obj2(UVMObject):
+            field = "bar"
+            def convert2string()
+              convert2string = "child_field=" + self.field
 
-         | obj o = new
-         | uvm_report_info("BusMaster",{"Sending:\n ",o.convert2string()})
+          class Obj(Base):
+            addr = 0x123
+            data = 0x456
+            write = 1
+            child = Obj2()
+            def convert2string(self):
+               convert2string = super().convert2string() +
+                 sv.sformatf(" write=%0d addr=%8h data=%8h ",write,addr,data) +
+                 child.convert2string()
 
-          The output will look similar to:
+         Then, to display an object, you could write:
 
-         | UVM_INFO @ 0: reporter [BusMaster] Sending:
-         |    base_field=foo write=1 addr=00000123 data=00000456 child_field=bar
-         extern virtual function string convert2string()
+         .. code-block:: python
+
+           o = Obj()
+           uvm_report_info("BusMaster", "Sending:\n " + o.convert2string())
+
+        The output will look similar to::
+
+          UVM_INFO @ 0: reporter [BusMaster] Sending:
+            base_field=foo write=1 addr=00000123 data=00000456 child_field=bar
+
         Returns:
+            str: Object converted into string.
         """
         return ""
 
@@ -462,8 +459,7 @@ class UVMObject(sv_obj):
         access to a simulator's recording capabilities.
 
         Args:
-            recorder:
-            None:
+            recorder (UVMRecorder):
         """
         if recorder is None:
             return
@@ -476,8 +472,6 @@ class UVMObject(sv_obj):
 
     def do_record(self, recorder):
         """
-        Function: do_record
-
         The `do_record` method is the user-definable hook called by the `record`
         method. A derived class should override this method to include its fields
         in a record operation.
@@ -495,20 +489,17 @@ class UVMObject(sv_obj):
           class mytype (UVMObject):
             data_obj data
             int f1
-            function void do_record (uvm_recorder recorder)
-              recorder.record_field("f1", f1, $bits(f1), UVM_DEC)
+            def do_record (self, recorder):
+              recorder.record_field("f1", f1, sv.bits(f1), UVM_DEC)
               recorder.record_object("data", data)
-            endfunction
 
         Args:
-            recorder:
+            recorder (UVMRecorder): Recorder policy object.
         """
         return
 
     def copy(self, rhs):
         """
-        Group: Copying
-
         The copy makes this object a copy of the specified object.
 
         The `copy` method is not virtual and should not be overloaded in derived
@@ -516,7 +507,7 @@ class UVMObject(sv_obj):
         the `do_copy` method.
 
         Args:
-            rhs:
+            rhs (UVMObject): An object to be copied.
         """
         # For cycle checking
         UVMObject.depth = 0
@@ -549,27 +540,22 @@ class UVMObject(sv_obj):
 
           class mytype (UVMObject):
             ...
-            int f1
+            field_1 = 0
             def do_copy(self, rhs):
-              mytype rhs_
               super.do_copy(rhs)
-              $cast(rhs_,rhs)
-              field_1 = rhs_.field_1
+              # Optionanl type checking
+              field_1 = rhs.field_1
 
-        The implementation must call ~super.do_copy~, and it must $cast the rhs
-        argument to the derived type before copying.
+        The implementation must call `super().do_copy`, and can optionally do
+        type checking before copying.
 
         Args:
-            rhs:
+            rhs (UVMObject): Object to be copied.
         """
         return
 
     def compare(self, rhs, comparer=None):
         """
-        Group: Comparing
-
-        Function: compare
-
         Deep compares members of this data object with those of the object provided
         in the `rhs` (right-hand side) argument, returning 1 on a match, 0 otherwise.
 
@@ -585,10 +571,10 @@ class UVMObject(sv_obj):
         for more information.
 
         Args:
-            rhs:
-            comparer:
-            None:
+            rhs (UVMObject): Object to be compared against.
+            comparer (UVMComparer): Comparer policy object.
         Returns:
+            bool: True if objects match, False otherwise.
         """
         t = 0
         dc = 0
@@ -663,28 +649,28 @@ class UVMObject(sv_obj):
 
           class mytype (UVMObject):
             ...
-            int f1
-            def do_compare (self, rhs, comparer):
-              mytype rhs_
+            f1 = 0
+            def do_compare(self, rhs, comparer):
               do_compare = super.do_compare(rhs,comparer)
-              $cast(rhs_,rhs)
-              do_compare &= comparer.compare_field_int("f1", f1, rhs_.f1)
+              # Optional type checking
+              do_compare &= comparer.compare_field_int("f1", f1, rhs.f1)
               return do_compare
 
-        A derived class implementation must call ~super.do_compare()~ to ensure its
-        base class' properties, if any, are included in the comparison. Also, the
-        rhs argument is provided as a generic uvm_object. Thus, you must ~$cast~ it
-        to the type of this object before comparing.
+        A derived class implementation must call `super().do_compare` to ensure its
+        base class' properties, if any, are included in the comparison. If type
+        matching is required instead of duck-typing, the user can also
+        implemented this checking.
 
-        The actual comparison should be implemented using the uvm_comparer object
+        The actual comparison should be implemented using the `UVMComparer` object
         rather than direct field-by-field comparison. This enables users of your
         class to customize how comparisons are performed and how much miscompare
-        information is collected. See uvm_comparer for more details.
+        information is collected. See `UVMComparer` for more details.
 
         Args:
-            rhs:
-            comparer:
+            rhs (UVMObject):
+            comparer (UVMComparer):
         Returns:
+            bool: True if objects match, False otherwise.
         """
         return True
 
@@ -695,12 +681,17 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack (ref bit bitstream[],
     #                            input uvm_packer packer=None)
-    #
+    def pack(self, bitstream, packer=None):
+        self.m_pack(packer)
+        packer.get_bits(bitstream)
+        return packer.get_packed_size()
+
+
     #  // Function: pack_bytes
     #
     #  extern function int pack_bytes (ref byte unsigned bytestream[],
     #                                  input uvm_packer packer=None)
-    #
+
     #  // Function: pack_ints
     #  //
     #  // The pack methods bitwise-concatenate this object's properties into an array
@@ -718,8 +709,8 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack_ints (ref int unsigned intstream[],
     #                                 input uvm_packer packer=None)
-    #
-    #
+
+
     #  // Function: do_pack
     #  //
     #  // The `do_pack` method is the user-definable hook called by the <pack> methods.
@@ -771,22 +762,22 @@ class UVMObject(sv_obj):
     #  //
     #  // Packing order does not need to match declaration order. However, unpacking
     #  // order must match packing order.
-    #
-    #  extern virtual function void do_pack (uvm_packer packer)
-    #
-    #
+    def do_pack(self, packer):
+        return
+
+
     #  // Group: Unpacking
     #
     #  // Function: unpack
     #
     #  extern function int unpack (ref   bit        bitstream[],
     #                              input uvm_packer packer=None)
-    #
+
     #  // Function: unpack_bytes
     #
     #  extern function int unpack_bytes (ref byte unsigned bytestream[],
     #                                    input uvm_packer packer=None)
-    #
+
     #  // Function: unpack_ints
     #  //
     #  // The unpack methods extract property values from an array of bits, bytes, or
@@ -808,8 +799,8 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack_ints (ref   int unsigned intstream[],
     #                                   input uvm_packer packer=None)
-    #
-    #
+
+
     #  // Function: do_unpack
     #  //
     #  // The `do_unpack` method is the user-definable hook called by the <unpack>
@@ -851,16 +842,17 @@ class UVMObject(sv_obj):
     #  //   the next property, if any. If the least significant bit is 1, then the
     #  //   target object should be allocated and its properties unpacked.
     #
-    #  extern virtual function void do_unpack (uvm_packer packer)
+    def do_unpack(self, packer):
+        return
 
-    def set_int_local(self, field_name, value, recurse=1):
+    def set_int_local(self, field_name, value, recurse=True):
         """
         Group: Configuration
 
         Args:
-            field_name str: Variable to set
+            field_name (str): Variable to set
             value: Value for the variable
-            recurse:
+            recurse (bool):
         """
         UVMObject._m_uvm_status_container.cycle_check.clear()
         UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
@@ -875,14 +867,14 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.cycle_check.clear()
 
 
-    def set_string_local(self, field_name, value, recurse=1):
+    def set_string_local(self, field_name, value, recurse=True):
         """
         Function: set_string_local
 
         Args:
-            field_name:
-            value:
-            recurse:
+            field_name (str): Variable to set
+            value: Value for the variable
+            recurse (bool): If True, recurse into sub-objects.
         """
         UVMObject._m_uvm_status_container.cycle_check.clear()
         UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
@@ -960,10 +952,10 @@ class UVMObject(sv_obj):
         directly by the user.
 
         Args:
-            field_name:
-            value:
-            clone:
-            recurse:
+            field_name (str): Variable to set
+            value: Value for the variable
+            clone (bool):
+            recurse (bool):
         """
         cc = None  # uvm_object cc
         UVMObject._m_uvm_status_container.cycle_check.clear()
@@ -992,7 +984,24 @@ class UVMObject(sv_obj):
     #  //                           Do not use directly
     #  //---------------------------------------------------------------------------
     #
+
     #  extern local function void m_pack        (inout uvm_packer packer)
+    def m_pack(self, packer):
+        if packer is not None:
+            UVMObject._m_uvm_status_container.packer = packer
+        else:
+            UVMObject._m_uvm_status_container.packer = uvm_default_packer
+        packer = UVMObject._m_uvm_status_container.packer
+
+        packer.reset()
+        packer.scope.down(self.get_name())
+
+        self._m_uvm_field_automation(None, UVM_PACK, "")
+        self.do_pack(packer)
+        packer.set_packed_size()
+        packer.scope.up()
+
+
     #  extern local function void m_unpack_pre  (inout uvm_packer packer)
     #  extern local function void m_unpack_post (uvm_packer packer)
     #
@@ -1010,7 +1019,7 @@ class UVMObject(sv_obj):
     #
     #  // the lookup table
     #  local static uvm_object uvm_global_copy_map[uvm_object]
-    #endclass
+
 
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
@@ -1024,13 +1033,6 @@ class UVMObject(sv_obj):
 #    self.srandom(uvm_create_random_seed(get_type_name(), get_full_name()))
 #endfunction
 #
-#// get inst_id
-#// -----------
-#
-#function int uvm_object::get_inst_id()
-#  return m_inst_id
-#endfunction
-#
 #
 #// get inst_count
 #// --------------
@@ -1040,39 +1042,8 @@ class UVMObject(sv_obj):
 #endfunction
 #
 #
-#// m_pack
-#// ------
-#
-#function void uvm_object::m_pack (inout uvm_packer packer)
-#
-#  if(packer!=None)
-#    _m_uvm_status_container.packer = packer
-#  else
-#    _m_uvm_status_container.packer = uvm_default_packer
-#  packer = _m_uvm_status_container.packer
-#
-#  packer.reset()
-#  packer.scope.down(get_name())
-#
-#  _m_uvm_field_automation(None, UVM_PACK, "")
-#  do_pack(packer)
-#
-#  packer.set_packed_size()
-#
-#  packer.scope.up()
-#
-#endfunction
 #
 #
-#// pack
-#// ----
-#
-#function int uvm_object::pack (ref bit bitstream [],
-#                               input uvm_packer packer =None )
-#  m_pack(packer)
-#  packer.get_bits(bitstream)
-#  return packer.get_packed_size()
-#endfunction
 #
 #// pack_bytes
 #// ----------
@@ -1095,13 +1066,6 @@ class UVMObject(sv_obj):
 #  return packer.get_packed_size()
 #endfunction
 #
-#
-#// do_pack
-#// -------
-#
-#function void uvm_object::do_pack (uvm_packer packer )
-#  return
-#endfunction
 #
 #
 #// m_unpack_pre
@@ -1180,16 +1144,6 @@ class UVMObject(sv_obj):
 #  packer.set_packed_size()
 #  return packer.get_packed_size()
 #endfunction
-#
-#
-#// do_unpack
-#// ---------
-#
-#function void uvm_object::do_unpack (uvm_packer packer)
-#  return
-#endfunction
-#
-#
 #
 #
 #
