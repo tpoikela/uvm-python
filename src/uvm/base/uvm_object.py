@@ -25,7 +25,7 @@
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
 from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
-        UVM_RECORD, UVM_SETINT, UVM_SETOBJ, UVM_SETSTR)
+        UVM_RECORD, UVM_SETINT, UVM_SETOBJ, UVM_SETSTR, UVM_PACK)
 from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 
