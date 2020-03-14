@@ -52,6 +52,7 @@ class UVMObject(sv_obj):
     instance name.
     """
 
+
     inst_id_count = 0
     use_uvm_seeding = True
     uvm_global_copy_map = {}  # dict UVMObject[UVMObject]
@@ -785,7 +786,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack (ref   bit        bitstream[],
     #                              input uvm_packer packer=None)
-    def unpack (self, bitstream, packer=None):
+    def unpack(self, bitstream, packer=None):
         packer = self.m_unpack_pre(packer)
         packer.put_bits(bitstream)
         self.m_unpack_post(packer)
@@ -797,7 +798,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack_bytes (ref byte unsigned bytestream[],
     #                                    input uvm_packer packer=None)
-    def unpack_bytes (self, bytestream, packer=None):
+    def unpack_bytes(self, bytestream, packer=None):
         packer = self.m_unpack_pre(packer)
         packer.put_bytes(bytestream)
         self.m_unpack_post(packer)
@@ -1062,67 +1063,3 @@ class UVMObject(sv_obj):
             uvm_report_warning("BDUNPK", sv.sformatf(
                 "Unpack operation unsuccessful: unpacked %0d bits from a total of %0d bits",
                 packer.get_packed_size(), provided_size), UVM_NONE)
-
-
-    #  // The print_matches bit causes an informative message to be printed
-    #  // when a field is set using one of the set methods.
-    #
-    #  local string m_leaf_name
-    #
-    #  local int m_inst_id
-    #  static protected int m_inst_count
-    #
-    #  static /*protected*/ uvm_status_container _m_uvm_status_container = new
-    #
-    #  extern protected virtual function uvm_report_object m_get_report_object()
-    #
-    #  // the lookup table
-    #  local static uvm_object uvm_global_copy_map[uvm_object]
-
-
-#//------------------------------------------------------------------------------
-#// IMPLEMENTATION
-#//------------------------------------------------------------------------------
-#
-#// reseed
-#// ------
-#
-#function void uvm_object::reseed ()
-#  if(use_uvm_seeding)
-#    self.srandom(uvm_create_random_seed(get_type_name(), get_full_name()))
-#endfunction
-#
-#
-#// get inst_count
-#// --------------
-#
-#function int uvm_object::get_inst_count()
-#  return m_inst_count
-#endfunction
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#// m_get_report_object
-#// -------------------
-#
-#function uvm_report_object uvm_object::m_get_report_object()
-#  return None
-#endfunction
