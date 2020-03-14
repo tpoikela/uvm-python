@@ -1,7 +1,7 @@
 
 import unittest
 # import re
-from uvm.base.uvm_packer import (UVMPacker)
+from uvm.base.uvm_packer import (UVMPacker, MASK_INT)
 from uvm.base.uvm_object import UVMObject
 
 
@@ -69,6 +69,32 @@ class TestUVMPacker(unittest.TestCase):
         packer.pack_ints(arr_int, 4 * 32)
         packer.set_packed_size()
         self.assertEqual(packer.unpack_field_int(32), 0x00000123)
+
+
+    def test_unpack_field(self):
+        num_ints = int(4096 / 32)
+        arr_ints = []
+        for i in range(num_ints):
+            arr_ints.append(1 + i**2)
+        packer = UVMPacker()
+        packer.big_endian = 0
+        packer.pack_ints(arr_ints, num_ints * 32)
+        packer.set_packed_size()
+        val_4096b = packer.unpack_field(4096)
+        # Verify the results
+        for i in range(num_ints):
+            value = (val_4096b >> (32*i)) & MASK_INT
+            self.assertEqual(value, arr_ints[i])
+
+    def test_pack_unpack_string(self):
+        str_list = ["Otatko työ mämmiä, Åke?", 'abcd_efgh_1234_6789']
+        for test_str in str_list:
+            packer = UVMPacker()
+            packer.big_endian = 0
+            packer.pack_string(test_str)
+            packer.set_packed_size()
+            new_str = packer.unpack_string()
+            self.assertEqual(new_str, test_str)
 
 
 if __name__ == '__main__':
