@@ -29,6 +29,7 @@ from ..macros.uvm_message_defines import uvm_error
 
 
 SIZEOF_INT = 32
+MASK_INT = 0xFFFFFFFF
 
 
 class UVMPacker(object):
@@ -276,15 +277,43 @@ class UVMPacker(object):
     #  // outside of SystemVerilog UVM.
     #
     #  extern def pack_string(self,string value):
-    #
-    #
+    def pack_string(self, value):
+        bytearr = value.encode()
+
+        size = 8 * len(bytearr)
+        bits = int(bytearr.hex(), 16)
+        if self.big_endian == 1:
+            bits = flip_bit_order(bits)
+        self.m_bits |= bits << self.count
+        self.count += size
+        if self.use_metadata == 1:
+            pass
+            # TODO self.m_bits |= 0 << self.count
+        #  byte b
+        #  foreach (value[index]):
+        #    if(self.big_endian == 0)
+        #      self.m_bits[count +: 8] = value[index]
+        #    else begin
+        #      b = value[index]
+        #      for(int i=0; i<8; ++i)
+        #        self.m_bits[count+i] = b[7-i]
+        #    end
+        #    count += 8
+        #  end
+        #  if(use_metadata == 1):
+        #    self.m_bits[count +: 8] = 0
+        #    count += 8
+        #  end
+        #endfunction
+
+
     #  // Function: pack_time
     #  //
     #  // Packs a time ~value~ as 64 bits into the pack array.
     #
     #  extern def pack_time(self,time value):;
-    #
-    #
+
+
     #  // Function: pack_real
     #  //
     #  // Packs a real ~value~ as 64 bits into the pack array.
@@ -293,7 +322,6 @@ class UVMPacker(object):
     #  // $real2bits before it is packed into the array.
     #
     #  extern def pack_real(self,real value):
-    #
 
 
     #  // Function: pack_object
@@ -305,17 +333,38 @@ class UVMPacker(object):
     #  // be 0.
     #  //
     #  // This is useful for mixed-language communication where unpacking may occur
-    #  // outside of SystemVerilog UVM.
+    #  // outside of UVM.
     #
     #  extern def pack_object(self,uvm_object value):
+    def pack_object(self, value):
+        if value._m_uvm_status_container.cycle_check.exists(value):
+            uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack",
+                value.get_inst_id()), UVM_NONE)
+            return
+
+        value._m_uvm_status_container.cycle_check[value] = 1
+
+        if((self.policy != UVM_REFERENCE) and value is not None):
+            if self.use_metadata == 1:
+                pass
+                #self.m_bits[count +: 4] = 1
+                #count += 4; // to better debug when display packed bits in hexadecimal
+
+            self.scope.down(value.get_name())
+            value.__m_uvm_field_automation(None, UVM_PACK,"")
+            value.do_pack(self)
+            self.scope.up()
+        elif self.use_metadata == 1:
+            pass
+            #self.m_bits[count +: 4] = 0
+            #count += 4
+        value._m_uvm_status_container.cycle_check.delete(value)
 
 
-    #
-    #
     #  //------------------//
     #  // Group: Unpacking //
     #  //------------------//
-    #
+
     #  // Function: is_null
     #  //
     #  // This method is used during unpack operations to peek at the next 4-bit
@@ -328,15 +377,27 @@ class UVMPacker(object):
     #  // needs to be allocated or not.
     #
     #  extern def is_null(self):
-    #
-    #
+
+
     #  // Function: unpack_field
     #  //
     #  // Unpacks bits from the pack array and returns the bit-stream that was
     #  // unpacked. ~size~ is the number of bits to unpack; the maximum is 4096 bits.
     #
     #  extern def unpack_field(self,int size):
-    #
+    def unpack_field(self, size):
+        return self.unpack_field_int(size)
+        #  unpack_field =  0b0
+        #  if (self.enough_bits(size,"integral")):
+        #    count += size
+        #    for (int i=0; i<size; i++)
+        #      if(self.big_endian == 1)
+        #        unpack_field[i] = self.m_bits[count-i-1]
+        #      else
+        #        unpack_field[i] = self.m_bits[count-size+i]
+        #  end
+        #endfunction
+
 
     #  // Function: unpack_field_int
     #  //
@@ -435,7 +496,7 @@ class UVMPacker(object):
         if size > max_size:
             uvm_error("UVM/BASE/PACKER/BAD_SIZE",
                 sv.sformatf("unpack_ints called with size '%0d', which exceeds value size of '%0d'",
-                   size, value.size()))
+                   size, len(value)))
             return
         else:
             if self.enough_bits(size, "integral"):
@@ -456,9 +517,41 @@ class UVMPacker(object):
     #  //
     #  // num_chars bytes are unpacked into a string. If num_chars is -1 then
     #  // unpacking stops on at the first ~null~ character that is encountered.
-    #
-    #  extern def unpack_string(self,int num_chars=-1):
+    #// If num_chars is not -1, then the user only wants to unpack a
+    #// specific number of bytes into the string.
+    def unpack_string(self, num_chars=-1):
+        #  byte b
+        i = 0
+        is_null_term = 0  # Assumes a ~None~ terminated string
+        #  int i; i=0
+        if num_chars == -1:
+            is_null_term = 1
 
+        #val_to_decode = 0x0
+        # We'll use bytearray to decode this, so need to find the num of bytes
+
+        byte_arr = bytearray()
+        #unpack_string = 0
+        curr_byte = (self.m_bits >> self.count) & 0xFF
+        while (self.enough_bits(8,"string", is_error=False) and
+              ((curr_byte != 0) or (is_null_term == 0)) and
+              ((i < num_chars) or (is_null_term == 1))):
+            # silly, because cannot append byte/char to string
+            #unpack_string = unpack_string + " "
+            #if self.big_endian == 0:
+            #    unpack_string[i] = self.m_bits[count +: 8]
+            #else:
+            #    for(int j=0; j<8; ++j)
+            #        b[7-j] = self.m_bits[count+j]
+            #  unpack_string[i] = b
+            i += 1
+            byte_arr.insert(0, curr_byte)
+            self.count += 8
+            curr_byte = (self.m_bits >> self.count) & 0xFF
+        if self.enough_bits(8,"string", is_error=False):
+            self.count += 8
+        return byte_arr.decode()
+        #return unpack_string
 
 
     #  // Function: unpack_time
@@ -578,11 +671,12 @@ class UVMPacker(object):
                 index,id,((self.m_packed_size+sz-1)/sz)-1))
 
     #  extern def enough_bits(self,int needed, string id):
-    def enough_bits(self, needed, id):
+    def enough_bits(self, needed, id, is_error=True):
         if ((self.m_packed_size - self.count) < needed):
-            uvm_error("PCKSZ",
-                sv.sformatf("%0d bits needed to unpack %0s, yet only %0d available.",
-                needed, id, (self.m_packed_size - self.count)))
+            if is_error is True:
+                uvm_error("PCKSZ",
+                    sv.sformatf("%0d bits needed to unpack %0s, yet only %0d available.",
+                    needed, id, (self.m_packed_size - self.count)))
             return 0
         return 1
 
@@ -599,28 +693,6 @@ class UVMPacker(object):
 #
 #// NOTE- max size limited to BITSTREAM bits parameter (default: 4096)
 #
-#
-#// index_ok
-#// --------
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 #// put_bits
 #// --------
 #
@@ -630,12 +702,12 @@ class UVMPacker(object):
 #
 #  bit_size = bitstream.size()
 #
-#  if(big_endian)
+#  if(self.big_endian)
 #    for (int i=bit_size-1;i>=0;i--)
-#      m_bits[i] = bitstream[i]
+#      self.m_bits[i] = bitstream[i]
 #  else
 #    for (int i=0;i<bit_size;i++)
-#      m_bits[i] = bitstream[i]
+#      self.m_bits[i] = bitstream[i]
 #
 #  m_packed_size = bit_size
 #  count = 0
@@ -655,11 +727,11 @@ class UVMPacker(object):
 #  index = 0
 #  for (int i=0;i<byte_size;i++):
 #    b = bytestream[i]
-#    if(big_endian):
+#    if(self.big_endian):
 #      byte unsigned tb; tb = b
 #      for(int j=0;j<8;++j) b[j] = tb[7-j]
 #    end
-#    m_bits[index +:8] = b
+#    self.m_bits[index +:8] = b
 #    index += 8
 #  end
 #
@@ -682,11 +754,9 @@ class UVMPacker(object):
 #  index = 0
 #  for (int i=0;i<int_size;i++):
 #    v = intstream[i]
-#    if(big_endian):
-#      int unsigned tv; tv = v
-#      for(int j=0;j<32;++j) v[j] = tv[31-j]
-#    end
-#    m_bits[index +:32] = v
+#    if(self.big_endian):
+#      v = flip_bit_order(v)
+#    self.m_bits[index +:32] = v
 #    index += 32
 #  end
 #
@@ -705,7 +775,7 @@ class UVMPacker(object):
 #def byte unsigned UVMPacker::get_byte(self,int unsigned index):
 #  if (index >= (m_packed_size+7)/8)
 #    index_error(index, "byte",8)
-#  return m_bits[index*8 +: 8]
+#  return self.m_bits[index*8 +: 8]
 #endfunction
 #
 #
@@ -715,40 +785,13 @@ class UVMPacker(object):
 #def int unsigned UVMPacker::get_int(self,int unsigned index):
 #  if (index >= (m_packed_size+31)/32)
 #    index_error(index, "int",32)
-#  return m_bits[(index*32) +: 32]
+#  return self.m_bits[(index*32) +: 32]
 #endfunction
 #
 #
 #// PACK
 #
 #
-#// pack_object
-#// ---------
-#
-#def void UVMPacker::pack_object(self,uvm_object value):
-#
-#  if(value._m_uvm_status_container.cycle_check.exists(value)):
-#    uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack", value.get_inst_id()), UVM_NONE)
-#    return
-#  end
-#  value._m_uvm_status_container.cycle_check[value] = 1
-#
-#  if((policy != UVM_REFERENCE)  and  (value is not None) ):
-#      if(use_metadata == 1):
-#        m_bits[count +: 4] = 1
-#        count += 4; // to better debug when display packed bits in hexadecimal
-#      end
-#      scope.down(value.get_name())
-#      value.__m_uvm_field_automation(None, UVM_PACK,"")
-#      value.do_pack(self)
-#      scope.up()
-#  end
-#  elif(use_metadata == 1):
-#    m_bits[count +: 4] = 0
-#    count += 4
-#  end
-#  value._m_uvm_status_container.cycle_check.delete(value)
-#endfunction
 #
 #
 #// pack_real
@@ -776,47 +819,27 @@ class UVMPacker(object):
 #
 #def void UVMPacker::pack_bits(self,ref bit value[], input int size = -1):
 #   if (size < 0)
-#     size = value.size()
+#     size = len(value)
 #
-#   if (size > value.size()):
+#   if (size > len(value)):
 #      uvm_error("UVM/BASE/PACKER/BAD_SIZE",
-#                 sv.sformatf("pack_bits called with size '%0d', which exceeds value.size() of '%0d'",
+#                 sv.sformatf("pack_bits called with size '%0d', which exceeds len(value) of '%0d'",
 #                           size,
-#                           value.size()))
+#                           len(value)))
 #      return
 #   end
 #
 #   for (int i=0; i<size; i++)
-#     if (big_endian == 1)
-#       m_bits[count+i] = value[size-1-i]
+#     if (self.big_endian == 1)
+#       self.m_bits[count+i] = value[size-1-i]
 #     else
-#       m_bits[count+i] = value[i]
+#       self.m_bits[count+i] = value[i]
 #   count += size
 #endfunction
 #
 #
 #
 #
-#// pack_string
-#// -----------
-#
-#def void UVMPacker::pack_string(self,string value):
-#  byte b
-#  foreach (value[index]):
-#    if(big_endian == 0)
-#      m_bits[count +: 8] = value[index]
-#    else begin
-#      b = value[index]
-#      for(int i=0; i<8; ++i)
-#        m_bits[count+i] = b[7-i]
-#    end
-#    count += 8
-#  end
-#  if(use_metadata == 1):
-#    m_bits[count +: 8] = 0
-#    count += 8
-#  end
-#endfunction
 #
 #
 #// UNPACK
@@ -847,7 +870,7 @@ class UVMPacker(object):
 #  value._m_uvm_status_container.cycle_check[value] = 1
 #
 #  if(use_metadata == 1):
-#    is_non_null = m_bits[count +: 4]
+#    is_non_null = self.m_bits[count +: 4]
 #    count+=4
 #  end
 #
@@ -878,7 +901,7 @@ class UVMPacker(object):
 #// -----------
 #
 #def real UVMPacker::unpack_real(self):
-#  if (enough_bits(64,"real")):
+#  if (self.enough_bits(64,"real")):
 #    return $bitstoreal(unpack_field_int(64))
 #  end
 #endfunction
@@ -888,26 +911,12 @@ class UVMPacker(object):
 #// -----------
 #
 #def time UVMPacker::unpack_time(self):
-#  if (enough_bits(64,"time")):
+#  if (self.enough_bits(64,"time")):
 #    return unpack_field_int(64)
 #  end
 #endfunction
 #
 #
-#// unpack_field
-#// ------------
-#
-#def uvm_bitstream_t UVMPacker::unpack_field(self,int size):
-#  unpack_field =  0b0
-#  if (enough_bits(size,"integral")):
-#    count += size
-#    for (int i=0; i<size; i++)
-#      if(big_endian == 1)
-#        unpack_field[i] = m_bits[count-i-1]
-#      else
-#        unpack_field[i] = m_bits[count-size+i]
-#  end
-#endfunction
 #
 #
 #
@@ -916,60 +925,29 @@ class UVMPacker(object):
 #
 #def void UVMPacker::unpack_bits(self,ref bit value[], input int size = -1):
 #   if (size < 0)
-#     size = value.size()
+#     size = len(value)
 #
-#   if (size > value.size()):
+#   if (size > len(value)):
 #      uvm_error("UVM/BASE/PACKER/BAD_SIZE",
-#                 sv.sformatf("unpack_bits called with size '%0d', which exceeds value.size() of '%0d'",
+#                 sv.sformatf("unpack_bits called with size '%0d', which exceeds len(value) of '%0d'",
 #                           size,
-#                           value.size()))
+#                           len(value)))
 #      return
 #   end
 #
-#   if (enough_bits(size, "integral")):
+#   if (self.enough_bits(size, "integral")):
 #      count += size
 #      for (int i=0; i<size; i++)
-#        if (big_endian == 1)
-#          value[i] = m_bits[count-i-1]
+#        if (self.big_endian == 1)
+#          value[i] = self.m_bits[count-i-1]
 #        else
-#          value[i] = m_bits[count-size+i]
+#          value[i] = self.m_bits[count-size+i]
 #   end
 #endfunction
 #
 #
 #
 #
-#// unpack_string
-#// -------------
-#
-#// If num_chars is not -1, then the user only wants to unpack a
-#// specific number of bytes into the string.
-#def string UVMPacker::unpack_string(self,int num_chars=-1):
-#  byte b
-#  bit  is_null_term; // Assumes a ~None~ terminated string
-#  int i; i=0
-#  if(num_chars == -1) is_null_term = 1
-#  else is_null_term = 0
-#
-#  while(enough_bits(8,"string")  and
-#        ((m_bits[count+:8] != 0)  or  (is_null_term == 0))  and
-#        ((i<num_chars) or (is_null_term==1)) )
-#  begin
-#    // silly, because cannot append byte/char to string
-#    unpack_string = {unpack_string," "}
-#    if(big_endian == 0)
-#      unpack_string[i] = m_bits[count +: 8]
-#    else begin
-#      for(int j=0; j<8; ++j)
-#        b[7-j] = m_bits[count+j]
-#      unpack_string[i] = b
-#    end
-#    count += 8
-#    ++i
-#  end
-#  if(enough_bits(8,"string"))
-#    count += 8
-#endfunction
 
 
 def flip_bit_order(value):
