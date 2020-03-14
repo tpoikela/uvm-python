@@ -77,7 +77,7 @@ class UVMPacker(object):
         #  // `UVMObject.do_pack` and `UVMObject.do_unpack` routines, to test the
         #  // setting of this field if you want to use it as a filter.
         #  bit abstract
-        self.abstractk = 0
+        self.abstract = 0
 
 
         #  // Variable: use_metadata
@@ -294,7 +294,8 @@ class UVMPacker(object):
     #
     #  extern def pack_real(self,real value):
     #
-    #
+
+
     #  // Function: pack_object
     #  //
     #  // Packs an object value into the pack array.
@@ -307,6 +308,8 @@ class UVMPacker(object):
     #  // outside of SystemVerilog UVM.
     #
     #  extern def pack_object(self,uvm_object value):
+
+
     #
     #
     #  //------------------//
@@ -334,6 +337,7 @@ class UVMPacker(object):
     #
     #  extern def unpack_field(self,int size):
     #
+
     #  // Function: unpack_field_int
     #  //
     #  // Unpacks bits from the pack array and returns the bit-stream that was
@@ -344,7 +348,22 @@ class UVMPacker(object):
     #  // smaller vectors.
     #
     #  extern def unpack_field_int(self,int size):
-    #
+    def unpack_field_int(self, size):
+        unpack_field_int = 0x0
+        if self.enough_bits(size,"integral"):
+            self.count += size
+            for i in range(size):
+                if self.big_endian:
+                    bit_sel = self.count-i-1
+                    bit_sel = (1 << bit_sel)
+                    unpack_field_int |= self.m_bits & bit_sel
+                else:
+                    bit_sel = self.count-size+i
+                    bit_sel = (1 << bit_sel)
+                    unpack_field_int |= self.m_bits & bit_sel
+        return unpack_field_int
+
+
     #  // Function: unpack_bits
     #  //
     #  // Unpacks bits from the pack array into an unpacked array of bits.
@@ -504,8 +523,44 @@ class UVMPacker(object):
     #  extern def int  unsigned get_int  (self,int unsigned index):
 
     #  extern def get_bits(self,ref bit unsigned bits[]):
+    def get_bits(self):
+        return self.m_bits
+
     #  extern def get_bytes(self,ref byte unsigned bytes[]):
-    #  extern def get_ints(self,ref int unsigned ints[]):
+    def get_bytes(self):
+        sz = 0
+        v = 0x00
+        sz = int((self.m_packed_size+7) / 8)
+        bytes = [0] * sz
+        for i in range(sz):
+            if (i != sz-1 or (self.m_packed_size % 8) == 0):
+                v = (self.m_bits >> (i * 8)) & 0xFF
+            else:
+                sel = (0xFF >> (8-(self.m_packed_size % 8)))
+                v = (self.m_bits >> (i * 8)) & sel
+            if self.big_endian:
+                v = flip_bit_order(v)
+            bytes[i] = v
+        return bytes
+
+
+    #  extern def get_ints(self):
+    def get_ints(self):
+        sz = 0
+        v = 0
+        sz = int((self.m_packed_size+31) / SIZEOF_INT)
+        ints = [0] * sz
+        for i in range(sz):
+            if i != sz-1 or (self.m_packed_size % 32) == 0:
+                v = (self.m_bits >> (i * SIZEOF_INT)) & 0xFFFFFFFF
+            else:
+                sel = (0xFFFFFFFF >> (32-(self.m_packed_size % 32)))
+                v = (self.m_bits >> (i * SIZEOF_INT)) & sel
+            if self.big_endian:
+                v = flip_bit_order(v)
+            ints[i] = v
+        return ints
+
 
     #  extern def put_bits(self,ref bit unsigned bitstream[]):
     #  extern def put_bytes(self,ref byte unsigned bytestream[]):
@@ -527,7 +582,7 @@ class UVMPacker(object):
         if ((self.m_packed_size - self.count) < needed):
             uvm_error("PCKSZ",
                 sv.sformatf("%0d bits needed to unpack %0s, yet only %0d available.",
-                needed, id, (self.m_packed_size - self.count)), UVM_NONE)
+                needed, id, (self.m_packed_size - self.count)))
             return 0
         return 1
 
@@ -560,57 +615,10 @@ class UVMPacker(object):
 #
 #
 #
-#// get_bits
-#// --------
-#
-#def void UVMPacker::get_bits(self,ref bit unsigned bits[]):
-#  bits = new[m_packed_size]
-#  for (int i=0;i<m_packed_size;i++)
-#    bits[i] = m_bits[i]
-#endfunction
 #
 #
-#// get_bytes
-#// ---------
-#
-#def void UVMPacker::get_bytes(self,ref byte unsigned bytes[]):
-#  int sz
-#  byte v
-#  sz = (m_packed_size+7) / 8
-#  bytes = new[sz]
-#  for (int i=0;i<sz;i++):
-#    if (i != sz-1  or  (m_packed_size % 8) == 0)
-#      v = m_bits[ i*8 +: 8 ]
-#    else
-#      v = m_bits[ i*8 +: 8 ] & ( 0xFF >> (8-(m_packed_size%8)))
-#    if(big_endian):
-#      byte tmp; tmp = v
-#      for(int j=0; j<8; ++j) v[j] = tmp[7-j]
-#    end
-#    bytes[i] = v
-#  end
-#endfunction
 #
 #
-#// get_ints
-#// --------
-#
-#def void UVMPacker::get_ints(self,ref int unsigned ints[]):
-#  int sz, v
-#  sz = (m_packed_size+31) / 32
-#  ints = new[sz]
-#  for (int i=0;i<sz;i++):
-#    if (i != sz-1  or  (m_packed_size % 32) == 0)
-#      v = m_bits[ i*32 +: 32 ]
-#    else
-#      v = m_bits[ i*32 +: 32 ] & ( 0xFFFFFFFF >> (32-(m_packed_size%32)))
-#    if(big_endian):
-#      int tmp; tmp = v
-#      for(int j=0; j<32; ++j) v[j] = tmp[31-j]
-#    end
-#    ints[i] = v
-#  end
-#endfunction
 #
 #
 #// put_bits
@@ -719,11 +727,11 @@ class UVMPacker(object):
 #
 #def void UVMPacker::pack_object(self,uvm_object value):
 #
-#  if(value.__m_uvm_status_container.cycle_check.exists(value)):
+#  if(value._m_uvm_status_container.cycle_check.exists(value)):
 #    uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack", value.get_inst_id()), UVM_NONE)
 #    return
 #  end
-#  value.__m_uvm_status_container.cycle_check[value] = 1
+#  value._m_uvm_status_container.cycle_check[value] = 1
 #
 #  if((policy != UVM_REFERENCE)  and  (value is not None) ):
 #      if(use_metadata == 1):
@@ -739,7 +747,7 @@ class UVMPacker(object):
 #    m_bits[count +: 4] = 0
 #    count += 4
 #  end
-#  value.__m_uvm_status_container.cycle_check.delete(value)
+#  value._m_uvm_status_container.cycle_check.delete(value)
 #endfunction
 #
 #
@@ -832,11 +840,11 @@ class UVMPacker(object):
 #
 #  byte is_non_null; is_non_null = 1
 #
-#  if(value.__m_uvm_status_container.cycle_check.exists(value)):
+#  if(value._m_uvm_status_container.cycle_check.exists(value)):
 #    uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during unpack", value.get_inst_id()), UVM_NONE)
 #    return
 #  end
-#  value.__m_uvm_status_container.cycle_check[value] = 1
+#  value._m_uvm_status_container.cycle_check[value] = 1
 #
 #  if(use_metadata == 1):
 #    is_non_null = m_bits[count +: 4]
@@ -861,7 +869,7 @@ class UVMPacker(object):
 #  elif ((is_non_null != 0)  and  (value is None)):
 #     uvm_report_error("UNPOBJ","cannot unpack into None object", UVM_NONE)
 #  end
-#  value.__m_uvm_status_container.cycle_check.delete(value)
+#  value._m_uvm_status_container.cycle_check.delete(value)
 #
 #endfunction
 #
@@ -902,20 +910,6 @@ class UVMPacker(object):
 #endfunction
 #
 #
-#// unpack_field_int
-#// ----------------
-#
-#def uvm_integral_t UVMPacker::unpack_field_int(self,int size):
-#  unpack_field_int =  0b0
-#  if (enough_bits(size,"integral")):
-#    count += size
-#    for (int i=0; i<size; i++)
-#      if(big_endian == 1)
-#        unpack_field_int[i] = m_bits[count-i-1]
-#      else
-#        unpack_field_int[i] = m_bits[count-size+i]
-#  end
-#endfunction
 #
 #// unpack_bits
 #// -------------------
@@ -976,8 +970,7 @@ class UVMPacker(object):
 #  if(enough_bits(8,"string"))
 #    count += 8
 #endfunction
-#
-#
+
 
 def flip_bit_order(value):
     flipped = 0
@@ -985,4 +978,3 @@ def flip_bit_order(value):
         flipped = (flipped << 1) + (value & 0x1)  # Choose LSB
         value = value >> 1
     return flipped
-

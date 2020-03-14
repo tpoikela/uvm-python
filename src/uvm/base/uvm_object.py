@@ -25,7 +25,7 @@
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
 from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
-        UVM_RECORD, UVM_SETINT, UVM_SETOBJ, UVM_SETSTR, UVM_PACK)
+        UVM_RECORD, UVM_SETINT, UVM_SETOBJ, UVM_SETSTR, UVM_PACK, UVM_UNPACK)
 from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
 
 
@@ -676,13 +676,13 @@ class UVMObject(sv_obj):
 
 
     #  // Group: Packing
-    #
+
     #  // Function: pack
     #
     #  extern function int pack (ref bit bitstream[],
     #                            input uvm_packer packer=None)
     def pack(self, bitstream, packer=None):
-        self.m_pack(packer)
+        packer = self.m_pack(packer)
         packer.get_bits(bitstream)
         return packer.get_packed_size()
 
@@ -691,6 +691,13 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack_bytes (ref byte unsigned bytestream[],
     #                                  input uvm_packer packer=None)
+    def pack_bytes(self, bytestream, packer=None):
+        packer = self.m_pack(packer)
+        bytes = packer.get_bytes()
+        for b in bytes:
+            bytestream.append(b)
+        return packer.get_packed_size()
+
 
     #  // Function: pack_ints
     #  //
@@ -709,6 +716,12 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack_ints (ref int unsigned intstream[],
     #                                 input uvm_packer packer=None)
+    def pack_ints(self, intstream, packer=None):
+        packer = self.m_pack(packer)
+        ints = packer.get_ints()
+        for i in ints:
+            intstream.append(i)
+        return packer.get_packed_size()
 
 
     #  // Function: do_pack
@@ -772,11 +785,25 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack (ref   bit        bitstream[],
     #                              input uvm_packer packer=None)
+    def unpack (self, bitstream, packer=None):
+        packer = self.m_unpack_pre(packer)
+        packer.put_bits(bitstream)
+        self.m_unpack_post(packer)
+        packer.set_packed_size()
+        return packer.get_packed_size()
+
 
     #  // Function: unpack_bytes
     #
     #  extern function int unpack_bytes (ref byte unsigned bytestream[],
     #                                    input uvm_packer packer=None)
+    def unpack_bytes (self, bytestream, packer=None):
+        packer = self.m_unpack_pre(packer)
+        packer.put_bytes(bytestream)
+        self.m_unpack_post(packer)
+        packer.set_packed_size()
+        return packer.get_packed_size()
+
 
     #  // Function: unpack_ints
     #  //
@@ -799,6 +826,12 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack_ints (ref   int unsigned intstream[],
     #                                   input uvm_packer packer=None)
+    def unpack_ints(self, intstream, packer=None):
+        packer = self.m_unpack_pre(packer)
+        packer.put_ints(intstream)
+        self.m_unpack_post(packer)
+        packer.set_packed_size()
+        return packer.get_packed_size()
 
 
     #  // Function: do_unpack
@@ -841,7 +874,6 @@ class UVMObject(sv_obj):
     #  //   is 0, the target object should be set to `None` and unpacking continues to
     #  //   the next property, if any. If the least significant bit is 1, then the
     #  //   target object should be allocated and its properties unpacked.
-    #
     def do_unpack(self, packer):
         return
 
@@ -1001,11 +1033,37 @@ class UVMObject(sv_obj):
         self.do_pack(packer)
         packer.set_packed_size()
         packer.scope.up()
+        return packer
 
 
     #  extern local function void m_unpack_pre  (inout uvm_packer packer)
+    def m_unpack_pre(self, packer):
+        if packer is not None:
+            UVMObject._m_uvm_status_container.packer = packer
+        else:
+            from .uvm_global_vars import uvm_default_packer
+            UVMObject._m_uvm_status_container.packer = uvm_default_packer
+        packer = UVMObject._m_uvm_status_container.packer
+        packer.reset()
+        return packer
+
     #  extern local function void m_unpack_post (uvm_packer packer)
-    #
+    def m_unpack_post(self, packer):
+        provided_size = packer.get_packed_size()
+        # Put this object into the hierarchy
+        packer.scope.down(self.get_name())
+
+        self._m_uvm_field_automation(None, UVM_UNPACK, "")
+        self.do_unpack(packer)
+        # Scope back up before leaving
+        packer.scope.up()
+
+        if packer.get_packed_size() != provided_size:
+            uvm_report_warning("BDUNPK", sv.sformatf(
+                "Unpack operation unsuccessful: unpacked %0d bits from a total of %0d bits",
+                packer.get_packed_size(), provided_size), UVM_NONE)
+
+
     #  // The print_matches bit causes an informative message to be printed
     #  // when a field is set using one of the set methods.
     #
@@ -1046,105 +1104,19 @@ class UVMObject(sv_obj):
 #
 #
 #
-#// pack_bytes
-#// ----------
-#
-#function int uvm_object::pack_bytes (ref byte unsigned bytestream [],
-#                                     input uvm_packer packer=None )
-#  m_pack(packer)
-#  packer.get_bytes(bytestream)
-#  return packer.get_packed_size()
-#endfunction
-#
-#
-#// pack_ints
-#// ---------
-#
-#function int uvm_object::pack_ints (ref int unsigned intstream [],
-#                                    input uvm_packer packer=None )
-#  m_pack(packer)
-#  packer.get_ints(intstream)
-#  return packer.get_packed_size()
-#endfunction
 #
 #
 #
-#// m_unpack_pre
-#// ------------
-#
-#function void uvm_object::m_unpack_pre (inout uvm_packer packer)
-#  if(packer!=None)
-#    _m_uvm_status_container.packer = packer
-#  else
-#    _m_uvm_status_container.packer = uvm_default_packer
-#  packer = _m_uvm_status_container.packer
-#  packer.reset()
-#endfunction
 #
 #
-#// m_unpack_post
-#// -------------
-#
-#function void uvm_object::m_unpack_post (uvm_packer packer)
-#
-#  int provided_size
-#
-#  provided_size = packer.get_packed_size()
-#
-#  //Put this object into the hierarchy
-#  packer.scope.down(get_name())
-#
-#  _m_uvm_field_automation(None, UVM_UNPACK, "")
-#
-#  do_unpack(packer)
-#
-#  //Scope back up before leaving
-#  packer.scope.up()
-#
-#  if(packer.get_packed_size() != provided_size):
-#    uvm_report_warning("BDUNPK", $sformatf("Unpack operation unsuccessful: unpacked %0d bits from a total of %0d bits", packer.get_packed_size(), provided_size), UVM_NONE)
-#  end
-#
-#endfunction
 #
 #
-#// unpack
-#// ------
-#
-#function int uvm_object::unpack (ref    bit        bitstream [],
-#                                 input  uvm_packer packer=None)
-#  m_unpack_pre(packer)
-#  packer.put_bits(bitstream)
-#  m_unpack_post(packer)
-#  packer.set_packed_size()
-#  return packer.get_packed_size()
-#endfunction
 #
 #
-#// unpack_bytes
-#// ------------
-#
-#function int uvm_object::unpack_bytes (ref    byte unsigned bytestream [],
-#                                       input  uvm_packer packer=None)
-#  m_unpack_pre(packer)
-#  packer.put_bytes(bytestream)
-#  m_unpack_post(packer)
-#  packer.set_packed_size()
-#  return packer.get_packed_size()
-#endfunction
 #
 #
-#// unpack_ints
-#// -----------
 #
-#function int uvm_object::unpack_ints (ref    int unsigned intstream [],
-#                                      input  uvm_packer packer=None)
-#  m_unpack_pre(packer)
-#  packer.put_ints(intstream)
-#  m_unpack_post(packer)
-#  packer.set_packed_size()
-#  return packer.get_packed_size()
-#endfunction
+#
 #
 #
 #
