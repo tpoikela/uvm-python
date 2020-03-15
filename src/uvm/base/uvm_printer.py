@@ -43,46 +43,44 @@ class UVMPrinterRowInfo:
         return "L: {} Name: {} Type: {} Size: {} Val: {}".format(
             self.level, self.name, self.type_name, self.size, self.val)
 
-#------------------------------------------------------------------------------
-#
-# Class: uvm_printer
-#
-# The uvm_printer class provides an interface for printing <uvm_objects> in
-# various formats. Subtypes of uvm_printer implement different print formats,
-# or policies.
-#
-# A user-defined printer format can be created, or one of the following four
-# built-in printers can be used:
-#
-# - <uvm_printer> - provides base printer functionality; must be overridden.
-#
-# - <uvm_table_printer> - prints the object in a tabular form.
-#
-# - <uvm_tree_printer> - prints the object in a tree form.
-#
-# - <uvm_line_printer> - prints the information on a single line, but uses the
-#   same object separators as the tree printer.
-#
-# Printers have knobs that you use to control what and how information is printed.
-# These knobs are contained in a separate knob class:
-#
-# - <uvm_printer_knobs> - common printer settings
-#
-# For convenience, global instances of each printer type are available for
-# direct reference in your testbenches.
-#
-#  -  <uvm_default_tree_printer>
-#  -  <uvm_default_line_printer>
-#  -  <uvm_default_table_printer>
-#  -  <uvm_default_printer> (set to default_table_printer by default)
-#
-# When <uvm_object::print> and <uvm_object::sprint> are called without
-# specifying a printer, the <uvm_default_printer> is used.
-#
-#------------------------------------------------------------------------------
-
 
 class UVMPrinter():
+    """
+    Class: UVMPrinter
+
+    The UVMPrinter class provides an interface for printing <uvm_objects> in
+    various formats. Subtypes of UVMPrinter implement different print formats,
+    or policies.
+
+    A user-defined printer format can be created, or one of the following four
+    built-in printers can be used:
+
+    - <UVMPrinter> - provides base printer functionality; must be overridden.
+
+    - <uvm_table_printer> - prints the object in a tabular form.
+
+    - <uvm_tree_printer> - prints the object in a tree form.
+
+    - <uvm_line_printer> - prints the information on a single line, but uses the
+      same object separators as the tree printer.
+
+    Printers have knobs that you use to control what and how information is printed.
+    These knobs are contained in a separate knob class:
+
+    - <uvm_printer_knobs> - common printer settings
+
+    For convenience, global instances of each printer type are available for
+    direct reference in your testbenches.
+
+     -  <uvm_default_tree_printer>
+     -  <uvm_default_line_printer>
+     -  <uvm_default_table_printer>
+     -  <uvm_default_printer> (set to default_table_printer by default)
+
+    When <uvm_object::print> and <uvm_object::sprint> are called without
+    specifying a printer, the <uvm_default_printer> is used.
+    """
+
 
     def __init__(self, name=""):
         self.knobs = UVMPrinterKnobs()
@@ -92,7 +90,7 @@ class UVMPrinter():
         self.m_rows = []
 
     def emit(self):
-        """         
+        """
         emit
         ----
         Returns:
@@ -101,17 +99,17 @@ class UVMPrinter():
         return ""
 
     def format_row(self, row):
-        """         
+        """
         format_row
         ----------
         Args:
-            row: 
+            row:
         Returns:
         """
         return ""
 
     def format_header(self):
-        """         
+        """
         format_header
         ----------
         Returns:
@@ -119,7 +117,7 @@ class UVMPrinter():
         return ""
 
     def format_footer(self):
-        """         
+        """
         format_footer
         ----------
         Returns:
@@ -157,12 +155,12 @@ class UVMPrinter():
 
 
     def print_array_range(self, min_val, max_val):
-        """         
+        """
         print_array_range
         -----------------
         Args:
-            min_val: 
-            max_val: 
+            min_val:
+            max_val:
         """
         tmpstr = ""
         if min_val == -1 and max_val == -1:
@@ -176,13 +174,13 @@ class UVMPrinter():
         self.print_generic("...", "...", -2, "...")
 
     def print_object_header(self, name, value, scope_separator="."):
-        """         
+        """
         print_object_header
         -------------------
         Args:
-            name: 
-            value: 
-            scope_separator: 
+            name:
+            value:
+            scope_separator:
         """
         row_info = UVMPrinterRowInfo()
         comp = None
@@ -220,13 +218,13 @@ class UVMPrinter():
         self.m_rows.append(row_info)
 
     def print_object(self, name, value, scope_separator="."):
-        """         
+        """
         print_object
         ------------
         Args:
-            name: 
-            value: 
-            scope_separator: 
+            name:
+            value:
+            scope_separator:
         """
         comp = None
         child_comp = None
@@ -266,7 +264,7 @@ class UVMPrinter():
                 del value._m_uvm_status_container.cycle_check[value]
 
     def istop(self):
-        """         
+        """
         istop
         -----
         Returns:
@@ -274,12 +272,12 @@ class UVMPrinter():
         return self.m_scope.depth() == 0
 
     def adjust_name(self, id, scope_separator="."):
-        """         
+        """
         #self.adjust_name
         -----------
         Args:
-            id: 
-            scope_separator: 
+            id:
+            scope_separator:
         Returns:
         """
         knobs_ok = self.knobs.show_root and self.m_scope.depth() == 0
@@ -318,17 +316,17 @@ class UVMPrinter():
 
     def print_field(self, name, value, size, radix=UVM_NORADIX,
             scope_separator=".", type_name=""):
-        """         
+        """
         print_field
         ---------
         Args:
-            name: 
-            value: 
-            size: 
-            radix: 
-            UVM_NORADIX: 
-            scope_separator: 
-            type_name: 
+            name:
+            value:
+            size:
+            radix:
+            UVM_NORADIX:
+            scope_separator:
+            type_name:
         """
         row_info = UVMPrinterRowInfo()
         sz_str = ""
@@ -388,7 +386,7 @@ class UVMPrinter():
         if radix == UVM_NORADIX:
             radix = self.knobs.default_radix
 
-        val_str = uvm_integral_to_string (value, size, radix,
+        val_str = uvm_integral_to_string(value, size, radix,
                                           self.knobs.get_radix_str(radix))
 
         row_info.level = self.m_scope.depth()
@@ -400,13 +398,13 @@ class UVMPrinter():
         self.m_rows.append(row_info)
 
     def print_time(self, name, value, scope_separator="."):
-        """         
+        """
         print_time
         ----------
         Args:
-            name: 
-            value: 
-            scope_separator: 
+            name:
+            value:
+            scope_separator:
         """
         self.print_field_int(name, value, 64, UVM_TIME, scope_separator)
 
@@ -446,12 +444,12 @@ class UVMPrinter():
         self.m_rows.append(row_info)
 
     def index_string(self, index, name=""):
-        """         
+        """
         index_string
         ------------
         Args:
-            index: 
-            name: 
+            index:
+            name:
         """
         res = "{}".index
         res = name + "[" + res + "]"
@@ -469,25 +467,25 @@ class UVMPrinterKnobs:
     def __init__(self):
         # Variable: header
         #
-        # Indicates whether the <uvm_printer::format_header> function should be called when
+        # Indicates whether the <UVMPrinter::format_header> function should be called when
         # printing an object.
         self.header = True
 
         # Variable: footer
         #
-        # Indicates whether the <uvm_printer::format_footer> function should be called when
+        # Indicates whether the <UVMPrinter::format_footer> function should be called when
         # printing an object.
         self.footer = True
 
         # Variable: full_name
         #
-        # Indicates whether <uvm_printer::adjust_name> should print the full name of an identifier
+        # Indicates whether <UVMPrinter::adjust_name> should print the full name of an identifier
         # or just the leaf name.
         self.full_name = False
 
         # Variable: identifier
         #
-        # Indicates whether <uvm_printer::adjust_name> should print the identifier. This is useful
+        # Indicates whether <UVMPrinter::adjust_name> should print the identifier. This is useful
         # in cases where you just want the values of an object, but no identifiers.
         self.identifier = True
 
@@ -566,8 +564,8 @@ class UVMPrinterKnobs:
         # Variable: default_radix
         #
         # This knob sets the default radix to use for integral values when no radix
-        # enum is explicitly supplied to the <uvm_printer::print_field> or
-        # <uvm_printer::print_field_int> methods.
+        # enum is explicitly supplied to the <UVMPrinter::print_field> or
+        # <UVMPrinter::print_field_int> methods.
         self.default_radix = UVM_HEX
 
         # Variable: dec_radix
@@ -671,7 +669,7 @@ class UVMTablePrinter(UVMPrinter):
                 self.m_max_value = len(row.val)
 
     def emit(self):
-        """         
+        """
         Function: emit
 
         Formats the collected information from prior calls to ~print_*~
@@ -747,26 +745,24 @@ class UVMTablePrinter(UVMPrinter):
         return self.knobs.prefix + s
 
 
-#//------------------------------------------------------------------------------
-#//
-#// Class: uvm_tree_printer
-#//
-#// By overriding various methods of the <uvm_printer> super class,
-#// the tree printer prints output in a tree format.
-#//
-#// The following shows sample output from the tree printer.
-#//
-#//|  c1: (container@1013) {
-#//|    d1: (mydata@1022) {
-#//|         v1: 'hcb8f1c97
-#//|         e1: THREE
-#//|         str: hi
-#//|    }
-#//|    value: 'h2d
-#//|  }
-#//
-#//------------------------------------------------------------------------------
 class UVMTreePrinter(UVMPrinter):
+    """
+    Class: uvm_tree_printer
+
+    By overriding various methods of the <UVMPrinter> super class,
+    the tree printer prints output in a tree format.
+
+    The following shows sample output from the tree printer::
+
+      c1: (container@1013) {
+        d1: (mydata@1022) {
+             v1: 'hcb8f1c97
+             e1: THREE
+             str: hi
+        }
+        value: 'h2d
+      }
+    """
 
 
     def __init__(self):
@@ -864,17 +860,15 @@ class UVMTreePrinter(UVMPrinter):
         self.m_rows = []
         return emit
 
-#//------------------------------------------------------------------------------
-#//
-#// Class: uvm_line_printer
-#//
-#// The line printer prints output in a line format.
-#//
-#// The following shows sample output from the line printer.
-#//
-#//| c1: (container@1013) { d1: (mydata@1022) { v1: 'hcb8f1c97 e1: THREE str: hi } value: 'h2d }
-#//------------------------------------------------------------------------------
 class UVMLinePrinter(UVMTreePrinter):
+    """
+    Class: uvm_line_printer
+
+    The line printer prints output in a line format.
+
+    The following shows sample output from the line printer::
+      c1: (container@1013) { d1: (mydata@1022) { v1: 'hcb8f1c97 e1: THREE str: hi } value: 'h2d }
+    """
 
     def __init__(self):
         UVMTreePrinter.__init__(self)
