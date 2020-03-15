@@ -156,7 +156,7 @@ class UVMPacker(object):
     def pack_field(self, value, size):
         #  for (int i=0; i<size; i++)
         if self.big_endian == 1:
-            flipped = flip_bit_order(value)
+            flipped = self.flip_bit_order(value, size)
             self.m_bits |= flipped << self.count
             # self.m_bits[count+i] = value[size-1-i]
         else:
@@ -173,9 +173,8 @@ class UVMPacker(object):
     #
     #  extern def pack_field_int(self,uvm_integral_t value, int size):
     def pack_field_int(self, value, size):
-        #for i in range(size):
         if self.big_endian == 1:
-            flipped = flip_bit_order(value)
+            flipped = self.flip_bit_order(value, size)
             self.m_bits |= flipped << self.count
             #self.m_bits[self.count+i] = value[size-1-i]
         else:
@@ -213,7 +212,7 @@ class UVMPacker(object):
             for i in range(len(value)):
                 byte = value[i]
                 if self.big_endian == 1:
-                    byte = flip_bit_order(value[len(value)-1-i])
+                    byte = self.flip_bit_order(value[len(value)-1-i], 8)
                 self.m_bits |= byte << self.count
                 self.count += 8
 
@@ -261,7 +260,8 @@ class UVMPacker(object):
             for i in range(len(value)):
                 int_num = value[i]
                 if self.big_endian == 1:
-                    int_num = flip_bit_order(value[len(value)-1-i])
+                    int_num = self.flip_bit_order(value[len(value)-1-i],
+                        SIZEOF_INT)
                 self.m_bits |= int_num << self.count
                 self.count += SIZEOF_INT
 
@@ -283,7 +283,7 @@ class UVMPacker(object):
         size = 8 * len(bytearr)
         bits = int(bytearr.hex(), 16)
         if self.big_endian == 1:
-            bits = flip_bit_order(bits)
+            bits = self.flip_bit_order(bits)
         self.m_bits |= bits << self.count
         self.count += size
         if self.use_metadata == 1:
@@ -411,6 +411,7 @@ class UVMPacker(object):
     #  extern def unpack_field_int(self,int size):
     def unpack_field_int(self, size):
         unpack_field_int = 0x0
+        count_before = self.count
         if self.enough_bits(size,"integral"):
             self.count += size
             for i in range(size):
@@ -422,6 +423,9 @@ class UVMPacker(object):
                     bit_sel = self.count-size+i
                     bit_sel = (1 << bit_sel)
                     unpack_field_int |= self.m_bits & bit_sel
+        unpack_field_int >>= count_before
+        if self.big_endian:
+            unpack_field_int = self.flip_bit_order(unpack_field_int, size)
         return unpack_field_int
 
 
@@ -453,7 +457,7 @@ class UVMPacker(object):
                 for b in range(len(value)):
                     byte = (self.m_bits >> b * 8) & 0xFF
                     if self.big_endian == 1:
-                        byte = flip_bit_order(byte)
+                        byte = self.flip_bit_order(byte, 8)
                         value[len(value)-1-b] = byte
                     else:
                         value[b] = byte
@@ -504,7 +508,7 @@ class UVMPacker(object):
                 for i in range(len(value)):
                     int_num = (self.m_bits >> i * SIZEOF_INT) & 0xFFFFFFFF
                     if self.big_endian == 1:
-                        int_num = flip_bit_order(int_num)
+                        int_num = self.flip_bit_order(int_num, SIZEOF_INT)
                         value[len(value)-1-i] = int_num
                     else:
                         value[i] = int_num
@@ -632,7 +636,7 @@ class UVMPacker(object):
                 sel = (0xFF >> (8-(self.m_packed_size % 8)))
                 v = (self.m_bits >> (i * 8)) & sel
             if self.big_endian:
-                v = flip_bit_order(v)
+                v = self.flip_bit_order(v, 8)
             bytes[i] = v
         return bytes
 
@@ -650,12 +654,27 @@ class UVMPacker(object):
                 sel = (0xFFFFFFFF >> (32-(self.m_packed_size % 32)))
                 v = (self.m_bits >> (i * SIZEOF_INT)) & sel
             if self.big_endian:
-                v = flip_bit_order(v)
+                v = self.flip_bit_order(v, SIZEOF_INT)
             ints[i] = v
         return ints
 
 
     #  extern def put_bits(self,ref bit unsigned bitstream[]):
+    def put_bits(self, bitstream):
+        #  int bit_size
+        #  bit_size = bitstream.size()
+        #
+        #  if(self.big_endian)
+        #    for (int i=bit_size-1;i>=0;i--)
+        #      self.m_bits[i] = bitstream[i]
+        #  else
+        #    for (int i=0;i<bit_size;i++)
+        #      self.m_bits[i] = bitstream[i]
+        #
+        self.m_bits = bitstream
+        self.m_packed_size = len(bin(self.m_bits)) - 2
+        self.count = 0
+
     #  extern def put_bytes(self,ref byte unsigned bytestream[]):
     #  extern def put_ints(self,ref int unsigned intstream[]):
 
@@ -686,6 +705,22 @@ class UVMPacker(object):
         self.m_bits = 0
         self.m_packed_size = 0
 
+    def flip_bit_order(self, value, size):
+        flipped = 0x0
+        num_bits = len(bin(value)) - 2
+        while value:
+            flipped = (flipped << 1) + (value & 0x1)  # Choose LSB
+            value = value >> 1
+        # For packing, need to add some right-padding
+        if size != -1:
+            rem_bits = size - num_bits
+            if rem_bits >= 0:
+                flipped <<= rem_bits
+            else:
+                raise Exception("rem_bits negative. size: {}, value: {}".format(
+                    size, hex(value)))
+        return flipped
+
 
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
@@ -693,26 +728,6 @@ class UVMPacker(object):
 #
 #// NOTE- max size limited to BITSTREAM bits parameter (default: 4096)
 #
-#// put_bits
-#// --------
-#
-#def void UVMPacker::put_bits (self,ref bit bitstream []):
-#
-#  int bit_size
-#
-#  bit_size = bitstream.size()
-#
-#  if(self.big_endian)
-#    for (int i=bit_size-1;i>=0;i--)
-#      self.m_bits[i] = bitstream[i]
-#  else
-#    for (int i=0;i<bit_size;i++)
-#      self.m_bits[i] = bitstream[i]
-#
-#  m_packed_size = bit_size
-#  count = 0
-#
-#endfunction
 #
 #// put_bytes
 #// ---------
@@ -755,7 +770,7 @@ class UVMPacker(object):
 #  for (int i=0;i<int_size;i++):
 #    v = intstream[i]
 #    if(self.big_endian):
-#      v = flip_bit_order(v)
+#      v = self.flip_bit_order(v)
 #    self.m_bits[index +:32] = v
 #    index += 32
 #  end
@@ -950,9 +965,3 @@ class UVMPacker(object):
 #
 
 
-def flip_bit_order(value):
-    flipped = 0
-    while value:
-        flipped = (flipped << 1) + (value & 0x1)  # Choose LSB
-        value = value >> 1
-    return flipped
