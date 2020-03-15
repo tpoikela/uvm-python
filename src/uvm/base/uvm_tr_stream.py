@@ -53,21 +53,21 @@ class m_uvm_tr_stream_cfg():
 
 #//------------------------------------------------------------------------------
 #//
-#// CLASS: uvm_tr_stream
+#// CLASS: UVMTrStream
 #//
-#// The ~uvm_tr_stream~ base class is a representation of a stream of records
+#// The ~UVMTrStream~ base class is a representation of a stream of records
 #// within a <uvm_tr_database>.
 #//
 #// The record stream is intended to hide the underlying database implementation
 #// from the end user, as these details are often vendor or tool-specific.
 #//
-#// The ~uvm_tr_stream~ class is pure virtual, and must be extended with an
+#// The ~UVMTrStream~ class is pure virtual, and must be extended with an
 #// implementation.  A default text-based implementation is provided via the
-#// <uvm_text_tr_stream> class.
+#// <UVMTextTrStream> class.
 #//
-#virtual class uvm_tr_stream extends uvm_object
+#virtual class UVMTrStream extends uvm_object
 
-class uvm_tr_stream(UVMObject):
+class UVMTrStream(UVMObject):
     #
     #   // Variable- m_cfg_dap
     #   // Data access protected reference to the DB
@@ -89,15 +89,15 @@ class uvm_tr_stream(UVMObject):
     #   // !m_is_opened && !m_is_closed == m_is_freed
     #
 
-    def __init__(self, name="unnamed-uvm_tr_stream"):
-        """         
+    def __init__(self, name="unnamed-UVMTrStream"):
+        """
            Function: new
            Constructor
-          
+
            Parameters:
            name - Stream instance name
         Args:
-            name: 
+            name:
         """
         UVMObject.__init__(self, name)
         self.m_cfg_dap = uvm_set_before_get_dap("cfg_dap")
@@ -105,9 +105,8 @@ class uvm_tr_stream(UVMObject):
         #   // Active records in the stream (active == open or closed)
         self.m_records = {}  # bit [uvm_recorder]
         self.m_warn_null_cfg = 0
-        #   endfunction : new
 
-    #
+
     #   // Variable- m_ids_by_stream
     #   // An associative array of integers, indexed by uvm_tr_streams.  This
     #   // provides a unique 'id' or 'handle' for each stream, which can be
@@ -116,18 +115,18 @@ class uvm_tr_stream(UVMObject):
     #   // By default, neither ~m_ids_by_stream~ or ~m_streams_by_id~ are
     #   // used.  Streams are only placed in the arrays when the user
     #   // attempts to determine the id for a stream.
-    #   local static integer m_ids_by_stream[uvm_tr_stream]
+    #   local static integer m_ids_by_stream[UVMTrStream]
     m_ids_by_stream = {}
 
     def get_db(self):
-        """         
+        """
 
            Group: Configuration API
 
            Function: get_db
            Returns a reference to the database which contains this
            stream.
-          
+
            A warning will be asserted if get_db is called prior to
            the stream being initialized via `do_open`.
         Returns:
@@ -141,9 +140,8 @@ class uvm_tr_stream(UVMObject):
             self.m_warn_null_cfg = 0
             return None
         return m_cfg[0].db
-    #   endfunction : get_db
 
-    #
+
     #   // Function: get_scope
     #   // Returns the ~scope~ supplied when opening this stream.
     #   //
@@ -260,17 +258,17 @@ class uvm_tr_stream(UVMObject):
     #   endfunction : free
 
     def m_do_open(self, db, scope="", stream_type_name=""):
-        """         
+        """
            Function- m_do_open
            Initializes the state of the stream
-          
+
            Parameters-
            db - Database which the stream belongs to
            scope - Optional scope
            stream_type_name - Optional type name for the stream
-          
+
            This method will trigger a `do_open` call.
-          
+
            An error will be asserted if-
            - m_do_open is called more than once without the stream
              being `freed` between.
@@ -279,9 +277,9 @@ class uvm_tr_stream(UVMObject):
                                   string scope="",
                                   string stream_type_name="")
         Args:
-            db: 
-            scope: 
-            stream_type_name: 
+            db:
+            scope:
+            stream_type_name:
         """
         m_cfg = []  # m_uvm_tr_stream_cfg
         m_db = None  # uvm_tr_database
@@ -305,25 +303,24 @@ class uvm_tr_stream(UVMObject):
             self.m_is_opened = True
 
             self.do_open(db, scope, stream_type_name)
-        #   endfunction : m_do_open
+
 
     def is_open(self):
-        """         
+        """
+        Function: is_open
+        Returns true if this `UVMTrStream` was opened on the database,
+        but has not yet been closed.
 
-           Function: is_open
-           Returns true if this `uvm_tr_stream` was opened on the database,
-           but has not yet been closed.
-          
         Returns:
         """
         return self.m_is_opened
 
     def is_closed(self):
-        """         
+        """
            Function: is_closed
-           Returns true if this `uvm_tr_stream` was closed on the database,
+           Returns true if this `UVMTrStream` was closed on the database,
            but has not yet been freed.
-          
+
         Returns:
         """
         return self.m_is_closed
@@ -338,29 +335,29 @@ class uvm_tr_stream(UVMObject):
     #
 
     def open_recorder(self, name, open_time=0, type_name=""):
-        """         
+        """
            Function: open_recorder
            Marks the opening of a new transaction recorder on the stream.
-          
+
            Parameters:
            name - A name for the new transaction
            open_time - Optional time to record as the opening of this transaction
            type_name - Optional type name for the transaction
-          
+
            If `open_time` is omitted (or set to 0), then the stream will use
            the current time.
-          
+
            This method will trigger a `do_open_recorder` call.  If `do_open_recorder`
            returns a non-`None` value, then the <uvm_recorder::do_open> method will
            be called in the recorder.
-          
+
            Transaction recorders can only be opened if the stream is
            `open` on the database (per `is_open`).  Otherwise the
            request will be ignored, and `None` will be returned.
         Args:
-            name: 
-            open_time: 
-            type_name: 
+            name:
+            open_time:
+            type_name:
         Returns:
         """
         m_time = open_time
@@ -377,7 +374,7 @@ class uvm_tr_stream(UVMObject):
             if p is not None:
                 s = p.get_randstate()
             open_recorder = self.do_open_recorder(name, m_time, type_name)
-        
+
             if open_recorder is not None:
                 self.m_records[open_recorder] = 1
                 open_recorder.m_do_open(self, m_time, type_name)
@@ -389,11 +386,11 @@ class uvm_tr_stream(UVMObject):
 
 
     def m_free_recorder(self, recorder):
-        """         
+        """
            Function- m_free_recorder
            Removes recorder from the internal array
         Args:
-            recorder: 
+            recorder:
         """
         if recorder in self.m_records:
             del self.m_records[recorder]
@@ -429,22 +426,22 @@ class uvm_tr_stream(UVMObject):
     #   // Variable- m_streams_by_id
     #   // A corollary to ~m_ids_by_stream~, this indexes the streams by their
     #   // unique ids.
-    #   local static uvm_tr_stream m_streams_by_id[integer]
+    #   local static UVMTrStream m_streams_by_id[integer]
     m_streams_by_id = {}
 
 
     def get_handle(self):
-        """         
+        """
            Function: get_handle
            Returns a unique ID for this stream.
-          
+
            A value of `0` indicates that the recorder has been `freed`,
            and no longer has a valid ID.
-          
+
         Returns:
         """
-        m_streams_by_id = uvm_tr_stream.m_streams_by_id
-        m_ids_by_stream = uvm_tr_stream.m_ids_by_stream
+        m_streams_by_id = UVMTrStream.m_streams_by_id
+        m_ids_by_stream = UVMTrStream.m_ids_by_stream
 
         if self.is_open() is False and self.is_closed() is False:
             return 0
@@ -481,7 +478,7 @@ class uvm_tr_stream(UVMObject):
     #   // stream with that ~id~ has been freed, then ~None~ is
     #   // returned.
     #   //
-    #   static function uvm_tr_stream get_stream_from_handle(integer id)
+    #   static function UVMTrStream get_stream_from_handle(integer id)
     #      if (id == 0)
     #        return None
     #
@@ -496,7 +493,7 @@ class uvm_tr_stream(UVMObject):
     #   // Frees the id/stream link (memory cleanup)
     #   //
     #   static function void m_free_id(integer id)
-    #      uvm_tr_stream stream
+    #      UVMTrStream stream
     #      if (!$isunknown(id) && m_streams_by_id.exists(id))
     #        stream = m_streams_by_id[id]
     #
@@ -557,23 +554,23 @@ class uvm_tr_stream(UVMObject):
     #      return None
     #   endfunction : do_open_recorder
     #
-    #endclass : uvm_tr_stream
+    #endclass : UVMTrStream
 #
 
 #//------------------------------------------------------------------------------
 #//
-#// CLASS: uvm_text_tr_stream
+#// CLASS: UVMTextTrStream
 #//
-#// The ~uvm_text_tr_stream~ is the default stream implementation for the
+#// The ~UVMTextTrStream~ is the default stream implementation for the
 #// <uvm_text_tr_database>.
 #//
 #//
 #
-#class uvm_text_tr_stream extends uvm_tr_stream
-class uvm_text_tr_stream(uvm_tr_stream):
+#class UVMTextTrStream extends UVMTrStream
+class UVMTextTrStream(UVMTrStream):
 
-    def __init__(self, name="unnamed-uvm_text_tr_stream"):
-        uvm_tr_stream.__init__(self, name)
+    def __init__(self, name="unnamed-UVMTextTrStream"):
+        UVMTrStream.__init__(self, name)
         #   // Variable- m_text_db
         #   // Internal reference to the text-based backend
         self.m_text_db = None
@@ -582,17 +579,17 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #   // Group: Implementation Agnostic API
 
     def do_open(self, db, scope, stream_type_name):
-        """         
+        """
            Function: do_open
            Callback triggered via <uvm_tr_database::open_stream>.
-          
+
           protected virtual function void do_open(uvm_tr_database db,
                                                   string scope,
                                                   string stream_type_name)
         Args:
-            db: 
-            scope: 
-            stream_type_name: 
+            db:
+            scope:
+            stream_type_name:
         """
         # $cast(m_text_db, db)
         self.m_text_db = db
@@ -606,7 +603,7 @@ class uvm_text_tr_stream(uvm_tr_stream):
                       self.get_handle())
 
     #   // Function: do_close
-    #   // Callback triggered via <uvm_tr_stream::close>.
+    #   // Callback triggered via <UVMTrStream::close>.
     #   protected virtual function void do_close()
     #      if (m_text_db.open_db())
     #        $fdisplay(m_text_db.m_file,
@@ -620,7 +617,7 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #
 
     #   // Function: do_free
-    #   // Callback triggered via <uvm_tr_stream::free>.
+    #   // Callback triggered via <UVMTrStream::free>.
     #   //
     #   protected virtual function void do_free()
     #      if (m_text_db.open_db())
@@ -637,15 +634,15 @@ class uvm_text_tr_stream(uvm_tr_stream):
     #
 
     def do_open_recorder(self, name, open_time, type_name):
-        """         
+        """
            Function: do_open_recorder
            Marks the beginning of a new record in the stream
-          
+
            Text-backend specific implementation.
         Args:
-            name: 
-            open_time: 
-            type_name: 
+            name:
+            open_time:
+            type_name:
         Returns:
         """
         if self.m_text_db.open_db():
@@ -653,5 +650,5 @@ class uvm_text_tr_stream(uvm_tr_stream):
         return None
 
 
-    #endclass : uvm_text_tr_stream
-uvm_object_utils(uvm_text_tr_stream)
+    #endclass : UVMTextTrStream
+uvm_object_utils(UVMTextTrStream)
