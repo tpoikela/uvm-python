@@ -52,7 +52,7 @@ def isunknown(value):
 
 
 def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
-    """     
+    """
     Function- uvm_get_array_index_string
     Args:
     Returns:
@@ -74,14 +74,13 @@ def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
 
 
 def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
-    """     
+    """
     Function- uvm_bitstream_to_string
     Args:
-        value: 
-        size: 
-        radix: 
-        UVM_NORADIX: 
-        radix_str: 
+        value:
+        size:
+        radix:
+        radix_str:
     Returns:
     """
     # sign extend & don't show radix for negative values
@@ -100,18 +99,18 @@ def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
 
 
 def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
-    """     
+    """
     Function- uvm_integral_to_string
     Args:
-        value: 
-        size: 
-        radix: 
-        UVM_NORADIX: 
-        radix_str: 
+        value:
+        size:
+        radix:
+        radix_str:
     Returns:
+        str:
     """
     # sign extend & don't show radix for negative values
-    if radix == UVM_DEC and value[size-1] == 1:
+    if radix == UVM_DEC and (value >> (size-1)) == 1:
         return "{}".format(value)
 
     # TODO $countbits(value,'z) would be even better
@@ -126,7 +125,7 @@ def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
 
 
 def uvm_object_value_str(v):
-    """     
+    """
     Function- uvm_object_value_str
     Returns:
     """
@@ -138,11 +137,11 @@ def uvm_object_value_str(v):
 
 
 def uvm_leaf_scope(full_name, scope_separator="."):
-    """     
+    """
     Function- uvm_leaf_scope
     Args:
-        full_name: 
-        scope_separator: 
+        full_name:
+        scope_separator:
     Returns:
     """
     bmatches = 0
@@ -223,7 +222,7 @@ class UVMStatusContainer:
     print_matches = False
 
     def __init__(self):
-        """         
+        """
          The clone setting is used by the set/get config to know if cloning is on.
         """
         self.clone = True
@@ -283,7 +282,7 @@ class UVMStatusContainer:
             return "unknown"
 
     def get_full_scope_arg(self):
-        """         
+        """
 
         Returns:
         """
@@ -351,15 +350,15 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
 
 
     def find_all(cls, start, TYPE):
-        """         
+        """
           Function: find_all
-         
+
           Recursively finds all component instances of the parameter type `TYPE`,
           starting with the component given by `start`. Uses <uvm_root::find_all>.
         Args:
-            cls: 
-            start: 
-            TYPE: 
+            cls:
+            start:
+            TYPE:
         Returns:
         """
         comp_list = []
@@ -410,17 +409,17 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
 
     @classmethod
     def get_config(cls, comp, is_fatal):
-        """         
+        """
           Function: get_config
-         
+
           This method gets the object config of type `TYPE`
           associated with component `comp`.
           We check for the two kinds of error which may occur with this kind of
           operation.
         Args:
-            cls: 
-            comp: 
-            is_fatal: 
+            cls:
+            comp:
+            is_fatal:
         Returns:
         """
         obj = None
