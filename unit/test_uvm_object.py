@@ -62,6 +62,18 @@ class TestUVMObject(unittest.TestCase):
         so2.my_obj.data = 666
         self.assertFalse(sup_obj.compare(so2))
 
+    def test_pack_unpack(self):
+        o2 = TestObj("o1")
+        o2.addr = 0x234
+        o2.data = 567
+        size, packed_obj = o2.pack()
+        print("Packed obj is " + str(packed_obj) + ' size: ' + str(size))
+        o3 = TestObj("o3")
+        o3.unpack(packed_obj)
+        self.assertEqual(o3.addr, 0x234)
+        self.assertEqual(o3.data, 567)
+
+
 
 if __name__ == '__main__':
     unittest.main()
