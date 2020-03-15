@@ -258,15 +258,28 @@ def uvm_field_utils_start(T):
                 mask_v = masks[v]
                 if not(mask_v & UVM_NOPACK):
                     val = getattr(self, v)
-                    T_cont.packer.pack_field_int(val, sv.bits(val))
-                    print("packed value for " + str(v))
+                    if isinstance(val, int):
+                        T_cont.packer.pack_field_int(val, sv.bits(val))
+                    elif isinstance(val, UVMObject):
+                        T_cont.packer.pack_object(val)
+                    elif isinstance(val, str):
+                        T_cont.packer.pack_string(val)
+                    else:
+                        raise TypeError("Unsupported type " + str(type(val)) + " for field automation")
         elif what__ == UVM_UNPACK:
             for v in vals:
                 mask_v = masks[v]
                 if not(mask_v & UVM_NOPACK):
                     val = getattr(self, v)
-                    rhs = T_cont.packer.unpack_field_int(sv.bits(val))
-                    print("Unpacking " + v + ' got: ' + hex(rhs))
+                    if isinstance(val, int):
+                        rhs = T_cont.packer.unpack_field_int(sv.bits(val))
+                    elif isinstance(val, UVMObject):
+                        T_cont.packer.unpack_object(val)
+                        rhs = val
+                    elif isinstance(val, str):
+                        rhs = T_cont.packer.unpack_string()
+                    else:
+                        raise TypeError("Unsupported type " + str(type(val)) + " for field automation")
                     setattr(self, v, rhs)
         if what__ in [UVM_SETINT, UVM_SETSTR, UVM_SETOBJ]:
             _current_scopes.pop()
