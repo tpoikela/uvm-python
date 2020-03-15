@@ -251,6 +251,23 @@ def uvm_field_utils_start(T):
         elif what__ == UVM_CHECK_FIELDS:
             for v in vals:
                 T_cont.do_field_check(v, self)
+                mask_v = masks[v]
+                ARG = getattr(self, v)
+        elif what__ == UVM_PACK:
+            for v in vals:
+                mask_v = masks[v]
+                if not(mask_v & UVM_NOPACK):
+                    val = getattr(self, v)
+                    T_cont.packer.pack_field_int(val, sv.bits(val))
+                    print("packed value for " + str(v))
+        elif what__ == UVM_UNPACK:
+            for v in vals:
+                mask_v = masks[v]
+                if not(mask_v & UVM_NOPACK):
+                    val = getattr(self, v)
+                    rhs = T_cont.packer.unpack_field_int(sv.bits(val))
+                    print("Unpacking " + v + ' got: ' + hex(rhs))
+                    setattr(self, v, rhs)
         if what__ in [UVM_SETINT, UVM_SETSTR, UVM_SETOBJ]:
             _current_scopes.pop()
             T_cont.uvm_cycle_scopes = _current_scopes
