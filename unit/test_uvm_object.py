@@ -85,6 +85,20 @@ class TestUVMObject(unittest.TestCase):
         self.assertEqual(sup_obj22.my_obj.addr, 888)
 
 
+class TestRecordIntegration(unittest.TestCase):
+
+    def test_record(self):
+        from uvm.base.uvm_tr_database import UVMTextTrDatabase
+        db = UVMTextTrDatabase()
+        self.assertTrue(db.open_db())
+        stream = db.open_stream("obj_str")
+        self.assertTrue(stream.is_open())
+        o2 = TestObj("o2")
+        recorder = stream.open_recorder("obj_recorder")
+        o2.record(recorder)
+        sup_obj = SuperObj("super_obj")
+        sup_obj.record(recorder)
+
 
 
 if __name__ == '__main__':
