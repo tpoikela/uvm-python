@@ -58,7 +58,7 @@ class UVMCoreService:
         Please note: it is up to the user to preserve the contents of the original factory or
         delegate calls to the original factory
         Args:
-            factory: 
+            factory (UVMFactory): 
         """
         self.factory = factory
 
@@ -68,32 +68,33 @@ class UVMCoreService:
         returns the current default record database
 
         If no default record database has been set before this method
-        is called, returns an instance of `uvm_text_tr_database`
+        is called, returns an instance of `UVMTextTrDatabase`
         Returns:
+            UVMTrDatabase: Default transaction database
         """
         if self.tr_database is None:
             #process p = process::self();
             p = None
-            tx_db = None  # uvm_text_tr_database
+            tx_db = None  # UVMTextTrDatabase
             s = ""
             if p is not None:
                 s = p.get_randstate()
 
-            from .uvm_tr_database import uvm_text_tr_database
-            tx_db = uvm_text_tr_database("default_tr_database")
+            from .uvm_tr_database import UVMTextTrDatabase
+            tx_db = UVMTextTrDatabase("default_tr_database")
             self.tr_database = tx_db
 
             if p is not None:
                 p.set_randstate(s)
         return self.tr_database
-        #endfunction : get_default_tr_database
+
 
     def set_default_tr_database(self, db):
         """         
         Function: set_default_tr_database
         Sets the current default record database to `db`
         Args:
-            db: 
+            db (UVMTrDatabase): Default transaction database to use
         """
         self.tr_database = db
 
