@@ -682,10 +682,9 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack (ref bit bitstream[],
     #                            input uvm_packer packer=None)
-    def pack(self, bitstream, packer=None):
+    def pack(self, packer=None):
         packer = self.m_pack(packer)
-        packer.get_bits(bitstream)
-        return packer.get_packed_size()
+        return packer.get_packed_size(), packer.get_bits()
 
 
     #  // Function: pack_bytes
@@ -694,8 +693,8 @@ class UVMObject(sv_obj):
     #                                  input uvm_packer packer=None)
     def pack_bytes(self, bytestream, packer=None):
         packer = self.m_pack(packer)
-        bytes = packer.get_bytes()
-        for b in bytes:
+        packed_bytes = packer.get_bytes()
+        for b in packed_bytes:
             bytestream.append(b)
         return packer.get_packed_size()
 
