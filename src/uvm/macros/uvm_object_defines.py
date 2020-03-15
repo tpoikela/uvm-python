@@ -281,6 +281,21 @@ def uvm_field_utils_start(T):
                     else:
                         raise TypeError("Unsupported type " + str(type(val)) + " for field automation")
                     setattr(self, v, rhs)
+        elif what__ == UVM_RECORD:
+            for v in vals:
+                mask_v = masks[v]
+                if not(mask_v & UVM_NORECORD):
+                    print("Recording now attr " + v)
+                    val = getattr(self, v)
+                    if isinstance(val, int):
+                        T_cont.recorder.record_field(v, val, 32)
+                    elif isinstance(val, UVMObject):
+                        T_cont.recorder.record_object(v, val)
+                    elif isinstance(val, str):
+                        T_cont.recorder.record_string(v, val)
+                    else:
+                        raise TypeError("Unsupported type " + str(type(val)) + " for field automation")
+
         if what__ in [UVM_SETINT, UVM_SETSTR, UVM_SETOBJ]:
             _current_scopes.pop()
             T_cont.uvm_cycle_scopes = _current_scopes
