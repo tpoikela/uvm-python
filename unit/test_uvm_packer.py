@@ -3,9 +3,24 @@ import unittest
 # import re
 from uvm.base.uvm_packer import (UVMPacker, MASK_INT)
 from uvm.base.uvm_object import UVMObject
+from uvm.base.sv import sv
 
 
 class TestUVMPacker(unittest.TestCase):
+
+    def test_flip_bit_order(self):
+        packer = UVMPacker()
+        bin1 = 0b0010
+        flip1 = packer.flip_bit_order(bin1, 8)
+        self.assertEqual(flip1, 0b01000000)
+        self.assertEqual(packer.flip_bit_order(flip1, 8), bin1)
+        for _ in range(16):
+            sizes = [8, 16, 24, 32, sv.urandom_range(3, 64)]
+            for size in sizes:
+                value = sv.urandom_range(1, (1 << size) - 1)
+                flip1 = packer.flip_bit_order(value, size)
+                double_flip1 = packer.flip_bit_order(flip1, size)
+                self.assertEqual(double_flip1, value)
 
     def test_pack_int(self):
         packer = UVMPacker()
@@ -95,6 +110,26 @@ class TestUVMPacker(unittest.TestCase):
             packer.set_packed_size()
             new_str = packer.unpack_string()
             self.assertEqual(new_str, test_str)
+
+    def test_big_endian(self):
+        for be in [0, 1]:
+            packer = UVMPacker()
+            packer.big_endian = be
+            packer.pack_field_int(0x123, 32)
+            packer.pack_field_int(0xABC, 32)
+            packer.pack_field_int(0xFACE, 64)
+            packer.pack_field_int(0x77, 8)
+            packer.set_packed_size()
+            val1 = packer.unpack_field(32)
+            val2 = packer.unpack_field(32)
+            val3 = packer.unpack_field(64)
+            val4 = packer.unpack_field(8)
+            self.assertEqual(hex(val1), hex(0x123))
+            self.assertEqual(hex(val2), hex(0xABC))
+            self.assertEqual(hex(val3), hex(0xFACE))
+            self.assertEqual(hex(val4), hex(0x77))
+
+
 
 
 if __name__ == '__main__':
