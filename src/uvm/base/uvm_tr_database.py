@@ -27,7 +27,7 @@ from ..base.uvm_object import UVMObject
 from ..base.sv import sv
 from ..macros.uvm_object_defines import uvm_object_utils
 from ..macros.uvm_message_defines import uvm_warning
-from .uvm_tr_stream import uvm_text_tr_stream, uvm_tr_stream
+from .uvm_tr_stream import UVMTextTrStream, UVMTrStream
 from .uvm_recorder import UVMRecorder
 from .uvm_links import (UVMParentChildLink, UVMRelatedLink)
 
@@ -45,46 +45,46 @@ NO_FILE_OPEN = 0
 
 #//------------------------------------------------------------------------------
 #//
-#// CLASS: uvm_tr_database
+#// CLASS: UVMTrDatabase
 #//
-#// The ~uvm_tr_database~ class is intended to hide the underlying database implementation
+#// The ~UVMTrDatabase~ class is intended to hide the underlying database implementation
 #// from the end user, as these details are often vendor or tool-specific.
 #//
-#// The ~uvm_tr_database~ class is pure virtual, and must be extended with an
+#// The ~UVMTrDatabase~ class is pure virtual, and must be extended with an
 #// implementation.  A default text-based implementation is provided via the
-#// <uvm_text_tr_database> class.
+#// <UVMTextTrDatabase> class.
 #//
 
-class uvm_tr_database(UVMObject):
+class UVMTrDatabase(UVMObject):
     #
     #   // Variable- m_streams
 
-    def __init__(self, name="unnamed-uvm_tr_database"):
-        """         
+    def __init__(self, name="unnamed-UVMTrDatabase"):
+        """
            Function: new
            Constructor
-          
+
            Parameters:
            name - Instance name
         Args:
-            name: 
+            name:
         """
         UVMObject.__init__(self, name)
         # Tracks the opened state of the database
         self.m_is_opened = False
         # Used for tracking streams which are between the open and closed states
-        self.m_streams = {}  # bit m_streams[uvm_tr_stream]
+        self.m_streams = {}  # bit m_streams[UVMTrStream]
 
     def open_db(self):
-        """         
+        """
            Group: Database API
 
            Function: open_db
            Open the backend connection to the database.
-          
+
            If the database is already open, then this
            method will return 1.
-          
+
            Otherwise, the method will call `do_open_db`,
            and return the result.
         Returns:
@@ -94,17 +94,17 @@ class uvm_tr_database(UVMObject):
         return self.m_is_opened
 
     def close_db(self):
-        """         
+        """
 
            Function: close_db
            Closes the backend connection to the database.
-          
+
            Closing a database implicitly closes and
            frees all `uvm_tr_streams` within the database.
-          
+
            If the database is already closed, then this
            method will return 1.
-          
+
            Otherwise, this method will trigger a `do_close_db`
            call, and return the result.
         Returns:
@@ -115,13 +115,13 @@ class uvm_tr_database(UVMObject):
         return self.m_is_opened == 0
 
     def is_open(self):
-        """         
+        """
            Function: is_open
            Returns the open/closed status of the database.
-          
+
            This method returns 1 if the database has been
            successfully opened, but not yet closed.
-          
+
         Returns:
         """
         return self.m_is_opened
@@ -131,35 +131,35 @@ class uvm_tr_database(UVMObject):
     #
 
     def open_stream(self, name, scope="", type_name=""):
-        """         
+        """
            Function: open_stream
            Provides a reference to a `stream` within the
            database.
-          
+
            Parameters:
              name - A string name for the stream.  This is the name associated
                     with the stream in the database.
              scope - An optional scope for the stream.
              type_name - An optional name describing the type of records which
                          will be created in this stream.
-          
-           The method returns a reference to a `uvm_tr_stream`
+
+           The method returns a reference to a `UVMTrStream`
            object if successful, `null` otherwise.
-          
+
            This method will trigger a `do_open_stream` call, and if a
-           non `null` stream is returned, then <uvm_tr_stream::do_open>
+           non `null` stream is returned, then <UVMTrStream::do_open>
            will be called.
-          
+
            Streams can only be opened if the database is
            open (per `is_open`).  Otherwise the request will
            be ignored, and `null` will be returned.
-          function uvm_tr_stream open_stream(string name,
+          function UVMTrStream open_stream(string name,
                                              string scope="",
                                              string type_name="")
         Args:
-            name: 
-            scope: 
-            type_name: 
+            name:
+            scope:
+            type_name:
         Returns:
         """
         if not self.open_db():
@@ -184,11 +184,11 @@ class uvm_tr_database(UVMObject):
 
 
     def m_free_stream(self, stream):
-        """         
+        """
            Function- m_free_stream
            Removes stream from the internal array
         Args:
-            stream: 
+            stream:
         """
         if stream in self.m_streams:
             del self.m_streams[stream]
@@ -199,16 +199,16 @@ class uvm_tr_database(UVMObject):
     #   // Provides a queue of all streams within the database.
     #   //
     #   // Parameters:
-    #   // q - A reference to a queue of <uvm_tr_stream>s
+    #   // q - A reference to a queue of <UVMTrStream>s
     #   //
     #   // The ~get_streams~ method returns the size of the queue,
     #   // such that the user can conditionally process the elements.
     #   //
-    #   // | uvm_tr_stream stream_q[$]
+    #   // | UVMTrStream stream_q[$]
     #   // | if (my_db.get_streams(stream_q)) begin
     #   // |   // Process the queue...
     #   // | end
-    #   function unsigned get_streams(ref uvm_tr_stream q[$])
+    #   function unsigned get_streams(ref UVMTrStream q[$])
     #      // Clear out the queue first...
     #      q.delete()
     #      // Then fill in the values
@@ -221,46 +221,46 @@ class uvm_tr_database(UVMObject):
     #   // Group: Link API
 
     def establish_link(self, link):
-        """         
+        """
            Function: establish_link
            Establishes a `link` between two elements in the database
-          
+
            Links are only supported between `streams` and `records`
            within a single database.
-          
+
            This method will trigger a `do_establish_link` call.
         Args:
-            link: 
+            link:
         """
-        s_lhs = []  # uvm_tr_stream 
-        s_rhs = []  # uvm_tr_stream 
-        r_lhs = []  # uvm_recorder 
-        r_rhs = []  # uvm_recorder 
+        s_lhs = []  # UVMTrStream
+        s_rhs = []  # UVMTrStream
+        r_lhs = []  # uvm_recorder
+        r_rhs = []  # uvm_recorder
         lhs = link.get_lhs()
         rhs = link.get_rhs()
-        db = None  # uvm_tr_database 
+        db = None  # UVMTrDatabase
 
         if lhs is None:
             uvm_warning("UVM/TR_DB/BAD_LINK",
-                "left hand side '<None>' is not supported in links for 'uvm_tr_database'")
+                "left hand side '<None>' is not supported in links for 'UVMTrDatabase'")
 
         if rhs is None:
             uvm_warning("UVM/TR_DB/BAD_LINK",
-                "right hand side '<None>' is not supported in links for 'uvm_tr_database'")
+                "right hand side '<None>' is not supported in links for 'UVMTrDatabase'")
             return
 
 
-        if (not sv.cast(s_lhs, lhs, uvm_tr_stream)) or (not sv.cast(r_lhs, lhs,
+        if (not sv.cast(s_lhs, lhs, UVMTrStream)) or (not sv.cast(r_lhs, lhs,
             UVMRecorder)):
             uvm_warning("UVM/TR_DB/BAD_LINK",
-                sv.sformatf("left hand side of type '%s' not supported in links for 'uvm_tr_database'",
+                sv.sformatf("left hand side of type '%s' not supported in links for 'UVMTrDatabase'",
                 lhs.get_type_name()))
             return
         else:
             s_lhs = s_lhs[0]
             r_lhs = r_lhs[0]
 
-        if (not sv.cast(s_rhs, rhs, uvm_tr_stream)) or (not sv.cast(r_rhs, rhs, UVMRecorder)):
+        if (not sv.cast(s_rhs, rhs, UVMTrStream)) or (not sv.cast(r_rhs, rhs, UVMRecorder)):
             uvm_warning("UVM/TR_DB/BAD_LINK",
                 sv.sformatf("right hand side of type '%s' not supported in links for 'uvm_record_datbasae'",
                 rhs.get_type_name()))
@@ -292,7 +292,7 @@ class uvm_tr_database(UVMObject):
 
         self.do_establish_link(link)
         #   endfunction : establish_link
-        
+
     #
     #   // Group: Implementation Agnostic API
     #   //
@@ -307,7 +307,7 @@ class uvm_tr_database(UVMObject):
     #
     #   // Function: do_open_stream
     #   // Backend implementation of <open_stream>
-    #   pure virtual protected function uvm_tr_stream do_open_stream(string name,
+    #   pure virtual protected function UVMTrStream do_open_stream(string name,
     #                                                                string scope,
     #                                                                string type_name)
     #
@@ -315,20 +315,20 @@ class uvm_tr_database(UVMObject):
     #   // Backend implementation of <establish_link>
     #   pure virtual protected function void do_establish_link(uvm_link_base link)
     #
-    #endclass : uvm_tr_database
-#
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_text_tr_database
-#//
-#// The ~uvm_text_tr_database~ is the default implementation for the
-#// <uvm_tr_database>.  It provides the ability to store recording information
-#// into a textual log file.
-#//
-#//
+    #endclass : UVMTrDatabase
 
-class uvm_text_tr_database(uvm_tr_database):
-    #
+
+
+class UVMTextTrDatabase(UVMTrDatabase):
+    """
+    CLASS: UVMTextTrDatabase
+
+    The ~UVMTextTrDatabase~ is the default implementation for the
+    <UVMTrDatabase>.  It provides the ability to store recording information
+    into a textual log file.
+    """
+
+
     #   // Variable- m_filename_dap
     #   // Data Access Protected Filename
     #   local uvm_simple_lock_dap#(string) m_filename_dap
@@ -336,33 +336,33 @@ class uvm_text_tr_database(uvm_tr_database):
     #   // Variable- m_file
     #   UVM_FILE m_file
 
-    def __init__(self, name="unnamed-uvm_text_tr_database"):
-        """         
+    def __init__(self, name="unnamed-UVMTextTrDatabase"):
+        """
            Function: new
            Constructor
-          
+
            Parameters:
            name - Instance name
         Args:
-            name: 
+            name:
         """
-        uvm_tr_database.__init__(self, name)
+        UVMTrDatabase.__init__(self, name)
         self.m_filename_dap = uvm_simple_lock_dap("filename_dap")
         self.m_filename_dap.set("tr_db.log")
         self.m_file = NO_FILE_OPEN
 
     def do_open_db(self):
-        """         
+        """
            Group: Implementation Agnostic API
 
            Function: do_open_db
            Open the backend connection to the database.
-          
-           Text-Backend implementation of <uvm_tr_database::open_db>.
-          
+
+           Text-Backend implementation of <UVMTrDatabase::open_db>.
+
            The text-backend will open a text file to dump all records in to.  The name
            of this text file is controlled via `set_file_name`.
-          
+
            This will also lock the `file_name`, so that it cannot be
            modified while the connection is open.
         Returns:
@@ -374,16 +374,16 @@ class uvm_text_tr_database(uvm_tr_database):
         return (self.m_file != NO_FILE_OPEN)
 
     def do_close_db(self):
-        """         
+        """
 
            Function: do_close_db
            Close the backend connection to the database.
-          
-           Text-Backend implementation of <uvm_tr_database::close_db>.
-          
+
+           Text-Backend implementation of <UVMTrDatabase::close_db>.
+
            The text-backend will close the text file used to dump all records in to,
            if it is currently opened.
-          
+
            This unlocks the `file_name`, allowing it to be modified again.
         Returns:
         """
@@ -395,37 +395,37 @@ class uvm_text_tr_database(uvm_tr_database):
         return 1
 
     def do_open_stream(self, name, scope, typename):
-        """         
+        """
            Function: do_open_stream
            Provides a reference to a `stream` within the
            database.
-          
-           Text-Backend implementation of <uvm_tr_database::open_stream>
-          protected virtual function uvm_tr_stream do_open_stream(string name,
+
+           Text-Backend implementation of <UVMTrDatabase::open_stream>
+          protected virtual function UVMTrStream do_open_stream(string name,
                                                                   string scope,
                                                                   string type_name)
         Args:
-            name: 
-            scope: 
-            typename: 
+            name:
+            scope:
+            typename:
         Returns:
         """
-        # puvm_text_tr_stream 
-        m_stream = uvm_text_tr_stream.type_id.create(name)
+        # puvm_text_tr_stream
+        m_stream = UVMTextTrStream.type_id.create(name)
         return m_stream
 
 
     def do_establish_link(self, link):
-        """         
+        """
            Function: do_establish_link
            Establishes a `link` between two elements in the database
-          
-           Text-Backend implementation of <uvm_tr_database::establish_link>.
+
+           Text-Backend implementation of <UVMTrDatabase::establish_link>.
         Args:
-            link: 
+            link:
         """
         r_lhs = None
-        r_rhs = None  # uvm_recorder 
+        r_rhs = None  # uvm_recorder
         lhs = link.get_lhs()
         rhs = link.get_rhs()
 
@@ -434,11 +434,11 @@ class uvm_text_tr_database(uvm_tr_database):
         r_lhs = r_lhs[0]
         r_rhs = r_rhs[0]
 
-        if (r_lhs is None  or r_rhs is None):
+        if (r_lhs is None or r_rhs is None):
             return
         else:
-            pc_link = None  # uvm_parent_child_link 
-            re_link = None  # uvm_related_link 
+            pc_link = None  # uvm_parent_child_link
+            re_link = None  # uvm_related_link
             if sv.cast(pc_link, link, UVMParentChildLink):
                 sv.fdisplay(self.m_file, "  LINK @%0t {{TXH1:%0d TXH2:%0d RELATION=%0s}}",
                     sv.time(), r_lhs.get_handle(), r_rhs.get_handle(), "child")
@@ -446,10 +446,8 @@ class uvm_text_tr_database(uvm_tr_database):
             elif sv.cast(re_link, link, UVMRelatedLink):
                 sv.fdisplay(self.m_file, "  LINK @%0t {{TXH1:%0d TXH2:%0d RELATION=%0s}}",
                     sv.time(), r_lhs.get_handle(), r_rhs.get_handle(), "")
-               
-        #   endfunction : do_establish_link
 
-    #
+
     #   // Group: Implementation Specific API
     #
     #   // Function: set_file_name
@@ -458,21 +456,17 @@ class uvm_text_tr_database(uvm_tr_database):
     #   // The ~set_file_name~ method can only be called prior to ~open_db~.
     #   //
     #   // By default, the database will use a file named "tr_db.log".
-    #   function void set_file_name(string filename)
-    #      if (filename == "") begin
-    #        `uvm_warning("UVM/TXT_DB/EMPTY_NAME",
-    #                     "Ignoring attempt to set file name to ''!")
-    #         return
-    #      end
-    #
-    #      if (!m_filename_dap.try_set(filename)) begin
-    #         `uvm_warning("UVM/TXT_DB/SET_AFTER_OPEN",
-    #                      "Ignoring attempt to change file name after opening the db!")
-    #         return
-    #      end
-    #   endfunction : set_file_name
+    def set_file_name(self, filename):
+        if filename == "":
+            uvm_warning("UVM/TXT_DB/EMPTY_NAME",
+                       "Ignoring attempt to set file name to ''!")
+            return
 
-    #
-    #
-    #endclass : uvm_text_tr_database
-uvm_object_utils(uvm_text_tr_database)
+
+        if not self.m_filename_dap.try_set(filename):
+            uvm_warning("UVM/TXT_DB/SET_AFTER_OPEN",
+                        "Ignoring attempt to change file name after opening the db!")
+        return
+
+
+uvm_object_utils(UVMTextTrDatabase)
