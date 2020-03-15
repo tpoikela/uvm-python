@@ -25,7 +25,7 @@
 from .uvm_object_globals import *
 from .uvm_scope_stack import UVMScopeStack
 from .sv import sv
-from ..macros.uvm_message_defines import uvm_error
+from ..macros.uvm_message_defines import uvm_error, uvm_warning
 
 
 SIZEOF_INT = 32
@@ -34,8 +34,6 @@ MASK_INT = 0xFFFFFFFF
 
 class UVMPacker(object):
     """
-    CLASS: UVMPacker
-
     The UVMPacker class provides a policy object for packing and unpacking
     uvm_objects. The policies determine how packing and unpacking should be done.
     Packing an object causes the object to be placed into a bit (byte or int)
@@ -337,7 +335,7 @@ class UVMPacker(object):
     #
     #  extern def pack_object(self,uvm_object value):
     def pack_object(self, value):
-        if value._m_uvm_status_container.cycle_check.exists(value):
+        if value in value._m_uvm_status_container.cycle_check:
             uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack",
                 value.get_inst_id()), UVM_NONE)
             return
@@ -351,14 +349,14 @@ class UVMPacker(object):
                 #count += 4; // to better debug when display packed bits in hexadecimal
 
             self.scope.down(value.get_name())
-            value.__m_uvm_field_automation(None, UVM_PACK,"")
+            value._m_uvm_field_automation(None, UVM_PACK,"")
             value.do_pack(self)
             self.scope.up()
         elif self.use_metadata == 1:
             pass
             #self.m_bits[count +: 4] = 0
             #count += 4
-        value._m_uvm_status_container.cycle_check.delete(value)
+        del value._m_uvm_status_container.cycle_check[value]
 
 
     #  //------------------//
@@ -591,7 +589,35 @@ class UVMPacker(object):
     #  // the pack array before calling this method.
     #
     #  extern def unpack_object(self,uvm_object value):
+    def unpack_object(self, value):
+        is_non_null = 1
 
+        if value in value._m_uvm_status_container.cycle_check:
+            uvm_warning("CYCFND", sv.sformatf(
+                "Cycle detected for object @%0d during unpack", value.get_inst_id()))
+            return
+        value._m_uvm_status_container.cycle_check[value] = 1
+
+        if self.use_metadata == 1:
+            is_non_null = get_bits(self.m_bits, self.count, 4) != 0  # [count +: 4]
+            self.count += 4
+
+        # NOTE- policy is a ~pack~ policy, not unpack policy;
+        #       and you can't pack an object by REFERENCE
+        if value is not None:
+            if is_non_null > 0:
+                self.scope.down(value.get_name())
+                value._m_uvm_field_automation(None, UVM_UNPACK,"")
+                value.do_unpack(self)
+                self.scope.up()
+            else:
+                pass
+                # TODO: help do_unpack know whether unpacked result would be null
+                #       to avoid new'ing unnecessarily;
+                #       this does not nullify argument; need to pass obj by ref
+        elif ((is_non_null != 0) and (value is None)):
+             uvm_error("UNPOBJ","cannot unpack into None object")
+        del value._m_uvm_status_container.cycle_check[value]
 
 
     #  // Function: get_packed_size
@@ -874,42 +900,6 @@ class UVMPacker(object):
 #  unpack_object(value)
 #endfunction
 #
-#def void UVMPacker::unpack_object(self,uvm_object value):
-#
-#  byte is_non_null; is_non_null = 1
-#
-#  if(value._m_uvm_status_container.cycle_check.exists(value)):
-#    uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during unpack", value.get_inst_id()), UVM_NONE)
-#    return
-#  end
-#  value._m_uvm_status_container.cycle_check[value] = 1
-#
-#  if(use_metadata == 1):
-#    is_non_null = self.m_bits[count +: 4]
-#    count+=4
-#  end
-#
-#  // NOTE- policy is a ~pack~ policy, not unpack policy;
-#  //       and you can't pack an object by REFERENCE
-#  if (value is not None)begin
-#    if (is_non_null > 0):
-#      scope.down(value.get_name())
-#      value.__m_uvm_field_automation(None, UVM_UNPACK,"")
-#      value.do_unpack(self)
-#      scope.up()
-#    end
-#    else begin
-#      // TODO: help do_unpack know whether unpacked result would be null
-#      //       to avoid new'ing unnecessarily;
-#      //       this does not nullify argument; need to pass obj by ref
-#    end
-#  end
-#  elif ((is_non_null != 0)  and  (value is None)):
-#     uvm_report_error("UNPOBJ","cannot unpack into None object", UVM_NONE)
-#  end
-#  value._m_uvm_status_container.cycle_check.delete(value)
-#
-#endfunction
 #
 #
 #// unpack_real
@@ -961,7 +951,11 @@ class UVMPacker(object):
 #endfunction
 #
 #
-#
-#
 
-
+def get_bits(bits, count, nbits):  # [count +: 4]
+    val = 0x0
+    idx = 0
+    for i in range(count, count + nbits + 1):
+        val |= (1 << (nbits - idx)) & (bits >> (i-idx))
+        idx += 1
+    return val
