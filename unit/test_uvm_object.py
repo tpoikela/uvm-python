@@ -53,6 +53,7 @@ class TestUVMObject(unittest.TestCase):
         o1.data = 20
         o3 = o1.clone()
         self.assertFalse(o1.compare(o3))
+        self.assertTrue(o1.compare(o1))
 
     def test_hier_object_utils(self):
         sup_obj = SuperObj("super_obj")
@@ -72,6 +73,17 @@ class TestUVMObject(unittest.TestCase):
         o3.unpack(packed_obj)
         self.assertEqual(o3.addr, 0x234)
         self.assertEqual(o3.data, 567)
+
+        sup_obj = SuperObj("super_obj")
+        sup_obj.my_obj.addr = 888
+        size, packed_obj = sup_obj.pack()
+        print(str(packed_obj))
+        print("packed obj is " + hex(packed_obj))
+        sup_obj22 = SuperObj("super_obj22")
+        self.assertEqual(sup_obj22.my_obj.addr, 3)
+        sup_obj22.unpack(packed_obj)
+        self.assertEqual(sup_obj22.my_obj.addr, 888)
+
 
 
 
