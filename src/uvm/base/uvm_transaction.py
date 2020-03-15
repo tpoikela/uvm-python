@@ -23,118 +23,23 @@
 
 from .sv import sv
 from .uvm_recorder import UVMRecorder
-
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_transaction
-#
-# The uvm_transaction class is the root base class for UVM transactions.
-# Inheriting all the methods of <uvm_object>, uvm_transaction adds a timing and
-# recording interface.
-#
-# This class provides timestamp properties, notification events, and transaction
-# recording support.
-#
-# Use of this class as a base for user-defined transactions
-# is deprecated. Its subtype, <uvm_sequence_item>, shall be used as the
-# base class for all user-defined transaction types.
-#
-# The intended use of this API is via a <uvm_driver #(REQ,RSP)> to call <uvm_component::accept_tr>,
-# <uvm_component::begin_tr>, and <uvm_component::end_tr> during the course of
-# sequence item execution. These methods in the component base class will
-# call into the corresponding methods in this class to set the corresponding
-# timestamps (~accept_time~, ~begin_time~, and ~end_time~), trigger the
-# corresponding event (<self.begin_event> and <self.end_event>, and, if enabled,
-# record the transaction contents to a vendor-specific transaction database.
-#
-# Note that get_next_item/item_done when called on a uvm_seq_item_pull_port
-# will automatically trigger the self.begin_event and end_events via calls to begin_tr and end_tr.
-# While convenient, it is generally the responsibility of drivers to mark a
-# transaction's progress during execution.  To allow the driver or layering sequence
-# to control sequence item timestamps, events, and recording, you must call
-# <uvm_sqr_if_base#(REQ,RSP)::disable_auto_item_recording> at the beginning
-# of the driver's ~run_phase~ task.
-#
-# Users may also use the transaction's event pool, <events>,
-# to define custom events for the driver to trigger and the sequences to wait on. Any
-# in-between events such as marking the beginning of the address and data
-# phases of transaction execution could be implemented via the
-# <events> pool.
-#
-# In pipelined protocols, the driver may release a sequence (return from
-# finish_item() or it's `uvm_do macro) before the item has been completed.
-# If the driver uses the begin_tr/end_tr API in uvm_component, the sequence can
-# wait on the item's <self.end_event> to block until the item was fully executed,
-# as in the following example.
-#
-#| task uvm_execute(item, ...)
-#|     // can use the `uvm_do macros as well
-#|     start_item(item)
-#|     item.randomize()
-#|     finish_item(item)
-#|     item.self.end_event.wait_on()
-#|     // get_response(rsp, item.get_transaction_id()); //if needed
-#| endtask
-#|
-#
-# A simple two-stage pipeline driver that can execute address and
-# data phases concurrently might be implemented as follows:
-#
-#| task run()
-#|     // this driver supports a two-deep pipeline
-#|     fork
-#|       do_item()
-#|       do_item()
-#|     join
-#| endtask
-#|
-#|
-#| task do_item()
-#|
-#|   forever begin
-#|     mbus_item req
-#|
-#|     lock.get()
-#|
-#|     seq_item_port.get(req); // Completes the sequencer-driver handshake
-#|
-#|     accept_tr(req)
-#|
-#|       // request bus, wait for grant, etc.
-#|
-#|     begin_tr(req)
-#|
-#|       // execute address phase
-#|
-#|     // allows next transaction to begin address phase
-#|     lock.put()
-#|
-#|       // execute data phase
-#|       // (may trigger custom "data_phase" event here)
-#|
-#|     end_tr(req)
-#|
-#|   end
-#|
-#| endtask: do_item
-
 from .uvm_object import UVMObject
 from .uvm_pool import UVMEventPool
 
-#------------------------------------------------------------------------------
+
 class UVMTransaction(UVMObject):
     """
     The `UVMTransaction` class is the root base class for UVM transactions.
     Inheriting all the methods of `UVMObject`, `UVMTransaction` adds a timing and
     recording interface.
-   
+
     This class provides timestamp properties, notification events, and transaction
     recording support.
-   
+
     Use of this class as a base for user-defined transactions
     is deprecated. Its subtype, `uvm_sequence_item`, shall be used as the
     base class for all user-defined transaction types.
-   
+
     The intended use of this API is via a `uvm_driver` to call `accept_tr`,
     `begin_tr`, and `end_tr` during the course of
     sequence item execution. These methods in the component base class will
@@ -142,7 +47,7 @@ class UVMTransaction(UVMObject):
     timestamps (`accept_time`, `begin_time`, and `end_time`), trigger the
     corresponding event (`begin_event` and `end_event`, and, if enabled,
     record the transaction contents to a vendor-specific transaction database.
-   
+
     Note that get_next_item/item_done when called on a `uvm_seq_item_pull_port`
     will automatically trigger the `begin_event` and `end_event` via calls to `begin_tr` and `end_tr`.
     While convenient, it is generally the responsibility of drivers to mark a
@@ -150,13 +55,13 @@ class UVMTransaction(UVMObject):
     to control sequence item timestamps, events, and recording, you must call
     `UVM_SEQ_ITEM_PULL_IMP.disable_auto_item_recording` at the beginning
     of the driver's `run_phase` task.
-   
+
     Users may also use the transaction's event pool, `events`,
     to define custom events for the driver to trigger and the sequences to wait on. Any
     in-between events such as marking the beginning of the address and data
     phases of transaction execution could be implemented via the
     `events` pool.
-   
+
     In pipelined protocols, the driver may release a sequence (return from
     `finish_item` or it's `uvm_do` macro) before the item has been completed.
     If the driver uses the `begin_tr`/`end_tr` API in `UVMComponent`, the sequence can
@@ -173,11 +78,11 @@ class UVMTransaction(UVMObject):
             item.self.end_event.wait_on()
             // get_response(rsp, item.get_transaction_id()); //if needed
         endtask
-   
-   
+
+
     A simple two-stage pipeline driver that can execute address and
     data phases concurrently might be implemented as follows:
-   
+
     .. code-block:: systemverilog
 
         task run()
@@ -188,38 +93,38 @@ class UVMTransaction(UVMObject):
               do_item()
             join
         endtask
-        
-        
+
+
         task do_item()
-        
+
           forever begin
             mbus_item req
-        
+
             lock.get()
-        
+
             seq_item_port.get(req); // Completes the sequencer-driver handshake
-        
+
             accept_tr(req)
-        
+
               // request bus, wait for grant, etc.
-        
+
             begin_tr(req)
-        
+
               // execute address phase
-        
+
             // allows next transaction to begin address phase
             lock.put()
-        
+
               // execute data phase
               // (may trigger custom "data_phase" event here)
-        
+
             end_tr(req)
-        
+
           end
-        
+
         endtask: do_item
     """
-    
+
     #  // Variable: events
     #  //
     #  // The event pool instance for this transaction. This pool is used to track
@@ -472,9 +377,8 @@ class UVMTransaction(UVMObject):
         self.tr_recorder = None
 
         self.end_event.trigger()
-        #endfunction
 
-    #
+
     #  // Function: do_end_tr
     #  //
     #  // This user-definable callback is called by <end_tr> just before the end event
@@ -485,30 +389,36 @@ class UVMTransaction(UVMObject):
     def do_end_tr(self):
         return
 
-    #
-    #
+
     #  // Function: get_tr_handle
     #  //
     #  // Returns the handle associated with the transaction, as set by a previous
-    #  // call to <begin_child_tr> or <begin_tr> with transaction recording enabled.
+    #  // call to <begin_child_tr> or `begin_tr` with transaction recording enabled.
     #
     #  extern function integer get_tr_handle ()
-    #
-    #
+    def get_tr_handle (self):
+        if self.tr_recorder is not None:
+            return self.tr_recorder.get_handle()
+        else:
+            return 0
+
+
     #  // Function: disable_recording
     #  //
     #  // Turns off recording for the transaction stream. This method does not
     #  // effect a <uvm_component>'s recording streams.
-    #
-    #  extern function void disable_recording ()
-    #
+    def disable_recording(self):
+        self.stream_handle = None
+
+
     #  // Function: enable_recording
     #  // Turns on recording to the ~stream~ specified.
     #  //
     #  // If transaction recording is on, then a call to ~record~ is made when the
     #  // transaction is ended.
-    #  extern function void enable_recording (uvm_tr_stream stream)
-    #
+    def enable_recording(self, stream):
+        self.stream_handle = stream
+
 
     #  // Function: is_recording_enabled
     #  //
@@ -524,8 +434,8 @@ class UVMTransaction(UVMObject):
     #  // Returns 0 if the transaction has not been started.
     #
     #  extern function bit is_active ()
-    #
-    #
+
+
     #  // Function: get_event_pool
     #  //
     #  // Returns the event pool associated with this transaction.
@@ -535,7 +445,7 @@ class UVMTransaction(UVMObject):
     #  // specialization of <uvm_pool#(KEY,T)>, e.g. a ~uvm_pool#(uvm_event)~.
     #
     #  extern function uvm_event_pool get_event_pool ()
-    #
+
 
     #  // Function: set_initiator
     #  //
@@ -549,30 +459,33 @@ class UVMTransaction(UVMObject):
     def set_initiator(self, initiator):
         self.initiator = initiator
 
+
     #  // Function: get_initiator
     #  //
     #  // Returns the component that produced or started the transaction, as set by
     #  // a previous call to set_initiator.
-    #
     #  extern function uvm_component get_initiator ()
-    #
-    #
+
+
     #  // Function: get_accept_time
     #
     #  extern function time   get_accept_time    ()
-    #
+
+
     #  // Function: get_begin_time
     #
     #  extern function time   get_begin_time     ()
-    #
+
+
     #  // Function: get_end_time
     #  //
     #  // Returns the time at which this transaction was accepted, begun, or ended,
     #  // as by a previous call to <accept_tr>, <begin_tr>, <begin_child_tr>, or <end_tr>.
     #
     #  extern function time   get_end_time       ()
-    #
-    #
+
+
+
     #  // Function: set_transaction_id
     #  //
     #  // Sets this transaction's numeric identifier to id. If not set via this
@@ -581,8 +494,6 @@ class UVMTransaction(UVMObject):
     #  // When using sequences to generate stimulus, the transaction ID is used along
     #  // with the sequence ID to route responses in sequencers and to correlate
     #  // responses to requests.
-    #
-    #  extern function void set_transaction_id(integer id)
     def set_transaction_id(self, id):
         self.m_transaction_id = id
 
@@ -595,7 +506,6 @@ class UVMTransaction(UVMObject):
     #  // ID is used along
     #  // with the sequence ID to route responses in sequencers and to correlate
     #  // responses to requests.
-    #  extern function integer get_transaction_id()
     def get_transaction_id(self):
         return self.m_transaction_id
 
@@ -604,7 +514,7 @@ class UVMTransaction(UVMObject):
     #  // Internal methods properties; do not use directly
     #  //
     #  //----------------------------------------------------------------------------
-    #
+
     #  //Override data control methods for internal properties
     #  extern virtual function void do_print  (uvm_printer printer)
 
@@ -617,15 +527,15 @@ class UVMTransaction(UVMObject):
     def m_begin_tr(self, begin_time=0, parent_handle=0):
         m_begin_tr = 0
         tmp_time = begin_time
-        if (begin_time == 0):
+        if begin_time == 0:
             tmp_time = sv.realtime()
         parent_recorder = None
-        
-        if (parent_handle != 0):
+
+        if parent_handle != 0:
             parent_recorder = UVMRecorder.get_recorder_from_handle(parent_handle)
 
         # If we haven't ended the previous record, end it.
-        if (self.tr_recorder is not None):
+        if self.tr_recorder is not None:
             # Don't free the handle, someone else may be using it...
             self.end_tr(tmp_time)
 
@@ -635,7 +545,7 @@ class UVMTransaction(UVMObject):
             db = self.stream_handle.get_db()
             self.end_time = -1
             self.begin_time = tmp_time
-          
+
             if (parent_recorder is None):
                 self.tr_recorder = self.stream_handle.open_recorder(self.get_type_name(),
                         self.begin_time,
@@ -644,13 +554,13 @@ class UVMTransaction(UVMObject):
                 self.tr_recorder = self.stream_handle.open_recorder(self.get_type_name(),
                         self.begin_time,
                         "Begin_End, Link")
-          
+
                 if (self.tr_recorder is not None):
                     pass
                     #link = uvm_parent_child_link::get_link(parent_recorder, self.tr_recorder)
                     # TODO
                     #db.establish_link(link)
-          
+
             if (self.tr_recorder is not None):
                 m_begin_tr = self.tr_recorder.get_handle()
             else:
@@ -775,38 +685,4 @@ class UVMTransaction(UVMObject):
 #    recorder.policy = p
 #  end
 #endfunction
-#
-# get_tr_handle
-# ---------
-#
-#function integer uvm_transaction::get_tr_handle ()
-#   if (self.tr_recorder is not None)
-#     return self.tr_recorder.get_handle()
-#   else
-#     return 0
-#endfunction
-#
-#
-# disable_recording
-# -----------------
-#
-#function void uvm_transaction::disable_recording ()
-#   self.stream_handle = None
-#endfunction
-#
-#
-# enable_recording
-# ----------------
-#
-#function void uvm_transaction::enable_recording (uvm_tr_stream stream)
-#   self.stream_handle = stream
-#endfunction : enable_recording
-#
-#
-#
-#
-#
-#
-#
-#
 #
