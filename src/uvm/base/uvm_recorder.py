@@ -25,30 +25,31 @@
 from ..dap import uvm_set_before_get_dap
 from .uvm_object import UVMObject
 from .uvm_object_globals import *
+from .uvm_misc import uvm_bitstream_to_string, uvm_integral_to_string
 from .sv import sv
-from ..macros import uvm_object_utils
+from ..macros import uvm_object_utils, uvm_warning
 from .uvm_scope_stack import UVMScopeStack
 
 
-#// File: UVM Recorders
-#//
-#// The uvm_recorder class serves two purposes:
-#//  - Firstly, it is an abstract representation of a record within a
-#//    <uvm_tr_stream>.
-#//  - Secondly, it is a policy object for recording fields ~into~ that
-#//    record within the ~stream~.
-#//
+"""
+File: UVM Recorders
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_recorder
-#//
-#// Abstract class which defines the ~recorder~ API.
-#//
-#//------------------------------------------------------------------------------
+The uvm_recorder class serves two purposes:
+ - Firstly, it is an abstract representation of a record within a
+   <uvm_tr_stream>.
+ - Secondly, it is a policy object for recording fields ~into~ that
+   record within the ~stream~.
+
+"""
+
 
 
 class UVMRecorder(UVMObject):
+    """
+    CLASS: uvm_recorder
+
+    Abstract class which defines the ~recorder~ API.
+    """
 
     #   // Variable- m_ids_by_recorder
     #   // An associative array of integers, indexed by uvm_recorders.  This
@@ -144,17 +145,16 @@ class UVMRecorder(UVMObject):
         #
 
     def get_stream(self):
-        """         
+        """
+        Group: Configuration API
 
-           Group: Configuration API
+        Function: get_stream
+        Returns a reference to the stream which created
+        this record.
 
-           Function: get_stream
-           Returns a reference to the stream which created
-           this record.
-          
-           A warning will be asserted if get_stream is called prior
-           to the record being initialized via `do_open`.
-          
+        A warning will be asserted if get_stream is called prior
+        to the record being initialized via `do_open`.
+
         Returns:
         """
         astr = []
@@ -164,7 +164,8 @@ class UVMRecorder(UVMObject):
                    sv.sformatf("attempt to retrieve STREAM from '%s' before it was set!",
                        self.get_name()))
             self.m_warn_null_stream = 0
-        return astr[0]
+        if len(astr):
+            return astr[0]
 
 
     #   // Group: Transaction Recorder API
@@ -181,18 +182,18 @@ class UVMRecorder(UVMObject):
 
 
     def close(self, close_time=0):
-        """         
+        """
            Function: close
            Closes this recorder.
-          
+
            Closing a recorder marks the end of the transaction in the stream.
-          
+
            Parameters:
            close_time - Optional time to record as the closing time of this transaction.
-          
+
            This method will trigger a `do_close` call.
         Args:
-            close_time: 
+            close_time:
         """
         if (close_time == 0):
             close_time = sv.realtime()
@@ -208,23 +209,23 @@ class UVMRecorder(UVMObject):
 
 
     def free(self, close_time=0):
-        """         
+        """
            Function: free
            Frees this recorder
-          
+
            Freeing a recorder indicates that the stream and database can release
            any references to the recorder.
-          
+
            Parameters:
            close_time - Optional time to record as the closing time of this transaction.
-          
+
            If a recorder has not yet been closed (via a call to `close`), then
            `close` will automatically be called, and passed the `close_time`.  If the recorder
            has already been closed, then the `close_time` will be ignored.
-          
+
            This method will trigger a `do_free` call.
         Args:
-            close_time: 
+            close_time:
         """
         # process p=process::self()
         p = None
@@ -257,65 +258,65 @@ class UVMRecorder(UVMObject):
             stream.m_free_recorder(self)
 
     def is_open(self):
-        """         
+        """
            Function: is_open
            Returns true if this `uvm_recorder` was opened on its stream,
            but has not yet been closed.
-          
+
         Returns:
         """
         return self.m_is_opened
 
 
     def get_open_time(self):
-        """         
+        """
 
            Function: get_open_time
            Returns the `open_time`
-          
+
         Returns:
         """
         return self.m_open_time
 
 
     def is_closed(self):
-        """         
+        """
            Function: is_closed
            Returns true if this `uvm_recorder` was closed on its stream,
            but has not yet been freed.
-          
+
         Returns:
         """
         return self.m_is_closed
 
 
     def get_close_time(self):
-        """         
+        """
            Function: get_close_time
            Returns the `close_time`
-          
+
         Returns:
         """
         return self.m_close_time
 
     def m_do_open(self, stream, open_time, type_name):
-        """         
+        """
           Function- m_do_open
           Initializes the internal state of the recorder.
-         
+
           Parameters:
           stream - The stream which spawned this recorder
-         
+
           This method will trigger a `do_open` call.
-         
+
           An error will be asserted if:
           - `m_do_open` is called more than once without the
            recorder being `freed` in between.
           - `stream` is `null`
         Args:
-            stream: 
-            open_time: 
-            type_name: 
+            stream:
+            open_time:
+            type_name:
         """
         m_stream = []
         if stream is None:
@@ -335,8 +336,7 @@ class UVMRecorder(UVMObject):
         self.m_is_opened = 1
 
         self.do_open(stream, open_time, type_name)
-        #  endfunction : m_do_open
-        #
+
 
     #   // Group: Handles
 
@@ -346,7 +346,7 @@ class UVMRecorder(UVMObject):
     #   local static uvm_recorder m_recorders_by_id[integer]
     m_recorders_by_id = {}
 
-    #
+
     #   // Variable- m_id
     #   // Static int marking the last assigned id.
     #   local static integer m_id
@@ -354,12 +354,12 @@ class UVMRecorder(UVMObject):
 
     @classmethod
     def m_free_id(cls, id):
-        """         
+        """
            Function- m_free_id
            Frees the id/recorder link (memory cleanup)
         Args:
-            cls: 
-            id: 
+            cls:
+            id:
         """
         recorder = None  # uvm_recorder
         if ((not sv.isunknown(id)) and (id in cls.m_recorders_by_id)):
@@ -370,13 +370,13 @@ class UVMRecorder(UVMObject):
             del cls.m_ids_by_recorder[recorder]
 
     def get_handle(self):
-        """         
+        """
            Function: get_handle
            Returns a unique ID for this recorder.
-          
+
            A value of `0` indicates that the recorder has been `freed`,
            and no longer has a valid ID.
-          
+
         Returns:
         """
         if (self.is_open() is False and self.is_closed() is False):
@@ -398,17 +398,17 @@ class UVMRecorder(UVMObject):
 
     @classmethod
     def get_recorder_from_handle(cls, id):
-        """         
+        """
            Function: get_recorder_from_handle
            Static accessor, returns a recorder reference for a given unique id.
-          
+
            If no recorder exists with the given `id`, or if the
            recorder with that `id` has been freed, then `null` is
            returned.
-          
+
            This method can be used to access the recorder associated with a
            call to <uvm_transaction::begin_tr> or <uvm_component::begin_tr>.
-          
+
         .. code-block:: python
 
            | integer handle = tr.begin_tr()
@@ -416,10 +416,10 @@ class UVMRecorder(UVMObject):
            | if (recorder != null):
            |   recorder.record_string("begin_msg", "Started recording transaction!")
            | end
-          
+
         Args:
-            cls: 
-            id: 
+            cls:
+            id:
         Returns:
         """
         if (id == 0):
@@ -442,15 +442,10 @@ class UVMRecorder(UVMObject):
     #   // radix - The <uvm_radix_enum> to use.
     #   //
     #   // This method will trigger a <do_record_field> call.
-    #   function void record_field(string name,
-    #                              uvm_bitstream_t value,
-    #                              int size,
-    #                              uvm_radix_enum radix=UVM_NORADIX)
-    #      if (get_stream() is None):
-    #         return
-    #      end
-    #      do_record_field(name, value, size, radix)
-    #   endfunction : record_field
+    def record_field(self, name, value, size, radix=UVM_NORADIX):
+        if self.get_stream() is None:
+            return
+        self.do_record_field(name, value, size, radix)
 
 
     #   // Function: record_field_int
@@ -493,7 +488,7 @@ class UVMRecorder(UVMObject):
     #      do_record_field_real(name, value)
     #   endfunction : record_field_real
 
-    #
+
     #   // Function: record_object
     #   // Records an object field.
     #   //
@@ -503,15 +498,12 @@ class UVMRecorder(UVMObject):
     #   //
     #   // The implementation must use the <recursion_policy> and <identifier> to
     #   // determine exactly what should be recorded.
-    #   function void record_object(string name,
-    #                               uvm_object value)
-    #      if (get_stream() is None):
-    #         return
-    #      end
-    #
-    #      do_record_object(name, value)
-    #   endfunction : record_object
-    #
+    def record_object(self, name, value):
+        if (self.get_stream() is None):
+            return
+        self.do_record_object(name, value)
+
+
     #   // Function: record_string
     #   // Records a string field.
     #   //
@@ -519,15 +511,12 @@ class UVMRecorder(UVMObject):
     #   // name - Name of the field
     #   // value - Value of the field
     #   //
-    #   function void record_string(string name,
-    #                               string value)
-    #      if (get_stream() is None):
-    #         return
-    #      end
-    #
-    #      do_record_string(name, value)
-    #   endfunction : record_string
-    #
+    def record_string(self, name, value):
+        if (self.get_stream() is None):
+            return
+        self.do_record_string(name, value)
+
+
     #   // Function: record_time
     #   // Records a time field.
     #   //
@@ -591,17 +580,17 @@ class UVMRecorder(UVMObject):
     #
 
     def do_open(self, stream, open_time, type_name):
-        """         
+        """
            Function: do_open
            Callback triggered via <uvm_tr_stream::open_recorder>.
-          
+
            The `do_open` callback can be used to initialize any internal
            state within the recorder, as well as providing a location to
            record any initial information.
         Args:
-            stream: 
-            open_time: 
-            type_name: 
+            stream:
+            open_time:
+            type_name:
         """
         pass
 
@@ -624,6 +613,7 @@ class UVMRecorder(UVMObject):
     #   protected virtual function void do_free()
     #   endfunction : do_free
     #
+
     #   // Function: do_record_field
     #   // Records an integral field (less than or equal to 4096 bits).
     #   //
@@ -632,7 +622,8 @@ class UVMRecorder(UVMObject):
     #                                                        uvm_bitstream_t value,
     #                                                        int size,
     #                                                        uvm_radix_enum radix)
-    #
+
+
     #   // Function: do_record_field_int
     #   // Records an integral field (less than or equal to 64 bits).
     #   //
@@ -789,14 +780,14 @@ class UVMRecorder(UVMObject):
 class UVMTextRecorder(UVMRecorder):
 
     def __init__(self, name="unnamed-uvm_text_recorder"):
-        """         
+        """
            Function: new
            Constructor
-          
+
            Parameters:
            name - Instance name
         Args:
-            name: 
+            name:
         """
         super().__init__(name)
         # Variable- m_text_db
@@ -806,21 +797,20 @@ class UVMTextRecorder(UVMRecorder):
         # Variable- scope
         # Imeplementation detail
         self.scope = UVMScopeStack()
-        #   endfunction : new
 
 
     def do_open(self, stream, open_time, type_name):
-        """         
+        """
            Group: Implementation Agnostic API
 
            Function: do_open
            Callback triggered via <uvm_tr_stream::open_recorder>.
-          
+
            Text-backend specific implementation.
         Args:
-            stream: 
-            open_time: 
-            type_name: 
+            stream:
+            open_time:
+            type_name:
         """
         self. m_text_db = stream.get_db()
         if self.m_text_db.open_db():
@@ -831,13 +821,13 @@ class UVMTextRecorder(UVMRecorder):
 
 
     def do_close(self, close_time):
-        """         
+        """
            Function: do_close
            Callback triggered via <uvm_recorder::close>.
-          
+
            Text-backend specific implementation.
         Args:
-            close_time: 
+            close_time:
         """
         if self.m_text_db.open_db():
             sv.fdisplay(self.m_text_db.m_file,
@@ -847,12 +837,11 @@ class UVMTextRecorder(UVMRecorder):
                  close_time)
 
     def do_free(self):
-        """         
+        """
+        Function: do_free
+        Callback triggered via <uvm_recorder::free>.
 
-           Function: do_free
-           Callback triggered via <uvm_recorder::free>.
-          
-           Text-backend specific implementation.
+        Text-backend specific implementation.
         """
         if self.m_text_db.open_db():
             sv.fdisplay(self.m_text_db.m_file,
@@ -861,7 +850,7 @@ class UVMTextRecorder(UVMRecorder):
 
         self.m_text_db = None
 
-    #
+
     #   // Function: do_record_field
     #   // Records an integral field (less than or equal to 4096 bits).
     #   //
@@ -870,19 +859,14 @@ class UVMTextRecorder(UVMRecorder):
     #                                                   uvm_bitstream_t value,
     #                                                   int size,
     #                                                   uvm_radix_enum radix)
-    #      scope.set_arg(name)
-    #      if (!radix)
-    #        radix = default_radix
-    #
-    #      write_attribute(scope.get(),
-    #                      value,
-    #                      radix,
-    #                      size)
-    #
-    #   endfunction : do_record_field
+    def do_record_field(self, name, value, size, radix):
+        self.scope.set_arg(name)
+        if not radix:
+            radix = self.default_radix
+        self.write_attribute(self.scope.get(), value, radix, size)
 
-    #
-    #
+
+
     #   // Function: do_record_field_int
     #   // Records an integral field (less than or equal to 64 bits).
     #   //
@@ -918,6 +902,8 @@ class UVMTextRecorder(UVMRecorder):
     #                          64)
     #   endfunction : do_record_field_real
     #
+
+
     #   // Function: do_record_object
     #   // Record an object field.
     #   //
@@ -926,54 +912,41 @@ class UVMTextRecorder(UVMRecorder):
     #   // The method uses ~identifier~ to determine whether or not to
     #   // record the object instance id, and ~recursion_policy~ to
     #   // determine whether or not to recurse into the object.
-    #   protected virtual function void do_record_object(string name,
-    #                                                    uvm_object value)
-    #      int            v
-    #      string         str
-    #
-    #      if(identifier):
-    #         if(value != null):
-    #            $swrite(str, "%0d", value.get_inst_id())
-    #            v = str.atoi()
-    #         end
-    #         scope.set_arg(name)
-    #         write_attribute_int(scope.get(),
-    #                             v,
-    #                             UVM_DEC,
-    #                             32)
-    #      end
-    #
-    #      if(policy != UVM_REFERENCE):
-    #         if(value!=null):
-    #            if(value.__m_uvm_status_container.cycle_check.exists(value)) return
-    #            value.__m_uvm_status_container.cycle_check[value] = 1
-    #            scope.down(name)
-    #            value.record(this)
-    #            scope.up()
-    #            value.__m_uvm_status_container.cycle_check.delete(value)
-    #         end
-    #      end
-    #   endfunction : do_record_object
-    #
+    def do_record_object(self, name, value):
+        v = 0
+        _str = ""
+
+        if self.identifier:
+            if value is not None:
+                _str = str(value.get_inst_id())
+                v = int(_str)
+            self.scope.set_arg(name)
+            self.write_attribute_int(self.scope.get(), v, UVM_DEC, 32)
+
+        if self.policy != UVM_REFERENCE:
+            if value is not None:
+                if value in value._m_uvm_status_container.cycle_check:
+                    return
+                value._m_uvm_status_container.cycle_check[value] = 1
+                self.scope.down(name)
+                value.record(self)
+                self.scope.up()
+                del value._m_uvm_status_container.cycle_check[value]
+
+
     #   // Function: do_record_string
     #   // Records a string field.
     #   //
     #   // Text-backend specific implementation.
-    #   protected virtual function void do_record_string(string name,
-    #                                                    string value)
-    #      scope.set_arg(name)
-    #      if (m_text_db.open_db()):
-    #         $fdisplay(m_text_db.m_file,
-    #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
-    #                   $realtime,
-    #                   this.get_handle(),
-    #                   scope.get(),
-    #                   value,
-    #                   "UVM_STRING",
-    #                   8+value.len())
-    #      end
-    #   endfunction : do_record_string
-    #
+    def do_record_string(self, name, value):
+        self.scope.set_arg(name)
+        if self.m_text_db.open_db():
+            sv.fdisplay(self.m_text_db.m_file,
+                "      SET_ATTR @%0t {{TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}}",
+                sv.realtime(), self.get_handle(), self.scope.get(),
+                value, "UVM_STRING", 8 + len(value))
+
+
     #   // Function: do_record_time
     #   // Records a time field.
     #   //
@@ -986,7 +959,8 @@ class UVMTextRecorder(UVMRecorder):
     #                          UVM_TIME,
     #                          64)
     #   endfunction : do_record_time
-    #
+
+
     #   // Function: do_record_generic
     #   // Records a name/value pair, where ~value~ has been converted to a string.
     #   //
@@ -1000,7 +974,7 @@ class UVMTextRecorder(UVMRecorder):
     #                      UVM_STRING,
     #                      8+value.len())
     #   endfunction : do_record_generic
-    #
+
 
     #   // Group: Implementation Specific API
     #
@@ -1017,19 +991,18 @@ class UVMTextRecorder(UVMRecorder):
     #                                 uvm_bitstream_t value,
     #                                 uvm_radix_enum radix,
     #                                 integer numbits=$bits(uvm_bitstream_t))
-    #      if (m_text_db.open_db()):
-    #         $fdisplay(m_text_db.m_file,
-    #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
-    #                   $realtime,
-    #                   this.get_handle(),
-    #                   nm,
-    #                   uvm_bitstream_to_string(value, numbits, radix),
-    #                    radix.name(),
-    #                   numbits)
-    #      end
-    #   endfunction : write_attribute
+    def write_attribute(self, nm, value, radix, numbits=32):
+        if self.m_text_db.open_db():
+            sv.fdisplay(self.m_text_db.m_file,
+                    "      SET_ATTR @%0t {{TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}}",
+                     sv.realtime(),
+                     self.get_handle(),
+                     nm,
+                     uvm_bitstream_to_string(value, numbits, radix),
+                     UVM_RADIX_TO_STRING_DICT[radix],
+                     numbits)
 
-    #
+
     #   // Function: write_attribute_int
     #   // Outputs an integral attribute to the textual log
     #   //
@@ -1038,23 +1011,15 @@ class UVMTextRecorder(UVMRecorder):
     #   // value - Value
     #   // radix - Radix of the output
     #   // numbits - number of valid bits
-    #   function void write_attribute_int(string  nm,
-    #                                     uvm_integral_t value,
-    #                                     uvm_radix_enum radix,
-    #                                     integer numbits=$bits(uvm_bitstream_t))
-    #      if (m_text_db.open_db()):
-    #         $fdisplay(m_text_db.m_file,
-    #                   "      SET_ATTR @%0t {TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}",
-    #                   $realtime,
-    #                   this.get_handle(),
-    #                   nm,
-    #                   uvm_integral_to_string(value, numbits, radix),
-    #                   radix.name(),
-    #                   numbits)
-    #      end
-    #   endfunction : write_attribute_int
+    def write_attribute_int(self, nm, value, radix, numbits=32):
+        if self.m_text_db.open_db():
+            sv.fdisplay(self.m_text_db.m_file,
+                "      SET_ATTR @%0t {{TXH:%0d NAME:%s VALUE:%s   RADIX:%s BITS=%0d}}",
+                sv.realtime(), self.get_handle(), nm,
+                uvm_integral_to_string(value, numbits, radix),
+                UVM_RADIX_TO_STRING_DICT[radix], numbits)
 
-    #
+
     #   /// LEFT FOR BACKWARDS COMPAT ONLY!!!!!!!!
     #
     #   //------------------------------
@@ -1193,7 +1158,7 @@ class UVMTextRecorder(UVMRecorder):
     #                                 integer h2,
     #                                 string relation="")
     #    if (open_file())
-    #      $fdisplay(m_text_db.m_file,"  LINK @%0t {TXH1:%0d TXH2:%0d RELATION=%0s}", $realtime,h1,
+    #      $fdisplay(self.m_text_db.m_file,"  LINK @%0t {TXH1:%0d TXH2:%0d RELATION=%0s}", $realtime,h1,
     #          h2,relation)
     #  endfunction
 
