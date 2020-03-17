@@ -212,6 +212,14 @@ class sv:
             print("$error: {},{} Assertion failed. {}".format(filename, line, msg))
 
     @classmethod
+    def test_plusargs(cls, name):
+        arr = []
+        sv.value_plusargs(name, arr)
+        if len(arr) > 0:
+            return True
+        return False
+
+    @classmethod
     def value_plusargs(cls, arg_str, arr):
         plusarg_dict = cocotb.plusargs
         for name in plusarg_dict:
