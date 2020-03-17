@@ -75,7 +75,7 @@ always @ (posedge apb_pclk)
    end
    else begin
        if (write_socket) begin
-           assert(paddr < NSESS)
+           assert(paddr < NSESS[9:0])
            else $error("paddr %0d out of range %0d", paddr, NSESS);
            SESSION[paddr] <= chosen_sock;
            write_socket <= 1'b0;
