@@ -48,7 +48,12 @@ class tb_env(UVMComponent):
             dut = dut[0]
         if self.model is None:
             self.model = reg_block_slave.type_id.create("model", self)
-            self.model.nsession = dut.NSESS.value
+            if hasattr(dut, 'NSESS'):
+                self.model.nsession = dut.NSESS.value
+            elif sv.test_plusargs("NSESS"):
+                self.model.nsession = sv.value_plusargs("NSESS")
+            else:
+                self.model.nsession = 128
             self.model.build()
             self.model.lock_model()
 
