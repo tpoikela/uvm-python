@@ -83,6 +83,7 @@ end
 
 `ifdef COCOTB_SIM
 `ifdef VCD
+`ifndef VERILATOR
 initial begin
  $dumpfile ("slave_dut.vcd");
  $dumpvars (0, slave);
@@ -90,6 +91,7 @@ initial begin
  for (int i = 0; i < 16; i++) $dumpvars(0, DMA[i]);
  for (int i = 0; i < 16; i++) $dumpvars(0, SOCKET[i]);
 end
+`endif
 `endif
 `endif
 

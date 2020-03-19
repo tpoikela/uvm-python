@@ -59,7 +59,7 @@ else begin
     addr_err <= 1'b0;
     if (we) begin
         if (mem_enable)
-            mem[mem_addr] <= data_in;
+            mem[mem_addr] <= data_in[MEM_DATA_WIDTH-1:0];
         else if (reg_a_enable)
             reg_a <= data_in;
         else if (reg_b_enable)
@@ -68,8 +68,10 @@ else begin
             addr_err <= 1'b1;
     end
     else if (read) begin
-        if (mem_enable)
-            data_reg <= mem[mem_addr];
+        if (mem_enable) begin
+            data_reg <= {DATA_WIDTH{1'b0}};
+            data_reg[MEM_DATA_WIDTH-1:0] <= mem[mem_addr];
+        end
         else if (reg_a_enable)
             data_reg <= reg_a;
         else if (reg_b_enable)
@@ -80,6 +82,7 @@ else begin
 end
 
 `define VCD
+`ifndef VERILATOR
 `ifdef COCOTB_SIM
     `ifdef VCD
     initial begin
@@ -89,6 +92,7 @@ end
         #2ns;
     end
     `endif
+`endif
 `endif
 
 
