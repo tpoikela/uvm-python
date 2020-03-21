@@ -92,17 +92,17 @@ from cocotb.triggers import Timer
 from uvm import *
 
 class NewTest(UVMTest):
-    @cocotb.coroutine
-    def run_phase(self, phase):
+
+    async def run_phase(self, phase):
         phase.raise_objection(self)
-        yield Timer(100, "NS")
+        await Timer(100, "NS")
         phase.drop_objection(self)
 
 uvm_component_utils(NewTest)
 
 @cocotb.test()
-def test_dut(dut):
-    yield run_test('NewTest')
+async def test_dut(dut):
+    await run_test('NewTest')
 ```
 
 Current status
@@ -119,7 +119,7 @@ status:
 | Feature    | Status                                                    |
 | ---------  | ------                                                    |
 | TLM1.0     | Done                                                      |
-| TLM2.0     | Started, 1st example working                              |
+| TLM2.0     | Started, 2/3 examples working                             |
 | Components | Done                                                      |
 | Phases     | Done                                                      |
 | Sequences  | Partially done, hier sequences work                       |
@@ -136,6 +136,8 @@ HDL Simulators
 
 Icarus Verilog (iverilog v11.0) and verilator (v4.020+) are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.
+Memory backdoor access has issues with packed multi-dimensional arrays in
+verilator.
 
 Commercial simulators that work with cocotb can of course be used with
 uvm-python as well.
