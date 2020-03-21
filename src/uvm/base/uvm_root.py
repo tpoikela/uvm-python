@@ -398,25 +398,18 @@ class UVMRoot(UVMComponent):
 
     def find_all(self, comp_match, comps, comp=None):
         """         
-
-          Function: find_all
-         
-          Returns the component handle (find) or list of components handles
-          (find_all) matching a given string. The string may contain the wildcards,
-          * and ?. Strings beginning with '.' are absolute path names. If the optional
-          argument comp is provided, then search begins from that component down
-          (default=all components).
-
-         extern function void find_all (string comp_match,
-                                        ref uvm_component comps[$],
-                                        input uvm_component comp=None)
+        Returns the component handle (find) or list of components handles
+        (find_all) matching a given string. The string may contain the wildcards,
+        * and ?. Strings beginning with '.' are absolute path names. If the optional
+        argument comp is provided, then search begins from that component down
+        (default=all components).
 
         Args:
-            comp_match: 
-            comps: 
-            comp: 
+            comp_match (str):
+            comps (list):
+            comp (UVMComponent):
         """
-        if (comp is None):
+        if comp is None:
             comp = self
         self.m_find_all_recurse(comp_match, comps, comp)
 
@@ -480,6 +473,10 @@ class UVMRoot(UVMComponent):
                     child_comp = comp.get_next_child()
         if uvm_is_match(comp_match, comp.get_full_name()) and comp.get_name() != "":
             comps.append(comp)
+        else:
+            print("VVV no match for |{}| - got |{}|".format(comp_match, comp.get_full_name()))
+            print("comp name is |{}|".format(comp.get_name()))
+            print("comp ID is |{}|".format(comp.get_inst_id()))
 
 
 
@@ -487,17 +484,17 @@ class UVMRoot(UVMComponent):
 
     def m_add_child(self, child):
         """         
-         extern protected virtual function bit m_add_child (uvm_component child)
-        Add to the top levels array
+        Add child to the top levels array.
         Args:
-            child: 
+            child (UVMComponent):
         Returns:
+            bool: True if adding child succeeds, False otherwise.
         """
-        if (super().m_add_child(child)):
+        if super().m_add_child(child):
             if child.get_name() == "uvm_test_top":
-                top_levels.insert(0, child)
+                self.top_levels.insert(0, child)
             else:
-                top_levels.append(child)
+                self.top_levels.append(child)
             return True
         else:
             return False
@@ -511,7 +508,7 @@ class UVMRoot(UVMComponent):
             phase: 
         """
         UVMComponent.build_phase(self, phase)
-        #self.m_set_cl_msg_args()
+        self.m_set_cl_msg_args()
         self.m_do_verbosity_settings()
         self.m_do_timeout_settings()
         self.m_do_factory_settings()
@@ -526,7 +523,7 @@ class UVMRoot(UVMComponent):
         """
         set_verbosity_settings = []
         split_vals = []
-        tmp_verb = 0
+        #tmp_verb = 0
 
         # Retrieve them all into set_verbosity_settings
         self.clp.get_arg_values("+uvm_set_verbosity=", set_verbosity_settings)
@@ -538,7 +535,7 @@ class UVMRoot(UVMComponent):
                   sv.sformatf(MSG_INVLCMDARGS, set_verbosity_settings[i]), UVM_NONE, "", "")
 
             # Invalid verbosity
-            if not (self.clp.m_convert_verb(split_vals[2], tmp_verb)):
+            if self.clp.m_convert_verb(split_vals[2]) == -1:
                 self.uvm_report_warning("INVLCMDVERB",
                   sv.sformatf("Invalid verbosity found on the command line for setting '%s'.",
                   set_verbosity_settings[i]), UVM_NONE, "", "")
