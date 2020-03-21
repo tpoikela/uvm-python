@@ -61,7 +61,7 @@ ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
 endif
 
-SIM_ARGS = ""
+#SIM_ARGS = ""
 TOPLEVEL := common_stub
 MODULE   ?= component
 
