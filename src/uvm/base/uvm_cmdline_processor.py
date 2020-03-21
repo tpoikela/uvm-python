@@ -516,7 +516,7 @@ class UVMCmdlineProcessor(UVMReportObject):
         Args:
             verb_str (str): Verbosity string.
         Returns:
-            int: Verbosity level.
+            int: Verbosity level matching one in `UVM_VERBOSITY_LIST`.
         """
         if verb_str == "NONE":
             return UVM_NONE
@@ -542,6 +542,6 @@ class UVMCmdlineProcessor(UVMReportObject):
             return UVM_DEBUG
         if verb_str == "UVM_DEBUG":
             return UVM_DEBUG
-        return 0
+        return -1
 
 UVMCmdlineProcessor.uvm_cmdline_proc = UVMCmdlineProcessor.get_inst()
