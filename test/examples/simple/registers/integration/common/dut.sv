@@ -23,10 +23,16 @@
 
 `timescale 1ns/1ns
 
+`define SOCK_ADDR_BITS 9:4
+`define DMA_ADDR_BITS 8:2
+//11:2
+
 module slave#(
     parameter int MEM_SIZE = 128,
     parameter int NSOCKETS = 64,
-    parameter int ID_REGISTER = {2'b00, 4'h0, 10'h176, 8'h5A, 8'h03}
+    parameter int ID_REGISTER = {2'b00, 4'h0, 10'h176, 8'h5A, 8'h03},
+    parameter int ADDR_WIDTH = 16
+    
 )
 (
    input apb_pclk,
@@ -43,8 +49,11 @@ reg [31:0] pr_data;
 assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite) ? pr_data : 'z;
 
 reg [31:0] DATA;
-reg [63:0] SOCKET[NSOCKETS];
+reg [63:0] SOCKET[0:NSOCKETS-1];
 reg [31:0] DMA[MEM_SIZE];
+
+wire[ADDR_WIDTH-1:0] apb_paddr_int;
+assign apb_paddr_int = apb_paddr[ADDR_WIDTH-1:0];
 
 always @ (posedge apb_pclk)
   begin
@@ -61,20 +70,22 @@ always @ (posedge apb_pclk)
       if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
          pr_data <= 32'h0;
          if (apb_pwrite) begin
-            casex (apb_paddr)
+            casez (apb_paddr_int)
               16'h0024: DATA <= apb_pwdata;
-              16'h1XX0: SOCKET[apb_paddr[11:4]][63:32] <= apb_pwdata; 
-              16'h1XX4: SOCKET[apb_paddr[11:4]][31: 0] <= apb_pwdata;
-              16'h2XXX: DMA[apb_paddr[11:2]] <= apb_pwdata;
+              16'h1??0: SOCKET[apb_paddr[`SOCK_ADDR_BITS]][63:32] <= apb_pwdata; 
+              16'h1??4: SOCKET[apb_paddr[`SOCK_ADDR_BITS]][31: 0] <= apb_pwdata;
+              16'h2???: DMA[apb_paddr[`DMA_ADDR_BITS]] <= apb_pwdata;
+              default: ;// Do nothing
             endcase
          end
          else begin
-            casex (apb_paddr)
+            casez (apb_paddr_int)
               16'h0000: pr_data <= ID_REGISTER;
               16'h0024: pr_data <= DATA;
-              16'h1XX0: pr_data <= SOCKET[apb_paddr[11:4]][63:32];
-              16'h1XX4: pr_data <= SOCKET[apb_paddr[11:4]][31: 0];
-              16'h2XXX: pr_data <= DMA[apb_paddr[11:2]];
+              16'h1??0: pr_data <= SOCKET[apb_paddr[`SOCK_ADDR_BITS]][63:32];
+              16'h1??4: pr_data <= SOCKET[apb_paddr[`SOCK_ADDR_BITS]][31: 0];
+              16'h2???: pr_data <= DMA[apb_paddr[`DMA_ADDR_BITS]];
+              default: ;// Do nothing
             endcase
          end
       end
