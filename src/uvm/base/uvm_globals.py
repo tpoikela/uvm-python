@@ -196,45 +196,48 @@ def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
 #endfunction
 
 #// TODO merge with uvm_enum_wrapper#(uvm_severity)
-#function bit uvm_string_to_severity (string sev_str, output uvm_severity sev)
-#  case (sev_str)
-#    "UVM_INFO": sev = UVM_INFO
-#    "UVM_WARNING": sev = UVM_WARNING
-#    "UVM_ERROR": sev = UVM_ERROR
-#    "UVM_FATAL": sev = UVM_FATAL
-#    default: return 0
-#  endcase
-#  return 1
-#endfunction
+def uvm_string_to_severity(sev_str, sev):
+    if sev_str == "UVM_INFO":
+        return UVM_INFO
+    if sev_str == "UVM_WARNING":
+        return UVM_WARNING
+    if sev_str == "UVM_ERROR":
+        return UVM_ERROR
+    if sev_str == "UVM_FATAL":
+        return UVM_FATAL
+    return -1
 
 
-#function automatic bit uvm_string_to_action (string action_str, output uvm_action action)
-#  string actions[$]
-#  uvm_split_string(action_str,"|",actions)
-#  uvm_string_to_action = 1
-#  action = 0
-#  foreach(actions[i]) begin
-#    case (actions[i])
-#      "UVM_NO_ACTION": action |= UVM_NO_ACTION
-#      "UVM_DISPLAY":   action |= UVM_DISPLAY
-#      "UVM_LOG":       action |= UVM_LOG
-#      "UVM_COUNT":     action |= UVM_COUNT
-#      "UVM_EXIT":      action |= UVM_EXIT
-#      "UVM_CALL_HOOK": action |= UVM_CALL_HOOK
-#      "UVM_STOP":      action |= UVM_STOP
-#      "UVM_RM_RECORD": action |= UVM_RM_RECORD
-#      default: uvm_string_to_action = 0
-#    endcase
-#  end
-#endfunction
+def uvm_string_to_action(action_str, action):
+    #  string actions[$]
+    actions = action_str.split('|')  # uvm_split_string(action_str,"|",actions)
+    action = 0x0
+    for i in range(len(actions)):
+        if actions[i] == "UVM_NO_ACTION":
+            action |= UVM_NO_ACTION
+        if actions[i] == "UVM_DISPLAY":
+            action |= UVM_DISPLAY
+        if actions[i] == "UVM_LOG":
+            action |= UVM_LOG
+        if actions[i] == "UVM_COUNT":
+            action |= UVM_COUNT
+        if actions[i] == "UVM_EXIT":
+            action |= UVM_EXIT
+        if actions[i] == "UVM_CALL_HOOK":
+            action |= UVM_CALL_HOOK
+        if actions[i] == "UVM_STOP":
+            action |= UVM_STOP
+        if actions[i] == "UVM_RM_RECORD":
+            action |= UVM_RM_RECORD
+    return action
 
 #----------------------------------------------------------------------------
 #
 # Group: Miscellaneous
 #
 #----------------------------------------------------------------------------
-#
-#
+
+
 # Function: uvm_is_match
 #
 # Returns 1 if the two strings match, 0 otherwise.
