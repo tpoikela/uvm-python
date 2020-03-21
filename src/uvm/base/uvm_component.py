@@ -22,10 +22,12 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
+import cocotb
 from cocotb.triggers import Timer
 from .uvm_report_object import UVMReportObject
 from .uvm_object_globals import (UVM_NONE, UVM_MEDIUM, UVM_PHASE_DONE, UVM_INFO,
-    UVM_CHECK_FIELDS, UVM_PHASE_SCHEDULE)
+    UVM_CHECK_FIELDS, UVM_PHASE_SCHEDULE, UVM_WARNING, UVM_ERROR, UVM_FATAL)
+
 from .uvm_common_phases import UVMBuildPhase
 from .uvm_domain import UVMDomain
 from .uvm_debug import uvm_debug
@@ -35,10 +37,27 @@ from .uvm_pool import UVMEventPool
 from .sv import sv, uvm_split_string
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 from .uvm_recorder import UVMRecorder
-from .uvm_globals import uvm_is_match
+from .uvm_globals import uvm_is_match, uvm_string_to_action, uvm_string_to_severity
 from .uvm_factory import UVMObjectWrapper
 from .uvm_links import (UVMRelatedLink, UVMParentChildLink)
 
+INV_WARN1 = ("+uvm_set_action requires 4 arguments, but %0d given for command "
+    + "+uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>")
+
+INV_WARN2 = ("Bad severity argument \"%s\" given to command +uvm_set_action=%s,"
+    + "Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>")
+
+INV_WARN3 = ("Bad action argument \"%s\" given to command +uvm_set_action=%s, "
+    + "Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>")
+
+INV_WARN4 = ("+uvm_set_severity requires 4 arguments, but %0d given for command "
+    + "+uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>")
+
+INV_WARN5 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s,"
+    + " Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>")
+
+INV_WARN6 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s, "
+    + "Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>")
 
 class VerbositySetting:
     """
@@ -56,6 +75,11 @@ class VerbositySetting:
         self.id = ""
         self.offset = 0
         self.verbosity = UVM_MEDIUM
+
+    def convert2string(self):
+        return "Comp: {}, phase: {}, ID: {}, offset: {}, verb: {}".format(
+            self.comp, self.phase, self.id, self.offset, self.verbosity)
+
 
 
 CLONE_ERR = ("Attempting to clone '%s'.  Clone cannot be called on a uvm_component. "
@@ -92,7 +116,7 @@ class UVMComponent(UVMReportObject):
         group of standard phase methods and an API for custom phases and
         multiple independent phasing domains to mirror DUT behavior e.g. power
 
-    Reporting - provides a convenience interface to the <uvm_report_handler>. All
+    Reporting - provides a convenience interface to the `UVMReportHandler`. All
         messages, warnings, and errors are processed through this interface.
 
     Transaction recording - provides methods for recording the transactions
@@ -107,6 +131,9 @@ class UVMComponent(UVMReportObject):
     seeding, if enabled. All other objects must be manually reseeded, if
     appropriate. See <uvm_object::reseed> for more information.
 
+    Most local methods within the class are prefixed with m_, indicating they are
+    not user-level methods.
+
     :cvar bool print_config_matches: Setting this static variable causes
         `UVMConfigDb.get` to print info about
         matching configuration settings as they are being applied.
@@ -117,6 +144,7 @@ class UVMComponent(UVMReportObject):
     """
 
     print_config_matches = False
+    m_time_settings = []
 
     def __init__(self, name, parent):
         """
@@ -146,7 +174,7 @@ class UVMComponent(UVMReportObject):
         #// By default, all children are printed. However, this bit allows a parent
         #// component to disable the printing of specific children.
         self.print_enabled = True
-        self.m_current_phase = None
+        self.m_current_phase = None  #  the most recently executed phase
         self.m_parent = None
         self.m_children_by_handle = {}
         self.m_children_ordered = []
@@ -230,7 +258,7 @@ class UVMComponent(UVMReportObject):
         self.m_parent = parent
 
         self.set_name(name)
-        if self.m_parent.add_child(self) is False:
+        if self.m_parent.m_add_child(self) is False:
             self.m_parent = None
 
         self.m_domain = parent.m_domain  # by default, inherit domains from parents
@@ -241,7 +269,7 @@ class UVMComponent(UVMReportObject):
         # Do local configuration settings
         arr = []
         from .uvm_config_db import UVMConfigDb
-        if (UVMConfigDb.get(self, "", "recording_detail", arr)):
+        if UVMConfigDb.get(self, "", "recording_detail", arr):
             self.recording_detail = arr[0]
 
         self.m_rh.set_name(self.get_full_name())
@@ -518,18 +546,18 @@ class UVMComponent(UVMReportObject):
     async def run_phase(self, phase):
         """
         Task: run_phase
-        
+
         The `UVMRunPhase` phase implementation method.
-        
+
         This task returning or not does not indicate the end
         or persistence of this phase.
         Thus the phase will automatically
         end once all objections are dropped using ~phase.drop_objection()~.
-        
+
         Any processes forked by this task continue to run
         after the task returns,
         but they will be killed once the phase ends.
-        
+
         The run_phase task should never be called directly.
         """
         uvm_debug(self, 'run_phase', self.get_name() + ' yielding self.run()')
@@ -545,7 +573,7 @@ class UVMComponent(UVMReportObject):
         await Timer(0)
 
     async def pre_reset_phase(self, phase):
-        """         
+        """
         Task: pre_reset_phase
 
         The `uvm_pre_reset_phase` phase implementation method.
@@ -564,12 +592,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def reset_phase(self, phase):
-        """         
+        """
         Task: reset_phase
 
         The `uvm_reset_phase` phase implementation method.
@@ -588,12 +616,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def post_reset_phase(self, phase):
-        """         
+        """
         Task: post_reset_phase
 
         The `uvm_post_reset_phase` phase implementation method.
@@ -612,12 +640,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def pre_configure_phase(self, phase):
-        """         
+        """
         Task: pre_configure_phase
 
         The `uvm_pre_configure_phase` phase implementation method.
@@ -636,12 +664,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def configure_phase(self, phase):
-        """         
+        """
         Task: configure_phase
 
         The `uvm_configure_phase` phase implementation method.
@@ -660,12 +688,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def post_configure_phase(self, phase):
-        """         
+        """
         Task: post_configure_phase
 
         The `uvm_post_configure_phase` phase implementation method.
@@ -684,12 +712,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def pre_main_phase(self, phase):
-        """         
+        """
         Task: pre_main_phase
 
         The `uvm_pre_main_phase` phase implementation method.
@@ -708,12 +736,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def main_phase(self, phase):
-        """         
+        """
         Task: main_phase
 
         The `uvm_main_phase` phase implementation method.
@@ -732,12 +760,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def post_main_phase(self, phase):
-        """         
+        """
         Task: post_main_phase
 
         The `uvm_post_main_phase` phase implementation method.
@@ -756,12 +784,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def pre_shutdown_phase(self, phase):
-        """         
+        """
         Task: pre_shutdown_phase
 
         The `uvm_pre_shutdown_phase` phase implementation method.
@@ -780,12 +808,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def shutdown_phase(self, phase):
-        """         
+        """
         Task: shutdown_phase
 
         The `uvm_shutdown_phase` phase implementation method.
@@ -804,12 +832,12 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
     async def post_shutdown_phase(self, phase):
-        """         
+        """
         Task: post_shutdown_phase
 
         The `uvm_post_shutdown_phase` phase implementation method.
@@ -828,7 +856,7 @@ class UVMComponent(UVMReportObject):
 
         This method should not be called directly.
         Args:
-            phase: 
+            phase:
         """
         await Timer(0)
 
@@ -904,7 +932,7 @@ class UVMComponent(UVMReportObject):
     def phase_ready_to_end(self, phase):
         """
         Function: phase_ready_to_end
-        
+
         Invoked when all objections to ending the given `phase` and all
         sibling phases have been dropped, thus indicating that `phase` is
         ready to begin a clean exit. Sibling phases are any phases that
@@ -912,10 +940,10 @@ class UVMComponent(UVMReportObject):
         sync'd to the current phase. Components needing to consume delta
         cycles or advance time to perform a clean exit from the phase
         may raise the phase's objection.
-        
+
         .. code-block:: python
             phase.raise_objection(self, "Reason")
-        
+
         It is the responsibility of this component to drop the objection
         once it is ready for this phase to end (and processes killed).
         If no objection to the given `phase` or sibling phases are raised,
@@ -1064,6 +1092,22 @@ class UVMComponent(UVMReportObject):
         return
 
     #extern function string massage_scope(string scope)
+    def massage_scope(self, scope):
+        # uvm_top
+        if scope == "":
+            return "^$"
+
+        if scope == "*":
+            return self.get_full_name() + ".*"
+
+        # absolute path to the top-level test
+        if(scope == "uvm_test_top"):
+            return "uvm_test_top"
+
+        # absolute path to uvm_root
+        if(scope[0] == "."):
+            return self.get_full_name() + scope
+        return self.get_full_name() + "." + scope
 
     #//----------------------------------------------------------------------------
     #// Group: Configuration Interface
@@ -1274,15 +1318,15 @@ class UVMComponent(UVMReportObject):
     #//
     #// If `recurse` is set, then configuration information for all
     #// children and below are printed as well.
-
-    #extern function void print_config_with_audit(bit recurse = 0)
+    def print_config_with_audit(self, recurse=0):
+        self.print_config(recurse, 1)
 
 
     #//----------------------------------------------------------------------------
     #// Group: Objection Interface
     #//----------------------------------------------------------------------------
     #//
-    #// These methods provide object level hooks into the <uvm_objection>
+    #// These methods provide object level hooks into the `UVMObjection`
     #// mechanism.
     #//
     #//----------------------------------------------------------------------------
@@ -1296,11 +1340,8 @@ class UVMComponent(UVMReportObject):
     #// The `description` is optionally provided by the `source_obj` to give a
     #// reason for raising the objection. The `count` indicates the number of
     #// objections raised by the `source_obj`.
-
-    #virtual function void raised (uvm_objection objection, uvm_object source_obj,
-    #    string description, int count)
-    #endfunction
-
+    def raised(self, objection, source_obj, description, count):
+        pass
 
 
     def dropped(self, objection, source_obj, description, count):
@@ -1313,10 +1354,10 @@ class UVMComponent(UVMReportObject):
         objections dropped by the `source_obj`.
 
         Args:
-            objection:
-            source_obj:
-            description:
-            count:
+            objection (UVMObjection):
+            source_obj (UVMObject):
+            description (str):
+            count (int):
         """
         pass
 
@@ -1537,9 +1578,10 @@ class UVMComponent(UVMReportObject):
     #//----------------------------------------------------------------------------
 
     #// Function: set_report_id_verbosity_hier
-
-    #extern function void set_report_id_verbosity_hier (string id,
-    #                                                int verbosity)
+    def set_report_id_verbosity_hier(self, id, verbosity):
+        self.set_report_id_verbosity(id, verbosity)
+        for c in self.m_children:
+            self.m_children[c].set_report_id_verbosity_hier(id, verbosity)
 
     #// Function: set_report_severity_id_verbosity_hier
     #//
@@ -1550,11 +1592,11 @@ class UVMComponent(UVMReportObject):
     #// with a severity.
     #//
     #// For a list of severities and their default verbosities, refer to
-    #// <uvm_report_handler>.
-
-    #extern function void set_report_severity_id_verbosity_hier(uvm_severity severity,
-    #                                                        string id,
-    #                                                        int verbosity)
+    #// `UVMReportHandler`.
+    def set_report_severity_id_verbosity_hier(self, severity, id, verbosity):
+        self.set_report_severity_id_verbosity(severity, id, verbosity)
+        for c in self.m_children:
+            self.m_children[c].set_report_severity_id_verbosity_hier(severity, id, verbosity)
 
 
     def set_report_severity_action_hier(self, severity, action):
@@ -1568,10 +1610,10 @@ class UVMComponent(UVMReportObject):
             self.m_children[c].set_report_severity_action_hier(severity, action)
 
 
-
-    #// Function: set_report_id_action_hier
-    #extern function void set_report_id_action_hier (string id,
-    #                                                uvm_action action)
+    def set_report_severity_id_action_hier(self, severity, id, action):
+        self.set_report_severity_id_action(severity, id, action)
+        for c in self.m_children:
+            self.m_children[c].set_report_severity_id_action_hier(severity, id, action)
 
 
     def set_report_id_action_hier(self, id, action):
@@ -1583,7 +1625,7 @@ class UVMComponent(UVMReportObject):
         with a severity.
 
         For a list of severities and their default actions, refer to
-        <uvm_report_handler>.
+        `UVMReportHandler`.
 
         Args:
             id (str): Message ID to use ('' = all)
@@ -1607,12 +1649,16 @@ class UVMComponent(UVMReportObject):
             self.m_children[c].set_report_default_file_hier(file)
 
     #// Function: set_report_severity_file_hier
-    #extern function void set_report_severity_file_hier (uvm_severity severity,
-    #                                                    UVM_FILE file)
+    def set_report_severity_file_hier(self, severity, file):
+        self.set_report_severity_file(severity, file)
+        for c in self.m_children:
+            self.m_children[c].set_report_severity_file_hier(severity, file)
 
     #// Function: set_report_id_file_hier
-    #extern function void set_report_id_file_hier (string id,
-    #                                              UVM_FILE file)
+    def set_report_id_file_hier(self, id, file):
+        self.set_report_id_file(id, file)
+        for c in self.m_children:
+            self.m_children[c].set_report_id_file_hier(id, file)
 
     #// Function: set_report_severity_id_file_hier
     #//
@@ -1623,12 +1669,11 @@ class UVMComponent(UVMReportObject):
     #// severity, which takes precedence over the default FILE descriptor.
     #//
     #// For a list of severities and other information related to the report
-    #// mechanism, refer to <uvm_report_handler>.
-
-    #extern function void set_report_severity_id_file_hier(uvm_severity severity,
-    #                                                      string id,
-    #                                                      UVM_FILE file)
-
+    #// mechanism, refer to `UVMReportHandler`.
+    def set_report_severity_id_file_hier(self, severity, id, file):
+        self.set_report_severity_id_file(severity, id, file)
+        for c in self.m_children:
+            self.m_children[c].set_report_severity_id_file_hier(severity, id, file)
 
 
     def set_report_verbosity_level_hier(self, verbosity):
@@ -1649,8 +1694,6 @@ class UVMComponent(UVMReportObject):
 
     def pre_abort(self):
         """
-        Function: pre_abort
-
         This callback is executed when the message system is executing a
         `UVM_EXIT` action. The exit action causes an immediate termination of
         the simulation, but the pre_abort callback hook gives components an
@@ -1954,29 +1997,7 @@ class UVMComponent(UVMReportObject):
             self.tr_database = cs.get_default_tr_database()
         return self.tr_database
 
-    #//----------------------------------------------------------------------------
-    #//                     PRIVATE or PSUEDO-PRIVATE members
-    #//                      *** Do not call directly ***
-    #//         Implementation and even existence are subject to change.
-    #//----------------------------------------------------------------------------
-    #// Most local methods are prefixed with m_, indicating they are not
-    #// user-level methods. SystemVerilog does not support friend classes,
-    #// which forces some otherwise internal methods to be exposed (i.e. not
-    #// be protected via 'local' keyword). These methods are also prefixed
-    #// with m_ to indicate they are not intended for public use.
-    #//
-    #// Internal methods will not be documented, although their implementa-
-    #// tions are freely available via the open-source license.
-    #//----------------------------------------------------------------------------
 
-    #protected uvm_domain m_domain;    // set_domain stores our domain handle
-
-
-    #//TND review protected, provide read-only accessor.
-    #uvm_phase            m_current_phase;            // the most recently executed phase
-
-    #/*protected*/ bit  m_build_done
-    #/*protected*/ int  m_phasing_active
 
     def set_int_local(self, field_name, value, recurse=1):
         """
@@ -1985,18 +2006,13 @@ class UVMComponent(UVMReportObject):
             value:
             recurse:
         """
-        #  // call the super function to get child recursion and any registered fields
+        # call the super function to get child recursion and any registered fields
         super().set_int_local(field_name, value, recurse)
 
         # set the local properties
         if uvm_is_match(field_name, "recording_detail"):
             self.recording_detail = value
 
-
-    #/*protected*/ uvm_component m_parent
-    #protected     uvm_component m_children[string]
-    #protected     uvm_component m_children_by_handle[uvm_component]
-    #extern protected virtual function bit  m_add_child(uvm_component child)
 
     def m_set_full_name(self):
         """
@@ -2032,6 +2048,9 @@ class UVMComponent(UVMReportObject):
     #extern                   function void do_flush()
 
     #extern virtual           function void flush ()
+    def flush(self):
+        pass
+
 
     def m_extract_name(self, name, leaf, remainder):
         """
@@ -2186,9 +2205,11 @@ class UVMComponent(UVMReportObject):
         #extern function void m_set_cl_msg_args
         """
         self.m_set_cl_verb()
-        #self.m_set_cl_action() # TODO
-        #self.m_set_cl_sev() # TODO
-        #endfunction
+        self.m_set_cl_action()
+        self.m_set_cl_sev()
+
+
+    first_m_set_cl_verb = 1
 
     def m_set_cl_verb(self):
         """
@@ -2202,7 +2223,6 @@ class UVMComponent(UVMReportObject):
         from .uvm_cmdline_processor import UVMCmdlineProcessor
 
         values = []  # static string values[$]
-        first = 1  # static bit first = 1
         args = []  # string args[$]
         clp = UVMCmdlineProcessor.get_inst()
         cs = UVMCoreService.get()
@@ -2218,74 +2238,189 @@ class UVMComponent(UVMReportObject):
 
             # Warning is already issued in uvm_root, so just don't keep it
             len_match = len(args) not in [4, 5]
-            if first and (len_match or (clp.m_convert_verb(args[2], setting.verbosity) == 0)):
+            setting.verbosity = clp.m_convert_verb(args[2])
+            if UVMComponent.first_m_set_cl_verb and (len_match or setting.verbosity == -1):
                 values.delete(i)
             else:
                 setting.comp = args[0]
                 setting.id = args[1]
-                clp.m_convert_verb(args[2],setting.verbosity)
+                setting.verbosity = clp.m_convert_verb(args[2])
                 setting.phase = args[3]
                 setting.offset = 0
                 if len(args) == 5:
-                    setting.offset = args[4].atoi()
+                    setting.offset = int(args[4])
                 if ((setting.phase == "time") and (self == top)):
-                    UVMComponent.m_time_settings.push_back(setting)
+                    UVMComponent.m_time_settings.append(setting)
 
                 if uvm_is_match(setting.comp, self.get_full_name()):
                     if((setting.phase == "" or setting.phase == "build" or
-                        setting.phase == "time") and setting.offset == 0):
+                            setting.phase == "time") and setting.offset == 0):
 
-                        if(setting.id == "_ALL_"):
+                        if setting.id == "_ALL_":
                             self.set_report_verbosity_level(setting.verbosity)
                         else:
                             self.set_report_id_verbosity(setting.id, setting.verbosity)
                     else:
-                        if(setting.phase != "time"):
+                        if setting.phase != "time":
                             self.m_verbosity_settings.append(setting)
 
-        # TODO do time based settings
-        #  if(this == top):
-        #    fork begin
-        #      time last_time = 0
-        #      if (m_time_settings.size() > 0)
-        #        m_time_settings.sort() with ( item.offset )
-        #      foreach(m_time_settings[i]):
-        #        uvm_component comps[$]
-        #        top.find_all(m_time_settings[i].comp,comps)
-        #        #(m_time_settings[i].offset - last_time)
-        #        last_time = m_time_settings[i].offset
-        #        if(m_time_settings[i].id == "_ALL_"):
-        #           foreach(comps[j]):
-        #             comps[j].set_report_verbosity_level(m_time_settings[i].verbosity)
-        #           end
-        #        end
-        #        else begin
-        #          foreach(comps[j]):
-        #            comps[j].set_report_id_verbosity(m_time_settings[i].id, m_time_settings[i].verbosity)
-        #          end
-        #        end
-        #      end
-        #    end join_none // fork begin
-        #  end
-        #
-        #  first = 0
-        #endfunction
+        if self == top:
+            cocotb.fork(self.m_fork_time_settings(top))
+        UVMComponent.first_m_set_cl_verb = 0
+
+
+    async def m_fork_time_settings(self, top):
+        m_time_settings = UVMComponent.m_time_settings
+        #fork begin
+        last_time = 0
+        if len(m_time_settings) > 0:
+            m_time_settings.sort(key=lambda item: item.offset)
+        for i in range(len(m_time_settings)):
+            comps = []
+            top.find_all(m_time_settings[i].comp, comps)
+            duration = m_time_settings[i].offset - last_time
+            last_time = m_time_settings[i].offset
+            cocotb.fork(self.m_set_comp_settings(i, comps.copy(), duration))
+        #end join_none // fork begin
+
+
+    async def m_set_comp_settings(self, i, comps, dur):
+        m_time_settings = UVMComponent.m_time_settings
+        await Timer(dur)
+        if m_time_settings[i].id == "_ALL_":
+            for comp in comps:
+                comp.set_report_verbosity_level(m_time_settings[i].verbosity)
+        else:
+            for comp in comps:
+                comp.set_report_id_verbosity(m_time_settings[i].id, m_time_settings[i].verbosity)
+
+
+    initialized_m_set_cl_action = 0
 
     #extern function void m_set_cl_action
+    def m_set_cl_action(self):
+        # _ALL_ can be used for ids or severities
+        # +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>
+        # +uvm_set_action=uvm_test_top.env0.*,_ALL_,UVM_ERROR,UVM_NO_ACTION
+        sev = 0
+        action = 0
+
+        if not UVMComponent.initialized_m_set_cl_action:
+            from .uvm_cmdline_processor import UVMCmdlineProcessor
+            values = []
+            UVMCmdlineProcessor.uvm_cmdline_proc.get_arg_values("+uvm_set_action=", values)
+            for idx in range(len(values)):
+                t = uvm_cmdline_parsed_arg_t()
+                args = []
+                uvm_split_string(values[idx], ",", args)
+
+                if len(args) != 4:
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN1, args.size(), values[idx]))
+
+                if((args[2] != "_ALL_") and not uvm_string_to_severity(args[2], sev)):
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN2, args[2], values[idx]))
+                    continue
+
+                if not uvm_string_to_action(args[3], action):
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN3, args[3], values[idx]))
+                    continue
+                t.args = args
+                t.arg = values[idx]
+                UVMComponent.m_uvm_applied_cl_action.append(t)
+
+            UVMComponent.initialized_m_set_cl_action = 1
+
+        for i in range(len(UVMComponent.m_uvm_applied_cl_action)):
+            args = UVMComponent.m_uvm_applied_cl_action[i].args
+
+            if not uvm_is_match(args[0], self.get_full_name()):
+                continue
+
+            sev = uvm_string_to_severity(args[2], sev)
+            action = uvm_string_to_action(args[3], action)
+
+            UVMComponent.m_uvm_applied_cl_action[i].used += 1
+            if args[1] == "_ALL_":
+                if args[2] == "_ALL_":
+                    self.set_report_severity_action(UVM_INFO, action)
+                    self.set_report_severity_action(UVM_WARNING, action)
+                    self.set_report_severity_action(UVM_ERROR, action)
+                    self.set_report_severity_action(UVM_FATAL, action)
+                else:
+                    self.set_report_severity_action(sev, action)
+            else:
+                if args[2] == "_ALL_":
+                    self.set_report_id_action(args[1], action)
+                else:
+                    self.set_report_severity_id_action(sev, args[1], action)
+
+    initialized_m_set_cl_sev = 0
 
     #extern function void m_set_cl_sev
+    def m_set_cl_sev(self):
+        #  // _ALL_ can be used for ids or severities
+        #  //  +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>
+        #  //  +uvm_set_severity=uvm_test_top.env0.*,BAD_CRC,UVM_ERROR,UVM_WARNING
+        pass
 
-    #m_verbosity_setting self.m_verbosity_settings[$]
-    #static m_verbosity_setting m_time_settings[$]
+        orig_sev = 0
+        sev = 0
 
-    #// does the pre abort callback hierarchically
-    #extern /*local*/ function void m_do_pre_abort
+        if not UVMComponent.initialized_m_set_cl_sev:
+            values = []
+            from .uvm_cmdline_processor import UVMCmdlineProcessor
+            UVMCmdlineProcessor.uvm_cmdline_proc.get_arg_values("+uvm_set_severity=",values)
+            for idx in range(len(values)):
+                t = uvm_cmdline_parsed_arg_t()
+                args = []  # string[$]
+                uvm_split_string(values[idx], ",", args)
+                if len(args) != 4:
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN4, args.size(), values[idx]))
+                    continue
+
+                if args[2] != "_ALL_" and not uvm_string_to_severity(args[2], orig_sev):
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN5, args[2], values[idx]))
+                    continue
+
+                if uvm_string_to_severity(args[3], sev) == -1:
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN6, args[3], values[idx]))
+                    continue
+
+                t.args = args
+                t.arg = values[idx]
+                UVMComponent.m_uvm_applied_cl_sev.append(t)
+            UVMComponent.initialized_m_set_cl_sev = 1
+        m_uvm_applied_cl_sev = UVMComponent.m_uvm_applied_cl_sev
+
+        for i in range(len(m_uvm_applied_cl_sev)):
+            args = m_uvm_applied_cl_sev[i].args
+
+            if not uvm_is_match(args[0], self.get_full_name()):
+                continue
+
+            orig_sev = uvm_string_to_severity(args[2], orig_sev)
+            sev = uvm_string_to_severity(args[3], sev)
+            m_uvm_applied_cl_sev[i].used += 1
+            if (args[1] == "_ALL_" and args[2] == "_ALL_"):
+                self.set_report_severity_override(UVM_INFO,sev)
+                self.set_report_severity_override(UVM_WARNING,sev)
+                self.set_report_severity_override(UVM_ERROR,sev)
+                self.set_report_severity_override(UVM_FATAL,sev)
+            elif (args[1] == "_ALL_"):
+                self.set_report_severity_override(orig_sev,sev)
+            elif (args[2] == "_ALL_"):
+                self.set_report_severity_id_override(UVM_INFO,args[1],sev)
+                self.set_report_severity_id_override(UVM_WARNING,args[1],sev)
+                self.set_report_severity_id_override(UVM_ERROR,args[1],sev)
+                self.set_report_severity_id_override(UVM_FATAL,args[1],sev)
+            else:
+                self.set_report_severity_id_override(orig_sev,args[1],sev)
 
 
-    #static uvm_cmdline_parsed_arg_t m_uvm_applied_cl_action[$]
-    #static uvm_cmdline_parsed_arg_t m_uvm_applied_cl_sev[$]
+    m_uvm_applied_cl_action = []  # uvm_cmdline_parsed_arg_t[$]
+    m_uvm_applied_cl_sev = []  # uvm_cmdline_parsed_arg_t [$]
 
-    def add_child(self, child):
+    def m_add_child(self, child):
         if child.get_name() in self.m_children:
             old_child = self.m_children[child.get_name()]
             uvm_warning("BDCLD",
@@ -2355,32 +2490,6 @@ class UVMComponent(UVMReportObject):
 #//
 #//------------------------------------------------------------------------------
 #
-#// m_add_child
-#// -----------
-#
-#function bit uvm_component::m_add_child(uvm_component child)
-#
-#  if (m_children.exists(child.get_name()) &&
-#      m_children[child.get_name()] != child):
-#      `uvm_warning("BDCLD",
-#        $sformatf("A child with the name '%0s' (type=%0s) already exists.",
-#           child.get_name(), m_children[child.get_name()].get_type_name()))
-#      return 0
-#  end
-#
-#  if (m_children_by_handle.exists(child)):
-#      `uvm_warning("BDCHLD",
-#        $sformatf("A child with the name '%0s' %0s %0s'",
-#                  child.get_name(),
-#                  "already exists in parent under name '",
-#                  m_children_by_handle[child].get_name()))
-#      return 0
-#    end
-#
-#  m_children[child.get_name()] = child
-#  m_children_by_handle[child] = child
-#  return 1
-#endfunction
 #
 #
 #
@@ -2389,66 +2498,6 @@ class UVMComponent(UVMReportObject):
 #// Hierarchy Methods
 #//
 #//------------------------------------------------------------------------------
-#
-#
-#// get_children
-#// ------------
-#
-#function void uvm_component::get_children(ref uvm_component children[$])
-#  foreach(m_children[i])
-#    children.push_back(m_children[i])
-#endfunction
-#
-#
-#// get_first_child
-#// ---------------
-#
-#function int uvm_component::get_first_child(ref string name)
-#  return m_children.first(name)
-#endfunction
-#
-#
-#// get_next_child
-#// --------------
-#
-#function int uvm_component::get_next_child(ref string name)
-#  return m_children.next(name)
-#endfunction
-#
-#
-#// get_child
-#// ---------
-#
-#function uvm_component uvm_component::get_child(string name)
-#  if (m_children.exists(name))
-#    return m_children[name]
-#  `uvm_warning("NOCHILD",{"Component with name '",name,
-#       "' is not a child of component '",get_full_name(),"'"})
-#  return None
-#endfunction
-#
-#
-#// has_child
-#// ---------
-#
-#function int uvm_component::has_child(string name)
-#  return m_children.exists(name)
-#endfunction
-#
-#
-#// get_num_children
-#// ----------------
-#
-#function int uvm_component::get_num_children()
-#  return m_children.num()
-#endfunction
-#
-#// flush
-#// -----
-#
-#function void uvm_component::flush()
-#  return
-#endfunction
 #
 #
 #// do_flush  (flush_hier?)
@@ -2572,95 +2621,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#
-#//------------------------------------------------------------------------------
-#//
-#// Hierarchical report configuration interface
-#//
-#//------------------------------------------------------------------------------
-#
-#// set_report_id_verbosity_hier
-#// -------------------------
-#
-#function void uvm_component::set_report_id_verbosity_hier( string id, int verbosity)
-#  set_report_id_verbosity(id, verbosity)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_id_verbosity_hier(id, verbosity)
-#endfunction
-#
-#
-#// set_report_severity_id_verbosity_hier
-#// ----------------------------------
-#
-#function void uvm_component::set_report_severity_id_verbosity_hier( uvm_severity severity,
-#                                                                 string id,
-#                                                                 int verbosity)
-#  set_report_severity_id_verbosity(severity, id, verbosity)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_severity_id_verbosity_hier(severity, id, verbosity)
-#endfunction
-#
-#
-#
-#
-#// set_report_id_action_hier
-#// -------------------------
-#
-#function void uvm_component::set_report_id_action_hier( string id, uvm_action action)
-#  set_report_id_action(id, action)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_id_action_hier(id, action)
-#endfunction
-#
-#
-#// set_report_severity_id_action_hier
-#// ----------------------------------
-#
-#function void uvm_component::set_report_severity_id_action_hier( uvm_severity severity,
-#                                                                 string id,
-#                                                                 uvm_action action)
-#  set_report_severity_id_action(severity, id, action)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_severity_id_action_hier(severity, id, action)
-#endfunction
-#
-#
-#// set_report_severity_file_hier
-#// -----------------------------
-#
-#function void uvm_component::set_report_severity_file_hier( uvm_severity severity,
-#                                                            UVM_FILE file)
-#  set_report_severity_file(severity, file)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_severity_file_hier(severity, file)
-#endfunction
-#
-#
-#
-#
-#// set_report_id_file_hier
-#// -----------------------
-#
-#function void uvm_component::set_report_id_file_hier( string id, UVM_FILE file)
-#  set_report_id_file(id, file)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_id_file_hier(id, file)
-#endfunction
-#
-#
-#// set_report_severity_id_file_hier
-#// --------------------------------
-#
-#function void uvm_component::set_report_severity_id_file_hier ( uvm_severity severity,
-#                                                                string id,
-#                                                                UVM_FILE file)
-#  set_report_severity_id_file(severity, id, file)
-#  foreach( m_children[c] )
-#    m_children[c].set_report_severity_id_file_hier(severity, id, file)
-#endfunction
-#
-#
-#
 #//------------------------------------------------------------------------------
 #//
 #// Phase interface
@@ -2710,30 +2670,12 @@ class UVMComponent(UVMReportObject):
 #
 #// these runtime phase methods are only called if a set_domain() is done
 #
-#
-#
-#//------------------------------
-#// current phase convenience API
-#//------------------------------
-#
-#// phase_ended
-#// -----------
-#
-#function void uvm_component::phase_ended(uvm_phase phase)
-#endfunction
-#
-#
 #//------------------------------
 #// phase / schedule / domain API
 #//------------------------------
 #// methods for VIP creators and integrators to use to set up schedule domains
 #// - a schedule is a named, organized group of phases for a component base type
 #// - a domain is a named instance of a schedule in the master phasing schedule
-#
-#
-#
-#
-#
 #
 #
 #// suspend
@@ -2908,9 +2850,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#
-#
-#
 #//------------------------------------------------------------------------------
 #//
 #// Configuration interface
@@ -2918,26 +2857,6 @@ class UVMComponent(UVMReportObject):
 #//------------------------------------------------------------------------------
 #
 #
-#function string uvm_component::massage_scope(string scope)
-#
-#  // uvm_top
-#  if(scope == "")
-#    return "^$"
-#
-#  if(scope == "*")
-#    return {get_full_name(), ".*"}
-#
-#  // absolute path to the top-level test
-#  if(scope == "uvm_test_top")
-#    return "uvm_test_top"
-#
-#  // absolute path to uvm_root
-#  if(scope[0] == ".")
-#    return {get_full_name(), scope}
-#
-#  return {get_full_name(), ".", scope}
-#
-#endfunction
 
 #// Undocumented struct for storing clone bit along w/
 #// object on set_config_object(...) calls
@@ -2947,17 +2866,6 @@ class UVMComponent(UVMReportObject):
 #endclass : uvm_config_object_wrapper
 
 
-#
-#
-#
-#
-#
-#// print_config_with_audit
-#// -----------------------
-#
-#function void uvm_component::print_config_with_audit(bit recurse = 0)
-#  print_config(recurse, 1)
-#endfunction
 #
 #
 #// do_print (override)
@@ -2983,158 +2891,3 @@ class UVMComponent(UVMReportObject):
 #    endcase
 #
 #endfunction
-#
-#
-
-#
-#// m_set_cl_action
-#// ---------------
-#
-#function void uvm_component::m_set_cl_action
-#  // _ALL_ can be used for ids or severities
-#  // +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>
-#  // +uvm_set_action=uvm_test_top.env0.*,_ALL_,UVM_ERROR,UVM_NO_ACTION
-#
-#  static bit initialized = 0
-#  uvm_severity sev
-#  uvm_action action
-#
-#  if(!initialized):
-#	string values[$]
-#    void'(uvm_cmdline_proc.get_arg_values("+uvm_set_action=",values))
-#	foreach(values[idx]):
-#		uvm_cmdline_parsed_arg_t t
-#		string args[$]
-#	 	uvm_split_string(values[idx], ",", args)
-#
-#		if(args.size() != 4):
-#	   		`uvm_warning("INVLCMDARGS", $sformatf("+uvm_set_action requires 4 arguments, but %0d given for command +uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>", args.size(), values[idx]))
-#	   		continue
-#   		end
-#   		if((args[2] != "_ALL_") && !uvm_string_to_severity(args[2], sev)):
-#	   		`uvm_warning("INVLCMDARGS", $sformatf("Bad severity argument \"%s\" given to command +uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>", args[2], values[idx]))
-#	   		continue
-#   		end
-#   		if(!uvm_string_to_action(args[3], action)):
-#	   		`uvm_warning("INVLCMDARGS", $sformatf("Bad action argument \"%s\" given to command +uvm_set_action=%s, Usage: +uvm_set_action=<comp>,<id>,<severity>,<action[|action]>", args[3], values[idx]))
-#	   		continue
-#   		end
-#   		t.args=args
-#   		t.arg=values[idx]
-#   		m_uvm_applied_cl_action.push_back(t)
-#	end
-#	initialized=1
-#  end
-#
-#  foreach(m_uvm_applied_cl_action[i]):
-#	string args[$] = m_uvm_applied_cl_action[i].args
-#
-#	if (!uvm_is_match(args[0], get_full_name()) ) continue
-#
-#	void'(uvm_string_to_severity(args[2], sev))
-#	void'(uvm_string_to_action(args[3], action))
-#
-#    m_uvm_applied_cl_action[i].used++
-#    if(args[1] == "_ALL_"):
-#      if(args[2] == "_ALL_"):
-#        set_report_severity_action(UVM_INFO, action)
-#        set_report_severity_action(UVM_WARNING, action)
-#        set_report_severity_action(UVM_ERROR, action)
-#        set_report_severity_action(UVM_FATAL, action)
-#      end
-#      else begin
-#        set_report_severity_action(sev, action)
-#      end
-#    end
-#    else begin
-#      if(args[2] == "_ALL_"):
-#        set_report_id_action(args[1], action)
-#      end
-#      else begin
-#        set_report_severity_id_action(sev, args[1], action)
-#      end
-#    end
-#  end
-#
-#endfunction
-#
-#
-#// m_set_cl_sev
-#// ------------
-#
-#function void uvm_component::m_set_cl_sev
-#  // _ALL_ can be used for ids or severities
-#  //  +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>
-#  //  +uvm_set_severity=uvm_test_top.env0.*,BAD_CRC,UVM_ERROR,UVM_WARNING
-#
-#  static bit initialized
-#  uvm_severity orig_sev, sev
-#
-#  if(!initialized):
-#	string values[$]
-#    void'(uvm_cmdline_proc.get_arg_values("+uvm_set_severity=",values))
-#	foreach(values[idx]):
-#		uvm_cmdline_parsed_arg_t t
-#		string args[$]
-#	 	uvm_split_string(values[idx], ",", args)
-#	 	if(args.size() != 4):
-#      		`uvm_warning("INVLCMDARGS", $sformatf("+uvm_set_severity requires 4 arguments, but %0d given for command +uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>", args.size(), values[idx]))
-#      		continue
-#    	end
-#    	if(args[2] != "_ALL_" && !uvm_string_to_severity(args[2], orig_sev)):
-#      		`uvm_warning("INVLCMDARGS", $sformatf("Bad severity argument \"%s\" given to command +uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>", args[2], values[idx]))
-#      		continue
-#    	end
-#    	if(!uvm_string_to_severity(args[3], sev)):
-#      		`uvm_warning("INVLCMDARGS", $sformatf("Bad severity argument \"%s\" given to command +uvm_set_severity=%s, Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>", args[3], values[idx]))
-#      		continue
-#    	end
-#
-#	 	t.args=args
-#    	t.arg=values[idx]
-#	 	m_uvm_applied_cl_sev.push_back(t)
-#	end
-#	initialized=1
-#  end
-#
-#  foreach(m_uvm_applied_cl_sev[i]):
-#  	string args[$]=m_uvm_applied_cl_sev[i].args
-#
-#    if (!uvm_is_match(args[0], get_full_name()) ) continue
-#
-#	void'(uvm_string_to_severity(args[2], orig_sev))
-#	void'(uvm_string_to_severity(args[3], sev))
-#    m_uvm_applied_cl_sev[i].used++
-#    if(args[1] == "_ALL_" && args[2] == "_ALL_"):
-#      set_report_severity_override(UVM_INFO,sev)
-#      set_report_severity_override(UVM_WARNING,sev)
-#      set_report_severity_override(UVM_ERROR,sev)
-#      set_report_severity_override(UVM_FATAL,sev)
-#    end
-#    else if(args[1] == "_ALL_"):
-#      set_report_severity_override(orig_sev,sev)
-#    end
-#    else if(args[2] == "_ALL_"):
-#      set_report_severity_id_override(UVM_INFO,args[1],sev)
-#      set_report_severity_id_override(UVM_WARNING,args[1],sev)
-#      set_report_severity_id_override(UVM_ERROR,args[1],sev)
-#      set_report_severity_id_override(UVM_FATAL,args[1],sev)
-#    end
-#    else begin
-#      set_report_severity_id_override(orig_sev,args[1],sev)
-#    end
-#  end
-#endfunction
-#
-#
-#
-#
-#// m_do_pre_abort
-#// --------------
-#
-#function void uvm_component::m_do_pre_abort
-#  foreach(m_children[i])
-#    m_children[i].m_do_pre_abort()
-#  pre_abort()
-#endfunction
-
