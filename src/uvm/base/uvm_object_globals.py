@@ -269,6 +269,9 @@ UVM_HIGH   = 300
 UVM_FULL   = 400
 UVM_DEBUG  = 500
 
+UVM_VERBOSITY_LIST = [UVM_NONE, UVM_LOW, UVM_MEDIUM, UVM_HIGH, UVM_FULL,
+        UVM_DEBUG]
+
 ### typedef int UVM_FILE;
 
 # -----------------
