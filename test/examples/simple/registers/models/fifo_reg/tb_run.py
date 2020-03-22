@@ -73,6 +73,9 @@ class FIFORegTest(tb_env):
         UVMConfigDb.get(None, "DUT_REF", "dut", dut)
         dut = dut[0]
 
+        #regmodel.default_map.set_auto_predict(on=True)
+        regmodel.default_map.set_check_on_read(on=False)
+
         phase.raise_objection(self)
 
         uvm_info("Test", "Resetting DUT and Register Model...", UVM_LOW)
@@ -110,14 +113,19 @@ class FIFORegTest(tb_env):
         uvm_info("FIFO Example",
             sv.sformatf(" Read back DUT FIFO reg into mirror using read()..."), UVM_LOW)
 
+        print("Before starting to read, FIFO contents: " + str([hex(no) for no
+            in FIFO.fifo]))
         # READ - read contents of DUT back to regmodel; DUT is empty now, regmodel FULL
         for i in range(len(expected)):
             status = []
             data = []
             await FIFO.read(status, data)
             if status[0] == UVM_NOT_OK:
-                uvm_fatal("FIFO Read Error", "Received status UVM_NOT_OK updating Regmodel")
-
+                uvm_fatal("FIFO Read Error",
+                    "Read status UVM_NOT_OK, read {}, data: {}".format(i, data))
+            else:
+                uvm_info("FIFO Read OK", "Read {}, got data: {}".format(i,
+                    data), UVM_LOW)
         phase.drop_objection(self)
 
 
@@ -135,3 +143,10 @@ async def test_reg_fifo(dut):
 
     cocotb.fork(Clock(vif.clk, 10, "NS").start())
     await run_test(dut=dut)
+
+    num_errors = svr.get_severity_count(UVM_ERROR)
+    if num_errors > 0:
+        raise Exception("Test failed. Got {} UVM_ERRORs".format(num_errors))
+    num_warnings = svr.get_severity_count(UVM_WARNING)
+    if num_warnings > 0:
+        raise Exception("Test failed. Got {} UVM_WARNINGs".format(num_warnings))
