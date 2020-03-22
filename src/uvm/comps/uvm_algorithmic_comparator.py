@@ -50,11 +50,11 @@ from ..tlm1 import UVMAnalysisImp, UVMAnalysisExport
 
 class UVMAlgorithmicComparator(UVMComponent):
     """
-    CLASS: UVMAlgorithmicComparator #(BEFORE,AFTER,TRANSFORMER)
+    CLASS: UVMAlgorithmicComparator
 
-    Compares two streams of data objects of different types, ~BEFORE~ and ~AFTER~.
+    Compares two streams of data objects of different types.
 
-    The algorithmic comparator is a wrapper around <UVMInOrderClassComparator #(T)>.
+    The algorithmic comparator is a wrapper around `UVMInOrderClassComparator`.
     Like the in-order comparator, the algorithmic comparator compares two streams
     of transactions, the ~BEFORE~ stream and the ~AFTER~ stream. It is often the case
     when two streams of transactions need to be compared that the two streams are
@@ -67,10 +67,10 @@ class UVMAlgorithmicComparator(UVMComponent):
     following prototype::
 
       def transform(self, b):
+          # Should return transformed transaction
 
     Matches and mismatches are reported in terms of the ~AFTER~ transactions.
-    For more information, see the
-    <uvm_in_order_comparator> class.
+    For more information, see the `UVMInOrderComparator` class.
 
     Port: before_export
 
