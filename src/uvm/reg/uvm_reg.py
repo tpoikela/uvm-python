@@ -722,23 +722,22 @@ class UVMReg(UVMObject):
 
     def get_mirrored_value(self, fname="", lineno=0):
         """
-           Function: get_mirrored_value
+        Return the mirrored value of the fields in the register.
 
-           Return the mirrored value of the fields in the register.
+        Does not actually read the value
+        of the register in the design
 
-           Does not actually read the value
-           of the register in the design
-
-           If the register contains write-only fields, the desired/mirrored
-           value for those fields are the value last written and assumed
-           to reside in the bits implementing these fields.
-           Although a physical read operation would something different
-           for these fields, the returned value is the actual content.
+        If the register contains write-only fields, the desired/mirrored
+        value for those fields are the value last written and assumed
+        to reside in the bits implementing these fields.
+        Although a physical read operation would something different
+        for these fields, the returned value is the actual content.
 
         Args:
             fname:
             lineno:
         Returns:
+            int: Mirrored value in the register
         """
         # Concatenate the value of the individual fields
         # to form the register value
@@ -1049,30 +1048,28 @@ class UVMReg(UVMObject):
     async def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, _map=None,
             parent=None, prior=-1, extension=None, fname="", lineno=0):
         """
-           Task: mirror
+        Read the register and update/check its mirror value
 
-           Read the register and update/check its mirror value
+        Read the register and optionally compared the readback value
+        with the current mirrored value if `check` is `UVM_CHECK`.
+        The mirrored value will be updated using the `UVMReg.predict`
+        method based on the readback value.
 
-           Read the register and optionally compared the readback value
-           with the current mirrored value if `check` is `UVM_CHECK`.
-           The mirrored value will be updated using the `UVMReg.predict`
-           method based on the readback value.
+        The mirroring can be performed using the physical interfaces (frontdoor)
+        or `UVMReg.peek` (backdoor).
 
-           The mirroring can be performed using the physical interfaces (frontdoor)
-           or `UVMReg.peek` (backdoor).
+        If `check` is specified as UVM_CHECK,
+        an error message is issued if the current mirrored value
+        does not match the readback value. Any field whose check has been
+        disabled with <uvm_reg_field::set_compare()> will not be considered
+        in the comparison.
 
-           If `check` is specified as UVM_CHECK,
-           an error message is issued if the current mirrored value
-           does not match the readback value. Any field whose check has been
-           disabled with <uvm_reg_field::set_compare()> will not be considered
-           in the comparison.
-
-           If the register is mapped in multiple address maps and physical
-           access is used (front-door access), an address `map` must be specified.
-           If the register contains
-           write-only fields, their content is mirrored and optionally
-           checked only if a UVM_BACKDOOR
-           access path is used to read the register.
+        If the register is mapped in multiple address maps and physical
+        access is used (front-door access), an address `map` must be specified.
+        If the register contains
+        write-only fields, their content is mirrored and optionally
+        checked only if a UVM_BACKDOOR
+        access path is used to read the register.
 
           extern virtual task mirror(output uvm_status_e      status,
                                      input uvm_check_e        check  = UVM_NO_CHECK,
@@ -1086,9 +1083,7 @@ class UVMReg(UVMObject):
         Args:
             status:
             check:
-            UVM_NO_CHECK:
             path:
-            UVM_DEFAULT_PATH:
             _map:
             parent:
             prior:
@@ -1445,12 +1440,12 @@ class UVMReg(UVMObject):
 
             # Mimick the final value after a physical read
             rw.kind = UVM_READ
-            if (bkdr is not None):
+            if bkdr is not None:
                 bkdr.read(rw)
             else:
                 self.backdoor_read(rw)
 
-            if (rw.status == UVM_NOT_OK):
+            if rw.status == UVM_NOT_OK:
                 self.m_write_in_progress = False
                 return
 
@@ -1491,7 +1486,7 @@ class UVMReg(UVMObject):
 
             if system_map.get_auto_predict():
                 status = 0
-                if (rw.status != UVM_NOT_OK):
+                if rw.status != UVM_NOT_OK:
                     self.sample(value, -1, 0, rw.map)
                     self.m_parent.XsampleX(map_info.offset, 0, rw.map)
 
@@ -1630,28 +1625,28 @@ class UVMReg(UVMObject):
                     nbits = self.m_fields[i].get_n_bits()
                     lsb_pos = self.m_fields[i].get_lsb_pos()
                     if (acc == "RC" or
-                        acc == "WRC" or
-                        acc == "WSRC" or
-                        acc == "W1SRC" or
-                        acc == "W0SRC"):
-                       value &= ~(((1<<nbits)-1) << lsb_pos)
+                            acc == "WRC" or
+                            acc == "WSRC" or
+                            acc == "W1SRC" or
+                            acc == "W0SRC"):
+                        value &= ~(((1 << nbits)-1) << lsb_pos)
                     elif (acc == "RS" or
-                             acc == "WRS" or
-                             acc == "WCRS" or
-                             acc == "W1CRS" or
-                             acc == "W0CRS"):
-                       value |= ((1<<nbits)-1) << lsb_pos
+                            acc == "WRS" or
+                            acc == "WCRS" or
+                            acc == "W1CRS" or
+                            acc == "W0CRS"):
+                        value |= ((1 << nbits)-1) << lsb_pos
                     elif (acc == "WO" or
-                             acc == "WOC" or
-                             acc == "WOS" or
-                             acc == "WO1"):
-                       wo_mask |= ((1<<nbits)-1) << lsb_pos
+                            acc == "WOC" or
+                            acc == "WOS" or
+                            acc == "WO1"):
+                        wo_mask |= ((1 << nbits)-1) << lsb_pos
 
-                if (value != rw.value[0]):
+                if value != rw.value[0]:
                     #uvm_reg_data_t saved
                     saved = rw.value[0]
                     rw.value[0] = value
-                    if (bkdr is not None):
+                    if bkdr is not None:
                         bkdr.write(rw)
                     else:
                         self.backdoor_write(rw)
@@ -1661,7 +1656,7 @@ class UVMReg(UVMObject):
 
                 if (_map.get_check_on_read() and
                         rw.status != UVM_NOT_OK):
-                   self.do_check(exp, rw.value[0], _map)
+                    self.do_check(exp, rw.value[0], _map)
 
                 self.do_predict(rw, UVM_PREDICT_READ)
         elif rw.path == UVM_FRONTDOOR:
@@ -2548,6 +2543,7 @@ class UVMReg(UVMObject):
     #   extern virtual function void            do_unpack  (uvm_packer packer)
     #
     #endclass: uvm_reg
+
 
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
