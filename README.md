@@ -57,9 +57,17 @@ To run unit tests only:
 
 ### Minimal working example ###
 
-`uvm-python` must be installed prior to running the example. You can find the
+`uvm-python` must be installed prior to running the example. Alternatively, you
+can create a symlink to the `uvm` source folder:
+
+```shell
+cd test/examples/minimal
+ln -s ../../../src/uvm uvm
+```
+
+You can find the
 source code for this example [here](test/examples/minimal). This example
-create a test component, register it with the UVM factory, and starts the test.
+creates a test component, registers it with the UVM factory, and starts the test.
 
 You can execute the example by running `SIM=icarus make`. Alternatively, you can
 run it with `SIM=verilator make`.
