@@ -61,3 +61,4 @@ test-registers:
 	make -C registers/primer/ UVM_TEST=cmdline_test UVM_REG_SEQ=mem_test_seq
 	make -C registers/models/coverage/
 	make -C registers/integration/10direct/
+	make -C registers/models/fifo_reg/
