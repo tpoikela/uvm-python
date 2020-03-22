@@ -1,8 +1,9 @@
 #//
 #//------------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
-#//   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,241 +20,234 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
-#
-#//------------------------------------------------------------------------------
-#// Title: Comparators
-#//
-#// The following classes define comparators for objects and built-in types.
-#//------------------------------------------------------------------------------
-#
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_in_order_comparator #(T,comp_type,convert,pair_type)
-#//
-#// Compares two streams of data objects of the type parameter, T.
-#// These transactions may either be classes or built-in types. To be
-#// successfully compared, the two streams of data must be in the same order.
-#// Apart from that, there are no assumptions made about the relative timing of
-#// the two streams of data.
-#//
-#// Type parameters
-#//
-#//   T       - Specifies the type of transactions to be compared.
-#//
-#//   comp_type - A policy class to compare the two
-#//               transaction streams. It must provide the static method
-#//               "function bit comp(T a, T b)" which returns ~TRUE~
-#//               if ~a~ and ~b~ are the same.
-#//
-#//   convert - A policy class to convert the transactions being compared
-#//             to a string. It must provide the static method
-#//             "function string convert2string(T a)".
-#//
-#//  pair_type - A policy class to allow pairs of transactions to be handled as
-#//              a single <uvm_object> type.
-#//
-#// Built in types (such as ints, bits, logic, and structs) can be compared using
-#// the default values for comp_type, convert, and pair_type. For convenience,
-#// you can use the subtype, <uvm_in_order_built_in_comparator #(T)> 
-#// for built-in types.
-#//
-#// When T is a <uvm_object>, you can use the convenience subtype
-#// <uvm_in_order_class_comparator #(T)>.
-#//
-#// Comparisons are commutative, meaning it does not matter which data stream is
-#// connected to which export, before_export or after_export.
-#//
-#// Comparisons are done in order and as soon as a transaction is received from
-#// both streams. Internal fifos are used to buffer incoming transactions on one
-#// stream until a transaction to compare arrives on the other stream.
-#//
-#//------------------------------------------------------------------------------
-#
-#class uvm_in_order_comparator 
-#  #( type T = int ,
-#     type comp_type = uvm_built_in_comp #( T ) ,
-#     type convert = uvm_built_in_converter #( T ) , 
-#     type pair_type = uvm_built_in_pair #( T ) )
-#    extends uvm_component;
-#
-#  typedef uvm_in_order_comparator #(T,comp_type,convert,pair_type) this_type;
-#  `uvm_component_param_utils(this_type)
-#
-#  const static string type_name = 
-#    "uvm_in_order_comparator #(T,comp_type,convert,pair_type)";
-#
-#  // Port: before_export
-#  //
-#  // The export to which one stream of data is written. The port must be
-#  // connected to an analysis port that will provide such data. 
-#
-#  uvm_analysis_export #(T) before_export;
-#
-#
-#  // Port: after_export
-#  //
-#  // The export to which the other stream of data is written. The port must be
-#  // connected to an analysis port that will provide such data. 
-#
-#  uvm_analysis_export #(T) after_export;
-#
-#
-#  // Port: pair_ap
-#  //
-#  // The comparator sends out pairs of transactions across this analysis port.
-#  // Both matched and unmatched pairs are published via a pair_type objects.
-#  // Any connected analysis export(s) will receive these transaction pairs.
-#
-#  uvm_analysis_port   #(pair_type) pair_ap;
-#  
-#  local uvm_tlm_analysis_fifo #(T) m_before_fifo;
-#  local uvm_tlm_analysis_fifo #(T) m_after_fifo;
-#
-#  int m_matches, m_mismatches;
-#
-#  function new(string name, uvm_component parent);
-#
-#    super.new(name, parent);
-#
-#    before_export = new("before_export", this);
-#    after_export  = new("after_export", this);
-#    pair_ap       = new("pair_ap", this);
-#
-#    m_before_fifo = new("before", this);
-#    m_after_fifo  = new("after", this);
-#    m_matches = 0;
-#    m_mismatches = 0;
-#
-#  endfunction
-#  
-#  virtual function string get_type_name();
-#    return type_name;
-#  endfunction
-#
-#  virtual function void connect_phase(uvm_phase phase);
-#    before_export.connect(m_before_fifo.analysis_export);
-#    after_export.connect(m_after_fifo.analysis_export);
-#  endfunction
-#
-#
-#  // Task- run_phase
-#  //
-#  // Internal method.
-#  //
-#  // Takes pairs of before and after transactions and compares them. 
-#  // Status information is updated according to the results of the comparison.
-#  // Each pair is published to the pair_ap analysis port.
-#
-#  virtual task run_phase(uvm_phase phase);
-# 
-#    pair_type pair;
-#    T b;
-#    T a;
-#  
-#    string s;
-#    super.run_phase(phase); 
-#    forever begin
-#      
-#      m_before_fifo.get(b);
-#      m_after_fifo.get(a);
-#      
-#      if(!comp_type::comp(b, a)) begin
-#
-#        $sformat(s, "%s differs from %s", convert::convert2string(a),
-#                                          convert::convert2string(b));
-#
-#        uvm_report_warning("Comparator Mismatch", s);
-#
-#        m_mismatches++;
-#
-#      end
-#      else begin
-#        s = convert::convert2string(b);
-#        uvm_report_info("Comparator Match", s);
-#        m_matches++;
-#      end
-#
-#      // we make the assumption here that a transaction "sent for
-#      // analysis" is safe from being edited by another process.
-#      // Hence, it is safe not to clone a and b.
-#      
-#      pair = new("after/before");
-#      pair.first = a;
-#      pair.second = b;
-#      pair_ap.write(pair);
-#    end
-#  
-#  endtask
-#
-#
-#  // Function: flush
-#  //
-#  // This method sets m_matches and m_mismatches back to zero. The
-#  // <uvm_tlm_fifo#(T)::flush> takes care of flushing the FIFOs.
-#
-#  virtual function void flush();
-#    m_matches = 0;
-#    m_mismatches = 0;
-#  endfunction
-#  
-#endclass
-#
-#
+"""
+Title: Comparators
+
+The following classes define comparators for objects and built-in types.
+"""
+
+from ..base.uvm_component import UVMComponent
+from ..base.uvm_object_globals import UVM_MEDIUM
+from ..base.sv import sv
+from ..macros import uvm_component_utils, uvm_error, uvm_info
+from ..tlm1 import UVMAnalysisExport, UVMAnalysisPort, UVMTLMAnalysisFIFO
+from .uvm_pair import UVMBuiltInPair
+from .uvm_policies import UVMBuiltInConverter, UVMBuiltInComp
+
+
+class UVMInOrderComparator(UVMComponent):
+    """
+    CLASS: UVMInOrderComparator #(T,comp_type,convert,pair_type)
+
+    Compares two streams of data objects of the type parameter, T.
+    These transactions may either be classes or built-in types. To be
+    successfully compared, the two streams of data must be in the same order.
+    Apart from that, there are no assumptions made about the relative timing of
+    the two streams of data.
+
+    Type parameters
+
+      T       - Specifies the type of transactions to be compared.
+
+      comp_type - A policy class to compare the two
+                  transaction streams. It must provide the static method
+                  "function bit comp(T a, T b)" which returns ~TRUE~
+                  if ~a~ and ~b~ are the same.
+
+      convert - A policy class to convert the transactions being compared
+                to a string. It must provide the static method
+                "function string convert2string(T a)".
+
+     pair_type - A policy class to allow pairs of transactions to be handled as
+                 a single <uvm_object> type.
+
+    Built in types (such as ints, bits, logic, and structs) can be compared using
+    the default values for comp_type, convert, and pair_type. For convenience,
+    you can use the subtype, <UVMInOrderBuiltInComparator #(T)>
+    for built-in types.
+
+    When T is a `UVMObject`, you can use the convenience subtype
+    `UVMInOrderClassComparator`.
+
+    Comparisons are commutative, meaning it does not matter which data stream is
+    connected to which export, before_export or after_export.
+
+    Comparisons are done in order and as soon as a transaction is received from
+    both streams. Internal fifos are used to buffer incoming transactions on one
+    stream until a transaction to compare arrives on the other stream.
+    """
+
+
+    #  #( type T = int ,
+    #     type comp_type = uvm_built_in_comp #( T ) ,
+    #     type convert = uvm_built_in_converter #( T ) ,
+    #     type pair_type = uvm_built_in_pair #( T ) )
+    #    extends uvm_component
+    #
+
+    type_name = "UVMInOrderComparator"
+
+    #  // Port: before_export
+    #  //
+    #  // The export to which one stream of data is written. The port must be
+    #  // connected to an analysis port that will provide such data.
+    #
+    #  uvm_analysis_export #(T) before_export
+
+
+    #  // Port: after_export
+    #  //
+    #  // The export to which the other stream of data is written. The port must be
+    #  // connected to an analysis port that will provide such data.
+    #
+    #  uvm_analysis_export #(T) after_export
+
+
+    #  // Port: pair_ap
+    #  //
+    #  // The comparator sends out pairs of transactions across this analysis port.
+    #  // Both matched and unmatched pairs are published via a pair_type objects.
+    #  // Any connected analysis export(s) will receive these transaction pairs.
+    #
+    #  uvm_analysis_port   #(pair_type) pair_ap
+
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+        self.PairType = UVMBuiltInPair
+        self.Convert = UVMBuiltInConverter
+        self.CompType = UVMBuiltInComp
+
+        self.before_export = UVMAnalysisExport("before_export", self)
+        self.after_export  = UVMAnalysisExport("after_export", self)
+        self.pair_ap       = UVMAnalysisPort("pair_ap", self)
+
+        self.m_before_fifo = UVMTLMAnalysisFIFO("before", self)
+        self.m_after_fifo  = UVMTLMAnalysisFIFO("after", self)
+        self.m_matches = 0
+        self.m_mismatches = 0
+
+
+    def get_type_name(self):
+        return UVMInOrderComparator.type_name
+
+
+    def connect_phase(self, phase):
+        self.before_export.connect(self.m_before_fifo.analysis_export)
+        self.after_export.connect(self.m_after_fifo.analysis_export)
+
+
+
+    #  // Task- run_phase
+    #  //
+    #  // Internal method.
+    #  //
+    #  // Takes pairs of before and after transactions and compares them.
+    #  // Status information is updated according to the results of the comparison.
+    #  // Each pair is published to the pair_ap analysis port.
+    async def run_phase(self, phase):
+
+        #    pair_type pair
+        #    T b
+        #    T a
+
+        s = ""
+        await super().run_phase(phase)  # Is this needed?
+        while True:
+
+            b = []
+            a = []
+
+            await self.m_before_fifo.get(b)
+            await self.m_after_fifo.get(a)
+
+            b = b[0]
+            a = a[0]
+
+            if self.CompType.comp(b, a) is False:
+                s = sv.sformatf("%s differs from %s", self.Convert.convert2string(a),
+                    self.Convert.convert2string(b))
+                uvm_error("Comparator Mismatch", s)
+                self.m_mismatches += 1
+
+            else:
+                s = self.Convert.convert2string(b)
+                uvm_info("Comparator Match", s, UVM_MEDIUM)
+                self.m_matches += 1
+
+            # we make the assumption here that a transaction "sent for
+            # analysis" is safe from being edited by another process.
+            # Hence, it is safe not to clone a and b.
+
+            pair = self.PairType("after/before")
+            pair.first = a
+            pair.second = b
+            self.pair_ap.write(pair)
+
+
+    #  // Function: flush
+    #  //
+    #  // This method sets m_matches and m_mismatches back to zero. The
+    #  // <uvm_tlm_fifo#(T)::flush> takes care of flushing the FIFOs.
+    def flush(self):
+        self.m_matches = 0
+        self.m_mismatches = 0
+
+
+uvm_component_utils(UVMInOrderComparator)
+
+
 #//------------------------------------------------------------------------------
 #//
-#// CLASS: uvm_in_order_built_in_comparator #(T)
+#// CLASS: UVMInOrderBuiltInComparator #(T)
 #//
 #// This class uses the uvm_built_in_* comparison, converter, and pair classes.
 #// Use this class for built-in types (int, bit, string, etc.)
 #//
 #//------------------------------------------------------------------------------
-#
-#class uvm_in_order_built_in_comparator #(type T=int)
-#  extends uvm_in_order_comparator #(T);
-#
-#  typedef uvm_in_order_built_in_comparator #(T) this_type;
-#  `uvm_component_param_utils(this_type)
-#
-#  const static string type_name = "uvm_in_order_built_in_comparator #(T)";
-#
-#  function new(string name, uvm_component parent);
-#    super.new(name, parent);
-#  endfunction
-#  
-#  virtual function string get_type_name ();
-#    return type_name;
-#  endfunction
-#
-#endclass
-#
-#
+
+class UVMInOrderBuiltInComparator(UVMInOrderComparator):
+
+    type_name = "UVMInOrderBuiltInComparator"
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+
+    def get_type_name(self):
+        return UVMInOrderBuiltInComparator.type_name
+
+
+uvm_component_utils(UVMInOrderBuiltInComparator)
+
+
 #//------------------------------------------------------------------------------
 #//
-#// CLASS: uvm_in_order_class_comparator #(T)
+#// CLASS: UVMInOrderClassComparator #(T)
 #//
 #// This class uses the uvm_class_* comparison, converter, and pair classes.
 #// Use this class for comparing user-defined objects of type T, which must
 #// provide compare() and convert2string() method.
 #//
 #//------------------------------------------------------------------------------
-#
-#class uvm_in_order_class_comparator #( type T = int )
-#  extends uvm_in_order_comparator #( T , 
-#                                     uvm_class_comp #( T ) , 
-#                                     uvm_class_converter #( T ) , 
-#                                     uvm_class_pair #( T, T ) );
-#
-#  typedef uvm_in_order_class_comparator #(T) this_type;
-#  `uvm_component_param_utils(this_type)
-#
-#  const static string type_name = "uvm_in_order_class_comparator #(T)";
-#
-#  function new( string name  , uvm_component parent);
-#    super.new( name, parent );
-#  endfunction
-#  
-#  virtual function string get_type_name ();
-#    return type_name;
-#  endfunction
-#
-#endclass
+
+class UVMInOrderClassComparator(UVMInOrderComparator):
+    #                                     uvm_class_comp #( T ) ,
+    #                                     uvm_class_converter #( T ) ,
+    #                                     uvm_class_pair #( T, T ) )
+    #
+    #  typedef UVMInOrderClassComparator #(T) this_type
+
+    type_name = "UVMInOrderClassComparator"
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+
+
+    def get_type_name(self):
+        return UVMInOrderClassComparator.type_name
+
+
+
+uvm_component_utils(UVMInOrderClassComparator)

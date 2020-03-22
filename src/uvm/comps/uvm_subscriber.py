@@ -27,9 +27,6 @@ from uvm.tlm1 import UVMAnalysisImp
 
 class UVMSubscriber(UVMComponent):  # (type T=int) extends uvm_component
     """
-
-    CLASS: uvm_subscriber
-
     This class provides an analysis export for receiving transactions from a
     connected analysis export. Making such a connection "subscribes" this
     component to any transactions emitted by the connected analysis port.

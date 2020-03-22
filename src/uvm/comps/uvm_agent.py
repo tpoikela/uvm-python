@@ -30,10 +30,10 @@ from ..base.uvm_queue import UVMQueue
 
 class UVMAgent(UVMComponent):
     """
-    The uvm_agent virtual class should be used as the base class for the user-
-    defined agents. Deriving from uvm_agent will allow you to distinguish agents
+    The `UVMAgent` virtual class should be used as the base class for the user-
+    defined agents. Deriving from `UVMAgent` will allow you to distinguish agents
     from other component types also using its inheritance. Such agents will
-    automatically inherit features that may be added to uvm_agent in the future.
+    automatically inherit features that may be added to `UVMAgent` in the future.
     
     While an agent's build function, inherited from `UVMComponent`, can be
     implemented to define any agent topology, an agent typically contains three
