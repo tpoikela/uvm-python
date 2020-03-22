@@ -38,7 +38,8 @@ from uvm import (run_test, UVMTest, UVMSequenceItem, UVMAnalysisPort,
     UVMCoreService, UVM_ERROR, UVMClassComp)
 from uvm.comps.uvm_algorithmic_comparator import UVMAlgorithmicComparator
 
-from uvm.macros import uvm_error, uvm_component_utils, uvm_object_utils
+from uvm.macros import (uvm_error, uvm_component_utils, uvm_object_utils,
+    uvm_object_utils_begin, uvm_object_utils_end, uvm_field_int)
 
 class Packet(UVMSequenceItem):
 
@@ -47,7 +48,10 @@ class Packet(UVMSequenceItem):
         self.addr = 0x0
         self.data = 0x0
 
-uvm_object_utils(Packet)
+uvm_object_utils_begin(Packet)
+uvm_field_int('addr')
+uvm_field_int('data')
+uvm_object_utils_end(Packet)
 
 
 class PacketTransformer():
@@ -79,11 +83,18 @@ class ComparatorTest(UVMTest):
         await Timer(10, "NS")
         self.ap_before.write(Packet('p_in'))
         self.ap_after.write(Packet('p_out'))
+
+        await Timer(10, "NS")
+        pkt_err = Packet('p_err')
+        pkt_err.data = 0x1234
+        self.ap_before.write(Packet('p_in2'))
+        self.ap_after.write(pkt_err)
         await Timer(100, "NS")
         phase.drop_objection(self)
 
 
 uvm_component_utils(ComparatorTest)
+
 
 @cocotb.test()
 async def test_comparators(dut):
@@ -92,5 +103,5 @@ async def test_comparators(dut):
     await run_test()
 
     num_errors = svr.get_severity_count(UVM_ERROR)
-    if num_errors > 0:
-        raise Exception("There were {} uvm_errors".format(num_errors))
+    if num_errors != 1:
+        raise Exception("There were {} uvm_errors, exp 1".format(num_errors))
