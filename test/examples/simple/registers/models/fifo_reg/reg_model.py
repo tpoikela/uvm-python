@@ -52,7 +52,7 @@ class reg_block_B(UVMRegBlock):
         self.FIFO.configure(self, None)
         self.FIFO.build()
 
-        self.default_map = self.create_map("default_map", 0x0, 4, UVM_LITTLE_ENDIAN)
+        self.default_map = self.create_map("default_map_fifo", 0x0, 4, UVM_LITTLE_ENDIAN)
         self.default_map.add_reg(self.FIFO, 0x0, "RW")
 
 
