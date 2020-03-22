@@ -32,14 +32,13 @@ from .uvm_reg_model import *
 from .uvm_reg_item import UVMRegItem, UVMRegBusOp
 from .uvm_reg_indirect import UVMRegIndirectData
 
-#//------------------------------------------------------------------------------
-#// TITLE: Explicit Register Predictor
-#//------------------------------------------------------------------------------
-#//
-#// The <uvm_reg_predictor> class defines a predictor component,
-#// which is used to update the register model's mirror values
-#// based on transactions explicitly observed on a physical bus.
-#//------------------------------------------------------------------------------
+"""
+TITLE: Explicit Register Predictor
+
+The `UVMRegPredictor` class defines a predictor component,
+which is used to update the register model's mirror values
+based on transactions explicitly observed on a physical bus.
+"""
 
 
 class UVMPredictS():
@@ -48,56 +47,50 @@ class UVMPredictS():
         self.addr = {}
         self.reg_item = None
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_reg_predictor
-#//
-#// Updates the register model mirror based on observed bus transactions
-#//
-#// This class converts observed bus transactions of type ~BUSTYPE~ to generic
-#// registers transactions, determines the register being accessed based on the
-#// bus address, then updates the register's mirror value with the observed bus
-#// data, subject to the register's access mode. See <uvm_reg::predict> for details.
-#//
-#// Memories can be large, so their accesses are not predicted.
-#//
-#//------------------------------------------------------------------------------
 
-#class uvm_reg_predictor #(type BUSTYPE=int) extends uvm_component
+
 class UVMRegPredictor(UVMComponent):
+    """
+    Updates the register model mirror based on observed bus transactions
 
+    This class converts observed bus transactions of type ~BUSTYPE~ to generic
+    registers transactions, determines the register being accessed based on the
+    bus address, then updates the register's mirror value with the observed bus
+    data, subject to the register's access mode. See `UVMReg.predict` for details.
 
-    #  // Variable: bus_in
-    #  //
-    #  // Observed bus transactions of type ~BUSTYPE~ are received from this
-    #  // port and processed.
-    #  //
-    #  // For each incoming transaction, the predictor will attempt to get the
-    #  // register or memory handle corresponding to the observed bus address.
-    #  //
-    #  // If there is a match, the predictor calls the register or memory's
-    #  // predict method, passing in the observed bus data. The register or
-    #  // memory mirror will be updated with this data, subject to its configured
-    #  // access behavior--RW, RO, WO, etc. The predictor will also convert the
-    #  // bus transaction to a generic <uvm_reg_item> and send it out the
-    #  // ~reg_ap~ analysis port.
-    #  //
-    #  // If the register is wider than the bus, the
-    #  // predictor will collect the multiple bus transactions needed to
-    #  // determine the value being read or written.
-    #  //
-    #  uvm_analysis_imp #(BUSTYPE, uvm_reg_predictor #(BUSTYPE)) bus_in
+    Memories can be large, so their accesses are not predicted.
+
+    Variable: bus_in
+
+    Observed bus transactions of type ~BUSTYPE~ are received from this
+    port and processed.
+
+    For each incoming transaction, the predictor will attempt to get the
+    register or memory handle corresponding to the observed bus address.
+
+    If there is a match, the predictor calls the register or memory's
+    predict method, passing in the observed bus data. The register or
+    memory mirror will be updated with this data, subject to its configured
+    access behavior--RW, RO, WO, etc. The predictor will also convert the
+    bus transaction to a generic <uvm_reg_item> and send it out the
+    ~reg_ap~ analysis port.
+
+    If the register is wider than the bus, the
+    predictor will collect the multiple bus transactions needed to
+    determine the value being read or written.
+
+    """
 
     def __init__(self, name, parent):
-        """         
+        """
           Function: new
-         
+
           Create a new instance of this type, giving it the optional `name`
           and `parent`.
-         
+
         Args:
-            name: 
-            parent: 
+            name:
+            parent:
         """
         super().__init__(name, parent)
         self.bus_in = UVMAnalysisImp("bus_in", self)
@@ -137,7 +130,6 @@ class UVMRegPredictor(UVMComponent):
     #  // Override this method to change the value or re-direct the
     #  // target register
     #  //
-    #  virtual function void pre_predict(uvm_reg_item rw)
     def pre_predict(self, rw):
         pass
 
@@ -147,7 +139,6 @@ class UVMRegPredictor(UVMComponent):
     #  // not a user-level method. Do not call directly. See documentation
     #  // for the ~bus_in~ member.
     #  //
-    #  virtual function void write(BUSTYPE tr)
     def write(self, tr):
         rg = None
         rw = UVMRegBusOp()
@@ -210,7 +201,7 @@ class UVMRegPredictor(UVMComponent):
                     if len(predict_info.addr) == len(map_info.addr):
                         # We've captured the entire abstract register transaction.
                         predict_kind = UVM_PREDICT_READ
-                        if (reg_item.kind == UVM_WRITE):
+                        if reg_item.kind == UVM_WRITE:
                             predict_kind = UVM_PREDICT_WRITE
 
                         is_ok = False
@@ -268,7 +259,6 @@ class UVMRegPredictor(UVMComponent):
             uvm_error("PENDING REG ITEMS", sv.sformatf(
                 "There are %0d incomplete register transactions still pending completion:%s",
                 self.m_pending.num(), UVM_STRING_QUEUE_STREAMING_PACK(q)))
-        #  endfunction
 
 
 uvm_component_utils(UVMRegPredictor)
