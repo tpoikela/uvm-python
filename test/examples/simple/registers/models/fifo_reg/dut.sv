@@ -85,6 +85,13 @@ always @ (posedge apb_pclk)
    end
 end
 
+`ifdef COCOTB_SIM
+initial begin
+    $dumpfile("./dut.vcd");
+    $dumpvars(0, dut);
+end
+`endif
+
 endmodule
 
 
