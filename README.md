@@ -27,11 +27,15 @@ The documentation is available on `readthedocs.io` in
 Installation
 ------------
 
-You can install uvm-python as a normal Python package:
+You can install uvm-python as a normal Python package. It is recommended to use
+[venv](https://docs.python.org/3/library/venv.html) to create a virtual
+environment for Python prior to installation.
 
 ```shell
 git clone https://github.com/tpoikela/uvm-python.git
 cd uvm-python
+python -m pip install . # If venv is used
+# Or without venv, and no sudo:
 python -m pip install --user .  # Omit --user for global installation
 ```
 
