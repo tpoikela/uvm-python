@@ -47,10 +47,10 @@ from inspect import getframeinfo, stack
 
 
 
-async def run_test(test_name=""):
+async def run_test(test_name="", dut=None):
     cs = get_cs()
     top = cs.get_root()
-    await top.run_test(test_name)
+    await top.run_test(test_name, dut)
 
 #//----------------------------------------------------------------------------
 #//
