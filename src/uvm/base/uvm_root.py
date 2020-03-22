@@ -190,22 +190,21 @@ class UVMRoot(UVMComponent):
     # Group: Simulation Control
     #----------------------------------------------------------------------------
 
-    # Task: run_test
-    #
-    # Phases all components through all registered phases. If the optional
-    # test_name argument is provided, or if a command-line plusarg,
-    # +UVM_TESTNAME=TEST_NAME, is found, then the specified component is created
-    # just prior to phasing. The test may contain new verification components or
-    # the entire testbench, in which case the test and testbench can be chosen from
-    # the command line without forcing recompilation. If the global (package)
-    # variable, finish_on_completion, is set, then $finish is called after
-    # phasing completes.
 
-
-    async def run_test(self, test_name=""):
+    async def run_test(self, test_name="", dut=None):
         """             
+        Phases all components through all registered phases. If the optional
+        test_name argument is provided, or if a command-line plusarg,
+        +UVM_TESTNAME=TEST_NAME, is found, then the specified component is created
+        just prior to phasing. The test may contain new verification components or
+        the entire testbench, in which case the test and testbench can be chosen from
+        the command line without forcing recompilation. If the global (package)
+        variable, finish_on_completion, is set, then $finish is called after
+        phasing completes.
+
         Args:
-            test_name: 
+            test_name (str): Name of the test to run.
+            dut: Handle to the DUT.
         """
         uvm_debug(self, 'run_test', 'Called with testname |' + test_name + '|')
         from .uvm_coreservice import UVMCoreService
@@ -473,10 +472,6 @@ class UVMRoot(UVMComponent):
                     child_comp = comp.get_next_child()
         if uvm_is_match(comp_match, comp.get_full_name()) and comp.get_name() != "":
             comps.append(comp)
-        else:
-            print("VVV no match for |{}| - got |{}|".format(comp_match, comp.get_full_name()))
-            print("comp name is |{}|".format(comp.get_name()))
-            print("comp ID is |{}|".format(comp.get_inst_id()))
 
 
 
