@@ -31,8 +31,9 @@ from ..base.uvm_object_globals import UVM_MEDIUM
 from ..base.sv import sv
 from ..macros import uvm_component_utils, uvm_error, uvm_info
 from ..tlm1 import UVMAnalysisExport, UVMAnalysisPort, UVMTLMAnalysisFIFO
-from .uvm_pair import UVMBuiltInPair
-from .uvm_policies import UVMBuiltInConverter, UVMBuiltInComp
+from .uvm_pair import UVMBuiltInPair, UVMClassPair
+from .uvm_policies import (UVMBuiltInConverter, UVMBuiltInComp,
+    UVMClassConverter, UVMClassComp)
 
 
 class UVMInOrderComparator(UVMComponent):
@@ -189,7 +190,7 @@ class UVMInOrderComparator(UVMComponent):
     #  // Function: flush
     #  //
     #  // This method sets m_matches and m_mismatches back to zero. The
-    #  // <uvm_tlm_fifo#(T)::flush> takes care of flushing the FIFOs.
+    #  // `UVMTLMFIFO.flush` takes care of flushing the FIFOs.
     def flush(self):
         self.m_matches = 0
         self.m_mismatches = 0
@@ -198,16 +199,14 @@ class UVMInOrderComparator(UVMComponent):
 uvm_component_utils(UVMInOrderComparator)
 
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: UVMInOrderBuiltInComparator #(T)
-#//
-#// This class uses the uvm_built_in_* comparison, converter, and pair classes.
-#// Use this class for built-in types (int, bit, string, etc.)
-#//
-#//------------------------------------------------------------------------------
-
 class UVMInOrderBuiltInComparator(UVMInOrderComparator):
+    """
+    CLASS: UVMInOrderBuiltInComparator
+
+    This class uses the uvm_built_in_* comparison, converter, and pair classes.
+    Use this class for built-in types (int, bit, string, etc.)
+    """
+
 
     type_name = "UVMInOrderBuiltInComparator"
 
@@ -222,32 +221,26 @@ class UVMInOrderBuiltInComparator(UVMInOrderComparator):
 uvm_component_utils(UVMInOrderBuiltInComparator)
 
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: UVMInOrderClassComparator #(T)
-#//
-#// This class uses the uvm_class_* comparison, converter, and pair classes.
-#// Use this class for comparing user-defined objects of type T, which must
-#// provide compare() and convert2string() method.
-#//
-#//------------------------------------------------------------------------------
-
 class UVMInOrderClassComparator(UVMInOrderComparator):
-    #                                     uvm_class_comp #( T ) ,
-    #                                     uvm_class_converter #( T ) ,
-    #                                     uvm_class_pair #( T, T ) )
-    #
-    #  typedef UVMInOrderClassComparator #(T) this_type
+    """
+    CLASS: UVMInOrderClassComparator #(T)
+
+    This class uses the uvm_class_* comparison, converter, and pair classes.
+    Use this class for comparing user-defined objects of type T, which must
+    provide compare() and convert2string() method.
+    """
 
     type_name = "UVMInOrderClassComparator"
 
     def __init__(self, name, parent):
         super().__init__(name, parent)
+        self.PairType = UVMClassPair
+        self.Convert = UVMClassConverter
+        self.CompType = UVMClassComp
 
 
     def get_type_name(self):
         return UVMInOrderClassComparator.type_name
-
 
 
 uvm_component_utils(UVMInOrderClassComparator)
