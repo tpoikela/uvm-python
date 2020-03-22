@@ -62,7 +62,7 @@ class UVMRegTransactionOrderPolicy(UVMObject):
         UVMObject.__init__(self, name)
 
     def order(self, q):
-        """         
+        """
             Function: order
             the order() function may reorder the sequence of bus transactions
             produced by a single uvm_reg transaction (read/write).
@@ -71,7 +71,7 @@ class UVMRegTransactionOrderPolicy(UVMObject):
             the first item (0) of the queue will be the first bus transaction (the last($)
             will be the final transaction
         Args:
-            q: 
+            q:
         Raises:
         """
         raise Exception("UVMRegTransactionOrderPolicy::order pure virtual function")
@@ -227,13 +227,13 @@ class UVMRegMap(UVMObject):
 
     @classmethod
     def backdoor(cls):
-        """         
+        """
            Function: backdoor
            Return the backdoor pseudo-map singleton
-          
+
            This pseudo-map is used to specify or configure the backdoor
            instead of a real address map.
-          
+
         Returns:
         """
         if UVMRegMap.m_backdoor is None:
@@ -245,13 +245,13 @@ class UVMRegMap(UVMObject):
     #   //----------------------
 
     def __init__(self, name="uvm_reg_map"):
-        """         
+        """
            Function: new
-          
+
            Create a new instance
-          
+
         Args:
-            name: 
+            name:
         """
         n = "default_map"
         if name != "":
@@ -285,34 +285,34 @@ class UVMRegMap(UVMObject):
         self.policy = None  # local uvm_reg_transaction_order_policy
 
     def configure(self, parent, base_addr, n_bytes, endian, byte_addressing=1):
-        """         
+        """
            Function: configure
-          
+
            Instance-specific configuration
-          
+
            Configures this map with the following properties.
-          
+
            parent    - the block in which this map is created and applied
-          
+
            base_addr - the base address for this map. All registers, memories,
                        and sub-blocks will be at offsets to this address
-          
+
            n_bytes   - the byte-width of the bus on which this map is used
-          
+
            endian    - the endian format. See `uvm_endianness_e` for possible
                        values
-          
+
            byte_addressing - specifies whether the address increment is on a
                        per-byte basis. For example, consecutive memory locations
                        with `n_bytes`=4 (32-bit bus) are 4 apart: 0, 4, 8, and
                        so on. Default is TRUE.
-          
+
         Args:
-            parent: 
-            base_addr: 
-            n_bytes: 
-            endian: 
-            byte_addressing: 
+            parent:
+            base_addr:
+            n_bytes:
+            endian:
+            byte_addressing:
         """
         self.m_parent     = parent
         self.m_n_bytes    = n_bytes
@@ -321,41 +321,41 @@ class UVMRegMap(UVMObject):
         self.m_byte_addressing = byte_addressing
 
     def add_reg(self, rg, offset, rights="RW", unmapped=0, frontdoor=None):
-        """         
+        """
            Function: add_reg
-          
+
            Add a register
-          
+
            Add the specified register instance `rg` to this address map.
-          
+
            The register is located at the specified address `offset` from
            this maps configured base address.
-          
+
            The `rights` specify the register's accessibility via this map.
            Valid values are "RW", "RO", and "WO". Whether a register field
            can be read or written depends on both the field's configured access
            policy (see <uvm_reg_field::configure> and the register's rights in
            the map being used to access the field.
-          
+
            The number of consecutive physical addresses occupied by the register
            depends on the width of the register and the number of bytes in the
            physical interface corresponding to this address map.
-          
+
            If `unmapped` is TRUE, the register does not occupy any
            physical addresses and the base address is ignored.
            Unmapped registers require a user-defined `frontdoor` to be specified.
-          
+
            A register may be added to multiple address maps
            if it is accessible from multiple physical interfaces.
            A register may only be added to an address map whose parent block
            is the same as the register's parent block.
-          
+
         Args:
-            rg: 
-            offset: 
-            rights: 
-            unmapped: 
-            frontdoor: 
+            rg:
+            offset:
+            rights:
+            unmapped:
+            frontdoor:
         """
         if rg in self.m_regs_info:
             uvm_report_error("RegModel", ("Register '" + rg.get_name()
@@ -379,38 +379,38 @@ class UVMRegMap(UVMObject):
 
 
     def add_mem(self, mem, offset, rights="RW", unmapped=0, frontdoor=None):
-        """         
+        """
            Function: add_mem
-          
+
            Add a memory
-          
+
            Add the specified memory instance to this address map.
            The memory is located at the specified base address and has the
            specified access rights ("RW", "RO" or "WO").
            The number of consecutive physical addresses occupied by the memory
            depends on the width and size of the memory and the number of bytes in the
            physical interface corresponding to this address map.
-          
+
            If `unmapped` is TRUE, the memory does not occupy any
            physical addresses and the base address is ignored.
            Unmapped memories require a user-defined `frontdoor` to be specified.
-          
+
            A memory may be added to multiple address maps
            if it is accessible from multiple physical interfaces.
            A memory may only be added to an address map whose parent block
            is the same as the memory's parent block.
-          
+
           extern virtual function void add_mem (uvm_mem        mem,
                                                 uvm_reg_addr_t offset,
                                                 string         rights = "RW",
                                                 bit            unmapped=0,
                                                 uvm_reg_frontdoor frontdoor=None)
         Args:
-            mem: 
-            offset: 
-            rights: 
-            unmapped: 
-            frontdoor: 
+            mem:
+            offset:
+            rights:
+            unmapped:
+            frontdoor:
         """
         if mem in self.m_mems_info:
             uvm_error("RegModel", "Memory '" + mem.get_name() +
@@ -433,11 +433,11 @@ class UVMRegMap(UVMObject):
         #endfunction: add_mem
 
     def add_submap(self, child_map, offset):
-        """         
+        """
            Function: add_submap
-          
+
            Add an address map
-          
+
            Add the specified address map instance to this address map.
            The address map is located at the specified base address.
            The number of consecutive physical addresses occupied by the submap
@@ -446,17 +446,17 @@ class UVMRegMap(UVMObject):
            the number of addresses used in the submap and
            the number of bytes in the
            physical interface corresponding to this address map.
-          
+
            An address map may be added to multiple address maps
            if it is accessible from multiple physical interfaces.
            An address map may only be added to an address map
            in the grand-parent block of the address submap.
-          
+
           extern virtual function void add_submap (uvm_reg_map    child_map,
                                                    uvm_reg_addr_t offset)
         Args:
-            child_map: 
-            offset: 
+            child_map:
+            offset:
         """
         parent_map = None  # #   uvm_reg_map
 
@@ -509,17 +509,17 @@ class UVMRegMap(UVMObject):
 
 
     def set_sequencer(self, sequencer, adapter=None):
-        """         
+        """
            Function: set_sequencer
-          
+
            Set the sequencer and adapter associated with this map. This method
            `must` be called before starting any sequences based on uvm_reg_sequence.
 
           extern virtual function void set_sequencer (uvm_sequencer_base sequencer,
                                                       uvm_reg_adapter    adapter=None)
         Args:
-            sequencer: 
-            adapter: 
+            sequencer:
+            adapter:
         """
         if sequencer is None:
             uvm_error("REG_None_SQR", "None reference specified for bus sequencer")
@@ -536,17 +536,17 @@ class UVMRegMap(UVMObject):
         #endfunction
 
     def set_submap_offset(self, submap, offset):
-        """         
+        """
 
            Function: set_submap_offset
-          
+
            Set the offset of the given `submap` to `offset`.
 
           extern virtual function void set_submap_offset (uvm_reg_map submap,
                                                           uvm_reg_addr_t offset)
         Args:
-            submap: 
-            offset: 
+            submap:
+            offset:
         """
         if (submap is None):
             uvm_error("REG/None","set_submap_offset: submap handle is None")
@@ -559,14 +559,14 @@ class UVMRegMap(UVMObject):
 
 
     def get_submap_offset(self, submap):
-        """         
+        """
            Function: get_submap_offset
-          
+
            Return the offset of the given `submap`.
 
           extern virtual function uvm_reg_addr_t get_submap_offset (uvm_reg_map submap)
         Args:
-            submap: 
+            submap:
         Returns:
         """
         if submap is None:
@@ -587,24 +587,24 @@ class UVMRegMap(UVMObject):
 
 
     def reset(self, kind="SOFT"):
-        """         
+        """
            Function: reset
-          
+
            Reset the mirror for all registers in this address map.
-          
+
            Sets the mirror value of all registers in this address map
            and all of its submaps
            to the reset value corresponding to the specified reset event.
            See <uvm_reg_field::reset()> for more details.
            Does not actually set the value of the registers in the design,
            only the values mirrored in their corresponding mirror.
-          
+
            Note that, unlike the other reset() method, the default
            reset event for this method is "SOFT".
-          
+
           extern virtual function void reset(string kind = "SOFT")
         Args:
-            kind: 
+            kind:
         """
         regs = []
         self.get_registers(regs)
@@ -613,12 +613,12 @@ class UVMRegMap(UVMObject):
 
 
     def add_parent_map(self, parent_map, offset):
-        """         
+        """
           /*local*/ extern virtual function void add_parent_map(uvm_reg_map  parent_map,
                                                                 uvm_reg_addr_t offset)
         Args:
-            parent_map: 
-            offset: 
+            parent_map:
+            offset:
         """
         if (parent_map is None):
             uvm_error("RegModel",
@@ -644,12 +644,12 @@ class UVMRegMap(UVMObject):
 
 
     def m_set_reg_offset(self, rg, offset, unmapped):
-        """         
+        """
         m_set_reg_offset
         Args:
-            rg: 
-            offset: 
-            unmapped: 
+            rg:
+            offset:
+            unmapped:
         """
         if not rg in self.m_regs_info:
             uvm_report_error("RegModel",
@@ -757,14 +757,14 @@ class UVMRegMap(UVMObject):
     #   //
 
     def get_full_name(self):
-        """         
+        """
            Function: get_full_name
-          
+
            Get the hierarchical name
-          
+
            Return the hierarchal name of this address map.
            The base of the hierarchical name is the root block.
-          
+
           extern virtual function string get_full_name()
         Returns:
         """
@@ -774,18 +774,15 @@ class UVMRegMap(UVMObject):
         return self.m_parent.get_full_name() + "." + get_full_name
 
     def get_root_map(self):
-        """         
+        """
+        Get the externally-visible address map
 
+        Get the top-most address map where this address map is instantiated.
+        It corresponds to the externally-visible address map that can
+        be accessed by the verification environment.
 
-           Function: get_root_map
-          
-           Get the externally-visible address map
-          
-           Get the top-most address map where this address map is instantiated.
-           It corresponds to the externally-visible address map that can
-           be accessed by the verification environment.
-          
         Returns:
+            UVMRegMap: Root map for this address map.
         """
         if self.m_parent_map is None:
             return self
@@ -793,25 +790,25 @@ class UVMRegMap(UVMObject):
             return self.m_parent_map.get_root_map()
 
     def get_parent(self):
-        """         
+        """
            Function: get_parent
-          
+
            Get the parent block
-          
+
            Return the block that is the parent of this address map.
-          
+
         Returns:
         """
         return self.m_parent
 
     def get_parent_map(self):
-        """         
+        """
            Function: get_parent_map
            Get the higher-level address map
-          
+
            Return the address map in which this address map is mapped.
            returns `None` if this is a top-level address map.
-          
+
           extern virtual function uvm_reg_map           get_parent_map()
         Returns:
         """
@@ -819,19 +816,19 @@ class UVMRegMap(UVMObject):
 
 
     def get_base_addr(self, hier=UVM_HIER):
-        """         
+        """
            Function: get_base_addr
-          
+
            Get the base offset address for this map. If this map is the
            root map, the base address is that set with the `base_addr` argument
            to <uvm_reg_block::create_map()>. If this map is a submap of a higher-level map,
            the base address is offset given this submap by the parent map.
            See `set_submap_offset`.
-          
+
           extern virtual function uvm_reg_addr_t get_base_addr (uvm_hier_e hier=UVM_HIER)
         Args:
-            hier: 
-            UVM_HIER: 
+            hier:
+            UVM_HIER:
         Returns:
         """
         # child = self
@@ -843,19 +840,19 @@ class UVMRegMap(UVMObject):
 
 
     def get_n_bytes(self, hier=UVM_HIER):
-        """         
+        """
            Function: get_n_bytes
-          
+
            Get the width in bytes of the bus associated with this map. If `hier`
            is `UVM_HIER`, then gets the effective bus width relative to the system
            level. The effective bus width is the narrowest bus width from this
            map to the top-level root map. Each bus access will be limited to this
            bus width.
-          
+
           extern virtual function int unsigned get_n_bytes (uvm_hier_e hier=UVM_HIER)
         Args:
-            hier: 
-            UVM_HIER: 
+            hier:
+            UVM_HIER:
         Returns:
         """
         if hier == UVM_NO_HIER:
@@ -864,13 +861,13 @@ class UVMRegMap(UVMObject):
 
 
     def get_addr_unit_bytes(self):
-        """         
+        """
            Function: get_addr_unit_bytes
-          
+
            Get the number of bytes in the smallest addressable unit in the map.
            Returns 1 if the address map was configured using byte-level addressing.
            Returns <get_n_bytes()> otherwise.
-          
+
           extern virtual function int unsigned get_addr_unit_bytes()
         Returns:
         """
@@ -881,16 +878,16 @@ class UVMRegMap(UVMObject):
 
 
     def get_endian(self, hier=UVM_HIER):
-        """         
+        """
            Function: get_base_addr
-          
+
            Gets the endianness of the bus associated with this map. If `hier` is
            set to `UVM_HIER`, gets the system-level endianness.
-          
+
           extern virtual function uvm_endianness_e get_endian (uvm_hier_e hier=UVM_HIER)
         Args:
-            hier: 
-            UVM_HIER: 
+            hier:
+            UVM_HIER:
         Returns:
         """
         if (hier == UVM_NO_HIER or self.m_parent_map is None):
@@ -899,17 +896,17 @@ class UVMRegMap(UVMObject):
 
 
     def get_sequencer(self, hier=UVM_HIER):
-        """         
+        """
            Function: get_sequencer
-          
+
            Gets the sequencer for the bus associated with this map. If `hier` is
            set to `UVM_HIER`, gets the sequencer for the bus at the system-level.
            See `set_sequencer`.
-          
+
           extern virtual function uvm_sequencer_base get_sequencer (uvm_hier_e hier=UVM_HIER)
         Args:
-            hier: 
-            UVM_HIER: 
+            hier:
+            UVM_HIER:
         Returns:
         """
         if (hier == UVM_NO_HIER or self.m_parent_map is None):
@@ -917,17 +914,17 @@ class UVMRegMap(UVMObject):
         return self.m_parent_map.get_sequencer(hier)
 
     def get_adapter(self, hier=UVM_HIER):
-        """         
+        """
            Function: get_adapter
-          
+
            Gets the bus adapter for the bus associated with this map. If `hier` is
            set to `UVM_HIER`, gets the adapter for the bus used at the system-level.
            See `set_sequencer`.
-          
+
           extern virtual function uvm_reg_adapter get_adapter (uvm_hier_e hier=UVM_HIER)
         Args:
-            hier: 
-            UVM_HIER: 
+            hier:
+            UVM_HIER:
         Returns:
         """
         if (hier == UVM_NO_HIER or self.m_parent_map is None):
@@ -936,21 +933,21 @@ class UVMRegMap(UVMObject):
         #endfunction
 
     def get_submaps(self, maps, hier=UVM_HIER):
-        """         
+        """
            Function: get_submaps
-          
+
            Get the address sub-maps
-          
+
            Get the address maps instantiated in this address map.
            If `hier` is `UVM_HIER`, recursively includes the address maps,
            in the sub-maps.
-          
+
           extern virtual function void  get_submaps (ref uvm_reg_map maps[$],
                                                      input uvm_hier_e hier=UVM_HIER)
         Args:
-            maps: 
-            hier: 
-            UVM_HIER: 
+            maps:
+            hier:
+            UVM_HIER:
         """
         for submap in self.m_submaps:
             maps.append(submap)
@@ -962,21 +959,21 @@ class UVMRegMap(UVMObject):
         #endfunction
 
     def get_registers(self, regs, hier=UVM_HIER):
-        """         
+        """
            Function: get_registers
-          
+
            Get the registers
-          
+
            Get the registers instantiated in this address map.
            If `hier` is `UVM_HIER`, recursively includes the registers
            in the sub-maps.
-          
+
           extern virtual function void  get_registers (ref uvm_reg regs[$],
                                                        input uvm_hier_e hier=UVM_HIER)
         Args:
-            regs: 
-            hier: 
-            UVM_HIER: 
+            regs:
+            hier:
+            UVM_HIER:
         """
         for rg in self.m_regs_info:
             regs.append(rg)
@@ -1039,11 +1036,11 @@ class UVMRegMap(UVMObject):
 
 
     def get_reg_map_info(self, rg, error=1):
-        """         
+        """
         get_reg_map_info
         Args:
-            rg: 
-            error: 
+            rg:
+            error:
         Returns:
         """
         result = None
@@ -1060,11 +1057,11 @@ class UVMRegMap(UVMObject):
         return result
 
     def get_mem_map_info(self, mem, error=1):
-        """         
+        """
           extern virtual function UVMRegMapInfo get_mem_map_info(uvm_mem mem, bit error=1)
         Args:
-            mem: 
-            error: 
+            mem:
+            error:
         Returns:
         """
         if mem not in self.m_mems_info:
@@ -1079,34 +1076,34 @@ class UVMRegMap(UVMObject):
 
 
     def get_physical_addresses(self, base_addr, mem_offset, n_bytes, addr):
-        """         
+        """
 
            Function: get_physical_addresses
-          
+
            Translate a local address into external addresses
-          
+
            Identify the sequence of addresses that must be accessed physically
            to access the specified number of bytes at the specified address
            within this address map.
            Returns the number of bytes of valid data in each access.
-          
+
            Returns in `addr` a list of address in little endian order,
            with the granularity of the top-level address map.
-          
+
            A register is specified using a base address with `mem_offset` as 0.
            A location within a memory is specified using the base address
            of the memory and the index of the location within that memory.
-          
+
 
           extern virtual function int get_physical_addresses(uvm_reg_addr_t        base_addr,
                                                              uvm_reg_addr_t        mem_offset,
                                                              int unsigned          n_bytes,
                                                              ref uvm_reg_addr_t    addr[])
         Args:
-            base_addr: 
-            mem_offset: 
-            n_bytes: 
-            addr: 
+            base_addr:
+            mem_offset:
+            n_bytes:
+            addr:
         Returns:
         """
         bus_width = self.get_n_bytes(UVM_NO_HIER)
@@ -1191,25 +1188,25 @@ class UVMRegMap(UVMObject):
 
 
     def get_reg_by_offset(self, offset, read=True):
-        """         
+        """
 
 
            Function: get_reg_by_offset
-          
+
            Get register mapped at offset
-          
+
            Identify the register located at the specified offset within
            this address map for the specified type of access.
            Returns `None` if no such register is found.
-          
+
            The model must be locked using <uvm_reg_block::lock_model()>
            to enable this functionality.
-          
+
           extern virtual function uvm_reg get_reg_by_offset(uvm_reg_addr_t offset,
                                                             bit            read = 1)
         Args:
-            offset: 
-            read: 
+            offset:
+            read:
         Returns:
         """
         if not(self.m_parent.is_locked()):
@@ -1225,11 +1222,8 @@ class UVMRegMap(UVMObject):
             return self.m_regs_by_offset[offset]
 
         return None
-    #endfunction
 
 
-
-    #
     #   //
     #   // Function: get_mem_by_offset
     #   // Get memory mapped at offset
@@ -1243,8 +1237,7 @@ class UVMRegMap(UVMObject):
     #   // to enable this functionality.
     #   //
     #   extern virtual function uvm_mem    get_mem_by_offset(uvm_reg_addr_t offset)
-    #
-    #
+
 
     #   //------------------
     #   // Group: Bus Access
@@ -1252,73 +1245,65 @@ class UVMRegMap(UVMObject):
 
 
     def set_auto_predict(self, on=True):
-        """         
-           Function: set_auto_predict
-          
-           Sets the auto-predict mode for his map.
-          
-           When `on` is `TRUE`,
-           the register model will automatically update its mirror
-           (what it thinks should be in the DUT) immediately after
-           any bus read or write operation via this map. Before a <uvm_reg::write>
-           or <uvm_reg::read> operation returns, the register's <uvm_reg::predict>
-           method is called to update the mirrored value in the register.
-          
-           When `on` is `FALSE`, bus reads and writes via this map do not
-           automatically update the mirror. For real-time updates to the mirror
-           in this mode, you connect a `uvm_reg_predictor` instance to the bus
-           monitor. The predictor takes observed bus transactions from the
-           bus monitor, looks up the associated `uvm_reg` register given
-           the address, then calls that register's <uvm_reg::predict> method.
-           While more complex, this mode will capture all register read/write
-           activity, including that not directly descendant from calls to
-           <uvm_reg::write> and <uvm_reg::read>.
-          
-           By default, auto-prediction is turned off.
-          
-          function void set_auto_predict(bit on=1); self.m_auto_predict = on; endfunction
+        """
+        Sets the auto-predict mode for his map.
+
+        When `on` is `TRUE`,
+        the register model will automatically update its mirror
+        (what it thinks should be in the DUT) immediately after
+        any bus read or write operation via this map. Before a `UVMReg.write`
+        or `UVMReg.read` operation returns, the register's `UVMReg.predict`
+        method is called to update the mirrored value in the register.
+
+        When `on` is `FALSE`, bus reads and writes via this map do not
+        automatically update the mirror. For real-time updates to the mirror
+        in this mode, you connect a `uvm_reg_predictor` instance to the bus
+        monitor. The predictor takes observed bus transactions from the
+        bus monitor, looks up the associated `UVMReg` register given
+        the address, then calls that register's `UVMReg.predict` method.
+        While more complex, this mode will capture all register read/write
+        activity, including that not directly descendant from calls to
+        `UVMReg.write` and `UVMReg.read`.
+
+        By default, auto-prediction is turned off.
+
         Args:
-            on: 
+            on:
         """
         self.m_auto_predict = on
 
     def get_auto_predict(self):
-        """         
+        """
+        Gets the auto-predict mode setting for this map.
 
-
-           Function: get_auto_predict
-          
-           Gets the auto-predict mode setting for this map.
-          
         Returns:
+            bool: True if auto-predict enabled, False otherwise.
         """
         return self.m_auto_predict
 
 
     def set_check_on_read(self, on=1):
-        """         
-           Function: set_check_on_read
-          
-           Sets the check-on-read mode for his map
-           and all of its submaps.
-          
-           When `on` is `TRUE`,
-           the register model will automatically check any value read back from
-           a register or field against the current value in its mirror
-           and report any discrepancy.
-           This effectively combines the functionality of the
-           <uvm_reg::read()> and ~uvm_reg::mirror(UVM_CHECK)~ method.
-           This mode is useful when the register model is used passively.
-          
-           When `on` is `FALSE`, no check is made against the mirrored value.
-          
-           At the end of the read operation, the mirror value is updated based
-           on the value that was read regardless of this mode setting.
-          
-           By default, auto-prediction is turned off.
-          
+        """
+        Sets the check-on-read mode for his map
+        and all of its submaps.
+
+        When `on` is `TRUE`,
+        the register model will automatically check any value read back from
+        a register or field against the current value in its mirror
+        and report any discrepancy.
+        This effectively combines the functionality of the
+        <uvm_reg::read()> and ~uvm_reg::mirror(UVM_CHECK)~ method.
+        This mode is useful when the register model is used passively.
+
+        When `on` is `FALSE`, no check is made against the mirrored value.
+
+        At the end of the read operation, the mirror value is updated based
+        on the value that was read regardless of this mode setting.
+
+        By default, auto-prediction is turned off.
+
         Args:
-            on: 
+            on:
         """
         self.m_check_on_read = on
         for submap in self.m_submaps:
@@ -1326,29 +1311,23 @@ class UVMRegMap(UVMObject):
 
 
     def get_check_on_read(self):
-        """         
-           Function: get_check_on_read
-          
-           Gets the check-on-read mode setting for this map.
-          
+        """
+        Gets the check-on-read mode setting for this map.
+
         Returns:
+            bool: True if checking on read enabled, False otherwise
         """
         return self.m_check_on_read
 
 
     async def do_bus_write(self, rw, sequencer, adapter):
-        """         
-           Task: do_bus_write
-          
-           Perform a bus write operation.
-          
-          extern virtual task do_bus_write (uvm_reg_item rw,
-                                            uvm_sequencer_base sequencer,
-                                            uvm_reg_adapter adapter)
+        """
+        Perform a bus write operation.
+
         Args:
-            rw: 
-            sequencer: 
-            adapter: 
+            rw (UVMRegItem):
+            sequencer (UVMSequencer):
+            adapter (UVMRegAdapter):
         """
         addrs = []
         system_map = self.get_root_map()
@@ -1493,18 +1472,13 @@ class UVMRegMap(UVMObject):
 
 
     async def do_bus_read(self, rw, sequencer, adapter):
-        """         
-           Task: do_bus_read
-          
-           Perform a bus read operation.
-          
-          extern virtual task do_bus_read (uvm_reg_item rw,
-                                           uvm_sequencer_base sequencer,
-                                           uvm_reg_adapter adapter)
+        """
+        Perform a bus read operation.
+
         Args:
-            rw: 
-            sequencer: 
-            adapter: 
+            rw (UVMRegItem):
+            sequencer (UVMSequencer):
+            adapter (UVMRegAdapter):
         """
         addrs = []  # uvm_reg_addr_t[$]
         system_map = self.get_root_map()
@@ -1651,14 +1625,11 @@ class UVMRegMap(UVMObject):
 
 
     async def do_write(self, rw):
-        """         
-           Task: do_write
-          
-           Perform a write operation.
-          
-          extern virtual task do_write(uvm_reg_item rw)
+        """
+        Perform a write operation.
+
         Args:
-            rw: 
+            rw (UVMRegItem): Register item for the write op.
         """
         tmp_parent_seq = None  # uvm_sequence_base
         system_map = self.get_root_map()
@@ -1698,14 +1669,11 @@ class UVMRegMap(UVMObject):
 
 
     async def do_read(self, rw):
-        """         
-           Task: do_read
-          
-           Perform a read operation.
-          
-          extern virtual task do_read(uvm_reg_item rw)
+        """
+        Perform a read operation.
+
         Args:
-            rw: 
+            rw (UVMRegItem): Register item for the read op.
         """
         tmp_parent_seq = None  # uvm_sequence_base
         system_map = self.get_root_map()
@@ -1740,18 +1708,15 @@ class UVMRegMap(UVMObject):
 
 
     def Xget_bus_infoX(self, rw, map_info, size, lsb, addr_skip):
-        """         
-          extern function void Xget_bus_infoX (uvm_reg_item rw,
-                                               output UVMRegMapInfo map_info,
-                                               output int size,
-                                               output int lsb,
-                                               output int addr_skip)
+        """
+        Returns bus info based on given register item.
+
         Args:
-            rw: 
-            map_info: 
-            size: 
-            lsb: 
-            addr_skip: 
+            rw (UVMRegItem):
+            map_info (UVMRegMapInfo):
+            size (int):
+            lsb (int):
+            addr_skip (int):
         Returns:
         Raises:
         """
@@ -1785,7 +1750,6 @@ class UVMRegMap(UVMObject):
             raise Exception("rw.element_kind value illegal: " +
                     str(rw.element_kind))
         return [map_info, size, lsb, addr_skip]
-        #endfunction
 
 
     #   extern virtual function string      convert2string()
@@ -2063,19 +2027,9 @@ uvm_object_utils(UVMRegMap)
 #endfunction
 #
 #
-#
-#
-#
 #--------------
 # Get-By-Offset
 #--------------
-#
-#
-#
-#
-#
-#
-#
 #
 # get_mem_by_offset
 #
@@ -2093,18 +2047,6 @@ uvm_object_utils(UVMRegMap)
 #
 #   return None
 #endfunction
-#
-#
-
-#-----------
-# Bus Access
-#-----------
-
-
-
-
-#
-#
 #
 #-------------
 # Standard Ops
