@@ -26,20 +26,17 @@ from .uvm_scope_stack import UVMScopeStack
 from .uvm_pool import UVMPool
 from .sv import sv
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_comparer
-#//
-#// The uvm_comparer class provides a policy object for doing comparisons. The
-#// policies determine how miscompares are treated and counted. Results of a
-#// comparison are stored in the comparer object. The <uvm_object::compare>
-#// and <uvm_object::do_compare> methods are passed a uvm_comparer policy
-#// object.
-#//
-#//------------------------------------------------------------------------------
 
 
 class UVMComparer:
+    """
+    The UVMComparer class provides a policy object for doing comparisons. The
+    policies determine how miscompares are treated and counted. Results of a
+    comparison are stored in the comparer object. The <uvm_object::compare>
+    and <uvm_object::do_compare> methods are passed a UVMComparer policy
+    object.
+
+    """
 
     def __init__(self):
         #
@@ -140,20 +137,20 @@ class UVMComparer:
         self.scope = UVMScopeStack()
 
 
-    def compare_field(self, name,  lhs,  rhs,  size, radix=UVM_NORADIX):
-        """         
+    def compare_field(self, name, lhs, rhs, size, radix=UVM_NORADIX):
+        """
           Function: compare_field
-         
+
           Compares two integral values.
-         
+
           The `name` input is used for purposes of storing and printing a miscompare.
-         
+
           The left-hand-side `lhs` and right-hand-side `rhs` objects are the two
           objects used for comparison.
-         
+
           The size variable indicates the number of bits to compare; size must be
           less than or equal to 4096.
-         
+
           The radix is used for reporting purposes, the default radix is hex.
 
          virtual function bit compare_field (string name,
@@ -162,12 +159,12 @@ class UVMComparer:
                                              int size,
                                              uvm_radix_enum radix=UVM_NORADIX);
         Args:
-            name: 
-            lhs: 
-            rhs: 
-            size: 
-            radix: 
-            UVM_NORADIX: 
+            name:
+            lhs:
+            rhs:
+            size:
+            radix:
+            UVM_NORADIX:
         Returns:
         """
         mask = 0
@@ -218,9 +215,9 @@ class UVMComparer:
 
 
     def compare_field_int(self, name, lhs, rhs, size, radix=UVM_NORADIX):
-        """         
+        """
           Function: compare_field_int
-         
+
           This method is the same as `compare_field` except that the arguments are
           small integers, less than or equal to 64 bits. It is automatically called
           by `compare_field` if the operand size is less than or equal to 64.
@@ -231,12 +228,11 @@ class UVMComparer:
                                                  int size,
                                                  uvm_radix_enum radix=UVM_NORADIX);
         Args:
-            name: 
-            lhs: 
-            rhs: 
-            size: 
-            radix: 
-            UVM_NORADIX: 
+            name:
+            lhs:
+            rhs:
+            size:
+            radix:
         Returns:
         """
         mask = 0x0
@@ -306,86 +302,82 @@ class UVMComparer:
 
 
     def compare_object(self, name, lhs, rhs):
-        """         
-          Function: compare_object
-         
-          Compares two class objects using the `policy` knob to determine whether the
-          comparison should be deep, shallow, or reference.
-         
-          The name input is used for purposes of storing and printing a miscompare.
-         
-          The `lhs` and `rhs` objects are the two objects used for comparison.
-         
-          The `check_type` determines whether or not to verify the object
-          types match (the return from ~lhs.get_type_name()~ matches
-          ~rhs.get_type_name()~).
+        """
+        Compares two class objects using the `policy` knob to determine whether the
+        comparison should be deep, shallow, or reference.
+
+        The name input is used for purposes of storing and printing a miscompare.
+
+        The `lhs` and `rhs` objects are the two objects used for comparison.
+
+        The `check_type` determines whether or not to verify the object
+        types match (the return from ~lhs.get_type_name()~ matches
+        ~rhs.get_type_name()~).
 
         Args:
-            name: 
-            lhs: 
-            rhs: 
+            name (str): Extra info for printing miscompare.
+            lhs (UVMObject): First object to compare.
+            rhs (UVMObject): Second object to compare.
         Returns:
+            bool: True if objects match, False otherwise.
         """
         if rhs == lhs:
-            return 1
+            return True
 
         if self.policy == UVM_REFERENCE and lhs != rhs:
             UVMObject._m_uvm_status_container.scope.set_arg(name)
             self.print_msg_object(lhs, rhs)
-            return 0
+            return False
 
         if rhs is None or lhs is None:
             UVMObject._m_uvm_status_container.scope.set_arg(name)
             self.print_msg_object(lhs, rhs)
-            return 0  # miscompare
+            return False  # miscompare
 
         UVMObject._m_uvm_status_container.scope.down(name)
         res = lhs.compare(rhs, self)
         UVMObject._m_uvm_status_container.scope.up()
         return res
-        #  endfunction
 
 
     def compare_string(self, name, lhs, rhs):
-        """         
-          Function: compare_string
-         
-          Compares two string variables.
-         
-          The `name` input is used for purposes of storing and printing a miscompare.
-         
-          The `lhs` and `rhs` objects are the two objects used for comparison.
+        """
+        Compares two string variables.
+
+        The `name` input is used for purposes of storing and printing a miscompare.
+        The `lhs` and `rhs` objects are the two objects used for comparison.
 
         Args:
-            name: 
-            lhs: 
-            rhs: 
+            name (str): Extra info for printing miscompare.
+            lhs (str): First str to compare.
+            rhs (str): Second str to compare.
         Returns:
+            bool: True if strings match, False otherwise.
         """
         msg = ""
         if lhs != rhs:
             UVMObject._m_uvm_status_container.scope.set_arg(name)
             msg = "lhs = \"" + lhs + "\" : rhs = \"" + rhs + "\""
             self.print_msg(msg)
-            return 0
-        return 1
-        #  endfunction
+            return False
+        return True
+
 
 
     def print_msg(self, msg):
-        """         
+        """
           Function: print_msg
-         
+
           Causes the error count to be incremented and the message, `msg`, to be
           appended to the `miscompares` string (a newline is used to separate
           messages).
-         
+
           If the message count is less than the `show_max` setting, then the message
           is printed to standard-out using the current verbosity and severity
           settings. See the `verbosity` and `sev` variables for more information.
 
         Args:
-            msg: 
+            msg:
         """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
@@ -402,7 +394,7 @@ class UVMComparer:
 
 
     def print_rollup(self, rhs, lhs):
-        """         
+        """
           Internal methods - do not call directly
 
           print_rollup
@@ -410,8 +402,8 @@ class UVMComparer:
 
          Need this function because sformat doesn't support objects
         Args:
-            rhs: 
-            lhs: 
+            rhs:
+            lhs:
         """
         pass
         # TODO
@@ -439,13 +431,11 @@ class UVMComparer:
 
 
     def print_msg_object(self, lhs, rhs):
-        """         
-          print_msg_object
-          ----------------
+        """
 
         Args:
-            lhs: 
-            rhs: 
+            lhs (UVMObject):
+            rhs (UVMObject):
         """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
@@ -463,22 +453,17 @@ class UVMComparer:
                 sv.sformatf("Miscompare for %0s: lhs = @%0d : rhs = @%0d",
                 UVMObject._m_uvm_status_container.scope.get(), lhs_id, rhs_id,
                 self.verbosity, "`uvm_file", "`uvm_line"))
-            
+
             self.miscompares = sv.sformatf("%s%s: lhs = @%0d : rhs = @%0d",
                 self.miscompares, UVMObject._m_uvm_status_container.scope.get(),
                 lhs_id, rhs_id)
-        #  endfunction
 
-    #
-    #
+
+
     #
     #  // init ??
     #
-    #  static function uvm_comparer init()
+    #  static function UVMComparer init()
     #    if(uvm_default_comparer==null) uvm_default_comparer=new
     #    return uvm_default_comparer
     #  endfunction
-    #
-    #
-    #
-    #endclass
