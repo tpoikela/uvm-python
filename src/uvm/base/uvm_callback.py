@@ -38,12 +38,12 @@ from .uvm_globals import (uvm_report_warning, uvm_report_error,
 
 ALL_TYPES = None
 
-#------------------------------------------------------------------------------
-# Title: Callbacks Classes
-#
-# This section defines the classes used for callback registration, management,
-# and user-defined callbacks.
-#------------------------------------------------------------------------------
+"""
+Title: Callbacks Classes
+
+This section defines the classes used for callback registration, management,
+and user-defined callbacks.
+"""
 
 
 def o2str(ordering):
@@ -82,13 +82,11 @@ class UVMTypeID(UVMTypeIDBase):
 
 class UVMCallbacksBase(UVMObject):
     """
-    Class - uvm_callbacks_base
-
     Base class singleton that holds generic queues for all instance
     specific objects. This is an internal class. This class contains a
     global pool that has all of the instance specific callback queues in it.
     All of the typewide callback queues live in the derivative class
-    uvm_typed_callbacks#(T). This is not a user visible class.
+    UVMTypedCallbacks#(T). This is not a user visible class.
 
     This class holds the class inheritance hierarchy information
     (super types and derivative types).
@@ -197,7 +195,7 @@ class UVMCallbacksBase(UVMObject):
 
 #------------------------------------------------------------------------------
 #
-# Class - uvm_typed_callbacks#(T)
+# Class - UVMTypedCallbacks#(T)
 #
 #------------------------------------------------------------------------------
 
@@ -218,7 +216,7 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
     #  static string m_typename
     m_typename = ""
 
-    #  typedef uvm_typed_callbacks#(T) this_type
+    #  typedef UVMTypedCallbacks#(T) this_type
     #  typedef uvm_callbacks_base      super_type
 
     #  #The actual global object from the derivative class. Note that this is
@@ -528,40 +526,39 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
     #endclass
 
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_callbacks #(T,CB)
-#
-# The ~uvm_callbacks~ class provides a base class for implementing callbacks,
-# which are typically used to modify or augment component behavior without
-# changing the component class. To work effectively, the developer of the
-# component class defines a set of "hook" methods that enable users to
-# customize certain behaviors of the component in a manner that is controlled
-# by the component developer. The integrity of the component's overall behavior
-# is intact, while still allowing certain customizable actions by the user.
-#
-# To enable compile-time type-safety, the class is parameterized on both the
-# user-defined callback interface implementation as well as the object type
-# associated with the callback. The object type-callback type pair are
-# associated together using the <`uvm_register_cb> macro to define
-# a valid pairing; valid pairings are checked when a user attempts to add
-# a callback to an object.
-#
-# To provide the most flexibility for end-user customization and reuse, it
-# is recommended that the component developer also define a corresponding set
-# of virtual method hooks in the component itself. This affords users the ability
-# to customize via inheritance/factory overrides as well as callback object
-# registration. The implementation of each virtual method would provide the
-# default traversal algorithm for the particular callback being called. Being
-# virtual, users can define subtypes that override the default algorithm,
-# perform tasks before and/or after calling super.<method> to execute any
-# registered callbacks, or to not call the base implementation, effectively
-# disabling that particular hook. A demonstration of this methodology is
-# provided in an example included in the kit.
-#------------------------------------------------------------------------------
 
 class UVMCallbacks(UVMTypedCallbacks):
-    #(type T=uvm_object, type CB=uvm_callback) extends uvm_typed_callbacks#(T)
+    """
+    The ~uvm_callbacks~ class provides a base class for implementing callbacks,
+    which are typically used to modify or augment component behavior without
+    changing the component class. To work effectively, the developer of the
+    component class defines a set of "hook" methods that enable users to
+    customize certain behaviors of the component in a manner that is controlled
+    by the component developer. The integrity of the component's overall behavior
+    is intact, while still allowing certain customizable actions by the user.
+
+    To enable compile-time type-safety, the class is parameterized on both the
+    user-defined callback interface implementation as well as the object type
+    associated with the callback. The object type-callback type pair are
+    associated together using the `UVMRegisterCb` macro to define
+    a valid pairing; valid pairings are checked when a user attempts to add
+    a callback to an object.
+
+    To provide the most flexibility for end-user customization and reuse, it
+    is recommended that the component developer also define a corresponding set
+    of virtual method hooks in the component itself. This affords users the ability
+    to customize via inheritance/factory overrides as well as callback object
+    registration. The implementation of each virtual method would provide the
+    default traversal algorithm for the particular callback being called. Being
+    virtual, users can define subtypes that override the default algorithm,
+    perform tasks before and/or after calling super.<method> to execute any
+    registered callbacks, or to not call the base implementation, effectively
+    disabling that particular hook. A demonstration of this methodology is
+    provided in an example included in the kit.
+    """
+
+
+    #(type T=uvm_object, type CB=uvm_callback) extends UVMTypedCallbacks#(T)
 
     # Singleton instance is used for type checking
     m_inst = None
@@ -1222,14 +1219,14 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
     """
 
     def __init__(self, obj, CB=None):
-        """         
+        """
         Function: new
 
         Creates a new callback iterator object. It is required that the object
         context be provided.
         Args:
-            obj: 
-            CB: 
+            obj:
+            CB:
         """
         self.m_i = 0
         self.m_cb = None  # UVMCallback
@@ -1237,7 +1234,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
         self.CB = CB
 
     def first(self):
-        """         
+        """
         Function: first
 
         Returns the first valid (enabled) callback of the callback type (or
@@ -1308,16 +1305,16 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
 
 class UVMCallback(UVMObject):
     """
-    The ~uvm_callback~ class is the base class for user-defined callback classes.
+    The `UVMCallback` class is the base class for user-defined callback classes.
     Typically, the component developer defines an application-specific callback
     class that extends from this class. In it, he defines one or more virtual
     methods, called a ~callback interface~, that represent the hooks available
     for user override.
-    
+
     Methods intended for optional override should not be declared ~pure.~ Usually,
     all the callback methods are defined with empty implementations so users have
     the option of overriding any or all of them.
-    
+
     The prototypes for each hook method are completely application specific with
     no restrictions.
     """
@@ -1328,8 +1325,9 @@ class UVMCallback(UVMObject):
     def __init__(self, name="uvm_callback"):
         """
         Creates a new uvm_callback object, giving it an optional `name`.
+
         Args:
-            name:
+            name (str): Name of the callback
         """
         super().__init__(name)
         self.m_enabled = True
@@ -1337,6 +1335,7 @@ class UVMCallback(UVMObject):
     def callback_mode(self, on=-1):
         """
         Enable/disable callbacks (modeled like rand_mode and constraint_mode).
+
         Args:
             on:
         Returns:
@@ -1363,8 +1362,9 @@ class UVMCallback(UVMObject):
     def is_enabled(self):
         """
         Returns 1 if the callback is enabled, 0 otherwise.
+
         Returns:
-            bool:  1 if the callback is enabled, 0 otherwise.
+            bool: 1 if the callback is enabled, 0 otherwise.
         """
         return self.callback_mode()
 
@@ -1373,5 +1373,8 @@ class UVMCallback(UVMObject):
     def get_type_name(self):
         """
         Returns the type name of this callback object.
+
+        Returns:
+            str: Type name of this callback object.
         """
         return UVMCallback.type_name

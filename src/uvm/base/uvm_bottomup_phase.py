@@ -27,44 +27,38 @@ from .uvm_domain import UVMDomain
 from .uvm_debug import *
 from .uvm_globals import *
 
-#------------------------------------------------------------------------------
-#
-# Class: uvm_bottomup_phase
-#
-#------------------------------------------------------------------------------
-# Virtual base class for function phases that operate bottom-up.
-# The pure virtual function execute() is called for each component.
-# This is the default traversal so is included only for naming.
-#
-# A bottom-up function phase completes when the <execute()> method
-# has been called and returned on all applicable components
-# in the hierarchy.
-
 
 class UVMBottomupPhase(UVMPhase):
+    """
+    Base class for function phases that operate bottom-up.
+    The pure virtual function execute() is called for each component.
+    This is the default traversal so is included only for naming.
+
+    A bottom-up function phase completes when the <execute()> method
+    has been called and returned on all applicable components
+    in the hierarchy.
+    """
+
 
     def __init__(self, name):
-        """         
-        Function: new
-
+        """
         Create a new instance of a bottom-up phase.
 
         Args:
-            name: 
+            name (str): Name of the phase.
         """
-        UVMPhase.__init__(self, name,UVM_PHASE_IMP)
+        UVMPhase.__init__(self, name, UVM_PHASE_IMP)
+
 
     def traverse(self, comp, phase, state):
-        """         
-        Function: traverse
-
+        """
         Traverses the component tree in bottom-up order, calling `execute` for
         each component.
 
         Args:
-            comp: 
-            phase: 
-            state: 
+            comp (UVMComponent): Top-level component for traversal
+            phase (UVMPhase):
+            state:
         """
         uvm_debug(self, 'traverse', self.get_name() + ' traversing bottomup phase now with ' +
                 comp.get_name())
@@ -78,7 +72,7 @@ class UVMBottomupPhase(UVMPhase):
                 self.traverse(child, phase, state)
                 child = comp.get_next_child()
 
-        if (UVMPhase.m_phase_trace):
+        if UVMPhase.m_phase_trace:
             dom_name = "unknown"
             if comp_domain is not None:
                 dom_name = comp_domain.get_name()
@@ -88,35 +82,32 @@ class UVMBottomupPhase(UVMPhase):
 
         if phase_domain == UVMDomain.get_common_domain() or phase_domain == comp_domain:
             if state == UVM_PHASE_STARTED:
-                comp.m_current_phase = phase;
-                comp.m_apply_verbosity_settings(phase);
-                comp.phase_started(phase);
+                comp.m_current_phase = phase
+                comp.m_apply_verbosity_settings(phase)
+                comp.phase_started(phase)
             elif state == UVM_PHASE_EXECUTING:
                 ph = self
                 if self in comp.m_phase_imps:
                     ph = comp.m_phase_imps[self]
                 ph.execute(comp, phase)
             elif state == UVM_PHASE_READY_TO_END:
-                comp.phase_ready_to_end(phase);
+                comp.phase_ready_to_end(phase)
             elif state == UVM_PHASE_ENDED:
-                comp.phase_ended(phase);
+                comp.phase_ended(phase)
                 comp.m_current_phase = None
             else:
-                uvm_report_fatal("PH_BADEXEC","bottomup phase traverse internal error")
+                uvm_report_fatal("PH_BADEXEC", "bottomup phase traverse internal error")
 
     def execute(self, comp, phase):
-        """         
-        Function: execute
-
+        """
         Executes the bottom-up phase `phase` for the component `comp`.
 
         Args:
-            comp: 
-            phase: 
+            comp (UVMComponent):
+            phase (UVMPhase):
         """
         # reseed this process for random stability
-        #process proc = process::self();
-        #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()));
-        comp.m_current_phase = phase;
-        self.exec_func(comp,phase);
-
+        #process proc = process::self()
+        #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()))
+        comp.m_current_phase = phase
+        self.exec_func(comp,phase)
