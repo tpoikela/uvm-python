@@ -20,12 +20,6 @@
 #   the License for the specific language governing
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
-
-
-from .uvm_tlm_fifo_base import *
-from ..base.uvm_mailbox import UVMMailbox
-
-
 """
 Title: TLM FIFO Classes
 
@@ -33,15 +27,19 @@ This section defines TLM-based FIFO classes.
 
 """
 
+from .uvm_tlm_fifo_base import *
+from ..base.uvm_mailbox import UVMMailbox
+
 
 class UVMTLMFIFO(UVMTLMFIFOBase):
     """
     Class: UVMTLMFIFO
 
     This class provides storage of transactions between two independently running
-    processes. Transactions are put into the FIFO via the `put_export`.
+    processes. Transactions are put into the FIFO via the `UVMTLMFIFOBase.put_export`.
     transactions are fetched from the FIFO in the order they arrived via the
-    `get_peek_export`. The `put_export` and `get_peek_export` are inherited from
+    `get_peek_export`. The `UVMTLMFIFOBase.put_export` and `UVMTLMFIFOBase.get_peek_export`
+    are inherited from
     the `UVMTLMFIFOBase` super class, and the interface methods provided by
     these exports are defined by the `TLMIFBaseClass` class.
     """
@@ -51,16 +49,15 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
 
     def __init__(self, name, parent=None, size=1):
         """
-          Function: new
+        The `name` and `parent` are the normal uvm_component constructor arguments.
+        The `parent` should be `null` if the <uvm_tlm_fifo#(T)> is going to be used in a
+        statically elaborated construct (e.g., a module). The `size` indicates the
+        maximum size of the FIFO; a value of zero indicates no upper bound.
 
-          The `name` and `parent` are the normal uvm_component constructor arguments.
-          The `parent` should be `null` if the <uvm_tlm_fifo#(T)> is going to be used in a
-          statically elaborated construct (e.g., a module). The `size` indicates the
-          maximum size of the FIFO; a value of zero indicates no upper bound.
         Args:
             name: Name of the component
             parent: Parent of the component
-            size:
+            size (int): Size of the TLM FIFO.
         """
         UVMTLMFIFOBase.__init__(self, name, parent)
         self.m = UVMMailbox(size)
@@ -72,11 +69,10 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
 
     def size(self):
         """
-          Function: size
+        Returns the capacity of the FIFO, the number of entries
+        the FIFO is capable of holding. A return value of 0 indicates the
+        FIFO capacity has no limit.
 
-          Returns the capacity of the FIFO, the number of entries
-          the FIFO is capable of holding. A return value of 0 indicates the
-          FIFO capacity has no limit.
         Returns:
             int: Capacity of the FIFO
         """
@@ -149,11 +145,8 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
 
     def flush(self):
         """
-          Function: flush
-
-          Removes all entries from the FIFO, after which `used` returns 0
-          and `is_empty` returns 1.
-        #
+        Removes all entries from the FIFO, after which `used` returns 0
+        and `is_empty` returns 1.
         """
         t = []
         r = 1
@@ -181,14 +174,14 @@ class UVMTLMAnalysisFIFO(UVMTLMFIFO):
 
     def __init__(self, name, parent=None):
         """
-        This is the standard uvm_component constructor. `name` is the local name
+        This is the standard `UVMComponent` constructor. `name` is the local name
         of this component. The `parent` should be left unspecified when this
         component is instantiated in statically elaborated constructs and must be
         specified when this component is a child of another UVM component.
 
         Args:
-            name: Name of the component
-            parent: Parent of the component
+            name (str): Name of the component
+            parent (UVMComponent): Parent of the component
         """
         UVMTLMFIFO.__init__(self, name, parent, 0)  # analysis fifo must be unbounded
         #  // Port: analysis_export #(T)
