@@ -41,7 +41,7 @@ class TestUVMObject(unittest.TestCase):
         self.assertEqual(comp.get_name(), "my_component")
 
     def test_inst_count(self):
-        UVMObject.inst_id_count = 0
+        UVMObject.m_inst_count = 0
         comp = UVMObject("my_component")
         self.assertEqual(comp.get_inst_count(), 1)
 
