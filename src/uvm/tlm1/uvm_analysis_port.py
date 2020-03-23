@@ -20,16 +20,15 @@
 #   the License for the specific language governing
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
-
-from ..base.uvm_port_base import *
-from .uvm_tlm_imps import *
-
 """
 Analysis Ports
 
 This section defines the port, export, and imp classes used for transaction
 analysis.
 """
+
+from ..base.uvm_port_base import *
+from .uvm_tlm_imps import *
 
 
 class UVMAnalysisPort(UVMPortBase):
@@ -62,7 +61,7 @@ class UVMAnalysisPort(UVMPortBase):
         Method: write
         Send specified value to all connected interface
         Args:
-            t: Transaction to broadcast.
+            t (any): Transaction to broadcast.
         """
         for i in range(0, self.size()):
             tif = self.get_if(i)
@@ -70,8 +69,6 @@ class UVMAnalysisPort(UVMPortBase):
                 uvm_report_fatal("NTCONN", ("No uvm_tlm interface is connected to ",
                   + self.get_full_name() + " for executing write()"), UVM_NONE)
             tif.write(t)
-
-    #endclass
 
 
 class UVMAnalysisImp:
@@ -101,26 +98,26 @@ class UVMAnalysisImp:
     def write(self, t):
         """
         Args:
-            t: Transaction to write.
+            t (any): Transaction to write.
         """
         self.m_imp.write(t)
 
 UVMAnalysisImp = UVM_IMP_COMMON(UVMAnalysisImp, UVM_TLM_ANALYSIS_MASK, "uvm_analysis_imp")
 
-#------------------------------------------------------------------------------
-# Class: uvm_analysis_export
-#
-# Exports a lower-level <uvm_analysis_imp> to its parent.
-#------------------------------------------------------------------------------
 
 class UVMAnalysisExport(UVMPortBase):
+    """
+    Exports a lower-level `UVMAnalysisImp` to its parent. Export can be used to
+    avoid long hierarchical paths like top.env.agent.monitor.
+    """
 
     def __init__(self, name, parent=None):
         """
         Instantiate the export.
+
         Args:
-            name: Name of the export.
-            parent: Parent component.
+            name (str): Name of the export.
+            parent (UVMComponent): Parent component.
         """
         UVMPortBase.__init__(self, name, parent, UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS)
         self.m_if_mask = UVM_TLM_ANALYSIS_MASK
@@ -133,6 +130,7 @@ class UVMAnalysisExport(UVMPortBase):
         Analysis port differs from other ports in that it broadcasts
         to all connected interfaces. Ports only send to the interface
         at the index specified in a call to set_if (0 by default).
+
         Args:
             t: Transaction to broadcast.
         """
@@ -142,38 +140,3 @@ class UVMAnalysisExport(UVMPortBase):
                 uvm_report_fatal("NTCONN", ("No uvm_tlm interface is connected to "
                     + self.get_full_name() + " for executing write()"), UVM_NONE)
             tif.write(t)
-
-
-import unittest
-
-class TestUVMAnalysisPort(unittest.TestCase):
-
-    def test_ports(self):
-        from ..base.uvm_domain import UVMDomain
-        from ..base.uvm_component import UVMComponent
-        domains = UVMDomain.get_common_domain()
-
-        class MyComp(UVMComponent):
-            def build(self):
-                self.analysis_imp = UVMAnalysisImp('ap', self)
-
-            def write(self, t):
-                self.written = True
-                self.t = t
-
-        imp = UVMComponent("port_parent", None)
-        analysis_port = UVMAnalysisPort('aport', None)
-        analysis_export = UVMAnalysisExport('my_export_in_test1', imp)
-        targetComp = MyComp('my_comp', None)
-        targetComp.build()
-        analysis_port.connect(analysis_export)
-        analysis_export.connect(targetComp.analysis_imp)
-        #analysis_port.connect(targetComp.analysis_imp)
-        analysis_port.resolve_bindings()
-
-        analysis_port.write(12345)
-        self.assertEqual(targetComp.written, True)
-        self.assertEqual(targetComp.t, 12345)
-
-if __name__ == '__main__':
-    unittest.main()
