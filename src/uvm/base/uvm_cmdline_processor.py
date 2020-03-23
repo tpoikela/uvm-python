@@ -337,7 +337,7 @@ class UVMCmdlineProcessor(UVMReportObject):
                                                               #doesn't match +barfoo
             uvm_cmdline_proc.get_arg_matches("/foo/",myargs)) #matches +foo, +foobar,
                                                               #foo.sv, barfoo, etc.
-            uvm_cmdline_proc.get_arg_matches("/^foo.*\.sv",myargs)) #matches foo.sv
+            uvm_cmdline_proc.get_arg_matches("/^foo.*\\.sv",myargs)) #matches foo.sv
                                                                     #and foo123.sv,
                                                                     #not barfoo.sv.
         Args:
