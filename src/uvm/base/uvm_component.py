@@ -1931,6 +1931,48 @@ class UVMComponent(UVMReportObject):
     #                                         string desc="",
     #                                         time   error_time=0,
     #                                         bit    keep_active=0)
+    def record_error_tr(self, stream_name="main", info=None, label="error_tr", desc="",
+            error_time=0, keep_active=0):
+        recorder = None  # uvm_recorder
+        etype = ""
+        handle = 0
+        stream = None  # uvm_tr_stream
+        db = self.m_get_tr_database()  # uvm_tr_database
+
+        if keep_active:
+            etype = "Event, Link"
+        else:
+            etype = "Event"
+
+        if error_time == 0:
+            error_time = sv.realtime()
+
+        if (stream_name == "" or stream_name == "main"):
+            if self.m_main_stream is None:
+                self.m_main_stream = self.tr_database.open_stream("main", self.get_full_name(), "TVM")
+            stream = self.m_main_stream
+        else:
+            stream = self.get_tr_stream(stream_name)
+
+        handle = 0
+        if stream is not None:
+            recorder = stream.open_recorder(label, error_time, etype)
+
+            if recorder is not None:
+                if label != "":
+                    recorder.record_string("label", label)
+                if desc != "":
+                    recorder.record_string("desc", desc)
+                if info is not None:
+                    info.record(recorder)
+
+                recorder.close(error_time)
+
+                if keep_active == 0:
+                    recorder.free()
+                else:
+                    handle = recorder.get_handle()
+        return handle
 
 
     #// Function: record_event_tr
@@ -1950,11 +1992,52 @@ class UVMComponent(UVMReportObject):
     #                                         string desc="",
     #                                         time   event_time=0,
     #                                         bit    keep_active=0)
+    def record_event_tr(self, stream_name="main", info=None, label="event_tr",
+            desc="", event_time=0,keep_active=0):
+        recorder = None  # uvm_recorder
+        etype = ""
+        handle = 0
+        stream = None  # uvm_tr_stream
+        db = self.m_get_tr_database()  # uvm_tr_database
+
+        if keep_active:
+            etype = "Event, Link"
+        else:
+            etype = "Event"
+
+        if event_time == 0:
+            event_time = sv.realtime()
+
+        if (stream_name == "" or stream_name=="main"):
+            if self.m_main_stream is None:
+                self.m_main_stream = self.tr_database.open_stream("main", self.get_full_name(), "TVM")
+            stream = self.m_main_stream
+        else:
+            stream = self.get_tr_stream(stream_name)
+
+        handle = 0
+        if stream is not None:
+            recorder = stream.open_recorder(label, event_time, etype)
+
+            if recorder is not None:
+                if label != "":
+                    recorder.record_string("label", label)
+                if desc != "":
+                    recorder.record_string("desc", desc)
+                if info is not None:
+                    info.record(recorder)
+
+                recorder.close(event_time)
+
+                if keep_active == 0:
+                    recorder.free()
+                else:
+                    handle = recorder.get_handle()
+        return handle
+
 
     def get_tr_stream(self, name, stream_type_name=""):
         """
-        Returns a tr stream with `this` component's full name as a scope.
-
         Streams which are retrieved via this method will be stored internally,
         such that later calls to `get_tr_stream` will return the same stream
         reference.
@@ -1962,11 +2045,11 @@ class UVMComponent(UVMReportObject):
         The stream can be removed from the internal storage via a call
         to `free_tr_stream`.
 
-        Parameters:
         Args:
             name (str):Name for the stream
             stream_type_name: Type name for the stream (Default = "")
         Returns:
+            UVMTrStream: Stream with this component's full name as scope.
         """
         db = self.m_get_tr_database()  # uvm_tr_database
         if name not in self.m_streams:
@@ -1984,7 +2067,30 @@ class UVMComponent(UVMReportObject):
     #// <uvm_tr_stream>.  If the current stream is open (or closed),
     #// then it will be freed.
     #extern virtual function void free_tr_stream(uvm_tr_stream stream)
+    def free_tr_stream(self, stream):
+        # Check the None case...
+        if stream is None:
+            return
 
+        str_name = stream.get_name()
+        str_type_name = stream.get_stream_type_name()
+        # Then make sure this name/type_name combo exists
+        if (str_name not in self.m_streams or str_type_name not in
+                self.m_streams[str_name]):
+            return
+
+        # Then make sure this name/type_name combo is THIS stream
+        if self.m_streams[str_name][str_type_name] != stream:
+            return
+
+        # Then delete it from the arrays
+        del self.m_streams[str_name][str_type_name]
+        if len(self.m_streams[str_name]) == 0:
+            del self.m_streams.delete[str_name]
+
+        # Finally, free the stream if necessary
+        if stream.is_open() or stream.is_closed():
+            stream.free()
 
 
     def m_get_tr_database(self):
@@ -2694,160 +2800,8 @@ class UVMComponent(UVMReportObject):
 #endtask
 #
 #
-#//------------------------------------------------------------------------------
-#//
-#// Recording interface
-#//
-#//------------------------------------------------------------------------------
 #
 #
-#
-#
-#
-#// free_tr_stream
-#// --------------
-#function void uvm_component::free_tr_stream(uvm_tr_stream stream)
-#   // Check the None case...
-#   if (stream is None)
-#     return
-#
-#   // Then make sure this name/type_name combo exists
-#   if (!m_streams.exists(stream.get_name()) ||
-#       !m_streams[stream.get_name()].exists(stream.get_stream_type_name()))
-#     return
-#
-#   // Then make sure this name/type_name combo is THIS stream
-#   if (m_streams[stream.get_name()][stream.get_stream_type_name()] != stream)
-#     return
-#
-#   // Then delete it from the arrays
-#   m_streams[stream.get_name()].delete(stream.get_type_name())
-#   if (m_streams[stream.get_name()].size() == 0)
-#     m_streams.delete(stream.get_name())
-#
-#   // Finally, free the stream if necessary
-#   if (stream.is_open() || stream.is_closed()):
-#      stream.free()
-#   end
-#endfunction : free_tr_stream
-#
-#
-
-#
-#
-#// record_error_tr
-#// ---------------
-#
-#function integer uvm_component::record_error_tr (string stream_name="main",
-#                                                 uvm_object info=None,
-#                                                 string label="error_tr",
-#                                                 string desc="",
-#                                                 time   error_time=0,
-#                                                 bit    keep_active=0)
-#   uvm_recorder recorder
-#   string etype
-#   uvm_tr_stream stream
-#   uvm_tr_database db = m_get_tr_database()
-#   integer handle
-#
-#   if(keep_active) etype = "Error, Link"
-#   else etype = "Error"
-#
-#   if(error_time == 0) error_time = $realtime
-#
-#   if ((stream_name=="") || (stream_name=="main")):
-#      if (m_main_stream is None)
-#        m_main_stream = self.tr_database.open_stream("main", this.get_full_name(), "TVM")
-#      stream = m_main_stream
-#   end
-#   else
-#     stream = get_tr_stream(stream_name)
-#
-#   handle = 0
-#   if (stream is not None):
-#
-#      recorder = stream.open_recorder(label,
-#                                    error_time,
-#                                    etype)
-#
-#      if (recorder is not None):
-#         if (label != "")
-#           recorder.record_string("label", label)
-#         if (desc != "")
-#           recorder.record_string("desc", desc)
-#         if (infois not None)
-#           info.record(recorder)
-#
-#         recorder.close(error_time)
-#
-#         if (keep_active == 0):
-#            recorder.free()
-#         end
-#         else begin
-#            handle = recorder.get_handle()
-#         end
-#      end // if (recorder is not None)
-#   end // if (stream is not None)
-#
-#   return handle
-#endfunction
-#
-#
-#// record_event_tr
-#// ---------------
-#
-#function integer uvm_component::record_event_tr (string stream_name="main",
-#                                                 uvm_object info=None,
-#                                                 string label="event_tr",
-#                                                 string desc="",
-#                                                 time   event_time=0,
-#                                                 bit    keep_active=0)
-#   uvm_recorder recorder
-#   string etype
-#   integer handle
-#   uvm_tr_stream stream
-#   uvm_tr_database db = m_get_tr_database()
-#
-#  if(keep_active) etype = "Event, Link"
-#  else etype = "Event"
-#
-#   if(event_time == 0) event_time = $realtime
-#
-#   if ((stream_name=="") || (stream_name=="main")):
-#      if (m_main_stream is None)
-#        m_main_stream = self.tr_database.open_stream("main", this.get_full_name(), "TVM")
-#      stream = m_main_stream
-#   end
-#   else
-#     stream = get_tr_stream(stream_name)
-#
-#   handle = 0
-#   if (stream is not None):
-#      recorder = stream.open_recorder(label,
-#                                    event_time,
-#                                    etype)
-#
-#      if (recorder is not None):
-#         if (label != "")
-#           recorder.record_string("label", label)
-#         if (desc != "")
-#           recorder.record_string("desc", desc)
-#         if (infois not None)
-#           info.record(recorder)
-#
-#         recorder.close(event_time)
-#
-#         if (keep_active == 0):
-#            recorder.free()
-#         end
-#         else begin
-#            handle = recorder.get_handle()
-#         end
-#      end // if (recorder is not None)
-#   end // if (stream is not None)
-#
-#   return handle
-#endfunction
 #
 #
 #//------------------------------------------------------------------------------
