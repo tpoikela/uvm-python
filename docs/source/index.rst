@@ -10,6 +10,7 @@ version 1.2 to `Python <https://python.org>`_ and the
    :maxdepth: 2
 
    uvm_1.2_class_reference
+   uvm_users_guide_1.2
 
 
 Indices and tables
