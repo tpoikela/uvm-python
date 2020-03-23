@@ -52,8 +52,9 @@ class UVMObject(sv_obj):
     instance name.
     """
 
+    m_inst_count = 0
 
-    inst_id_count = 0
+    m_inst_count = 0
     use_uvm_seeding = True
     uvm_global_copy_map = {}  # dict UVMObject[UVMObject]
     _m_uvm_status_container = UVMStatusContainer()
@@ -64,8 +65,8 @@ class UVMObject(sv_obj):
         """
         sv_obj.__init__(self)
         self.name = name
-        self.inst_id = UVMObject.inst_id_count
-        UVMObject.inst_id_count += 1
+        self.inst_id = UVMObject.m_inst_count
+        UVMObject.m_inst_count += 1
         self.leaf_name = name
 
 
@@ -136,13 +137,13 @@ class UVMObject(sv_obj):
             simulation. The instance counter is used to form a unique numeric instance
             identifier.
         """
-        return UVMObject.inst_id_count
+        return UVMObject.m_inst_count
 
     def get_type(self):
         """
         Function: get_type
 
-        Returns the type-proxy (wrapper) for this object. The `uvm_factory`'s
+        Returns the type-proxy (wrapper) for this object. The `UVMFactory`'s
         type-based override and creation methods take arguments of
         `uvm_object_wrapper`. This method, if implemented, can be used as convenient
         means of supplying those arguments.
@@ -265,7 +266,7 @@ class UVMObject(sv_obj):
               return t
 
         Args:
-            name:
+            name (str): Name of the created object.
         Returns:
             obj: New object.
         """
@@ -279,6 +280,7 @@ class UVMObject(sv_obj):
         virtual, derived classes may override this implementation if desired.
 
         Returns:
+            UVMObject: Clone of the object.
         """
         tmp = self.create(self.get_name())
         if tmp is None:
@@ -577,10 +579,10 @@ class UVMObject(sv_obj):
         Returns:
             bool: True if objects match, False otherwise.
         """
-        t = 0
+        # t = 0
         dc = 0
         #static int style
-        style = 0
+        # style = 0
         done = 0
         cls = UVMObject
         if comparer is not None:

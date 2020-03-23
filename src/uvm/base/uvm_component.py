@@ -63,11 +63,11 @@ class VerbositySetting:
     """
     The verbosity settings may have a specific phase to start at.
     We will do this work in the phase_started callback.
-    :ivar UVMComponent comp:
-    :ivar UVMPhase phase:
-    :ivar int id:
-    :ivar int offset:
-    :ivar int verbosity:
+        :ivar UVMComponent comp: Component related to the settings
+        :ivar UVMPhase phase: Phase in which settings apply.
+        :ivar int id: ID for verbosity setting
+        :ivar int offset: Time offset for verbosity setting
+        :ivar int verbosity: Verbosity level of the setting.
     """
     def __init__(self):
         self.comp = ""
@@ -109,27 +109,31 @@ class UVMComponent(UVMReportObject):
     addition to the features inherited from `UVMObject` and `UVMReportObject`,
     uvm_component provides the following interfaces:
 
-    Hierarchy - provides methods for searching and traversing the component
-        hierarchy.
+    Hierarchy:
+      provides methods for searching and traversing the component hierarchy.
 
-    Phasing - defines a phased test flow that all components follow, with a
-        group of standard phase methods and an API for custom phases and
-        multiple independent phasing domains to mirror DUT behavior e.g. power
+    Phasing
+      defines a phased test flow that all components follow, with a
+      group of standard phase methods and an API for custom phases and
+      multiple independent phasing domains to mirror DUT behavior e.g. power
 
-    Reporting - provides a convenience interface to the `UVMReportHandler`. All
-        messages, warnings, and errors are processed through this interface.
+    Reporting
+      provides a convenience interface to the `UVMReportHandler`. All
+      messages, warnings, and errors are processed through this interface.
 
-    Transaction recording - provides methods for recording the transactions
+    Transaction recording
+        provides methods for recording the transactions
         produced or consumed by the component to a transaction database (vendor
         specific).
 
-    Factory - provides a convenience interface to the <uvm_factory>. The factory
+    Factory
+        provides a convenience interface to the `UVMFactory`. The factory
         is used to create new components and other objects based on type-wide and
         instance-specific configuration.
 
-    The uvm_component is automatically seeded during construction using UVM
+    The `UVMComponent` is automatically seeded during construction using UVM
     seeding, if enabled. All other objects must be manually reseeded, if
-    appropriate. See <uvm_object::reseed> for more information.
+    appropriate. See `UVMObject.reseed` for more information.
 
     Most local methods within the class are prefixed with m_, indicating they are
     not user-level methods.
@@ -148,20 +152,20 @@ class UVMComponent(UVMReportObject):
 
     def __init__(self, name, parent):
         """
-         Creates a new component with the given leaf instance `name` and handle
-         to its `parent`.  If the component is a top-level component (i.e. it is
-         created in a static module or interface), `parent` should be `None`.
+        Creates a new component with the given leaf instance `name` and handle
+        to its `parent`.  If the component is a top-level component (i.e. it is
+        created in a static module or interface), `parent` should be `None`.
 
-         The component will be inserted as a child of the `parent` object, if any.
-         If `parent` already has a child by the given `name`, an error is produced.
+        The component will be inserted as a child of the `parent` object, if any.
+        If `parent` already has a child by the given `name`, an error is produced.
 
-         If `parent` is `None`, then the component will become a child of the
-         implicit top-level component, `uvm_top`.
+        If `parent` is `None`, then the component will become a child of the
+        implicit top-level component, `uvm_top`.
 
-         All classes derived from uvm_component must call super.new(name,parent).
+        All classes derived from uvm_component must call super.new(name,parent).
         Args:
-            name:
-            parent:
+            name (str): Name of the component.
+            parent (UVMComponent): Parent component.
         """
         super().__init__(name)
         self.m_children = {}  # uvm_component[string]
@@ -217,8 +221,7 @@ class UVMComponent(UVMReportObject):
         common = UVMDomain.get_common_domain()
         bld = common.find(UVMBuildPhase.get())
         if bld is None:
-            uvm_fatal("COMP/INTERNAL",
-                    "attempt to find build phase object failed",UVM_NONE)
+            uvm_fatal("COMP/INTERNAL", "attempt to find build phase object failed")
         if bld.get_state() == UVM_PHASE_DONE:
             parent_name = top.get_full_name()
             if parent is not None:
@@ -227,7 +230,7 @@ class UVMComponent(UVMReportObject):
                 name + "' under '" + parent_name + "') after the build phase has ended."))
 
         if name == "":
-            name = "COMP_" + UVMObject.inst_count
+            name = "COMP_" + str(UVMObject.m_inst_count)
 
         if parent == self:
             uvm_fatal("THISPARENT",
@@ -2086,7 +2089,7 @@ class UVMComponent(UVMReportObject):
         # Then delete it from the arrays
         del self.m_streams[str_name][str_type_name]
         if len(self.m_streams[str_name]) == 0:
-            del self.m_streams.delete[str_name]
+            del self.m_streams[str_name]
 
         # Finally, free the stream if necessary
         if stream.is_open() or stream.is_closed():
@@ -2152,8 +2155,13 @@ class UVMComponent(UVMReportObject):
         self.resolve_bindings()
 
     #extern                   function void do_flush()
+    def do_flush(self):
+        for c in self.m_children:
+            self.m_children[c].do_flush()
+        self.flush()
 
-    #extern virtual           function void flush ()
+
+    #extern virtual function void flush ()
     def flush(self):
         pass
 
@@ -2187,10 +2195,12 @@ class UVMComponent(UVMReportObject):
 
     def create(self, name=""):
         """
-        Overridden to disable.
+        Overridden to disable component creation using this method.
+
         Args:
-            name:
+            name (str): Name of the component.
         Returns:
+            None - Create cannot be called on `UVMComponent`
         """
         uvm_error("ILLCRT",
             "create cannot be called on a uvm_component. Use create_component instead.")
@@ -2199,23 +2209,26 @@ class UVMComponent(UVMReportObject):
 
     def clone(self):
         """
+        Components cannot be cloned. Added this to show `uvm_error` whenever a
+        cloning is attempted.
+
         Returns:
+            None - Components cannot be cloned.
         """
         uvm_error("ILLCLN", sv.sformatf(CLONE_ERR, self.get_full_name()))
         return None
 
-    #local uvm_tr_stream m_main_stream
 
     def m_begin_tr(self, tr, parent_handle=0, stream_name="main", label="",
             desc="", begin_time=0):
         """
         Args:
-            tr:
+            tr (UVMTransaction):
             parent_handle:
-            stream_name:
-            label:
-            desc:
-            begin_time:
+            stream_name (str):
+            label (str):
+            desc (str):
+            begin_time (int):
         Returns:
         """
         e = None  # uvm_event#(uvm_object) e
@@ -2346,7 +2359,7 @@ class UVMComponent(UVMReportObject):
             len_match = len(args) not in [4, 5]
             setting.verbosity = clp.m_convert_verb(args[2])
             if UVMComponent.first_m_set_cl_verb and (len_match or setting.verbosity == -1):
-                values.delete(i)
+                del values[i]
             else:
                 setting.comp = args[0]
                 setting.id = args[1]
@@ -2421,7 +2434,7 @@ class UVMComponent(UVMReportObject):
                 uvm_split_string(values[idx], ",", args)
 
                 if len(args) != 4:
-                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN1, args.size(), values[idx]))
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN1, len(args), values[idx]))
 
                 if((args[2] != "_ALL_") and not uvm_string_to_severity(args[2], sev)):
                     uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN2, args[2], values[idx]))
@@ -2481,7 +2494,7 @@ class UVMComponent(UVMReportObject):
                 args = []  # string[$]
                 uvm_split_string(values[idx], ",", args)
                 if len(args) != 4:
-                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN4, args.size(), values[idx]))
+                    uvm_warning("INVLCMDARGS", sv.sformatf(INV_WARN4, len(args), values[idx]))
                     continue
 
                 if args[2] != "_ALL_" and not uvm_string_to_severity(args[2], orig_sev):
@@ -2573,7 +2586,7 @@ class UVMComponent(UVMReportObject):
                     #end join_none
                     #p.set_randstate(p_rand)
                 # Remove after use
-                self.m_verbosity_settings.delete(i)
+                del self.m_verbosity_settings[i]
 
     def kill(self):
         """
@@ -2587,33 +2600,12 @@ class UVMComponent(UVMReportObject):
 
 
 #//------------------------------------------------------------------------------
-#// IMPLEMENTATION
-#//------------------------------------------------------------------------------
-#
-#//------------------------------------------------------------------------------
-#//
-#// CLASS- uvm_component
-#//
-#//------------------------------------------------------------------------------
-#
-#
-#
-#
-#//------------------------------------------------------------------------------
 #//
 #// Hierarchy Methods
 #//
 #//------------------------------------------------------------------------------
 #
 #
-#// do_flush  (flush_hier?)
-#// --------
-#
-#function void uvm_component::do_flush()
-#  foreach( m_children[s] )
-#    m_children[s].do_flush()
-#  flush()
-#endfunction
 #
 #
 #
