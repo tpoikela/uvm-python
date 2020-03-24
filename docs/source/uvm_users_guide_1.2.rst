@@ -4,53 +4,56 @@ Universal Verification Methodology (UVM) 1.2 User’s Guide
 
 **March 23, 2020**
 
-*Copyright © 2011 - 2015 Accellera. All rights reserved.*
+Mandatory copyrights::
 
-
-Copyright\ :sup:`©` 2011 - 2015 Accellera Systems Initiative
-(Accellera). All rights reserved.
-
-Accellera Systems Initiative, 8698 Elk Grove Bldv Suite 1, #114, Elk
-Grove, CA 95624, USA
-
-Copyright\ :sup:`©` 2013 - 2015 Advanced Micro Devices, Inc. All
-rights reserved.
-
-Advanced Micro Devices (AMD), 7171 Southwest Parkway, Austin, TX
-78735
-
-Copyright\ :sup:`©` 2011 - 2015 Cadence Design Systems,
-Inc. (Cadence). All rights reserved.
-
-Cadence Design Systems, Inc., 2655 Seely Ave., San Jose, CA 95134,
-USA.
-
-Copyright\ :sup:`©` 2011 - 2015 Mentor Graphics, Corp. (Mentor). All
-rights reserved.
-
-Mentor Graphics, Corp., 8005 SW Boeckman Rd., Wilsonville, OR 97070,
-USA
-
-Copyright\ :sup:`©` 2013 - 2015 NVIDIA CORPORATION. All rights
-reserved.
-
-NVIDIA Corporation, 2701 San Tomas Expy, Santa Clara, CA 95050
-
-Copyright\ :sup:`©` 2011 - 2015 Synopsys, Inc. (Synopsys). All rights
-reserved.
-
-Synopsys, Inc., 690 E. Middlefield Rd, Mountain View, CA 94043
-
-*Copyright © 2019 - 2020 Tuomas Poikela. All rights reserved.*
+    *Copyright © 2011 - 2015 Accellera. All rights reserved.*
+    
+    Copyright\ :sup:`©` 2011 - 2015 Accellera Systems Initiative
+    (Accellera). All rights reserved.
+    
+    Accellera Systems Initiative, 8698 Elk Grove Bldv Suite 1, #114, Elk
+    Grove, CA 95624, USA
+    
+    Copyright\ :sup:`©` 2013 - 2015 Advanced Micro Devices, Inc. All
+    rights reserved.
+    
+    Advanced Micro Devices (AMD), 7171 Southwest Parkway, Austin, TX
+    78735
+    
+    Copyright\ :sup:`©` 2011 - 2015 Cadence Design Systems,
+    Inc. (Cadence). All rights reserved.
+    
+    Cadence Design Systems, Inc., 2655 Seely Ave., San Jose, CA 95134,
+    USA.
+    
+    Copyright\ :sup:`©` 2011 - 2015 Mentor Graphics, Corp. (Mentor). All
+    rights reserved.
+    
+    Mentor Graphics, Corp., 8005 SW Boeckman Rd., Wilsonville, OR 97070,
+    USA
+    
+    Copyright\ :sup:`©` 2013 - 2015 NVIDIA CORPORATION. All rights
+    reserved.
+    
+    NVIDIA Corporation, 2701 San Tomas Expy, Santa Clara, CA 95050
+    
+    Copyright\ :sup:`©` 2011 - 2015 Synopsys, Inc. (Synopsys). All rights
+    reserved.
+    
+    Synopsys, Inc., 690 E. Middlefield Rd, Mountain View, CA 94043
+    
+    *Copyright © 2019 - 2020 Tuomas Poikela. All rights reserved.*
 
 This product is licensed under the Apache Software Foundation’s
 Apache License, Version 2.0, January 2004. The full license is
 available at: http://www.apache.org/licenses/.
 
-**Notices**
 
-**WARNING**: This is semi-manual translation from the original 
-[UVM 1.2 User's Guide](http://www.accellera.org/images//downloads/standards/uvm/uvm_users_guide_1.2.pdf)
+**WARNING**: This is semi-manual translation from the original SystemVerilog
+`UVM 1.2 User's Guide <http://www.accellera.org/images//downloads/standards/uvm/uvm_users_guide_1.2.pdf>`
+to uvm-python. It is work-in-progress.
+
+**Notices**
 
 While this guide offers a set of instructions to perform one or more
 specific verification tasks, it should be supplemented by education,
@@ -98,9 +101,9 @@ all possible testbench architectures or every type use of UVM in the
 electronic design automation (EDA) industry.
 
 .. figure:: fig/01_typical_uvm_tb_architecture.png
-    :width: 400px
+    :width: 830px
     :align: center
-    :height: 200px
+    :height: 698px
     :alt: alternate text
     :figclass: align-center
 
@@ -394,13 +397,17 @@ information is needed to model a unit of communication between two
 components. In the most basic example, a simple bus protocol
 transaction to transfer information would be modeled as follows::
 
-    class simple_trans extends uvm_sequence_item;
+    class(UVMSequenceItem);
+        def __init__(self, name):
+            super().__init__(name)
+            data = 0
+            self.rand('data')
+            self.addr = 0x0
+            self.rand('addr')
+            self.kind = WRITE
+            self.rand('kind', [WRITE, READ])
+            # constraint c1 { addr < 16’h2000; } ...
 
-        rand data_t data;
-        rand addr_t addr;
-        rand enum {WRITE,READ} kind;
-        constraint c1 { addr < 16’h2000; } ...
-    endclass
 
 The transaction object includes variables, constraints, and other
 fields and methods necessary for generating and operating on the
@@ -434,30 +441,29 @@ called.
 The most basic transaction-level operation allows one component to
 *put* a transaction to another. Consider Figure 4.
 
+.. figure:: fig/04_single_producer_consumer.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-
-producer consumer
-
-**Figure 4—Single Producer/Consumer**
+    Single Producer/Consumer
 
 The square box on the producer indicates a port and the circle on the
 consumer indicates the export. The producer generates transactions
 and sends them out its put_port::
 
-class producer extends uvm_component;
+    class producer (UVMComponent);
 
-    uvm_blocking_put_port #(simple_trans) put_port; // 1 parameter
-    function new( string name, uvm_component parent);
-        put_port = new(“put_port”, this); ...
-    endfunction
-   
-    virtual task run();
-        simple_trans t;
-        for(int i = 0; i < N; i++) begin
-        // Generate t.
-        put_port.put(t);
-        end
-     endtask
+        def __init__(self, name, parent);
+            super().__init__(name, parent)
+            self.put_port = UVMBlockingPutPort(“put_port”, self); ...
+        endfunction
+       
+        async run(self):
+            for _ in range(N):
+                t = simple_trans()
+                # Generate t.
+                await self.put_port.put(t);
 
 NOTE—The uvm_*_port is parameterized by the transaction type that
 will be communicated. This may either be specified directly or it may
@@ -466,7 +472,7 @@ be a parameter of the parent component.
 The actual implementation of the put() call is supplied by the
 consumer::
 
-    class consumer extends uvm_component;
+    class consumer (UVMComponent);
 
         uvm_blocking_put_imp #(simple_trans, consumer) put_export;
         // 2 parameters ...
@@ -493,14 +499,17 @@ interfaces are well defined.
 
 The converse operation to put is *get*. Consider Figure 5.
 
+.. figure:: fig/05_consumer_gets_from_producer.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-
-**Figure 5—Consumer gets from Producer**
+    Consumer gets from Producer
 
 In this case, the consumer requests transactions from the producer
 via its get port::
 
-    class get_consumer extends uvm_component;
+    class get_consumer (UVMComponent);
 
     uvm_blocking_get_port #(simple_trans) get_port;
     function new( string name, uvm_component parent);
@@ -517,7 +526,7 @@ via its get port::
 
 The get() implementation is supplied by the producer::
 
-    class get_producer extends uvm_component;
+    class get_producer (UVMComponent);
         uvm_blocking_get_imp #(simple_trans, get_producer) get_export; ...
         task get(output simple_trans t);
             simple_trans tmp = new(); // Assign values to tmp. t = tmp;
@@ -546,8 +555,12 @@ the TLM interface methods, so the producer puts the transaction into
 the uvm_tlm_fifo, while the consumer independently gets the
 transaction from the fifo, as shown in Figure 6.
 
+.. figure:: fig/06_using_uvm_tlm_fifo.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**Figure 6—Using a uvm_tlm_fifo**
+    Using a uvm_tlm_fifo
 
 When the producer puts a transaction into the fifo, it will block if the
 fifo is full, otherwise it will put the object into the fifo and return
@@ -573,14 +586,19 @@ In contrast, a *nonblocking* call returns immediately\ *.* The semantics
 of a nonblocking call guarantee that the call returns in the same delta
 cycle in which it was issued, that is, without consuming any time, not
 even a single delta cycle. In UVM, nonblocking calls are modeled as
-functions.
+functions::
 
-class consumer extends uvm_component;
+    class consumer (UVMComponent);
 
-uvm_get_port #(simple_trans) get_port; task run;
+        uvm_get_port #(simple_trans) get_port;
 
-... for(int i=0; i<10; i++) if(get_port.try_get(t)) //Do something with
-t. ... endtask endclass
+        task run;
+            ...
+            for(int i=0; i<10; i++)
+                if(get_port.try_get(t)) //Do something with t.
+                ...
+         endtask
+     endclass
 
 If a transaction exists, it will be returned in the argument and the
 function call itself will return TRUE. If no transaction exists, the
@@ -607,10 +625,9 @@ target’s implementation. Thus, when a component calls::
 
 consumer
 
+the connection means that it actually calls::
 
-the connection means that it actually calls
-
-target.put_export.put(t);
+    target.put_export.put(t);
 
 where target is the connected component.
 
@@ -619,16 +636,18 @@ where target is the connected component.
 
 When connecting components at the same level of hierarchy, ports are
 always connected to exports. All connect() calls between components
-are done in the parent’s connect() method.
+are done in the parent’s connect() method::
 
-class my_env extends uvm_env;
+    class my_env extends uvm_env;
 
-... virtual function void connect_phase(uvm_phase phase);
-
-// component.port.connect(target.export);
-producer.blocking_put_port.connect(fifo.put_export);
-get_consumer.get_port.connect(fifo.get_export); ... endfunction
-endclass
+        ...
+        virtual function void connect_phase(uvm_phase phase);
+            // component.port.connect(target.export);
+            producer.blocking_put_port.connect(fifo.put_export);
+            get_consumer.get_port.connect(fifo.get_export);
+            ...
+        endfunction
+    endclass
 
 2.3.1.8 Port/Export Compatibility
 ---------------------------------
@@ -664,7 +683,12 @@ Making connections across hierarchical boundaries involves some
 additional issues, which are discussed in this section. Consider the
 hierarchical design shown in Figure 7.
 
-**Figure 7—Hierarchy in TLM**
+.. figure:: fig/07_hierarchy_in_tlm.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    Hierarchy in TLM
 
 The hierarchy of this design contains two components, producer and
 consumer. producer contains three components, stim, fifo, and conv.
@@ -676,7 +700,7 @@ the same uvm_tlm_fifo component.
 
 In Figure 7, connections A, B, D, and F are standard peer-to-peer
 connections as discussed above. As an example, connection A would be
-coded in the producer’s connect() method as:
+coded in the producer’s connect() method as::
 
     gen.put_port.connect(fifo.put_export);
 
@@ -701,7 +725,7 @@ connections in a parent component are of the form::
 
 so connection E would be coded as::
 
-    class consumer extends uvm_component;
+    class consumer (UVMComponent);
 
         uvm_put_export #(trans) put_export;
         uvm_tlm_fifo #(trans) fifo;
@@ -719,7 +743,7 @@ Conversely, port-to-port connections are of the form::
 
 so connection C would be coded as::
 
-    class producer extends uvm_component;
+    class producer (UVMComponent);
 
         uvm_put_port #(trans) put_port;
         conv c;
@@ -785,29 +809,37 @@ may be connected to zero, one, or many analysis exports, but the
 operation of the component that writes to the analysis port does not
 depend on the number of exports connected. Because write() is a void
 function, the call will always
-
-
-
 complete in the same delta cycle, regardless of how many components
 (for example, scoreboards, coverage collectors, and so on) are
 connected.
 
-:sup:`sub2` cov2 :sup:`sub` cov :sup:`producer` tlm fifo
-:sup:`get_sp\_` consumer **Figure 8—Analysis Communication**
+.. figure:: fig/08_analysis_communication.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-class get_consumer_with_ap extends get_consumer;
+    Analysis Communication
 
-uvm_analysis_port #(my_trans) ap; function new(...);
+Code example::
 
-super.new() ap = new(“analysis_port”, this); ... endfunction task
-run_phase(uvm_phase phase);
+    class get_consumer_with_ap extends get_consumer;
 
-... for(int i=0; i<10; i++)
-
-if(get_port.get(t)) begin
-
-//Do something with t. ap.write(t); // Write transaction. ... end
-endtask
+        uvm_analysis_port #(my_trans) ap;
+       
+        function new(...);
+            super.new() ap = new(“analysis_port”, this);
+            ...
+            endfunction
+           
+        task run_phase(uvm_phase phase);
+            ...
+            for(int i=0; i<10; i++)
+                if(get_port.get(t)) begin
+                //Do something with t.
+                ap.write(t); // Write transaction.
+                ...
+                end
+        endtask
 
 In the parent environment, the analysis port gets connected to the
 analysis export of the desired components, such as coverage
@@ -1263,8 +1295,12 @@ path is indicated by an arrow connecting the target socket back to
 the initiator socket. Section 3.4 of the TLM-2.0 LRM fully explains
 sockets, initiators, targets, and interconnect components.
 
+.. figure:: fig/09_socket_connections.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**Figure 9—Socket Connections**
+    Socket Connections
 
 Sockets come in several flavors: Each socket is an initiator or a
 target, a passthrough, or a terminator. Furthermore, any particular
@@ -1530,7 +1566,7 @@ component type and instance are provided to complete the binding.
 Consider, for example, a consumer component with a blocking target
 socket::
 
-    class consumer extends uvm_component;
+    class consumer (UVMComponent);
 
         uvm_tlm_b_target_socket #(trans, consumer) target_socket;
 
@@ -1781,29 +1817,12 @@ to verify a design. A simplified testbench is shown in Figure 10 (for
 simplicity, typical containers like environment and agents are not shown
 here).
 
-Sequencer
+.. figure:: fig/10_simplified_transaction_level_testbench.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-Produces data Analysis :sup:`Analysis `
-
-seq_item_export
-
-seq_item_port
-
-Monitor
-
-Driver
-
-checking
-
-Consumes and sends coveragedata to the DUT
-
-:sub:`vi `
-
-vi
-
-DUT
-
-**Figure 10—Simplified Transaction-Level Testbench**
+    Simplified Transaction-Level Testbench
 
 The basic components of a simple transaction-level verification
 environment are:
@@ -1823,39 +1842,12 @@ regardless of its internal implementation (see Figure 11). This chapter
 discusses how to encapsulate these types of components into a proven
 architecture, a verification component, to improve reuse even further.
 
-Analysis
+.. figure:: fig/11_highly_reusable_verification_component_agent.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**Agent**
-
-Config
-
-Analysis
-
-Analysis
-
-**Figure 11—Highly Reusable Verification Component Agent**
-
-Sequencer
-
-Produces data
-
-seq_item_export
-
-seq_item_port
-
-Monitor
-
-Driver checking
-
-Consumes and sends coveragedata to the DUT
-
-:sub:`vi `
-
-vi
-
-DUT
-
-
+    Highly Reusable Verification Component Agent
 
 Figure 11 shows the recommended grouping of individual components
 into a reusable interface-level verification component agent. Instead
@@ -1878,12 +1870,13 @@ pre_reset - post_shutdown) to refine its operation.
 
 To create a driver:
 
-a) Derive from the uvm_driver base class. b) If desired, add UVM
+a) Derive from the uvm_driver base class.
+b) If desired, add UVM
 infrastructure macros for class properties to implement utilities for
-printing,
-
-copying, comparing, and so on. c) Obtain the next data item from the
-sequencer and execute it as outlined above. d) Declare a virtual
+printing, copying, comparing, and so on.
+c) Obtain the next data item from the
+sequencer and execute it as outlined above.
+d) Declare a virtual
 interface in the driver to connect the driver to the DUT.
 
 Refer to Section 3.10.2 for a description of how a sequencer, driver,
@@ -1975,23 +1968,12 @@ optionally, provides responses. The component that contains the
 instances of the driver and sequencer makes the connection between
 them. See Section 3.8.
 
+.. figure:: fig/12_sequencer_driver_interaction.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-
-Sequencer
-
-Produces data
-
-uvm_seq_item_pull_export seq_item_export
-
-uvm_seq_item_pull_port seq_item_port
-
-Driver
-
-Consumes and sends data to the DUT
-
-vi
-
-**Figure 12—Sequencer-Driver Interaction**
+    Sequencer-Driver Interaction
 
 The seq_item_port in uvm_driver defines the set of methods used by
 the driver to obtain the next item in the sequence. An important part
@@ -2010,12 +1992,11 @@ example in Section 3.3, the driver uses get_next_item() to fetch the
 next randomized item to be sent. After sending it to the DUT, the
 driver signals the sequencer that the item was processed using
 item_done().Typically, the main loop within a driver resembles the
-following pseudo code.
+following pseudo code::
 
-forever begin
-
-get_next_item(req); // Send item following the protocol. item_done();
-end
+    forever begin
+        get_next_item(req); // Send item following the protocol. item_done();
+    end
 
 NOTE—get_next_item() is blocking until an item is provided by the
 sequences running on that sequencer.
@@ -2030,9 +2011,6 @@ execution. You can use this task to have the driver execute some idle
 transactions, such as when the DUT has to be stimulated when there
 are no meaningful data to transmit. The following example shows a
 revised
-
-
-
 implementation of the run_phase() task in the previous example (in
 Section 3.3), this time using try_next_item() to drive idle
 transactions as long as there is no real data item to execute::
@@ -2074,17 +2052,17 @@ changes the driver makes to the data item will be visible inside the
 sequencer. In cases where the data item between the driver and the
 sequencer is copied by value, the driver needs to return the
 processed response back to the sequencer. Do this using the optional
-argument to item_done(),
+argument to item_done()::
 
-seq_item_port.item_done(rsp);
+    seq_item_port.item_done(rsp);
 
-or using the put_response() method,
+or using the put_response() method::
 
-seq_item_port.put_response(rsp);
+    seq_item_port.put_response(rsp);
 
-or using the built-in analysis port in uvm_driver.
+or using the built-in analysis port in uvm_driver::
 
-rsp_port.write(rsp);
+    rsp_port.write(rsp);
 
 NOTE—Before providing the response, the response’s sequence and
 transaction id must be set to correspond to the request transaction
@@ -2259,30 +2237,31 @@ to change the parent’s connect() method. This flexibility is
 accomplished through the use of the *factory* in UVM.
 
 When instantiating components in UVM, rather than calling its
-constructor (in bold below);
+constructor (in bold below)::
 
-class my_component extends uvm_component;
+    class my_component (UVMComponent);
 
-my_driver driver; ... virtual function void build_phase(uvm_phase
-phase);
+    my_driver driver;
+    ...
+    virtual function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        **driver = new(“driver”,this)**;
+        ...
+        endfunction
+    endclass
 
-super.build_phase(phase);
+components should be instantiated using the create() method::
 
-**driver = new(“driver”,this)**; ... endfunction endclass
+    class my_component (UVMComponent);
 
-components should be instantiated using the create() method.
-
-class my_component extends uvm_component;
-
-my_driver driver;
-
-... virtual function void
-
-build_phase(uvm_phase phase); super.build_phase(phase);
-
-**driver = my_driver::type_id::create("driver",this);**
-
-... endfunction endclass
+        my_driver driver;
+        ...
+        virtual function void build_phase(uvm_phase phase);
+            super.build_phase(phase);
+            **driver = my_driver::type_id::create("driver",this);**
+            ...
+        endfunction
+        endclass
 
 The factory operation is explained in Section 6.2. The
 type_id::create() method is a type-specific static method that
@@ -2298,22 +2277,20 @@ For example, for a specific test, an environment user may want to
 change the driver. To change the driver for a specific test:
 
 a) Declare a new driver extended from the base component and add or
-modify functionality as desired.
+modify functionality as desired::
 
-class new_driver extends my_driver;
+    class new_driver extends my_driver;
 
-... // Add more functionality here. endclass: new_driver b) In your
-test, environment, or testbench, override the type to be returned by the
-factory.
+    ... // Add more functionality here.
+    endclass: new_driver
+   
+b) In your test, environment, or testbench, override the type to be returned
+by the factory::
 
-virtual function void build_phase(uvm_phase phase);
-
-
-
-set_type_override_by_type(my_driver::get_type();
-super.build_phase(phase);
-
-new_driver::get_type()); endfunction
+    def build_phase(self,  phase):
+        self.set_type_override_by_type(my_driver.get_type(), 
+            new_driver.get_type())
+        super().build_phase(phase)
 
 The factory also allows a new type to be returned for the creation of a
 specific instance as well. In either case, because new_driver is an
