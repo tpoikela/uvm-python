@@ -9,6 +9,9 @@ This is a port of SystemVerilog (SV) Universal Verification Methodology (UVM)
 testing the code so
 far, but the plan is to include verilator in the regressions as well.
 
+[uvm-python Documentation](https://uvm-python.readthedocs.io/).
+[uvm-python User's Guide](https://uvm-python.readthedocs.io/en/latest/uvm_users_guide_1.2.html)
+
 Why bother?
 -----------
 
