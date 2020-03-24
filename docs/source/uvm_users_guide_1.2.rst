@@ -8,46 +8,45 @@ Mandatory copyrights::
 
     *Copyright © 2011 - 2015 Accellera. All rights reserved.*
     
-    Copyright\ :sup:`©` 2011 - 2015 Accellera Systems Initiative
+    Copyright © 2011 - 2015 Accellera Systems Initiative
     (Accellera). All rights reserved.
     
     Accellera Systems Initiative, 8698 Elk Grove Bldv Suite 1, #114, Elk
     Grove, CA 95624, USA
     
-    Copyright\ :sup:`©` 2013 - 2015 Advanced Micro Devices, Inc. All
+    Copyright © 2013 - 2015 Advanced Micro Devices, Inc. All
     rights reserved.
     
     Advanced Micro Devices (AMD), 7171 Southwest Parkway, Austin, TX
     78735
     
-    Copyright\ :sup:`©` 2011 - 2015 Cadence Design Systems,
+    Copyright © 2011 - 2015 Cadence Design Systems,
     Inc. (Cadence). All rights reserved.
     
     Cadence Design Systems, Inc., 2655 Seely Ave., San Jose, CA 95134,
     USA.
     
-    Copyright\ :sup:`©` 2011 - 2015 Mentor Graphics, Corp. (Mentor). All
+    Copyright © 2011 - 2015 Mentor Graphics, Corp. (Mentor). All
     rights reserved.
     
     Mentor Graphics, Corp., 8005 SW Boeckman Rd., Wilsonville, OR 97070,
     USA
     
-    Copyright\ :sup:`©` 2013 - 2015 NVIDIA CORPORATION. All rights
+    Copyright © 2013 - 2015 NVIDIA CORPORATION. All rights
     reserved.
     
     NVIDIA Corporation, 2701 San Tomas Expy, Santa Clara, CA 95050
     
-    Copyright\ :sup:`©` 2011 - 2015 Synopsys, Inc. (Synopsys). All rights
+    Copyright © 2011 - 2015 Synopsys, Inc. (Synopsys). All rights
     reserved.
     
     Synopsys, Inc., 690 E. Middlefield Rd, Mountain View, CA 94043
     
-    *Copyright © 2019 - 2020 Tuomas Poikela. All rights reserved.*
+    Copyright © 2019 - 2020 Tuomas Poikela. All rights reserved.
 
 This product is licensed under the Apache Software Foundation’s
 Apache License, Version 2.0, January 2004. The full license is
 available at: http://www.apache.org/licenses/.
-
 
 **WARNING**: This is semi-manual translation from the original SystemVerilog
 `UVM 1.2 User's Guide <http://www.accellera.org/images//downloads/standards/uvm/uvm_users_guide_1.2.pdf>`
@@ -68,7 +67,7 @@ approaches in verification methodology. This guide may have several
 recommendations to accomplish the same thing and may require some
 judgment to determine the best course of action.
 
-The [UVM 1.2 Class Reference](uvm_1.2_class_reference) represents the foundation
+The `uvm_1.2_class_reference` represents the foundation
 used to create the UVM 1.2 User’s Guide. This guide is a way to apply the UVM
 1.2 Class Reference, but is not the only way. Accellera believes
 standards are an important ingredient to foster innovation and
@@ -101,9 +100,7 @@ all possible testbench architectures or every type use of UVM in the
 electronic design automation (EDA) industry.
 
 .. figure:: fig/01_typical_uvm_tb_architecture.png
-    :width: 830px
     :align: center
-    :height: 698px
     :alt: alternate text
     :figclass: align-center
 
@@ -113,12 +110,18 @@ electronic design automation (EDA) industry.
 1.1.1 UVM Testbench
 -------------------
 
-The UVM Testbench typically instantiates the Design under Test
-(DUT) module and the UVM Test class, and configures the connections
-between them. If the verification collaterals include module-based
-components, they are instantiated under the UVM Testbench as well.
+The UVM Testbench is simply a Python function decorated with
+@cocotb.test. The Design under Test
+(DUT) module is passed to the testbench as an object, and no
+explicit signal connections have to be made by the user.
+The UVM Test class can be declared in a separate file and then
+imported into the testbench.
+If the verification collaterals include module-based
+components, they are should be instantiated in a wrapper HDL module
+outside Python code.
 The UVM Test is dynamically instantiated at run-time, allowing the
-UVM Testbench to be compiled once and run with many different tests.
+an HDL DUT to be compiled/elaborated once, and run with many different
+tests.
 
 Note that in some architectures, the Testbench term is used to
 refer to a special module that encapsulates verification collaterals
@@ -127,11 +130,11 @@ only, which in turn are integrated up with the DUT.
 1.1.2 UVM Test
 --------------
 
-The UVM *Test* is the top-level UVM Component in the UVM Testbench.
+The `UVMTest` is the top-level UVM Component in the UVM Testbench.
 The UVM Test typically performs three main functions: Instantiates
-the top-level environment, configures the environment (via factory
-overrides or the configuration database), and applies stimulus by
-invoking UVM Sequences through the environment to the DUT.
+the top-level environment, configures the environment (via configuration
+objects, factory overrides or the configuration database), and applies
+stimulus by invoking UVM Sequences through the environment to the DUT.
 
 Typically, there is one base UVM Test with the UVM Environment
 instantiation and other common items. Then, other individual tests
@@ -151,9 +154,10 @@ components targeting the DUT.
 For example: In a typical system on a chip (SoC) UVM Environment, you
 will find one UVM Environment per IP (e.g., PCIe Environment, USB
 Environment, Memory Controller Environment, etc.). Sometimes, those
-IP Environments are grouped together into *Cluster Environments*
+IP Environments are grouped together into *Cluster Environments* or
+subsystem environments
 (e.g., IO Environment, Processor Environment, etc.) that are grouped
-together eventually in the to- level SoC Environment.
+together eventually in the top-level SoC Environment.
 
 1.1.4 UVM Scoreboard
 --------------------
@@ -213,8 +217,11 @@ the duration of the simulation, or anywhere in-between. UVM Sequences
 can operate hierarchically with one sequence, called a *parent
 sequence*, invoking another sequence, called a *child sequence*.
 
-To operate, each UVM Sequence is eventually bound to a UVM Sequencer.
-Multiple UVM Sequence instances can be bound to the same UVM Sequencer.
+To operate, each UVM Sequence is eventually bound to a UVM Sequencer. In
+practice this means that `UVMSequence.start` receives the sequencer as 
+an argument. Multiple UVM Sequence instances can be bound to the same
+UVM Sequencer. Top-level sequences do not have to run on a sequencer,
+and can start other sequences instead.
 
 1.1.8 UVM Driver
 ----------------
@@ -270,10 +277,10 @@ The advantages of using the UVM Class Library include:
 
 a) A robust set of built-in features—The UVM Class Library provides many
 features that are required for verification, including complete
-implementation of printing, copying, test phases, factory meth- ods, and
+implementation of printing, copying, test phases, factory methods, and
 more. b) Correctly-implemented UVM concepts—Each component in the block
 diagram in Figure 1 and Figure 2 can be derived from a corresponding UVM
-Class Library component. Using these base- class elements increases the
+Class Library component. Using these baseclass elements increases the
 readability of your code since each component’s role is predetermined by
 its parent class.
 
@@ -285,8 +292,9 @@ messaging utility for failure reporting and general reporting
 purposes. They support testbench construction by providing a standard
 communication infrastructure between verification components (TLM)
 and flexible verification environment construction (UVM factory).
-Finally, they also provide macros for allowing more compact coding
-styles.
+Finally, they also provide mixins for allowing more compact coding
+styles. These mixins offer similar capabilities as macros in the
+SystemVerilog (SV) version.
 
 This User’s Guide will touch on most of these utilities; for the
 complete list, see the UVM *1.2 Class Reference*.
@@ -348,7 +356,7 @@ In practice, TLM refers to a family of abstraction levels beginning
 with cycle-accurate modeling, the most abstract level, and extending
 upwards in abstraction as far as the eye can see. Common
 transaction-level abstractions today include: cycle-accurate,
-approximately- timed, loosely-timed, untimed, and token-level.
+approximately-timed, loosely-timed, untimed, and token-level.
 
 The acronym TLM also refers to a system of code elements used to
 create transaction-level models. TLM-1 and TLM-2.0 are two TLM
@@ -368,7 +376,7 @@ still enabling transfer of data and synchronization between
 independent
 processes, is mainly designed for high performance modeling of
 memory-mapped bus-based systems. A subset of both these facilities
-has been implemented in SystemVerilog and is available as part of
+has been implemented in uvm-python and is available as part of
 UVM.
 
 2.3 TLM-1 Implementation
@@ -397,7 +405,7 @@ information is needed to model a unit of communication between two
 components. In the most basic example, a simple bus protocol
 transaction to transfer information would be modeled as follows::
 
-    class(UVMSequenceItem);
+    class simple_trans(UVMSequenceItem);
         def __init__(self, name):
             super().__init__(name)
             data = 0
@@ -454,12 +462,12 @@ and sends them out its put_port::
 
     class producer (UVMComponent);
 
-        def __init__(self, name, parent);
+        def __init__(self, name, parent):
             super().__init__(name, parent)
-            self.put_port = UVMBlockingPutPort(“put_port”, self); ...
-        endfunction
+            self.put_port = UVMBlockingPutPort(“put_port”, self)
+            ...
        
-        async run(self):
+        async def run(self):
             for _ in range(N):
                 t = simple_trans()
                 # Generate t.
@@ -472,26 +480,28 @@ be a parameter of the parent component.
 The actual implementation of the put() call is supplied by the
 consumer::
 
-    class consumer (UVMComponent);
+    class consumer(UVMComponent):
 
-        uvm_blocking_put_imp #(simple_trans, consumer) put_export;
-        // 2 parameters ...
-        task put(simple_trans t);
-            case(t.kind)
-                READ: // Do read.
-                WRITE: // Do write.
-            endcase
-        endtask
-    endclass
+        def __init__(self, name, parent):
+            super().__init__(name, parent)
+            self.put_export = UVMBlockingPutImp(“put_export”, self)
 
-NOTE—The uvm_*_imp takes two parameters: the type of the transaction
+        # 2 parameters ...
+        async def put(self, t):
+            if t.kind == READ:
+                # Do read.
+            elif t.kind == WRITE:
+                # Do write.
+
+
+NOTE—The UVM*Imp takes two parameters: the type of the transaction
 and the type of the object that declares the method implementation.
 
 NOTE—The semantics of the put operation are defined by TLM. In this
 case, the put() call in the producer will block until the consumer’s
 put implementation is complete. Other than that, the operation of
 producer is completely independent of the put implementation
-(uvm_put_imp). In fact, consumer could be replaced by another
+(`UVMPutImp`). In fact, consumer could be replaced by another
 component that also implements put and producer will continue to work
 in exactly the same way. The modularity provided by TLM fosters an
 environment in which components may be easily reused since the
@@ -510,28 +520,29 @@ In this case, the consumer requests transactions from the producer
 via its get port::
 
     class get_consumer (UVMComponent);
-
-    uvm_blocking_get_port #(simple_trans) get_port;
-    function new( string name, uvm_component parent);
-        get_port = new(“get_port”, this); ...
-    endfunction
+        def __init__(self, name, parent):
+            super().__init__(name, parent)
+            self.get_port = UVMBlockingGetPort(“get_port”, self)
+            ...
    
-    virtual task run();
-        simple_trans t;
-        for(int i = 0; i < N; i++) begin
-            // Generate t.
-            get_port.get(t);
-        end
-    endtask
+        async def run_phase(self, phase):
+            for _ in range(N):
+                # Generate t.
+                t = simple_trans()
+                await self.get_port.get(t);
 
 The get() implementation is supplied by the producer::
 
     class get_producer (UVMComponent);
-        uvm_blocking_get_imp #(simple_trans, get_producer) get_export; ...
-        task get(output simple_trans t);
-            simple_trans tmp = new(); // Assign values to tmp. t = tmp;
-        endtask
-    endclass
+
+        def __init__(self, name, parent):
+            super().__init__(name, parent)
+            self.get_export = UVMBlockingGetImp("get_export", self)
+
+        async def get(self, t):
+            tmp = simple_trans()
+            // Assign values to tmp.
+            t.copy(tmp)
 
 As with put() above, the get_consumer’s get() call will block until
 the get_producer’s method completes. In TLM terms, put() and get()
@@ -549,10 +560,10 @@ In the basic put example above, the consumer will be active only when
 its put() method is called. In many cases, it may be necessary for
 components to operate independently, where the producer is creating
 transactions in one process while the consumer needs to operate on
-those transactions in another. UVM provides the uvm_tlm_fifo channel
-to facilitate such communication. The uvm_tlm_fifo implements all of
+those transactions in another. UVM provides the `UVMTLMFIFO` channel
+to facilitate such communication. The `UVMTLMFIFO` implements all of
 the TLM interface methods, so the producer puts the transaction into
-the uvm_tlm_fifo, while the consumer independently gets the
+the `UVMTLMFIFO`, while the consumer independently gets the
 transaction from the fifo, as shown in Figure 6.
 
 .. figure:: fig/06_using_uvm_tlm_fifo.png
@@ -582,7 +593,7 @@ otherwise alter the flow of control. They simply wait until the request
 is satisfied. In a timed system, this means that time may pass between
 the time the call was initiated and the time it returns.
 
-In contrast, a *nonblocking* call returns immediately\ *.* The semantics
+In contrast, a *nonblocking* call returns immediately. The semantics
 of a nonblocking call guarantee that the call returns in the same delta
 cycle in which it was issued, that is, without consuming any time, not
 even a single delta cycle. In UVM, nonblocking calls are modeled as
@@ -619,11 +630,7 @@ interface. The resolution of these connections causes the collapsing of
 the netlist, which results in the initiator’s port being assigned to the
 target’s implementation. Thus, when a component calls::
 
-  put_port.put(t);
-  :sup:`producer `
-  tlm fifo :sup:`get_ `
-
-consumer
+    put_port.put(t);
 
 the connection means that it actually calls::
 
@@ -638,13 +645,13 @@ When connecting components at the same level of hierarchy, ports are
 always connected to exports. All connect() calls between components
 are done in the parent’s connect() method::
 
-    class my_env extends uvm_env;
+    class my_env(UVMEnv):
 
         ...
-        virtual function void connect_phase(uvm_phase phase);
-            // component.port.connect(target.export);
-            producer.blocking_put_port.connect(fifo.put_export);
-            get_consumer.get_port.connect(fifo.get_export);
+        def connect_phase(self, phase);
+            # component.port.connect(target.export);
+            self.producer.blocking_put_port.connect(fifo.put_export);
+            self.get_consumer.get_port.connect(fifo.get_export);
             ...
         endfunction
     endclass
@@ -696,7 +703,7 @@ consumer contains two components, fifo and drv. Notice that, from the
 perspective of top, the producer and consumer appear identical to
 those in Figure 4, in which the producer’s put_port is connected to
 the consumer’s put_export. The two fifos are both unique instances of
-the same uvm_tlm_fifo component.
+the same `UVMTLMFIFO` component.
 
 In Figure 7, connections A, B, D, and F are standard peer-to-peer
 connections as discussed above. As an example, connection A would be
@@ -725,7 +732,7 @@ connections in a parent component are of the form::
 
 so connection E would be coded as::
 
-    class consumer (UVMComponent);
+    class consumer(UVMComponent);
 
         uvm_put_export #(trans) put_export;
         uvm_tlm_fifo #(trans) fifo;
@@ -760,13 +767,12 @@ Table 1 summarizes connection types and elaboration functions.
 
 **Table 1—TLM Connection Types**
 
-**Connection type connect() form**::
+.. **Connection type connect() form**::
 
-    port-to-export comp1.port.connect(comp2.export);
-
-    port-to-port subcomponent.port.connect(port);
-
-    export-to-export export.connect(subcomponent.export);
+.. csv-table:: Connection type connect() form
+    port-to-export, comp1.port.connect(comp2.export);
+    port-to-port, subcomponent.port.connect(port);
+    export-to-export, export.connect(subcomponent.export);
 
 NOTE—The argument to the port.connect() method may be either an
 export or a port, depending on the nature of the connection (that is,
@@ -798,7 +804,7 @@ transaction stream in a particular way.
 2.3.3.1 Analysis Ports
 ----------------------
 
-The uvm_analysis_port (represented as a diamond on the monitor in
+The `UVMAnalysisPort` (represented as a diamond on the monitor in
 Figure 8) is a specialized TLM port whose interface consists of a
 single function, write(). The analysis port contains a list of
 analysis_exports that are connected to it. When the component calls
@@ -873,7 +879,7 @@ order. Since all implementations of write() must be functions, the
 analysis port’s write() function completes immediately, regardless of
 how many exports are connected to it.
 
-class my_env extends uvm_env;
+class my_env(UVMEnv):
 
 get_component_with_ap g; sub1 s1; sub2 s2; function new(string name,
 uvm_component parent) ;
@@ -1639,7 +1645,7 @@ Data items:
 environment. — Are instances of classes that you define (“user-defined”
 classes). — Capture and measure transaction-level coverage and checking.
 
-NOTE—The UVM Class Library provides the uvm_sequence_item base class.
+NOTE—The UVM Class Library provides the UVMSequenceItem base class.
 Every user-defined data item should be derived directly or indirectly
 from this base class.
 
@@ -1648,7 +1654,7 @@ To create a user-defined data item:
 a) Review your DUT's transaction specification and identify the
 application-specific properties, constraints, tasks, and functions.
 b) Derive a data item class from the
-uvm_sequence_item base class (or a derivative of it).
+UVMSequenceItem base class (or a derivative of it).
 c) Define a constructor for the data item.
 d) Add control fields (“knobs”) for the
 items identified in Step (a) to enable easier test writing.
@@ -1670,7 +1676,7 @@ routines.
 To assist in debugging and tracking transactions, the uvm_transaction
 base class provides access to a unique transaction number via the
 get_transaction_id() member function. In addition, the
-uvm_sequence_item base class (extended from uvm_transaction) also
+UVMSequenceItem base class (extended from uvm_transaction) also
 includes a get_transaction_id() member function, allowing sequence
 items to be correlated to the sequence that generated them
 originally.
@@ -1681,7 +1687,7 @@ utilities that operate on this class, such as copy, compare, print,
 and so on. In particular, the \`uvm_object_utils macro registers the
 class type with the common factory::
 
-    1 class simple_item extends uvm_sequence_item;
+    1 class simple_item extends UVMSequenceItem;
     2 rand int unsigned addr;
     3 rand int unsigned data;
     4 rand int unsigned delay;
@@ -1699,7 +1705,7 @@ class type with the common factory::
     16 endfunction : new
     17 endclass : simple_item
 
-Line 1 Derives data items from uvm_sequence_item so they can be
+Line 1 Derives data items from `UVMSequenceItem` so they can be
 generated in a procedural sequence. See Section 3.10.2 for more
 information.
 
@@ -1770,7 +1776,7 @@ Knobs Example::
 
     typedef enum {ZERO, SHORT, MEDIUM, LARGE, MAX} simple_item_delay_e;
 
-    class simple_item extends uvm_sequence_item;
+    class simple_item extends UVMSequenceItem;
 
         rand int unsigned addr;
         rand int unsigned data;
@@ -1975,7 +1981,7 @@ them. See Section 3.8.
 
     Sequencer-Driver Interaction
 
-The seq_item_port in uvm_driver defines the set of methods used by
+The seq_item_port in `UVMDriver` defines the set of methods used by
 the driver to obtain the next item in the sequence. An important part
 of this interaction is the driver’s ability to synchronize to the
 bus, and to interact with the sequencer to generate data items at the
@@ -2086,30 +2092,25 @@ requesting an item from the sequencer, and put() to provide a
 response. Thus, other components, which may not necessarily be
 derived from uvm_driver, may still connect to and communicate with
 the sequencer. As with the seq_item_port, the methods to use depend
-on the interaction desired.
+on the interaction desired::
 
-// Pause sequencer operation while the driver operates on the
-transaction.
+    // Pause sequencer operation while the driver operates on the transaction.
+    peek(req); // Process req operation.
+    get(req); // Allow sequencer to proceed immediately upon driver receiving transaction.
 
-peek(req); // Process req operation.
-
-get(req); // Allow sequencer to proceed immediately upon driver
-receiving transaction.
-
-get(req); // Process req operation.
+    get(req); // Process req operation.
 
 The following also apply.
 
 — peek() is a blocking method, so the driver may block waiting for an
 item to be returned. — The get() operation notifies the sequencer to
 proceed to the next transaction. It returns the same
-
 transaction as the peek(), so the transaction may be ignored.
 
 To provide a response using the blocking_slave_port, the driver would
-call:
+call::
 
-seq_item_port.put(rsp);
+    seq_item_port.put(rsp);
 
 The response may also be sent back using an analysis_port as well.
 
@@ -2148,54 +2149,60 @@ functions:
 (item_collected_port).
 
 Actual code for collection is not shown in this example. A complete
-example can be found in the UBus example in ubus_master_monitor.sv.
+example can be found in the UBus example in ubus_master_monitor.py::
 
 
+    class master_monitor extends uvm_monitor;
 
-class master_monitor extends uvm_monitor;
+        virtual bus_if xmi; // SystemVerilog virtual interface bit
+        checks_enable = 1; // Control checking in monitor and interface. bit
+        coverage_enable = 1; // Control coverage in monitor and interface.
+        uvm_analysis_port #(simple_item) item_collected_port;
 
-virtual bus_if xmi; // SystemVerilog virtual interface bit
-checks_enable = 1; // Control checking in monitor and interface. bit
-coverage_enable = 1; // Control coverage in monitor and interface.
-uvm_analysis_port #(simple_item) item_collected_port;
+        event cov_transaction; // Events needed to trigger covergroups
+        protected simple_item trans_collected;
+        `uvm_component_utils_begin(master_monitor)
+        `uvm_field_int(checks_enable, UVM_ALL_ON)
+        `uvm_field_int(coverage_enable, UVM_ALL_ON)
+        `uvm_component_utils_end
 
-event cov_transaction; // Events needed to trigger covergroups
-protected simple_item trans_collected;
-\`uvm_component_utils_begin(master_monitor)
+        covergroup cov_trans @cov_transaction;
+            option.per_instance = 1;
+            ... // Coverage bins definition
+        endgroup : cov_trans
 
-\`uvm_field_int(checks_enable, UVM_ALL_ON)
-\`uvm_field_int(coverage_enable, UVM_ALL_ON)
-\`uvm_component_utils_end covergroup cov_trans @cov_transaction;
+        function new (string name, uvm_component parent);
+            super.new(name, parent);
+            cov_trans = new();
+            cov_trans.set_inst_name({get_full_name(), ".cov_trans"});
+            trans_collected = new();
+            item_collected_port = new("item_collected_port", this);
+        endfunction : new
 
-option.per_instance = 1; ... // Coverage bins definition endgroup :
-cov_trans function new (string name, uvm_component parent);
+        virtual task run_phase(uvm_phase phase);
+            collect_transactions(); // collector task.
+        endtask : run virtual
 
-super.new(name, parent); cov_trans = new();
-cov_trans.set_inst_name({get_full_name(), ".cov_trans"});
-trans_collected = new(); item_collected_port =
-new("item_collected_port", this); endfunction : new virtual task
-run_phase(uvm_phase phase);
+        protected task collect_transactions();
+            forever begin
+                @(posedge xmi.sig_clock);
+                ...// Collect the data from the bus into trans_collected.
+                if (checks_enable)
+                    perform_transfer_checks();
+                if (coverage_enable)
+                    perform_transfer_coverage();
+                item_collected_port.write(trans_collected);
+            end
+        endtask : collect_transactions
 
-collect_transactions(); // collector task. endtask : run virtual
-protected task collect_transactions();
+        virtual protected function void perform_transfer_coverage();
+            -> cov_transaction;
+        endfunction : perform_transfer_coverage virtual
 
-forever begin
-
-@(posedge xmi.sig_clock); ...// Collect the data from the bus into
-trans_collected. if (checks_enable)
-
-perform_transfer_checks(); if (coverage_enable)
-
-perform_transfer_coverage();
-item_collected_port.write(trans_collected); end endtask :
-collect_transactions virtual protected function void
-perform_transfer_coverage();
-
--> cov_transaction; endfunction : perform_transfer_coverage virtual
-protected function void perform_transfer_checks();
-
-... // Perform data checks on trans_collected. endfunction :
-perform_transfer_checks endclass : master_monitor
+        protected function void perform_transfer_checks();
+            ... // Perform data checks on trans_collected.
+        endfunction : perform_transfer_checks
+    endclass : master_monitor
 
 The collection is done in a task (collect_transactions) which is
 spawned at the beginning of the run() phase. It runs in an endless
@@ -2209,10 +2216,9 @@ information.
 Coverage collection and checking are conditional because they can
 affect simulation run-time performance. If not needed, they can be
 turned off by setting coverage_enable or checks_enable to 0, using
-the configuration mechanism. For example:
+the configuration mechanism. For example::
 
-uvm_config_int::set(this,“\*.master0.monitor”, “checks_enable”, 0);
-
+    UVMConfigDb.set(this,“*.master0.monitor”, “checks_enable”, 0)
 
 
 If checking is enabled, the task calls the perform_transfer_checks
@@ -2309,7 +2315,12 @@ create an agent that provides protocol-specific stimuli creation,
 checking, and coverage for a device. In a bus-based environment, an
 agent usually models a master, a slave, or an arbiter component.
 
-**Figure 13—Agent**
+.. figure:: fig/13_agent.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    Agent
 
 3.8.1 Operating Modes
 ---------------------
@@ -2320,26 +2331,6 @@ An agent has two basic operating modes:
 drives DUT signals. This mode requires that the agent instantiate a
 driver and sequencer. A monitor also is instantiated for checking and
 coverage.
-
-**Agent**
-
-Sequencer
-
-:sub:`Config Object `
-
-Produces data is_active ...
-
-Monitor
-
-Driver
-
-checking coverageinterface
-
-Consumes and sends data to the DUT
-
-:sub:`vi vi `
-
-
 
 — Passive mode, where the agent does not instantiate a driver or
 sequencer and operates passively. Only the monitor is instantiated and
@@ -2354,21 +2345,30 @@ function can be overridden without any limitations. Also, instead of
 hard coding, the allocation type_id::create() is used to instantiate
 the subcomponents. The example in “To change the driver for a
 specific test:” in Section 3.8 illustrates how you can override
-existing behavior using extends.
+existing behavior using extends::
 
-1 class simple_agent extends uvm_agent; 2 ... // Constructor and UVM
-automation macros 3 uvm_sequencer #(simple_item) sequencer; 4
-simple_driver driver; 5 simple_monitor monitor; 6 // Use build_phase
-to create agents's subcomponents. 7 virtual function void
-build_phase(uvm_phase phase); 8 super.build_phase(phase) 9 monitor =
-simple_monitor::type_id::create("monitor",this); 10 if (is_active ==
-UVM_ACTIVE) begin 11 // Build the sequencer and driver. 12 sequencer
-= 13 uvm_sequencer#(simple_item)::type_id::create("sequencer",this);
-14 driver = simple_driver::type_id::create("driver",this); 15 end 16
-endfunction : build_phase 17 virtual function void
-connect_phase(uvm_phase phase); 18 if(is_active == UVM_ACTIVE) begin
-19 driver.seq_item_port.connect(sequencer.seq_item_export); 20 end 21
-endfunction : connect_phase 22 endclass : simple_agent
+    1 class simple_agent extends uvm_agent;
+    2 ... // Constructor and UVM automation macros
+    3 uvm_sequencer #(simple_item) sequencer;
+    4 simple_driver driver;
+    5 simple_monitor monitor;
+    6 // Use build_phase to create agents's subcomponents.
+    7 virtual function void build_phase(uvm_phase phase);
+    8 super.build_phase(phase)
+    9 monitor = simple_monitor::type_id::create("monitor",this);
+    10 if (is_active == UVM_ACTIVE) begin
+    11 // Build the sequencer and driver.
+    12 sequencer =
+    13 uvm_sequencer#(simple_item)::type_id::create("sequencer",this);
+    14 driver = simple_driver::type_id::create("driver",this);
+    15 end
+    16 endfunction : build_phase
+    17 virtual function void connect_phase(uvm_phase phase);
+    18 if(is_active == UVM_ACTIVE) begin
+    19 driver.seq_item_port.connect(sequencer.seq_item_export);
+    20 end
+    21 endfunction : connect_phase
+    22 endclass : simple_agent
 
 NOTE—Invoking super.build_phase() (see Line 8) enables the automatic
 configuration for UVM fields declared via the uvm_field_\* macros
@@ -2399,7 +2399,6 @@ agent is active and, if so, the connection between the sequencer and
 driver is made using connect_phase().
 
 
-
 3.8.2 Connecting Components
 ---------------------------
 
@@ -2418,67 +2417,13 @@ will be architecturally correct, consistent with other verification
 components, and reusable. The following sections describe how to create
 and connect environment sub-components.
 
-**uvm_env**
 
-Config: ... ...\ :sub:`name `
+.. figure:: fig/14_typical_uvm_environment_architecture.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-uvm_agent
-
-uvm_agent
-
-uvm_agent
-
-uvm_agent :sup:`Slave Slave Agent `
-
-:sup:`Agent `
-
-:sup:`Slave Master Agent `
-
-:sup:`Agent` Config
-
-Config
-
-Config
-
-Config has_... ...
-
-AnalysisAnalysisAnalysis
-
-Analysis
-
-uvm_sequenc
-
-uvm_sequencer
-
-AnalysisAnalysisAnalysis
-
-Analysis
-
-uvm_sequenc
-
-uvm_sequencer
-
-uvm_sequence
-
-uvm_monitor
-
-checks
-
-uvm_monitor uvm_monitor
-
-uvm_drive uvm_drive
-
-uvm_driver uvm_drive uvm_monitor uvm_monitor
-
-uvm_drive uvm_drive
-
-uvm_drive uvm_driver coverage
-
-**DUT**
-
-bus
-
-**Figure 14—Typical UVM Environment Architecture**
+    Typical UVM Environment Architecture
 
 3.9.1 The Environment Class
 ---------------------------
@@ -2488,33 +2433,35 @@ instantiates and configures all of its subcomponents. Most verification
 reuse occurs at the environment level where the user instantiates an
 environment class and configures it and its agents for specific
 verification tasks. For example, a user might need to change the number
-of masters and slaves in a new environment as shown below.
+of masters and slaves in a new environment as shown below::
 
+    class ahb_env(UVMEnv):
 
+        int num_masters;
+        ahb_master_agent masters[];
+        `uvm_component_utils_begin(ahb_env)
+        `uvm_field_int(num_masters, UVM_ALL_ON)
+        `uvm_component_utils_end
 
-class ahb_env extends uvm_env;
+        virtual function void build_phase(phase);
+            string inst_name;
+            super.build_phase(phase);
+            if(num_masters ==0))
+                `uvm_fatal("NONUM",{"'num_masters' must be set";
+            masters = new[num_masters];
 
-int num_masters; ahb_master_agent masters[];
-\`uvm_component_utils_begin(ahb_env)
+            for(int i = 0; i < num_masters; i++) begin
+                $sformat(inst_name, "masters[%0d]", i);
+                masters[i] = ahb_master_agent::type_id::create(inst_name,this);
+            end
+            // Build slaves and other components.
+            endfunction
 
-\`uvm_field_int(num_masters, UVM_ALL_ON) \`uvm_component_utils_end
-virtual function void build_phase(phase);
+        function new(string name, uvm_component parent);
+            super.new(name, parent);
+        endfunction : new
 
-string inst_name; super.build_phase(phase);
-
-if(num_masters ==0))
-
-\`uvm_fatal("NONUM",{"'num_masters' must be set"; masters =
-new[num_masters];
-
-for(int i = 0; i < num_masters; i++) begin
-
-$sformat(inst_name, "masters[%0d]", i); masters[i] =
-ahb_master_agent::type_id::create(inst_name,this); end // Build
-slaves and other components. endfunction function new(string name,
-uvm_component parent);
-
-super.new(name, parent); endfunction : new endclass
+    endclass
 
 NOTE—Similarly to the agent, create is used to allocate the
 environment sub-components. This allows introducing derivations of
@@ -2572,13 +2519,13 @@ stimulus patterns and reduces the length of tests. In addition, a
 sequence can call upon other sequences, thereby creating more complex
 scenarios.
 
-NOTE—The UVM Class Library provides the uvm_sequence base class. You
+NOTE—The UVM Class Library provides the UVMSequence base class. You
 should derive all sequence classes directly or indirectly from this
 class.
 
 To create a user-defined sequence:
 
-a) Derive a sequence from the uvm_sequence base class and specify the
+a) Derive a sequence from the UVMSequence base class and specify the
 request and response item type parameters. In the example below, only
 the request type is specified, simple_item. This will result in the
 response type also being of type simple_item. b) Use the
@@ -2593,37 +2540,39 @@ the body task, you can execute data items and other sequences (see
 Section 3.10.2).
 
 The class simple_seq_do in the following example defines a simple
-sequence. It is derived from uvm_sequence and uses the
+sequence. It is derived from UVMSequence and uses the
 \`uvm_object_utils macro. The example then defines a simple_sequencer
-class on which the simple_seq_do sequence can run.
+class on which the simple_seq_do sequence can run::
 
-class simple_seq_do extends uvm_sequence #(simple_item);
+    class simple_seq_do extends UVMSequence #(simple_item);
 
-rand int count; constraint c1 { count >0; count <50; } // Constructor
-function new(string name="simple_seq_do");
+        rand int count;
+        constraint c1 { count >0; count <50; }
+        // Constructor
+        function new(string name="simple_seq_do");
+            super.new(name);
+        endfunction
+        //Register with the factory
+        `uvm_object_utils(simple_seq_do)
+        // The body() task is the actual logic of the sequence.
+        virtual task body();
+        repeat(count) // Example of using convenience macro to execute the item
+            \`uvm_do(req)
+        endtask : body
+    endclass : simple_seq_do
 
-super.new(name); endfunction //Register with the factory
-\`uvm_object_utils(simple_seq_do) // The body() task is the actual logic
-of the sequence. virtual task body();
+    class simple_sequencer extends uvm_sequencer #(simple_item) ;
 
-repeat(count) // Example of using convenience macro to execute the
-item
-
-\`uvm_do(req) endtask : body endclass : simple_seq_do
-
-class simple_sequencer extends uvm_sequencer #(simple_item) ;
-
-// same parameter as simple_seq_do
-\`uvm_component_utils(simple_sequencer) function new (string
-name=“simple_sequencer”, uvm_component parent) ;
-
-super.new(name,parent) ; endfunction endclass
+        // same parameter as simple_seq_do
+        `uvm_component_utils(simple_sequencer)
+        function new (string name=“simple_sequencer”, uvm_component parent);
+            super.new(name,parent) ;
+        endfunction
+    endclass
 
 **3.10.2 Sending Subsequences and Sequence Items**
 
 Sequences allow you to define:
-
-
 
 — Streams of data items sent to a DUT. — Streams of actions performed on
 a DUT interface.
@@ -2656,84 +2605,76 @@ objects are called at different points of processing for each object
 type as shown in the figures. Note that the pre_body() and
 post_body() methods are not called for subsequences.
 
-**Figure 15—Sequence Item Flow in Pull Mode**
+
+.. figure:: fig/15_sequence_item_flow_in_pull_mode.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    Sequence Item Flow in Pull Mode
 
 
+.. figure:: fig/16_subsequence_flow.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**Sequencer**
-
-**Sequence** (1) :sup:`n `
-
-\`uvm_do(\ *subsequence*);
-
-Call **pre_do**\ () task with is_item = 0
-
-The sequencer does not schedule sequences but only items; therefore,
-
-Call mid_do() trigger *subsequence*.started when do-ing a sequence, no
-synchronization is done
-
-Call *subsequence*.body() trigger *subsequence*.ended between the
-sequencer and the doing sequence or the done
-
-Call post_do()
-
-subsequence
-
-End of do *subsequence*
-
-**Note** This flow does not depend on the driver interaction mode.
-
-**Figure 16—Subsequence Flow**
+    Subsequence Flow
 
 **3.10.2.2 Sequence and Sequence Item Macros**
 
-This section describes the sequence and sequence item macros, \`uvm_do
-and \`uvm_do_with. The ’uvm_do macro and variations provide a convenient
+This section describes the sequence and sequence functins, `uvm_do`
+and `uvm_do_with`. The uvm_do function and variations provide a convenient
 set of calls to create, randomize, and send transaction items in a
-sequence. The ’uvm_do macro delays randomization of the item until the
+sequence. The uvm_do function delays randomization of the item until the
 driver has signaled that it is ready to receive it and the pre_do method
-has been executed. Other macro variations allow constraints to be
-applied to the randomization (uvm_do_with) or bypass the randomization
+has been executed. Other function variations allow constraints to be
+applied to the randomization (`uvm_do_with`) or bypass the randomization
 altogether.
 
-**3.10.2.2.1 \`uvm_do**
+**3.10.2.2.1 uvm_do**
 
-This macro takes as an argument a variable of type uvm_sequence or
-uvm_sequence_item. An object is created using the factory settings and
+This function takes as an argument a variable of type `UVMSequence` or
+UVMSequenceItem. An object is created using the factory settings and
 assigned to the specified variable. Based on the processing in Figure
 15, when the driver requests an item from the sequencer, the item is
 randomized and provided to the driver.
 
 The simple_seq_do sequence declaration in the example in Section 3.10.1
 is repeated here. The body of the sequence invokes an item of type
-simple_item, using the \`uvm_do macro.
+simple_item, using the `uvm_do` function::
 
-class simple_seq_do extends uvm_sequence #(simple_item);
+    class simple_seq_do extends UVMSequence #(simple_item);
 
-... // Constructor and UVM automation macros // See Section 4.7.2
-virtual task body();
+        ...
+        // Constructor and UVM automation macros
+        // See Section 4.7.2
 
-\`uvm_do(req) endtask : body endclass : simple_seq_do
+        virtual task body();
+            uvm_do(req)
+        endtask : body
+    endclass : simple_seq_do
 
 Similarly, a sequence variable can be provided and will be processed as
 shown in Figure 16. The following example declares another sequence
 (simple_seq_sub_seqs), which uses \`uvm_do to execute a sequence of type
-simple_seq_do, which was defined earlier.
+simple_seq_do, which was defined earlier::
 
+    class simple_seq_sub_seqs extends UVMSequence #(simple_item);
 
+        ...
+        // Constructor and UVM automation macros
+        // See Section 4.7.2
+        simple_seq_do seq_do;
+        virtual task body();
+            uvm_do(seq_do)
+        endtask : body
+    endclass : simple_seq_sub_seqs
 
-class simple_seq_sub_seqs extends uvm_sequence #(simple_item);
+**3.10.2.2.2 uvm_do_with**
 
-... // Constructor and UVM automation macros // See Section 4.7.2
-simple_seq_do seq_do; virtual task body();
-
-\`uvm_do(seq_do) endtask : body endclass : simple_seq_sub_seqs
-
-**3.10.2.2.2 \`uvm_do_with**
-
-This macro is similar to \`uvm_do (Section 3.10.2.2.1). The first
-argument is a variable of a type derived from uvm_sequence_item,
+This function is similar to \`uvm_do (Section 3.10.2.2.1). The first
+argument is a variable of a type derived from UVMSequenceItem,
 which includes items and sequences. The second argument can be any
 valid inline constraints that would be legal if used in
 arg1.randomize() with inline constraints. This enables adding
@@ -2745,7 +2686,7 @@ sequence variable.
 This sequence produces two data items with specific constraints on
 the values of addr and data.
 
-class simple_seq_do_with extends uvm_sequence #(simple_item);
+class simple_seq_do_with extends UVMSequence #(simple_item);
 
 ... // Constructor and UVM automation macros // See Section 4.7.2
 virtual task body();
@@ -2758,7 +2699,7 @@ If constraints are used simply to set parameters to specific values,
 as in the previous example, the macro can be replaced with a
 user-defined task.
 
-class simple_seq_do_with extends uvm_sequence #(simple_item);
+class simple_seq_do_with extends UVMSequence #(simple_item);
 
 task do_rw(int addr, int data);
 
@@ -2911,7 +2852,7 @@ test extends ovm_test;
 task run_phase (uvm_phase phase); seq.set_starting_phase(phase);
 seq.start(seqr); endtask endclass
 
-class seq extends uvm_sequence #(data_item);
+class seq extends UVMSequence #(data_item);
 
 task body();
 
@@ -2936,7 +2877,7 @@ class test extends ovm_test;
 task run_phase (uvm_phase phase); seq.set_starting_phase(phase);
 seq.start(seqr); endtask endclass
 
-class seq extends uvm_sequence #(data_item);
+class seq extends UVMSequence #(data_item);
 
 function new(string name = "seq");
 
@@ -3227,7 +3168,7 @@ top-level environment.
 
 **uvm_sequencer**
 
-**uvm_sequence**
+**UVMSequence**
 
 **uvm_env**
 
@@ -3243,7 +3184,7 @@ top-level environment.
 
 **uvm_sequencer**
 
-**uvm_sequencer\ uvm_sequence**
+**uvm_sequencer\ UVMSequence**
 
 **uvm_sequencer **
 
@@ -3315,7 +3256,7 @@ build_phase() func-
 
 tion.
 
-class ubus_example_env extends uvm_env;
+class ubus_example_env(UVMEnv):
 
 // Provide implementations of virtual methods such as
 get_type_name().
@@ -3798,7 +3739,7 @@ Run the simulation using a command-line option to specify the test name.
 *Data Item Example*
 
 typedef enum bit {BAD_PARITY, GOOD_PARITY} parity_e; class uart_frame
-extends uvm_sequence_item; rand int unsigned transmit_delay; rand bit
+extends UVMSequenceItem; rand int unsigned transmit_delay; rand bit
 start_bit; rand bit [7:0] payload; rand bit [1:0] stop_bits; rand bit
 [3:0] error_bits; bit parity; // Control fields rand parity_e
 parity_type; function new(input string name);
@@ -4054,7 +3995,7 @@ associated with them, only sequences.
 
 To create a virtual sequence:
 
-a) Declare a sequence class by deriving it from uvm_sequence, just like
+a) Declare a sequence class by deriving it from UVMSequence, just like
 a driver sequence. b) Define a body() method that implements the desired
 logic of the sequence. c) Use the \`uvm_do_on (or \`uvm_do_on_with)
 macro to invoke sequences in the underlying
@@ -4071,7 +4012,7 @@ ethernet sequencer provides an eth_large_payload_seq sequence in its
 library. The following sequence example invokes these two sequencers,
 one after the other.
 
-class simple_virt_seq extends uvm_sequence;
+class simple_virt_seq extends UVMSequence;
 
 ... // Constructor and UVM automation macros // A sequence from the cpu
 sequencer library cpu_config_seq conf_seq; // A sequence from the
@@ -4181,7 +4122,7 @@ path to the sequencers inside the various components is known and
 that path is used to get a handle to them and connect them to the
 virtual sequencer.
 
-class simple_tb extends uvm_env;
+class simple_tb(UVMEnv):
 
 cpu_env_c cpu0; // Reuse a cpu verification component. eth_env_c eth0;
 // Reuse an ethernet verification component. simple_virtual_sequencer
@@ -6800,7 +6741,7 @@ User-defined front-door access is made possible by extending the
 uvm_reg_frontdoor class and registering an instance of the class with
 specific registers or memories using the uvm_reg::set_frontdoor() or
 uvm_mem::set_frontdoor() method. The uvm_reg_frontdoor is a
-uvm_sequence. For each write or read operation, the register model
+UVMSequence. For each write or read operation, the register model
 creates a uvm_reg_item object representing the operation, assigns it to
 the rw_info property of registered front-door sequence, and calls its
 start method. Ultimately, the front-door’s body task is called, which
@@ -7122,7 +7063,7 @@ sub-block environments, their register models must then be specified by
 setting their respective regmodel class properties. All of this must be
 implemented in the environment’s build phase method.
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; subblk_env subblk;
 
@@ -7140,7 +7081,7 @@ environment that instantiates the register model. The value of that root
 path will depend on the location of the model for the DUT within the
 complete simulation model.
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; virtual function void build_phase(uvm_phase
 phase);
@@ -7176,7 +7117,7 @@ the register model has a parent. If not, it is a root model and
 integration with the bus agent may proceed. All this must be implemented
 in the environment’s connect phase.
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; subblk_env subblk;
 
@@ -7245,13 +7186,13 @@ function new(string name = "reg2apb_adapter");
 
 super.new(name); endfunction
 
-virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw);
+virtual function UVMSequenceItem reg2bus(const ref uvm_reg_bus_op rw);
 
 apb_rw apb = apb_rw::type_id::create("apb_rw"); apb.kind = (rw.kind ==
 UVM_READ) ? apb_rw::READ : apb_rw::WRITE; apb.addr = rw.addr; apb.data =
 rw.data; return apb; endfunction
 
-virtual function void bus2reg(uvm_sequence_item bus_item,
+virtual function void bus2reg(UVMSequenceItem bus_item,
 
 ref uvm_reg_bus_op rw); apb_rw apb; if (!$cast(apb,bus_item)) begin
 
@@ -7282,7 +7223,7 @@ UVC.
 The transaction adapter is then instantiated in the connect phase of the
 environments corresponding to root register models:
 
-class block_env extends uvm_env; block_reg_model regmodel; subblk_env
+class block_env(UVMEnv): block_reg_model regmodel; subblk_env
 subblk;
 
 virtual function void connect_phase(uvm_phase phase);
@@ -7344,7 +7285,7 @@ during execution of each bus item generated by the model. To gain
 exclusive access to the bus, the register sequence may also call grab or
 lock to prevent other bus sequences from running.
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; apb_agent apb;
 
@@ -7422,15 +7363,15 @@ model.A.write(status, 'h33, .parent(this)); if (status == UVM_NOT_OK)
 endclass
 
 The uvm_reg_sequence class parameterizes its base class. This allows you
-to splice in any user-defined uvm_sequence subtype if needed:
+to splice in any user-defined UVMSequence subtype if needed:
 
-class VIP_sequence extends uvm_sequence #(VIP_base_item); class
+class VIP_sequence extends UVMSequence #(VIP_base_item); class
 my_reg_sequence extends uvm_reg_sequence (VIP_sequence);
 
 Alternatively, you can promote the parameter to your register sequence,
 which allows the end-user to choose the super class:
 
-class my_reg_sequence #(type BASE=uvm_sequence #(uvm_reg_item))
+class my_reg_sequence #(type BASE=UVMSequence #(uvm_reg_item))
 
 extends uvm_reg_sequence #(BASE);
 
@@ -7516,7 +7457,7 @@ is more than one sequencer/ adapter pair is registered with the register
 model and the register sequence’s start method is called without
 specifying a sequencer to run.
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; apb_agent apb; wishbone_agent wsh;
 
@@ -7663,9 +7604,9 @@ translation **bus agent** sequence **bus sequencer**
 
 
 
-typedef uvm_reg_sequence #(uvm_sequence #(apb_rw)) reg2apb_seq_t;
+typedef uvm_reg_sequence #(UVMSequence #(apb_rw)) reg2apb_seq_t;
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; uvm_sequencer#(uvm_reg_item) reg_seqr;
 apb_agent apb; reg2apb_seq_t reg2apb_seq;
@@ -7738,7 +7679,7 @@ with the adapter and address map in the register model that corresponds
 to the bus being monitored. The uvm_reg_predictor component is then
 connected to the bus monitor’s analysis port.
 
-class block_env extends uvm_env;
+class block_env(UVMEnv):
 
 block_reg_model regmodel; uvm_reg_predictor#(apb_rw) apb2reg_predictor;
 apb_agent apb;
@@ -8051,7 +7992,7 @@ data.get_type_name());
 
 ... endtask
 
-1\ :sub:`Contrast to uvm_sequence, sequence_item, and transaction, which are transient –they are created, used, and then`
+1\ :sub:`Contrast to UVMSequence, sequence_item, and transaction, which are transient –they are created, used, and then`
 garbage collected when dereferenced.
 
 
@@ -8522,11 +8463,11 @@ bd_cb::delete(this, cbs); endtask endclass
 
 In UVM, it is possible to group similar sequences together into a
 *sequence library*. The uvm_sequence_library is an extension of the
-uvm_sequence base class.
+UVMSequence base class.
 
 class uvm_sequence_library #(type REQ=int, RSP=REQ)
 
-extends uvm_sequence#(REQ,RSP);
+extends UVMSequence#(REQ,RSP);
 
 The uvm_sequence_library is a sequence that contains a list of
 registered sequence types. It can be configured to create and execute
@@ -8653,7 +8594,7 @@ driver, arbitrating between the sequences that are willing to provide an
 item for execution and selects them one at a time. The a and b sequences
 are subsequences of the fork_join_sequence.
 
-class fork_join_sequence extends uvm_sequence #(simple_item);
+class fork_join_sequence extends UVMSequence #(simple_item);
 
 ... // Constructor and UVM automation macros go here.
 
@@ -8670,7 +8611,7 @@ parallel. It waits for the sequences to complete. Instead, it
 immediately finishes after activating the sequences. Also, the a and b
 sequences are started as root sequences.
 
-class concurrent_seq extends uvm_sequence #(simple_item);
+class concurrent_seq extends UVMSequence #(simple_item);
 
 ... // Constructor and UVM automation macros go here.
 
@@ -8758,7 +8699,7 @@ Define an interrupt handler sequence.
 // Upon an interrupt, grab the sequencer, and execute a
 
 // read_status_seq sequence. class interrupt_handler_seq extends
-uvm_sequence #(bus_transfer);
+UVMSequence #(bus_transfer);
 
 ... // Constructor and UVM automation macros here
 
@@ -8820,7 +8761,7 @@ preference to a lower ISR.
 
 
 
-class int_test_seq extends uvm_sequence #(bus_seq_item);
+class int_test_seq extends UVMSequence #(bus_seq_item);
 
 \`uvm_object_utils(int_test_seq) function new(string name =
 "int_test_seq");
@@ -8936,7 +8877,7 @@ wait_for_relevant() task to prevent the sequencer from hanging under
 certain circumstances. The following example illustrates the use of
 both.
 
-class flow_control_seq extends uvm_sequence #(bus_transfer);
+class flow_control_seq extends UVMSequence #(bus_transfer);
 
 ... // Constructor and UVM automation macros go here.
 
@@ -9194,7 +9135,7 @@ calling start_item(). Should it be necessary to deal with the response
 from the execution of the lower-level item, it can be obtained by the
 get_response() method of the layering sequence.
 
-class upper_to_lower_seq extends uvm_sequence#(lower_item);
+class upper_to_lower_seq extends UVMSequence#(lower_item);
 
 ... uvm_sequencer #(upper_item) upper_sequencer;
 
@@ -9395,7 +9336,7 @@ lower_driver, lower_monitor, upper_item, upper_driver, and
 upper_monitor. The example further assumes a simple one-to-one mapping
 between the upper and lower-layer protocol. A complete example can be
 found in the UVM distribution under the directory
-examples/simple/layering/agents.
+test/examples/simple/layering/agents.
 
 Not all code required for creating UVM-compliant components (such as
 utility macro calls and configuration of virtual interfaces) is shown
@@ -9407,7 +9348,7 @@ optionally get their response. The sequence has no body() method. The
 items will be executed by explicitly calling its start_item() and
 finish_item() methods from the layering driver.
 
-class lower_passthru_seq extends uvm_sequence#(lower_item);
+class lower_passthru_seq extends UVMSequence#(lower_item);
 
 function new(string name = “lower_passthru_sequence”);
 
@@ -9499,7 +9440,7 @@ completion of the *build* phase. The analysis port of the lower-layer
 agent is connected to the analysis export of the higher-layer layering
 monitor using the usual connection mechanism
 
-class layered_env extends uvm_env;
+class layered_env(UVMEnv):
 
 upper_agent u_agent; lower_agent l_agent;
 
@@ -9567,8 +9508,8 @@ constraints finish_item(req, priority);
 --------------------
 
 This macro allocates an object using the common factory and initializes
-its properties. Its argument is a variable of type uvm_sequence_item or
-uvm_sequence. You can use the macro with SystemVerilog’s
+its properties. Its argument is a variable of type UVMSequenceItem or
+UVMSequence. You can use the macro with SystemVerilog’s
 constraint_mode() and rand_mode() functions to control subsequent
 randomization of the sequence or sequence item.
 
@@ -9584,7 +9525,7 @@ options for sending this pre-generated item to the driver.
 
 
 
-class my_seq extends uvm_sequence #(my_item);
+class my_seq extends UVMSequence #(my_item);
 
 ... // Constructor and UVM automation macros go here.
 
@@ -9600,7 +9541,7 @@ NOTE–You might need to disable a constraint to avoid a conflict.
 6.5.3.2 \`uvm_send
 ------------------
 
-This macro processes the uvm_sequence_item or uvm_sequence class handle
+This macro processes the UVMSequenceItem or UVMSequence class handle
 argument as shown in Figure15 and Figure16, without any allocation or
 randomization. Sequence items are placed in the sequencer’s queue to
 await processing while subsequences are processed immediately. The
@@ -9610,7 +9551,7 @@ In the following example, we show the use of uvm_create() to
 pre-allocate a sequence item along with \`uvm_send, which processes it
 as shown in Figure 15, without allocation or randomization.
 
-class my_seq2 extends uvm_sequence #(my_item);
+class my_seq2 extends UVMSequence #(my_item);
 
 ... // Constructor and UVM automation macros go here.
 
@@ -9638,21 +9579,23 @@ The following example shows the use of \`uvm_create to pre-allocate a
 sequence item along with the \`uvm_rand_send\* macros, which process it
 as shown in Figure15, without allocation. The rand_mode() and
 constraint_mode() constructs are used to show fine-grain control on the
-randomization of an object.
+randomization of an object::
 
+    class my_seq3 extends UVMSequence #(my_item);
 
+        ...
+        // Constructor and UVM automation macros go here.
 
-class my_seq3 extends uvm_sequence #(my_item);
+        // See Section 4.7.2
+        virtual task body(); \`uvm_create(req)
+            req.addr.rand_mode(0);
+            req.dc1.constraint_mode(0);
+            req.addr = 27; // Randomize and process the item. 
+            uvm_rand_send(req) // Randomize and process again, this time with inline constraints.
+            uvm_rand_send_with(req, {data < 1000;})
+        endtask : body
 
-... // Constructor and UVM automation macros go here.
-
-   // See Section 4.7.2 virtual task body(); \`uvm_create(req)
-   req.addr.rand_mode(0); req.dc1.constraint_mode(0); req.addr = 27; //
-   Randomize and process the item. \`uvm_rand_send(req) // Randomize and
-   process again, this time with inline constraints.
-
-\`uvm_rand_send_with(req, {data < 1000;}) endtask : body endclass:
-my_seq3
+    endclass: my_seq3
 
 6.5.4 Executing Sequences and Items on other Sequencers
 -------------------------------------------------------
@@ -9685,22 +9628,21 @@ only can users retrieve the complete arguments using methods such as
 ~get_args()~ and ~get_arg_matches()~, but they can also retrieve the
 suffixes of arguments using ~get_arg_values()~.
 
-The uvm_cmdline_processor class also provides support for setting
+The UVMCmdlineProcessor class also provides support for setting
 various UVM variables from the command line, such as components’
 verbosities and configuration settings for integral types and strings.
 Command line arguments that are in UPPERCASE should only have one
 setting to invocation. Command line arguments in lowercase can have
 multiple settings per invocation. All of this is further described in
-uvm_cmdline_processor in the UVM *1.2 Class Reference*.
+UVMCmdlineProcessor in the UVM *1.2 Class Reference*.
 
 6.6.2 Getting Started
 ---------------------
 
 To start using the `UVMCmdlineProcessor`, the user needs to first
-get access to the singleton instance of the uvm_cmdline_processor.
+get access to the singleton instance of the UVMCmdlineProcessor::
 
-uvm_cmdline_processor cmdline_processor =
-uvm_cmdline_processor::get_inst();
+    cmdline_processor = UVMCmdlineProcessor::get_inst();
 
 
 
@@ -9796,50 +9738,49 @@ Max quit count +UVM_MAX_QUIT_COUNT
 Objection mechanism debug +UVM_OBJECTION_TRACE
 
 Please see the UVM *1.2 Class Reference* for more examples of using the
-uvm_cmdline_processor class facilities.
+`UVMCmdlineProcessor` class facilities.
 
-6.7 Macros in UVM
+6.7 Mixins in UVM
 #################
 
-To reduce coding overhead, the UVM library provides a set of macro
-declarations. These macros can be used to combine the definition of
+To reduce coding overhead, the UVM library provides a set of mixin
+functions. These mixins can be used to combine the definition of
 multiple things into one step (e.g., declare a field and a task, when
-both are required to exist at the same time). No other SystemVerilog
-code structure can express such concerns in a concise manner. However,
-you are not required to use these macros and may instead choose to build
+both are required to exist at the same time). However,
+you are not required to use these mixins and may instead choose to build
 the expanded (required) code yourself.
 
-It is important to understand the decision of macro vs non-macro usage
+It is important to understand the decision of mixin vs non-mixin usage
 is typically a —performance" vs —creation speed and/or maintenance
 effort" decision. A few points might help to find the best choice for
-your particular usage.
+your particular usage. If in doubt, try to profile the code before you
+assume it is too slow.
 
-a) Such usage can be a personal or project preference. b) The UVM macros
-can be considered as a kind of —first class citizens", similar to
-functions and tasks. However, bug fixes, use model changes, and
-performance improvements inside the macros will obviously only reach the
-users of such macros. c) Performance differences between the two
-approaches may heavily depend upon the macro used,
+  * Such usage can be a personal or project preference.
+  * The UVM mixin can be considered as a kind of —first class citizens", similar to
+    functions and tasks. However, bug fixes, use model changes, and
+    performance improvements inside the mixins will obviously only reach the
+    users of such mixins.
+  * Performance differences between the two
+    approaches may heavily depend upon the mixin used,
+    exact use model, tool vendor, and tool version.
+  * The benefits of a hand-coded implementation (non-macro) need to
+    be weighed against those
+    of having a shorter user code, but eventually utilizing more generic code.
+  * Neither path (macro or non-macro) is exclusive within a class or
+    project. Special care must be taken when mixing the two within a single
+    class or inheritance tree, as the automation provided by the
+    uvm_field mixins will always execute prior to the handcrafted
+    implementation. The only exception here is —auto configuration" which
+    relies upon the field registration macros, will only exe- cute when
+    super.build_phase() is called. When macros are used incorrectly,
+    error/warning messages might not directly indicate the source of the
+    issue and ,during simulation, debugging with macros might be more
+    challenging. The capabilities and support for macro compilation and
+    debugging might differ from vendor to vendor.
+  * It is also important to understand that different macro types are
+    used in different contexts.
 
-exact use model, tool vendor, and tool version. d) The benefits of a
-hand-coded implementation (non-macro) need to be weighed against those
-of having a shorter user code, but eventually utilizing more generic code. e)
-Neither path (macro or non-macro) is exclusive within a class or
-project. Special care must be taken when mixing the two within a single
-class or inheritance tree, as the automation provided by the
-uvm_field_\* macros will always execute prior to the handcrafted
-implementation. The only exception here is —auto configuration" which
-relies upon the field registration macros, will only exe- cute when
-super.build_phase() is called. When macros are used incorrectly,
-error/warning messages might not directly indicate the source of the
-issue and ,during simulation, debugging with macros might be more
-challenging. The capabilities and support for macro compilation and
-debugging might differ from vendor to vendor.
-
-
-
-f) It is also important to understand that different macro types are
-used in different contexts.
 
 1) Registration macros (uvm*utils*, \*callbacks, constants, etc.) are
 typically used once and do not incur a performance penalty.
@@ -9865,62 +9806,74 @@ do_compare/do_copy/etc. methods.
 
 The UVM distribution comes with two examples of small environments
 illustrating the usage with and without macro usage. The examples are
-located under examples/simple/basic_examples/pkg and
-examples/simple/sequence/basic_read_write_sequence.
+located under test/examples/simple/basic_examples/pkg and
+test/examples/simple/sequence/basic_read_write_sequence.
 
-*Example*
+*Example*::
 
-class bus_trans extends uvm_sequence_item;
+    class bus_trans extends UVMSequenceItem;
 
-bit [11:0] addr; bit [7:0] data; bus_op_t op; \`ifdef USE_FIELD_MACROS
+        bit [11:0] addr; bit [7:0] data; bus_op_t op; \`ifdef USE_FIELD_MACROS
 
-\`uvm_object_utils_begin(bus_trans)
+        \`uvm_object_utils_begin(bus_trans)
 
-\`uvm_field_int(addr,UVM_DEFAULT)
-\`uvm_field_int(data,UVM_DEFAULT|UVM_NORECORD)
-\`uvm_field_enum(bus_op_t,op,UVM_DEFAULT) \`uvm_field_utils_end \`else
+        \`uvm_field_int(addr,UVM_DEFAULT)
+        \`uvm_field_int(data,UVM_DEFAULT|UVM_NORECORD)
+        \`uvm_field_enum(bus_op_t,op,UVM_DEFAULT) \`uvm_field_utils_end \`else
 
-\`uvm_object_utils(bus_trans) virtual function void do_copy (uvm_object
-rhs);
+        \`uvm_object_utils(bus_trans)
 
-bus_trans rhs_; if(!$cast(rhs_, rhs))
+        virtual function void do_copy (uvm_object rhs);
+            bus_trans rhs_;
+            if(!$cast(rhs_, rhs))
+                \`uvm_error("do_copy", "$cast failed, check type compatability")
+            super.do_copy(rhs);
+            addr = rhs_.addr;
+            data = rhs_.data;
+            op = rhs_.op;
+        endfunction
 
-\`uvm_error("do_copy", "$cast failed, check type compatability")
-super.do_copy(rhs); addr = rhs_.addr; data = rhs_.data; op = rhs_.op;
-endfunction virtual function bit do_compare(uvm_object rhs,uvm_comparer
-comparer);
+        virtual function bit do_compare(uvm_object rhs,uvm_comparer comparer);
+            bus_trans rhs_;
+            if(!$cast(rhs_, rhs))
+                \`uvm_fatal("do_compare", "cast failed, check type compatability")
+                return ((op == rhs_.op) && (addr == rhs_.addr) && (data == rhs_.data));
+        endfunction
 
-bus_trans rhs_; if(!$cast(rhs_, rhs))
+        virtual function void do_print(uvm_printer printer);
+            super.do_print(printer);
+            printer.print_generic("op", "bus_op_t", $size(bus_op_t), op.name());
+            printer.print_int("int", addr, $size(addr));
+            printer.print_int("int", data, $size(data));
+        endfunction
 
-\`uvm_fatal("do_compare", "cast failed, check type compatability")
-return ((op == rhs_.op) && (addr == rhs_.addr) && (data == rhs_.data));
-endfunction virtual function void do_print(uvm_printer printer);
+        virtual void do_record(uvm_recorder recorder);
+            if (!is_recording_enabled())
+                return;
+            super.do_record(recorder);
+            uvm_record_int("int", addr, $bits(addr))
+            uvm_record_int("int", data, $bits(data))
+        endfunction
 
-super.do_print(printer); printer.print_generic("op", "bus_op_t",
-$size(bus_op_t), op.name()); printer.print_int("int", addr,
-$size(addr)); printer.print_int("int", data, $size(data)); endfunction
-virtual void do_record(uvm_recorder recorder);
+        virtual function void do_pack (uvm_packer packer);
+            super.do_pack(packer);
+            uvm_pack_enum(op) 
+            uvm_pack_int(data)
+            uvm_pack_int(addr)
+        endfunction
 
+        virtual function void do_unpack(uvm_packer packer);
+            super.do_unpack(packer);
+            uvm_unpack_enum(op,bus_op_t)
+            uvm_unpack_int(data)
+            uvm_unpack_int(addr)
+        endfunction \`endif
 
+        function new(string name="");
+            super.new(name);
+        endfunction
 
-if (!is_recording_enabled())
-
-return; super.do_record(recorder); \`uvm_record_int("int", addr,
-$bits(addr)) \`uvm_record_int("int", data, $bits(data))
-
-endfunction virtual function void do_pack (uvm_packer packer);
-
-super.do_pack(packer); \`uvm_pack_enum(op) \`uvm_pack_int(data)
-\`uvm_pack_int(addr) endfunction virtual function void do_unpack
-(uvm_packer packer);
-
-super.do_unpack(packer); \`uvm_unpack_enum(op,bus_op_t)
-\`uvm_unpack_int(data) \`uvm_unpack_int(addr) endfunction \`endif
-
-function new(string name="");
-
-super.new(name); endfunction endclass
-
+    endclass
 
 
 7. UBus Verification Component Example
@@ -9962,129 +9915,134 @@ which activates the read byte sequence followed by the write byte
 sequence, followed by another read byte sequence. An assertion verifies
 the data read in the second read byte sequence is identical to the data
 written in the write byte sequence. The following output is generated
-when the test is simulated with UVM_VERBOSITY = UVM_LOW.
+when the test is simulated with UVM_VERBOSITY = UVM_LOW::
 
-# UVM_INFO @ 0: reporter [RNTST] Running test test_read_modify_write...
-# UVM_INFO test_lib.sv(55) @ 0: uvm_test_top [test_read_modify_write] #
-Printing the test topology : #
--------------------------------------------------------------------- #
-Name Type Size Value #
--------------------------------------------------------------------- #
-uvm_test_top test_read_modify_write - @350 # ubus_example_tb0
-ubus_example_tb - @372 # scoreboard0 ubus_example_scoreboard - @395 #
-item_collected_export uvm_analysis_imp - @404 # disable_scoreboard
-integral 1 'h0 # num_writes integral 32 'd0 # num_init_reads integral 32
-'d0 # num_uninit_reads integral 32 'd0 # recording_detail uvm_verbosity
-32 UVM_FULL # ubus0 ubus_env - @386 # bus_monitor ubus_bus_monitor -
-@419 # masters[0] ubus_master_agent - @454 # slaves[0] ubus_slave_agent
-- @468 # has_bus_monitor integral 1 'h1 # num_masters integral 32 'h1 #
-num_slaves integral 32 'h1 # intf_checks_enable integral 1 'h1 #
-intf_coverage_enable integral 1 'h1
+    # UVM_INFO @ 0: reporter [RNTST] Running test test_read_modify_write...
+    # UVM_INFO test_lib.sv(55) @ 0: uvm_test_top [test_read_modify_write]
+    # Printing the test topology :
+    #--------------------------------------------------------------------
+    # Name Type Size Value
+    #--------------------------------------------------------------------
+    # uvm_test_top test_read_modify_write - @350
+    # ubus_example_tb0 ubus_example_tb - @372
+    # scoreboard0 ubus_example_scoreboard - @395
+    # item_collected_export uvm_analysis_imp - @404
+    # disable_scoreboard integral 1 'h0
+    # num_writes integral 32 'd0
+    # num_init_reads integral 32 'd0
+    # num_uninit_reads integral 32 'd0
+    # recording_detail uvm_verbosity 32 UVM_FULL
+    # ubus0 ubus_env - @386
+    # bus_monitor ubus_bus_monitor - @419
+    # masters[0] ubus_master_agent - @454
+    # slaves[0] ubus_slave_agent - @468
+    # has_bus_monitor integral 1 'h1
+    # num_masters integral 32 'h1
+    # num_slaves integral 32 'h1
+    # intf_checks_enable integral 1 'h1
+    # intf_coverage_enable integral 1 'h1
+    # recording_detail uvm_verbosity 32 UVM_FULL
+    # recording_detail uvm_verbosity 32 UVM_FULL
+    # --------------------------------------------------------------------
+    #
+    # UVM_INFO ubus_example_scoreboard.sv(100) @ 110:
+      uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
+      READ to empty address...Updating address : b877 with data : 91
+    # UVM_INFO ../sv/ubus_bus_monitor.sv(223) @ 110:
 
-
-
-# recording_detail uvm_verbosity 32 UVM_FULL # recording_detail
-uvm_verbosity 32 UVM_FULL #
---------------------------------------------------------------------
-#\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(100) @ 110: `
-
-uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard] READ
-to empty address...Updating address : b877 with data : 91 # UVM_INFO
-../sv/ubus_bus_monitor.sv(223) @ 110:
-
-uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
-Transfer collected : #
----------------------------------------------------------- # Name Type
-Size Value # ----------------------------------------------------------
-# ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
-read_write ubus_read_write_enum 32 READ # size integral 32 'h1 # data
-da(integral) 1 - # [0] integral 8 'h91 # wait_state da(integral) 0 - #
-error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
-string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 70
-# end_time time 64 110 #
-----------------------------------------------------------
-#\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(89) @ 200: `
-
-uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
-WRITE to existing address...Updating address : b877 with data : 92 #
-UVM_INFO ../sv/ubus_bus_monitor.sv(223) @ 200:
-
-uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
-Transfer collected : #
----------------------------------------------------------- # Name Type
-Size Value # ----------------------------------------------------------
-# ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
-read_write ubus_read_write_enum 32 WRITE # size integral 32 'h1 # data
-da(integral) 1 - # [0] integral 8 'h92 # wait_state da(integral) 1 - #
-error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
-string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 160
-# end_time time 64 200 #
-----------------------------------------------------------
-#\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(75) @ 310: `
-
-uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard] READ
-to existing address...Checking address : b877 with data : 92 # UVM_INFO
-../sv/ubus_bus_monitor.sv(223) @ 310:
-
-uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
-Transfer collected :
-
-
-
-# ---------------------------------------------------------- # Name Type
-Size Value # ----------------------------------------------------------
-# ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
-read_write ubus_read_write_enum 32 READ # size integral 32 'h1 # data
-da(integral) 1 - # [0] integral 8 'h92 # wait_state da(integral) 1 - #
-error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
-string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 270
-# end_time time 64 310 #
-----------------------------------------------------------
-#\ :sub:`# UVM_INFO ../../../../src/base/uvm_objection.svh(1271) @ 360: reporter `
-
-[TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase #
-UVM_INFO ubus_example_scoreboard.sv(114) @ 360:
-
-uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
-Reporting scoreboard information... #
------------------------------------------------------------------- #
-Name Type Size Value #
------------------------------------------------------------------- #
-scoreboard0 ubus_example_scoreboard - @395 # item_collected_export
-uvm_analysis_imp - @404 # recording_detail uvm_verbosity 32 UVM_FULL #
-disable_scoreboard integral 1 'h0 # num_writes integral 32 'd1 #
-num_init_reads integral 32 'd1 # num_uninit_reads integral 32 'd1 #
-recording_detail uvm_verbosity 32 UVM_FULL #
-------------------------------------------------------------------
-#\ :sub:`# UVM_INFO ../sv/ubus_master_monitor.sv(205) @ 360: `
-
-uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor
-[uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] Covergroup
-'cov_trans' coverage: 23.750000 # UVM_INFO
-../sv/ubus_slave_monitor.sv(243) @ 360:
-
-uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor
-[uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] Covergroup
-'cov_trans' coverage: 23.750000 # UVM_INFO test_lib.sv(70) @ 360:
-uvm_test_top [test_read_modify_write] \*\* UVM
-
-TEST PASSED \*\* # UVM_INFO
-../../../../src/base/uvm_report_server.svh(847) @ 360: reporter
-
-[UVM/REPORT/SERVER] # --- UVM Report Summary ---
-#\ :sub:`# ** Report counts by severity` # UVM_INFO : 14 # UVM_WARNING :
-0 # UVM_ERROR : 0 # UVM_FATAL : 0 # \*\* Report counts by id # [RNTST] 1
-# [TEST_DONE] 1 # [UVM/RELNOTES] 1
-
-
-
-# [test_read_modify_write] 2 # [ubus_bus_monitor] 3 #
-[ubus_example_scoreboard] 4 #
-[uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] 1 #
-[uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] 1
-
-# $finish called from file "../../../../src/base/uvm_root.svh", line
-517. # $finish at simulation time 360
+    uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
+    Transfer collected : #
+    ---------------------------------------------------------- # Name Type
+    Size Value # ----------------------------------------------------------
+    # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
+    read_write ubus_read_write_enum 32 READ # size integral 32 'h1 # data
+    da(integral) 1 - # [0] integral 8 'h91 # wait_state da(integral) 0 - #
+    error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
+    string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 70
+    # end_time time 64 110 #
+    ----------------------------------------------------------
+    #\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(89) @ 200: `
+    
+    uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
+    WRITE to existing address...Updating address : b877 with data : 92 #
+    UVM_INFO ../sv/ubus_bus_monitor.sv(223) @ 200:
+    
+    uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
+    Transfer collected : #
+    ---------------------------------------------------------- # Name Type
+    Size Value # ----------------------------------------------------------
+    # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
+    read_write ubus_read_write_enum 32 WRITE # size integral 32 'h1 # data
+    da(integral) 1 - # [0] integral 8 'h92 # wait_state da(integral) 1 - #
+    error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
+    string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 160
+    # end_time time 64 200 #
+    ----------------------------------------------------------
+    #\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(75) @ 310: `
+    
+    uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard] READ
+    to existing address...Checking address : b877 with data : 92 # UVM_INFO
+    ../sv/ubus_bus_monitor.sv(223) @ 310:
+    
+    uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
+    Transfer collected :
+    
+    
+    
+    # ---------------------------------------------------------- # Name Type
+    Size Value # ----------------------------------------------------------
+    # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
+    read_write ubus_read_write_enum 32 READ # size integral 32 'h1 # data
+    da(integral) 1 - # [0] integral 8 'h92 # wait_state da(integral) 1 - #
+    error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
+    string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 270
+    # end_time time 64 310 #
+    ----------------------------------------------------------
+    #\ :sub:`# UVM_INFO ../../../../src/base/uvm_objection.svh(1271) @ 360: reporter `
+    
+    [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase #
+    UVM_INFO ubus_example_scoreboard.sv(114) @ 360:
+    
+    uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
+    Reporting scoreboard information... #
+    ------------------------------------------------------------------ #
+    Name Type Size Value #
+    ------------------------------------------------------------------ #
+    scoreboard0 ubus_example_scoreboard - @395 # item_collected_export
+    uvm_analysis_imp - @404 # recording_detail uvm_verbosity 32 UVM_FULL #
+    disable_scoreboard integral 1 'h0 # num_writes integral 32 'd1 #
+    num_init_reads integral 32 'd1 # num_uninit_reads integral 32 'd1 #
+    recording_detail uvm_verbosity 32 UVM_FULL #
+    ------------------------------------------------------------------
+    #\ :sub:`# UVM_INFO ../sv/ubus_master_monitor.sv(205) @ 360: `
+    
+    uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor
+    [uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] Covergroup
+    'cov_trans' coverage: 23.750000 # UVM_INFO
+    ../sv/ubus_slave_monitor.sv(243) @ 360:
+    
+    uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor
+    [uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] Covergroup
+    'cov_trans' coverage: 23.750000 # UVM_INFO test_lib.sv(70) @ 360:
+    uvm_test_top [test_read_modify_write] \*\* UVM
+    
+    TEST PASSED \*\* # UVM_INFO
+    ../../../../src/base/uvm_report_server.svh(847) @ 360: reporter
+    
+    [UVM/REPORT/SERVER] # --- UVM Report Summary ---
+    #\ :sub:`# ** Report counts by severity` # UVM_INFO : 14 # UVM_WARNING :
+    0 # UVM_ERROR : 0 # UVM_FATAL : 0 # \*\* Report counts by id # [RNTST] 1
+    # [TEST_DONE] 1 # [UVM/RELNOTES] 1
+    
+    
+    
+    # [test_read_modify_write] 2 # [ubus_bus_monitor] 3 #
+    [ubus_example_scoreboard] 4 #
+    [uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] 1 #
+    [uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] 1
+    
+    # $finish called from file "../../../../src/base/uvm_root.svh", line
+    517. # $finish at simulation time 360
 
 7.2 UBus Example Architecture
 #############################
@@ -10092,56 +10050,13 @@ TEST PASSED \*\* # UVM_INFO
 Figure 40 shows the testbench topology of the UBus simulation
 environment in the UBus example delivered with this release.
 
-   **test_read_modify_write**
 
-**ubus_example_tb**
+.. figure:: fig/40_ubus_example_architecture.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**ubus_example_scoreboard**
-
-**ubus_env**
-
-**ubus_bus_monitor**
-
-**checks coverage**
-
-**ubus_master_agent**
-
-**ubus_master_sequencer**
-
-   *read_modify_write incr_read incr_read_write seq_r8_w8_r4_w4
-   incr_write*
-
-checks
-
-**ubus_if**
-
-**ubus_slave_agent**
-
-**ubus_slave_sequencer**
-
-*slave_memory*
-
-*simple_response*
-
-checks
-
-**Figure 40–UBus Example Architecture**
-
-**ubus_master_driver**
-
-**ubus_master_monitor**
-
-**ubus_slave_driver**
-
-**ubus_slave_monitor**
-
-covergroups
-
-covergroups
-
-**checks & coverage**
-
-
+    UBus Example Architecture
 
 7.3 UBus Top Module
 ###################
