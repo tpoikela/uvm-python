@@ -46,14 +46,14 @@ class ubus_master_agent(UVMAgent):
     #
     #  // new - constructor
     def __init__(self, name, parent):
-        UVMAgent.__init__(self, name, parent)
+        super().__init__(name, parent)
         self.master_id = 0
         self.driver = None
         self.sequencer = None
         self.monitor = None
 
     def build_phase(self, phase):
-        UVMAgent.build_phase(self, phase)
+        super().build_phase(phase)
         self.monitor = ubus_master_monitor.type_id.create("monitor", self)
         if self.get_is_active() == UVM_ACTIVE:
             self.driver = ubus_master_driver.type_id.create("driver", self)

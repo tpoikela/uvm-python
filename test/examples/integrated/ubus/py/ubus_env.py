@@ -74,8 +74,8 @@ class ubus_env(UVMEnv):
     #  // build_phase
     def build_phase(self, phase):
         inst_name = ""
-        UVMEnv.build_phase(self, phase)
-        #//    set_phase_domain("uvm")
+        super().build_phase(phase)
+
         arr = []
         if UVMConfigDb.get(None, "*", "vif", arr):
             uvm_info("GOT_VIF", "vif was received from configDb", UVM_HIGH)
@@ -106,7 +106,7 @@ class ubus_env(UVMEnv):
         for i in range(self.num_slaves):
             inst_name = sv.sformatf("slaves[%0d]", i)
             self.slaves.append(ubus_slave_agent.type_id.create(inst_name, self))
-        #  endfunction : build_phase
+
 
     #
     #  // set_slave_address_map

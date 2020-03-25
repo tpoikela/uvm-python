@@ -19,10 +19,6 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-#`include "ubus_example_scoreboard.sv"
-#`include "ubus_master_seq_lib.sv"
-#`include "ubus_example_master_seq_lib.sv"
-#`include "ubus_slave_seq_lib.sv"
 
 from uvm.base import *
 from uvm.comps import UVMEnv
@@ -30,12 +26,6 @@ from uvm.macros import uvm_component_utils
 from ubus_example_scoreboard import ubus_example_scoreboard
 
 from ubus_env import ubus_env
-
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: ubus_example_tb
-#//
-#//------------------------------------------------------------------------------
 
 
 class ubus_example_tb(UVMEnv):

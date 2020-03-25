@@ -48,9 +48,9 @@ This product is licensed under the Apache Software Foundation’s
 Apache License, Version 2.0, January 2004. The full license is
 available at: http://www.apache.org/licenses/.
 
-**WARNING**: This is semi-manual translation from the original SystemVerilog
-`UVM 1.2 User's Guide <http://www.accellera.org/images//downloads/standards/uvm/uvm_users_guide_1.2.pdf>`
-to uvm-python. It is work-in-progress.
+.. WARNING:: This is semi-manual translation from the original SystemVerilog
+    `UVM 1.2 User's Guide <http://www.accellera.org/images//downloads/standards/uvm/uvm_users_guide_1.2.pdf>`
+    to uvm-python. It is work-in-progress.
 
 **Notices**
 
@@ -2264,7 +2264,7 @@ components should be instantiated using the create() method::
         ...
         virtual function void build_phase(uvm_phase phase);
             super.build_phase(phase);
-            **driver = my_driver::type_id::create("driver",this);**
+            **driver = my_driver.type_id.create("driver",this);**
             ...
         endfunction
         endclass
@@ -2355,12 +2355,12 @@ existing behavior using extends::
     6 // Use build_phase to create agents's subcomponents.
     7 virtual function void build_phase(uvm_phase phase);
     8 super.build_phase(phase)
-    9 monitor = simple_monitor::type_id::create("monitor",this);
+    9 monitor = simple_monitor.type_id.create("monitor",this);
     10 if (is_active == UVM_ACTIVE) begin
     11 // Build the sequencer and driver.
     12 sequencer =
-    13 uvm_sequencer#(simple_item)::type_id::create("sequencer",this);
-    14 driver = simple_driver::type_id::create("driver",this);
+    13 uvm_sequencer#(simple_item).type_id.create("sequencer",this);
+    14 driver = simple_driver.type_id.create("driver",this);
     15 end
     16 endfunction : build_phase
     17 virtual function void connect_phase(uvm_phase phase);
@@ -2452,7 +2452,7 @@ of masters and slaves in a new environment as shown below::
 
             for(int i = 0; i < num_masters; i++) begin
                 $sformat(inst_name, "masters[%0d]", i);
-                masters[i] = ahb_master_agent::type_id::create(inst_name,this);
+                masters[i] = ahb_master_agent.type_id.create(inst_name,this);
             end
             // Build slaves and other components.
             endfunction
@@ -2703,7 +2703,7 @@ class simple_seq_do_with extends UVMSequence #(simple_item);
 
 task do_rw(int addr, int data);
 
-item= simple_item::type_id::create("item",,get_full_name());
+item= simple_item.type_id.create("item",,get_full_name());
 item.addr.rand_mode(0); item.data.rand_mode(0); item.addr = addr;
 item.data = data; start_item(item); randomize(item);
 finish_item(item); endtask virtual task body(); repeat (num_trans)
@@ -2737,17 +2737,17 @@ starting main_phase and creating an instance of the
 loop_read_modify_write_seq sequence, then randomize it and start
 executing it.
 
-uvm_config_db#(uvm_object_wrapper)::set(this,
+UVMConfigDb.set(this,
 
 ".ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
 "default_sequence", loop_read_modify_write_seq::type_id::get());
 
 It is also possible to start a specific instance of a sequence:
 
-lrmw_seq = loop_read_modify_write_seq::type_id::create(“lrmw”,,
+lrmw_seq = loop_read_modify_write_seq.type_id.create(“lrmw”,,
 
 get_full_name()); // set parameters in lrmw_seq, if desired
-uvm_config_db#(uvm_sequence_base)::set(this,
+UVMConfigDb.set(this,
 
 ".ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
 "default_sequence", lrmw_seq);
@@ -3095,7 +3095,7 @@ If checks_enable is set to 0, the function that performs the checks
 is not called, thus disabling the checks. The following example shows
 how to turn off the checks for the master0.monitor.
 
-uvm_config_db#(int)::set(this,"masters[0].monitor", "checks_enable",
+UVMConfigDb.set(this,"masters[0].monitor", "checks_enable",
 0);
 
 The same facilities exist for the coverage_enable field in the Ubus
@@ -3275,13 +3275,13 @@ virtual function void build_phase(uvm_phase phase);
 
 super.build_phase(phase); // Configure before creating the
 
-// subcomponents. uvm_config_db#(int)::set(this,"ubus0",
+// subcomponents. UVMConfigDb.set(this,"ubus0",
 
-"num_masters", 1); uvm_config_db#(int)::set(this,".ubus0",
+"num_masters", 1); UVMConfigDb.set(this,".ubus0",
 
-"num_slaves", 1); ubus0 = ubus_env::type_id::create("ubus0", this);
+"num_slaves", 1); ubus0 = ubus_env.type_id.create("ubus0", this);
 
-scoreboard0 = ubus_example_scoreboard::type_id::create("scoreboard0",
+scoreboard0 = ubus_example_scoreboard.type_id.create("scoreboard0",
 
 this);; endfunction : build_phase virtual function connect_phase();
 
@@ -3298,19 +3298,19 @@ Other configuration examples include:
 
 — Set the masters[0] agent to be active:
 
-uvm_config_db#(uvm_active_passive_enum)::set(this,"ubus0.masters[0]",
+UVMConfigDb.set(this,"ubus0.masters[0]",
 
 "is_active", UVM_ACTIVE);
 
 — Do not collect coverage for masters[0] agent:
 
-uvm_config_db#(int)::set(this, "ubus0.masters[0].monitor",
+UVMConfigDb.set(this, "ubus0.masters[0].monitor",
 
 "coverage_enable", 0);
 
 — Set all slaves (using a wildcard) to be passive:
 
-uvm_config_db#(uvm_active_passive_enum)::set(this,"ubus0.slaves*",
+UVMConfigDb.set(this,"ubus0.slaves*",
 
 "is_active", UVM_PASSIVE);
 
@@ -3426,7 +3426,7 @@ integrators to configure an environment without needing to know the
 verification component implementation and hook-up scheme. The
 following are some examples.
 
-uvm_config_db#(int)::set(this,"*.masters[0]", "master_id", 0);
+UVMConfigDb.set(this,"*.masters[0]", "master_id", 0);
 uvm_config_db#(uvm_object_wrapper)::
 
 set(this, "*.ubus0.masters[0].sequencer.main_phase",
@@ -3578,7 +3578,7 @@ component.
 virtual function build_phase(); // Create the top-level environment.
 
 super.build_phase(phase); ubus_example_env0 =
-ubus_example_tb::type_id::create("ubus_example_env0", this);
+ubus_example_tb.type_id.create("ubus_example_env0", this);
 
 endfunction endclass
 
@@ -3831,7 +3831,7 @@ environment.
 factory.\ **set_type_override_by_type**\ (uart_frame::get_type(),
 
 short_delay_frame::get_type()); uart_tb0 =
-uart_tb::type_id::create("uart_tb0", this); endfunction task
+uart_tb.type_id.create("uart_tb0", this); endfunction task
 run_phase(uvm_phase phase);
 
 uvm_top.print_topology(); endtask endclass
@@ -4052,10 +4052,10 @@ sequences on the subsequencers in the example in Section 4.7.4.
 
 // Configuration: Disable subsequencer sequences.
 
-uvm_config_db#(uvm_sequence_base)::set(this, "*.cpu_seqr.*_phase",
+UVMConfigDb.set(this, "*.cpu_seqr.*_phase",
 
 "default_sequence", null);;
-uvm_config_db#(uvm_sequence_base)::set(this, "*.eth_seqr.*_phase",
+UVMConfigDb.set(this, "*.eth_seqr.*_phase",
 
 "default_sequence", null); c) Use grab()/lock() and ungrab()/unlock()—In
 this case, a virtual sequence can achieve full control over its
@@ -4131,16 +4131,16 @@ function void build_phase(uvm_phase phase);
 
 super.build_phase(phase); // Configuration: Set the default sequence
 for the virtual sequencer.
-uvm_config_db#(uvm_object_wrapper)::set(this,
+UVMConfigDb.set(this,
 
 "v_sequencer.run_phase",
 
 "default_sequence", simple_virt_seq.type_id::get()); // Build envs
-with subsequencers. cpu0 = cpu_env_c::type_id::create("cpu0", this);
-eth0 = eth_env_c::type_id::create("eth0", this);
+with subsequencers. cpu0 = cpu_env_c.type_id.create("cpu0", this);
+eth0 = eth_env_c.type_id.create("eth0", this);
 
 // Build the virtual sequencer. v_sequencer =
-simple_virtual_sequencer::type_id::create("v_sequencer",
+simple_virtual_sequencer.type_id.create("v_sequencer",
 
 this); endfunction : build_phase
 
@@ -4149,7 +4149,7 @@ this); endfunction : build_phase
 function void connect_phase();
 
 v_sequencer.cpu_seqr = cpu0.master[0].sequencer;
-uvm_config_db#(uvm_sequencer)::set(this,“v_sequencer”,
+UVMConfigDb.set(this,“v_sequencer”,
 
 “eth_seqr”,eth0.tx_rx_agent.sequencer); endfunction : connect_phase
 
@@ -4341,7 +4341,7 @@ build() phase:
 function ubus_example_env::build_phase(uvm_phase phase);
 
 ... scoreboard0 =
-ubus_example_scoreboard::type_id::create("scoreboard0",
+ubus_example_scoreboard.type_id.create("scoreboard0",
 
 
 
@@ -5630,7 +5630,7 @@ class my_reg_type extends uvm_reg;
 
 virtual function build();
 
-this.F1 = uvm_reg_field::type_id::create(.name(“F1”),
+this.F1 = uvm_reg_field.type_id.create(.name(“F1”),
 
 .parent(null), .contxt(get_full_name())); this.F1.configure(this, ...);
 
@@ -5809,7 +5809,7 @@ virtual function build();
 
 uvm_reg_block blk = get_block();
 
-this.RF1 = my_rf1_type::type_id::create(
+this.RF1 = my_rf1_type.type_id.create(
 
 .name($psprintf(“%s.rf1”, get_name())), .parent(null),
 .contxt(blk.get_full_name())); this.RF1.configure(get_block(), this,
@@ -6099,7 +6099,7 @@ class my_blk_type extends uvm_reg_block;
 
 virtual function build();
 
-this.BLK1 = my_blk1_type::type_id::create(“BLK1”, null,
+this.BLK1 = my_blk1_type.type_id.create(“BLK1”, null,
 
 get_full_name()); this.BLK1.configure(this, ...); this.BLK1.build();
 endfunction endclass
@@ -6113,7 +6113,7 @@ class my_blk_type extends uvm_reg_block;
 
 virtual function build();
 
-this.R1 = my_reg1_type::type_id::create(“R1”, null, get_full_name());
+this.R1 = my_reg1_type.type_id.create(“R1”, null, get_full_name());
 this.R1.configure(this,...); this.R1.build();
 this.default_map.add_reg(this.R1, ’h04, ...); endfunction endclass
 
@@ -6125,7 +6125,7 @@ class my_rf_type extends uvm_reg_regfile;
 
 virtual function build();
 
-this.RF1 = my_rf1_type::type_id::create(“RF1”, null, get_full_name());
+this.RF1 = my_rf1_type.type_id.create(“RF1”, null, get_full_name());
 this.RF1.build(); this.RF1.map(this.default_map, ’h200, ...);
 endfunction endclass
 
@@ -6664,13 +6664,13 @@ foreach (INDIRECT_REG[i]) begin
 
 string name = $sformatf("INDIRECT_REG[%0d]",i); INDIRECT_REG[i]=
 
-ind_reg::type_id::create(name,,get_full_name());
+ind_reg.type_id.create(name,,get_full_name());
 INDIRECT_REG[i].configure(this, null, ...); INDIRECT_REG[i].build(); end
 
-IND_IDX = ind_idx_reg::type_id::create(“IND_IDX”,,get_full_name());
+IND_IDX = ind_idx_reg.type_id.create(“IND_IDX”,,get_full_name());
 IND_IDX.configure(this, null, ...); IND_IDX.build();
 
-IND_DATA = ind_data_reg::type_id::create(“IND_DATA”,,get_full_name());
+IND_DATA = ind_data_reg.type_id.create(“IND_DATA”,,get_full_name());
 IND_DATA.configure(IND_IDX, INDIRECT_REG, this, null); IND_DATA.build();
 
 default_map = create_map("", 0, 4, UVM_BIG_ENDIAN);
@@ -6785,7 +6785,7 @@ foreach TABLE[i] begin
 
 indexed_reg_frontdoor idx_frtdr = new(INDEX, DATA, i);
 
-= idx_reg_frontdoor::type_id::create(“idx_frtdr”,,get_full_name());
+= idx_reg_frontdoor.type_id.create(“idx_frtdr”,,get_full_name());
 idx_frntdoor.configure(idx_reg, data_reg, i);
 regmodel.TABLE[i].set_frontdoor(idx_frontdoor, default_map, ...); end
 endfunction: build
@@ -6861,14 +6861,14 @@ class my_reg_Ra extends uvm_reg;
 
 rand uvm_reg_field F1; ... virtual function void build();
 
-F1 = uvm_reg_field::type_id::create("F1"); F1.configure(this, 8, 0,
+F1 = uvm_reg_field.type_id.create("F1"); F1.configure(this, 8, 0,
 "RW", 0, 8'h0, 1, 1, 1); endfunction ... endclass
 
 class my_reg_Rb extends uvm_reg;
 
 uvm_reg_field F1; ... virtual function void build();
 
-F1 = uvm_reg_field::type_id::create("F1"); F1.configure(this, 8, 0,
+F1 = uvm_reg_field.type_id.create("F1"); F1.configure(this, 8, 0,
 "RO", 0, 8'h0, 1, 0, 1); endfunction
 
 
@@ -6936,10 +6936,10 @@ virtual function build();
 
 default_map = create_map("", 0, 4, UVM_BIG_ENDIAN);
 
-Ra = reg_Ra::type_id::create("Ra",,get_full_name()); Ra.configure(this,
+Ra = reg_Ra.type_id.create("Ra",,get_full_name()); Ra.configure(this,
 null); Ra.build();
 
-Rb = reg_Rb::type_id::create("Rb",,get_full_name()); Rb.configure(this,
+Rb = reg_Rb.type_id.create("Rb",,get_full_name()); Rb.configure(this,
 null); Rb.build();
 
 default_map.add_reg(Ra, ’h0100); default_map.add_reg(Rb, ’h0200);
@@ -6948,7 +6948,7 @@ begin
 
 alias_RaRb RaRb;
 
-RaRb = alias_RaRb::type_id::create("RaRb",,get_full_name());
+RaRb = alias_RaRb.type_id.create("RaRb",,get_full_name());
 RaRb.configure(Ra, Rb); end endfunction endclass
 
 There are no pre-defined aliasing classes because the nature of the
@@ -7033,10 +7033,10 @@ rand reg_RO R; rand reg_WO W; ... virtual function void build();
 
 default_map = create_map("", 0, 4, UVM_BIG_ENDIAN);
 
-R = reg_RO::type_id::create("R"); R.configure(this, null, "R_reg");
+R = reg_RO.type_id.create("R"); R.configure(this, null, "R_reg");
 R.build();
 
-W = reg_WO::type_id::create("W"); W.configure(this, null, "W_reg");
+W = reg_WO.type_id.create("W"); W.configure(this, null, "W_reg");
 W.build();
 
 default_map.add_reg(R, 'h100, "RO"); default_map.add_reg(W, 'h100,
@@ -7071,9 +7071,9 @@ virtual function void build_phase(uvm_phase phase);
 
 if (regmodel == null) begin
 
-regmodel = block_reg_model::type_id::create(“regmodel”, this);
+regmodel = block_reg_model.type_id.create(“regmodel”, this);
 regmodel.build(); regmodel.lock_model(); end subblk =
-subblk_env::type_id::create(“subblk”, this); subblk.regmodel =
+subblk_env.type_id.create(“subblk”, this); subblk.regmodel =
 regmodel.subblk; endfunction endclass
 
 If HDL paths are used, the root HDL paths must be specified in the
@@ -7088,7 +7088,7 @@ phase);
 
 if (regmodel == null) begin
 
-regmodel = block_reg_model::type_id::create(“regmodel”, this);
+regmodel = block_reg_model.type_id.create(“regmodel”, this);
 regmodel.build(); regmodel.set_hdl_path_root(“tb_top.dut”); end
 endfunction endclass
 
@@ -7188,7 +7188,7 @@ super.new(name); endfunction
 
 virtual function UVMSequenceItem reg2bus(const ref uvm_reg_bus_op rw);
 
-apb_rw apb = apb_rw::type_id::create("apb_rw"); apb.kind = (rw.kind ==
+apb_rw apb = apb_rw.type_id.create("apb_rw"); apb.kind = (rw.kind ==
 UVM_READ) ? apb_rw::READ : apb_rw::WRITE; apb.addr = rw.addr; apb.data =
 rw.data; return apb; endfunction
 
@@ -7232,7 +7232,7 @@ virtual function void connect_phase(uvm_phase phase);
 
 reg2apb_adapter reg2apb =
 
-reg2apb_adapter::type_id::create(“reg2apb”,,get_full_name()); ...
+reg2apb_adapter.type_id.create(“reg2apb”,,get_full_name()); ...
 
 
 
@@ -7295,7 +7295,7 @@ if (regmodel.get_parent() == null) begin
 
 reg2apb_adapter reg2apb =
 
-reg2apb_adapter::type_id::create(“reg2apb”,,get_full_name());
+reg2apb_adapter.type_id.create(“reg2apb”,,get_full_name());
 regmodel.APB.set_sequencer(apb.sequencer, reg2apb);
 regmodel.set_auto_predict(1); end ... endfunction ... endclass
 
@@ -7382,7 +7382,7 @@ class my_test extends uvm_test;
 
 block_env env; virtual function void run_phase(uvm_phase phase);
 
-my_reg_sequence seq = my_reg_sequence::type_id::create(“seq”,this);
+my_reg_sequence seq = my_reg_sequence.type_id.create(“seq”,this);
 seq.start(env.apb.master); endfunction endclass
 
 5.9.2.2 Register Sequence Running as a Virtual Sequence
@@ -7467,10 +7467,10 @@ if (regmodel.get_parent() == null) begin
 
 reg2apb_adapter reg2apb =
 
-reg2apb_adapter::type_id::create(“reg2apb”,,get_full_name());
+reg2apb_adapter.type_id.create(“reg2apb”,,get_full_name());
 reg2wsh_adapter reg2wsh =
 
-reg2wsh_adapter::type_id::create(“reg2wsh”,,get_full_name());
+reg2wsh_adapter.type_id.create(“reg2wsh”,,get_full_name());
 regmodel.APB.set_sequencer(apb.sequencer, reg2apb);
 regmodel.WSH.set_sequencer(wsh.sequencer, reg2wsh);
 regmodel.set_auto_predict(1); **ybus sequencer**
@@ -7512,7 +7512,7 @@ block_env env;
 
 virtual function void run_phase(uvm_phase phase);
 
-my_reg_sequence seq = my_reg_sequence::type_id::create(“seq”,this);
+my_reg_sequence seq = my_reg_sequence.type_id.create(“seq”,this);
 seq.start(\ **null**); endfunction
 
 endclass
@@ -7616,10 +7616,10 @@ virtual function void connect_phase(uvm_phase phase);
 if (regmodel.get_parent() == null) begin
 
 regmodel.default_map.set_sequencer(reg_seqr,null); reg2apb_seq =
-reg2apb_seq_t::type_id::create(“reg2apb_seq”,,
+reg2apb_seq_t.type_id.create(“reg2apb_seq”,,
 
 get_full_name()); reg2apb_seq.reg_seqr = reg_seqr; reg2apb_seq.adapter =
-reg2apb_adapter::type_id::create(“reg2apb”,,
+reg2apb_adapter.type_id.create(“reg2apb”,,
 
 get_full_name()); regmodel.set_auto_predict(1); end endfunction
 
@@ -7638,7 +7638,7 @@ block_env env;
 
 virtual function void run_phase(uvm_phase phase);
 
-my_reg_sequence seq = my_reg_sequence::type_id::create(“seq”,this);
+my_reg_sequence seq = my_reg_sequence.type_id.create(“seq”,this);
 seq.start(env.reg_seqr); endfunction
 
 endclass
@@ -7718,7 +7718,7 @@ if (regmodel.get_parent() == null) begin
 
 reg2apb_adapter reg2apb =
 
-reg2apb_adapter::type_id::create(“reg2apb”,,get_full_name()); ...
+reg2apb_adapter.type_id.create(“reg2apb”,,get_full_name()); ...
 apb2reg_predictor.map = regmodel.APB; apb2reg_predictor.adapter =
 reg2apb; regmodel.APB.set_auto_predict(0);
 apb.monitor.ap.connect(apb2reg_predictor.bus_in); end ... endfunction
@@ -7975,7 +7975,7 @@ factory provides this capability with a static allocation function that
 you can use instead of the built-in new function. The function provided
 by the factory is:
 
-*type_name*::type_id::create(string *name*, uvm_component *parent*)
+*type_name*.type_id.create(string *name*, uvm_component *parent*)
 
 Since the create() method is automatically type-specific, it may be used
 to create components or objects. When creating objects, the second
@@ -7987,7 +7987,7 @@ like the following:
 task mycomponent::run_phase(uvm_phase phase);
 
 mytype data; // Data must be mytype or derivative. data =
-mytype::type_id::create("data"); $display("type of object is: %0s",
+mytype.type_id.create("data"); $display("type of object is: %0s",
 data.get_type_name());
 
 ... endtask
@@ -8488,7 +8488,7 @@ generate an index into the queue to select a sequence to execute.
 
 The selection mode may be set using the configuration database:
 
-uvm_config_db#(uvm_sequence_lib_mode)::set(this, “<sequencer path>”,
+UVMConfigDb.set(this, “<sequencer path>”,
 
 “default_sequence.selection_mode”,
 
@@ -8618,7 +8618,7 @@ class concurrent_seq extends UVMSequence #(simple_item);
 // See Section 4.7.2 a_seq a; b_seq b; virtual task body();
 
 // Initialize the sequence variables with the factory. \`a =
-a_seq::type_id::create(“a”); b = b_seq::type_id::create(“b”); // Start
+a_seq.type_id.create(“a”); b = b_seq.type_id.create(“b”); // Start
 each subsequence as a new thread. fork\ :sub:`a.start(m_sequencer);`
 b.start(m_sequencer); join endtask : body endclass : concurrent_seq
 
@@ -8726,7 +8726,7 @@ run_phase(uvm_phase phase);
 
 interrupt_seq =
 
-interrupt_handler_seq::type_id::create("interrupt_seq");
+interrupt_handler_seq.type_id.create("interrupt_seq");
 fork\ :sub:`interrupt_seq.start(this);` join_none super.run(); endtask :
 run endclass : my_sequncer
 
@@ -8771,13 +8771,13 @@ super.new(name); endfunction task body;
    set_ints setup_ints; // Main sequence running on the bus isr
    ISR0,ISR1,ISR2,ISR3; // Interrupt service routines int_config i_cfg;
    // Config object contains IRQ monitoring tasks setup_ints =
-   set_ints::type_id::create("setup_ints"); my_sequencer =
+   set_ints.type_id.create("setup_ints"); my_sequencer =
    get_sequencer(); // ISR0 is highest priority ISR0 =
-   isr::type_id::create("ISR0"); ISR0.id = "ISR0"; ISR0.i = 0; // ISR1
-   is medium priority ISR1 = isr::type_id::create("ISR1"); ISR1.id =
+   isr.type_id.create("ISR0"); ISR0.id = "ISR0"; ISR0.i = 0; // ISR1
+   is medium priority ISR1 = isr.type_id.create("ISR1"); ISR1.id =
    "ISR1"; ISR1.i = 1; // ISR2 is medium priority ISR2 =
-   isr::type_id::create("ISR2"); ISR2.id = "ISR2"; ISR2.i = 2; // ISR3
-   is lowest priority ISR3 = isr::type_id::create("ISR1"); ISR3.id =
+   isr.type_id.create("ISR2"); ISR2.id = "ISR2"; ISR2.i = 2; // ISR3
+   is lowest priority ISR3 = isr.type_id.create("ISR1"); ISR3.id =
    "ISR3"; ISR3.i = 3; i_cfg = int_config::get_config(my_sequencer); //
    Set up sequencer to use priority based on FIFO order
    my_sequencer.set_arbitration(SEQ_ARB_STRICT_FIFO); // Main thread,
@@ -9184,7 +9184,7 @@ virtual function void write(lower_item l_item);
 
 upper_item u_item; if (is_relevant(l_item)) begin
 
-u_item = upper_item::type_id::create(“u_item”,,get_fullname());
+u_item = upper_item.type_id.create(“u_item”,,get_fullname());
 lower_to_upper(l_item, u_item); ap.write(u_item); end endfunction: write
 endclass: upper_monitor
 
@@ -9210,14 +9210,14 @@ translation sequence.
 
 task run_phase(uvm_phase phase);
 
-upper_to_lower_seq u2lseq = upper_to_lower_seq::type_id::create(“u2l”,
+upper_to_lower_seq u2lseq = upper_to_lower_seq.type_id.create(“u2l”,
 this); u2lseq.start(l_sqr);
 
-drv = lower_driver::type_id::create(“drv”, this); l_sqr =
-lower_sequencer::type_id::create((“l_sqr”, this); u_sqr =
-upper_sequencer::type_id::create((“u_sqr”, this); l_mon =
-lower_monitor::type_id::create((“l_mon”, this); u_mon =
-upper_monitor::type_id::create((“u_mon”, this); endfunction : build
+drv = lower_driver.type_id.create(“drv”, this); l_sqr =
+lower_sequencer.type_id.create((“l_sqr”, this); u_sqr =
+upper_sequencer.type_id.create((“u_sqr”, this); l_mon =
+lower_monitor.type_id.create((“l_mon”, this); u_mon =
+upper_monitor.type_id.create((“u_mon”, this); endfunction : build
 
 function void
 
@@ -9381,7 +9381,7 @@ virtual task run_phase(uvm_phase phase); // DO NOT CALL
 super.run_phase()!! lower_passthru_seq l_seq; lower_sqr l_sqr;
 
 uvm_config_db#(lower_sqr)::get(this, "“,”lower_sqr“, l_sqr); l_seq =
-lower_passthru_seq::type_id::create(”l_seq", this);
+lower_passthru_seq.type_id.create(”l_seq", this);
 
 forever begin
 
@@ -9416,7 +9416,7 @@ virtual function void write(lower_item l_item);
 
 upper_item u_item; if (is_relevant(l_item)) begin
 
-u_item = upper_item::type_id::create(“u_item”,,get_fullname());
+u_item = upper_item.type_id.create(“u_item”,,get_fullname());
 lower_to_upper(l_item, u_item); ap.write(u_item); end endfunction: write
 
 virtual task run_phase(uvm_phase phase); // DO NOT CALL
@@ -9446,8 +9446,8 @@ upper_agent u_agent; lower_agent l_agent;
 
 function build_phase(uvm_phase phase); l_seq = new();
 
-l_agent = lower_agent::type_id::create(“l_agent”, this); u_agent =
-upper_agent::type_id::create(“u_agent”, this);
+l_agent = lower_agent.type_id.create(“l_agent”, this); u_agent =
+upper_agent.type_id.create(“u_agent”, this);
 set_inst_override_by_type(“u_agent.drv”, upper_driver::get_type(),
 
 upper_layering_driver::get_type());
@@ -9462,7 +9462,7 @@ endfunction
 function void connect_phase(uvm_phase phase);
 
 upper_layering_monitor u_mon; super.connect_phase(phase);
-uvm_config_db#(lower_sqr)::set(this, “u_agent.drv”, “lower_sqr”,
+UVMConfigDb.set(this, “u_agent.drv”, “lower_sqr”,
 
 l_agent.sqr); $cast(u_mon, u_agent.mon);
 
@@ -9500,7 +9500,7 @@ the standard methods on sequence items.
 
 virtual task body();
 
-req = request_time::type_id::create(“req”); //set values in ‘req’ here
+req = request_time.type_id.create(“req”); //set values in ‘req’ here
 start_item(req, priority, sequencer); req.randomize(); // or with
 constraints finish_item(req, priority);
 
@@ -10131,11 +10131,11 @@ simulation phases. Refer to Section 4.5 for more information.
 uvm_component parent=null); 11 super.new(name, parent); 12 endfunction
 13 // UVM build_phase() phase 14 virtual function void
 build_phase(uvm_phase phase); 15 super.build_phase(phase); 16 // Enable
-transaction recording for everything. 17 uvm_config_db#(int)::set(this,
+transaction recording for everything. 17 UVMConfigDb.set(this,
 "*", "recording_detail", UVM_FULL); 18 // Create the testbench. 19
 ubus_example_tb0 =
 
-ubus_example_tb::type_id::create("ubus_example_tb0", this); 20 // Create
+ubus_example_tb.type_id.create("ubus_example_tb0", this); 20 // Create
 specific-depth printer for printing the created topology. 21 printer =
 new(); 22 printer.knobs.depth = 3; 23 endfunction: build_phase 24 //
 Built-in UVM phase 25 function void end_of_elaboration_phase(uvm_phase
@@ -10215,11 +10215,11 @@ function void build_phase();
 
 begin\ :sub:`// Set the default sequence for the master and slave. `
 
-   uvm_config_db#(uvm_object_wrapper)::set(this,
+   UVMConfigDb.set(this,
 
    "ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
    "default_sequence", read_modify_write_seq::type_id::get());
-   uvm_config_db#(uvm_object_wrapper)::set(this,
+   UVMConfigDb.set(this,
 
 "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
 "default_sequence", slave_memory_seq::type_id::get());
@@ -10248,7 +10248,7 @@ This section discusses the testbench created in the *Example:
 test_lib.sv* in Section 7.4. The code that creates the ubus_example_tb
 is repeated here::
 
-    ubus_example_tb0 = ubus_example_tb::type_id::create("ubus_example_tb0", this);
+    ubus_example_tb0 = ubus_example_tb.type_id.create("ubus_example_tb0", this);
 
 In general, testbenches can contain any number of envs (verification
 components) of any type: ubus, pci, ahb, ethernet, and so on. The UBus
@@ -10284,10 +10284,10 @@ The test will create an instance of this class.
 *Example: ubus_example_tb.sv*
 
 1 function void ubus_example_tb::build_phase(); 2 super.build_phase(); 3
-uvm_config_db#(int)::set(this,".ubus0", 4 "num_masters", 1); 5
-uvm_config_db#(int)::set(this,".ubus0", 6 "num_slaves", 1); 7 ubus0 =
-ubus_env::type_id::create("ubus0", this); 8 scoreboard0 =
-ubus_example_scoreboard::type_id::create("scoreboard0",
+UVMConfigDb.set(this,".ubus0", 4 "num_masters", 1); 5
+UVMConfigDb.set(this,".ubus0", 6 "num_slaves", 1); 7 ubus0 =
+ubus_env.type_id.create("ubus0", this); 8 scoreboard0 =
+ubus_example_scoreboard.type_id.create("scoreboard0",
 
 this); 9 endfunction : build 10
 :sub:`11 function void ubus_example_tb::connect_phase(uvm_phase phase);`
@@ -10306,7 +10306,7 @@ fields. This is important because the test, which creates the testbench,
 may register overrides for the testbench. Calling super.build_phase()
 will ensure that those overrides are updated.
 
-Line3 - Line5 The uvm_config_db#(int)::set calls are adjusting the
+Line3 - Line5 The UVMConfigDb.set calls are adjusting the
 num_masters and num_slaves configuration fields of the ubus_env. In this
 case, the ubus0 instance of the ubus_env
 is being manipulated. Line 3 instructs the ubus0 instance of the
@@ -10362,54 +10362,66 @@ ubus_bus_monitor
 
 The build_phase() function of the ubus_env creates the master agents,
 slave agents, and the bus monitor. Three properties control whether
-these are created. The source code is shown here.
+these are created. The source code is shown here:
 
+.. code-block:: python
+    :linenos:
 
+    def build_phase(self, phase):
+        inst_name = ""
+        super().build_phase(phase)
 
-*Example: ubus_env.sv*
+        arr = []
+        if UVMConfigDb.get(None, "*", "vif", arr):
+            uvm_info("GOT_VIF", "vif was received from configDb", UVM_HIGH)
+            self.vif = arr[0]
 
-1 function void ubus_env::build_phase(uvm_phase phase); 2 string
-inst_name; 3 // set_phase_domain("uvm"); 4 super.build_phase(phase); 5
-if(!uvm_config_db#(uvm_integral_t)::get(this,"",
+        if self.vif is None:
+            self.uvm_report_fatal("NOVIF","virtual interface must be set for: " +
+                    self.get_full_name() + ".vif")
 
-"num_masters",num_masters)) 6 \`uvm_fatal("NONUM",{"‘num_masters’ must
-be set for:", 7 get_full_name()}); 8 if(has_bus_monitor == 1) begin 9
-bus_monitor = ubus_bus_monitor::type_id::create("bus_monitor",
+        if self.has_bus_monitor is True:
+            self.bus_monitor = ubus_bus_monitor.type_id.create("bus_monitor", self)
 
-this); 10 end 11 uvm_config_db#(int)::get(this, "“,”num_masters",
-num_masters); 12 masters = new[num_masters]; 13
-:sub:`14 for(int i = 0; i < num_masters; i++) begin` 15
-$sformat(inst_name, "masters[%0d]", i); 16 masters[i] =
-ubus_master_agent::type_id::create(inst_name, this); 17
-void'(uvm_config_db#(int)::set(this,{inst_name,".monitor"}, 18
-"master_id", i); 19
-void'(uvm_config_db#(int)::set(this,{inst_name,".driver"}, 20
-"master_id", i); 21 end 22 void uvm_config_db#(int)::get(this,"",
-"num_slaves", num_slaves); 23 slaves = new[num_slaves]; 24 for(int i =
-0; i < num_slaves; i++) begin 25 $sformat(inst_name, "slaves[%0d]", i);
-26 slaves[i] = ubus_slave_agent::type_id::create(inst_name, this); 27
-end 28 endfunction: build
+        arr = []
+        if UVMConfigDb.get(self, "", "num_masters", arr) is True:
+            self.num_masters = arr[0]
+
+        for i in range(self.num_masters):
+            inst_name = sv.sformatf("masters[%0d]", i)
+            master = ubus_master_agent.type_id.create(inst_name, self)
+            self.masters.append(master)
+            UVMConfigDb.set(self, inst_name + ".monitor", "master_id", i)
+            UVMConfigDb.set(self, inst_name + ".driver", "master_id", i)
+
+        arr = []
+        if UVMConfigDb.get(self, "", "num_slaves", arr) is True:
+            self.num_slaves = arr[0]
+
+        for i in range(self.num_slaves):
+            inst_name = sv.sformatf("slaves[%0d]", i)
+            self.slaves.append(ubus_slave_agent.type_id.create(inst_name, self))
 
 Line 1 Declare the build_phase() function.
 
-Line 4 Call super.build_phase(). This guarantees that the configuration
+Line 3 Call super.build_phase(). This guarantees that the configuration
 fields (num_masters, num_slaves, and has_bus_monitor) are updated per
 any resource settings.
 
-Line 8 - Line 10 Create the bus monitor if the has_bus_monitor control
+Line 14 - Line 15 Create the bus monitor if the has_bus_monitor control
 field is set to 1. The create function is used for creation.
 
-Line 11 - Line 21 The master’s dynamic array is sized per the
+Line 17 - Line 26 The master’s dynamic array is sized per the
 num_masters control field, which is read from the resource database.
 This allows the for loop to populate the dynamic array according to the
 num_masters value. The instance name that is used for the master agent
-instance is built using $sformat so the instance names match the
+instance is built using `sv.sformatf` so the instance names match the
 dynamic-array identifiers exactly. The iterator of the for loop is also
 used to set a resource value for the master_id properties of the master
 agent and all its children (through the use of the asterisk). This
 defines which request-grant pair is driven by the master agent.
 
-Line 22 - Line 27 As in the master-agent creation code above, this code
+Line 28 - Line 34 As in the master-agent creation code above, this code
 creates the slave agents using num_slaves but does not set a resource
 for the slave agent.
 
@@ -10421,26 +10433,19 @@ structured identically; the only difference is the protocol-specific
 function of its subcomponents.
 
 
-
 The UBus master agent contains up to three subcomponents: the sequencer,
 driver, and monitor. By default, all three are created. However, the
 configuration can specify the agent as passive (is_active=UVM_PASSIVE),
 which disables the creation of the sequencer and driver. The
 ubus_master_agent is derived from uvm_agent.
 
-**ubus_example_tb0.ubus0.master0**
 
-ubus_master_agent
+.. figure:: fig/43_highly_reusable_verification_component_agent.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**uvm_sequencer**
-
-**#(ubus_transfer)**
-
-   **ubus_master_driver**
-
-   **ubus_master_monitor**
-
-**Figure 43–Instance of ubus_master_agent**
+    Instance of ubus_master_agent
 
 The build_phase() function of the ubus_master_agent is specified to
 create the driver, sequencer, and the monitor. The is_active property
@@ -10448,19 +10453,26 @@ controls whether the driver and sequencer are created.
 
 *Example: ubus_master_agent.sv*
 
-1 function void ubus_master_agent::build_phase(uvm_phase phase); 2
-super.build_phase(); 3 monitor =
-ubus_master_monitor::type_id::create("monitor", this); 4 if (is_active
-== UVM_ACTIVE) begin 5 sequencer =
+.. code-block:: python
+    :linenos:
 
-uvm_sequencer#(ubus_transfer)::type_id::create("sequencer",
+    def build_phase(self, phase):
+        super().build_phase(phase)
+        self.monitor = ubus_master_monitor.type_id.create("monitor", self)
+        if self.get_is_active() == UVM_ACTIVE:
+            self.driver = ubus_master_driver.type_id.create("driver", self)
+            self.sequencer = ubus_master_sequencer.type_id.create("sequencer",
+                    self)
 
-this); 6 driver = ubus_master_driver::type_id::create("driver", this); 7
-end 8 endfunction : build_phase 9
-:sub:`10 function void ubus_master_agent::connect_phase(uvm_phase phase);`
-11 if (is_active == UVM_ACTIVE) begin 12
-driver.seq_item_port.connect(sequencer0.seq_item_export); 13 end 14
-endfunction : connect_phase
+        arr = []
+        if UVMConfigDb.get(self, "*", "master_id", arr) is True:
+            self.master_id = arr[0]
+        UVMConfigDb.set(self, "", "master_id", self.master_id)
+
+    def connect_phase(self, phase):
+        if self.get_is_active() == UVM_ACTIVE:
+            self.driver.seq_item_port.connect(self.sequencer.seq_item_export)
+            self.sequencer.addr_ph_port.connect(self.monitor.addr_ph_imp)
 
 Line 1 Declare the build_phase() function.
 
@@ -10474,11 +10486,9 @@ Line 4 - Line 7 Create the sequencer and driver if the is_active control
 field is set to UVM_ACTIVE. The create() function is used for creation.
 Note the use of the base uvm_sequencer.
 
-Line 10 Declare the connect_phase() function.
+Line 14 Declare the connect_phase() function.
 
-
-
-Line11 - Line13 Since the driver expects transactions from the
+Line 15 - Line 17 Since the driver expects transactions from the
 sequencer, the interfaces in both components should be connected using
 the connect() function. The agent (which creates the monitor, sequencer,
 and driver) is responsible for connecting the interfaces of its
@@ -10490,16 +10500,12 @@ children.
 This component controls the flow of sequence items to the driver (see
 Figure 44).
 
-**ubus_example_tb0.ubus0.master0.sequencer**
+.. figure:: fig/44_instance_of_ubus_master_sequencer.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-   ubus_master_agent
-
-**ubus_master_sequencer**
-
-sequences *read_modify_write_seq incr_read_seq incr_read_write_seq
-r8_w8_r4_w4_seq incr_write_seq*
-
-**Figure 44–Instance of ubus_master_sequencer**
+    Instance of ubus_master_sequencer
 
 The sequencer controls which sequence items are provided to the driver.
 The uvm_sequencer base class will automatically read the sequence
@@ -10516,20 +10522,12 @@ based on the physical-protocol definition. In the UBus example, the
 seq_item_port methods get_next_item() and item_done() are accessed to
 retrieve transactions from the sequencer.
 
-**ubus_example_tb0.ubus0.master0.driver**
+.. figure:: fig/45_instance_of_ubus_master_driver.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-ubus_master_agent
-
-**ubus_master_driver**
-
-*signal-driving methods from event pool*
-
-vif
-
-pointer to ubus_if ·interface
-
-**Figure 45–Instance of ubus_master_driver**
-
+    Instance of ubus_master_driver
 
 
 The primary role of the driver is to drive (in a master) or respond (in
@@ -10538,15 +10536,20 @@ done in the run_phase() task that is automatically invoked as part of
 UVM’s built-in simulation phasing. For the master driver, the core
 routine is summarized as follows:
 
-task ubus_master_driver::run_phase();
+.. code-block:: python
+    :linenos:
 
-... @(negedge vif.sig_reset); forever begin // Repeat the following
-forever.
-
-@(posedge vif.sig_clock); seq_item_port.get_next_item(req); // Pull item
-from sequencer. ... drive_transfer(req); // Drive item onto signal-level
-bus. ... seq_item_port.item_done(); // Indicate we are done.
-seq_item_port.put_response(rsp); // Provide response end endtask
+    async def get_and_drive(self):
+        await RisingEdge(self.vif.sig_reset)
+        while True:
+            await RisingEdge(self.vif.sig_clock)
+            req = []
+            await self.seq_item_port.get_next_item(req)
+            rsp = req[0].clone()
+            rsp.set_id_info(req[0])
+            await self.drive_transfer(rsp)
+            self.seq_item_port.item_done()
+            self.seq_item_port.put_response(rsp)
 
 Once the sig_reset signal is deasserted, the driver’s run task runs
 forever until stopped by having all run_phase objections dropped. You
@@ -10570,26 +10573,17 @@ its duties. The exact implementation is protocol- and
 programmer-dependent, but the entry point, the run task, is the same for
 all components.
 
-**ubus_example_tb0.ubus0.master0.monitor**
+.. figure:: fig/46_instance_of_ubus_master_monitor.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-ubus_master_agent
-
-**ubus_master_monitor**
-
-checks
-
-covergroups\ :sub:`vif `
-
-pointer to ubus_if ·interface
-
-**Figure 46–Instance of ubus_master_monitor**
+    Instance of ubus_master_monitor**
 
 The monitor’s functionality is contained in an infinite loop defined
 with the run_phase() task. Once all of the run_phase objections were
 dropped, the run_phase() tasks finish, allowing other simulation phases
 to complete, and the simulation itself to end.
-
-
 
 The checks are responsible for enforcing protocol-specific checks, and
 the coverage is responsible for collecting functional coverage from the
@@ -10608,9 +10602,9 @@ The ubus_env build_phase() function has a control field called
 has_bus_monitor, which determines whether the ubus_bus_monitor is
 created or not. The bus monitor will be created by default since the
 default value for this control field is 1. You can use the uvm_config_db
-interface to override this value.
+interface to override this value::
 
-uvm_config_db#(int)::set(this, "ubus0", "has_bus_monitor", 0);
+    UVMConfigDb.set(self, "ubus0", "has_bus_monitor", 0)
 
 Here, the ubus0 instance of ubus_env has its has_bus_monitor control
 field overridden to 0. Therefore, the ubus_bus_monitor in ubus0 will not
@@ -10631,7 +10625,7 @@ determine which master is performing a transfer on the bus, the UBus bus
 monitor checks which grant line is asserted.
 
 To keep the UBus bus monitor example simple, an assumption has been made
-that the *n*\ th master connects to the *n*\ th request and grant lines.
+that the nth master connects to the nth request and grant lines.
 For example, master[0] is connected to grant0, master[1] is connected to
 grant1, and so on. Therefore, when the UBus bus monitor sees grant0 is
 asserted, it assumes master[0] is performing the transfer on the bus.
@@ -10641,9 +10635,9 @@ UBus bus monitor needs to know the address range supported by each slave
 in the environment. The environment developer has created the user
 interface API, ubus_env::set_slave_address_map(), to set the address map
 for the slave as well as the bus monitor. The prototype for this
-function is
+function is::
 
-set_slave_address_map(string slave_name, int min_addr, int max_addr);
+    set_slave_address_map(self, slave_name, min_addr, max_addr);
 
 For each slave, call set_slave_address_map() with the minimum and
 maximum address values to which the slave should respond. This function
@@ -10653,8 +10647,6 @@ monitor about each slave and its address map.
 Using the address map information for each slave and the address that is
 collected from the bus, the bus monitor determines which slave has
 responded to the transfer.
-
-
 
 **7.11.2 Number of Transfers**
 
@@ -10767,18 +10759,21 @@ Table 15. All control signals are active high.
 
 **Table 15–Bus Signals**
 
-**Signal Name**
+| **Signal name** | **Width (bits)** | **Driven by** | **Purpose**                                                                                 |
+| :------         | :------          | :-----        | :------                                                                                     |
+| **clock**       | 1                | n/a           | Master clock                                                                                |
+| **reset**       | 1                | n/a           | Bus reset                                                                                   |
+| **start**       | 1                | arbiter       | This signal is high during the Arbitration Phase and low during the Address and Data Phases |
+| **addr**        | 16               | master        | R4C4                                                                                        |
+| **size**        | 2                | master        | R5C4                                                                                        |
+| **read**        | 1                | master        | R6C4                                                                                        |
+| **write**       | 1                | master        | R7C4                                                                                        |
+| **bip**         | 1                | master        | R7C4                                                                                        |
+| **data**        | 8                | master/slave  | R7C4                                                                                        |
+| **wait**        | 1                | slave         | R7C4                                                                                        |
+| **error**       | 1                | slave         | R7C4                                                                                        |
 
-**Width (bits) Driven By Purpose **
 
-**clock** 1 n/a Master clock for bus
-
-**reset** 1 n/a Bus reset
-
-**start** 1 arbiter This signal is high during the Arbitration Phase and
-low during the
-
-Address and Data Phases
 
 **addr** 16 master Address of first byte of a transfer
 
@@ -11117,3 +11112,5 @@ Figure 47 and Figure 48 show sample timing diagrams.
 **Figure 47–Example Write Waveform**
 
 **Figure 48–Example Read Waveform**
+
+
