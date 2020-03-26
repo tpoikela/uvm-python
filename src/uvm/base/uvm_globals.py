@@ -28,7 +28,9 @@
 
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time, simulator
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
+                                 UVM_FATAL, UVM_INFO, UVM_LOG, UVM_LOW, UVM_MEDIUM, UVM_NONE,
+                                 UVM_NO_ACTION, UVM_RM_RECORD, UVM_STOP, UVM_WARNING)
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
 
@@ -414,6 +416,10 @@ def uvm_sim_time(units='NS'):
 
 
 async def uvm_empty_delay():
+    await Timer(0, "NS")
+
+
+async def uvm_zero_delay():
     await Timer(0, "NS")
 
 

@@ -20,10 +20,13 @@
 #//--------------------------------------------------------------
 #//
 
-from ..seq.uvm_sequence_item import *
-from ..macros.uvm_object_defines import *
+from ..seq.uvm_sequence_item import UVMSequenceItem
+from ..macros.uvm_object_defines import uvm_object_utils
 from .uvm_reg_model import (UVM_READ, UVM_NOT_OK, UVM_MEM, UVM_FRONTDOOR,
     UVM_ACCESS_NAMES)
+from ..base.uvm_object_globals import UVM_HIGH, UVM_INFO
+from ..base.sv import sv
+from ..base.uvm_globals import uvm_report_enabled
 
 #//------------------------------------------------------------------------------
 #// Title: Generic Register Operation Descriptors

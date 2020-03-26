@@ -21,10 +21,8 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 
-import cocotb
 
-from ..macros.uvm_tlm_defines import *
-from ..base.uvm_object_globals import *
+from ..base.uvm_object_globals import UVM_EXPORT, UVM_IMPLEMENTATION, UVM_PORT
 
 # These IMP macros define implementations of the uvm_*_port, uvm_*_export,
 # and uvm_*_imp ports.
@@ -161,10 +159,12 @@ def UVM_BLOCKING_PEEK_IMP(imp, T):
 #    return imp.try_peek(arg); \
 #  function bit can_peek(); \
 #    return imp.can_peek(); \
+
 def UVM_NONBLOCKING_PEEK_IMP(imp, T):
     def try_peek(self, arg):
         return getattr(self, imp).try_peek(arg)
     setattr(T, 'try_peek', try_peek)
+
     def can_peek(self):
         return getattr(self, imp).can_peek()
     setattr(T, 'can_peek', can_peek)

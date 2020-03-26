@@ -24,11 +24,12 @@
 from ..base.sv import sv
 from ..base.uvm_component import UVMComponent
 from ..base.uvm_pool import UVMPool
-from ..base.uvm_globals import *
+from ..base.uvm_object_globals import UVM_FULL, UVM_HIGH, UVM_MEDIUM
 from ..tlm1 import UVMAnalysisImp, UVMAnalysisPort
 from ..macros import (uvm_component_utils, uvm_info, uvm_fatal, uvm_error)
 from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
-from .uvm_reg_model import *
+from .uvm_reg_model import (UVM_NOT_OK, UVM_PREDICT, UVM_PREDICT_READ, UVM_PREDICT_WRITE, UVM_READ,
+                            UVM_REG, UVM_WRITE)
 from .uvm_reg_item import UVMRegItem, UVMRegBusOp
 from .uvm_reg_indirect import UVMRegIndirectData
 

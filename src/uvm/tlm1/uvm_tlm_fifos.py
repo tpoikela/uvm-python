@@ -27,8 +27,9 @@ This section defines TLM-based FIFO classes.
 
 """
 
-from .uvm_tlm_fifo_base import *
+from .uvm_tlm_fifo_base import UVMAnalysisImp, UVMTLMFIFOBase
 from ..base.uvm_mailbox import UVMMailbox
+from ..macros.uvm_message_defines import uvm_error
 
 
 class UVMTLMFIFO(UVMTLMFIFOBase):
@@ -148,14 +149,14 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
         Removes all entries from the FIFO, after which `used` returns 0
         and `is_empty` returns 1.
         """
-        t = []
-        r = 1
-        while r:
-            r = self.try_get(t)
+        trans = []
+        res = 1
+        while res:
+            res = self.try_get(trans)
 
         if self.m.num() > 0 and self.m_pending_blocked_gets != 0:
-            uvm_report_error("flush failed" ,
-                "there are blocked gets preventing the flush", UVM_NONE)
+            uvm_error("flush failed",
+                "there are blocked gets preventing the flush")
 
 
 

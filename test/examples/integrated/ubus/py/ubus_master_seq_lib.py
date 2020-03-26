@@ -20,10 +20,11 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-import cocotb
 from uvm.seq import UVMSequence
-from uvm.macros import *
-from uvm.base import sv
+from uvm.macros.uvm_object_defines import uvm_object_utils
+from uvm.macros.uvm_message_defines import uvm_info
+from uvm.macros.uvm_sequence_defines import uvm_do_with
+from uvm.base import sv, UVM_HIGH
 from ubus_transfer import ubus_transfer, READ, WRITE
 
 #//------------------------------------------------------------------------------
@@ -34,9 +35,9 @@ from ubus_transfer import ubus_transfer, READ, WRITE
 
 #// This sequence raises/drops objections in the pre/post_body so that root
 #// sequences raise objections but subsequences do not.
-#
+
 class ubus_base_sequence(UVMSequence):
-    #
+
     def __init__(self, name="ubus_base_seq"):
         UVMSequence.__init__(self, name)
         self.set_automatic_phase_objection(1)
@@ -49,6 +50,7 @@ class ubus_base_sequence(UVMSequence):
 #//
 #//------------------------------------------------------------------------------
 
+
 class read_byte_seq(ubus_base_sequence):
 
     def __init__(self, name="read_byte_seq"):
@@ -58,7 +60,7 @@ class read_byte_seq(ubus_base_sequence):
 
     #  constraint transmit_del_ct { (transmit_del <= 10); }
 
-    
+
     async def body(self):
         self.req.data = [1234]
         self.req.addr = self.start_addr
@@ -80,8 +82,8 @@ class read_byte_seq(ubus_base_sequence):
                 self.get_sequence_path(), self.rsp.addr, self.rsp.data[0]),
             UVM_HIGH)
         #  endtask
-    #
-    #endclass : read_byte_seq
+
+
 uvm_object_utils(read_byte_seq)
 
 
@@ -209,7 +211,7 @@ class write_byte_seq(ubus_base_sequence):
 
     #  constraint transmit_del_ct { (transmit_del <= 10); }
 
-    
+
     async def body(self):
         req = ubus_transfer()
         req.data.append(self.data0)
@@ -228,9 +230,8 @@ class write_byte_seq(ubus_base_sequence):
         uvm_info(self.get_type_name(),
             sv.sformatf("%s wrote : addr = `x%0h, data[0] = `x%0h",
             self.get_sequence_path(), req.addr, req.data[0]), UVM_HIGH)
-        #  endtask
 
-    #endclass : write_byte_seq
+
 uvm_object_utils(write_byte_seq)
 
 

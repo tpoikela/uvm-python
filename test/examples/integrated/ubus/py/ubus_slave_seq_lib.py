@@ -24,7 +24,7 @@ import cocotb
 
 from ubus_transfer import *
 from uvm.seq import UVMSequence
-from uvm.base import sv
+from uvm.base import sv, UVM_MEDIUM
 from uvm.macros import *
 
 DEBUG = True

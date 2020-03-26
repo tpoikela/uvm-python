@@ -21,19 +21,25 @@
 #   permissions and limitations under the License.
 #-------------------------------------------------------------
 
-import cocotb
-
 from ..macros import uvm_error, uvm_info
 from ..base.sv import sv
 from ..base.uvm_mailbox import UVMMailbox
 from ..base.uvm_object import UVMObject
-from ..base.uvm_pool import *
+from ..base.uvm_pool import UVMObjectStringPool, UVMPool
 from ..base.uvm_queue import UVMQueue
-from ..base.uvm_globals import *
+from ..base.uvm_globals import (UVM_NONE, uvm_check_output_args, uvm_report_enabled,
+                                uvm_report_error, uvm_report_fatal, uvm_report_info,
+                                uvm_report_warning, uvm_zero_delay)
+from ..base.uvm_object_globals import UVM_INFO, UVM_DEBUG, UVM_HIGH
+from ..macros.uvm_message_defines import uvm_warning
 
 from .uvm_reg_field import UVMRegField
-from .uvm_reg_model import *
-from .uvm_reg_item import *
+from .uvm_reg_model import (UVM_BACKDOOR, UVM_CHECK, UVM_DEFAULT_PATH, UVM_FIELD, UVM_FRONTDOOR,
+                            UVM_IS_OK, UVM_NOT_OK, UVM_NO_CHECK, UVM_NO_COVERAGE, UVM_NO_HIER,
+                            UVM_PREDICT_DIRECT, UVM_PREDICT_READ, UVM_PREDICT_WRITE, UVM_READ,
+                            UVM_REG, UVM_WRITE, uvm_hdl_concat2string, uvm_hdl_path_concat,
+                            uvm_reg_cvr_rsrc_db)
+from .uvm_reg_item import UVMRegItem
 from .uvm_reg_cbs import UVMRegFieldCbIter, UVMRegCbIter
 from .uvm_reg_map import UVMRegMap
 from ..dpi.uvm_hdl import uvm_hdl
@@ -1246,7 +1252,7 @@ class UVMReg(UVMObject):
             if rw is None:
                 raise Exception("rw must not be None for on=1")
             if (rw is not None) and rw == self.m_atomic_rw:
-                await Timer(0, "NS")
+                await uvm_zero_delay()
                 return
             q = []
             await self.m_atomic.get(q)
@@ -1376,7 +1382,7 @@ class UVMReg(UVMObject):
         Args:
             rw:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         # TODO finish this
         cbs = UVMRegCbIter(self)  # uvm_reg_cb_iter  cbs = new(this)
         map_info = []  # uvm_reg_map_info
@@ -1386,7 +1392,7 @@ class UVMReg(UVMObject):
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, map_info, "write()") is False:
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             return
         # May be not be set for BACKDOOR, so check len
         if len(map_info) > 0:
@@ -1564,7 +1570,6 @@ class UVMReg(UVMObject):
 
         map_info = []
         if not(self.Xcheck_accessX(rw,map_info,"read()")):
-            # await uvm_empty_delay()
             return
         # May be not be set for BACKDOOR, so check len
         if len(map_info) > 0:
@@ -2416,7 +2421,6 @@ class UVMReg(UVMObject):
     #   // field callbacks
     #   //
     async def pre_write(self, rw):
-        #await uvm_empty_delay()
         pass
 
 
@@ -2438,7 +2442,6 @@ class UVMReg(UVMObject):
         Args:
             rw:
         """
-        #await uvm_empty_delay()
         pass
 
 
@@ -2462,7 +2465,6 @@ class UVMReg(UVMObject):
         Args:
             rw:
         """
-        #await uvm_empty_delay()
         pass
 
     async def post_read(self, rw):
@@ -2481,7 +2483,6 @@ class UVMReg(UVMObject):
         Args:
             rw:
         """
-        #await uvm_empty_delay()
         pass
 
 

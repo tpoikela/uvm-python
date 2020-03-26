@@ -23,7 +23,7 @@
 import cocotb
 from cocotb.triggers import RisingEdge, FallingEdge, Timer
 
-from uvm.base import UVMObject, sv, UVMConfigDb
+from uvm.base import UVMObject, sv, UVMConfigDb, UVM_HIGH
 from uvm.macros import uvm_component_utils, uvm_object_utils
 from uvm.comps import UVMMonitor
 from uvm.tlm1 import UVMAnalysisPort
@@ -57,7 +57,7 @@ class slave_address_map_info(UVMObject):
     def get_max_add(self):
         return self.max_addr
 
-    #endclass : slave_address_map_info
+
 uvm_object_utils(slave_address_map_info)
 #  `uvm_object_utils_begin(slave_address_map_info)
 #    `uvm_field_int(min_addr, UVM_DEFAULT)

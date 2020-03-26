@@ -34,35 +34,36 @@
 # in the hierarchy.
 
 from .uvm_phase import UVMPhase
-from .uvm_globals import *
+from .uvm_globals import uvm_report_fatal, uvm_report_info
 from .uvm_debug import uvm_debug
-from .uvm_object_globals import UVM_PHASE_IMP, UVM_PHASE_STARTED
+from .uvm_object_globals import (UVM_DEBUG, UVM_PHASE_ENDED, UVM_PHASE_EXECUTING, UVM_PHASE_IMP,
+                                 UVM_PHASE_READY_TO_END, UVM_PHASE_STARTED)
 
 
 class UVMTopdownPhase(UVMPhase):
 
     def __init__(self, name):
-        """         
+        """
         Function: new
 
         Create a new instance of a top-down phase
 
         Args:
-            name: 
+            name:
         """
         UVMPhase.__init__(self, name, UVM_PHASE_IMP)
 
     def traverse(self, comp, phase, state):
-        """         
+        """
         Function: traverse
 
         Traverses the component tree in top-down order, calling `execute` for
         each component.
 
         Args:
-            comp: 
-            phase: 
-            state: 
+            comp:
+            phase:
+            state:
         """
         uvm_debug(self, 'traverse', self.get_name() +
             ' traversing topdown phase now with comp' + comp.get_name())
@@ -108,14 +109,14 @@ class UVMTopdownPhase(UVMPhase):
                 child = comp.get_next_child()
 
     def execute(self, comp, phase):
-        """         
+        """
         Function: execute
 
         Executes the top-down phase `phase` for the component `comp`.
 
         Args:
-            comp: 
-            phase: 
+            comp:
+            phase:
         """
         # reseed this process for random stability
         #process proc = process::self();

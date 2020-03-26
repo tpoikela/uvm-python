@@ -31,14 +31,23 @@
 import cocotb
 from cocotb.triggers import Timer, Event, Combine
 
-from ..macros import *
+from ..macros.uvm_object_defines import uvm_object_utils
+from ..macros.uvm_message_defines import uvm_fatal, uvm_info
+from ..macros.uvm_callback_defines import uvm_do_callbacks
 from .uvm_callback import UVMCallback
 from .uvm_cmdline_processor import UVMCmdlineProcessor
 from .uvm_debug import uvm_debug
-from .uvm_globals import *
+from .uvm_globals import get_cs, uvm_report_error, uvm_report_info, uvm_wait_for_nba_region
 from .uvm_mailbox import UVMMailbox
 from .uvm_object import UVMObject
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_ALL_DROPPED, UVM_DEBUG, UVM_EQ, UVM_GT, UVM_GTE, UVM_HIGH,
+                                 UVM_LOW, UVM_LT, UVM_LTE, UVM_MEDIUM, UVM_NE, UVM_PHASE2STR,
+                                 UVM_PHASE_CLEANUP, UVM_PHASE_DOMAIN, UVM_PHASE_DONE,
+                                 UVM_PHASE_DORMANT, UVM_PHASE_ENDED, UVM_PHASE_EXECUTING,
+                                 UVM_PHASE_IMP, UVM_PHASE_JUMPING, UVM_PHASE_NODE,
+                                 UVM_PHASE_READY_TO_END, UVM_PHASE_SCHEDULE, UVM_PHASE_SCHEDULED,
+                                 UVM_PHASE_STARTED, UVM_PHASE_SYNCING, UVM_PHASE_TERMINAL,
+                                 UVM_PHASE_UNINITIALIZED)
 from .uvm_objection import UVMObjection
 from .sv import sv
 
@@ -52,7 +61,7 @@ async def my_combine(events):
     pproc = []
     for e in events:
         e.clear()
-        
+
         async def my_task(ee):
             await ee.wait()
         my_fork  = cocotb.fork(my_task(e))
@@ -82,7 +91,7 @@ async def my_combine(events):
 
 class UVMPhaseStateChange(UVMObject):
 
-    def __init__(self, name = "uvm_phase_state_change"):
+    def __init__(self, name="uvm_phase_state_change"):
         UVMObject.__init__(self, name)
         # Implementation -- do not use directly
         self.m_phase = None
@@ -90,7 +99,7 @@ class UVMPhaseStateChange(UVMObject):
         self.m_jump_to = None
 
     def get_state(self):
-        """         
+        """
         Function: get_state()
 
         Returns the state the phase just transitioned to.
@@ -101,7 +110,7 @@ class UVMPhaseStateChange(UVMObject):
         return self.m_phase.get_state()
 
     def get_prev_state(self):
-        """         
+        """
         Function: get_prev_state()
 
         Returns the state the phase just transitioned from.
@@ -111,7 +120,7 @@ class UVMPhaseStateChange(UVMObject):
         return self.m_prev_state
 
     def jump_to(self):
-      """       
+      """
       Function: jump_to()
 
       If the current state is `UVM_PHASE_ENDED` or `UVM_PHASE_JUMPING` because of
@@ -121,6 +130,7 @@ class UVMPhaseStateChange(UVMObject):
       Returns:
       """
       return self.m_jump_to
+
 uvm_object_utils(UVMPhaseStateChange)
 
 #------------------------------------------------------------------------------
@@ -442,20 +452,20 @@ class UVMPhase(UVMObject):
             with_phase = self.find(with_phase)
             if with_phase is None:
                 uvm_fatal("PH_BAD_ADD", ("cannot find with_phase '" + nm
-                    + "' within node '" + get_name() + "'"))
+                    + "' within node '" + self.get_name() + "'"))
 
         if before_phase is not None and before_phase.get_phase_type() == UVM_PHASE_IMP:
             nm = before_phase.get_name()
             before_phase = self.find(before_phase)
             if before_phase is None:
                 uvm_fatal("PH_BAD_ADD", ("cannot find before_phase '" + nm
-                  + "' within node '" + get_name() + "'"))
+                  + "' within node '" + self.get_name() + "'"))
 
         if after_phase is not None and after_phase.get_phase_type() == UVM_PHASE_IMP:
             nm = after_phase.get_name()
             after_phase = self.find(after_phase)
             if after_phase is None:
-              uvm_fatal("PH_BAD_ADD",("cannot find after_phase '" + nm
+                uvm_fatal("PH_BAD_ADD",("cannot find after_phase '" + nm
                   + "' within node '" + self.get_name() + "'"))
 
         if with_phase is not None and (after_phase is not None or before_phase
@@ -490,8 +500,8 @@ class UVMPhase(UVMObject):
             else:
                 uvm_debug(self, 'add', (phase.get_name() +
                     " is not task-based phase, so no objections"))
-        else: # We are inserting an existing schedule
-            uvm_debug(self, "add",  "We are inserting an existing schedule")
+        else:  # We are inserting an existing schedule
+            uvm_debug(self, "add", "We are inserting an existing schedule")
             begin_node = phase
             end_node   = phase.m_end_node
             phase.m_parent = self
@@ -504,7 +514,7 @@ class UVMPhase(UVMObject):
 
         if UVMPhase.m_phase_trace:
             typ = phase.get_phase_type()
-            uvm_report_info("PH/TRC/ADD_PH", (get_name() + " (" + self.m_phase_type.name()
+            uvm_report_info("PH/TRC/ADD_PH", (self.get_name() + " (" + self.m_phase_type.name()
                 + ") ADD_PHASE: phase=" + phase.get_full_name() + " ("
                 + typ.name() + ", inst_id=" + "{}".format(phase.get_inst_id())
                 + ")"), UVM_DEBUG)
@@ -882,7 +892,7 @@ class UVMPhase(UVMObject):
     #  //| wait_for_state(UVM_PHASE_STARTED | UVM_PHASE_EXECUTING, UVM_EQ)
     #  //
     #  extern task wait_for_state(uvm_phase_state state, uvm_wait_op op=UVM_EQ)
-    
+
     async def wait_for_state(self, state, op=UVM_EQ):
         func = None
         if op == UVM_EQ:
@@ -907,7 +917,7 @@ class UVMPhase(UVMObject):
             raise Exception('IMPL for wait_for_state not finished yet')
         await self._wait_state_change_func(func)
 
-    
+
     async def _wait_state_change_func(self, func):
         while True:
             await self.m_phase_set_state_event.wait()
@@ -956,7 +966,7 @@ class UVMPhase(UVMObject):
     #  // Specify a phase to transition to when phase is complete.
     #  // Note that this function is part of what jump() does; unlike jump()
     #  // it does not set the flag to terminate the phase prematurely.
-    #  extern function void set_jump_phase(uvm_phase phase) 
+    #  extern function void set_jump_phase(uvm_phase phase)
 
     #  // Function: end_prematurely
     #  //
@@ -1112,7 +1122,7 @@ class UVMPhase(UVMObject):
         if self.get_name() != 'final':
             del pred_of_succ[self]
 
-    
+
     async def m_wait_for_pred(self):
         pred_of_succ = {}  # bit [uvm_phase]
         self.get_predecessors_for_successors(pred_of_succ)
@@ -1174,7 +1184,7 @@ class UVMPhase(UVMObject):
     # processes.  By hosting the phase processes here we avoid problems
     # associated with phase processes related as parents/children
     @classmethod
-    
+
     async def m_run_phases(cls):
         cs = get_cs()
         top = cs.get_root()
@@ -1186,7 +1196,7 @@ class UVMPhase(UVMObject):
         ph = UVMDomain.get_common_domain()
         uvm_debug(cls, 'm_run_phases', 'common domain OK')
         if not UVMPhase.m_phase_hopper.try_put(ph):
-            raise Expection('Could not add phase to phase_hopper mailbox')
+            raise Exception('Could not add phase to phase_hopper mailbox')
 
         while True:
             qphase = []
@@ -1463,7 +1473,7 @@ class UVMPhase(UVMObject):
         uvm_debug(self, 'execute_phase', 'End of task reached. Yay!')
         #endtask
 
-    
+
     async def _wait_all_predecessors_done(self):
         nn = self.get_name()
         if self.has_predecessors():
@@ -1584,11 +1594,11 @@ class UVMPhase(UVMObject):
     #uvm_object_utils(UVMPhase)
     #uvm_register_cb(UVMPhase, UVMPhaseCb)
 
-    
+
     async def wait_for_criterion_for_end_phase(self, state_chg):
         await self._wait_for_all_dropped(state_chg)
 
-    
+
     async def _wait_for_all_dropped(self, state_chg):
         cs = get_cs()
         top = cs.get_root()
@@ -1648,16 +1658,16 @@ class UVMPhase(UVMObject):
 class UVMPhaseCb(UVMCallback):
 
     def __init__(self, name="unnamed-uvm_phase_cb"):
-        """         
+        """
         Function: new
         Constructor
         Args:
-            name: 
+            name:
         """
         UVMCallback.__init__(self)
 
     def phase_state_change(self, phase, change):
-        """         
+        """
         Function: phase_state_change
 
         Called whenever a `phase` changes state.
@@ -1674,8 +1684,8 @@ class UVMPhaseCb(UVMCallback):
         no effect on the phasing schedule or execution.
 
         Args:
-            phase: 
-            change: 
+            phase:
+            change:
         """
         pass
 
@@ -1953,7 +1963,7 @@ class UVMPhaseCb(UVMCallback):
     #//
     #// Specify a phase to transition to when phase is complete.
     #
-    #function void uvm_phase::set_jump_phase(uvm_phase phase) 
+    #function void uvm_phase::set_jump_phase(uvm_phase phase)
     #  uvm_phase d
     #
     #  if ((self.m_state <  UVM_PHASE_STARTED) ||
@@ -2015,8 +2025,8 @@ class UVMPhaseCb(UVMCallback):
     #// that a jump has been requested and performs the jump.
     #
     #function void uvm_phase::jump(uvm_phase phase)
-    #   set_jump_phase(phase) 
-    #   end_prematurely() 
+    #   set_jump_phase(phase)
+    #   end_prematurely()
     #endfunction
     #
     #

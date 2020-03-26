@@ -21,40 +21,27 @@
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
 
-import cocotb
-
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import UVMPool, UVMObjectStringPool
 from ..base.uvm_queue import UVMQueue
-from ..base.uvm_globals import *
+from ..base.uvm_globals import (uvm_check_output_args, uvm_empty_delay, uvm_report_enabled,
+    uvm_report_info)
+from ..base.uvm_object_globals import UVM_DEBUG, UVM_HIGH, UVM_INFO
 from ..base.sv import sv
-from ..macros import *
-from .uvm_reg_model import *
+from ..macros.uvm_message_defines import uvm_error, uvm_info, uvm_warning, uvm_fatal
+from .uvm_reg_model import (UVM_BACKDOOR, UVM_BURST_READ, UVM_BURST_WRITE, UVM_DEFAULT_PATH,
+                            UVM_FRONTDOOR, UVM_IS_OK, UVM_MEM, UVM_NOT_OK, UVM_NO_COVERAGE,
+                            UVM_READ, UVM_WRITE, uvm_hdl_concat2string, uvm_hdl_path_concat,
+                            uvm_reg_cvr_rsrc_db)
 from .uvm_reg_item import UVMRegItem
 from .uvm_reg_map import UVMRegMap
-from .uvm_mem_mam import *
+from .uvm_mem_mam import UVMMemMam, UVMMemMamCfg
 from .uvm_reg_cbs import UVMMemCbIter
 
 from ..dpi.uvm_hdl import uvm_hdl
 
 ERR_MEM_BD_READ = ("Backdoor read of register %s with multiple HDL copies: "
     + "values are not the same: %0h at path '%s', and %0h at path '%s'. Returning first value.")
-
-#//------------------------------------------------------------------------------
-#// CLASS: uvm_mem
-#//------------------------------------------------------------------------------
-#// Memory abstraction base class
-#//
-#// A memory is a collection of contiguous locations.
-#// A memory may be accessible via more than one address map.
-#//
-#// Unlike registers, memories are not mirrored because of the potentially
-#// large data space: tests that walk the entire memory space would negate
-#// any benefit from sparse memory modelling techniques.
-#// Rather than relying on a mirror, it is recommended that
-#// backdoor access be used instead.
-#//
-#//------------------------------------------------------------------------------
 
 
 #   typedef enum {UNKNOWNS, ZEROES, ONES, ADDRESS, VALUE, INCR, DECR} init_e
@@ -68,22 +55,31 @@ DECR = 6
 
 
 class UVMMem(UVMObject):
-    #
-    #
-    #   local int               m_lineno
+    """
+    Memory abstraction base class
+
+    A memory is a collection of contiguous locations.
+    A memory may be accessible via more than one address map.
+    
+    Unlike registers, memories are not mirrored because of the potentially
+    large data space: tests that walk the entire memory space would negate
+    any benefit from sparse memory modelling techniques.
+    Rather than relying on a mirror, it is recommended that
+    backdoor access be used instead.
+    """
+
+
+
     #   local bit               m_vregs[uvm_vreg]
     #   local uvm_object_string_pool
     #               #(uvm_queue #(uvm_hdl_path_concat)) m_hdl_paths_pool
     #
 
-    #   local static int unsigned  UVMMem.m_max_size
     m_max_size = 0
 
-    #
     #   //----------------------
     #   // Group: Initialization
     #   //----------------------
-    #
 
     #   // Function: new
     #   //
@@ -143,10 +139,8 @@ class UVMMem(UVMObject):
         #   // or to locate virtual register array.
         #   //
         self.mam = None  # uvm_mem_mam
-    #endfunction: new
 
-    #
-    #
+
     #   // Function: configure
     #   //
     #   // Instance-specific configuration

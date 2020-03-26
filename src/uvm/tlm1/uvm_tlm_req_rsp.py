@@ -21,9 +21,10 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-import cocotb
 from ..base.uvm_component import UVMComponent
-from ..tlm1 import *
+from ..base.uvm_object_globals import UVM_NO_ACTION
+from ..tlm1 import (UVMAnalysisPort, UVMGetPeekExport, UVMMasterImp,
+    UVMPutExport, UVMSlaveImp, UVMTLMFIFO)
 from ..base.uvm_port_base import (s_connection_error_id)
 
 #//------------------------------------------------------------------------------
@@ -49,8 +50,8 @@ from ..base.uvm_port_base import (s_connection_error_id)
 #//------------------------------------------------------------------------------
 
 
-class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends uvm_component
-    pass
+class UVMTLMReqRspChannel(UVMComponent):
+
 
     #  typedef uvm_tlm_req_rsp_channel #(REQ, RSP) this_type
     #
@@ -189,14 +190,14 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
     #                             nonblocking_get_peek_response_export
     #
     #  uvm_master_imp #(REQ, RSP, this_type, uvm_tlm_fifo #(REQ), uvm_tlm_fifo #(RSP))
-    #                             blocking_master_export, 
+    #                             blocking_master_export,
     #                             nonblocking_master_export
     #
     #  uvm_slave_imp  #(REQ, RSP, this_type, uvm_tlm_fifo #(REQ), uvm_tlm_fifo #(RSP))
-    #                             blocking_slave_export, 
+    #                             blocking_slave_export,
     #                             nonblocking_slave_export
 
-    #
+
     #  // Function: new
     #  //
     #  // The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
@@ -204,11 +205,10 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
     #  // component such as a module, program block, or interface. The last two
     #  // arguments specify the request and response FIFO sizes, which have default
     #  // values of 1.
-    #
     def __init__(self, name, parent=None, request_fifo_size=1,
             response_fifo_size=1):
         super().__init__(name, parent)
-    
+
         self.m_request_fifo  = UVMTLMFIFO("request_fifo", self, request_fifo_size)
         self.m_response_fifo = UVMTLMFIFO("response_fifo", self, response_fifo_size)
         self.request_ap      = UVMAnalysisPort("request_ap", self)
@@ -227,13 +227,12 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
         self.set_report_id_action_hier(s_connection_error_id, UVM_NO_ACTION)
 
     def connect_phase(self, phase):
-        self.put_request_export.connect       (self.m_request_fifo.put_export)
-        self.get_peek_request_export.connect  (self.m_request_fifo.get_peek_export)
-        self.m_request_fifo.put_ap.connect    (self.request_ap)
-        self.put_response_export.connect      (self.m_response_fifo.put_export)
-        self.get_peek_response_export.connect (self.m_response_fifo.get_peek_export)
-        self.m_response_fifo.put_ap.connect   (self.response_ap)
-    #  endfunction
+        self.put_request_export.connect(self.m_request_fifo.put_export)
+        self.get_peek_request_export.connect(self.m_request_fifo.get_peek_export)
+        self.m_request_fifo.put_ap.connect(self.request_ap)
+        self.put_response_export.connect(self.m_response_fifo.put_export)
+        self.get_peek_response_export.connect(self.m_response_fifo.get_peek_export)
+        self.m_response_fifo.put_ap.connect(self.response_ap)
 
 
     def create_aliased_exports(self):
@@ -248,7 +247,7 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
         self.nonblocking_peek_request_export     = self.get_peek_request_export
         self.blocking_get_peek_request_export    = self.get_peek_request_export
         self.nonblocking_get_peek_request_export = self.get_peek_request_export
-      
+
         # response
         self.blocking_put_response_export         = self.put_response_export
         self.nonblocking_put_response_export      = self.put_response_export
@@ -260,16 +259,16 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
         self.nonblocking_peek_response_export     = self.get_peek_response_export
         self.blocking_get_peek_response_export    = self.get_peek_response_export
         self.nonblocking_get_peek_response_export = self.get_peek_response_export
-      
+
         # master/slave
-        self.blocking_master_export    = self.master_export; 
+        self.blocking_master_export    = self.master_export
         self.nonblocking_master_export = self.master_export
         self.blocking_slave_export     = self.slave_export
         self.nonblocking_slave_export  = self.slave_export
 
     #  // get_type_name
     #  // -------------
-    def get_type_name (self):
+    def get_type_name(self):
         return UVMTLMReqRspChannel.type_name
 
     #  // create
@@ -290,7 +289,7 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
 #//
 #//------------------------------------------------------------------------------
 #
-#class uvm_tlm_transport_channel #(type REQ=int, type RSP=REQ) 
+#class uvm_tlm_transport_channel #(type REQ=int, type RSP=REQ)
     #                                     extends uvm_tlm_req_rsp_channel #(REQ, RSP)
     #
     #  typedef uvm_tlm_transport_channel #(REQ, RSP) this_type
@@ -349,7 +348,7 @@ class UVMTLMReqRspChannel(UVMComponent):  # (type REQ=int, type RSP=REQ) extends
     #  endtask
     #
     #  def bit nb_transport (self,REQ req, output RSP rsp ):
-    #    if(self.m_request_fifo.try_put(req)) 
+    #    if(self.m_request_fifo.try_put(req))
     #      return self.m_response_fifo.try_get(rsp)
     #    else
     #      return 0

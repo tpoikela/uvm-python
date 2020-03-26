@@ -20,7 +20,9 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-from ..base.uvm_globals import *
+from ..base.uvm_globals import (UVM_ERROR, UVM_FATAL, UVM_INFO, UVM_NONE, UVM_WARNING,
+                                uvm_report_enabled, uvm_report_error, uvm_report_fatal,
+                                uvm_report_info, uvm_report_warning)
 
 import inspect
 from inspect import getframeinfo, stack

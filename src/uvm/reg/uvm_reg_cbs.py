@@ -430,28 +430,28 @@ class UVMRegReadOnlyCbs(UVMRegCbs):
     #      rw.status = UVM_NOT_OK
     #   endtask
     #
-    #   local static uvm_reg_read_only_cbs m_me
-    #   local static function uvm_reg_read_only_cbs get()
-    #      if (m_me == null) m_me = new
-    #      return m_me
-    #   endfunction
-    #
-    #
+
+    m_me = None
+    @classmethod
+    def get(cls):
+        if cls.m_me is None:
+            cls.m_me = UVMRegReadOnlyCbs()
+        return cls.m_me
+
+
     #   // Function: add
     #   //
     #   // Add this callback to the specified register and its contained fields.
     #   //
-    #   static function void add(uvm_reg rg)
-    #      uvm_reg_field flds[$]
-    #
-    #      uvm_reg_cb::add(rg, get())
-    #      rg.get_fields(flds)
-    #      foreach (flds[i]) begin
-    #         uvm_reg_field_cb::add(flds[i], get())
-    #      end
-    #   endfunction
-    #
-    #
+    @classmethod
+    def add(cls, rg):
+        flds = []  # uvm_reg_field [$]
+        UVMRegCb.add(rg, cls.get())
+        rg.get_fields(flds)
+        for i in range(len(flds)):
+            UVMRegFieldCb.add(flds[i], cls.get())
+
+
     #   // Function: remove
     #   //
     #   // Remove this callback from the specified register and its contained fields.
@@ -476,21 +476,20 @@ class UVMRegReadOnlyCbs(UVMRegCbs):
 uvm_object_utils(UVMRegReadOnlyCbs)
 
 #//------------------------------------------------------------------------------
-#// Class: uvm_reg_write_only_cbs
+#// Class: UVMRegWriteOnlyCbs
 #//
 #// Pre-defined register callback method for write-only registers
 #// that will issue an error if a read() operation is attempted.
 #//
 #//------------------------------------------------------------------------------
-#
-#class uvm_reg_write_only_cbs extends uvm_reg_cbs
-    #
-    #   function new(string name = "uvm_reg_write_only_cbs")
-    #      super.new(name)
-    #   endfunction
-    #
-    #   `uvm_object_utils(uvm_reg_write_only_cbs)
-    #
+
+
+class UVMRegWriteOnlyCbs(UVMRegCbs):
+
+    def __init__(self, name="UVMRegWriteOnlyCbs"):
+        super().__init__(name)
+
+
     #   // Function: pre_read
     #   //
     #   // Produces an error message and sets status to <UVM_NOT_OK>.
@@ -514,29 +513,30 @@ uvm_object_utils(UVMRegReadOnlyCbs)
     #
     #      rw.status = UVM_NOT_OK
     #   endtask
-    #
-    #   local static uvm_reg_write_only_cbs m_me
-    #   local static function uvm_reg_write_only_cbs get()
-    #      if (m_me == null) m_me = new
-    #      return m_me
-    #   endfunction
-    #
-    #
+
+
+    m_me = None
+
+    @classmethod
+    def get(cls):
+        if cls.m_me is None:
+            cls.m_me = UVMRegWriteOnlyCbs()
+        return cls.m_me
+
+
     #   // Function: add
     #   //
     #   // Add this callback to the specified register and its contained fields.
     #   //
-    #   static function void add(uvm_reg rg)
-    #      uvm_reg_field flds[$]
-    #
-    #      uvm_reg_cb::add(rg, get())
-    #      rg.get_fields(flds)
-    #      foreach (flds[i]) begin
-    #         uvm_reg_field_cb::add(flds[i], get())
-    #      end
-    #   endfunction
-    #
-    #
+    @classmethod
+    def add(cls, rg):
+        flds = []  # uvm_reg_field [$]
+        UVMRegCb.add(rg, cls.get())
+        rg.get_fields(flds)
+        for i in range(len(flds)):
+            UVMRegFieldCb.add(flds[i], cls.get())
+
+
     #   // Function: remove
     #   //
     #   // Remove this callback from the specified register and its contained fields.
@@ -558,3 +558,5 @@ uvm_object_utils(UVMRegReadOnlyCbs)
     #      end
     #   endfunction
     #endclass
+
+uvm_object_utils(UVMRegWriteOnlyCbs)

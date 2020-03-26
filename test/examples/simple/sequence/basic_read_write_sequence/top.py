@@ -26,6 +26,7 @@ from cocotb.utils import get_sim_time
 from uvm.base.uvm_debug import UVMDebug
 from uvm.base.sv import sv
 from uvm.base.uvm_globals import run_test
+from uvm.base.uvm_object_globals import UVM_MEDIUM, UVM_HIGH
 from uvm.base.uvm_phase import UVMPhase
 from uvm.seq import UVMSequence, UVMSequenceItem, UVMSequencer
 from uvm.macros import *

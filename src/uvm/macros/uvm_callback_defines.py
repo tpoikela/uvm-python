@@ -20,8 +20,8 @@
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
 
-from ..base.uvm_debug import *
-from ..base.uvm_globals import *
+from ..base.uvm_debug import uvm_debug
+from ..base.uvm_globals import UVM_NONE, uvm_report_info
 from ..base.sv import sv
 
 #//-----------------------------------------------------------------------------

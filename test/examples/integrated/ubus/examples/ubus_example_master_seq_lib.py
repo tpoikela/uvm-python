@@ -21,8 +21,8 @@
 #//----------------------------------------------------------------------
 
 from ubus_master_seq_lib import ubus_base_sequence, read_byte_seq, write_byte_seq
-from uvm.macros import *
-from uvm.base import sv
+from uvm.macros import uvm_do_with, uvm_error, uvm_info, uvm_object_utils
+from uvm.base import sv, UVM_MEDIUM
 
 #//------------------------------------------------------------------------------
 #//

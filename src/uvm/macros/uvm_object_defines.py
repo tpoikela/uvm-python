@@ -1,8 +1,13 @@
 
-from ..base.uvm_registry import *
+from ..base.uvm_registry import UVMComponentRegistry, UVMObjectRegistry, uvm_report_warning
 from ..base.sv import sv
 
-from ..base.uvm_object_globals import *
+from ..base.uvm_object_globals import (UVM_CHECK_FIELDS, UVM_COMPARE, UVM_COPY, UVM_DEFAULT,
+                                       UVM_LOW, UVM_NOCOMPARE, UVM_NOCOPY, UVM_NONE, UVM_NOPACK,
+                                       UVM_NOPRINT, UVM_NORECORD, UVM_PACK, UVM_PRINT, UVM_RADIX,
+                                       UVM_READONLY, UVM_RECORD, UVM_REFERENCE, UVM_SETINT,
+                                       UVM_SETOBJ, UVM_SETSTR, UVM_UNPACK)
+from ..base.uvm_globals import uvm_report_info
 from ..base.uvm_globals import uvm_is_match
 
 

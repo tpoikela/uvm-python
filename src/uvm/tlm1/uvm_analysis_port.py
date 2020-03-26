@@ -27,8 +27,10 @@ This section defines the port, export, and imp classes used for transaction
 analysis.
 """
 
-from ..base.uvm_port_base import *
-from .uvm_tlm_imps import *
+from ..macros.uvm_message_defines import uvm_fatal
+from ..macros.uvm_tlm_defines import UVM_TLM_ANALYSIS_MASK
+from ..base.uvm_port_base import UVM_UNBOUNDED_CONNECTIONS, UVMPortBase
+from .uvm_tlm_imps import UVM_EXPORT, UVM_IMP_COMMON, UVM_PORT
 
 
 class UVMAnalysisPort(UVMPortBase):
@@ -66,8 +68,8 @@ class UVMAnalysisPort(UVMPortBase):
         for i in range(0, self.size()):
             tif = self.get_if(i)
             if tif is None:
-                uvm_report_fatal("NTCONN", ("No uvm_tlm interface is connected to ",
-                  + self.get_full_name() + " for executing write()"), UVM_NONE)
+                uvm_fatal("NTCONN", ("No uvm_tlm interface is connected to ",
+                  + self.get_full_name() + " for executing write()"))
             tif.write(t)
 
 
@@ -137,6 +139,6 @@ class UVMAnalysisExport(UVMPortBase):
         for i in range(0, self.size()):
             tif = self.get_if(i)
             if tif is None:
-                uvm_report_fatal("NTCONN", ("No uvm_tlm interface is connected to "
-                    + self.get_full_name() + " for executing write()"), UVM_NONE)
+                uvm_fatal("NTCONN", ("No uvm_tlm interface is connected to "
+                    + self.get_full_name() + " for executing write()"))
             tif.write(t)

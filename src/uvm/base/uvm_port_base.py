@@ -208,7 +208,6 @@ class UVMPortComponent(UVMPortComponentBase):
 
 class UVMPortBase():
 
-    ## typedef uvm_port_base #(IF) this_type
 
     # Function: new
     #
@@ -227,7 +226,6 @@ class UVMPortBase():
     # this port is not checked. This can be overridden by configuring the
     # port's ~check_connection_relationships~ bit via ~uvm_config_int::set()~. See
     # <connect> for more information.
-
     def __init__(self, name, parent, port_type, min_size=0, max_size=1):
         self.m_port_type = port_type
         self.m_min_size    = min_size
@@ -251,8 +249,6 @@ class UVMPortBase():
         """ Returns the full hierarchical name of this port. """
         return self.m_comp.get_full_name()
 
-    # Function: get_parent
-    #
 
     def get_parent(self):
         """ Returns the handle to this port's parent, or ~null~ if it has no
@@ -266,7 +262,6 @@ class UVMPortBase():
     # Ports are considered components. However, they do not inherit
     # <uvm_component>. Instead, they contain an instance of
     # <uvm_port_component #(PORT)> that serves as a proxy to this port.
-
     def get_comp(self):
         return self.m_comp
 
@@ -275,7 +270,6 @@ class UVMPortBase():
     # Returns the type name to this port. Derived port classes must implement
     # this method to return the concrete type. Otherwise, only a generic
     # "uvm_port", "uvm_export" or "uvm_implementation" is returned.
-
     def get_type_name(self):
         if self.m_port_type == UVM_PORT:
             return "port"
@@ -310,7 +304,6 @@ class UVMPortBase():
     # Returns 1 if this port has no maximum on the number of implementation
     # ports this port can connect to. A port is unbounded when the ~max_size~
     # argument in the constructor is specified as ~UVM_UNBOUNDED_CONNECTIONS~.
-
     def is_unbounded(self):
         return self.m_max_size == UVM_UNBOUNDED_CONNECTIONS
 
@@ -328,7 +321,6 @@ class UVMPortBase():
     #
     # Returns 1 if this port is of the type given by the method name,
     # 0 otherwise.
-
     def is_imp(self):
         return self.m_port_type == UVM_IMPLEMENTATION
 
@@ -337,7 +329,6 @@ class UVMPortBase():
     # Gets the number of implementation ports connected to this port. The value
     # is not valid before the end_of_elaboration phase, as port connections have
     # not yet been resolved.
-
     def size(self):
         return len(self.m_imp_list)
 
@@ -355,7 +346,6 @@ class UVMPortBase():
     # method. This method should only be called on UVM_EXPORT types. The value
     # must not be set before the end_of_elaboration phase, when port connections
     # have not yet been resolved.
-
     def set_default_index(self, index):
         self.m_def_index = index
 

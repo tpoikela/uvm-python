@@ -40,9 +40,9 @@ import cocotb
 from cocotb.triggers import Timer
 
 from uvm.tlm1 import *
-from uvm.base.uvm_component import *
 from uvm.base.uvm_component import UVMComponent
 from uvm.base.uvm_globals import run_test
+from uvm.base.uvm_object_globals import UVM_DEBUG, UVM_MEDIUM
 from uvm.comps.uvm_env import UVMEnv
 from uvm.macros import *
 

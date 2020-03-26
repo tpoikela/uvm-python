@@ -22,13 +22,15 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
-import cocotb
 from cocotb.triggers import Event, Timer
 
 from .sv import sv, wait
 from .uvm_object import UVMObject
+from .uvm_object_globals import UVM_NONE
+from ..macros.uvm_message_defines import uvm_warning
 from .uvm_queue import UVMQueue
-from .uvm_debug import *
+
+#from .uvm_debug import *
 
 #//------------------------------------------------------------------------------
 #//
@@ -400,7 +402,7 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
             append: 
         """
         if cb in self.callbacks:
-            uvm_report_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE)
+            uvm_warning("CBRGED","add_callback: Callback already registered. Ignoring.", UVM_NONE)
             return
 
         if append is True:

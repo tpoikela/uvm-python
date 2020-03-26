@@ -2,8 +2,11 @@
 from cocotb.utils import get_sim_time
 
 from .uvm_object import UVMObject
-from .uvm_object_globals import *
-from .uvm_globals import *
+from .uvm_object_globals import (UVM_BIN, UVM_COUNT, UVM_DEC, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
+                                 UVM_FATAL, UVM_INFO, UVM_LOG, UVM_LOW, UVM_MEDIUM, UVM_NONE,
+                                 UVM_NO_ACTION, UVM_RM_RECORD, UVM_SEVERITY_LEVELS, UVM_STOP,
+                                 UVM_WARNING)
+from .uvm_globals import uvm_report_info, uvm_sim_time
 from .uvm_pool import UVMPool
 from .uvm_global_vars import uvm_default_printer
 from .sv import sv
@@ -118,10 +121,10 @@ class UVMReportServer(UVMObject):
 
         if self.m_id_count.has_first():
             l_id_count_index = self.m_id_count.first()
-            printer.print_array_header("id_count",self.m_id_count.size(),"id counts")
+            printer.print_array_header("id_count",self.m_id_count.num(),"id counts")
             ok = True
             while ok:
-                printer.print_int("".format("[{}]",l_id_count_index),
+                printer.print_int("[{}]".format(l_id_count_index),
                     self.m_id_count[l_id_count_index], 32, UVM_DEC)
                 ok = self.m_id_count.has_next()
                 if ok:
@@ -158,8 +161,8 @@ class UVMReportServer(UVMObject):
     def set_max_quit_count(self, count, overridable=True):
         if self.max_quit_overridable is False:
             uvm_report_info("NOMAXQUITOVR",
-                "".format("The max quit count setting of {} is not overridable to {} due to a previous setting.",
-                self.m_max_quit_count, count), UVM_NONE)
+                "The max quit count setting of {} is not overridable to {} due to a previous setting."
+                .format(self.m_max_quit_count, count), UVM_NONE)
             return
         self.max_quit_overridable = overridable
         if count < 0:

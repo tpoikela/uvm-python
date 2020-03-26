@@ -21,17 +21,19 @@
 #    TODO add modifications
 # -------------------------------------------------------------
 
-import cocotb
-
 from ..base.sv import sv
 from ..base.uvm_debug import uvm_debug
 from ..base.uvm_object import UVMObject
-from ..base.uvm_globals import *
-from ..macros.uvm_object_defines import *
-from ..macros.uvm_message_defines import *
-from .uvm_reg_model import *
+from ..base.uvm_globals import UVM_LOW, UVM_MEDIUM
+from ..macros.uvm_message_defines import (uvm_fatal, uvm_error, uvm_warning,
+    uvm_info)
+from ..macros.uvm_object_defines import uvm_object_utils
+from .uvm_reg_model import (UVMRegMapAddrRange, UVM_BIG_ENDIAN, UVM_BIG_FIFO, UVM_FIELD, UVM_HIER,
+                            UVM_LITTLE_ENDIAN, UVM_LITTLE_FIFO, UVM_MEM, UVM_NOT_OK, UVM_NO_HIER,
+                            UVM_REG)
 from .uvm_reg_item import UVMRegBusOp
 from ..seq import UVMSequenceBase
+from .uvm_reg_cbs import UVMRegReadOnlyCbs, UVMRegWriteOnlyCbs
 
 UVM_VERB_MEM_MAP = UVM_LOW
 
@@ -63,19 +65,19 @@ class UVMRegTransactionOrderPolicy(UVMObject):
 
     def order(self, q):
         """
-            Function: order
-            the order() function may reorder the sequence of bus transactions
-            produced by a single uvm_reg transaction (read/write).
-            This can be used in scenarios when the register width differs from
-            the bus width and one register access results in a series of bus transactions.
-            the first item (0) of the queue will be the first bus transaction (the last($)
-            will be the final transaction
+        the order() function may reorder the sequence of bus transactions
+        produced by a single uvm_reg transaction (read/write).
+        This can be used in scenarios when the register width differs from
+        the bus width and one register access results in a series of bus transactions.
+        the first item (0) of the queue will be the first bus transaction (the last($)
+        will be the final transaction
+
         Args:
             q:
         Raises:
         """
         raise Exception("UVMRegTransactionOrderPolicy::order pure virtual function")
-    #endclass
+
 
 #------------------------------------------------------------------------------
 #
@@ -182,7 +184,7 @@ class UVMRegMap(UVMObject):
                 min2 = addrs[0]
 
                 mem_offset = self.m_mems_info[mem].offset
-                self.get_physical_addresses(mem_offset, (mem.get_size()-1), mem.get_n_bytes(), addrs_max)
+                self.get_physical_addresses(mem_offset, mem.get_size()-1, mem.get_n_bytes(), addrs_max)
                 if addrs_max[0] > addrs_max[len(addrs_max)-1]:
                     max1 = addrs_max[0]
                 else:
@@ -358,12 +360,12 @@ class UVMRegMap(UVMObject):
             frontdoor:
         """
         if rg in self.m_regs_info:
-            uvm_report_error("RegModel", ("Register '" + rg.get_name()
+            uvm_error("RegModel", ("Register '" + rg.get_name()
                       + "' has already been added to map '" + self.get_name() + "'"))
             return
 
         if rg.get_parent() != self.get_parent():
-            uvm_report_error("RegModel", ("Register '" + rg.get_full_name()
+            uvm_error("RegModel", ("Register '" + rg.get_full_name()
                 + "' may not be added to address map '"
                 + self.get_full_name() + "' : they are not in the same block"))
             return
@@ -500,7 +502,7 @@ class UVMRegMap(UVMObject):
             uvm_warning("RegModel",
                sv.sformatf("Adding %0d-byte submap '%s' to %0d-byte parent map '%s'",
                          child_map.get_n_bytes(UVM_NO_HIER), child_map.get_full_name(),
-                         self.m_n_bytes, get_full_name()))
+                         self.m_n_bytes, self.get_full_name()))
 
 
         child_map.add_parent_map(self, offset)
@@ -652,7 +654,7 @@ class UVMRegMap(UVMObject):
             unmapped:
         """
         if not rg in self.m_regs_info:
-            uvm_report_error("RegModel",
+            uvm_error("RegModel",
               ("Cannot modify offset of register '" + rg.get_full_name()
               + "' in address map '" + self.get_full_name()
               + "' : register not mapped in that address map"))
@@ -664,7 +666,7 @@ class UVMRegMap(UVMObject):
         addrs = []
 
         if blk is None:
-            uvm_report_fatal("RegModel", "Addr map requires parent reg_block")
+            uvm_fatal("RegModel", "Addr map requires parent reg_block")
 
         # if block is not locked, Xinit_address_mapX will resolve map when block is locked
         if blk.is_locked():
@@ -712,7 +714,7 @@ class UVMRegMap(UVMObject):
                            # TODO UVMRegReadOnlyCbs.add(rg2)
                         else:
                             a = "{}".format(addr)
-                            uvm_report_warning("RegModel", ("In map '" + self.get_full_name()
+                            uvm_warning("RegModel", ("In map '" + self.get_full_name()
                                 + "' register '"+ rg.get_full_name()
                                 + "' maps to same address as register '"
                                 + top_map.m_regs_by_offset[addr].get_full_name()
@@ -723,7 +725,7 @@ class UVMRegMap(UVMObject):
                     for range in top_map.m_mems_by_offset.keys():
                         if adr >= range.min and adr <= range.max:
                             a = "{}".format(adr)
-                            uvm_report_warning("RegModel", ("In map '" + self.get_full_name()
+                            uvm_warning("RegModel", ("In map '" + self.get_full_name()
                                 + "' register '" +
                                 rg.get_full_name() + "' overlaps with address range of memory '"
                                 + top_map.m_mems_by_offset[range].get_full_name()
@@ -1046,12 +1048,12 @@ class UVMRegMap(UVMObject):
         result = None
         if rg not in self.m_regs_info:
             if error:
-                uvm_report_error("REG_NO_MAP", ("Register '" + rg.get_name()
+                uvm_error("REG_NO_MAP", ("Register '" + rg.get_name()
                     + "' not in map '" + self.get_name() + "'"))
             return None
         result = self.m_regs_info[rg]
         if not result.is_initialized:
-            uvm_report_fatal("RegModel", ("map '" + self.get_name() +
+            uvm_fatal("RegModel", ("map '" + self.get_name() +
                 "' does not seem to be initialized correctly, "
                 + "check that the top register model is locked()"))
         return result

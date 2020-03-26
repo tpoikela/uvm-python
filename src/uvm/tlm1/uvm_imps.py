@@ -26,8 +26,25 @@
 #// The following defines the TLM implementation (imp) classes.
 #//------------------------------------------------------------------------------
 
-from .uvm_tlm_imps import *
+from .uvm_tlm_imps import (UVM_BLOCKING_GET_IMP, UVM_BLOCKING_GET_PEEK_IMP, UVM_BLOCKING_PEEK_IMP,
+                           UVM_BLOCKING_PUT_IMP, UVM_BLOCKING_TRANSPORT_IMP, UVM_GET_IMP,
+                           UVM_GET_PEEK_IMP, UVM_IMP_COMMON, UVM_MS_IMP_COMMON,
+                           UVM_NONBLOCKING_GET_IMP, UVM_NONBLOCKING_GET_PEEK_IMP,
+                           UVM_NONBLOCKING_PEEK_IMP, UVM_NONBLOCKING_PUT_IMP,
+                           UVM_NONBLOCKING_TRANSPORT_IMP, UVM_PEEK_IMP, UVM_PUT_IMP)
 from ..base.uvm_port_base import UVMPortBase
+from ..macros.uvm_tlm_defines import (UVM_TLM_BLOCKING_GET_MASK, UVM_TLM_BLOCKING_GET_PEEK_MASK,
+                                      UVM_TLM_BLOCKING_MASTER_MASK, UVM_TLM_BLOCKING_PEEK_MASK,
+                                      UVM_TLM_BLOCKING_PUT_MASK, UVM_TLM_BLOCKING_SLAVE_MASK,
+                                      UVM_TLM_BLOCKING_TRANSPORT_MASK, UVM_TLM_GET_MASK,
+                                      UVM_TLM_GET_PEEK_MASK, UVM_TLM_MASTER_MASK,
+                                      UVM_TLM_NONBLOCKING_GET_MASK,
+                                      UVM_TLM_NONBLOCKING_GET_PEEK_MASK,
+                                      UVM_TLM_NONBLOCKING_MASTER_MASK,
+                                      UVM_TLM_NONBLOCKING_PEEK_MASK, UVM_TLM_NONBLOCKING_PUT_MASK,
+                                      UVM_TLM_NONBLOCKING_SLAVE_MASK,
+                                      UVM_TLM_NONBLOCKING_TRANSPORT_MASK, UVM_TLM_PEEK_MASK,
+                                      UVM_TLM_PUT_MASK, UVM_TLM_SLAVE_MASK, UVM_TLM_TRANSPORT_MASK)
 
 #//------------------------------------------------------------------------------
 #//
