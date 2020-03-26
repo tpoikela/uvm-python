@@ -25,7 +25,7 @@
 #   preserved where possible.
 # ------------------------------------------------------------------------------
 
-import cocotb
+
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time, simulator
 from .uvm_object_globals import *
@@ -40,14 +40,16 @@ from inspect import getframeinfo, stack
 #
 # ------------------------------------------------------------------------------
 
-# Task: run_test
-#
-# Convenience function for uvm_top.run_test(). See <uvm_root> for more
-# information.
-
-
 
 async def run_test(test_name="", dut=None):
+    """
+    Convenience function for uvm_top.run_test(). See `UVMRoot` for more
+    information.
+
+    Args:
+        test_name (str): Name of the test to run.
+        dut: DUT object from cocotb
+    """
     cs = get_cs()
     top = cs.get_root()
     await top.run_test(test_name, dut)
