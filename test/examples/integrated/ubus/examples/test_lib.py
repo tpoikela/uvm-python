@@ -42,7 +42,7 @@ class ubus_example_base_test(UVMTest):
         self.printer = None
 
     def build_phase(self, phase):
-        UVMTest.build_phase(self, phase)
+        super().build_phase(phase)
         # Enable transaction recording for everything
         UVMConfigDb.set(self, "*", "recording_detail", UVM_FULL)
         # Create the tb
@@ -100,7 +100,7 @@ uvm_component_utils(ubus_example_base_test)
 class test_read_modify_write(ubus_example_base_test):
 
     def __init__(self, name="test_read_modify_write", parent=None):
-        ubus_example_base_test.__init__(self, name, parent)
+        super().__init__(name, parent)
 
     def build_phase(self, phase):
         UVMConfigDb.set(self, "ubus_example_tb0.ubus0.masters[0].sequencer.run_phase",
@@ -109,7 +109,6 @@ class test_read_modify_write(ubus_example_base_test):
                 "default_sequence", slave_memory_seq.type_id.get())
         #    // Create the tb
         ubus_example_base_test.build_phase(self, phase)
-        #  endfunction : build_phase
 
     
     async def run_phase(self, phase):
@@ -127,7 +126,7 @@ class test_read_modify_write(ubus_example_base_test):
         await sv.fork_join_any([slave_proc, master_proc])
         phase.drop_objection(self, "test_read_modify_write drop objection")
 
-    #endclass : test_read_modify_write
+
 uvm_component_utils(test_read_modify_write)
 
 
