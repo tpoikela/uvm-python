@@ -38,6 +38,7 @@ distclean:
 # Dependencies for this special target are ignored by make, as discussed in
 # http://stackoverflow.com/questions/26875072/dependencies-for-special-make-target-default-not-firing
 # We hack around that by calling the target explicitly.
+ifeq ($(DEV), )
 	make .venv
-
+endif
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
