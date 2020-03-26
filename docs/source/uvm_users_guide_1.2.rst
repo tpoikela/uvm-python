@@ -7,41 +7,41 @@ Universal Verification Methodology (UVM) 1.2 User’s Guide
 Mandatory copyrights::
 
     *Copyright © 2011 - 2015 Accellera. All rights reserved.*
-    
+
     Copyright © 2011 - 2015 Accellera Systems Initiative
     (Accellera). All rights reserved.
-    
+
     Accellera Systems Initiative, 8698 Elk Grove Bldv Suite 1, #114, Elk
     Grove, CA 95624, USA
-    
+
     Copyright © 2013 - 2015 Advanced Micro Devices, Inc. All
     rights reserved.
-    
+
     Advanced Micro Devices (AMD), 7171 Southwest Parkway, Austin, TX
     78735
-    
+
     Copyright © 2011 - 2015 Cadence Design Systems,
     Inc. (Cadence). All rights reserved.
-    
+
     Cadence Design Systems, Inc., 2655 Seely Ave., San Jose, CA 95134,
     USA.
-    
+
     Copyright © 2011 - 2015 Mentor Graphics, Corp. (Mentor). All
     rights reserved.
-    
+
     Mentor Graphics, Corp., 8005 SW Boeckman Rd., Wilsonville, OR 97070,
     USA
-    
+
     Copyright © 2013 - 2015 NVIDIA CORPORATION. All rights
     reserved.
-    
+
     NVIDIA Corporation, 2701 San Tomas Expy, Santa Clara, CA 95050
-    
+
     Copyright © 2011 - 2015 Synopsys, Inc. (Synopsys). All rights
     reserved.
-    
+
     Synopsys, Inc., 690 E. Middlefield Rd, Mountain View, CA 94043
-    
+
     Copyright © 2019 - 2020 Tuomas Poikela. All rights reserved.
 
 This product is licensed under the Apache Software Foundation’s
@@ -218,7 +218,7 @@ can operate hierarchically with one sequence, called a *parent
 sequence*, invoking another sequence, called a *child sequence*.
 
 To operate, each UVM Sequence is eventually bound to a UVM Sequencer. In
-practice this means that `UVMSequence.start` receives the sequencer as 
+practice this means that `UVMSequence.start` receives the sequencer as
 an argument. Multiple UVM Sequence instances can be bound to the same
 UVM Sequencer. Top-level sequences do not have to run on a sequencer,
 and can start other sequences instead.
@@ -463,7 +463,7 @@ and sends them out its put_port::
             super().__init__(name, parent)
             self.put_port = UVMBlockingPutPort(“put_port”, self)
             ...
-       
+
         async def run(self):
             for _ in range(N):
                 t = simple_trans()
@@ -521,7 +521,7 @@ via its get port::
             super().__init__(name, parent)
             self.get_port = UVMBlockingGetPort(“get_port”, self)
             ...
-   
+
         async def run_phase(self, phase):
             for _ in range(N):
                 # Generate t.
@@ -831,7 +831,7 @@ Code example::
             super().__init__(name, parent)
             self.ap = UVMAnalysisPort(“analysis_port”, self)
             ...
-           
+
         async def run_phase(self, phase);
             ...
             for i in range(10):
@@ -949,12 +949,12 @@ uvm_tlm_command_e and uvm_tlm_response_status_e are enumerated types.
 They are defined as::
 
     typedef enum {
-    
+
     TLM_READ_COMMAND, TLM_WRITE_COMMAND, TLM_IGNORE_COMMAND }
     uvm_tlm_command_e;
-    
+
     typedef enum {
-    
+
     TLM_OK_RESPONSE = 1, TLM_INCOMPLETE_RESPONSE = 0,
     TLM_GENERIC_ERROR_RESPONSE = -1, TLM_ADDRESS_ERROR_RESPONSE = -2,
     TLM_COMMAND_ERROR_RESPONSE = -3, TLM_BURST_ERROR_RESPONSE = -4,
@@ -983,8 +983,8 @@ are protected and similarly accessed through accessor methods::
     virtual function bit[63:0] get_address();
     virtual function void get_data (output byte p []);
     virtual function void set_data_ptr(ref byte p []);
-    
-    
+
+
     virtual function int unsigned get_data_length();
     virtual function void set_data_length(int unsigned length);
     virtual function int unsigned get_streaming_width();
@@ -1037,12 +1037,12 @@ Each extension container type is derived from the uvm_tlm_extension
 class and contains any additional information required by the user::
 
     class gp_Xs_ext extends uvm_tlm_extension#(gp_Xs_ext);
-    
+
     byte Xmask[];
-    
+
     function new(string name = ""); super.new(name); endfunction
     ’uvm_object_utils_begin(gp_Xs_ext)
-    
+
     ’uvm_field_int_array(Xmask, UVM_ALL_ON) ’uvm_object_utils_end
     endclass
 
@@ -1090,7 +1090,7 @@ The default phase enum is::
     typedef enum {
         UNINITIALIZED_PHASE, BEGIN_REQ, END_REQ, BEGIN_RESP, END_RESP
     } uvm_tlm_phase_e;
-    
+
 Each of the interface methods take a handle to the transaction to be
 transported and a handle to a timescale- independent time value
 object. In addition, the nonblocking interfaces take a reference
@@ -1316,17 +1316,17 @@ class definitions for these sockets are as follows::
     class uvm_tlm_nb_passthrough_initiator_socket #(type T=uvm_tlm_generic_payload,
     type P=uvm_tlm_phase_e) extends
     uvm_tlm_nb_passthrough_initiator_socket_base #(T,P);
-    
+
     class uvm_tlm_nb_passthrough_target_socket#(
         type T=uvm_tlm_generic_payload,
         type P=uvm_tlm_phase_e
     ) extends uvm_tlm_nb_passthrough_target_socket_base #(T,P);
-    
+
     class uvm_tlm_b_passthrough_initiator_socket #(
         type T=uvm_tlm_generic_payload
     ) extends
     uvm_tlm_b_passthrough_initiator_socket_base #(T);
-    
+
     class uvm_tlm_b_passthrough_target_socket #(
         type T=uvm_tlm_generic_payload
     )
@@ -1475,29 +1475,29 @@ information across a socket.
 For example::
 
     \`timescale 1ns/1ps
-    
+
     package a_pkg; class a;
-    
+
     function void f(inout time t);
         t += 10ns;
     endfunction endclass
-    
+
     endpackage
-    
+
     \`timescale 1ps/1ps
-    
+
     program p;
     import a_pkg::*;
-    
+
     time t = 0;
-    
+
     initial begin
         a A = new;
         A.f(t);
         #t;
         $write("T=%0d ps (Should be 10,000)\n", $time());
     end
-    
+
     endprogram
 
 yields::
@@ -1509,30 +1509,30 @@ may interpret a time value in a different timescale. Using the
 uvm_tlm_time type::
 
     `timescale 1ns/1ps
-    
+
     package a_pkg;
-    
+
         import uvm_pkg::*;
-        
+
         class a;
-        
+
         function void f(uvm_tlm_time t);
             t.incr(10ns, 1ns);
         endfunction
 
         endclass
-    
+
     endpackage
-    
+
     `timescale 1ps/1ps
-    
+
     program p;
-    
+
         import uvm_pkg::*;
         import a_pkg::*;
-        
+
         uvm_tlm_time t = new;
-        
+
         initial begin
             a A = new;
             A.f(t);
@@ -1737,7 +1737,7 @@ word_aligned_item, which includes an additional constraint to select
 only word-aligned addresses::
 
     class word_aligned_item extends simple_item;
-    
+
         constraint word_aligned_addr { addr[1:0] == 2'b00; }
         `uvm_object_utils(word_aligned_item)
 
@@ -1745,7 +1745,7 @@ only word-aligned addresses::
         function new (string name = "word_aligned_item");
             super.new(name);
         endfunction : new
-    
+
     endclass : word_aligned_item
 
 To enable this type of extensibility:
@@ -1798,7 +1798,7 @@ Knobs Example::
             (delay_kind == MEDIUM) -> delay inside { [11:99] };
             (delay_kind == LARGE) -> delay inside { [100:999] };
             (delay_kind == MAX ) -> delay == 1000;
-            delay >=0; delay <= 1000; 
+            delay >=0; delay <= 1000;
         }
     endclass : simple_item
 
@@ -2298,12 +2298,12 @@ modify functionality as desired::
 
     ... // Add more functionality here.
     endclass: new_driver
-   
+
 b) In your test, environment, or testbench, override the type to be returned
 by the factory::
 
     def build_phase(self,  phase):
-        self.set_type_override_by_type(my_driver.get_type(), 
+        self.set_type_override_by_type(my_driver.get_type(),
             new_driver.get_type())
         super().build_phase(phase)
 
@@ -3450,23 +3450,31 @@ ubus_example_env defined in Section 4.2. This base test is a starting
 point for all derivative tests that will use the ubus_example_env.
 The complete test class is shown here:
 
-class ubus_example_base_test extends uvm_test;
+.. code-block:: python
 
-\`uvm_component_utils(ubus_example_base_test) ubus_example_env
-ubus_example_env0; // The test’s constructor function new (string name =
-"ubus_example_base_test",
+    class ubus_example_base_test(UVMTest):
 
-uvm_component parent = null); super.new(name, parent); endfunction //
-Update this component's properties and create the ubus_example_tb
 
-component.
+        def __init__(self, name="ubus_example_base_test", parent=None):
+            super().__init__(name, parent)
+            self.test_pass = True
+            self.ubus_example_tb0 = None
+            self.printer = None
 
-virtual function build_phase(); // Create the top-level environment.
-
-super.build_phase(phase); ubus_example_env0 =
-ubus_example_tb.type_id.create("ubus_example_env0", this);
-
-endfunction endclass
+        def build_phase(self, phase):
+            super().build_phase(phase)
+            # Enable transaction recording for everything
+            UVMConfigDb.set(self, "*", "recording_detail", UVM_FULL)
+            # Create the tb
+            self.ubus_example_tb0 = ubus_example_tb.type_id.create("ubus_example_tb0", self)
+            # Create a specific depth printer for printing the created topology
+            self.printer = UVMTablePrinter()
+            self.printer.knobs.depth = 3
+            arr = []
+            if UVMConfigDb.get(None, "*", "vif", arr) is True:
+                UVMConfigDb.set(self, "*", "vif", arr[0])
+            else:
+                uvm_fatal("NOVIF", "Could not get vif from config DB")
 
 The build_phase() function of the base test creates the
 ubus_example_env. The UVM Class Library will execute the
@@ -3496,33 +3504,40 @@ derivative tests can make minor adjustments. (For example, changing
 the default sequence executed by the agents in the environment.) The
 following is a simple test that inherits from ubus_example_base_test.
 
+.. code-block:: python
 
 
-class test_read_modify_write extends ubus_example_base_test;
+    class test_read_modify_write(ubus_example_base_test):
 
-\`uvm_component_utils(test_read_modify_write) // The test’s
-constructor
+        def __init__(self, name="test_read_modify_write", parent=None):
+            super().__init__(name, parent)
 
-function new (string name = "test_read_modify_write",
+        def build_phase(self, phase):
+            UVMConfigDb.set(self, "ubus_example_tb0.ubus0.masters[0].sequencer.run_phase",
+                    "default_sequence", read_modify_write_seq.type_id.get())
+            UVMConfigDb.set(self, "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
+                    "default_sequence", slave_memory_seq.type_id.get())
+            #    // Create the tb from super class
+            ubus_example_base_test.build_phase(self, phase)
 
-uvm_component parent = null); super.new(name, parent); endfunction //
-Register configurations to control which
 
-// sequence is executed by the sequencers. virtual function void
-build_phase(uvm_phase phase);
+        async def run_phase(self, phase):
+            phase.raise_objection(self, "test_read_modify_write OBJECTED")
+            master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
+            slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
 
-// Substitute the default sequence.
+            uvm_info("TEST_TOP", "Forking master_proc now", UVM_LOW)
+            master_seq = read_modify_write_seq("r_mod_w_seq")
+            master_proc = cocotb.fork(master_seq.start(master_sqr))
 
-UVMConfigDb#(uvm_object_wrapper):: set(this,
-"ubus0.masters[0].sequencer.main_phase",
+            slave_seq = slave_memory_seq("mem_seq")
+            slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
+            await sv.fork_join_any([slave_proc, master_proc])
+            phase.drop_objection(self, "test_read_modify_write drop objection")
 
-"default_sequence", read_modify_write_seq::type_id::get());
-UVMConfigDb#(uvm_object_wrapper)::
 
-set(this, "ubus0.slaves[0].sequencer.main_phase",
+    uvm_component_utils(test_read_modify_write)
 
-"default_sequence",slave_memory_seq::type_id::get());
-super.build_phase(phase); endfunction endclass
 
 This test changes the default sequence executed by the masters[0]
 agent and the slaves[0] agent. It is important to understand that
@@ -3542,9 +3557,9 @@ run_phase() phase.
 
 After defining user-defined tests (described in Section 4.5.2), the
 uvm_pkg::run_test() task needs to be invoked to select a test to be
-simulated. Its prototype is:
+simulated. Its prototype is::
 
-task run_test(string test_name="");
+    async def run_test(test_name="")
 
 UVM supports declaring which test is to be run via two separate
 mechanisms. The testname (i.e. the name which was used to register
@@ -3771,41 +3786,12 @@ In Figure 19, the virtual sequencer invokes configuration sequences
 on the ethernet and cpu verification components. The configuration
 sequences are developed during block-level testing.
 
+.. figure:: fig/19_highly_reusable_verification_component_agent.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-
-**comm_env**
-
-virtual_sequencer
-
-cpu_config
-
-comm_sequence_s
-
-eth_legal
-
-**ethernet_env**
-
-**cpu_env**
-
-ethernet_agent
-
-cpu_agent ethernet_sequencer
-
-cpu_bus_sequencer seq
-
-seq seq
-
-seq seq
-
-seq
-
-seq
-
-seq
-
-driver driver
-
-**Figure 19—Virtual Sequence**
+    Virtual Sequence
 
 There are three ways in which the virtual sequencer can interact with
 its subsequencers:
@@ -4090,13 +4076,12 @@ agent, and one active slave agent. Every component in the UBus
 environment is created using the build_phase() methods defined by the
 IP developer.
 
+.. figure:: fig/20_ubus_demo_environment.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-
-**ubus_example_env0**
-
-**scoreboard0**
-
-**Figure 20—UBus Demo Environment**
+    UBus Demo Environment
 
 4.9.1 Creating the Scoreboard
 -----------------------------
@@ -4396,15 +4381,12 @@ Model generators are outside the scope of the UVM library.
 Figure 21 shows how a register model is used in a verification
 environment.
 
-**Environment Specification **
+.. figure:: fig/21_register_model_in_uvm_environment.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**Sequences Generator**
-
-**Register Model**
-
-**DUT**
-
-**Figure 21–Register Model in an UVM Environment**
+    Register Model in an UVM Environment
 
 5.2 Usage Model
 ###############
@@ -4415,49 +4397,18 @@ Each register file contains any number of registers and other register
 files. Each register contains any number of fields, which mirror the
 values of the corresponding elements in hardware.
 
-
-
 For each element in a register model–field, register, register file,
 memory or block–there is a class instance that abstracts the read and
 write operations on that element.
 
 Figure 22 shows the class collaboration diagram of the register model.
 
-**uvm_reg_block**
+.. figure:: fig/22_register_model_class_collaboration.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-**uvm_reg**
-
-my_block
-
-1..N
-
-my_reg
-
-1..N **uvm_reg_field **
-
-1..N :sup:`1..N `
-
-**uvm_reg_file**
-
-1..N
-
-my_regfile\ :sub:`1..N `
-
-1..N
-
-**uvm_mem**
-
-**uvm_mem_mam**
-
-**uvm_\*** = UVM base class :sup:`my_* `
-
-= user-defined class
-
-(generated) 1..N
-
-**uvm_reg_map**
-
-**Figure 22–Register Model Class Collaboration**
+    Register Model Class Collaboration
 
 A *block* generally corresponds to a design component with its own host
 processor interface(s), address decoding, and memory-mapped registers
@@ -4478,74 +4429,20 @@ registers, which have two and three fields respectively, an internal
 memory, and an external memory. Figure 24 shows the structure of the
 corresponding register model.
 
+.. figure:: fig/23_design_structure_of_registers_fields_and_memories.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
+
+    Design Structure of Registers, Fields, and Memories
 
 
-*CODEC*
+.. figure:: fig/24_register_model_structure.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-*INTRPT STATUS MASK CONFIG *
-
-*ADDR DS OE TBL* Host_IF
-
-**Figure 23–Design Structure of Registers, Fields, and Memories**
-
-uvm_reg_block
-
-**Figure 24–Register Model Structure**
-
-RAM
-
-*BFR*
-
-RAM
-
-*CODEC\ CONFIG *
-
-uvm_reg
-
-*ADDR*
-
-uvm_reg_field
-
-*DS*\ :sub:`uvm_reg_field `
-
-*OE*\ :sub:`uvm_reg_field `
-
-*ADDR*
-
-uvm_reg_field
-
-*DS*\ :sub:`uvm_reg_field `
-
-*OE*\ :sub:`uvm_reg_field `
-
-*INTRPT*
-
-uvm_reg
-
-*STATUS*
-
-uvm_reg_field
-
-*MASK*
-
-uvm_reg_field
-
-*STATUS*
-
-uvm_reg_field
-
-*MASK*
-
-uvm_reg_field
-
-*TBL*
-
-uvm_mem
-
-*BFR*
-
-uvm_mem
-
+    Register Model Structure
 
 
 When using a register model, fields, registers, and memory locations are
@@ -4590,11 +4487,12 @@ However, field D can be accessed using a single cycle at address 0x01.
 Since this field occupies an entire physical address, accessing it does
 not pose a challenge.
 
-127 104
+.. figure:: fig/25_128_bit_register.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-88 64 32 24 16 8 04 **G F E**
-
-**D C B A Figure 25–128-bit Register**
+    128-bit Register
 
 Similarly, accessing field C can be done using a single access at
 address 0x00. However, this will also access fields B and A. Accessing
@@ -4617,9 +4515,6 @@ occupant of one or more byte lane(s) if the containing register does not
 use a user-defined front-door and the underlying bus protocol supports
 byte enabling. A field may also be individually-accessible if the other
 fields in the same byte lanes are not
-
-
-
 affected by read or write operations. Whether a field can be
 individually accessible (assuming the underlying protocol supports
 byte-enabling) is specified by the register model generator in the
@@ -4951,11 +4846,11 @@ uvm_reg_field class. There must be one class per unique field type. The
 name of the field type is created by the register model generator. The
 name of the field type class must be unique within the scope of its
 declaration. The field type class must include an appropriate invocation
-of the `uvm_object_utils()`::.
+of the `uvm_object_utils()`::
 
-    class my_fld_type extends uvm_reg_field;
-    endclass
-    uvm_object_utils(my_fld_type)
+    class my_fld_type(UVMRegField):
+        ...
+    uvm_object_utils(my_fld_type) # Outside the class
 
 Field types are instantiated in the build() method of the containing
 register types.
@@ -9476,7 +9371,7 @@ randomization of an object::
         virtual task body(); \`uvm_create(req)
             req.addr.rand_mode(0);
             req.dc1.constraint_mode(0);
-            req.addr = 27; // Randomize and process the item. 
+            req.addr = 27; // Randomize and process the item.
             uvm_rand_send(req) // Randomize and process again, this time with inline constraints.
             uvm_rand_send_with(req, {data < 1000;})
         endtask : body
@@ -9743,7 +9638,7 @@ test/examples/simple/sequence/basic_read_write_sequence.
 
         virtual function void do_pack (uvm_packer packer);
             super.do_pack(packer);
-            uvm_pack_enum(op) 
+            uvm_pack_enum(op)
             uvm_pack_int(data)
             uvm_pack_int(addr)
         endfunction
@@ -9848,11 +9743,11 @@ when the test is simulated with UVM_VERBOSITY = UVM_LOW::
     # end_time time 64 110 #
     ----------------------------------------------------------
     #\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(89) @ 200: `
-    
+
     uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
     WRITE to existing address...Updating address : b877 with data : 92 #
     UVM_INFO ../sv/ubus_bus_monitor.sv(223) @ 200:
-    
+
     uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
     Transfer collected : #
     ---------------------------------------------------------- # Name Type
@@ -9865,16 +9760,16 @@ when the test is simulated with UVM_VERBOSITY = UVM_LOW::
     # end_time time 64 200 #
     ----------------------------------------------------------
     #\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(75) @ 310: `
-    
+
     uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard] READ
     to existing address...Checking address : b877 with data : 92 # UVM_INFO
     ../sv/ubus_bus_monitor.sv(223) @ 310:
-    
+
     uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
     Transfer collected :
-    
-    
-    
+
+
+
     # ---------------------------------------------------------- # Name Type
     Size Value # ----------------------------------------------------------
     # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
@@ -9885,10 +9780,10 @@ when the test is simulated with UVM_VERBOSITY = UVM_LOW::
     # end_time time 64 310 #
     ----------------------------------------------------------
     #\ :sub:`# UVM_INFO ../../../../src/base/uvm_objection.svh(1271) @ 360: reporter `
-    
+
     [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase #
     UVM_INFO ubus_example_scoreboard.sv(114) @ 360:
-    
+
     uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
     Reporting scoreboard information... #
     ------------------------------------------------------------------ #
@@ -9901,32 +9796,32 @@ when the test is simulated with UVM_VERBOSITY = UVM_LOW::
     recording_detail uvm_verbosity 32 UVM_FULL #
     ------------------------------------------------------------------
     #\ :sub:`# UVM_INFO ../sv/ubus_master_monitor.sv(205) @ 360: `
-    
+
     uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor
     [uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] Covergroup
     'cov_trans' coverage: 23.750000 # UVM_INFO
     ../sv/ubus_slave_monitor.sv(243) @ 360:
-    
+
     uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor
     [uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] Covergroup
     'cov_trans' coverage: 23.750000 # UVM_INFO test_lib.sv(70) @ 360:
     uvm_test_top [test_read_modify_write] \*\* UVM
-    
+
     TEST PASSED \*\* # UVM_INFO
     ../../../../src/base/uvm_report_server.svh(847) @ 360: reporter
-    
+
     [UVM/REPORT/SERVER] # --- UVM Report Summary ---
     #\ :sub:`# ** Report counts by severity` # UVM_INFO : 14 # UVM_WARNING :
     0 # UVM_ERROR : 0 # UVM_FATAL : 0 # \*\* Report counts by id # [RNTST] 1
     # [TEST_DONE] 1 # [UVM/RELNOTES] 1
-    
-    
-    
+
+
+
     # [test_read_modify_write] 2 # [ubus_bus_monitor] 3 #
     [ubus_example_scoreboard] 4 #
     [uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] 1 #
     [uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] 1
-    
+
     # $finish called from file "../../../../src/base/uvm_root.svh", line
     517. # $finish at simulation time 360
 
