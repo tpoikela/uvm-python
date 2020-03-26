@@ -1355,13 +1355,13 @@ class UVMPhase(UVMObject):
                     state_chg.m_jump_to = self.m_jump_phase
                     uvm_report_info("PH_JUMP", (
                         "phase {} (schedule {}, domain {}) is jumping to phase {}".format(
-                        self.get_name(), self.get_schedule_name(), self.get_domain_name(),
-                        self.m_jump_phase.get_name())), UVM_MEDIUM)
+                            self.get_name(), self.get_schedule_name(), self.get_domain_name(),
+                            self.m_jump_phase.get_name())), UVM_MEDIUM)
                 else:
                     uvm_report_info("PH_JUMP", (
                         "phase {} (schedule {}, domain {}) is ending prematurely".format(
-                           get_name(), self.get_schedule_name(),
-                           self.get_domain_name())), UVM_MEDIUM)
+                            self.get_name(), self.get_schedule_name(),
+                            self.get_domain_name())), UVM_MEDIUM)
 
                 #0; // LET ANY WAITERS ON READY_TO_END TO WAKE UP
                 await Timer(0)
