@@ -16,24 +16,22 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-
 """
 Contains SystemVerilog (SV) system functions mocked/added
 to make the porting SV to Python faster.
-
 """
 
 import re
 import random
 import cocotb
-#from cocotb_coverage.coverage import *
+
 from cocotb_coverage import crv
 from cocotb.triggers import Lock, Timer, Combine, First
 from cocotb.utils import get_sim_time, simulator
 from cocotb.bus import Bus
 from inspect import getframeinfo, stack
 
-# from constraint import Problem
+from .uvm_exceptions import RandomizeError
 
 RET_ERR = 1
 RET_OK = 0
@@ -168,7 +166,7 @@ class sv:
 
     @classmethod
     def sformatf(cls, msg, *args):
-        """         
+        """
         This is to make porting faster, but should be switched to native python
         formatting inside UVM code
         Args:
@@ -264,10 +262,25 @@ class sv_obj(crv.Randomized):
         self._sv_rand_obj = []
         random.seed(self._sv_seed)
         self._sv_rand_state = random.getstate()
+        self._rand_mode = True
+
 
     def constraint(self, c):
-        """ Adds a constraint into the object """
+        """
+        Adds a constraint into the object.
+
+        Args:
+            c (constraint): Lambda expression or function.
+
+        """
         self.add_constraint(c)
+
+
+    def rand_mode(self, mode):
+        if mode:
+            self._rand_mode = True
+        else:
+            self._rand_mode = False
 
 
     def rand(self, key, val_list=None):
@@ -283,17 +296,32 @@ class sv_obj(crv.Randomized):
             if val_list is None:
                 self._sv_rand_obj.append(key)
         elif hasattr(self, key) and val_list is None:
-            self._sv_rand_obj.append(key)
+            if self.is_valid_rand_type(key):
+                self._sv_rand_obj.append(key)
+            else:
+                raise TypeError('Attr {} of {} requires range or value list for rand()'
+                    .format(key, type(getattr(self, key))))
         else:
             self.add_rand(key, val_list)
 
+    def is_valid_rand_type(self, key):
+        return not isinstance(getattr(self, key), (int, str, float))
+
+    def pre_randomize(self):
+        pass
+
+    def post_randomize(self):
+        pass
 
     def randomize(self, recurse=True):
-        """ 
+        """
         Randomizes values in object marked with rand(). Recurses to sub-objects
         randomizing them as well.
         """
+        if self._rand_mode is False:
+            return True
         try:
+            self.pre_randomize()
             ok = True
             if recurse:
                 for entry in self._sv_rand_obj:
@@ -302,14 +330,18 @@ class sv_obj(crv.Randomized):
                         obj = getattr(self, entry)
                     ok = ok and obj.randomize()
             super().randomize()
+            self.post_randomize()
             return True and ok
-        except:
-            # TODO this can mask all sorts of errors
-            return False
+        except Exception as e:
+            raise RandomizeError('randomize() failed for ' + str(self) + '\n' + e)
+            # return False
 
 
     def randomize_with(self, *constr):
+        if self._rand_mode is False:
+            return True
         try:
+            self.pre_randomize()
             ok = True
             for entry in self._sv_rand_obj:
                 obj = entry
@@ -317,10 +349,11 @@ class sv_obj(crv.Randomized):
                     obj = getattr(self, entry)
                 ok = ok and obj.randomize()
             super().randomize_with(*constr)
+            self.post_randomize()
             return True and ok
-        except:
-            # TODO this can mask all sorts of errors
-            return False
+        except Exception as e:
+            raise RandomizeError('randomize() failed for ' + str(self) + '\n' + str(e))
+            # return False
 
 
 class semaphore():
@@ -331,7 +364,7 @@ class semaphore():
         self.lock = Lock("sem_lock")
         self.locked = False
 
-    
+
     async def get(self, count=1):
         if self.count > count:
             self.count -= count
