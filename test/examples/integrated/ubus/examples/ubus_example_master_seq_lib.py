@@ -185,6 +185,7 @@ class read_modify_write_seq(ubus_base_sequence):
         self.write_byte_seq0 = None  # write_byte_seq
         self.addr_check = 0
         self.m_data0_check = 0
+        self.test_pass = False
 
     
     async def body(self):
@@ -195,6 +196,8 @@ class read_modify_write_seq(ubus_base_sequence):
         await uvm_do_with(self, self.read_byte_seq0, {})
         self.addr_check = self.read_byte_seq0.rsp.addr
         self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
+        
+        print("HHH data is here: " + str(self.m_data0_check))
 
         # WRITE MODIFIED READ DATA
         self.write_byte_seq0 = write_byte_seq("write_byte_seq")
@@ -204,10 +207,12 @@ class read_modify_write_seq(ubus_base_sequence):
         #      { write_byte_seq0.start_addr == addr_check;
         #        write_byte_seq0.data0 == m_data0_check; } )
 
+        self.m_data0_check = write_byte_seq.last_data
+    
         #    // READ MODIFIED WRITE DATA
         self.read_byte_seq0.start_addr = self.addr_check
-        await uvm_do_with(self, self.read_byte_seq0, {})
-        #      { read_byte_seq0.start_addr == addr_check; } )
+        await uvm_do_with(self, self.read_byte_seq0,
+            lambda start_addr: start_addr == self.addr_check)
 
         if self.m_data0_check != int(self.read_byte_seq0.rsp.data[0]):
             uvm_error(self.get_type_name(),
@@ -215,9 +220,10 @@ class read_modify_write_seq(ubus_base_sequence):
                     self.get_sequence_path(),
                     self.addr_check, self.m_data0_check,
                     int(self.read_byte_seq0.rsp.data[0])))
-        #  endtask : body
-    #
-    #endclass : read_modify_write_seq
+        else:
+            self.test_pass = True
+
+
 uvm_object_utils(read_modify_write_seq)
 
 #//------------------------------------------------------------------------------

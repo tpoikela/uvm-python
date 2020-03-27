@@ -125,6 +125,8 @@ class test_read_modify_write(ubus_example_base_test):
         #await [slave_proc, master_proc.join()]
         await sv.fork_join_any([slave_proc, master_proc])
         phase.drop_objection(self, "test_read_modify_write drop objection")
+        if not master_seq.test_pass:
+            self.test_pass = False
 
 
 uvm_component_utils(test_read_modify_write)
@@ -243,8 +245,7 @@ class test_2m_4s(ubus_example_base_test):
         for i in range(1, 4):
             self.ubus_example_tb0.ubus0.slaves[i].monitor.item_collected_port.connect(
                 self.ubus_example_tb0.scoreboard0.item_collected_export)
-        #  endfunction : connect_phase
-        #
+
 
     def end_of_elaboration_phase(self, phase):
         # Set up slave address map for ubus0 (slaves[0] is overwritten here)
@@ -253,8 +254,6 @@ class test_2m_4s(ubus_example_base_test):
         self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[2]", 0x8000, 0xBfff)
         self.ubus_example_tb0.ubus0.set_slave_address_map("slaves[3]", 0xC000, 0xFfff)
         super().end_of_elaboration_phase(phase)
-        #  endfunction : end_of_elaboration_phase
 
-    #
-    #endclass : test_2m_4s
+
 uvm_component_utils(test_2m_4s)
