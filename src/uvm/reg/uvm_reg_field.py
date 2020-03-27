@@ -140,7 +140,7 @@ class UVMRegField(UVMObject):
             size = 1
 
         self.m_size      = size
-        self.rand('value', range((1 << size) - 1))
+        self.rand('value', range(1 << size))
         self.m_volatile  = volatile
         self.m_access    = access.upper()
         self.m_lsb       = lsb_pos
