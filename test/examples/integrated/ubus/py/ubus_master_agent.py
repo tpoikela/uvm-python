@@ -21,6 +21,7 @@
 
 from uvm.base import *
 from uvm.comps import UVMAgent
+from uvm.macros import uvm_component_utils
 
 from ubus_master_monitor import ubus_master_monitor
 from ubus_master_driver import ubus_master_driver
@@ -72,5 +73,5 @@ class ubus_master_agent(UVMAgent):
             self.sequencer.addr_ph_port.connect(self.monitor.addr_ph_imp)
         #  endfunction : connect_phase
 
-    #endclass : ubus_master_agent
+
 uvm_component_utils(ubus_master_agent)

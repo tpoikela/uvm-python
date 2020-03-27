@@ -26,17 +26,20 @@ from cocotb.triggers import Timer, Event
 
 from .sv import sv, uvm_split_string
 from .uvm_component import UVMComponent
-from .uvm_version import *
+from .uvm_version import (uvm_cdn_copyright, uvm_cy_copyright, uvm_mgc_copyright, uvm_nv_copyright,
+                          uvm_revision_string, uvm_snps_copyright, uvm_tpoikela_copyright)
 from .uvm_cmdline_processor import UVMCmdlineProcessor
-from .uvm_object_globals import *
+from .uvm_globals import uvm_is_match, uvm_report_error, uvm_report_warning
+from .uvm_object_globals import (UVM_DEBUG, UVM_ERROR, UVM_FULL, UVM_HIGH,
+    UVM_LOW, UVM_MEDIUM, UVM_NONE)
 from .uvm_phase import UVMPhase
 from .uvm_debug import uvm_debug
-from .uvm_objection import *
+from .uvm_objection import UVMObjection
 from .uvm_report_server import UVMReportServer
 from .uvm_domain import end_of_elaboration_ph
 from .uvm_common_phases import UVMEndOfElaborationPhase
-from ..macros import *
-from ..uvm_macros import *
+from ..macros import uvm_info, uvm_fatal
+from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 
 MULTI_TESTS = ("Multiple ({}) +UVM_TESTNAME arguments provided on the command"
         + "line. '{}' will be used.  Provided list: {}.")
@@ -676,6 +679,7 @@ class UVMRoot(UVMComponent):
             cfg: 
             is_int: 
         """
+        from .uvm_coreservice import UVMCoreService
         v = 0
         split_val = []
         cs = UVMCoreService.get()

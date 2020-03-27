@@ -25,10 +25,13 @@
 
 
 from ..base.uvm_object import UVMObject
-from ..base.uvm_globals import *
+from ..base.uvm_globals import uvm_report_error, uvm_report_warning
 from ..base.uvm_resource_db import UVMResourceDb
 from ..macros.uvm_object_defines import uvm_object_utils
-from .uvm_reg_model import *
+from ..macros.uvm_message_defines import uvm_error
+from .uvm_reg_model import (UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK, UVM_NOT_OK, UVM_NO_CHECK,
+                            UVM_NO_COVERAGE, UVM_PREDICT, UVM_PREDICT_DIRECT, UVM_PREDICT_READ,
+                            UVM_PREDICT_WRITE, uvm_fatal)
 from .uvm_reg_item import UVMRegItem
 from .uvm_reg_cbs import UVMRegFieldCbIter
 
@@ -399,12 +402,12 @@ class UVMRegField(UVMObject):
             return field_access
         elif rights == "RO":
             if field_access in ["RW", "RO", "WC", "WS",
-                "W1C", "W1S", "W1T", "W0C", "W0S", "W0T", "W1"]:
+                    "W1C", "W1S", "W1T", "W0C", "W0S", "W0T", "W1"]:
                 field_access = "RO"
             elif field_access in ["RC", "WRC", "W1SRC", "W0SRC",
                     "WSRC"]:
                 field_access = "RC"
-            elif field_acces in ["RS", "WRS", "W1CRS", "W0CRS", "WCRS"]:
+            elif field_access in ["RS", "WRS", "W1CRS", "W0CRS", "WCRS"]:
                 field_access = "RS"
             elif field_access in ["WO", "WOC", "WOS", "WO1"]:
                 field_access = "NOACCESS"
@@ -517,7 +520,7 @@ class UVMRegField(UVMObject):
         if value >> self.m_size:
             uvm_report_warning("RegModel",
                 "Specified value (0x{}) greater than field \"{}\" size ({} bits)".format(
-                 value, get_name(), self.m_size))
+                     value, self.get_name(), self.m_size))
             value = value & mask
 
         if self.m_parent.is_busy():

@@ -22,15 +22,17 @@
 #------------------------------------------------------------------------------
 
 
-import cocotb
 from cocotb.triggers import Event
 
-from .uvm_imps import *
-from .uvm_analysis_port import *
+from .uvm_imps import UVMGetPeekImp, UVMPutImp
+from .uvm_analysis_port import UVMAnalysisPort
 from ..base.uvm_component import UVMComponent
+from ..base.uvm_object_globals import UVM_NONE
+from ..base.uvm_globals import uvm_report_error
 
 UVM_TLM_FIFO_TASK_ERROR = "fifo channel task not implemented"
 UVM_TLM_FIFO_FUNCTION_ERROR = "fifo channel function not implemented"
+
 
 class UVMTLMEvent:
     def __init__(self):
@@ -137,19 +139,19 @@ class UVMTLMFIFOBase(UVMComponent):
         """
         UVMComponent.__init__(self, name, parent)
         self.put_export = UVMPutImp("put_export", self)
-        self.blocking_put_export     = self.put_export
-        self.nonblocking_put_export  = self.put_export
+        self.blocking_put_export = self.put_export
+        self.nonblocking_put_export = self.put_export
 
         get_peek_export = UVMGetPeekImp("get_peek_export", self)
         self.get_peek_export = get_peek_export
-        self.blocking_get_peek_export    = get_peek_export
+        self.blocking_get_peek_export = get_peek_export
         self.nonblocking_get_peek_export = get_peek_export
-        self.blocking_get_export         = get_peek_export
-        self.nonblocking_get_export      = get_peek_export
-        self.get_export                  = get_peek_export
-        self.blocking_peek_export        = get_peek_export
-        self.nonblocking_peek_export     = get_peek_export
-        self.peek_export                 = get_peek_export
+        self.blocking_get_export = get_peek_export
+        self.nonblocking_get_export = get_peek_export
+        self.get_export = get_peek_export
+        self.blocking_peek_export = get_peek_export
+        self.nonblocking_peek_export = get_peek_export
+        self.peek_export = get_peek_export
         self.put_ap = UVMAnalysisPort("put_ap", self)
         self.get_ap = UVMAnalysisPort("get_ap", self)
 
@@ -159,7 +161,7 @@ class UVMTLMFIFOBase(UVMComponent):
             phase (UVMPhase):
         """
         self.build()  # for backward compat, won't cause auto-config
-        return
+
 
     def flush(self):
         uvm_report_error("flush", UVM_TLM_FIFO_FUNCTION_ERROR, UVM_NONE)

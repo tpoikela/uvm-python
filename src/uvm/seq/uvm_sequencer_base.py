@@ -24,18 +24,22 @@
 import cocotb
 from cocotb.triggers import Timer, Event
 
+from .uvm_sequence import UVMSequence
+from .uvm_sequence_base import UVMSequenceBase
+
 from ..base.sv import sv, process
 from ..base.uvm_component import UVMComponent
 from ..base.uvm_event import UVMEvent
 from ..base.uvm_resource import UVMResourcePool
 from ..base.uvm_config_db import UVMConfigDb
-from ..macros import uvm_info
-from ..base.uvm_object_globals import *
+from ..macros.uvm_message_defines import (
+    uvm_error, uvm_fatal, uvm_info, uvm_report_fatal, uvm_warning)
+from ..base.uvm_object_globals import UVM_FINISHED, UVM_FULL, UVM_NONE, UVM_SEQ_ARB_FIFO
 from ..base.uvm_pool import UVMPool
 from ..base.uvm_queue import UVMQueue
 from ..base.uvm_globals import uvm_wait_for_nba_region
 from uvm.base.sv import sv_if, wait
-from setuptools.dist import sequence
+#from setuptools.dist import sequence
 
 SEQ_ERR1_MSG = ("The task responsible for requesting a lock on sequencer '%s' "
     + " for sequence '%s' has been killed, to avoid a deadlock the sequence will "

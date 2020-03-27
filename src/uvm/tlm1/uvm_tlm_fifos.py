@@ -27,9 +27,10 @@ This section defines TLM-based FIFO classes.
 
 """
 
-from .uvm_tlm_fifo_base import UVMAnalysisImp, UVMTLMFIFOBase
+from .uvm_tlm_fifo_base import UVMTLMFIFOBase
 from ..base.uvm_mailbox import UVMMailbox
 from ..macros.uvm_message_defines import uvm_error
+from .uvm_analysis_port import UVMAnalysisImp
 
 
 class UVMTLMFIFO(UVMTLMFIFOBase):

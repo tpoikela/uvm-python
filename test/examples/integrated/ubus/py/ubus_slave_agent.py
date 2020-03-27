@@ -22,6 +22,7 @@
 
 from uvm.base import *
 from uvm.comps import UVMAgent
+from uvm.macros import uvm_component_utils, uvm_info
 
 from ubus_slave_monitor import ubus_slave_monitor
 from ubus_slave_driver import ubus_slave_driver
@@ -33,9 +34,10 @@ from ubus_slave_sequencer import ubus_slave_sequencer
 #//
 #//------------------------------------------------------------------------------
 
+
 class ubus_slave_agent(UVMAgent):
 
-    #  // new - constructor
+    #  // constructor
     def __init__(self, name, parent):
         UVMAgent.__init__(self, name, parent)
         self.driver = None
@@ -60,5 +62,5 @@ class ubus_slave_agent(UVMAgent):
             self.driver.seq_item_port.connect(self.sequencer.seq_item_export)
             self.sequencer.addr_ph_port.connect(self.monitor.addr_ph_imp)
 
-    #endclass : ubus_slave_agent
+
 uvm_component_utils(ubus_slave_agent)
