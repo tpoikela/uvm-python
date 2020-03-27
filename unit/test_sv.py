@@ -17,6 +17,8 @@ class Packet(sv_obj):
         self.data = 0
         self.rand("data", [0, 1, 2, 4, 8, 16, 32])
 
+        self.free_var = 0x0
+
         c1 = lambda addr, b_addr: b_addr == 3 * addr
         self.constraint(c1)
 
@@ -31,14 +33,31 @@ class TestSV(unittest.TestCase):
         ok = pp.randomize()
         self.assertEqual(ok, True)
 
-        self.assertEqual(pp.addr in [1, 2, 3], True)
+        self.assertTrue(pp.addr in [1, 2, 3])
         self.assertNotEqual(pp.data, 1234)
         self.assertEqual(pp.tx_id, 888)
         self.assertEqual(3 * pp.addr, pp.b_addr)
 
-        #ok = pp.randomize_with([["addr", [5, 6, 7]]])
+        #ok = pp.randomize_with(lambda addr: addr in [5, 6, 7])
         #self.assertEqual(ok, True)
         #self.assertEqual(pp.addr, 3 * pp.b_addr)
+
+    def test_randomize_with(self):
+        pp = Packet("ethss")
+        ok = pp.randomize_with(lambda addr: addr in [1, 2])
+        self.assertTrue(ok)
+        self.assertTrue(pp.addr in [1, 2])
+
+        # Check that previous constraint does nothing
+        ok = pp.randomize_with(lambda addr: addr in [3, 4])
+        self.assertTrue(ok)
+        self.assertTrue(pp.addr in [3, 4])
+        # Add extra constraint outside class
+        #p2 = Packet('pkt_dfess')
+        #p2.rand('free_var', range(0, (1 << 32) - 1))
+        #ok = p2.randomize_with(lambda free_var, addr, b_addr: free_var == (addr + b_addr))
+        #self.assertTrue(ok)
+        #self.assertEqual(p2.free_var, p2.addr + p2.b_addr)
 
 
     def test_uvm_glob_to_re(self):
