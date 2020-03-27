@@ -121,9 +121,9 @@ async def uvm_do(seq_obj, SEQ_OR_ITEM):
 #`define uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, CONSTRAINTS)
 
-async def uvm_do_with(seq_obj, SEQ_OR_ITEM, CONSTRAINTS):
+async def uvm_do_with(seq_obj, SEQ_OR_ITEM, *CONSTRAINTS):
     await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1,
-            CONSTRAINTS)
+            *CONSTRAINTS)
 
 
 #// MACRO: `uvm_do_pri_with
@@ -222,7 +222,18 @@ def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
 #  else __seq.start(SEQR, this, PRIORITY, 0); \
 #  end
 
-async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
+async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS):
+    """
+    This is the same as uvm_do_pri_with except that it also sets the parent
+    sequence to the sequence in which the function is invoked, and it sets the
+    sequencer to the specified ~SEQR~ argument.
+
+    Args:
+        seq_obj (UVMSequence): Seq to start.
+        SEQ_OR_ITEM (UVMSequence|UVMSequenceItem): 
+        SEQR (UVMSequencer): Runs sequence on this sequencer.
+        CONSTRAINTS (constraints): Randomization constraints
+    """
     from ..seq.uvm_sequence import UVMSequence
     _seq = uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR)
     if isinstance(_seq, UVMSequence):
@@ -230,12 +241,11 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
     else:
         # TODO handle constraints
         await seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
-        if SEQ_OR_ITEM.randomize_with(CONSTRAINTS) is False:
+        if SEQ_OR_ITEM.randomize_with(*CONSTRAINTS) is False:
             uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action")
         await seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
 
-#
-#
+
 #//-----------------------------------------------------------------------------
 #//
 #// Group: Sequence Action Macros for Pre-Existing Sequences
@@ -243,8 +253,8 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
 #// These macros are used to start sequences and sequence items that do not
 #// need to be created.
 #//-----------------------------------------------------------------------------
-#
-#
+
+
 #// MACRO: `uvm_send
 #//
 #//| `uvm_send(SEQ_OR_ITEM)
@@ -273,8 +283,8 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
 #  end \
 #  else __seq.start(__seq.get_sequencer(), this, PRIORITY, 0);\
 #  end
-#
-#
+
+
 #// MACRO: `uvm_rand_send
 #//
 #//| `uvm_rand_send(SEQ_OR_ITEM)
@@ -347,8 +357,8 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
 #// Group- Sequence Library
 #//
 #//-----------------------------------------------------------------------------
-#
-#
+
+
 #// MACRO: `uvm_add_to_sequence_library
 #//
 #// Adds the given sequence ~TYPE~ to the given sequence library ~LIBTYPE~
@@ -479,4 +489,3 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS):
 #        `uvm_fatal("DCLPSQ", \
 #        $sformatf("%m %s Error casting p_sequencer, please verify that this sequence/sequence item is intended to execute on this type of sequencer", get_full_name())) \
 #  endfunction
-#
