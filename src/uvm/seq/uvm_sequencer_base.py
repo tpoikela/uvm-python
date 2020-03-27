@@ -30,7 +30,7 @@ from .uvm_sequence_base import UVMSequenceBase
 from ..base.sv import sv, process
 from ..base.uvm_component import UVMComponent
 from ..base.uvm_event import UVMEvent
-from ..base.uvm_resource import UVMResourcePool
+from ..base.uvm_resource import UVMResourcePool, UVMResource
 from ..base.uvm_config_db import UVMConfigDb
 from ..macros.uvm_message_defines import (
     uvm_error, uvm_fatal, uvm_info, uvm_report_fatal, uvm_warning)
@@ -38,8 +38,9 @@ from ..base.uvm_object_globals import UVM_FINISHED, UVM_FULL, UVM_NONE, UVM_SEQ_
 from ..base.uvm_pool import UVMPool
 from ..base.uvm_queue import UVMQueue
 from ..base.uvm_globals import uvm_wait_for_nba_region
-from uvm.base.sv import sv_if, wait
-#from setuptools.dist import sequence
+from uvm.base.sv import wait
+from typing import List
+
 
 SEQ_ERR1_MSG = ("The task responsible for requesting a lock on sequencer '%s' "
     + " for sequence '%s' has been killed, to avoid a deadlock the sequence will "
@@ -72,8 +73,8 @@ class uvm_sequence_process_wrapper:
         """     process pid
         uvm_sequence_base seq
         """
-        self.pid = 0
-        self.seq = None
+        self.pid = 0  # type: int
+        self.seq = None  # type: UVMSequenceBase
     #endclass : uvm_sequence_process_wrapper
 
 
@@ -292,15 +293,15 @@ class UVMSequencerBase(UVMComponent):
             if seq is not None:
                 break
             rsrc = rq[i]  # uvm_resource_base
-            sbr = []  # uvm_resource#(uvm_sequence_base)
-            owr = []  # uvm_resource#(uvm_object_wrapper)
+            sbr = []  # type: List[UVMResource]
+            owr = []  # type: List[UVMResource]
 
             # uvm_config_db#(uvm_sequence_base)?
             # Priority is given to uvm_sequence_base because it is a specific sequence instance
             # and thus more specific than one that is dynamically created via the
             # factory and the object wrapper.
             if (sv.cast(sbr, rsrc, UVMConfigDb) and sbr[0] is not None):
-                seq = sbr.read(self)
+                seq = sbr[0].read(self)
                 if seq is None:
                     uvm_info("UVM/SQR/PH/DEF/SB/None", "Default phase sequence for phase '"
                             + phase.get_name() + "' explicitly disabled", UVM_FULL)
@@ -1098,7 +1099,7 @@ class UVMSequencerBase(UVMComponent):
     async def m_wait_arb_not_equal(self):
         """             
         """
-        await wait(lambda : self.m_arb_size != self.m_lock_arb_size, 
+        await wait(lambda: self.m_arb_size != self.m_lock_arb_size, 
              self.m_event_value_changed)
 
     #  extern protected task            m_wait_for_available_sequence()
@@ -1107,7 +1108,7 @@ class UVMSequencerBase(UVMComponent):
         """             
         """
         i = 0
-        is_relevant_entries: List[int] = []  # int[$]
+        is_relevant_entries = []  # type: List[int]
 
         # This routine will wait for a change in the request list, or for
         # wait_for_relevant to return on any non-relevant, non-blocked sequence
