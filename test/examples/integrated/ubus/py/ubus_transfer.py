@@ -54,7 +54,7 @@ class ubus_transfer(UVMSequenceItem):
     def __init__(self, name="ubus_transfer_inst"):
         UVMSequenceItem.__init__(self, name)
         self.addr = 0
-        self.rand("addr", None)
+        self.rand("addr", range(0, 65536 - 1))
         self.read_write = 0
         self.rand("read_write", [READ, WRITE])
         self.size = 0
@@ -100,7 +100,7 @@ class ubus_transfer(UVMSequenceItem):
         res += ", size: " + str(self.size) + ", wait_state: " + str(self.wait_state)
         res += "\ndata: " + str(self.data)
         return res
-    #endclass : ubus_transfer
+
 
 uvm_object_utils(ubus_transfer)
 

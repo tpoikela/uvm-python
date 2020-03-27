@@ -56,6 +56,7 @@ class read_byte_seq(ubus_base_sequence):
     def __init__(self, name="read_byte_seq"):
         ubus_base_sequence.__init__(self, name)
         self.start_addr = 0
+        self.rand('start_addr', range((1 << 32) - 1))
         self.transmit_delay = 0
 
     #  constraint transmit_del_ct { (transmit_del <= 10); }
@@ -68,7 +69,7 @@ class read_byte_seq(ubus_base_sequence):
         self.req.size = 1
         self.req.error_pos = 1000
         self.req.transmit_delay = self.transmit_delay
-        await uvm_do_with(self, self.req, {})
+        await uvm_do_with(self, self.req, lambda addr: addr == self.start_addr)
         #      { req.addr == start_addr
         #        req.read_write == READ
         #        req.size == 1
@@ -202,10 +203,13 @@ uvm_object_utils(read_byte_seq)
 #//------------------------------------------------------------------------------
 
 class write_byte_seq(ubus_base_sequence):
-    #
+
+    last_data = None
+
     def __init__(self, name="write_byte_seq"):
         ubus_base_sequence.__init__(self, name)
         self.start_addr = 0
+        self.rand('start_addr', range(1 << 16))
         self.data0 = 0
         self.transmit_delay = 0
 
@@ -220,7 +224,9 @@ class write_byte_seq(ubus_base_sequence):
         req.error_pos = 1000
         req.read_write = WRITE
         req.transmit_delay = self.transmit_delay
-        await uvm_do_with(self, req, {})
+        await uvm_do_with(self, req, lambda addr: addr == self.start_addr,
+            lambda read_write: read_write == WRITE,
+            lambda data: data[0] == self.data0)
         #      { req.addr == start_addr
         #        req.read_write == WRITE
         #        req.size == 1
@@ -230,6 +236,7 @@ class write_byte_seq(ubus_base_sequence):
         uvm_info(self.get_type_name(),
             sv.sformatf("%s wrote : addr = `x%0h, data[0] = `x%0h",
             self.get_sequence_path(), req.addr, req.data[0]), UVM_HIGH)
+        write_byte_seq.last_data = req.data[0]
 
 
 uvm_object_utils(write_byte_seq)
