@@ -1,3 +1,4 @@
+#from .uvm_barrier import *
 from .uvm_bottomup_phase import *
 from .uvm_callback import *
 from .uvm_cmdline_processor import *
