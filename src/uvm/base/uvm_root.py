@@ -40,6 +40,7 @@ from .uvm_domain import end_of_elaboration_ph
 from .uvm_common_phases import UVMEndOfElaborationPhase
 from ..macros import uvm_info, uvm_fatal
 from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
+from .uvm_config_db import UVMConfigDb
 
 MULTI_TESTS = ("Multiple ({}) +UVM_TESTNAME arguments provided on the command"
         + "line. '{}' will be used.  Provided list: {}.")
@@ -59,68 +60,73 @@ MSG_MULTTIMOUT = ("Multiple (%0d) +UVM_TIMEOUT arguments provided on the command
 MSG_INVLCMDARGS = ("Invalid number of arguments found on the command line for setting "
     + "'+uvm_set_verbosity=%s'.  Setting ignored.")
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_root
-#
-# The ~uvm_root~ class serves as the implicit top-level and phase controller for
-# all UVM components. Users do not directly instantiate ~uvm_root~. The UVM
-# automatically creates a single instance of <uvm_root> that users can
-# access via the global (uvm_pkg-scope) variable, ~uvm_top~.
-#
-# (see uvm_ref_root.gif)
-#
-# The ~uvm_top~ instance of ~uvm_root~ plays several key roles in the UVM.
-#
-# Implicit top-level - The ~uvm_top~ serves as an implicit top-level component.
-# Any component whose parent is specified as ~None~ becomes a child of ~uvm_top~.
-# Thus, all UVM components in simulation are descendants of ~uvm_top~.
-#
-# Phase control - ~uvm_top~ manages the phasing for all components.
-#
-# Search - Use ~uvm_top~ to search for components based on their
-# hierarchical name. See <find> and <find_all>.
-#
-# Report configuration - Use ~uvm_top~ to globally configure
-# report verbosity, log files, and actions. For example,
-# ~uvm_top.set_report_verbosity_level_hier(UVM_FULL)~ would set
-# full verbosity for all components in simulation.
-#
-# Global reporter - Because ~uvm_top~ is globally accessible (in uvm_pkg
-# scope), UVM's reporting mechanism is accessible from anywhere
-# outside ~uvm_component~, such as in modules and sequences.
-# See <uvm_report_error>, <self.uvm_report_warning>, and other global
-# methods.
-#
-#
-# The ~uvm_top~ instance checks during the end_of_elaboration phase if any errors have
-# been generated so far. If errors are found a UVM_FATAL error is being generated as result
-# so that the simulation will not continue to the start_of_simulation_phase.
+WARN_MAX_QUIT_COUNT = ("Multiple (%0d) +UVM_MAX_QUIT_COUNT arguments provided "
+    + "on the command line.  '%s' will be used.  Provided list: %s.")
 
 
 class UVMRoot(UVMComponent):
-    # Function: get()
-    # Static accessor for <uvm_root>.
-    #
-    # The static accessor is provided as a convenience wrapper
-    # around retrieving the root via the <uvm_coreservice_t::get_root>
-    # method.
-    #
-    # | // Using the uvm_coreservice_t:
-    # | uvm_coreservice_t cs
-    # | uvm_root r
-    # | cs = uvm_coreservice_t::get()
-    # | r = cs.get_root()
-    # |
-    # | // Not using the uvm_coreservice_t:
-    # | uvm_root r
-    # | r = uvm_root::get()
-    #
+    """
+    The `UVMRoot` class serves as the implicit top-level and phase controller for
+    all UVM components. Users do not directly instantiate `UVMRoot`. The UVM
+    automatically creates a single instance of <uvm_root> that users can
+    access via the global (uvm_pkg-scope) variable, ~uvm_top~.
+
+    (see uvm_ref_root.gif)
+
+    The ~uvm_top~ instance of ~uvm_root~ plays several key roles in the UVM.
+
+    Implicit top-level - The ~uvm_top~ serves as an implicit top-level component.
+    Any component whose parent is specified as ~None~ becomes a child of ~uvm_top~.
+    Thus, all UVM components in simulation are descendants of ~uvm_top~.
+
+    Phase control - ~uvm_top~ manages the phasing for all components.
+
+    Search - Use ~uvm_top~ to search for components based on their
+    hierarchical name. See `UVMRoot.find` and `UVMRoot.find_all`.
+
+    Report configuration - Use ~uvm_top~ to globally configure
+    report verbosity, log files, and actions. For example,
+    ~uvm_top.set_report_verbosity_level_hier(UVM_FULL)~ would set
+    full verbosity for all components in simulation.
+
+    Global reporter - Because ~uvm_top~ is globally accessible (in uvm_pkg
+    scope), UVM's reporting mechanism is accessible from anywhere
+    outside ~uvm_component~, such as in modules and sequences.
+    See <uvm_report_error>, <self.uvm_report_warning>, and other global
+    methods.
+
+
+    The ~uvm_top~ instance checks during the end_of_elaboration phase if any errors have
+    been generated so far. If errors are found a UVM_FATAL error is being generated as result
+    so that the simulation will not continue to the start_of_simulation_phase.
+    """
+
 
     m_relnotes_done = False
 
     @classmethod
     def get(cls):
+        """
+        Static accessor for `UVMRoot`.
+
+        The static accessor is provided as a convenience wrapper
+        around retrieving the root via the `UVMCoreService.get_root`
+        method::
+
+            # Using the uvm_coreservice_t:
+            uvm_coreservice_t cs
+            uvm_root r
+            cs = uvm_coreservice_t::get()
+            r = cs.get_root()
+
+            # Not using the uvm_coreservice_t:
+            uvm_root r
+            r = uvm_root::get()
+
+        Returns:
+            UVMRoot: Handle to the UVMRoot singleton.
+
+        """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
         return cs.get_root()
@@ -195,7 +201,7 @@ class UVMRoot(UVMComponent):
 
 
     async def run_test(self, test_name="", dut=None):
-        """             
+        """
         Phases all components through all registered phases. If the optional
         test_name argument is provided, or if a command-line plusarg,
         +UVM_TESTNAME=TEST_NAME, is found, then the specified component is created
@@ -306,13 +312,13 @@ class UVMRoot(UVMComponent):
         if self.finish_on_completion:
             self.uvm_report_info('FINISH', '$finish was reached in run_test()', UVM_NONE)
 
-    
+
     async def wait_all_phases_done(self):
         await self.m_phase_all_done_event.wait()
         #wait (m_phase_all_done == 1)
 
     def die(self):
-        """         
+        """
         Function: die
 
         This method is called by the report server if a report reaches the maximum
@@ -373,12 +379,12 @@ class UVMRoot(UVMComponent):
 
 
     def find(self, comp_match):
-        """         
+        """
           Function: find
 
          extern function uvm_component find (string comp_match)
         Args:
-            comp_match: 
+            comp_match:
         Returns:
         """
         comp_list = []
@@ -399,7 +405,7 @@ class UVMRoot(UVMComponent):
         return comp_list[0]
 
     def find_all(self, comp_match, comps, comp=None):
-        """         
+        """
         Returns the component handle (find) or list of components handles
         (find_all) matching a given string. The string may contain the wildcards,
         * and ?. Strings beginning with '.' are absolute path names. If the optional
@@ -416,9 +422,9 @@ class UVMRoot(UVMComponent):
         self.m_find_all_recurse(comp_match, comps, comp)
 
     def print_topology(self, printer=None):
-        """         
+        """
           Function: print_topology
-         
+
           Print the verification environment's component topology. The
           `printer` is a `uvm_printer` object that controls the format
           of the topology printout; a `None` printer prints with the
@@ -426,7 +432,7 @@ class UVMRoot(UVMComponent):
 
         #function void uvm_root::print_topology(uvm_printer printer=None)
         Args:
-            printer: 
+            printer:
         """
         s = ""
         if (len(self.m_children) == 0):
@@ -453,15 +459,15 @@ class UVMRoot(UVMComponent):
     #
 
     def m_find_all_recurse(self, comp_match, comps, comp=None):
-        """         
+        """
           PRIVATE members
          extern function void m_find_all_recurse(string comp_match,
                                                  ref uvm_component comps[$],
                                                  input uvm_component comp=None);
         Args:
-            comp_match: 
-            comps: 
-            comp: 
+            comp_match:
+            comps:
+            comp:
         """
         child_comp = None
 
@@ -481,7 +487,7 @@ class UVMRoot(UVMComponent):
     #  extern protected function new ()
 
     def m_add_child(self, child):
-        """         
+        """
         Add child to the top levels array.
         Args:
             child (UVMComponent):
@@ -500,10 +506,10 @@ class UVMRoot(UVMComponent):
         #
 
     def build_phase(self, phase):
-        """         
+        """
          extern function void build_phase(uvm_phase phase)
         Args:
-            phase: 
+            phase:
         """
         UVMComponent.build_phase(self, phase)
         self.m_set_cl_msg_args()
@@ -511,12 +517,12 @@ class UVMRoot(UVMComponent):
         self.m_do_timeout_settings()
         self.m_do_factory_settings()
         self.m_do_config_settings()
-        # TODO self.m_do_max_quit_settings()
+        self.m_do_max_quit_settings()
         self.m_do_dump_args()
-        #endfunction
+
 
     def m_do_verbosity_settings(self):
-        """         
+        """
          extern local function void m_do_verbosity_settings()
         """
         set_verbosity_settings = []
@@ -542,7 +548,7 @@ class UVMRoot(UVMComponent):
         #
 
     def m_do_timeout_settings(self):
-        """         
+        """
          extern local function void m_do_timeout_settings()
         """
         timeout_settings = []
@@ -581,7 +587,7 @@ class UVMRoot(UVMComponent):
         #
 
     def m_do_factory_settings(self):
-        """         
+        """
          extern local function void m_do_factory_settings()
         """
         args = []
@@ -599,10 +605,10 @@ class UVMRoot(UVMComponent):
         #
 
     def m_process_inst_override(self, ovr):
-        """         
+        """
          extern local function void m_process_inst_override(string ovr)
         Args:
-            ovr: 
+            ovr:
         """
         from .uvm_coreservice import UVMCoreService
         split_val = []
@@ -624,20 +630,20 @@ class UVMRoot(UVMComponent):
         #
 
     def m_process_type_override(self, ovr):
-        """         
+        """
          extern local function void m_process_type_override(string ovr)
         Args:
-            ovr: 
+            ovr:
         """
         pass  # TODO
 
 
     def m_do_config_settings(self):
-        """         
+        """
          extern local function void m_do_config_settings()
         """
         args = []
-        
+
         self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/", args)
         for i in range(len(args)):
             self.m_process_config(args[i][20:len(args[i])], 1)
@@ -653,11 +659,46 @@ class UVMRoot(UVMComponent):
 
         #endfunction
         #
-        
+
     #  extern local function void m_do_max_quit_settings()
+    def m_do_max_quit_settings(self):
+        max_quit_settings = []
+        max_quit_count = 0
+        max_quit = ""
+        split_max_quit = []
+        max_quit_int = 0
+        srvr = UVMReportServer.get_server()
+        max_quit_count = self.clp.get_arg_values("+UVM_MAX_QUIT_COUNT=", max_quit_settings)
+        if max_quit_count == 0:
+            return
+        else:
+            max_quit = max_quit_settings[0]
+            if max_quit_count > 1:
+                max_quit_list = ""
+                sep = ""
+                for i in range(len(max_quit_settings)):
+                    if i != 0:
+                        sep = "; "
+                    max_quit_list = max_quit_list + sep + max_quit_settings[i]
+
+                self.uvm_report_warning("MULTMAXQUIT",
+                  sv.sformatf(WARN_MAX_QUIT_COUNT,
+                  max_quit_count, max_quit, max_quit_list), UVM_NONE)
+
+            self.uvm_report_info("MAXQUITSET",
+                sv.sformatf("'+UVM_MAX_QUIT_COUNT=%s' provided on the command line is being applied.",
+                    max_quit), UVM_NONE)
+            uvm_split_string(max_quit, ",", split_max_quit)
+            max_quit_int = int(split_max_quit[0])
+            if split_max_quit[1] == "YES":
+                srvr.set_max_quit_count(max_quit_int, 1)
+            elif split_max_quit[1] == "NO":
+                srvr.set_max_quit_count(max_quit_int, 0)
+            else:
+                srvr.set_max_quit_count(max_quit_int, 1)
 
     def m_do_dump_args(self):
-        """         
+        """
          extern local function void m_do_dump_args()
         """
         dump_args = []
@@ -670,14 +711,14 @@ class UVMRoot(UVMComponent):
                     continue
                 out_string = out_string + all_args[i] + " "
             uvm_info("DUMPARGS", out_string, UVM_NONE)
-        #endfunction
+
 
     def m_process_config(self, cfg, is_int):
-        """         
+        """
          extern local function void m_process_config(string cfg, bit is_int)
         Args:
-            cfg: 
-            is_int: 
+            cfg:
+            is_int:
         """
         from .uvm_coreservice import UVMCoreService
         v = 0
@@ -704,41 +745,36 @@ class UVMRoot(UVMComponent):
                 cfg), UVM_NONE)
             return
 
-        # TODO finish this
-        #  if(is_int):
-        #    if(split_val[2].len() > 2):
-        #      string base, extval
-        #      base = split_val[2].substr(0,1)
-        #      extval = split_val[2].substr(2,split_val[2].len()-1);
-        #      case(base)
-        #        "'b" : v = extval.atobin()
-        #        "0b" : v = extval.atobin()
-        #        "'o" : v = extval.atooct()
-        #        "'d" : v = extval.atoi()
-        #        "'h" : v = extval.atohex()
-        #        "'x" : v = extval.atohex()
-        #        "0x" : v = extval.atohex()
-        #        default : v = split_val[2].atoi()
-        #      endcase
-        #    end
-        #    else begin
-        #      v = split_val[2].atoi()
-        #    end
-        #    self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying config setting from the command line: +uvm_set_config_int=", cfg}, UVM_NONE)
-        #    uvm_config_int::set(m_uvm_top, split_val[0], split_val[1], v)
-        #  end
-        #  else begin
-        #    self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying config setting from the command line: +uvm_set_config_string=", cfg}, UVM_NONE)
-        #    uvm_config_string::set(m_uvm_top, split_val[0], split_val[1], split_val[2])
-        #  end
-        #
-        #endfunction
-        
+        if is_int:
+            if split_val[2].len() > 2:
+                #base = split_val[2].substr(0,1)
+                base = split_val[2][0:2]
+                extval = split_val[2][2:len(split_val[2])]
+                v = int(split_val[2])
+                if base in ["'b", "0b"]:
+                    v = int(extval, 2)
+                elif base == "'o":
+                    v = int(extval, 8)
+                elif base == "'d":
+                    v = int(extval, 10)
+                elif base in ["'h", "'x", "0x"]:
+                    v = int(extval, 16)
+            else:
+                v = int(split_val[2])
+
+            self.uvm_report_info("UVM_CMDLINE_PROC", ("Applying config setting "
+                    + "from the command line: +uvm_set_config_int=" + cfg), UVM_NONE)
+            UVMConfigDb.set(m_uvm_top, split_val[0], split_val[1], v)
+        else:
+            self.uvm_report_info("UVM_CMDLINE_PROC",
+                "Applying config setting from the command line: +uvm_set_config_string=" + cfg, UVM_NONE)
+            UVMConfigDb.set(m_uvm_top, split_val[0], split_val[1], split_val[2])
+
 
     #  extern local function void m_process_default_sequence(string cfg)
 
     def m_check_verbosity(self):
-        """         
+        """
          extern function void m_check_verbosity()
         """
         verb_string = ""
@@ -814,10 +850,10 @@ class UVMRoot(UVMComponent):
         #endfunction
 
     def report_header(self, _file=0):
-        """         
+        """
          extern virtual function void report_header(UVM_FILE file = 0)
         Args:
-            _file: 
+            _file:
         """
         q = []
         args = []
@@ -844,28 +880,22 @@ class UVMRoot(UVMComponent):
             q.append("\n  You are using a Python version of the UVM library which \n")
             q.append("  requires cocotb and an HDL simulator.\n")
             UVMRoot.m_relnotes_done = True
-        #`endif
 
         if UVMRoot.m_relnotes_done is True:
             q.append("\n      (Specify +UVM_NO_RELNOTES to turn off this notice)\n")
 
         self.uvm_report_info("UVM/RELNOTES", UVM_STRING_QUEUE_STREAMING_PACK(q), UVM_LOW)
-        #endfunction
 
 
-    #  // singleton handle
-    #  static local uvm_root m_inst
-    #
     #  // For error checking
     #  extern virtual task run_phase (uvm_phase phase)
 
     def phase_started(self, phase):
-        """         
-          phase_started
-          -------------
-         At end of elab phase we need to do tlm binding resolution.
+        """
+        At end of elab phase we need to do tlm binding resolution.
+
         Args:
-            phase: 
+            phase (UVMPhase): Current phase for this callback.
         """
         eof_elab_phase = UVMEndOfElaborationPhase.get()
         uvm_debug(self, 'phase_started', phase.get_name())
@@ -879,8 +909,7 @@ class UVMRoot(UVMComponent):
             if srvr.get_severity_count(UVM_ERROR) > 0:
                 self.uvm_report_fatal("BUILDERR", "stopping due to build errors", UVM_NONE)
 
-    #
-    #
+
     # function void end_of_elaboration_phase(uvm_phase phase);
     #	 uvm_component_proxy p = new("proxy")
     #	 uvm_top_down_visitor_adapter#(uvm_component) adapter = new("adapter")
@@ -888,8 +917,7 @@ class UVMRoot(UVMComponent):
     #	 uvm_visitor#(uvm_component) v = cs.get_component_visitor()
     #	 adapter.accept(this, v, p)
     # endfunction
-    #
-    #endclass
+
 
 #----------------------------------------------------------------------------
 # Group: Global Variables
@@ -1018,49 +1046,6 @@ uvm_top = UVMRoot.get()
 #
 #
 #
-#// m_do_max_quit_settings
-#// ----------------------
-#
-#function void uvm_root::m_do_max_quit_settings()
-#  uvm_report_server srvr
-#  string max_quit_settings[$]
-#  int max_quit_count
-#  string max_quit
-#  string split_max_quit[$]
-#  int max_quit_int
-#  srvr = uvm_report_server::get_server()
-#  max_quit_count = clp.get_arg_values("+UVM_MAX_QUIT_COUNT=", max_quit_settings)
-#  if (max_quit_count ==  0)
-#    return
-#  else begin
-#    max_quit = max_quit_settings[0]
-#    if (max_quit_count > 1):
-#      string max_quit_list
-#      string sep
-#      for (int i = 0; i < max_quit_settings.size(); i++):
-#        if (i != 0)
-#          sep = "; "
-#        max_quit_list = {max_quit_list, sep, max_quit_settings[i]}
-#      end
-#      self.uvm_report_warning("MULTMAXQUIT",
-#        $sformatf("Multiple (%0d) +UVM_MAX_QUIT_COUNT arguments provided on the command line.  '%s' will be used.  Provided list: %s.",
-#        max_quit_count, max_quit, max_quit_list), UVM_NONE)
-#    end
-#    self.uvm_report_info("MAXQUITSET",
-#      $sformatf("'+UVM_MAX_QUIT_COUNT=%s' provided on the command line is being applied.", max_quit), UVM_NONE)
-#    uvm_split_string(max_quit, ",", split_max_quit)
-#    max_quit_int = split_max_quit[0].atoi()
-#    case(split_max_quit[1])
-#      "YES"   : srvr.set_max_quit_count(max_quit_int, 1)
-#      "NO"    : srvr.set_max_quit_count(max_quit_int, 0)
-#      default : srvr.set_max_quit_count(max_quit_int, 1)
-#    endcase
-#  end
-#endfunction
-#
-#
-#
-#
 #
 #// It is required that the run phase start at simulation time 0
 #// TBD this looks wrong - taking advantage of uvm_root not doing anything else?
@@ -1082,6 +1067,3 @@ uvm_top = UVMRoot.get()
 #       "run_test(), and pre-run user defined phases may not consume ",
 #       "simulation time before the start of the run phase."})
 #endtask
-#
-
-
