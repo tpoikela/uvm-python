@@ -32,7 +32,11 @@ containers along with other UVM objects.
 """
 
 import re
-from .uvm_object_globals import *
+from ..macros.uvm_message_defines import uvm_error, uvm_warning
+from .uvm_object_globals import (UVM_BIN, UVM_COMPARE, UVM_COPY, UVM_DEC, UVM_FLAGS, UVM_NONE,
+                                 UVM_NORADIX, UVM_OCT, UVM_PACK, UVM_PRINT, UVM_RECORD, UVM_SETINT,
+                                 UVM_SETOBJ, UVM_SETSTR, UVM_STRING, UVM_TIME, UVM_UNPACK,
+                                 UVM_UNSIGNED, UVM_HEX)
 from .uvm_scope_stack import UVMScopeStack
 from .sv import sv
 
@@ -76,15 +80,17 @@ def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
 def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     """
     Function- uvm_bitstream_to_string
+
     Args:
-        value:
+        value (int):
         size:
         radix:
         radix_str:
     Returns:
+        str: Given number as string.
     """
     # sign extend & don't show radix for negative values
-    if radix == UVM_DEC:  # and value[size-1] == 1: TODO
+    if radix == UVM_DEC and (value >> (size-1)):
         return "{}".format(value)
 
     # TODO $countbits(value,'z) would be even better
@@ -102,10 +108,10 @@ def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     """
     Function- uvm_integral_to_string
     Args:
-        value:
-        size:
+        value (int):
+        size (int):
         radix:
-        radix_str:
+        radix_str (str):
     Returns:
         str:
     """
@@ -127,12 +133,20 @@ def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
 def uvm_object_value_str(v):
     """
     Function- uvm_object_value_str
+
+    Args:
+        v (object): Object to convert to string.
     Returns:
+        str: Inst ID for `UVMObject`, otherwise uses str()
     """
     if v is None:
         return "<null>"
-    res = "{}".format(v.get_inst_id())
-    res = "@" + res
+    res = ""
+    if hasattr(v, 'get_inst_id'):
+        res = "{}".format(v.get_inst_id())
+        res = "@" + res
+    else:
+        res = str(v)
     return res
 
 
@@ -140,21 +154,14 @@ def uvm_leaf_scope(full_name, scope_separator="."):
     """
     Function- uvm_leaf_scope
     Args:
-        full_name:
-        scope_separator:
+        full_name (str):
+        scope_separator (str):
     Returns:
+        str: Leaf scope name without any brackets/indexing.
     """
     bmatches = 0
 
-    bracket_match = ""
-    if scope_separator == "[":
-        bracket_match = "]"
-    if scope_separator == "(":
-        bracket_match = ")"
-    if scope_separator == "<":
-        bracket_match = ">"
-    if scope_separator == "{":
-        bracket_match = "}"
+    bracket_match = get_bracket_match(scope_separator)
 
     # Only use bracket matching if the input string has the end match
     if bracket_match != "" and bracket_match != full_name[-1]:
@@ -190,9 +197,22 @@ def uvm_leaf_scope(full_name, scope_separator="."):
     return res
 
 
+def get_bracket_match(scope_separator):
+    bracket_match = ""
+    if scope_separator == "[":
+        bracket_match = "]"
+    elif scope_separator == "(":
+        bracket_match = ")"
+    elif scope_separator == "<":
+        bracket_match = ">"
+    elif scope_separator == "{":
+        bracket_match = "}"
+    return bracket_match
+
+
 def num_with_radix(radix, radix_str, value):
     if radix == UVM_BIN:
-        return "{}{}".format(radix_str, value)
+        return "{}{:b}".format(radix_str, value)
     if radix == UVM_OCT:
         return "{}{}".format(radix_str, value)
     if radix == UVM_UNSIGNED:
@@ -203,6 +223,8 @@ def num_with_radix(radix, radix_str, value):
         return "{}{}".format(radix_str, value)
     if radix == UVM_DEC:
         return "{}{}".format(radix_str, value)
+    if radix == UVM_HEX:
+        return "{}{:X}".format(radix_str, value)
     return "{}{}".format(radix_str, value)
 
 
@@ -253,7 +275,7 @@ class UVMStatusContainer:
     def do_field_check(self, field, obj):
         if UVM_ENABLE_FIELD_CHECKS:
             if field in self.field_array:
-                uvm_report_error("MLTFLD", "Field {} is defined multiple times in type '{}'".
+                uvm_error("MLTFLD", "Field {} is defined multiple times in type '{}'".
                 format(field, obj.get_type_name()), UVM_NONE)
         UVMStatusContainer.field_array[field] = 1
 
@@ -361,6 +383,7 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
             TYPE:
         Returns:
         """
+        from .uvm_coreservice import UVMCoreService
         comp_list = []
         types = []
         cs = UVMCoreService.get()
@@ -402,7 +425,7 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
         typ = obj
         # TODO cast
         #    if (!sv.cast(typ,obj))
-        #     uvm_report_error("WRONG_TYPE",{"The type_name given '",type_name,
+        #     uvm_error("WRONG_TYPE",{"The type_name given '",type_name,
         #            "' with context '",contxt,"' did not produce the expected type."})
         return typ
 
