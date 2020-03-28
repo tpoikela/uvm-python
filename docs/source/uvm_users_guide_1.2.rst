@@ -764,9 +764,8 @@ Table 1 summarizes connection types and elaboration functions.
 
 **Table 1—TLM Connection Types**
 
-.. **Connection type connect() form**::
+.. csv-table:: Connection type connect form
 
-.. csv-table:: Connection type connect() form
     port-to-export, comp1.port.connect(comp2.export);
     port-to-port, subcomponent.port.connect(port);
     export-to-export, export.connect(subcomponent.export);
