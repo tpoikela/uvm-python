@@ -26,16 +26,12 @@ import collections
 from .uvm_object import UVMObject
 from ..macros import uvm_warning
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_pool #(KEY,T)
-#//
-#//------------------------------------------------------------------------------
-#// Implements a class-based dynamic associative array. Allows sparse arrays to
-#// be allocated on demand, and passed and stored by reference.
-#//------------------------------------------------------------------------------
 
 class UVMPool(UVMObject):
+    """
+    Implements a class-based dynamic associative array. Allows sparse arrays to
+    be allocated on demand, and passed and stored by reference.
+    """
 
     type_name = "uvm_pool"
     m_global_pool = None
@@ -49,36 +45,35 @@ class UVMPool(UVMObject):
 
     @classmethod
     def get_global_pool(cls):
-        """         
-        Function: get_global_pool
-
-        Returns the singleton global pool for the item type, T.
+        """
+        Returns the singleton global pool. Unlike in SV, uvm-python has only one
+        global pool.
 
         This allows items to be shared amongst components throughout the
         verification environment.
+
         Returns:
+            UVMPool: Single global pool
         """
-        """ Returns the singleton global pool """
         if UVMPool.m_global_pool is None:
             UVMPool.m_global_pool = UVMPool("pool")
         return UVMPool.m_global_pool
 
     @classmethod
     def get_global(cls, key):
-        """         
-        Function: get_global
+        """
+        Returns the specified item instance from the global item pool.
 
-        Returns the specified item instance from the global item pool. 
         Args:
-            cls: 
-            key: 
+            key (str):
         Returns:
+            any: Item matching the given key.
         """
         gpool = UVMPool.get_global_pool()
         return gpool.get(key)
 
     def get(self, key):
-        """         
+        """
         Function: get
 
         Returns the item with the given `key`.
@@ -86,7 +81,7 @@ class UVMPool(UVMObject):
         If no item exists by that key, a new item is created with that key
         and returned.
         Args:
-            key: 
+            key:
         Returns:
         """
         if key in self.pool:
@@ -180,35 +175,35 @@ class UVMPool(UVMObject):
                 printer.print_generic(name, '', 0, str(item))
 
     def __len__(self):
-        """         
+        """
         len() operator
         Returns:
         """
         return self.num()
 
     def __contains__(self, key):
-        """         
+        """
         Implements X in Y operator
         Args:
-            key: 
+            key:
         Returns:
         """
         return key in self.pool
 
     def __setitem__(self, key, value):
-        """         
+        """
         Implements aa[x] = y
         Args:
-            key: 
-            value: 
+            key:
+            value:
         """
         self.pool[key] = value
 
     def __getitem__(self, key):
-        """         
+        """
         Implements aa[x]
         Args:
-            key: 
+            key:
         Returns:
         Raises:
         """
@@ -218,107 +213,96 @@ class UVMPool(UVMObject):
             raise IndexError('No key found')
 
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_object_string_pool #(T)
-#//
-#//------------------------------------------------------------------------------
-#// This provides a specialization of the generic <uvm_pool #(KEY,T)> class for
-#// an associative array of <uvm_object>-based objects indexed by string.
-#// Specializations of this class include the ~uvm_event_pool~ (a
-#// uvm_object_string_pool storing ~uvm_event#(uvm_object)~) and
-#// ~uvm_barrier_pool~ (a uvm_obejct_string_pool storing <uvm_barrier>).
-#//------------------------------------------------------------------------------
 
 
-class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(string,T);
-    #  typedef uvm_object_string_pool #(T) this_type;
+class UVMObjectStringPool(UVMPool):
+    """
+    This provides a specialization of the generic `UVMPool` class for
+    an associative array of `UVMObject`-based objects indexed by string.
+    Specializations of this class include the `UVMEventPool` (a
+    `UVMObjectStringPool` storing `UVMEvent` and
+    `UVMBarrierPool` (a `UVMObjectStringPool` storing `UVMBarrier`).
+    """
+
     m_global_pool = None
     type_name = "uvm_obj_str_pool"
 
     def __init__(self, name="", Constr=UVMObject):
-        """         
-          Function: new
-         
-          Creates a new pool with the given `name`.
+        """
+        Creates a new pool with the given `name`.
+
         Args:
-            name: 
-            Constr: 
-            UVMObject: 
+            name (str): Name of the pool.
+            Constr (class): Used for constructing default objects.
         """
         UVMPool.__init__(self, name)
         self.Constructor = Constr
-    #  endfunction
+
 
     def get_type_name(self):
-        """         
-          Function: get_type_name
-         
-          Returns the type name of this object.
+        """
+        Returns the type name of this object.
 
         Returns:
+            str: Type name of this object.
         """
         return UVMObjectStringPool.type_name
-    # endfunction
+
 
     @classmethod
     def get_global_pool(cls):
-        """         
-          Function: get_global_pool
-         
-          Returns the singleton global pool for the item type, T.
-         
-          This allows items to be shared amongst components throughout the
-          verification environment.
+        """
+        Returns the singleton global pool.
+
+        This allows objects to be shared amongst components throughout the
+        verification environment.
+
         Returns:
+            UVMObjectStringPool: Global pool
         """
         if UVMObjectStringPool.m_global_pool is None:
             UVMObjectStringPool.m_global_pool = UVMObjectStringPool("global_pool")
         return UVMObjectStringPool.m_global_pool
-    #  endfunction
+
 
     @classmethod
     def get_global(cls, key):
-        """         
-          Function: get_global
-         
-          Returns the specified item instance from the global item pool.
+        """
+        Returns the specified item instance from the global item pool.
+
         Args:
-            cls: 
-            key: 
+            key (str): Key used for getting the item from global pool.
+
         Returns:
+            any: Object matching the key in the global pool.
         """
         gpool = UVMObjectStringPool.get_global_pool()
         return gpool.get(key)
-    # endfunction
+
 
     def get(self, key):
-        """         
+        """
+        Returns the object item at the given string `key`.
 
-          Function: get
-         
-          Returns the object item at the given string `key`.
-         
-          If no item exists by the given `key`, a new item is created for that key
-          and returned.
+        If no item exists by the given `key`, a new item is created for that key
+        and returned.
 
         Args:
-            key: 
+            key (str): Key used for getting the item.
         Returns:
+            any: Item matching the key. If no match, returns new object.
         """
         if key not in self.pool:
             self.pool[key] = self.Constructor(key)
         return self.pool[key]
-    #  endfunction
+
 
     def delete(self, key):
-        """         
-          Function: delete
-         
-          Removes the item with the given string `key` from the pool.
+        """
+        Removes the item with the given string `key` from the pool.
 
         Args:
-            key: 
+            key (str): Key used for removing the item.
         """
         if not self.exists(key):
             uvm_warning("POOLDEL", "delete: key '{}' doesn't exist".format(key))
@@ -327,10 +311,11 @@ class UVMObjectStringPool(UVMPool):  # (type T=uvm_object) extends uvm_pool #(st
     #  endfunction
 
     def do_print(self, printer):
-        """         
+        """
           Function- do_print
+
         Args:
-            printer: 
+            printer (UVMPrinter): Printer used for printing
         """
         key = ""
         num_keys = len(list(self.pool.keys()))
