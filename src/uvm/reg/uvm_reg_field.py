@@ -189,7 +189,7 @@ class UVMRegField(UVMObject):
         Returns:
             str: Full hier name (including parent's name)
         """
-        return self.m_parent.get_full_name() +  "." + self.get_name()
+        return self.m_parent.get_full_name() + "." + self.get_name()
 
     def get_parent(self):
         """
@@ -1265,7 +1265,6 @@ class UVMRegField(UVMObject):
         # Assume that the entire field is enabled
         if (0x00000001 & be) == 0:
             raise Exception('DBG Early return field not enabled')
-            return
 
         self.m_fname = rw.fname
         self.m_lineno = rw.lineno
