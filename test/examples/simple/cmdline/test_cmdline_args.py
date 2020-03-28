@@ -1,7 +1,4 @@
 #----------------------------------------------------------------------
-#   Copyright 2007-2010 Mentor Graphics Corporation
-#   Copyright 2007-2011 Cadence Design Systems, Inc.
-#   Copyright 2010-2011 Synopsys, Inc.
 #   Copyright 2019 Tuomas Poikela (tpoikela)
 #   All Rights Reserved Worldwide
 #
@@ -21,13 +18,12 @@
 # ----------------------------------------------------------------------
 
 import cocotb
-from cocotb.utils import get_sim_time
 from cocotb.triggers import Timer
 
 from uvm import run_test, UVMTest, UVMComponent
 from uvm.base.uvm_object_globals import *
 from uvm.base.uvm_debug import uvm_debug, UVMDebug
-from uvm.macros import uvm_component_utils, uvm_fatal
+from uvm.macros import uvm_component_utils, uvm_fatal, uvm_error
 
 
 class DummyTest(UVMTest):
@@ -61,6 +57,26 @@ class CmdLineTest(UVMTest):
 
 
 uvm_component_utils(CmdLineTest)
+
+
+class TestMaxQuitCount(CmdLineTest):
+
+    def __init__(self, name="CmdLineTest", parent=None):
+        super().__init__(name, parent)
+        self.caught = False
+
+    async def run_phase(self, phase):
+        phase.raise_objection(self)
+        await Timer(100, 'ns')
+        for i in range(10):
+            if i < 9:
+                uvm_error("TestMaxQuitCountInfo", "Info " + str(i))
+        await Timer(100, 'ns')
+        uvm_fatal("TestMaxQuitCount", "This must not be reached")
+        phase.drop_objection(self)
+
+
+uvm_component_utils(TestMaxQuitCount)
 
 
 class MyComponent(UVMComponent):
