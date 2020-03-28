@@ -89,6 +89,8 @@ class process():
 class sv:
     """ Namespace for SV functions """
 
+    default_time_unit = "NS"
+
     @classmethod
     def clog2(cls, value):
         value = value - 1
@@ -108,7 +110,7 @@ class sv:
         if simulator is None:
             return 0
         elif unit is None:
-            return get_sim_time()
+            return get_sim_time(cls.default_time_unit)
         else:
             return get_sim_time(unit)
 
