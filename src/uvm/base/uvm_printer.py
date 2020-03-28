@@ -376,11 +376,11 @@ class UVMPrinter():
 
         if type_name == "":
             if radix == UVM_TIME:
-                type_name ="time"
+                type_name = "time"
             elif radix == UVM_STRING:
-                type_name ="string"
+                type_name = "string"
             else:
-                type_name ="integral"
+                type_name = "integral"
 
         sz_str = "{}".format(size)
         if radix == UVM_NORADIX:
@@ -609,13 +609,13 @@ class UVMPrinterKnobs:
             radix = self.default_radix
         if radix == UVM_BIN:
             return self.bin_radix
-        if UVM_OCT:
+        if radix == UVM_OCT:
             return self.oct_radix
-        if UVM_DEC:
+        if radix == UVM_DEC:
             return self.dec_radix
-        if UVM_HEX:
+        if radix == UVM_HEX:
             return self.hex_radix
-        if UVM_UNSIGNED:
+        if radix == UVM_UNSIGNED:
             return self.unsigned_radix
         return ""
 
