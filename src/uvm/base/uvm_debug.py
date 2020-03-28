@@ -18,7 +18,6 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
-import cocotb
 import inspect
 from inspect import getframeinfo, stack
 import re
