@@ -14,7 +14,7 @@ class UVMQueue(UVMObject):
 
     @classmethod
     def get_global_queue(cls):
-        """         
+        """
         Function: get_global_queue
 
         Returns the singleton global queue for the item type, T.
@@ -29,20 +29,20 @@ class UVMQueue(UVMObject):
 
     @classmethod
     def get_global(cls, index):
-        """         
+        """
         Function: get_global
 
         Returns the specified item instance from the global item queue.
         Args:
-            cls: 
-            index: 
+            cls:
+            index:
         Returns:
         """
         gqueue = UVMQueue.get_global_queue()
         return gqueue.get(index)
 
     def get(self, index):
-        """         
+        """
         Function: get
 
         Returns the item at the given `index`.
@@ -50,7 +50,7 @@ class UVMQueue(UVMObject):
         If no item exists by that key, a new item is created with that key
         and returned.
         Args:
-            index: 
+            index:
         Returns:
         """
         default_value = 0
@@ -62,7 +62,7 @@ class UVMQueue(UVMObject):
         return self.queue[index]
 
     def size(self):
-        """         
+        """
         Function: size
 
         Returns the number of items stored in the queue.
@@ -71,18 +71,18 @@ class UVMQueue(UVMObject):
         return len(self.queue)
 
     def __len__(self):
-        """         
+        """
         len() operator
         Returns:
         """
         return self.size()
 
     def __setitem__(self, i, value):
-        """         
+        """
         Implements aa[x] = y
         Args:
-            i: 
-            value: 
+            i:
+            value:
         Raises:
         """
         if i < self.size():
@@ -92,10 +92,10 @@ class UVMQueue(UVMObject):
                 i, self.size()))
 
     def __getitem__(self, i):
-        """         
+        """
         Implements aa[x]
         Args:
-            i: 
+            i:
         Returns:
         Raises:
         """
@@ -106,13 +106,13 @@ class UVMQueue(UVMObject):
                 i, self.size()))
 
     def insert(self, index, item):
-        """         
+        """
         Function: insert
 
         Inserts the item at the given `index` in the queue.
         Args:
-            index: 
-            item: 
+            index:
+            item:
         """
         if index >= self.size() or index < 0:
             uvm_report_warning("QUEUEINS",
@@ -122,13 +122,13 @@ class UVMQueue(UVMObject):
         self.queue.insert(index,item)
 
     def delete(self, index=-1):
-        """         
+        """
         Function: delete
 
         Removes the item at the given `index` from the queue; if `index` is
         not provided, the entire contents of the queue are deleted.
         Args:
-            index: 
+            index:
         """
         if index >= self.size() or index < -1:
             uvm_report_warning("QUEUEDEL",
@@ -141,7 +141,7 @@ class UVMQueue(UVMObject):
             self.queue.pop(index)
 
     def pop_front(self):
-        """         
+        """
         Function: pop_front
 
         Returns the first element in the queue (index=0),
@@ -167,7 +167,7 @@ class UVMQueue(UVMObject):
         return None
 
     def pop_back(self):
-        """         
+        """
         Function: pop_back
 
         Returns the last element in the queue (index=size()-1),
@@ -177,22 +177,22 @@ class UVMQueue(UVMObject):
         return self.queue.pop()
 
     def push_front(self, item):
-        """         
+        """
         Function: push_front
 
         Inserts the given `item` at the front of the queue.
         Args:
-            item: 
+            item:
         """
         self.queue.insert(0, item)
 
     def push_back(self, item):
-        """         
+        """
         Function: push_back
 
         Inserts the given `item` at the back of the queue.
         Args:
-            item: 
+            item:
         """
         self.queue.append(item)
 
@@ -216,11 +216,11 @@ class UVMQueue(UVMObject):
         return self.convert2string()
 
     def find_with(self, find_func):
-        """         
+        """
         Group: find functions
         Added by tpoikela to mimic SystemVerilog find API
         Args:
-            find_func: 
+            find_func:
         Returns:
         """
         qq = UVMQueue()
