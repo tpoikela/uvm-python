@@ -101,7 +101,7 @@ class UVMRoot(UVMComponent):
     so that the simulation will not continue to the start_of_simulation_phase.
     """
 
-
+    raise_exception_on_die = True
     m_relnotes_done = False
 
     @classmethod
@@ -319,24 +319,24 @@ class UVMRoot(UVMComponent):
 
     def die(self):
         """
-        Function: die
-
         This method is called by the report server if a report reaches the maximum
         quit count or has a UVM_EXIT action associated with it, e.g., as with
         fatal errors.
 
         Calls the <uvm_component::pre_abort()> method
         on the entire `uvm_component` hierarchy in a bottom-up fashion.
-        It then calls <uvm_report_server::report_summarize> and terminates the simulation
-        with ~$finish~.
+        It then calls <uvm_report_server::report_summarize> and terminates the simulation.
+
         Raises:
+            Exception:
         """
         l_rs = get_report_server()
         # do the pre_abort callbacks
         self.m_do_pre_abort()
         l_rs.report_summarize()
         #$finish
-        raise Exception('die(): $finish from UVMRoot')
+        if UVMRoot.raise_exception_on_die:
+            raise Exception('die(): $finish from UVMRoot')
 
     def running_test_msg(self, test_name, uvm_test_top):
         if test_name == "":
@@ -690,10 +690,11 @@ class UVMRoot(UVMComponent):
                     max_quit), UVM_NONE)
             uvm_split_string(max_quit, ",", split_max_quit)
             max_quit_int = int(split_max_quit[0])
-            if split_max_quit[1] == "YES":
-                srvr.set_max_quit_count(max_quit_int, 1)
-            elif split_max_quit[1] == "NO":
-                srvr.set_max_quit_count(max_quit_int, 0)
+            if len(split_max_quit) > 1:
+                if split_max_quit[1] == "YES":
+                    srvr.set_max_quit_count(max_quit_int, 1)
+                elif split_max_quit[1] == "NO":
+                    srvr.set_max_quit_count(max_quit_int, 0)
             else:
                 srvr.set_max_quit_count(max_quit_int, 1)
 
