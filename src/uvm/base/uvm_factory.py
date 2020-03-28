@@ -46,45 +46,40 @@ class uvm_factory_queue_class:
     def __init__(self):
         self.queue = UVMQueue()
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_factory
-#
-#------------------------------------------------------------------------------
-#
-# As the name implies, uvm_factory is used to manufacture (create) UVM objects
-# and components. Object and component types are registered
-# with the factory using lightweight proxies to the actual objects and
-# components being created. The <uvm_object_registry #(T,Tname)> and
-# <uvm_component_registry #(T,Tname)> class are used to proxy <uvm_objects>
-# and <uvm_components>.
-#
-# The factory provides both name-based and type-based interfaces.
-#
-# type-based - The type-based interface is far less prone to errors in usage.
-#   When errors do occur, they are caught at compile-time.
-#
-# name-based - The name-based interface is dominated
-#   by string arguments that can be misspelled and provided in the wrong order.
-#   Errors in name-based requests might only be caught at the time of the call,
-#   if at all. Further, the name-based interface is not portable across
-#   simulators when used with parameterized classes.
-#
-#
-# The ~uvm_factory~ is an abstract class which declares many of its methods
-# as ~pure virtual~.  The UVM uses the <uvm_default_factory> class
-# as its default factory implementation.
-#
-# See <uvm_default_factory::Usage> section for details on configuring and using the factory.
 
 
 class UVMFactory:
+    """
+    As the name implies, uvm_factory is used to manufacture (create) UVM objects
+    and components. Object and component types are registered
+    with the factory using lightweight proxies to the actual objects and
+    components being created. The `UVMObjectRegistry` and
+    `UVMComponentRegistry` class are used to proxy `UVMObject`
+    and `UVMComponent`.
+
+    The factory provides both name-based and type-based interfaces.
+
+    type-based - The type-based interface is far less prone to errors in usage.
+      When errors do occur, they are caught at compile-time.
+
+    name-based - The name-based interface is dominated
+      by string arguments that can be misspelled and provided in the wrong order.
+      Errors in name-based requests might only be caught at the time of the call,
+      if at all. Further, the name-based interface is not portable across
+      simulators when used with parameterized classes.
+
+    The ~uvm_factory~ is an abstract class which declares many of its methods
+    as ~pure virtual~.  The UVM uses the `UVMDefaultFactory` class
+    as its default factory implementation.
+
+    See `UVMDefaultFactory` section for details on configuring and using the factory.
+    """
 
     #// Group: Retrieving the factory
 
     @classmethod
     def get(cls):
-        """         
+        """
         Function: get
         Static accessor for `uvm_factory`
 
@@ -139,14 +134,14 @@ class UVMDefaultFactory(UVMFactory):
 
 
     def register(self, obj):
-        """         
+        """
         Group: Registering Types
 
         Function: register
 
         Registers the given proxy object, `obj`, with the factory.
         Args:
-            obj: 
+            obj:
         """
         if obj is None:
             uvm_report_fatal("NULLWR", "Attempting to register a null object with the factory", UVM_NONE)
@@ -182,7 +177,7 @@ class UVMDefaultFactory(UVMFactory):
 
     def set_type_override_by_type(self, original_type, override_type,
             replace=True):
-        """         
+        """
         set_type_override_by_type
         -------------------------
 
@@ -190,9 +185,9 @@ class UVMDefaultFactory(UVMFactory):
                                                              uvm_object_wrapper override_type,
                                                              bit replace=1)
         Args:
-            original_type: 
-            override_type: 
-            replace: 
+            original_type:
+            override_type:
+            replace:
         """
         replaced = False
 
@@ -254,13 +249,13 @@ class UVMDefaultFactory(UVMFactory):
 
     def set_type_override_by_name(self, original_type_name, override_type_name,
             replace=True):
-        """         
+        """
         set_type_override_by_name
         -------------------------
         Args:
-            original_type_name: 
-            override_type_name: 
-            replace: 
+            original_type_name:
+            override_type_name:
+            replace:
         """
         replaced = False
         original_type = None
@@ -317,16 +312,16 @@ class UVMDefaultFactory(UVMFactory):
 
     def check_inst_override_exists(self, original_type, override_type,
             full_inst_path):
-        """         
+        """
         check_inst_override_exists
         --------------------------
         #function bit uvm_default_factory::check_inst_override_exists (uvm_object_wrapper original_type,
                                              uvm_object_wrapper override_type,
                                              string full_inst_path)
         Args:
-            original_type: 
-            override_type: 
-            full_inst_path: 
+            original_type:
+            override_type:
+            full_inst_path:
         Returns:
         """
         override = None  # uvm_factory_override
@@ -353,7 +348,7 @@ class UVMDefaultFactory(UVMFactory):
 
     def set_inst_override_by_type(self, original_type, override_type,
             full_inst_path):
-        """         
+        """
         set_inst_override_by_type
         -------------------------
 
@@ -361,9 +356,9 @@ class UVMDefaultFactory(UVMFactory):
                                                              uvm_object_wrapper override_type,
                                                              string full_inst_path)
         Args:
-            original_type: 
-            override_type: 
-            full_inst_path: 
+            original_type:
+            override_type:
+            full_inst_path:
         """
 
         override = None  # uvm_factory_override
@@ -451,13 +446,13 @@ class UVMDefaultFactory(UVMFactory):
 
     def create_object_by_name(self, requested_type_name, parent_inst_path="",
               name=""):
-        """         
+        """
         create_object_by_name
         ---------------------
         Args:
-            requested_type_name: 
-            parent_inst_path: 
-            name: 
+            requested_type_name:
+            parent_inst_path:
+            name:
         Returns:
         """
         inst_path = self._get_inst_path(parent_inst_path, name)
@@ -476,13 +471,13 @@ class UVMDefaultFactory(UVMFactory):
         return wrapper.create_object(name)
 
     def create_object_by_type(self, requested_type, parent_inst_path="", name=""):
-        """         
+        """
         create_object_by_type
         ---------------------
         Args:
-            requested_type: 
-            parent_inst_path: 
-            name: 
+            requested_type:
+            parent_inst_path:
+            name:
         Returns:
         """
         if requested_type is None:
@@ -507,14 +502,14 @@ class UVMDefaultFactory(UVMFactory):
 
     def create_component_by_name(self, requested_type_name,
             parent_inst_path, name, parent):
-        """         
+        """
         create_component_by_name
         ------------------------
         Args:
-            requested_type_name: 
-            parent_inst_path: 
-            name: 
-            parent: 
+            requested_type_name:
+            parent_inst_path:
+            name:
+            parent:
         Returns:
         """
 
@@ -536,14 +531,14 @@ class UVMDefaultFactory(UVMFactory):
 
     def create_component_by_type(self, requested_type, parent_inst_path, name,
             parent):
-        """         
+        """
         create_component_by_type
         ------------------------
         Args:
-            requested_type: 
-            parent_inst_path: 
-            name: 
-            parent: 
+            requested_type:
+            parent_inst_path:
+            name:
+            parent:
         Returns:
         """
         full_inst_path = self._get_inst_path(parent_inst_path, name)
@@ -566,13 +561,13 @@ class UVMDefaultFactory(UVMFactory):
     #endfunction
 
     def find_override_by_name(self, requested_type_name, full_inst_path):
-        """         
+        """
         find_override_by_name
         ---------------------
         @return uvm_object_wrapper
         Args:
-            requested_type_name: 
-            full_inst_path: 
+            requested_type_name:
+            full_inst_path:
         Returns:
         """
         rtype = None
@@ -637,12 +632,12 @@ class UVMDefaultFactory(UVMFactory):
         return None
 
     def find_override_by_type(self, requested_type, full_inst_path):
-        """         
+        """
         find_override_by_type
         ---------------------
         Args:
-            requested_type: 
-            full_inst_path: 
+            requested_type:
+            full_inst_path:
         Returns:
         """
         override = None
@@ -705,10 +700,10 @@ class UVMDefaultFactory(UVMFactory):
         #endfunction
 
     def convert2string(self, all_types=True):
-        """         
+        """
         tpoikela: Added to access factory string without print()
         Args:
-            all_types: 
+            all_types:
         Returns:
         """
         key = ""
@@ -837,11 +832,11 @@ class UVMDefaultFactory(UVMFactory):
         return UVM_STRING_QUEUE_STREAMING_PACK(qs)
 
     def print_factory(self, all_types=True):
-        """         
+        """
         print
         -----
         Args:
-            all_types: 
+            all_types:
         """
         fact_str = self.convert2string(all_types)
         uvm_info("UVM/FACTORY/PRINT", fact_str, UVM_NONE)
@@ -998,56 +993,55 @@ class UVMDefaultFactory(UVMFactory):
              type_override.orig_type_name == requested_type.get_type_name())
         return type_override.orig_type == requested_type or match_ok
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_object_wrapper
-#
-# The uvm_object_wrapper provides an abstract interface for creating object and
-# component proxies. Instances of these lightweight proxies, representing every
-# <uvm_object>-based and <uvm_component>-based object available in the test
-# environment, are registered with the <uvm_factory>. When the factory is
-# called upon to create an object or component, it finds and delegates the
-# request to the appropriate proxy.
-#
-#------------------------------------------------------------------------------
 
 
 class UVMObjectWrapper:
+    """
+    The uvm_object_wrapper provides an abstract interface for creating object and
+    component proxies. Instances of these lightweight proxies, representing every
+    `UVMObject`-based and `UVMComponent`-based object available in the test
+    environment, are registered with the <uvm_factory>. When the factory is
+    called upon to create an object or component, it finds and delegates the
+    request to the appropriate proxy.
+    """
 
     def create_object(self, name=""):
-        """         
+        """
         Function: create_object
 
         Creates a new object with the optional `name`.
         An object proxy (e.g., <uvm_object_registry #(T,Tname)>) implements this
         method to create an object of a specific type, T.
+
         Args:
-            name: 
+            name:
         Returns:
         """
         return None
 
     def create_component(self, name, parent):
-        """         
+        """
         Function: create_component
 
         Creates a new component, passing to its constructor the given `name` and
         `parent`. A component proxy (e.g. <uvm_component_registry #(T,Tname)>)
         implements this method to create a component of a specific type, T.
+
         Args:
-            name: 
-            parent: 
+            name:
+            parent:
         Returns:
         """
         return None
 
     def get_type_name(self):
-        """         
+        """
         Function: get_type_name
 
         Derived classes implement this method to return the type name of the object
         created by `create_component` or `create_object`. The factory uses this
         name when matching against the requested type in name-based lookups.
+
         Returns:
         """
         return "<unknown_type>"
