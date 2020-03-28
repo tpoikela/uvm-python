@@ -50,7 +50,10 @@ available at: http://www.apache.org/licenses/.
 
 .. WARNING:: This is semi-manual translation from the original SystemVerilog
     `UVM 1.2 User's Guide <http://www.accellera.org/images//downloads/standards/uvm/uvm_users_guide_1.2.pdf>`
-    to uvm-python. It is work-in-progress.
+    to uvm-python. It is work-in-progress. It's a work-in-progress and contains
+    still a lot of errors and references to SystemVerilog facilities. This will
+    be gradually fixed over time. Feel free to contribute to this userguide
+    with a pull request. Even small fixes will help in making it better!
 
 **Notices**
 
@@ -61,7 +64,8 @@ may be applicable in all circumstances. The UVM 1.2 User’s Guide does
 not necessarily represent the standard of care by which the adequacy
 of a given professional service must be judged nor should this
 document be applied without consideration of a project’s unique
-aspects. This guide has been approved through the Accellera consensus
+aspects. The original SystemVerilog version of this guide has been
+approved through the Accellera consensus
 process and serves to increase the awareness of information and
 approaches in verification methodology. This guide may have several
 recommendations to accomplish the same thing and may require some
@@ -69,12 +73,12 @@ judgment to determine the best course of action.
 
 The `uvm_1.2_class_reference` represents the foundation
 used to create the UVM 1.2 User’s Guide. This guide is a way to apply the UVM
-1.2 Class Reference, but is not the only way. Accellera believes
-standards are an important ingredient to foster innovation and
+1.2 Class Reference, but is not the only way.
+Standards are an important ingredient to foster innovation and
 continues to encourage industry innovation based on its standards.
 
-.. toctree::
-   :maxdepth: 3
+.. contents:: Table of Contents
+    :depth: 3
 
 1. Overview
 ===========
@@ -1199,20 +1203,15 @@ enum values and their meanings are shown in Table 2.
 
 **Table 2—uvm_tlm_sync_e enum Description**
 
-**Enum value Interpretation**
+.. csv-table:: uvm_tlm_sync_e enum Description
+    :widths: 30, 70
 
-UVM_TLM_ACCEPTED:
-    Transaction has been accepted. Neither the transaction object,
-    the phase nor the delay arguments have been modified.
-
-UVM_TLM_UPDATED:
-    Transaction has been modified. The transac tion object, the phase or
-    the delay argu- ments may have been modified.
-
-UVM_TLM_COMPLETED:
-    Transaction execution has completed. The transaction object, the phase or
+    **Enum value**, **Interpretation**
+    UVM_TLM_ACCEPTED:, "Transaction has been accepted. Neither the transaction object, the phase nor the delay arguments have been modified."
+    UVM_TLM_UPDATED:, "Transaction has been modified. The transac tion object, the phase or the delay arguments may have been modified."
+    UVM_TLM_COMPLETED:, "Transaction execution has completed. The transaction object, the phase or
     the delay arguments may have been modified. There will be no further
-    transport calls asso- ciated with this transaction.
+    transport calls associated with this transaction."
 
 The P argument of nb_transport_fw and nb_transport_bw represents the
 transaction phase. This can be a user-defined type that is specific
@@ -1222,17 +1221,14 @@ Protocol*.
 
 **Table 3—uvm_tlm_phase_e Description**
 
-**Enum value Interpretation**
+.. csv-table:: uvm_tlm_phase_e Description
 
-UNITIALIZED_PHASE Phase has not yet begun
-
-BEGIN_REQ Request has begun
-
-END_REQ Request has completed
-
-BEGIN_RESP Response has begun
-
-END_RESP Response has terminated
+    **Enum value**, **Interpretation**
+    UNITIALIZED_PHASE, Phase has not yet begun
+    BEGIN_REQ, Request has begun
+    END_REQ, Request has completed
+    BEGIN_RESP, Response has begun
+    END_RESP, Response has terminated
 
 The first call to nb_transport_fw by the initiator marks the first
 timing point in the transaction execution. Subsequent calls to
@@ -1244,7 +1240,6 @@ simulation time by the delay value specified in the delay argument.
 An nb_transport_fw call on the forward path shall under no
 circumstances directly or indirectly make a call to nb_transport_bw
 on the backward path, and vice versa.
-
 
 The value of the phase argument represents the current state of the
 protocol state machine. Any change in the value of the transaction
@@ -1421,8 +1416,6 @@ allowable socket types. For example, an initiator socket can connect
 to an initiator passthrough socket, a target passthrough socket, or a
 target socket. It cannot connect to another initiator socket. These
 kinds of checks are performed for each socket type.
-
-
 
 2.4.6 Time
 ----------
@@ -2160,7 +2153,7 @@ Actual code for collection is not shown in this example. A complete
 example can be found in the UBus example in ubus_master_monitor.py::
 
 
-    class master_monitor extends uvm_monitor;
+    class master_monitor extends UVMMonitor;
 
         virtual bus_if xmi; // SystemVerilog virtual interface bit
         checks_enable = 1; // Control checking in monitor and interface. bit
@@ -2943,34 +2936,33 @@ environment developers to define a drain time per sub-system.
 **3.12 Implementing Checks and Coverage**
 
 Checks and coverage are crucial to a coverage-driven verification
-flow. SystemVerilog allows the usage shown in Table 5 for **assert**,
-**cover**, and **covergroup** constructs.
+flow. Python/uvm-python allows the usage shown in Table 5 for **assert**,
+**@Coverpoint**, and **@Covergroup** constructs.
 
-NOTE—This overview is for concurrent assertions. Immediate assertions
-can be used in any procedural statement. Refer to the SystemVerilog
-IEEE1800 LRM for more information.
+There are no temporal/concurrent assertions implemented via special
+syntax. Users must implement these assertions using normal Python
+procedural code and cocotb/uvm-python.
 
-**Table 5—SystemVerilog Checks and Coverage Construct Usage Overview**
+**Table 5—Python/uvm-python Checks and Coverage Construct Usage Overview**
 
-**class interface package module initial always generate program**
+.. csv-table:: uvm-python Checks and Coverage Construct Usage Overview
 
-**assert** :sup:`no yes no yes yes yes yes yes `
-
-**cover** :sup:`no yes yes yes yes yes yes yes `
-
-**covergroup** :sup:`yes yes yes yes no no yes yes `
+    **class**, **interface**, **package**, **module**, **initial**, **always**, **generate**, **program**
+    **assert**, no, yes, no, yes, yes, yes, yes, yes
+    **@Coverpoint**, no, yes, yes, yes, yes, yes, yes, yes
+    **@Covergroup**, yes, yes, yes, yes, no, no, yes, yes
 
 In a verification component, checks and coverage are defined in
 multiple locations depending on the category of functionality being
 analyzed. In Figure 17, checks and coverage are depicted in the
-uvm_monitor and interface. The following sections describe how the
+UVMMonitor and interface. The following sections describe how the
 **assert**, **cover**, and **covergroup** constructs are used in the
 Ubus verification component example (described in Chapter 7).
 
 **3.12.1 Implementing Checks and Coverage in Classes**
 
 Class checks and coverage should be implemented in the classes
-derived from uvm_monitor. The derived class of uvm_monitor is always
+derived from UVMMonitor. The derived class of UVMMonitor is always
 present in the agent and, thus, will always contain the necessary
 checks and coverage. The bus monitor is created by default in an env
 and if the checks and coverage collection is enabled the bus monitor
@@ -3055,7 +3047,7 @@ cross beat_addr, beat_dir; beat_addrXdata : cross beat_addr,
 beat_data; endgroup : cov_trans_beat
 
 This embedded covergroup is defined inside a class derived from
-uvm_monitor and is sampled explicitly. For the above covergroup, you
+UVMMonitor and is sampled explicitly. For the above covergroup, you
 should assign the local variables that serve as coverpoints in a
 function, then sample the covergroup. This is done so that each
 transaction data beat of the transfer can be covered. This function
