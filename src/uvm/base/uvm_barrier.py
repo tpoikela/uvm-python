@@ -21,9 +21,12 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
+from cocotb.triggers import Timer
 
+from .sv import sv
 from .uvm_object import UVMObject
 from .uvm_event import UVMEvent
+from .uvm_object_globals import UVM_BIN, UVM_DEC
 
 
 class UVMBarrier(UVMObject):
@@ -52,7 +55,7 @@ class UVMBarrier(UVMObject):
 
     #  // Task: wait_for
     #  //
-    #  // Waits for enough processes to reach the barrier before continuing. 
+    #  // Waits for enough processes to reach the barrier before continuing.
     #  //
     #  // The number of processes to wait for is set by the <set_threshold> method.
     async def wait_for(self):
@@ -66,16 +69,16 @@ class UVMBarrier(UVMObject):
                 self.at_threshold=1
             self.m_trigger()
             return
-        
+
         await self.m_event.wait_trigger()
 
 
     #  // Function: reset
     #  //
-    #  // Resets the barrier. This sets the waiter count back to zero. 
+    #  // Resets the barrier. This sets the waiter count back to zero.
     #  //
     #  // The threshold is unchanged. After reset, the barrier will force processes
-    #  // to wait for the threshold again. 
+    #  // to wait for the threshold again.
     #  //
     #  // If the ~wakeup~ bit is set, any currently waiting processes will
     #  // be activated.
@@ -92,10 +95,10 @@ class UVMBarrier(UVMObject):
     #  // Function: set_auto_reset
     #  //
     #  // Determines if the barrier should reset itself after the threshold is
-    #  // reached. 
+    #  // reached.
     #  //
     #  // The default is on, so when a barrier hits its threshold it will reset, and
-    #  // new processes will block until the threshold is reached again. 
+    #  // new processes will block until the threshold is reached again.
     #  //
     #  // If auto reset is off, then once the threshold is achieved, new processes
     #  // pass through without being blocked until the barrier is reset.
@@ -106,12 +109,12 @@ class UVMBarrier(UVMObject):
 
     #  // Function: set_threshold
     #  //
-    #  // Sets the process threshold. 
+    #  // Sets the process threshold.
     #  //
     #  // This determines how many processes must be waiting on the barrier before
-    #  // the processes may proceed. 
+    #  // the processes may proceed.
     #  //
-    #  // Once the ~threshold~ is reached, all waiting processes are activated. 
+    #  // Once the ~threshold~ is reached, all waiting processes are activated.
     #  //
     #  // If ~threshold~ is set to a value less than the number of currently
     #  // waiting processes, then the barrier is reset and waiting processes are
@@ -157,17 +160,21 @@ class UVMBarrier(UVMObject):
         return UVMBarrier.type_name
 
 
-    def m_trigger(self):
+    async def m_trigger(self):
         self.m_event.trigger()
-        self.num_waiters=0
+        self.num_waiters = 0
         await Timer(0, "NS")  # self process was last to wait; allow other procs to resume first
 
 
     def do_print(self, printer):
-        printer.print_field_int("threshold", threshold, sv.bits(threshold), UVM_DEC, ".", "int")
-        printer.print_field_int("num_waiters", num_waiters, sv.bits(num_waiters), UVM_DEC, ".", "int")
-        printer.print_field_int("at_threshold", at_threshold, sv.bits(at_threshold), UVM_BIN, ".", "bit")
-        printer.print_field_int("auto_reset", auto_reset, sv.bits(auto_reset), UVM_BIN, ".", "bit")
+        printer.print_field_int("threshold", self.threshold, sv.bits(self.threshold),
+                UVM_DEC, ".", "int")
+        printer.print_field_int("num_waiters", self.num_waiters, sv.bits(self.num_waiters),
+                UVM_DEC, ".", "int")
+        printer.print_field_int("at_threshold", self.at_threshold, sv.bits(self.at_threshold),
+                UVM_BIN, ".", "bit")
+        printer.print_field_int("auto_reset", self.auto_reset, sv.bits(self.auto_reset), UVM_BIN,
+                ".", "bit")
 
 
     #  def do_copy(self,uvm_object rhs):
@@ -180,4 +187,4 @@ class UVMBarrier(UVMObject):
     #    at_threshold = b.at_threshold
     #    auto_reset = b.auto_reset
     #    m_event = b.m_event
-    #  endfunction  
+    #  endfunction
