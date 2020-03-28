@@ -27,7 +27,7 @@ from .uvm_object import UVMObject
 from .uvm_object_globals import *
 from .uvm_misc import uvm_bitstream_to_string, uvm_integral_to_string
 from .sv import sv
-from ..macros import uvm_object_utils, uvm_warning
+from ..macros import uvm_object_utils, uvm_warning, uvm_error
 from .uvm_scope_stack import UVMScopeStack
 
 
@@ -397,37 +397,35 @@ class UVMRecorder(UVMObject):
     @classmethod
     def get_recorder_from_handle(cls, id):
         """
-           Function: get_recorder_from_handle
-           Static accessor, returns a recorder reference for a given unique id.
+        Static accessor, returns a recorder reference for a given unique id.
 
-           If no recorder exists with the given `id`, or if the
-           recorder with that `id` has been freed, then `null` is
-           returned.
+        If no recorder exists with the given `id`, or if the
+        recorder with that `id` has been freed, then `null` is
+        returned.
 
-           This method can be used to access the recorder associated with a
-           call to <uvm_transaction::begin_tr> or <uvm_component::begin_tr>.
+        This method can be used to access the recorder associated with a
+        call to `UVMTransaction.begin_tr` or `UVMComponent.begin_tr`.
 
         .. code-block:: python
 
-           | integer handle = tr.begin_tr()
-           | uvm_recorder recorder = uvm_recorder::get_recorder_from_handle(handle)
-           | if (recorder != null):
-           |   recorder.record_string("begin_msg", "Started recording transaction!")
-           | end
+           handle = tr.begin_tr()
+           recorder = UVMRecorder.get_recorder_from_handle(handle)
+           if recorder is not None:
+               recorder.record_string("begin_msg", "Started recording transaction!")
 
         Args:
             cls:
             id:
         Returns:
+            UVMRecorder:
         """
-        if (id == 0):
+        if id == 0:
             return None
         if sv.isunknown(id) or id not in cls.m_recorders_by_id:
             return None
         return cls.m_recorders_by_id[id]
-        #   endfunction : get_recorder_from_handle
 
-    #
+
     #   // Group: Attribute Recording
     #
     #   // Function: record_field
@@ -545,7 +543,8 @@ class UVMRecorder(UVMObject):
     #
     #      do_record_generic(name, value, type_name)
     #   endfunction : record_generic
-    #
+
+
     #  // Function: use_record_attribute
     #  //
     #  // Indicates that this recorder does (or does not) support usage of
@@ -554,10 +553,10 @@ class UVMRecorder(UVMObject):
     #  // The default return value is ~0~ (not supported), developers can
     #  // optionally extend ~uvm_recorder~ and set the value to ~1~ if they
     #  // support the <`uvm_record_attribute> macro.
-    #  virtual function bit use_record_attribute()
-    #     return 0
-    #  endfunction : use_record_attribute
-    #
+    def use_record_attribute(self):
+        return 0
+
+
     #   // Function: get_record_attribute_handle
     #   // Provides a tool-specific handle which is compatible with <`uvm_record_attribute>.
     #   //
@@ -594,18 +593,18 @@ class UVMRecorder(UVMObject):
     #   // The ~do_close~ callback can be used to set internal state
     #   // within the recorder, as well as providing a location to
     #   // record any closing information.
-    #   protected virtual function void do_close(time close_time)
-    #   endfunction : do_close
-    #
+    def do_close(self, close_time):
+        pass
+
     #   // Function: do_free
     #   // Callback triggered via <free>.
     #   //
     #   // The ~do_free~ callback can be used to release the internal
     #   // state within the recorder, as well as providing a location
     #   // to record any "freeing" information.
-    #   protected virtual function void do_free()
-    #   endfunction : do_free
-    #
+    def do_free(self):
+        pass
+
 
     #   // Function: do_record_field
     #   // Records an integral field (less than or equal to 4096 bits).
