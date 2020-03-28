@@ -20,7 +20,6 @@
 #
 #----------------------------------------------------------------------
 
-import cocotb
 from .uvm_queue import UVMQueue
 from cocotb.triggers import Event, Timer
 from .uvm_debug import *
@@ -32,6 +31,9 @@ def _uvm_debug(self, func, msg):
 
 
 class UVMMailbox():
+    """
+    Class to mimic SystemVerilog mailbox class.
+    """
 
     def __init__(self, size=0, name='mailbox'):
         self.max_size = size
