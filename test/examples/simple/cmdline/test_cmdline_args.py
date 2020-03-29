@@ -72,6 +72,7 @@ class TestMaxQuitCount(CmdLineTest):
         self.caught = False
 
     async def run_phase(self, phase):
+        self.comp.set_config_int_test = True
         phase.raise_objection(self)
         await Timer(100, 'ns')
         for i in range(10):
@@ -120,6 +121,7 @@ class MyComponent(UVMComponent):
         self.oct_to_match = 0
         self.dec_to_match = 0
         self.str_with_ws = "<not set>"
+        self.set_config_int_test = False
 
 
     def build_phase(self, phase):
@@ -161,15 +163,16 @@ class MyComponent(UVMComponent):
 
     def check_phase(self, phase):
         uvm_fatal("FAT2WARN", "Severity should change UVM_FATAL->UVM_WARN")
-        if self.hex_to_match != 0x789:
-            uvm_fatal("HEX_NUM_CONFIG_INT_FATAL",
-                "hex_to_match not auto-configured correctly")
-        if self.oct_to_match != int('456', 8):
-            uvm_fatal("OCT_NUM_CONFIG_INT_FATAL",
-                "oct_to_match not auto-configured correctly")
-        if self.dec_to_match < 1000000000:
-            uvm_fatal("DEC_NUM_CONFIG_INT_FATAL",
-                "dec_to_match not auto-configured correctly")
+        if self.set_config_int_test:
+            if self.hex_to_match != 0x789:
+                uvm_fatal("HEX_NUM_CONFIG_INT_FATAL",
+                    "hex_to_match not auto-configured correctly")
+            if self.oct_to_match != int('456', 8):
+                uvm_fatal("OCT_NUM_CONFIG_INT_FATAL",
+                    "oct_to_match not auto-configured correctly")
+            if self.dec_to_match < 1000000000:
+                uvm_fatal("DEC_NUM_CONFIG_INT_FATAL",
+                    "dec_to_match not auto-configured correctly")
 
 uvm_component_utils_begin(MyComponent)
 uvm_field_string('tag')
