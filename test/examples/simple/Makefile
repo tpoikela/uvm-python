@@ -46,6 +46,7 @@ test-comps:
 
 test-cmdline:
 	make -C cmdline/
+	make -C cmdline/ UVM_TEST=TestMaxQuitCount
 
 test-factory:
 	make -C factory/
