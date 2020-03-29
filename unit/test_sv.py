@@ -108,6 +108,28 @@ class TestSV(unittest.TestCase):
             self.assertEqual(sv.clog2(1 << i), i)
 
 
+    def test_sscanf(self):
+        str_in = "ab12 23cd s"
+        format_in = "%d %s"
+        misc = 0
+        num, my_str = sv.sscanf(str_in, format_in, misc)
+        self.assertEqual(num, 12)
+        self.assertEqual(my_str, "23cd")
+
+        str_fails = "abc abc"
+        format_in = "%d %d"
+        res = sv.sscanf(str_fails, format_in, misc)
+        self.assertEqual(res, [])
+
+        num_str = "0x1234 5678 10104 -345.124"
+        format_in = "%h %d %b %f"
+        res = sv.sscanf(num_str, format_in, misc)
+        num_hex, num_dec, num_bin, num_float = res
+        self.assertEqual(num_hex, 0x1234)
+        self.assertEqual(num_dec, 5678)
+        self.assertEqual(num_bin, 0b1010)
+        self.assertEqual(num_float, -345.124)
+
 
 if __name__ == '__main__':
     unittest.main()
