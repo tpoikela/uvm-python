@@ -199,17 +199,14 @@ The implementation of this is in `UVMRoot`.
 """
 
 
-
 import regex
 import cocotb
 
 from .uvm_report_object import UVMReportObject
-from .uvm_debug import *
+from .uvm_debug import uvm_debug
 from ..macros import uvm_error
-from .uvm_object_globals import *
+from .uvm_object_globals import UVM_DEBUG, UVM_FULL, UVM_HIGH, UVM_LOW, UVM_MEDIUM, UVM_NONE
 from .uvm_globals import uvm_check_output_args
-
-
 
 
 class UVMCmdLineVerb:
@@ -221,19 +218,35 @@ class UVMCmdLineVerb:
 
 
 def uvm_dpi_get_tool_name():
-    # Return the simulator name, as reported by VPI
+    """
+    Return the simulator name, as reported by VPI
+
+    Returns:
+        str: Simulator name.
+    """
     return cocotb.SIM_NAME
 
+
 def uvm_dpi_get_tool_version():
-    # Return the simulator version, as reported by VPI
+    """
+    Return the simulator version, as reported by VPI
+
+    """
     return cocotb.SIM_VERSION
 
+
 def uvm_dpi_regcomp(match):
+    """
+    Tries to recompile given string into regular expression.
+
+    Returns:
+        Regex|None:
+    """
     rr = None
     try:
         rr = regex.compile(match)
-    except:
-        pass
+    except Exception as e:
+        print(str(e))
     return rr
 
 
@@ -266,6 +279,7 @@ class UVMCmdlineProcessor(UVMReportObject):
     # Used in unit tests only (not part of original UVM)
     m_test_mode = False
     m_test_plusargs = {}
+    m_test_argv = []
 
     # Group: Singleton
 
@@ -289,7 +303,9 @@ class UVMCmdlineProcessor(UVMReportObject):
         arguments that were used to start the simulation. Note that
         element 0 of the array will always be the name of the
         executable which started the simulation.
+
         Returns:
+            list:
         """
         return self.m_argv
 
@@ -469,43 +485,46 @@ class UVMCmdlineProcessor(UVMReportObject):
 
     def __init__(self, name=""):
         """
+        Constructor which handles also cmdline argument processing.
+
         Args:
             name (str): Name of this object.
         """
-        UVMReportObject.__init__(self, name)
+        super().__init__(name)
         self.m_argv = []
         self.m_plus_argv = []
         self.m_uvm_argv = []
-        self.m_plus_arg_map = {}  # string -> []
 
-        s = ""
-        sub = ""
 
-        ok = True
-        plusarg_dict = cocotb.plusargs
+        argv = []
+        if hasattr(cocotb, 'argv'):
+            argv = cocotb.argv
         if UVMCmdlineProcessor.m_test_mode is True:
-            plusarg_dict = UVMCmdlineProcessor.m_test_plusargs
+            argv = UVMCmdlineProcessor.m_test_argv
+        self.extract_args(argv)
 
-        for name in plusarg_dict:
-            uvm_debug(self, '__init__', "name is %s, val %s" % (name, plusarg_dict[name]))
-            arg_val = plusarg_dict[name]
-            s = name
-            full_plus_arg = "+" + s + "=" + str(arg_val)
-            if s != "":
-                if name not in self.m_plus_arg_map:
-                    self.m_plus_arg_map[name] = []
-                self.m_plus_arg_map[name].append(arg_val)
-                self.m_plus_argv.append(full_plus_arg)
-                self.m_argv.append(full_plus_arg)
-                uvm_debug(self, '__init__', "Added plusarg " + name + ' - ' +
-                        full_plus_arg)
-                if len(full_plus_arg) >= 4 and (full_plus_arg[0] == "-" or full_plus_arg[0] == "+"):
-                    sub = full_plus_arg[1:4]
-                    #sub = sub.toupper()
-                    if sub == "UVM":
-                        uvm_debug(self, '__init__', "Found UVM plusarg %s" % (full_plus_arg))
-                        self.m_uvm_argv.append(full_plus_arg)
-            ok = s != ""
+
+    def extract_args(self, argv):
+        """
+        Extracts simulation arguments from given array. Stores results into 3
+        different internal arrays: All args, plusargs and UVM args.
+
+        Args:
+            argv (list): List of arguments.
+        """
+        sub = ""
+        for arg in argv:
+            if len(arg) == 0:
+                continue
+            self.m_argv.append(arg)
+            if arg[0] == "+":
+                self.m_plus_argv.append(arg[0])
+                uvm_debug(self, '__init__', "Simple UVM plusarg %s" % (arg))
+            sub = arg[1:4]
+            sub = sub.upper()
+            if sub == "UVM":
+                self.m_uvm_argv.append(arg)
+                uvm_debug(self, '__init__', "Found UVM plusarg %s" % (arg))
 
 
     def m_convert_verb(self, verb_str):
