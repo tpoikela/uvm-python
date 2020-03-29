@@ -66,11 +66,25 @@ SIM_ARGS += "+UVM_TESTNAME=CmdLineTest"  # Selects the UVM test to run
 else
 SIM_ARGS += "+UVM_TESTNAME=$(UVM_TEST)"  # Selects the UVM test to run
 endif
+
 SIM_ARGS += "+UVM_VERBOSITY=UVM_HIGH"    # Selects the global verbosity
 SIM_ARGS += "+uvm_set_verbosity=uvm_test_top.my_comp,_ALL_,UVM_DEBUG,time,1000"
 SIM_ARGS += "+uvm_set_action=uvm_test_top.my_comp,SUPPRESS_FATAL,UVM_FATAL,UVM_LOG"
 SIM_ARGS += "+uvm_set_severity=uvm_test_top.my_*,FAT2WARN,UVM_FATAL,UVM_WARNING"
 SIM_ARGS += "+UVM_MAX_QUIT_COUNT=10"
+
+
+# Used only in TestMaxQuitCount
+ifeq ($(UVM_TEST), TestMaxQuitCount)
+SIM_ARGS += "+uvm_set_config_int=*,hex_to_match,0x789"
+SIM_ARGS += "+uvm_set_config_int=uvm_test_top.*,bin_to_match,0b10101010"
+SIM_ARGS += "+uvm_set_config_int=uvm_test_top.my_comp,dec_to_match,10000000000000000001"
+SIM_ARGS += "+uvm_set_config_int=*.my_comp,oct_to_match,'o456"
+SIM_ARGS += "+uvm_set_config_string=uvm_test_top.my_comp,tag,matched_correctly"
+SIM_ARGS += "+uvm_set_config_string=uvm_test_top.my_comp,str_with_ws,'str with whitespace[912]'"
+SIM_ARGS += "+UVM_TIMEOUT=200000,NO"
+endif
+
 TOPLEVEL := common_stub
 MODULE   ?= test_cmdline_args
 
