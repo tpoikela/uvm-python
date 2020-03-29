@@ -16,18 +16,16 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
-#`ifndef UVM_GLOBAL_DEFINES_SVH
-#`define UVM_GLOBAL_DEFINES_SVH
-#
+
 #//
-#// Title: Global Macros 
+#// Title: Global Macros
 #//------------------------
 #// Group: Global object Macro definitions can be used in multiple locations
 #//------------------------
 #//
 #// MACRO: `UVM_MAX_STREAMBITS
 #//
-#// Defines the maximum bit vector size for integral types. 
+#// Defines the maximum bit vector size for integral types.
 #// Used to set uvm_bitstream_t
 #
 #`ifndef UVM_MAX_STREAMBITS
@@ -43,17 +41,16 @@
 #`ifndef UVM_PACKER_MAX_BYTES
 # `define UVM_PACKER_MAX_BYTES `UVM_MAX_STREAMBITS
 #`endif
-#
+
 #//------------------------
-#// Group: Global Time Macro definitions that can be used in multiple locations
+#// Group: Global Time Variable definitions that can be used in multiple locations
 #//------------------------
-#
-#// MACRO: `UVM_DEFAULT_TIMEOUT
+
+#// variable: UVM_DEFAULT_TIMEOUT
 #//
 #// The default timeout for simulation, if not overridden by
-#// <uvm_root::set_timeout> or <uvm_cmdline_processor::+UVM_TIMEOUT>
+#// `UVMRoot.set_timeout` or <uvm_cmdline_processor::+UVM_TIMEOUT>
 #//
-#
-#`define UVM_DEFAULT_TIMEOUT 9200s
-#
-#`endif //  `ifndef UVM_GLOBAL_DEFINES_SVH
+
+UVM_DEFAULT_TIMEOUT = 9200
+UVM_DEFAULT_TIMEOUT_UNIT = "s"
