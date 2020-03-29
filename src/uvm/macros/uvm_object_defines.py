@@ -311,23 +311,33 @@ def uvm_field_utils_start(T):
 def uvm_field_utils_end(T):
     pass
 
+
 def uvm_field_val(name, mask):
-    vals = getattr(__CURR_OBJ, "_m_uvm_field_names")
-    masks = getattr(__CURR_OBJ, "_m_uvm_field_masks")
-    vals.append(name)
-    masks[name] = mask
+    if not hasattr(__CURR_OBJ, name):
+        vals = getattr(__CURR_OBJ, "_m_uvm_field_names")
+        masks = getattr(__CURR_OBJ, "_m_uvm_field_masks")
+        vals.append(name)
+        masks[name] = mask
+    else:
+        raise Exception('uvm_field_val(): ' + str(__CURR_OBJ) +
+            ' does not have property named ' + name)
+
 
 def uvm_field_int(name, mask=UVM_DEFAULT):
     uvm_field_val(name, mask)
 
+
 def uvm_field_string(name, mask=UVM_DEFAULT):
     uvm_field_val(name, mask)
+
 
 def uvm_field_object(name, mask=UVM_DEFAULT):
     uvm_field_val(name, mask)
 
+
 def uvm_field_aa(name, mask=UVM_DEFAULT):
     uvm_field_val(name, mask)
+
 
 def uvm_field_aa_string_string(name, mask=UVM_DEFAULT):
     uvm_field_aa(name, mask)
