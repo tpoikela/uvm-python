@@ -38,7 +38,7 @@ from .uvm_objection import UVMObjection
 from .uvm_report_server import UVMReportServer
 from .uvm_domain import end_of_elaboration_ph
 from .uvm_common_phases import UVMEndOfElaborationPhase
-from ..macros import uvm_info, uvm_fatal
+from ..macros import uvm_info, uvm_fatal, UVM_DEFAULT_TIMEOUT
 from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 from .uvm_config_db import UVMConfigDb
 
@@ -137,6 +137,9 @@ class UVMRoot(UVMComponent):
         UVMComponent.__init__(self, "__top__", None)
         #self.m_children = {}
         self.clp = UVMCmdlineProcessor.get_inst()
+        #  // Variable: finish_on_completion
+        #  //
+        #  // If set, then run_test will call $finish after all phases are executed.
         self.finish_on_completion = True
         self.m_phase_all_done = False
         self.m_phase_all_done_event = Event('phase_all_done_event')
@@ -158,7 +161,10 @@ class UVMRoot(UVMComponent):
         #  // well as any other top level components that have been instantiated
         #  // anywhere in the hierarchy.
         self.top_levels = []
-    #endfunction
+        #  // Variable- phase_timeout
+        #  //
+        #  // Specifies the timeout for the run phase. Default is `UVM_DEFAULT_TIMEOUT
+        self.phase_timeout = UVM_DEFAULT_TIMEOUT
 
 
     m_called_get_common_domain = False
@@ -310,6 +316,7 @@ class UVMRoot(UVMComponent):
         l_rs = get_report_server()
         l_rs.report_summarize()
         if self.finish_on_completion:
+            # TODO should be linked to cocotb somehow
             self.uvm_report_info('FINISH', '$finish was reached in run_test()', UVM_NONE)
 
 
@@ -347,6 +354,7 @@ class UVMRoot(UVMComponent):
             self.uvm_report_info("RNTST", ("Running test " + uvm_test_top.get_type_name()
                 + " (via factory override for test \"" + test_name + "\")..."), UVM_LOW)
 
+    m_uvm_timeout_overridable = 1
     #  // Function: set_timeout
     #  //
     #  // Specifies the timeout for the simulation. Default is <`UVM_DEFAULT_TIMEOUT>
@@ -360,32 +368,30 @@ class UVMRoot(UVMComponent):
     #  // essentially hung.
     #  //
     #  //
-    #
-    #  extern function void set_timeout(time timeout, bit overridable=1)
+    def set_timeout(self, timeout, overridable=1):
+        if UVMRoot.m_uvm_timeout_overridable == 0:
+            self.uvm_report_info("NOTIMOUTOVR", sv.sformatf(
+                "Global timeout setting %0d is not overridable to %0d due to a previous setting.",
+                self.phase_timeout, timeout), UVM_NONE)
+            return
+
+        UVMRoot.m_uvm_timeout_overridable = overridable
+        self.phase_timeout = timeout
 
 
-    #  // Variable: finish_on_completion
-    #  //
-    #  // If set, then run_test will call $finish after all phases are executed.
-    #
-    #  bit  finish_on_completion = 1
-    #
-    #
     #  //----------------------------------------------------------------------------
     #  // Group: Topology
     #  //----------------------------------------------------------------------------
-    #
-    #
 
 
     def find(self, comp_match):
         """
-          Function: find
+        Find components from the hierarchy.
 
-         extern function uvm_component find (string comp_match)
         Args:
-            comp_match:
+            comp_match (str): String to match.
         Returns:
+            UVMComponent: First component matching the string.
         """
         comp_list = []
 
@@ -423,23 +429,21 @@ class UVMRoot(UVMComponent):
 
     def print_topology(self, printer=None):
         """
-          Function: print_topology
+        Print the verification environment's component topology. The
+        `printer` is a `UVMPrinter` object that controls the format
+        of the topology printout; a `None` printer prints with the
+        default output.
 
-          Print the verification environment's component topology. The
-          `printer` is a `uvm_printer` object that controls the format
-          of the topology printout; a `None` printer prints with the
-          default output.
-
-        #function void uvm_root::print_topology(uvm_printer printer=None)
         Args:
-            printer:
+            printer (UVMPrinter):
         """
-        s = ""
-        if (len(self.m_children) == 0):
-            self.uvm_report_warning("EMTCOMP", "print_topology - No UVM components to print.", UVM_NONE)
+        # s = ""
+        if len(self.m_children) == 0:
+            self.uvm_report_warning("EMTCOMP", "print_topology - No UVM components to print.",
+                    UVM_NONE)
             return
 
-        if (printer is None):
+        if printer is None:
             from .uvm_global_vars import uvm_default_printer
             printer = uvm_default_printer
 
@@ -449,14 +453,6 @@ class UVMRoot(UVMComponent):
         self.uvm_report_info("UVMTOP", "UVM testbench topology:\n" + printer.emit(), UVM_NONE)
 
 
-    #  // Variable- phase_timeout
-    #  //
-    #  // Specifies the timeout for the run phase. Default is `UVM_DEFAULT_TIMEOUT
-    #
-    #
-    #  time phase_timeout = `UVM_DEFAULT_TIMEOUT
-    #
-    #
 
     def m_find_all_recurse(self, comp_match, comps, comp=None):
         """
@@ -565,7 +561,7 @@ class UVMRoot(UVMComponent):
                 timeout_list = ""
                 sep = ""
                 for i in range(len(timeout_settings)):
-                    if (i != 0):
+                    if i != 0:
                         sep = "; "
                     timeout_list = timeout_list + sep + timeout_settings[i]
 
@@ -575,16 +571,17 @@ class UVMRoot(UVMComponent):
             self.uvm_report_info("TIMOUTSET",
                 sv.sformatf("'+UVM_TIMEOUT=%s' provided on the command line is being applied.",
                     timeout), UVM_NONE)
-            sv.sscanf(timeout,"%d,%s",timeout_int,override_spec)
-            #case(override_spec)
+
+            matches = sv.sscanf(timeout,"%d,%s", timeout_int, override_spec)
+            if len(matches) == 2:
+                override_spec, timeout_int = matches
             if override_spec == "YES":
                 self.set_timeout(timeout_int, 1)
             elif override_spec == "NO":
                 self.set_timeout(timeout_int, 0)
             else:
                 self.set_timeout(timeout_int, 1)
-        #endfunction
-        #
+
 
     def m_do_factory_settings(self):
         """
@@ -601,12 +598,11 @@ class UVMRoot(UVMComponent):
         for i in range(len(args)):
             value = args[i][23:len(args[i])]
             self.m_process_type_override(value)
-        #endfunction
-        #
+
 
     def m_process_inst_override(self, ovr):
         """
-         extern local function void m_process_inst_override(string ovr)
+        extern local function void m_process_inst_override(string ovr)
         Args:
             ovr:
         """
@@ -640,15 +636,19 @@ class UVMRoot(UVMComponent):
 
     def m_do_config_settings(self):
         """
-         extern local function void m_do_config_settings()
+        Processes config value options set from cmdline:
+          +uvm_set_config_int=
+          +uvm_set_config_string=
         """
         args = []
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/", args)
+        print("uvm_set_config_int args " + str(args))
         for i in range(len(args)):
             self.m_process_config(args[i][20:len(args[i])], 1)
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/",args)
+        print("uvm_set_config_string args " + str(args))
         for i in range(len(args)):
             self.m_process_config(args[i][23:len(args[i])], 0)
 
@@ -657,8 +657,6 @@ class UVMRoot(UVMComponent):
         #for i in range(len(args)):
         #    self.m_process_default_sequence(args[i][26:len(args[i])])
 
-        #endfunction
-        #
 
     #  extern local function void m_do_max_quit_settings()
     def m_do_max_quit_settings(self):
@@ -716,7 +714,7 @@ class UVMRoot(UVMComponent):
 
     def m_process_config(self, cfg, is_int):
         """
-         extern local function void m_process_config(string cfg, bit is_int)
+        extern local function void m_process_config(string cfg, bit is_int)
         Args:
             cfg:
             is_int:
@@ -747,11 +745,10 @@ class UVMRoot(UVMComponent):
             return
 
         if is_int:
-            if split_val[2].len() > 2:
+            if len(split_val[2]) > 2:
                 #base = split_val[2].substr(0,1)
                 base = split_val[2][0:2]
                 extval = split_val[2][2:len(split_val[2])]
-                v = int(split_val[2])
                 if base in ["'b", "0b"]:
                     v = int(extval, 2)
                 elif base == "'o":
@@ -760,6 +757,8 @@ class UVMRoot(UVMComponent):
                     v = int(extval, 10)
                 elif base in ["'h", "'x", "0x"]:
                     v = int(extval, 16)
+                else:
+                    v = int(split_val[2])
             else:
                 v = int(split_val[2])
 
@@ -939,32 +938,6 @@ uvm_top = UVMRoot.get()
 #//-----------------------------------------------------------------------------
 #// IMPLEMENTATION
 #//-----------------------------------------------------------------------------
-#
-#// get
-#// ---
-#
-#function uvm_root uvm_root::get()
-#   uvm_coreservice_t cs = uvm_coreservice_t::get()
-#   return cs.get_root()
-#endfunction
-#
-#
-#
-#// set_timeout
-#// -----------
-#
-#function void uvm_root::set_timeout(time timeout, bit overridable=1)
-#  static bit m_uvm_timeout_overridable = 1
-#  if (m_uvm_timeout_overridable == 0):
-#    self.uvm_report_info("NOTIMOUTOVR",
-#      $sformatf("The global timeout setting of %0d is not overridable to %0d due to a previous setting.",
-#         phase_timeout, timeout), UVM_NONE)
-#    return
-#  end
-#  m_uvm_timeout_overridable = overridable
-#  phase_timeout = timeout
-#endfunction
-#
 #
 #
 #
