@@ -18,9 +18,14 @@
 #//----------------------------------------------------------------------
 """
 Contains SystemVerilog (SV) system functions mocked/added
-to make the porting SV to Python faster.
+to make the porting SV to Python faster. Also, some functions which are
+originally implemented in C-code, are moved here to implement them in
+Python. As the backdoor access is implemented via cocotb-object interface,
+we don't want to compile vendor-specific C-code for using the backdoor
+access. cocotb is already hiding these details from us.
 """
 
+from inspect import getframeinfo, stack
 import re
 import random
 import cocotb
@@ -29,7 +34,6 @@ from cocotb_coverage import crv
 from cocotb.triggers import Lock, Timer, Combine, First
 from cocotb.utils import get_sim_time, simulator
 from cocotb.bus import Bus
-from inspect import getframeinfo, stack
 
 from .uvm_exceptions import RandomizeError
 
@@ -167,13 +171,60 @@ class sv:
             "%p", "%0t", "%t", "%x"]
 
     @classmethod
+    def sscanf(cls, scan_str, formats, *results):
+        """
+        Scans the input string with given format pattern.
+
+        Args:
+            scan_str (str): Input string to be scanned.
+
+        Returns:
+            list: List of matched strings
+        """
+
+        res = []
+        re_list = get_regex_list(formats)
+        acc = ""
+        curr_match = ""
+        for char in scan_str:
+            acc += char
+            prefix = re_list[0][2]
+            if re_list[0][0].match(acc):
+                # Keep adding chars while match holds
+                curr_match += char
+            elif len(curr_match) > 0:
+                # When it stops matching, we're done for curr match
+                value = re_list[0][1](curr_match)
+                re_list.pop(0)  # Remove matched regex
+                res.append(value)  # Append results
+                curr_match = ""
+                acc = ""
+                if len(re_list) == 0:  # We're done, all matched
+                    break
+            elif (len(acc) >= len(prefix) and acc != prefix):
+                acc = ""
+
+        # Special case if last letter is a matching one
+        if len(curr_match) > 0:
+            # When it stops matching, we're done for curr match
+            value = re_list[0][1](curr_match)
+            re_list.pop(0)  # Remove matched regex
+            res.append(value)  # Append results
+
+        # TODO check from SV spec if all format specifiers must match
+        if len(re_list) > 0:  # Regex left unmatched
+            return []
+        return res
+
+    @classmethod
     def sformatf(cls, msg, *args):
         """
         This is to make porting faster, but should be switched to native python
         formatting inside UVM code
+
         Args:
-            msg: String to format containing format specifiers.
-            args: Values that are used in formatting.
+            msg (str): String to format containing format specifiers.
+            args (*any): Values that are used in formatting.
         Returns:
             str: Formatted string
         """
@@ -424,3 +475,34 @@ async def wait(cond, ev):
         else:
             await ev.wait()
             ev.clear()
+
+# Each letter matches a pair:
+#   1. Regex to parse that value from string
+#   2. Lambda function to convert the value
+RE_FORMATS = {
+    "d": [re.compile(r'^(-?[0-9_]+)$'), lambda s: int(s, 10), '-'],
+    "h": [re.compile(r'^(0x[0-9a-fA-F_]+)$'), lambda s: int(s, 16), '0x'],
+    "b": [re.compile(r'^([01_]+)$'), lambda s: int(s, 2), ''],
+    "o": [re.compile(r'^(o[01_]+)$'), lambda s: int(s, 8), 'o'],
+    "f": [re.compile(r'^(-?[0-9]*\.?[0-9]*)$'), float, '-'],
+    "s": [re.compile(r'^(\w+)$'), lambda s: s, '']
+}
+
+
+def get_regex_list(formats):
+    acc = ""
+    re_format = re.compile("^%([dshbfo])$")
+    results = []
+    for char in formats:
+        acc += char
+        if len(acc) == 2:
+            match = re_format.match(acc)
+            if match:
+                if match[1] in RE_FORMATS:
+                    results.append(RE_FORMATS[match[1]])
+                    acc = ""
+                else:
+                    raise Exception("Format spec {} not supported".format(match))
+            else:
+                acc = acc[1]  # Discard 1st character out of 2
+    return results
