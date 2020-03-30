@@ -387,7 +387,7 @@ UVM.
 ########################
 
 The following subsections specify how TLM-1 is to be implemented in
-SystemVerilog.
+uvm-python.
 
 .. contents::
     :local:
@@ -913,6 +913,10 @@ analysis_fifo at its leisure.
 2.4 TLM-2.0 Implementation
 ##########################
 
+.. WARNING:: TLM-2.0 interaction/integration with SystemC is untested at this
+    point of development. This depends heavily on the simulation support as
+    well.
+
 The following subsections specify how TLM-2.0 is to be implemented in
 Python.
 
@@ -924,7 +928,7 @@ Python.
 
 TLM-2.0 defines a base object, called the *generic payload*, for
 moving data between components. In SystemC, this is the primary
-transaction vehicle. In SystemVerilog, this is the default
+transaction vehicle. In `uvm-python`, this is the default
 transaction type, but it is not the only type that can be used (as
 will be explained more fully in Section 2.4.2).
 
@@ -932,80 +936,81 @@ will be explained more fully in Section 2.4.2).
 ------------------
 
 Each attribute in the SystemC version has a corresponding member in
-the SystemVerilog generic payload::
+the `uvm-python` generic payload::
 
-    protected rand bit [63:0] m_address;
-    protected rand uvm_tlm_command_e m_command;
-    protected rand byte m_data[];
-    protected rand int unsigned m_length;
-    protected rand uvm_tlm_response_status_e m_response_status;
-    protected rand bit m_dmi;
-    protected rand byte m_byte_enable[];
-    protected rand int unsigned m_byte_enable_length;
-    protected rand int unsigned m_streaming_width;
+    int m_address;
+    uvm_tlm_command_e m_command;
+    int m_data[];
+    int unsigned m_length;
+    uvm_tlm_response_status_e m_response_status;
+    bool m_dmi;
+    int m_byte_enable[];
+    int unsigned m_byte_enable_length;
+    int m_streaming_width;
 
-The data types of most members translate directly into SystemVerilog.
-Bool and unsigned int in SystemC become bit and int unsigned in
-SystemVerilog. m_data and m_byte_enable, which are defined as type
-char\* in SystemC, are defined as dynamic arrays of bytes.
+The data types of most members translate directly into `uvm-python`.
+Unsigned int in SystemC become int in
+Python. m_data and m_byte_enable, which are defined as type
+char\* in SystemC, are defined as dynamic arrays of ints.
 uvm_tlm_command_e and uvm_tlm_response_status_e are enumerated types.
 They are defined as::
 
-    typedef enum {
+    class uvm_tlm_command_e(Enum):
+        UVM_TLM_READ_COMMAND = auto()
+        UVM_TLM_WRITE_COMMAND = auto()
+        UVM_TLM_IGNORE_COMMAND = auto()
 
-    TLM_READ_COMMAND, TLM_WRITE_COMMAND, TLM_IGNORE_COMMAND }
-    uvm_tlm_command_e;
+    class uvm_tlm_response_status_e(IntEnum):
+        OK_RESPONSE = 1
+        INCOMPLETE_RESPONSE = 0
+        GENERIC_ERROR_RESPONSE = -1
+        ADDRESS_ERROR_RESPONSE = -2
+        COMMAND_ERROR_RESPONSE = -3
+        BURST_ERROR_RESPONSE = -4
+        BYTE_ENABLE_ERROR_RESPONSE = -5
 
-    typedef enum {
-
-    TLM_OK_RESPONSE = 1, TLM_INCOMPLETE_RESPONSE = 0,
-    TLM_GENERIC_ERROR_RESPONSE = -1, TLM_ADDRESS_ERROR_RESPONSE = -2,
-    TLM_COMMAND_ERROR_RESPONSE = -3, TLM_BURST_ERROR_RESPONSE = -4,
-    TLM_BYTE_ENABLE_ERROR_RESPONSE = -5 } uvm_tlm_response_status_e;
-
-All of the members of the generic payload have the rand qualifier.
+All of the members of the generic payload can be randomized.
 This enables instances of the generic payload to be randomized.
 SystemVerilog allows arrays, including dynamic arrays to be
-randomized. See IEEE Std. 1800-2012, the SystemVerilog LRM, for more
-details.
+randomized. 
 
 2.4.1.2 Accessors
 -----------------
 
 In SystemC, all of the attributes are private and are accessed
-through accessor methods. In SystemVerilog, this means all members
-are protected and similarly accessed through accessor methods::
+through accessor methods. In Python, this restriction is
+removed. The following access methods are implemented::
 
-    virtual function uvm_tlm_command_e get_command();
-    virtual function void set_command(uvm_tlm_command_e command);
-    virtual function bit is_read();
-    virtual function void set_read();
-    virtual function bit is_write();
-    virtual function void set_write();
-    virtual function void set_address(bit [63:0] addr);
-    virtual function bit[63:0] get_address();
-    virtual function void get_data (output byte p []);
-    virtual function void set_data_ptr(ref byte p []);
+    def uvm_tlm_command_e get_command();
+    def void set_command(uvm_tlm_command_e command);
+    def bit is_read();
+    def void set_read();
+    def bit is_write();
+    def void set_write();
+    def void set_address(bit [63:0] addr);
+    def bit[63:0] get_address();
+    def void get_data (output byte p []);
+    def void set_data_ptr(ref byte p []);
 
 
-    virtual function int unsigned get_data_length();
-    virtual function void set_data_length(int unsigned length);
-    virtual function int unsigned get_streaming_width();
-    virtual function void set_streaming_width(int unsigned width);
-    virtual function void get_byte_enable(output byte p[]);
-    virtual function void set_byte_enable(ref byte p[]);
-    virtual function int unsigned get_byte_enable_length();
-    virtual function void set_byte_enable_length(int unsigned length);
-    virtual function void set_dmi_allowed(bit dmi);
-    virtual function bit is_dmi_allowed();
-    virtual function uvm_tlm_response_status_e get_response_status();
-    virtual function void set_response_status(uvm_tlm_response_status_e status);
-    virtual function bit is_response_ok();
-    virtual function bit is_response_error();
-    virtual function string get_response_string();
+    def int unsigned get_data_length();
+    def void set_data_length(int unsigned length);
+    def int unsigned get_streaming_width();
+    def void set_streaming_width(int unsigned width);
+    def void get_byte_enable(output byte p[]);
+    def void set_byte_enable(ref byte p[]);
+    def int unsigned get_byte_enable_length();
+    def void set_byte_enable_length(int unsigned length);
+    def void set_dmi_allowed(bit dmi);
+    def bit is_dmi_allowed();
+    def uvm_tlm_response_status_e get_response_status();
+    def void set_response_status(uvm_tlm_response_status_e status);
+    def bit is_response_ok();
+    def bit is_response_error();
+    def string get_response_string();
 
 The accessor functions let you set and get each of the members of the
-generic payload. All of the accessor methods are virtual. This
+generic payload. This
 implies a slightly different use model for the generic payload than
 in SystemC. The way the generic payload is defined in SystemC does
 not encourage you to create new transaction types derived from
@@ -1013,7 +1018,7 @@ uvm_tlm_generic_payload. Instead, you would use the extensions
 mechanism (see Section 2.4.1.3). Thus, in SystemC, none of the
 accessors are virtual.
 
-In SystemVerilog, an important use model is to add randomization
+In `uvm-python`, an important use model is to add randomization
 constraints to a transaction type. This is most often done with
 inheritance—take a derived object and add constraints to a base
 class. These constraints can further be modified or extended by
@@ -1026,7 +1031,7 @@ local.
 
 The generic payload extension mechanism is very similar to the one
 used in SystemC; minor differences exist simply due to the lack of
-function templates in SystemVerilog. Extensions are used to attach
+function templates in Python. Extensions are used to attach
 additional application-specific or bus-specific information to the
 generic bus transaction described in the generic payload.
 
@@ -1039,30 +1044,31 @@ of a specific extension container type.
 Each extension container type is derived from the uvm_tlm_extension
 class and contains any additional information required by the user::
 
-    class gp_Xs_ext extends uvm_tlm_extension#(gp_Xs_ext);
+    class gp_Xs_ext(uvm_tlm_extension):
 
-    byte Xmask[];
+        def __init__(string name = ""):
+            super().__init__(name)
+            self.Xmask = []
 
-    function new(string name = ""); super.new(name); endfunction
-    ’uvm_object_utils_begin(gp_Xs_ext)
+    uvm_object_utils_begin(gp_Xs_ext)
+    uvm_field_int_array('Xmask', UVM_ALL_ON)
+    uvm_object_utils_end(gp_Xs_ext)
 
-    ’uvm_field_int_array(Xmask, UVM_ALL_ON) ’uvm_object_utils_end
-    endclass
 
 To add an extension to a generic payload object, allocate an instance
 of the extension container class and attach it to the generic payload
 object using the set_extension() method::
 
-    gp_Xs_ext Xs = new(); gp.set_extension(Xs);
-
+    Xs = gp_Xs_ext()
+    gp.set_extension(Xs)
 
 
 The static function ID() in the user-defined extension container
 class can be used as an argument to the function get_extension method
 to retrieve the extension (if any) of the corresponding container
-type— if it is attached to the generic payload object:
+type— if it is attached to the generic payload object::
 
-    gp_Xs_ext Xs; $cast(Xs, gp.get_extension(gp_Xs_ext::ID));
+    Xs = gp.get_extension(gp_Xs_ext.ID)
 
 The following methods are also available in the generic payload for
 managing extensions::
@@ -1078,12 +1084,11 @@ payload.
 2.4.2 Core Interfaces and Ports
 -------------------------------
 
-In the SystemVerilog implementation of TLM-2.0, we have provided only
+In the `uvm-python` implementation of TLM-2.0, we have provided only
 the basic transport interfaces. They are defined in the uvm_tlm_if#()
 class::
 
-    class uvm_tlm_if#(type T=uvm_tlm_generic_payload, type P=uvm_tlm_phase_e);
-    endclass
+    class uvm_tlm_if():
 
 The interface class is parameterized with the type of the transaction
 object that will be transported across the interface and the type of

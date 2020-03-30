@@ -21,11 +21,6 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
-
-from ..seq.uvm_sequence_item import *
-from ..macros import *
-from ..base.uvm_object import UVMObject
-
 """
 TLM Generic Payload & Extensions
 
@@ -34,22 +29,19 @@ TLM Generic Payload & Extensions
  TLM2 blocking and nonblocking transport interfaces.
 """
 
+from ..seq.uvm_sequence_item import *
+from ..macros import *
+from ..base.uvm_object import UVMObject
+
+
 from enum import Enum, auto, IntEnum
 from uvm.seq.uvm_sequence_item import UVMSequenceItem
 from uvm.base.uvm_object import UVMObject
 
-#//---------------
-#// Group -- NODOCS -- Globals
-#//---------------
-#//
-#// Defines, Constants, enums.
-
-
 
 class uvm_tlm_command_e(Enum):
     """
-     Enum uvm_tlm_command_e
-
+    Enum uvm_tlm_command_e
     Command attribute type definition
 
     UVM_TLM_READ_COMMAND      - Bus read operation
@@ -70,7 +62,6 @@ UVM_TLM_IGNORE_COMMAND = uvm_tlm_command_e.UVM_TLM_IGNORE_COMMAND
 class uvm_tlm_response_status_e(IntEnum):
     """
     Enum uvm_tlm_response_status_e
-
     Response status attribute type definition
 
     UVM_TLM_OK_RESPONSE                - Bus operation completed successfully
@@ -117,9 +108,7 @@ class UVMTLMGenericPayload(UVMSequenceItem):
     purpose transaction class that lends itself to many applications. The
     class is derived from uvm_sequence_item which enables it to be
     generated in sequences and transported to drivers through sequencers.
-    """
 
-    """
     :ivar int m_address: Address for the bus operation.
       Should be set or read using the <set_address> and <get_address>
       methods. The variable should be used only when constraining.
