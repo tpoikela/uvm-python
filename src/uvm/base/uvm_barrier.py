@@ -27,6 +27,7 @@ from .sv import sv
 from .uvm_object import UVMObject
 from .uvm_event import UVMEvent
 from .uvm_object_globals import UVM_BIN, UVM_DEC
+from .uvm_globals import uvm_empty_delay
 
 
 class UVMBarrier(UVMObject):
@@ -163,7 +164,7 @@ class UVMBarrier(UVMObject):
     async def m_trigger(self):
         self.m_event.trigger()
         self.num_waiters = 0
-        await Timer(0, "NS")  # self process was last to wait; allow other procs to resume first
+        await uvm_empty_delay()  # self process was last to wait; allow other procs to resume first
 
 
     def do_print(self, printer):
