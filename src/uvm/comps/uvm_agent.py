@@ -60,7 +60,7 @@ class UVMAgent(UVMComponent):
 
 
     def build_phase(self, phase):
-        active = 0
+        self.active = 0
         rp = None  # uvm_resource_pool
         rq = UVMQueue()  # uvm_resource_types::rsrc_q_t
 
