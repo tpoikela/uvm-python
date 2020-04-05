@@ -118,6 +118,9 @@ class env(UVMEnv):
     
     async def run_phase(self, phase):
         phase.raise_objection(self)
+        for _ in range(1000):
+            await Timer(0)
+        uvm_info("ENV", 'run_phase logic starting', UVM_LOW)
         fork_procs = []
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
@@ -140,12 +143,11 @@ class env(UVMEnv):
         uvm_info("ENV", rpt, UVM_LOW)
 
 
-
 uvm_component_utils(env)
 
 
 @cocotb.test()
-async def test_module_top(dut):
+async def seq_fork_module_top(dut):
     UVMPhase.m_phase_trace = True
     e = env("env_name", parent=None)
     uvm_info("top","In top initial block", UVM_MEDIUM)
