@@ -30,7 +30,7 @@ from ..uvm_reg_model import *
 from ..uvm_reg_map import UVMRegMap
 from ..uvm_reg_sequence import UVMRegSequence
 from ...macros import uvm_object_utils, uvm_error, uvm_info, uvm_warning
-from ...base import UVMResourceDb, UVM_LOW
+from ...base import UVMResourceDb, UVM_LOW, uvm_empty_delay
 
 #//------------------------------------------------------------------------------
 #//
@@ -296,7 +296,7 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   //
     
     async def reset_blk(self, blk):
-        await Timer(0, "NS")
+        await uvm_empty_delay()
 
 
 uvm_object_utils(UVMRegAccessSeq)

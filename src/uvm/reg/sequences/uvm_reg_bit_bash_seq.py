@@ -28,7 +28,7 @@ from ..uvm_reg_sequence import UVMRegSequence
 from ..uvm_reg_model import (UVM_NO_HIER, UVM_NO_CHECK,
         UVM_FRONTDOOR, UVM_IS_OK)
 from ...macros import uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH
-from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH
+from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_empty_delay
 
 
 
@@ -311,7 +311,7 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   //
     
     async def reset_blk(self, blk):
-        await Timer(0, "NS")
+        await uvm_empty_delay()
 
     #endclass: UVMRegBitBashSeq
 

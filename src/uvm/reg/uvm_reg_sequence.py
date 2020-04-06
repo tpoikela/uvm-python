@@ -27,6 +27,7 @@ from cocotb.triggers import Timer
 from ..seq.uvm_sequence import UVMSequence
 from ..macros import uvm_object_utils, uvm_fatal, uvm_warning, uvm_info
 from ..base import UVM_LOW, UVM_HIGH
+from ..base.uvm_globals import uvm_empty_delay
 from .uvm_reg_model import UVM_WRITE
 
 #//------------------------------------------------------------------------------
@@ -157,7 +158,7 @@ class UVMRegSequence(UVMSequence):
                self.m_sequencer.get_full_name() + "' does not have an upstream sequencer defined. "
                + "Execution of register items available only via direct calls to 'do_reg_item'")
             #wait(0);
-            await Timer(0, "NS")
+            await uvm_empty_delay()
         uvm_info("REG_XLATE_SEQ_START",
            "Starting RegModel translation sequence on sequencer " +
            self.m_sequencer.get_full_name() + "'", UVM_LOW)
@@ -167,7 +168,7 @@ class UVMRegSequence(UVMSequence):
             await self.do_reg_item(reg_item[0])
             await self.reg_seqr.get(reg_item)
             #0;
-            await Timer(0)
+            await uvm_empty_delay()
 
 
     async def do_reg_item(self, rw):

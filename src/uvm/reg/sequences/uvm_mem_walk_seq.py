@@ -31,6 +31,7 @@ from ...macros import (uvm_info, uvm_error, uvm_object_utils)
 from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base.uvm_object_globals import UVM_LOW
+from ...base.uvm_globals import uvm_empty_delay
 
 #//------------------------------------------------------------------------------
 #// Title: Memory Walking-Ones Test Sequences
@@ -294,7 +295,7 @@ class UVMMemWalkSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   //
     
     async def reset_blk(self, blk):
-        await Timer(0, "NS")
+        await uvm_empty_delay()
 
-    #endclass: UVMMemWalkSeq
+
 uvm_object_utils(UVMMemWalkSeq)
