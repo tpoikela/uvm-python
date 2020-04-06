@@ -192,7 +192,7 @@ class UVMTaskPhase(UVMPhase):
         #phase.m_num_procs_not_yet_returned += 1
         proc = cocotb.fork(self._execute_fork_join_none(comp,phase))
         #phase.m_num_procs_not_yet_returned -= 1
-        await Timer(0)
+        await uvm_empty_delay()
         #join_none
 
 
