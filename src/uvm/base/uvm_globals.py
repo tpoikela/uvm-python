@@ -297,8 +297,14 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #
 #----------------------------------------------------------------------------
 
+import cocotb
+
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
+
+if hasattr(cocotb, 'SIM_NAME') and cocotb.SIM_NAME == 'Verilator':
+    UVM_POUND_ZERO_COUNT = 15
+    # UVM_POUND_ZERO_COUNT = 10
 
 
 
