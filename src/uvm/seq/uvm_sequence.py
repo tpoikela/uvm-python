@@ -3,6 +3,7 @@
 #//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2013 Cisco Systems, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -20,54 +21,39 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-import cocotb
 from .uvm_sequence_base import UVMSequenceBase
 from ..macros.uvm_message_defines import uvm_fatal
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_sequence #(REQ,RSP)
-#//
-#// The uvm_sequence class provides the interfaces necessary in order to create
-#// streams of sequence items and/or other sequences.
-#//
-#//------------------------------------------------------------------------------
-#
-#virtual class uvm_sequence #(type REQ = uvm_sequence_item,
-#                             type RSP = REQ) extends uvm_sequence_base
-
 
 class UVMSequence(UVMSequenceBase):
+    """
+    The UVMSequence class provides the interfaces necessary in order to create
+    streams of sequence items and/or other sequences.
+    """
 
     def __init__(self, name="uvm_sequence"):
-        """      typedef uvm_sequencer_param_base #(REQ, RSP) sequencer_t
+        """
+        Variable: req
 
-         sequencer_t        param_sequencer
+        The sequence contains a field of the request type called req.  The user
+        can use this field, if desired, or create another field to use.  The
+        default `do_print` will print this field.
 
-          Variable: req
-         
-          The sequence contains a field of the request type called req.  The user
-          can use this field, if desired, or create another field to use.  The
-          default `do_print` will print this field.
-         REQ                req
+        Variable: rsp
 
-          Variable: rsp
-         
-          The sequence contains a field of the response type called rsp.  The user
-          can use this field, if desired, or create another field to use.   The
-          default `do_print` will print this field.
-         RSP                rsp
+        The sequence contains a field of the response type called rsp.  The user
+        can use this field, if desired, or create another field to use.   The
+        default `do_print` will print this field.
 
-          Function: new
-         
-          Creates and initializes a new sequence object.
+        Creates and initializes a new sequence object.
 
         Args:
-            name: 
+            name:
         """
         UVMSequenceBase.__init__(self, name)
         self.req = None
         self.rsp = None
+        self.param_sequencer = None
 
     #  // Function: send_request
     #  //
@@ -88,8 +74,7 @@ class UVMSequence(UVMSequenceBase):
     #    m_sequencer.send_request(this, m_request, rerandomize)
     #  endfunction
 
-    #
-    #
+
     #  // Function: get_current_item
     #  //
     #  // Returns the request item currently being executed by the sequencer. If the
@@ -125,30 +110,25 @@ class UVMSequence(UVMSequenceBase):
     #  // If a response is dropped in the response queue, an error will be reported
     #  // unless the error reporting is disabled via
     #  // set_response_queue_error_report_disabled.
-    #  virtual task get_response(output RSP response, input int transaction_id = -1)
-
     async def get_response(self, response, transaction_id=-1):
-        """             
+        """
         Args:
-            response: 
-            transaction_id: 
+            response:
+            transaction_id:
         """
         if response is None:
             uvm_fatal("RESP IS NONE", "response arg must be an empty list")
         rsp = []
         await self.get_base_response(rsp, transaction_id)
         response.append(rsp[0])
-        #  endtask
+
 
     def put_response(self, response_item):
-        """         
-          Function- put_response
-         
-          Internal method.
+        """
+        Internal method.
 
-        virtual function void put_response(uvm_sequence_item response_item)
         Args:
-            response_item: 
+            response_item (UVMSequenceItem): Response item
         """
         #response
         #if (!$cast(response, response_item)) begin
@@ -157,14 +137,12 @@ class UVMSequence(UVMSequenceBase):
 
 
     def do_print(self, printer):
-        """         
-          Function- do_print
-         
+        """
+        Function- do_print
+
         Args:
-            printer: 
+            printer (UVMPrinter): Printer used for printing
         """
         super().do_print(printer)
         printer.print_object("req", self.req)
         printer.print_object("rsp", self.rsp)
-
-    #endclass
