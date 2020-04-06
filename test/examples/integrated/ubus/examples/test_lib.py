@@ -235,8 +235,7 @@ class test_2m_4s(ubus_example_base_test):
             top_seq.master_sqr.append(master.sequencer)
         # TODO add handles for sequencers
         await top_seq.start(None)  # vseq runs with sequencer
-        #yield Timer(1000, "NS")
-        await Timer(500, "NS")
+        await Timer(1000, "NS")
         phase.drop_objection(self)
 
 
