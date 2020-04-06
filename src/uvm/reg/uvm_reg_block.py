@@ -33,25 +33,12 @@ from ..base.uvm_queue import UVMQueue
 from ..base.uvm_resource_db import UVMResourceDb
 from .uvm_reg_model import (UVM_IS_OK, UVM_HAS_X, UVM_NO_COVERAGE,
     UVM_DEFAULT_PATH, UVM_HIER, uvm_reg_cvr_rsrc_db, UVM_FRONTDOOR,
-    UVM_NO_CHECK, UVM_CVR_ALL)
+    UVM_NO_CHECK, UVM_CVR_ALL, UVM_NOT_OK)
 from .uvm_reg_map import UVMRegMap
 from .uvm_mem import UVMMem
 from .uvm_reg_field import UVMRegField
 from .uvm_reg import UVMReg
 from ..macros import (uvm_info, uvm_error, uvm_warning, uvm_fatal, UVM_REG_DATA_WIDTH)
-
-#------------------------------------------------------------------------
-# Class: uvm_reg_block
-#
-# Block abstraction base class
-#
-# A block represents a design hierarchy. It can contain registers,
-# register files, memories and sub-blocks.
-#
-# A block has one or more address maps, each corresponding to a physical
-# interface on the block.
-#
-#------------------------------------------------------------------------
 
 ERR_MSG1 = ("There are %0d root register models named %s. The names of the root"
     + " register models have to be unique")
@@ -61,6 +48,16 @@ ERR_MSG3 = ("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d"
 
 
 class UVMRegBlock(UVMObject):
+    """
+    Block abstraction base class
+
+    A block represents a design hierarchy. It can contain registers,
+    register files, memories and sub-blocks.
+
+    A block has one or more address maps, each corresponding to a physical
+    interface on the block.
+    """
+
     m_roots = {}  # static bit[uvm_reg_block]
     id = 0
 
@@ -82,7 +79,6 @@ class UVMRegBlock(UVMObject):
     #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
     #   //
     #   function new(string name="", int has_coverage=UVM_NO_COVERAGE)
-
     def __init__(self, name="", has_coverage=UVM_NO_COVERAGE):
         super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
@@ -106,7 +102,7 @@ class UVMRegBlock(UVMObject):
         self.fname = ""
         self.lineno = 0
 
-    #
+
     #   // Function: configure
     #   //
     #   // Instance-specific configuration
@@ -171,7 +167,7 @@ class UVMRegBlock(UVMObject):
         if self.maps.num() == 1:
             self.default_map = _map
         return _map
-    #endfunction
+
 
     #   // Function: check_data_width
     #   //
@@ -982,7 +978,6 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    
     async def update(self, status, path=UVM_DEFAULT_PATH, parent=None, prior=-1, extension=None, fname="",
             lineno=0):
         uvm_check_output_args([status])
@@ -1015,7 +1010,6 @@ class UVMRegBlock(UVMObject):
             if (stat_blk[0] != UVM_IS_OK and stat_blk[0] != UVM_HAS_X):
                 stat_all = stat_blk
         status.append(stat_all)
-        #endtask: update
 
 
     #   // Task: mirror
@@ -1039,7 +1033,6 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object         extension = None,
     #                              input  string             fname = "",
     #                              input  int                lineno = 0)
-    
     async def mirror(self, status, check=UVM_NO_CHECK, path=UVM_DEFAULT_PATH, parent=None, prior=-1,
             extension=None, fname="", lineno=0):
         final_status = UVM_IS_OK
@@ -1079,7 +1072,16 @@ class UVMRegBlock(UVMObject):
     #                              input  uvm_object          extension = None,
     #                              input  string              fname = "",
     #                              input  int                 lineno = 0)
+    async def write_reg_by_name(self, status, name, data, path=UVM_DEFAULT_PATH,
+            map=None, parent=None, prior=-1, extension=None, fname="",
+            lineno=0):
+        self.fname = fname
+        self.lineno = lineno
 
+        status = UVM_NOT_OK
+        rg = self.get_reg_by_name(name)
+        if rg is not None:
+            await rg.write(status, data, path, map, parent, prior, extension)
 
 
     #   // Task: read_reg_by_name
@@ -1374,10 +1376,8 @@ class UVMRegBlock(UVMObject):
         for map_ in self.maps.key_list():
             map_.Xinit_address_mapX()
         # map.Xverify_map_configX()
-    #endfunction
 
-    #
-    #endclass: uvm_reg_block
+
 
 #------------------------------------------------------------------------
 #
@@ -1702,28 +1702,6 @@ class UVMRegBlock(UVMObject):
 # Run-Time Access
 #----------------
 #
-# write_reg_by_name
-#
-#task uvm_reg_block::write_reg_by_name(output uvm_status_e   status,
-#                                      input  string              name,
-#                                      input  uvm_reg_data_t      data,
-#                                      input  uvm_path_e     path = UVM_DEFAULT_PATH,
-#                                      input  UVMRegMap      map = None,
-#                                      input  uvm_sequence_base   parent = None,
-#                                      input  int                 prior = -1,
-#                                      input  uvm_object          extension = None,
-#                                      input  string              fname = "",
-#                                      input  int                 lineno = 0)
-#   uvm_reg rg
-#   self.fname = fname
-#   self.lineno = lineno
-#
-#   status = UVM_NOT_OK
-#   rg = self.get_reg_by_name(name)
-#   if (rg is not None)
-#     rg.write(status, data, path, map, parent, prior, extension)
-#
-#endtask: write_reg_by_name
 #
 #
 # read_reg_by_name
