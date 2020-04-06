@@ -37,7 +37,8 @@ from .uvm_pool import UVMEventPool
 from .sv import sv, uvm_split_string
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 from .uvm_recorder import UVMRecorder
-from .uvm_globals import uvm_is_match, uvm_string_to_action, uvm_string_to_severity
+from .uvm_globals import (uvm_is_match, uvm_string_to_action,
+        uvm_string_to_severity, uvm_empty_delay)
 from .uvm_factory import UVMObjectWrapper
 from .uvm_links import (UVMRelatedLink, UVMParentChildLink)
 
@@ -573,7 +574,7 @@ class UVMComponent(UVMReportObject):
 
     async def run(self):
         uvm_debug(self, 'run', self.get_name() + ' yield Timer(0) in self.run()')
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def pre_reset_phase(self, phase):
         """
@@ -597,7 +598,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def reset_phase(self, phase):
         """
@@ -621,7 +622,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def post_reset_phase(self, phase):
         """
@@ -645,7 +646,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def pre_configure_phase(self, phase):
         """
@@ -669,7 +670,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def configure_phase(self, phase):
         """
@@ -693,7 +694,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def post_configure_phase(self, phase):
         """
@@ -717,7 +718,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def pre_main_phase(self, phase):
         """
@@ -741,7 +742,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def main_phase(self, phase):
         """
@@ -765,7 +766,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def post_main_phase(self, phase):
         """
@@ -789,7 +790,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def pre_shutdown_phase(self, phase):
         """
@@ -813,7 +814,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def shutdown_phase(self, phase):
         """
@@ -837,7 +838,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     async def post_shutdown_phase(self, phase):
         """
@@ -861,7 +862,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await Timer(0)
+        await uvm_empty_delay()
 
     def extract_phase(self, phase):
         """
@@ -1408,10 +1409,10 @@ class UVMComponent(UVMReportObject):
     #// of the component created may be different than the requested type. See
     #// <set_type_override> and <set_inst_override>. See also <uvm_factory> for
     #// details on factory operation.
-
-    #extern function uvm_component create_component (string requested_type_name,
-    #                                                string name)
-
+    def create_component(self, requested_type_name, name):
+        factory = _get_factory()
+        return factory.create_component_by_name(requested_type_name,
+            self.get_full_name(), name, self) 
 
     #// Function: create_object
     #//
@@ -1427,9 +1428,10 @@ class UVMComponent(UVMReportObject):
     #// If the factory determines that a type or instance override exists, the
     #// type of the object created may be different than the requested type.  See
     #// <uvm_factory> for details on factory operation.
-
-    #extern function uvm_object create_object (string requested_type_name,
-    #                                          string name="")
+    def create_object(self, requested_type_name, name=""):
+        factory = _get_factory()
+        return factory.create_object_by_name(requested_type_name,
+            self.get_full_name(), name)
 
 
     #// Function: set_type_override_by_type
@@ -1564,9 +1566,10 @@ class UVMComponent(UVMReportObject):
     #// and create_component, but instead of creating an object, it prints
     #// information about what type of object would be created given the
     #// provided arguments.
+    def print_override_info(self, requested_type_name, name=""):
+        factory= _get_factory()
+        factory.debug_create_by_name(requested_type_name, self.get_full_name(), name)
 
-    #extern function void print_override_info(string requested_type_name,
-    #                                         string name="")
 
     #//----------------------------------------------------------------------------
     #// Group: Hierarchical Reporting Interface
@@ -2601,57 +2604,9 @@ class UVMComponent(UVMReportObject):
 
 #//------------------------------------------------------------------------------
 #//
-#// Hierarchy Methods
-#//
-#//------------------------------------------------------------------------------
-#
-#
-#
-#
-#
-#//------------------------------------------------------------------------------
-#//
 #// Factory Methods
 #//
 #//------------------------------------------------------------------------------
-#
-#
-#
-#
-#// print_override_info
-#// -------------------
-#
-#function void  uvm_component::print_override_info (string requested_type_name,
-#                                                   string name="")
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory factory=cs.get_factory()
-#  factory.debug_create_by_name(requested_type_name, get_full_name(), name)
-#endfunction
-#
-#
-#// create_component
-#// ----------------
-#
-#function uvm_component uvm_component::create_component (string requested_type_name,
-#                                                        string name)
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory factory=cs.get_factory()
-#  return factory.create_component_by_name(requested_type_name, get_full_name(),
-#                                          name, this)
-#endfunction
-#
-#
-#// create_object
-#// -------------
-#
-#function uvm_object uvm_component::create_object (string requested_type_name,
-#                                                  string name="")
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory factory=cs.get_factory()
-#  return factory.create_object_by_name(requested_type_name,
-#                                       get_full_name(), name)
-#endfunction
-#
 #
 #// set_type_override (static)
 #// -----------------
@@ -2659,8 +2614,7 @@ class UVMComponent(UVMReportObject):
 #function void uvm_component::set_type_override (string original_type_name,
 #                                                string override_type_name,
 #                                                bit    replace=1)
-#   uvm_coreservice_t cs = uvm_coreservice_t::get()
-#   uvm_factory factory=cs.get_factory()
+#   factory= _get_factory()
 #   factory.set_type_override_by_name(original_type_name,override_type_name, replace)
 #endfunction
 #
@@ -2671,8 +2625,7 @@ class UVMComponent(UVMReportObject):
 #function void uvm_component::set_type_override_by_type (uvm_object_wrapper original_type,
 #                                                        uvm_object_wrapper override_type,
 #                                                        bit    replace=1)
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory factory=cs.get_factory()
+#   factory= _get_factory()
 #   factory.set_type_override_by_type(original_type, override_type, replace)
 #endfunction
 #
@@ -2683,9 +2636,8 @@ class UVMComponent(UVMReportObject):
 #function void  uvm_component::set_inst_override (string relative_inst_path,
 #                                                 string original_type_name,
 #                                                 string override_type_name)
-#  string full_inst_path
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory factory=cs.get_factory()
+#  full_inst_path = ""
+#  factory= _get_factory()
 #
 #  if (relative_inst_path == "")
 #    full_inst_path = get_full_name()
@@ -2837,3 +2789,9 @@ class UVMComponent(UVMReportObject):
 #    endcase
 #
 #endfunction
+
+def _get_factory():
+    from .uvm_coreservice import UVMCoreService
+    cs = UVMCoreService.get()
+    factory = cs.get_factory()
+    return factory
