@@ -638,28 +638,23 @@ class UVMSequencerBase(UVMComponent):
         `uvm_wait_for_nba_region` to give a sequence as much time as
         possible to deliver an item before advancing time.
         """
-        uvm_info("YYY", "Before uvm_wait_for_nba_region()", UVM_LOW)
+        # uvm_info("UVM_SQR_BASE", "Before uvm_wait_for_nba_region()", UVM_LOW)
         await uvm_wait_for_nba_region()
-        uvm_info("YYY", "AFTER uvm_wait_for_nba_region()", UVM_LOW)
+        # uvm_info("UVM_SQR_BASE", "AFTER uvm_wait_for_nba_region()", UVM_LOW)
 
 
     def send_request(self, sequence_ptr, t, rerandomize=0):
         """
-          Function: send_request
+        Derived classes implement this function to send a request item to the
+        sequencer, which will forward it to the driver.  If the rerandomize bit
+        is set, the item will be randomized before being sent to the driver.
 
-          Derived classes implement this function to send a request item to the
-          sequencer, which will forward it to the driver.  If the rerandomize bit
-          is set, the item will be randomized before being sent to the driver.
+        This function may only be called after a `wait_for_grant` call.
 
-          This function may only be called after a `wait_for_grant` call.
-
-         extern virtual function void send_request(uvm_sequence_base sequence_ptr,
-                                                   uvm_sequence_item t,
-                                                   bit rerandomize = 0)
         Args:
-            sequence_ptr:
-            t:
-            rerandomize:
+            sequence_ptr (UVMSequenceBase):
+            t (UVMSequenceItem): Item which is sent as a request.
+            rerandomize (bool): If True, re-randomize item.
         """
         return
 
@@ -1110,7 +1105,7 @@ class UVMSequencerBase(UVMComponent):
                         is_relevant_entries.append(i)
 
         # Typical path - don't need fork if all queued entries are relevant
-        if (len(is_relevant_entries) == 0):
+        if len(is_relevant_entries) == 0:
             await self.m_wait_arb_not_equal()
             return
 
@@ -1135,7 +1130,6 @@ class UVMSequencerBase(UVMComponent):
             self.m_wait_relevant_count += 1
             if self.m_wait_relevant_count > self.m_max_zero_time_wait_relevant_count:
                 uvm_fatal("SEQRELEVANTLOOP",sv.sformatf(SEQ_FATAL1_MSG, self.m_wait_relevant_count))
-        #self.m_is_relevant_completed = 1
         self.set_value('m_is_relevant_completed', True)
 
 
@@ -1209,7 +1203,6 @@ class UVMSequencerBase(UVMComponent):
 #endfunction
 #
 #
-#
 #// convert2string
 #// ----------------
 #
@@ -1226,7 +1219,6 @@ class UVMSequencerBase(UVMComponent):
 #  end
 #  return(s)
 #endfunction
-#
 #
 #
 #// m_find_number_driver_connections

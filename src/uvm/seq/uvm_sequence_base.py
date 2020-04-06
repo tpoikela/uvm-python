@@ -1031,9 +1031,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if set_priority < 0:
             set_priority = self.get_priority()
 
-        print("VVV XXX start_item wait_for_grant()")
         await sequencer.wait_for_grant(self, set_priority)
-        print("VVV XXX GOT GRANT start_item wait_for_grant()")
 
         # TODO recording
         #if (sequencer.is_auto_item_recording_enabled()) begin
