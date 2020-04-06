@@ -142,10 +142,11 @@ class UVMRegMap(UVMObject):
                         else:
                             a = ""
                             a = sv.sformatf("%0h",addr)
-                            uvm_warning("RegModel", ("In map '" + self.get_full_name(),"' register '"
-                                    + rg.get_full_name() + "' maps to same address as register '"
-                                    + top_map.m_regs_by_offset[addr].get_full_name()
-                                    + "': 'h" + a))
+                            uvm_warning("RegModel", ("In map '" +
+                                self.get_full_name() + "' register '" + rg.get_full_name()
+                                + "' maps to same address as register '"
+                                + top_map.m_regs_by_offset[addr].get_full_name()
+                                + "': 'h" + a))
                     else:
                         top_map.m_regs_by_offset[addr] = rg
 
