@@ -405,9 +405,11 @@ def get_cs():
 def uvm_sim_time(units='NS'):
     """     
     Returns current simtime in the given units (default: NS)
+
     Args:
-        units: 
+        units (str): PS, NS, US, MS or S
     Returns:
+        int: Simulation time in specified units
     """
     if simulator is not None:
         return get_sim_time(units=units)
