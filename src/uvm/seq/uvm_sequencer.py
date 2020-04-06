@@ -21,28 +21,40 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-import cocotb
 from cocotb.triggers import Timer
 
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
-from ..macros import uvm_component_utils
-from ..base.uvm_globals import uvm_check_output_args
+from ..macros import uvm_component_utils, uvm_info
+from ..base.uvm_globals import uvm_check_output_args, uvm_empty_delay
 from ..base.uvm_object_globals import *
 
 FATAL_MSG1 = ("Item_done() called with no outstanding requests." +
     " Each call to item_done() must be paired with a previous call to "
     + " get_next_item().")
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_sequencer #(REQ,RSP)
-#//
-#//------------------------------------------------------------------------------
-#class uvm_sequencer #(type REQ=uvm_sequence_item, RSP=REQ)
-#                                   extends uvm_sequencer_param_base #(REQ, RSP)
 
 class UVMSequencer(UVMSequencerParamBase):
+    """
+    Group: Sequencer Interface
+    This is an interface for communicating with sequencers.
+
+    The interface is defined as::
+
+      Requests:
+       async def get_next_item      (output REQ request)
+       async def try_next_item      (output REQ request)
+       async def get                (output REQ request)
+       async def peek               (output REQ request)
+      Responses:
+       def item_done          (input RSP response=null)
+       async def put                (input RSP response)
+      Sync Control:
+       async def          wait_for_sequences()
+       def  has_do_available()
+
+    See `UVMSqrIfBase` for information about this interface.
+    """
 
     def __init__(self, name, parent=None):
         """
@@ -72,36 +84,17 @@ class UVMSequencer(UVMSequencerParamBase):
 
     #  extern virtual function string get_type_name()
 
-    #  // Group: Sequencer Interface
-    #  // This is an interface for communicating with sequencers.
-    #  //
-    #  // The interface is defined as:
-    #  //| Requests:
-    #  //|  virtual task          get_next_item      (output REQ request)
-    #  //|  virtual task          try_next_item      (output REQ request)
-    #  //|  virtual task          get                (output REQ request)
-    #  //|  virtual task          peek               (output REQ request)
-    #  //| Responses:
-    #  //|  virtual function void item_done          (input RSP response=null)
-    #  //|  virtual task          put                (input RSP response)
-    #  //| Sync Control:
-    #  //|  virtual task          wait_for_sequences ()
-    #  //|  virtual function bit  has_do_available   ()
-    #  //
-    #  // See <uvm_sqr_if_base #(REQ,RSP)> for information about this interface.
 
-    #
-    #  // Task: get_next_item
-    #  // Retrieves the next available item from a sequence.
-    #  //
-    #  extern virtual task          get_next_item (output REQ t)
 
     async def get_next_item(self, t):
         """
+        Retrieves the next available item from a sequence.
+
         Args:
-            t:
+            t (list): Empty list into which item is appended
         """
         uvm_check_output_args([t])
+        uvm_info("UVM_SEQUENCER YYY", "get_next_item called now", UVM_MEDIUM)
         # req_item = None
 
         # If a sequence_item has already been requested, then get_next_item()
@@ -119,8 +112,8 @@ class UVMSequencer(UVMSequencerParamBase):
         self.sequence_item_requested = True
         self.get_next_item_called = True
         await self.m_req_fifo.peek(t)
-        #endtask
-    #
+
+
     #  // Task: try_next_item
     #  // Retrieves the next available item from a sequence if one is available.
     #  //
@@ -128,11 +121,8 @@ class UVMSequencer(UVMSequencerParamBase):
 
     def item_done(self, item=None):
         """
+        Indicates that the request is completed.
 
-          Function: item_done
-          Indicates that the request is completed.
-
-         extern virtual function void item_done     (RSP item = null)
         Args:
             item:
         """
@@ -153,36 +143,30 @@ class UVMSequencer(UVMSequencerParamBase):
 
         # Grant any locks as soon as possible
         self.grant_queued_locks()
-        #endfunction
 
-    #  // Task: put
-    #  // Sends a response back to the sequence that issued the request.
-    #  //
-    #  extern virtual task          put           (RSP t)
 
     async def put(self, t):
         """
+        Sends a response back to the sequence that issued the request.
+
         Args:
-            t:
+            t (UVMSequenceItem): Response item.
         """
         self.put_response(t)
-        await Timer(0)
+        await uvm_empty_delay()
 
 
     #  // Task: get
     #  // Retrieves the next available item from a sequence.
-
     async def get(self, t):
         """
         Args:
             t:
         """
-        print("Called get in sequencer " + self.get_name())
         if self.sequence_item_requested == 0:
             await self.m_select_sequence()
         self.sequence_item_requested = 1
         await self.m_req_fifo.peek(t)
-        print("sequencer.get() item is now " + t[0].convert2string())
         self.item_done()
 
     #  // Task: peek
@@ -203,7 +187,7 @@ class UVMSequencer(UVMSequencerParamBase):
         self.sequence_item_requested = 1
         await self.m_req_fifo.peek(t)
 
-    #
+
     #  /// Documented here for clarity, implemented in uvm_sequencer_base
     #
     #  // Task: wait_for_sequences
@@ -225,12 +209,10 @@ class UVMSequencer(UVMSequencerParamBase):
     #    return last_rsp(0)
     #  endfunction
     #  extern protected virtual function int m_find_number_driver_connections()
-    #
-    #endclass
-#  `uvm_component_param_utils(this_type)
+
+
 uvm_component_utils(UVMSequencer)
 
-#typedef uvm_sequencer #(uvm_sequence_item) uvm_virtual_sequencer
 
 #//------------------------------------------------------------------------------
 #// IMPLEMENTATION
