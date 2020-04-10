@@ -72,8 +72,6 @@ endif
 PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_HIGH
 ifneq ($(UVM_TEST),)
     PLUSARGS += +UVM_TESTNAME=$(UVM_TEST)
-else
-    PLUSARGS += +UVM_TESTNAME=sys_R_test 
 endif
 
 ifneq ($(SIMARGS),)
