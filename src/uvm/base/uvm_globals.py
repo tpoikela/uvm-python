@@ -19,15 +19,16 @@
 #   CONDITIONS OF ANY KIND, either express or implied.  See
 #   the License for the specific language governing
 #   permissions and limitations under the License.
-
+#
 #   uvm-python NOTE: All code ported from SystemVerilog UVM 1.2 to
 #   python. Original code structures (including comments)
 #   preserved where possible.
 # ------------------------------------------------------------------------------
 
-
-from cocotb.triggers import Timer
+import cocotb
+from cocotb.triggers import Timer, Edge
 from cocotb.utils import get_sim_time, simulator
+
 from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
                                  UVM_FATAL, UVM_INFO, UVM_LOG, UVM_LOW, UVM_MEDIUM, UVM_NONE,
                                  UVM_NO_ACTION, UVM_RM_RECORD, UVM_STOP, UVM_WARNING)
@@ -75,19 +76,19 @@ async def run_test(test_name="", dut=None):
 #  return top
 #endfunction
 
-# Function: uvm_report_enabled
-#
-# Returns 1 if the configured verbosity in ~uvm_top~ for this
-# severity/id is greater than or equal to ~verbosity~ else returns 0.
-#
-# See also <uvm_report_object::uvm_report_enabled>.
-#
-# Static methods of an extension of uvm_report_object, e.g. uvm_component-based
-# objects, cannot call ~uvm_report_enabled~ because the call will resolve to
-# the <uvm_report_object::uvm_report_enabled>, which is non-static.
-# Static methods cannot call non-static methods of the same class.
 
 def uvm_report_enabled(verbosity, severity=UVM_INFO, id=""):
+    """
+    Returns 1 if the configured verbosity in ~uvm_top~ for this
+    severity/id is greater than or equal to ~verbosity~ else returns 0.
+
+    See also `UVMReportObject.uvm_report_enabled`.
+
+    Static methods of an extension of `UVMReportObject`, e.g. uvm_component-based
+    objects, cannot call `uvm_report_enabled` because the call will resolve to
+    the `UVMReportObject.uvm_report_enabled`, which is non-static.
+    Static methods cannot call non-static methods of the same class.
+    """
     cs = get_cs()
     top = cs.get_root()
     return top.uvm_report_enabled(verbosity,severity,id)
@@ -117,6 +118,7 @@ def uvm_report_info(id, message, verbosity=UVM_MEDIUM, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_INFO, id):
         cs = get_cs()
         top = cs.get_root()
+        # tpoikela: Do not refactor
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -132,6 +134,7 @@ def uvm_report_error(id, message, verbosity=UVM_LOW, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_ERROR, id):
         cs = get_cs()
         top = cs.get_root()
+        # tpoikela: Do not refactor
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -147,6 +150,7 @@ def uvm_report_warning(id, message, verbosity=UVM_LOW, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_WARNING, id):
         cs = get_cs()
         top = cs.get_root()
+        # tpoikela: Do not refactor
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -157,22 +161,23 @@ def uvm_report_warning(id, message, verbosity=UVM_LOW, filename="", line=0,
                 report_enabled_checked)
 
 
-#// Function: uvm_report_fatal
-#//
-#// These methods, defined in package scope, are convenience functions that
-#// delegate to the corresponding component methods in ~uvm_top~. They can be
-#// used in module-based code to use the same reporting mechanism as class-based
-#// components. See <uvm_report_object> for details on the reporting mechanism.
-#//
-#// *Note:* Verbosity is ignored for warnings, errors, and fatals to ensure users
-#// do not inadvertently filter them out. It remains in the methods for backward
-#// compatibility.
-
 def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
         context_name="", report_enabled_checked=False):
+    """
+    These methods, defined in package scope, are convenience functions that
+    delegate to the corresponding component methods in ~uvm_top~. They can be
+    used in module-based code to use the same reporting mechanism as class-based
+    components. See <uvm_report_object> for details on the reporting mechanism.
+
+    *Note:* Verbosity is ignored for warnings, errors, and fatals to ensure users
+    do not inadvertently filter them out. It remains in the methods for backward
+    compatibility.
+    """
+
     if uvm_report_enabled(verbosity, UVM_FATAL, id):
         cs = get_cs()
         top = cs.get_root()
+        # tpoikela: Do not refactor
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -198,6 +203,7 @@ def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
 #  top = cs.get_root()
 #  top.uvm_process_report_message(report_message)
 #endfunction
+
 
 #// TODO merge with uvm_enum_wrapper#(uvm_severity)
 def uvm_string_to_severity(sev_str, sev):
@@ -293,14 +299,18 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #
 # Callers of this task will not return until the NBA region, thus allowing
 # other processes any number of delta cycles (#0) to settle out before
-# continuing. See <uvm_sequencer_base::wait_for_sequences> for example usage.
+# continuing. See `UVMSequencerBase.wait_for_sequences` for example usage.
 #
 #----------------------------------------------------------------------------
 
-import cocotb
+
+# from .uvm_dut import UVMDut
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
+# UVM_NO_WAIT_FOR_NBA = False
+
+UVM_AFTER_NBA_WAIT = 10
 
 if hasattr(cocotb, 'SIM_NAME') and cocotb.SIM_NAME == 'Verilator':
     UVM_POUND_ZERO_COUNT = 15
@@ -309,18 +319,17 @@ if hasattr(cocotb, 'SIM_NAME') and cocotb.SIM_NAME == 'Verilator':
 
 
 async def uvm_wait_for_nba_region():
-    s = ""
-    nba = 0
-    next_nba = 0
 
-    #If `included directly in a program block, can't use a non-blocking assign,
-    #but it isn't needed since program blocks are in a separate region.
+    # Note that this requires dut.nba signal to exist. Also, verilator does not
+    # finish the UVM phases correctly with this one
     if UVM_NO_WAIT_FOR_NBA is False:
-        next_nba += 1
-        #nba <= next_nba
-        nba = next_nba
-        #@(nba)
-        await Timer(0)
+        for _ in range(1):
+            next_nba = int(UVMDut.dut.nba)
+            next_nba += 1
+            UVMDut.dut.nba <= next_nba
+            await Edge(UVMDut.dut.nba)
+        for i in range(UVM_AFTER_NBA_WAIT):
+            await Timer(0)
     else:
         for i in range(0, UVM_POUND_ZERO_COUNT):
             await Timer(0)
@@ -409,7 +418,7 @@ def get_cs():
 
 
 def uvm_sim_time(units='NS'):
-    """     
+    """
     Returns current simtime in the given units (default: NS)
 
     Args:
@@ -432,8 +441,9 @@ async def uvm_zero_delay():
 
 
 def uvm_check_output_args(arr):
-    """     
+    """
     Check that all args in the arr are lists to emulate the SV inout/output/ref args
+
     Raises:
     """
     for item in arr:
