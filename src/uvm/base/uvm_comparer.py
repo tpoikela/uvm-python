@@ -20,7 +20,8 @@
 #//   permissions and limitations under the License.
 #//-----------------------------------------------------------------------------
 
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_DEFAULT_POLICY, UVM_INFO, UVM_LOW,
+    UVM_NORADIX, UVM_REFERENCE)
 from .uvm_object import UVMObject
 from .uvm_scope_stack import UVMScopeStack
 from .uvm_pool import UVMPool
@@ -164,7 +165,6 @@ class UVMComparer:
             rhs:
             size:
             radix:
-            UVM_NORADIX:
         Returns:
         """
         mask = 0
@@ -239,7 +239,7 @@ class UVMComparer:
         msg = ""
         mask = -1
         mask >>= (64-size)
-        if ((lhs & mask) != (rhs & mask)):
+        if (lhs & mask) != (rhs & mask):
             UVMObject._m_uvm_status_container.scope.set_arg(name)
             msg = "lhs = {} : rhs = {}".format(lhs, rhs)
             # TODO pretty formatting
@@ -281,24 +281,23 @@ class UVMComparer:
         #  endfunction
 
 
-    #  // Function: compare_field_real
-    #  //
-    #  // This method is the same as <compare_field> except that the arguments are
-    #  // real numbers.
-    #
-    #  virtual function bit compare_field_real (string name,
-    #                                          real lhs,
-    #                                          real rhs)
-    #    string msg
-    #
-    #    if(lhs != rhs):
-    #      UVMObject._m_uvm_status_container.scope.set_arg(name)
-    #      $swrite(msg, "lhs = ", lhs, " : rhs = ", rhs)
-    #      print_msg(msg)
-    #      return 0
-    #    end
-    #    return 1
-    #  endfunction
+    def compare_field_real(self, name, lhs, rhs):
+        """
+        This method is the same as <compare_field> except that the arguments are
+        real numbers.
+
+        Args:
+            lhs: First float to compare
+            rhs: Second float to compare
+        Returns:
+            bool: True if numbers match, False otherwise
+        """
+        if lhs != rhs:
+            UVMObject._m_uvm_status_container.scope.set_arg(name)
+            msg = "lhs = " + str(lhs) + " : rhs = " + str(rhs)
+            self.print_msg(msg)
+            return False
+        return True
 
 
     def compare_object(self, name, lhs, rhs):
@@ -366,18 +365,16 @@ class UVMComparer:
 
     def print_msg(self, msg):
         """
-          Function: print_msg
+        Causes the error count to be incremented and the message, `msg`, to be
+        appended to the `miscompares` string (a newline is used to separate
+        messages).
 
-          Causes the error count to be incremented and the message, `msg`, to be
-          appended to the `miscompares` string (a newline is used to separate
-          messages).
-
-          If the message count is less than the `show_max` setting, then the message
-          is printed to standard-out using the current verbosity and severity
-          settings. See the `verbosity` and `sev` variables for more information.
+        If the message count is less than the `show_max` setting, then the message
+        is printed to standard-out using the current verbosity and severity
+        settings. See the `verbosity` and `sev` variables for more information.
 
         Args:
-            msg:
+            msg (str): Message to print
         """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
@@ -390,12 +387,11 @@ class UVMComparer:
             root.uvm_report(self.sev, "MISCMP", msg, self.verbosity, "`uvm_file", "`uvm_line")
         self.miscompares = (self.miscompares + UVMObject._m_uvm_status_container.scope.get()
             + ": " + msg + "\n")
-        #  endfunction
 
 
     def print_rollup(self, rhs, lhs):
         """
-          Internal methods - do not call directly
+        Internal methods - do not call directly
 
           print_rollup
           ------------
@@ -423,7 +419,8 @@ class UVMComparer:
         #        end
         #
         #        root.uvm_report(sev, "MISCMP", $sformatf("%s%s@%0d vs. %s@%0d", msg,
-        #                        lhs.get_name(), lhs.get_inst_id(), rhs.get_name(), rhs.get_inst_id()),
+        #                        lhs.get_name(), lhs.get_inst_id(), rhs.get_name(),
+        #                        rhs.get_inst_id()),
         #			verbosity, `uvm_file, `uvm_line)
         #      end
         #    end
@@ -459,8 +456,6 @@ class UVMComparer:
                 lhs_id, rhs_id)
 
 
-
-    #
     #  // init ??
     #
     #  static function UVMComparer init()
