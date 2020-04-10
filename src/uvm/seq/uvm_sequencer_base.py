@@ -305,7 +305,7 @@ class UVMSequencerBase(UVMComponent):
             # uvm_config_db#(uvm_object_wrapper)?
             elif (sv.cast(owr, rsrc, UVMConfigDb) and owr is not None):
                 wrapper = None  # uvm_object_wrapper
-                wrapper = owr.read(self)
+                wrapper = owr[0].read(self)
                 if wrapper is None:
                     uvm_info("UVM/SQR/PH/DEF/OW/None", "Default phase sequence for phase '"
                             + phase.get_name() + "' explicitly disabled", UVM_FULL)
@@ -343,7 +343,7 @@ class UVMSequencerBase(UVMComponent):
             await uvm_empty_delay()
             return
 
-        cocotb.fork(self.c_seq_fork_proc(seq, phase))
+        cocotb.fork(self._seq_fork_proc(seq, phase))
         await uvm_empty_delay()
 
 
@@ -727,10 +727,11 @@ class UVMSequencerBase(UVMComponent):
             if b > (self.arb_sequence_q.size()-1):
                 self.arb_sequence_q = blocked_seqs
             else:
-                self.arb_sequence_q = {blocked_seqs,self.arb_sequence_q[b:self.arb_sequence_q.size()-1]}
+                blocked_seqs.push_back(self.arb_sequence_q[b:self.arb_sequence_q.size()-1])
+                self.arb_sequence_q = blocked_seqs
 
             for idx in range(len(not_blocked_seqs)):
-                self.lock_list.push_back(not_blocked_seqs[idx].sequence_ptr);
+                self.lock_list.push_back(not_blocked_seqs[idx].sequence_ptr)
                 self.m_set_arbitration_completed(not_blocked_seqs[idx].request_id)
 
             # trigger listeners if lock list has changed
