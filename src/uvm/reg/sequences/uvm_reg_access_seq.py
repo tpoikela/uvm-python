@@ -21,8 +21,16 @@
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
 #//
+"""
 
-import cocotb
+Title: Register Access Test Sequences
+
+This section defines sequences that test DUT register access via the
+available frontdoor and backdoor paths defined in the provided register
+model.
+
+"""
+
 from cocotb.triggers import Timer
 
 from .uvm_mem_access_seq import UVMMemAccessSeq
@@ -31,15 +39,6 @@ from ..uvm_reg_map import UVMRegMap
 from ..uvm_reg_sequence import UVMRegSequence
 from ...macros import uvm_object_utils, uvm_error, uvm_info, uvm_warning
 from ...base import UVMResourceDb, UVM_LOW, uvm_empty_delay
-
-#//------------------------------------------------------------------------------
-#//
-#// Title: Register Access Test Sequences
-#//
-#// This section defines sequences that test DUT register access via the
-#// available frontdoor and backdoor paths defined in the provided register
-#// model.
-#//------------------------------------------------------------------------------
 
 
 #//------------------------------------------------------------------------------
@@ -70,7 +69,7 @@ from ...base import UVMResourceDb, UVM_LOW, uvm_empty_delay
 #//------------------------------------------------------------------------------
 
 
-class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
+class UVMRegSingleAccessSeq(UVMRegSequence):
 
     def __init__(self, name="UVMRegSingleAccessSeq"):
         super().__init__(name)
@@ -79,7 +78,7 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         self.reg = None
 
 
-    
+
     async def body(self):
         maps = []  # uvm_reg_map[$]
         rg = self.rg
@@ -153,7 +152,7 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
                    + "' when writing '" + rg.get_full_name() +
                    + "' through map '" + maps[j].get_full_name() + "'"))
-            await Timer(1, "NS")
+            await Timer(1, "NS")  # tpoikela: Original UVM has #1
 
             status = []
             await rg.mirror(status, UVM_CHECK, UVM_BACKDOOR, UVMRegMap.backdoor(), self)
@@ -180,7 +179,6 @@ class UVMRegSingleAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                    + rg.get_full_name() + "' through map '"
                    + maps[j].get_full_name() + "'"))
 
-    #endclass: UVMRegSingleAccessSeq
 
 uvm_object_utils(UVMRegSingleAccessSeq)
 
@@ -205,7 +203,7 @@ uvm_object_utils(UVMRegSingleAccessSeq)
 #//------------------------------------------------------------------------------
 
 
-class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
+class UVMRegAccessSeq(UVMRegSequence):
 
 
     def __init__(self, name="UVMRegAccessSeq"):
@@ -229,7 +227,6 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   // Executes the Register Access sequence.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    
     async def body(self):
         model = self.model
 
@@ -249,7 +246,6 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   //
     #   // Test all of the registers in a block
     #   //
-    
     async def do_block(self, blk):
         #      uvm_reg regs[$]
         regs = []
@@ -279,7 +275,6 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
         blk.get_blocks(blks)
         for i in range(len(blks)):
             await self.do_block(blks[i])
-        #   endtask: do_block
 
 
     #   // Task: reset_blk
@@ -294,7 +289,6 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    
     async def reset_blk(self, blk):
         await uvm_empty_delay()
 
@@ -302,29 +296,26 @@ class UVMRegAccessSeq(UVMRegSequence): #(uvm_sequence #(uvm_reg_item))
 uvm_object_utils(UVMRegAccessSeq)
 
 
-#//------------------------------------------------------------------------------
-#//
-#// Class: UVMRegMemAccessSeq
-#//
-#// Verify the accessibility of all registers and memories in a block
-#// by executing the <UVMRegAccessSeq> and
-#// <uvm_mem_access_seq> sequence respectively on every register
-#// and memory within it.
-#//
-#// Blocks and registers with the NO_REG_TESTS or
-#// the NO_REG_ACCESS_TEST attribute are not verified.
-#//
-#//------------------------------------------------------------------------------
-
 
 class UVMRegMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
+    """
+    Class: UVMRegMemAccessSeq
+
+    Verify the accessibility of all registers and memories in a block
+    by executing the `UVMRegAccessSeq` and
+    `UVMMemAccessSeq` sequence respectively on every register
+    and memory within it.
+
+    Blocks and registers with the NO_REG_TESTS or
+    the NO_REG_ACCESS_TEST attribute are not verified.
+    """
 
 
     def __init__(self, name="UVMRegMemAccessSeq"):
         super().__init__(name)
 
 
-    
+
     async def body(self):
         model = self.model
 
@@ -353,12 +344,8 @@ class UVMRegMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 
     #   // Any additional steps required to reset the block
     #   // and make it accessibl
-    
     async def reset_blk(self, blk):
-        await Timer(1, "NS")
-
-
-    #endclass: UVMRegMemAccessSeq
+        await uvm_empty_delay()
 
 
 uvm_object_utils(UVMRegMemAccessSeq)
