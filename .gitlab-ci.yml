@@ -44,7 +44,7 @@ lint:
 test:
   script:
     - export SIM=icarus
-    - make test --jobs=4 || exit 1
+    - make test || exit 1
     # - RET_VAL=`grep failure results.log`
     # - python setup.py test
     # - pip install tox flake8  # you can also use tox
