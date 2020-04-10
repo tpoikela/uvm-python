@@ -57,7 +57,7 @@ class my_driver(UVMDriver):
         self.recording_detail = UVM_HIGH
 
     
-    async def run_phase(self, phase):
+    async def main_phase(self, phase):
         # req = None
         # rsp = None
 
@@ -116,11 +116,12 @@ class env(UVMEnv):
         self.drv.seq_item_port.connect(self.sqr.seq_item_export)
 
     
-    async def run_phase(self, phase):
+    async def main_phase(self, phase):
         phase.raise_objection(self)
+        uvm_info("ENV", 'Before 1000 x await Timer(0)', UVM_LOW)
         for _ in range(1000):
             await Timer(0)
-        uvm_info("ENV", 'run_phase logic starting', UVM_LOW)
+        uvm_info("ENV", 'main_phase logic starting', UVM_LOW)
         fork_procs = []
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
@@ -148,6 +149,7 @@ uvm_component_utils(env)
 
 @cocotb.test()
 async def seq_fork_module_top(dut):
+    print("Using simulator " + cocotb.SIM_NAME)
     UVMPhase.m_phase_trace = True
     e = env("env_name", parent=None)
     uvm_info("top","In top initial block", UVM_MEDIUM)
