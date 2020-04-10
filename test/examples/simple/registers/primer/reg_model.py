@@ -188,9 +188,8 @@ class reg_block_slave(UVMRegBlock):
         self.PRODUCT_ID = None  # type: UVMRegField
         self.nsession = 256
 
-    #
-    def build(self):
 
+    def build(self):
         # create
         self.ID        = reg_slave_ID.type_id.create("ID")
         self.INDEX     = reg_slave_INDEX.type_id.create("INDEX")
@@ -235,7 +234,6 @@ class reg_block_slave(UVMRegBlock):
         self.REVISION_ID = self.ID.REVISION_ID
         self.CHIP_ID     = self.ID.CHIP_ID
         self.PRODUCT_ID  = self.ID.PRODUCT_ID
-    #   endfunction
 
 
 uvm_object_utils(reg_block_slave)
