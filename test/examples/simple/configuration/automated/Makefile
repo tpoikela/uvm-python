@@ -31,41 +31,12 @@
 
 # Usage:
 # To execute tests in given file using given verilog source, you can do:
-# >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIM_ARGS='-aaa +bbb'
+# >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIMARGS='-aaa +bbb'
 #
 
-TOPLEVEL_LANG ?= verilog
-UVM_PYTHON ?= $(WPWD)/../../../../../src
+include ../../MakefileCommon.mk
 
-PWD=$(shell pwd)
-
-ifeq ($(OS),Msys)
-WPWD=$(shell sh -c 'pwd -W')
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-else
-WPWD=$(shell pwd)
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-endif
-
-
-ifeq ($(TOPLEVEL_LANG),verilog)
-    ifeq ($(IMG),BLK)
-        VERILOG_SOURCES ?= $(WPWD)/module_top.sv
-    else
-        VERILOG_SOURCES ?= $(WPWD)/module_top.sv
-    endif
-else
-    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
-endif
-
-
-ifneq ($(VLOG),)
-	VERILOG_SOURCES := $(VLOG)
-endif
+VERILOG_SOURCES = $(WPWD)/module_top.sv
 
 PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_MEDIUM
 ifneq ($(UVM_TEST),)
@@ -80,7 +51,7 @@ TOPLEVEL ?= module_top
 MODULE   ?= top
 
 # Will be passed to compilation
-EXTRA_ARGS=""
+# EXTRA_ARGS=""
 
 include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim
