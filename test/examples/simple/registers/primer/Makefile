@@ -42,33 +42,6 @@ PYTHONPATH := $(WPWD)/../../../integrated:$(PYTHONPATH)
 
 VERILOG_SOURCES := $(WPWD)/dut.sv
 
-#TOPLEVEL_LANG ?= verilog
-#UVM_PYTHON ?= $(WPWD)/../../../../../src
-#
-#PWD=$(shell pwd)
-#
-#ifeq ($(OS),Msys)
-#WPWD=$(shell sh -c 'pwd -W')
-#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-#PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-#else
-#WPWD=$(shell pwd)
-#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-#PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-#endif
-#
-#ifeq ($(TOPLEVEL_LANG),verilog)
-#    VERILOG_SOURCES ?= $(WPWD)/dut.sv
-#else
-#    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
-#endif
-#
-#ifneq ($(VLOG),)
-#	VERILOG_SOURCES := $(VLOG)
-#endif
-
 ifeq ($(VCD), 1)
 	COMPILE_ARGS += -DVCD=1
 endif
