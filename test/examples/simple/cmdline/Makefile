@@ -31,58 +31,33 @@
 
 # Usage:
 # To execute tests in given file using given verilog source, you can do:
-# >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIM_ARGS='-aaa +bbb'
+# >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v PLUSARGS='-aaa +bbb'
 #
 
-TOPLEVEL_LANG ?= verilog
-UVM_PYTHON ?= $(WPWD)/../../../../src
-
-PWD=$(shell pwd)
-
-ifeq ($(OS),Msys)
-WPWD=$(shell sh -c 'pwd -W')
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
-PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-else
-WPWD=$(shell pwd)
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH)
-PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-endif
-
-ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(WPWD)/../common_stub.v
-else
-    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
-endif
-
-ifneq ($(VLOG),)
-	VERILOG_SOURCES := $(VLOG)
-endif
+include ../MakefileCommon.mk
 
 ifeq ($(UVM_TEST), )
-SIM_ARGS += "+UVM_TESTNAME=CmdLineTest"  # Selects the UVM test to run
+PLUSARGS += "+UVM_TESTNAME=CmdLineTest"  # Selects the UVM test to run
 else
-SIM_ARGS += "+UVM_TESTNAME=$(UVM_TEST)"  # Selects the UVM test to run
+PLUSARGS += "+UVM_TESTNAME=$(UVM_TEST)"  # Selects the UVM test to run
 endif
 
-SIM_ARGS += "+UVM_VERBOSITY=UVM_HIGH"    # Selects the global verbosity
-SIM_ARGS += "+uvm_set_verbosity=uvm_test_top.my_comp,_ALL_,UVM_DEBUG,time,1000"
-SIM_ARGS += "+uvm_set_action=uvm_test_top.my_comp,SUPPRESS_FATAL,UVM_FATAL,UVM_LOG"
-SIM_ARGS += "+uvm_set_severity=uvm_test_top.my_*,FAT2WARN,UVM_FATAL,UVM_WARNING"
-SIM_ARGS += "+UVM_MAX_QUIT_COUNT=10"
+PLUSARGS += "+UVM_VERBOSITY=UVM_HIGH"    # Selects the global verbosity
+PLUSARGS += "+uvm_set_verbosity=uvm_test_top.my_comp,_ALL_,UVM_DEBUG,time,1000"
+PLUSARGS += "+uvm_set_action=uvm_test_top.my_comp,SUPPRESS_FATAL,UVM_FATAL,UVM_LOG"
+PLUSARGS += "+uvm_set_severity=uvm_test_top.my_*,FAT2WARN,UVM_FATAL,UVM_WARNING"
+PLUSARGS += "+UVM_MAX_QUIT_COUNT=10"
 
 
 # Used only in TestMaxQuitCount
 ifeq ($(UVM_TEST), TestMaxQuitCount)
-SIM_ARGS += "+uvm_set_config_int=*,hex_to_match,0x789"
-SIM_ARGS += "+uvm_set_config_int=uvm_test_top.*,bin_to_match,0b10101010"
-SIM_ARGS += "+uvm_set_config_int=uvm_test_top.my_comp,dec_to_match,10000000000000000001"
-SIM_ARGS += "+uvm_set_config_int=*.my_comp,oct_to_match,'o456"
-SIM_ARGS += "+uvm_set_config_string=uvm_test_top.my_comp,tag,matched_correctly"
-SIM_ARGS += "+uvm_set_config_string=uvm_test_top.my_comp,str_with_ws,'str with whitespace[912]'"
-SIM_ARGS += "+UVM_TIMEOUT=200000,NO"
+PLUSARGS += "+uvm_set_config_int=*,hex_to_match,0x789"
+PLUSARGS += "+uvm_set_config_int=uvm_test_top.*,bin_to_match,0b10101010"
+PLUSARGS += "+uvm_set_config_int=uvm_test_top.my_comp,dec_to_match,10000000000000000001"
+PLUSARGS += "+uvm_set_config_int=*.my_comp,oct_to_match,'o456"
+PLUSARGS += "+uvm_set_config_string=uvm_test_top.my_comp,tag,matched_correctly"
+PLUSARGS += "+uvm_set_config_string=uvm_test_top.my_comp,str_with_ws,'str with whitespace[912]'"
+PLUSARGS += "+UVM_TIMEOUT=200000,NO"
 endif
 
 TOPLEVEL := common_stub
