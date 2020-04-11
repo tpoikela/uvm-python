@@ -1,5 +1,8 @@
 # Common makefile for uvm-python examples
 
+COCOTB_HDL_TIMEUNIT=1ns
+COCOTB_HDL_TIMEPRECISION=1ns
+
 TOPLEVEL_LANG ?= verilog
 
 MAKEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -8,14 +11,9 @@ UVM_PYTHON ?= $(MAKEDIR)/../../../src
 ifeq ($(OS),Msys)
 WPWD=$(shell sh -c 'pwd -W')
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH):.
-#PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 else
 WPWD=$(shell pwd)
 PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH):.
-#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.
-#PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
 export PYTHONPATH
