@@ -34,29 +34,14 @@
 # >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIM_ARGS='-aaa +bbb'
 #
 
-TOPLEVEL_LANG ?= verilog
-UVM_PYTHON ?= $(WPWD)/../../../../../src
-
-PWD=$(shell pwd)
-
-ifeq ($(OS),Msys)
-WPWD=$(shell sh -c 'pwd -W')
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-else
-WPWD=$(shell pwd)
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-endif
-
+include ../../MakefileCommon.mk
+PYTHONPATH := $(WPWD)/../../../integrated:$(PYTHONPATH)
 
 ifeq ($(TOPLEVEL_LANG),verilog)
     ifeq ($(IMG),BLK)
-        VERILOG_SOURCES ?= $(WPWD)/blk_dut.sv
+        VERILOG_SOURCES := $(WPWD)/blk_dut.sv
     else
-        VERILOG_SOURCES ?= $(WPWD)/sys_dut.sv
+        VERILOG_SOURCES := $(WPWD)/sys_dut.sv
     endif
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
@@ -87,10 +72,10 @@ else
 endif
 
 ifeq ($(SIM),$(filter $(SIM),ius xcelium))
-    EXTRA_ARGS=-gpg "PBASE_ADDR => 'h100"
+    COMPILE_ARGS=-gpg "PBASE_ADDR => 'h100"
 else
     ifeq ($(SIM), icarus)
-        EXTRA_ARGS="-PBASE_ADDR='h100"
+        COMPILE_ARGS="-PBASE_ADDR='h100"
     endif
 endif
 
