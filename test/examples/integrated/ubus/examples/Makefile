@@ -51,6 +51,8 @@ PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
+export PYTHONPATH
+
 ifeq ($(TOPLEVEL_LANG),verilog)
     VERILOG_SOURCES ?= $(WPWD)/dut_dummy.v
 else
