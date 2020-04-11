@@ -34,34 +34,12 @@
 # >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIM_ARGS='-aaa +bbb'
 #
 
-TOPLEVEL_LANG ?= verilog
-UVM_PYTHON ?= $(WPWD)/../../../../../../src
+include ../../../MakefileCommon.mk
+PYTHONPATH := $(WPWD)/../../../integrated:$(PYTHONPATH)
+PYTHONPATH := $(WPWD)/../..:$(PYTHONPATH)
 
-PWD=$(shell pwd)
+VERILOG_SOURCES := $(WPWD)/dut.sv
 
-ifeq ($(OS),Msys)
-WPWD=$(shell sh -c 'pwd -W')
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../..
-PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-else
-WPWD=$(shell pwd)
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../..
-PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-endif
-
-ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(WPWD)/dut.sv
-else
-    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
-endif
-
-ifneq ($(VLOG),)
-	VERILOG_SOURCES := $(VLOG)
-endif
-
-SIM_ARGS = ""
 TOPLEVEL := dut
 MODULE   ?= tb_run
 
