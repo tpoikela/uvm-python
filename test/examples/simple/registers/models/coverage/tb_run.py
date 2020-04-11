@@ -24,6 +24,7 @@
 
 
 import cocotb
+from cocotb.triggers import FallingEdge
 from cocotb.clock import Clock
 
 from uvm import (UVMTest, uvm_top,
@@ -39,6 +40,7 @@ class tb_test(UVMTest):
 
     def __init__(self, name="tb_test", parent=None):
         super().__init__(name, parent)
+        self.dut = None
 
     def build_phase(self, phase):
         super().build_phase(phase)
@@ -52,12 +54,18 @@ class tb_test(UVMTest):
         env.regmodel.reset()
         env.regmodel.set_coverage(UVM_CVR_ALL)  # cast to 'void' removed
 
-        seq = UVMRegBitBashSeq.type_id.create("seq")
+        self.dut.rst <= 0
+        for _ in range(3):
+            await FallingEdge(self.dut.clk)
+        self.dut.rst <= 1
+        await FallingEdge(self.dut.clk)
+
+        seq = UVMRegBitBashSeq.type_id.create("reg_test_seq")
         seq.model = env.regmodel
         await seq.start(env.bus.sqr)
         await seq.wait_for_sequence_state(UVM_FINISHED)
 
-        seq = UVMMemWalkSeq.type_id.create("seq")
+        seq = UVMMemWalkSeq.type_id.create("memory_test_seq")
         seq.model = env.regmodel
         await seq.start(env.bus.sqr)
         await seq.wait_for_sequence_state(UVM_FINISHED)
@@ -84,12 +92,14 @@ async def initial_begin(dut):
     c = Clock(dut.clk, 10, 'ns')
 
     test = tb_test("test")
+    test.dut = dut
 
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
     UVMConfigDb.set(None, "", "dut", dut)
 
     cocotb.fork(c.start())
+
     await run_test()
 
     def my_log(msg):
