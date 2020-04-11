@@ -167,6 +167,9 @@ class UVMRoot(UVMComponent):
         #  // Specifies the timeout for the run phase. Default is `UVM_DEFAULT_TIMEOUT
         self.phase_timeout = UVM_DEFAULT_TIMEOUT
 
+        # Handle to the DUT (added for uvm-python)
+        self._dut = None
+
 
     m_called_get_common_domain = False
 
@@ -202,6 +205,10 @@ class UVMRoot(UVMComponent):
         if tr_db.is_open():
             tr_db.close_db()
 
+
+    @classmethod
+    def get_dut(cls):
+        return cls.get()._dut
     #----------------------------------------------------------------------------
     # Group: Simulation Control
     #----------------------------------------------------------------------------
@@ -230,7 +237,11 @@ class UVMRoot(UVMComponent):
         test_names = []
         msg = ""
         uvm_test_top = None  # uvm_component
+        self._dut = dut
         ##process phase_runner_proc; // store thread forked below for final cleanup
+
+        # from .uvm_scheduler import UVMScheduler
+        # cocotb.fork(UVMScheduler.get().run_event_loop())
 
         # Set up the process that decouples the thread that drops objections from
         # the process that processes drop/all_dropped objections. Thus, if the
