@@ -79,6 +79,7 @@ class tb_env(UVMEnv):
         self.regmodel.lock_model()
 
         self.bus = reg_agent.type_id.create("bus", self)
+        self.bus.set_nbits(16)
         self.predict = UVMRegPredictor.type_id.create("predict", self)
 
 
