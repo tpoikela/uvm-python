@@ -19,8 +19,13 @@ setup(
     packages=find_packages(),
     package_dir={"": "src"},
     setup_requires=["setuptools_scm",],
-    python_requires=">=3.5",
-    install_requires=["cocotb>=1.3.0", "cocotb-coverage>=1.0.0", "regex>=2019.11.1"],
+    python_requires=">=3.6",
+    install_requires=[
+        #"cocotb>=1.3.0",
+        "cocotb @ git+git://github.com/cocotb/cocotb@f61afcedc0#egg=cocotb",
+        "cocotb-coverage>=1.0.0",
+        "regex>=2019.11.1"
+    ],
     platforms="any",
     classifiers=[
         "Programming Language :: Python :: 3",
