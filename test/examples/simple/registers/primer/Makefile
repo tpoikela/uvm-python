@@ -37,32 +37,37 @@
 COCOTB_HDL_TIMEUNIT=1ns
 COCOTB_HDL_TIMEPRECISION=1ns
 
-TOPLEVEL_LANG ?= verilog
-UVM_PYTHON ?= $(WPWD)/../../../../../src
+include ../../MakefileCommon.mk
+PYTHONPATH := $(WPWD)/../../../integrated:$(PYTHONPATH)
 
-PWD=$(shell pwd)
+VERILOG_SOURCES := $(WPWD)/dut.sv
 
-ifeq ($(OS),Msys)
-WPWD=$(shell sh -c 'pwd -W')
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-else
-WPWD=$(shell pwd)
-PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
-PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-endif
-
-ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(WPWD)/dut.sv
-else
-    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
-endif
-
-ifneq ($(VLOG),)
-	VERILOG_SOURCES := $(VLOG)
-endif
+#TOPLEVEL_LANG ?= verilog
+#UVM_PYTHON ?= $(WPWD)/../../../../../src
+#
+#PWD=$(shell pwd)
+#
+#ifeq ($(OS),Msys)
+#WPWD=$(shell sh -c 'pwd -W')
+#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
+#PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
+#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
+#else
+#WPWD=$(shell pwd)
+#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:../../../integrated
+#PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
+#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
+#endif
+#
+#ifeq ($(TOPLEVEL_LANG),verilog)
+#    VERILOG_SOURCES ?= $(WPWD)/dut.sv
+#else
+#    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
+#endif
+#
+#ifneq ($(VLOG),)
+#	VERILOG_SOURCES := $(VLOG)
+#endif
 
 ifeq ($(VCD), 1)
 	COMPILE_ARGS += -DVCD=1
