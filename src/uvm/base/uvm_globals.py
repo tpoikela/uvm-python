@@ -35,6 +35,7 @@ from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERRO
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
 
+# from .uvm_scheduler import uvm_default_scheduler
 # Title: Globals
 
 # ------------------------------------------------------------------------------
@@ -303,8 +304,9 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #
 #----------------------------------------------------------------------------
 
+# verilator = True
+verilator = False
 
-# from .uvm_dut import UVMDut
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
@@ -312,27 +314,32 @@ UVM_NO_WAIT_FOR_NBA = True
 
 UVM_AFTER_NBA_WAIT = 10
 
-if hasattr(cocotb, 'SIM_NAME') and cocotb.SIM_NAME == 'Verilator':
+if hasattr(cocotb, 'SIM_NAME') and getattr(cocotb, 'SIM_NAME') == 'Verilator':
     UVM_POUND_ZERO_COUNT = 15
-    # UVM_POUND_ZERO_COUNT = 10
 
 
 
 async def uvm_wait_for_nba_region():
-
-    # Note that this requires dut.nba signal to exist. Also, verilator does not
-    # finish the UVM phases correctly with this one
-    if UVM_NO_WAIT_FOR_NBA is False:
-        for _ in range(1):
-            next_nba = int(UVMDut.dut.nba)
-            next_nba += 1
-            UVMDut.dut.nba <= next_nba
-            await Edge(UVMDut.dut.nba)
-        for i in range(UVM_AFTER_NBA_WAIT):
-            await Timer(0)
+    if verilator is True:
+        from .uvm_scheduler import UVMScheduler
+        await UVMScheduler.get().wait_nba(None)
     else:
-        for i in range(0, UVM_POUND_ZERO_COUNT):
-            await Timer(0)
+
+        # Note that this requires dut.nba signal to exist. Also, verilator does not
+        # finish the UVM phases correctly with this one
+        if UVM_NO_WAIT_FOR_NBA is False:
+            from .uvm_root import UVMRoot
+            dut = UVMRoot.get_dut()
+            for _ in range(1):
+                next_nba = int(dut.nba)
+                next_nba += 1
+                dut.nba <= next_nba
+                await Edge(dut.nba)
+            for _ in range(UVM_AFTER_NBA_WAIT):
+                await Timer(0)
+        else:
+            for _ in range(0, UVM_POUND_ZERO_COUNT):
+                await Timer(0)
 
 
 # Returns UVM coreservice
@@ -433,11 +440,19 @@ def uvm_sim_time(units='NS'):
 
 
 async def uvm_empty_delay():
-    await Timer(0, "NS")
+    if verilator is False:
+        await Timer(0, "NS")
+    else:
+        from .uvm_scheduler import UVMScheduler
+        await UVMScheduler.get().wait_zero(None)
 
 
 async def uvm_zero_delay():
-    await Timer(0, "NS")
+    if verilator is False:
+        await Timer(0, "NS")
+    else:
+        from .uvm_scheduler import UVMScheduler
+        await UVMScheduler.get().wait_zero(None)
 
 
 def uvm_check_output_args(arr):
