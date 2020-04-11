@@ -32,7 +32,6 @@
 # Usage:
 # To execute tests in given file using given verilog source, you can do:
 # >$ make MODULE=py_mod_name VLOG=hdl/my_vlog.v SIM_ARGS='-aaa +bbb'
-#
 
 COCOTB_HDL_TIMEUNIT=1ns
 COCOTB_HDL_TIMEPRECISION=1ns
@@ -41,42 +40,7 @@ include ../../../MakefileCommon.mk
 PYTHONPATH := $(WPWD)/../../../../integrated:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../common:$(PYTHONPATH)
 
-#TOPLEVEL_LANG ?= verilog
-#
-#PWD=$(shell pwd)
-#
-#
-#ifeq ($(OS),Msys)
-#WPWD=$(shell sh -c 'pwd -W')
-#INTEGRATED=$(WPWD)/../../../../integrated
-#COMMON=$(WPWD)/../common
-#UVM_PYTHON ?= $(WPWD)/../../../../../../src
-#
-#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:$(INTEGRATED)
-#PYTHONPATH := $(COMMON):$(PYTHONPATH)
-#PYTHONPATH := $(UVM_PYTHON):$(UVM_PYTHON)/base:$(PYTHONPATH)
-#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-#else
-#WPWD=$(shell pwd)
-#INTEGRATED=$(WPWD)/../../../../integrated
-#COMMON=$(WPWD)/../common
-#UVM_PYTHON ?= $(WPWD)/../../../../../../src
-#
-#PYTHONPATH := $(WPWD)/model:$(PYTHONPATH):.:$(INTEGRATED)
-#PYTHONPATH := $(COMMON):$(PYTHONPATH)
-#PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
-#PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
-#endif
-#
-#ifeq ($(TOPLEVEL_LANG),verilog)
-#    VERILOG_SOURCES ?= $(WPWD)/../common/dut.sv
-#else
-#    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
-#endif
-#
-#ifneq ($(VLOG),)
-#	VERILOG_SOURCES := $(VLOG)
-#endif
+VERILOG_SOURCES := $(WPWD)/../common/dut.sv
 
 ifeq ($(VCD), 1)
 	COMPILE_ARGS += -DVCD=1
