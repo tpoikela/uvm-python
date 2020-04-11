@@ -1,4 +1,4 @@
-RET_VAL=`grep failure results.log`
+RET_VAL=`grep -l failure results.log`
 echo "RET_VAL is |$RET_VAL|"
 if [[ -n $RET_VAL ]]
 then
