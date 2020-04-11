@@ -20,6 +20,12 @@
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
 #//
+"""
+Title: Bit Bashing Test Sequences
+
+This section defines classes that test individual bits of the registers
+defined in a register model.
+"""
 
 import cocotb
 from cocotb.triggers import Timer
@@ -27,17 +33,10 @@ from cocotb.triggers import Timer
 from ..uvm_reg_sequence import UVMRegSequence
 from ..uvm_reg_model import (UVM_NO_HIER, UVM_NO_CHECK,
         UVM_FRONTDOOR, UVM_IS_OK)
-from ...macros import uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH
+from ...macros import (uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH,
+    uvm_warning)
 from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_empty_delay
 
-
-
-#//----------------------------------------------------------------------------
-#// Title: Bit Bashing Test Sequences
-#//----------------------------------------------------------------------------
-#// This section defines classes that test individual bits of the registers
-#// defined in a register model.
-#//----------------------------------------------------------------------------
 
 #//----------------------------------------------------------------------------
 #// Class: UVMRegSingleBitBashSeq
@@ -75,7 +74,6 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         self.rg = None
 
 
-    
     async def body(self):
         fields = []  # uvm_reg_field[$]
         mode = [""] * UVM_REG_DATA_WIDTH  # string [`UVM_REG_DATA_WIDTH]
@@ -115,14 +113,12 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             dc_mask  = [0] * UVM_REG_DATA_WIDTH
 
             for k in range(len(fields)):
-                lsb = 0
-                w = 0
-                dc = 0
 
                 field_access = fields[k].get_access(maps[j])
                 dc = (fields[k].get_compare() == UVM_NO_CHECK)
                 lsb = fields[k].get_lsb_pos()
                 w   = fields[k].get_n_bits()
+
                 # Ignore Write-only fields because
                 # you are not supposed to read them
                 if field_access in ["WO", "WOC", "WOS", "WO1", "NOACCESS"]:
@@ -145,6 +141,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             uvm_info("UVMRegBitBashSeq", sv.sformatf("Verifying bits in register %s in map \"%s\"...",
                 rg.get_full_name(), maps[j].get_full_name()),UVM_LOW)
 
+            bits_bashed = 0
             # Bash the kth bit
             for k in range(n_bits):
                 # Cannot test unpredictable bit behavior
@@ -155,11 +152,13 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                     dc_mask_int |= (dc_mask[i] << i)
 
                 await self.bash_kth_bit(rg, k, mode[k], maps[j], dc_mask_int)
+                bits_bashed += 1
 
-    #   endtask: body
+            if bits_bashed == 0:
+                uvm_warning('UVMRegBitBashSeq', 'No bits bashed for ' +
+                    rg.get_name())
 
 
-    
     async def bash_kth_bit(self, rg, k, mode, _map, dc_mask):
         status = 0
         val = 0x0
@@ -204,7 +203,6 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
                     + "'h%h yielded 'h%h instead of 'h%h"),
                     bit_val, k, rg.get_full_name(), v, val, exp))
 
-    #endclass: UVMRegSingleBitBashSeq
 
 uvm_object_utils(UVMRegSingleBitBashSeq)
 
@@ -248,7 +246,6 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Executes the Register Bit Bash sequence.
     #   // Do not call directly. Use seq.start() instead.
     #   //
-    
     async def body(self):
 
         if self.model is None:
@@ -266,8 +263,6 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Task: do_block
     #   //
     #   // Test all of the registers in a given ~block~
-    #   //
-    
     async def do_block(self, blk):
         regs = []
 
@@ -294,7 +289,6 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
         blk.get_blocks(blks)
         for blk in blks:
             await self.do_block(blk)
-    #   endtask: do_block
 
 
     #   // Task: reset_blk
@@ -309,10 +303,8 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // test sequence or this method should be implemented
     #   // in an extension to reset the DUT.
     #   //
-    
     async def reset_blk(self, blk):
         await uvm_empty_delay()
 
-    #endclass: UVMRegBitBashSeq
 
 uvm_object_utils(UVMRegBitBashSeq)
