@@ -74,6 +74,7 @@ class UVMRegField(UVMObject):
         This method should not be used directly.
         The `UVMRegField.type_id.create()` factory method
         should be used instead.
+
         Args:
             name: (str): Name of the register field
         """
@@ -94,7 +95,7 @@ class UVMRegField(UVMObject):
         self.m_lineno = 0
         self.m_cover_on = 0
         self.m_individually_accessible = False
-        self.m_check = 0  # uvm_check_e
+        self.m_check = UVM_NO_CHECK  # uvm_check_e
         if UVMRegField.m_predefined is False:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
 
@@ -921,13 +922,11 @@ class UVMRegField(UVMObject):
 
     def set_compare(self, check=UVM_CHECK):
         """
-           Function: set_compare
-
-           Sets the compare policy during a mirror update.
-           The field value is checked against its mirror only when both the
-           `check` argument in <uvm_reg_block::mirror>, `UVMReg.mirror`,
-           or <uvm_reg_field::mirror> and the compare policy for the
-           field is <UVself.m_check>.
+        Sets the compare policy during a mirror update.
+        The field value is checked against its mirror only when both the
+        `check` argument in `UVMRegBlock.mirror`, `UVMReg.mirror`,
+        or `UVMRegField.mirror` and the compare policy for the
+        field is `UVMRegField.m_check`.
 
         Args:
             check:
@@ -938,9 +937,7 @@ class UVMRegField(UVMObject):
 
     def get_compare(self):
         """
-           Function: get_compare
-
-           Returns the compare policy for this field.
+        Returns the compare policy for this field.
 
         Returns:
         """
