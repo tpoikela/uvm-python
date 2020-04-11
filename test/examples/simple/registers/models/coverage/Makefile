@@ -40,6 +40,8 @@ PYTHONPATH := $(WPWD)/../..:$(PYTHONPATH)
 
 VERILOG_SOURCES := $(WPWD)/reg_mem_dut.sv
 
+#PLUSARGS += +UVM_VERBOSITY=UVM_DEBUG
+
 TOPLEVEL := reg_mem_dut
 MODULE   ?= tb_run
 
