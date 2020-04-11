@@ -45,7 +45,7 @@ CORRECT_PHASES = ['build', 'connect', 'end_of_elaboration',
 
 # Define new base class with phase_started/ended callbacks.
 
-test_duration = 500
+test_duration = 10
 
 
 class VerifComp(UVMComponent):
