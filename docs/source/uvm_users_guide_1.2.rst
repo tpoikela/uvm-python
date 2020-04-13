@@ -1878,12 +1878,12 @@ To create a driver:
 
 a) Derive from the uvm_driver base class.
 b) If desired, add UVM
-infrastructure macros for class properties to implement utilities for
-printing, copying, comparing, and so on.
+    infrastructure macros for class properties to implement utilities for
+    printing, copying, comparing, and so on.
 c) Obtain the next data item from the
-sequencer and execute it as outlined above.
+    sequencer and execute it as outlined above.
 d) Declare a virtual
-interface in the driver to connect the driver to the DUT.
+    interface in the driver to connect the driver to the DUT.
 
 Refer to Section 3.10.2 for a description of how a sequencer, driver,
 and sequences synchronize with each other to generate constrained
@@ -2752,22 +2752,19 @@ defined in user code, typically the test. For example, this resource
 setting causes the specified sequencer instance to be triggered by
 starting main_phase and creating an instance of the
 loop_read_modify_write_seq sequence, then randomize it and start
-executing it.
+executing it::
 
-UVMConfigDb.set(this,
+    UVMConfigDb.set(self,
+        ".ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
+        "default_sequence", loop_read_modify_write_seq.type_id.get()
+    )
 
-".ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
-"default_sequence", loop_read_modify_write_seq::type_id::get());
+It is also possible to start a specific instance of a sequence::
 
-It is also possible to start a specific instance of a sequence:
-
-lrmw_seq = loop_read_modify_write_seq.type_id.create(“lrmw”,,
-
-get_full_name()); // set parameters in lrmw_seq, if desired
-UVMConfigDb.set(this,
-
-".ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
-"default_sequence", lrmw_seq);
+    lrmw_seq = loop_read_modify_write_seq.type_id.create(
+        “lrmw”,, self.get_full_name()) # set parameters in lrmw_seq, if desired
+    UVMConfigDb.set(this, ".ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
+        "default_sequence", lrmw_seq)
 
 By creating a specific instance of the sequence, the instance may be
 randomized and/or specific parameters set explicitly or constrained
@@ -2777,7 +2774,7 @@ instance.
 
 **3.10.4 Overriding Sequence Items and Sequences**
 
-In a user-defined uvm_test, e.g., base_test_ubus_demo (discussed in
+In a user-defined UVMTest, e.g., base_test_ubus_demo (discussed in
 Section 4.5.1), you can configure the simulation environment to use a
 modified version of an existing sequence or a sequence item by using
 the common factory to create instances of sequence and sequence-item
@@ -3139,10 +3136,11 @@ sections.
 The steps to create a testbench from verification components are:
 
 a) Review the reusable verification component configuration parameters.
-b) Instantiate and configure reusable verification components. c) Create
-reusable sequences for interface verification components (optional). d)
-Add a virtual sequencer (optional). e) Add checking and functional
-coverage extensions. f) Create tests to achieve coverage goals.
+b) Instantiate and configure reusable verification components.
+c) Create reusable sequences for interface verification components (optional).
+d) Add a virtual sequencer (optional).
+e) Add checking and functional coverage extensions.
+f) Create tests to achieve coverage goals.
 
 Before reading this chapter make sure you read Chapter 1. It is also
 recommended (but not required) that you read Chapter 3 to get a
@@ -3154,10 +3152,10 @@ deeper understanding of verification components.
 Instantiating individual verification components directly inside of
 each test has several drawbacks:
 
-— The test writer must know how to configure each component. — Changes
-to the topology require updating multiple test files, which can turn
-into a big task. — The tests are not reusable because they rely on a
-specific environment structure.
+- The test writer must know how to configure each component.
+- Changes to the topology require updating multiple test files, which can turn
+    into a big task.
+- The tests are not reusable because they rely on a specific environment structure.
 
 The *top-level environment* is a container that defines the reusable
 component topology within the UVM tests. The top-level environment
@@ -3197,81 +3195,65 @@ The following also apply.
 **interface ports**
 
 
-— Examples for the UVMConfigDb::set calls can be found within the
-build_phase() func-
+— Examples for the `UVMConfigDb.set` calls can be found within the
+    build_phase() function.
 
-tion.
+.. code-block:: python
 
-class ubus_example_env(UVMEnv):
+    class ubus_example_env(UVMEnv):
 
-// Provide implementations of virtual methods such as
-get_type_name().
 
-\`uvm_component_utils(ubus_example_env) // UBus reusable environment
+        def __init__(self, name, parent);
+            super.new(name, parent);
+            self.ubus0 = None  # Scoreboard to check the memory operation of the slave
+            self.scoreboard0 = None
 
-ubus_env ubus0; // Scoreboard to check the memory operation of the slave
+        def build_phase(self, phase):
+            super().build_phase(phase)  # Configure before creating the
+            # subcomponents.
+            UVMConfigDb.set(self,"ubus0", "num_masters", 1);
+            UVMConfigDb.set(self,".ubus0", "num_slaves", 1);
+            self.ubus0 = ubus_env.type_id.create("ubus0", self)
+            self.scoreboard0 = ubus_example_scoreboard.type_id.create("scoreboard0", self)
 
-ubus_example_scoreboard scoreboard0; // new()
 
-function new(string name, uvm_component parent);
+        def connect_phase(self, phase):
+            # Connect slave0 monitor to scoreboard.
+            self.ubus0.slaves[0].monitor.item_collected_port.connect(
+                self.scoreboard0.item_collected_export)
 
-super.new(name, parent); endfunction : new // build_phase()
+        def end_of_elaboration_phase(self, phase);
+            # Set up slave address map for ubus0 (basic default).
+            ubus0.set_slave_address_map("slaves[0]", 0, 0xFFFF);
 
-virtual function void build_phase(uvm_phase phase);
-
-super.build_phase(phase); // Configure before creating the
-
-// subcomponents. UVMConfigDb.set(this,"ubus0",
-
-"num_masters", 1); UVMConfigDb.set(this,".ubus0",
-
-"num_slaves", 1); ubus0 = ubus_env.type_id.create("ubus0", this);
-
-scoreboard0 = ubus_example_scoreboard.type_id.create("scoreboard0",
-
-this);; endfunction : build_phase virtual function connect_phase();
-
-// Connect slave0 monitor to scoreboard.
-ubus0.slaves[0].monitor.item_collected_port.connect(
-scoreboard0.item_collected_export); endfunction : connect virtual
-function void end_of_elaboration_phase(uvm_phase phase);
-
-// Set up slave address map for ubus0 (basic default).
-ubus0.set_slave_address_map("slaves[0]", 0, 16'hffff); endfunction :
-end_of_elaboration_phase endclass : ubus_example_env
+    uvm_component_utils(ubus_example_env)  # UBus reusable environment
 
 Other configuration examples include:
 
-— Set the masters[0] agent to be active:
+— Set the masters[0] agent to be active::
 
-UVMConfigDb.set(this,"ubus0.masters[0]",
+    UVMConfigDb.set(self,"ubus0.masters[0]", "is_active", UVM_ACTIVE)
 
-"is_active", UVM_ACTIVE);
+— Do not collect coverage for masters[0] agent::
 
-— Do not collect coverage for masters[0] agent:
+    UVMConfigDb.set(self, "ubus0.masters[0].monitor", "coverage_enable", 0)
 
-UVMConfigDb.set(this, "ubus0.masters[0].monitor",
+— Set all slaves (using a wildcard) to be passive::
 
-"coverage_enable", 0);
-
-— Set all slaves (using a wildcard) to be passive:
-
-UVMConfigDb.set(this,"ubus0.slaves*",
-
-"is_active", UVM_PASSIVE);
+    UVMConfigDb.set(self,"ubus0.slaves*", "is_active", UVM_PASSIVE)
 
 Many test classes may instantiate the top-level environment class
 above, and configure it as needed. A test writer may use the
 top-level environment in its default configuration without having to
 understand all the details of how it is created and configured.
 
-The ubus_example_env’s new() constructor is not used for creating the
+The ubus_example_env’s __init__ constructor is not used for creating the
 top-level environment subcomponents because there are limitations on
-overriding new() in object-oriented languages such as SystemVerilog.
+overriding __init__ in object-oriented languages such as SystemVerilog.
 Instead, use a virtual build_phase() function, which is a built-in
 UVM phase.
 
-The UVMConfigDb::set calls specify that the number of masters and
+The `UVMConfigDb.set` calls specify that the number of masters and
 slaves should both be 1. These configuration settings are used by the
 ubus0 environment during the ubus0 build_phase(). This defines the
 topology of the ubus0 environment, which is a child of the
@@ -3286,7 +3268,7 @@ See Section 6.2.3 for more information.
 
 super.build_phase() is called as the first line of the
 ubus_example_env’s build() function. If the UVM field automation
-macros are used, this updates the configuration fields of the
+mixins are used, this updates the configuration fields of the
 ubus_example_tb.
 
 connect_phase() is used to make the connection between the slave
@@ -3304,7 +3286,7 @@ agent should respond.
 4.3 Creating Test Classes
 #########################
 
-The uvm_test class defines the test scenario and goals. Part of that
+The UVMTest class defines the test scenario and goals. Part of that
 responsibility involved selecting which top level environment will be
 used, as well as enabling configuration of the environment and its
 children verification components. Although IP developers provide
@@ -3317,7 +3299,7 @@ inline constraints. Test files are typically associated with a single
 configuration. For usage examples of test classes, refer to Section
 4.5.
 
-Tests in UVM are classes that are derived from an uvm_test class.
+Tests in UVM are classes that are derived from an UVMTest class.
 Using classes allows inheritance and reuse of tests. Typically, a
 base test class is defined that instantiates and configures the
 top-level environment (see Section 4.5.1), and is then extended to
@@ -3370,7 +3352,7 @@ verification component implementation and hook-up scheme. The
 following are some examples::
 
     UVMConfigDb.set(self,"*.masters[0]", "master_id", 0);
-    UVMConfigDb.set(self, "*.ubus0.masters[0].sequencer.main_phase", "default_sequence", read_modify_write_seq::type_id::get());
+    UVMConfigDb.set(self, "*.ubus0.masters[0].sequencer.main_phase", "default_sequence", read_modify_write_seq.type_id.get());
     UVMConfigDb.set(this,"ubus_example_env0.*","vif",vif);
     UVMResourceDb.set(“anyobject”, “shared_config”, data, this);
 
@@ -3694,44 +3676,45 @@ example in Section 4.6.1), the parity bit is constrained to be
 In tests, the user may wish to change the way data items are
 generated. For example, the test writer may wish to have short
 delays. This can be achieved by deriving a new data item class and
-adding constraints or other class members as needed.
+adding constraints or other class members as needed::
 
-// A derived data item example
+    // A derived data item example
+    // Test code
+    class short_delay_frame extends uart_frame;
 
-// Test code class short_delay_frame extends uart_frame;
+        // This constraint further limits the delay values.
+        constraint test1_txmit_delay {transmit_delay < 10;}
+        uvm_object_utils(short_delay_frame)
 
-// This constraint further limits the delay values. constraint
-test1_txmit_delay {transmit_delay < 10;}
-\`uvm_object_utils(short_delay_frame) function new(input string
-name="short_delay_frame");
+        function new(input string name="short_delay_frame");
+            super.new(name);
+        endfunction
 
-super.new(name); endfunction endclass: short_delay_frame
+    endclass: short_delay_frame
 
 Deriving the new class is not enough to get the desired effect. The
 environment needs to be configured to use the new class
 (short_delay_frame) rather than the verification component frame. The
 UVM Class Library factory mechanism can be used to introduce the
-derived class to the environment.
+derived class to the environment::
+
+    class short_delay_test(UVMTest):
+
+        def __init__(self, name="short_delay_test", parent=None):
+            super().__init__(name, parent)
+            self.uart_tb0 = None
+
+        def build_phase(self, phase):
+            super.build_phase(phase)  # Use short_delay_frame throughout the environment.
+            factory.set_type_override_by_type(uart_frame.get_type(),
+                short_delay_frame.get_type())
+            self.uart_tb0 = uart_tb.type_id.create("uart_tb0", self)
 
 
+        async def run_phase(self, phase):
+            uvm_top.print_topology()
 
-class short_delay_test extends uvm_test;
-
-\`uvm_component_utils(short_delay_test) uart_tb uart_tb0; function
-new (string name = "short_delay_test",uvm_component parent =
-null);\ :sub:`super.new(name, parent); `
-
-endfunction virtual function build_phase(uvm_phase phase);
-
-super.build_phase(phase); // Use short_delay_frame throughout the
-environment.
-factory.\ **set_type_override_by_type**\ (uart_frame::get_type(),
-
-short_delay_frame::get_type()); uart_tb0 =
-uart_tb.type_id.create("uart_tb0", this); endfunction task
-run_phase(uvm_phase phase);
-
-uvm_top.print_topology(); endtask endclass
+    uvm_component_utils(short_delay_test)
 
 Calling the factory function set_type_override_by_type() (in bold
 above) instructs the environment to use short-delay frames.
@@ -3739,18 +3722,16 @@ above) instructs the environment to use short-delay frames.
 At times, a user may want to send special traffic to one interface
 but keep sending the regular traffic to other interfaces. This can be
 achieved by using set_inst_override_by_type() inside an UVM
-component.
+component::
 
-set_inst_override_by_type("uart_env0.master.sequencer.*",
-
-uart_frame::get_type(), short_delay_frame::get_type());
+    set_inst_override_by_type("uart_env0.master.sequencer.*",
+        uart_frame::get_type(), short_delay_frame::get_type());
 
 Wildcards can also be used to override the instantiation of a few
-components, e.g.,
+components, e.g. ::
 
-set_inst_override_by_type("uart_env*.master.sequencer.*",
-
-uart_frame::get_type(), short_delay_frame::get_type());
+    set_inst_override_by_type("uart_env*.master.sequencer.*",
+        uart_frame::get_type(), short_delay_frame::get_type())
 
 4.7 Virtual Sequences
 #####################
@@ -3793,18 +3774,17 @@ There are three ways in which the virtual sequencer can interact with
 its subsequencers:
 
 a) “Business as usual”—Virtual subsequencers and subsequencers send
-transactions simultaneously. b) Disable subsequencers—Virtual sequencer
-is the only one driving. c) Using grab() and ungrab()—Virtual sequencer
-takes control of the underlying driver(s) for a
-
-limited time.
+    transactions simultaneously.
+b) Disable subsequencers—Virtual sequencer is the only one driving.
+c) Using grab() and ungrab()—Virtual sequencer takes control of the
+    underlying driver(s) for a limited time.
 
 When using virtual sequences, most users disable the subsequencers and
 invoke sequences only from the virtual sequence. For more information,
 see Section 4.7.3.
 
 To invoke sequences, do one of the following: Use the appropriate
-’uvm_do macro. Use the sequence start() method.
+uvm_do function. Use the sequence start() method.
 
 4.7.1 Creating a Virtual Sequencer
 ----------------------------------
@@ -3817,30 +3797,28 @@ virtual sequencer.
 To create a virtual sequencer that controls several subsequencers:
 
 a) Derive a virtual sequencer class from the uvm_sequencer class.
-
-
-
 b) Add references to the sequencers where the virtual sequences will
-coordinate the activity. These ref-
-
-erences will be assigned by a higher-level component (typically the
-top-level environment).
+    coordinate the activity. These references will be assigned by a
+    higher-level component (typically the top-level environment).
 
 The following example declares a virtual sequencer with two
 subsequencers. Two interfaces called eth and cpu are created in the
-build function, which will be hooked up to the actual sub-sequencers.
+build function, which will be hooked up to the actual sub-sequencers::
 
-class simple_virtual_sequencer extends uvm_sequencer;
+    class simple_virtual_sequencer extends uvm_sequencer;
 
-eth_sequencer eth_seqr; cpu_sequencer cpu_seqr; // Constructor
+        eth_sequencer eth_seqr;
+        cpu_sequencer cpu_seqr; // Constructor
 
-function new(input string name="simple_virtual_sequencer",
+        function new(input string name="simple_virtual_sequencer",
+                input uvm_component parent=null);
+            super.new(name, parent);
+        endfunction
 
-input uvm_component parent=null); super.new(name, parent);
-endfunction // UVM automation macros for sequencers
+        // UVM automation macros for sequencers
+        `uvm_component_utils(simple_virtual_sequencer)
 
-\`uvm_component_utils(simple_virtual_sequencer) endclass:
-simple_virtual_sequencer
+    endclass: simple_virtual_sequencer
 
 Subsequencers can be driver sequencers or other virtual sequencers.
 The connection of the actual subsequencer instances via reference is
@@ -3864,14 +3842,12 @@ associated with them, only sequences.
 To create a virtual sequence:
 
 a) Declare a sequence class by deriving it from UVMSequence, just like
-a driver sequence. b) Define a body() method that implements the desired
-logic of the sequence. c) Use the \`uvm_do_on (or \`uvm_do_on_with)
-macro to invoke sequences in the underlying
-
-subsequencers. d) Use the \`uvm_do (or \`uvm_do_with) macro to invoke
-other virtual sequences in the current vir-
-
-tual sequencer.
+    a driver sequence.
+b) Define a body() method that implements the desired logic of the sequence.
+c) Use the \`uvm_do_on (or \`uvm_do_on_with) macro to invoke sequences in the
+    underlying subsequencers.
+d) Use the \`uvm_do (or \`uvm_do_with) macro to invoke other virtual
+    sequences in the current virtual sequencer.
 
 The following example shows a simple virtual sequence controlling two
 subsequencers: a cpu sequencer and an ethernet sequencer. Assume the
@@ -3911,21 +3887,21 @@ original subsequencers. The data items resulting from the subse-
 quencers’ default behavior—along with those injected by sequences
 invoked by the virtual sequencer—will be intermixed and executed in an
 arbitrary order by the driver. This is the default behavior, so there is
-no need to do anything to achieve this. b) Disable the
-subsequencers—Using the UVMConfigDb::set routines, the default_se-
+no need to do anything to achieve this.
 
-quence property of the subsequencers is set to null, disabling their
-default behavior. The following code snippet disables the default
-sequences on the subsequencers in the example in Section 4.7.4.
+b) Disable the subsequencers—Using the UVMConfigDb::set routines,
+the default_sequence property of the subsequencers is set to null,
+disabling their default behavior. The following code snippet
+disables the default
+sequences on the subsequencers in the example in Section 4.7.4::
 
-// Configuration: Disable subsequencer sequences.
+    // Configuration: Disable subsequencer sequences.
+    UVMConfigDb.set(this, "*.cpu_seqr.*_phase",
+        "default_sequence", null);;
+    UVMConfigDb.set(this, "*.eth_seqr.*_phase",
+        "default_sequence", null);
 
-UVMConfigDb.set(this, "*.cpu_seqr.*_phase",
-
-"default_sequence", null);;
-UVMConfigDb.set(this, "*.eth_seqr.*_phase",
-
-"default_sequence", null); c) Use grab()/lock() and ungrab()/unlock()—In
+c) Use grab()/lock() and ungrab()/unlock()—In
 this case, a virtual sequence can achieve full control over its
 subsequencers for a limited time and then let the original sequences
 continue working. The grab and lock APIs effectively prevent sequence
@@ -3944,18 +3920,15 @@ a given subsequencer is not a virtual sequencer before attempting to
 lock it.
 
 The following example illustrates this using the functions grab() and
-ungrab() in the sequence consumer interface.
+ungrab() in the sequence consumer interface::
 
-virtual task body();
-
-// Grab the cpu sequencer if not virtual. if (p_sequencer.cpu_seqr !=
-null)
-
-grab(p_sequencer.cpu_seqr); // Execute a sequence.
-\`uvm_do_on(conf_seq, p_sequencer.cpu_seqr) // Ungrab. if
-(p_sequencer.cpu_seqr != null) ungrab(p_sequencer.cpu_seqr); endtask
-
-
+    virtual task body();
+        // Grab the cpu sequencer if not virtual.
+        if (p_sequencer.cpu_seqr != null)
+            grab(p_sequencer.cpu_seqr); // Execute a sequence.
+        `uvm_do_on(conf_seq, p_sequencer.cpu_seqr) // Ungrab.
+        if (p_sequencer.cpu_seqr != null) ungrab(p_sequencer.cpu_seqr);
+    endtask
 
 NOTE—When grabbing several sequencers, make sure to use some convention
 to avoid deadlocks. For example, always grab in a standard order.
@@ -3969,15 +3942,13 @@ a) Assign the sequencer references specified in the virtual sequencer to
 instances of the sequencers.
 
 This is a simple reference assignment and should be done only after all
-components are created.
+components are created::
 
-v_sequencer.cpu_seqr = cpu_seqr;
-
-v_sequencer.eth_seqr = eth_seqr;
+    v_sequencer.cpu_seqr = cpu_seqr
+    v_sequencer.eth_seqr = eth_seqr
 
 b) Perform the assignment in the connect() phase of the verification
 environment at the appropriate
-
 location in the verification environment hierarchy.
 
 Alternatively, the sequencer pointer could be set as a resource
@@ -3988,41 +3959,36 @@ which instantiates the ethernet and cpu components and the virtual
 sequencer that controls the two. At the top-level environment, the
 path to the sequencers inside the various components is known and
 that path is used to get a handle to them and connect them to the
-virtual sequencer.
+virtual sequencer::
 
-class simple_tb(UVMEnv):
+    class simple_tb(UVMEnv):
 
-cpu_env_c cpu0; // Reuse a cpu verification component. eth_env_c eth0;
-// Reuse an ethernet verification component. simple_virtual_sequencer
-v_sequencer; ... // Constructor and UVM automation macros virtual
-function void build_phase(uvm_phase phase);
+        cpu_env_c cpu0; // Reuse a cpu verification component.
+        eth_env_c eth0;
+        // Reuse an ethernet verification component.
+        simple_virtual_sequencer v_sequencer; ... // Constructor and UVM automation macros virtual
 
-super.build_phase(phase); // Configuration: Set the default sequence
-for the virtual sequencer.
-UVMConfigDb.set(this,
+        function void build_phase(uvm_phase phase);
+            super.build_phase(phase);
+            // Configuration: Set the default sequence for the virtual sequencer.
+            UVMConfigDb.set(this, "v_sequencer.run_phase",
+                "default_sequence", simple_virt_seq.type_id::get());
+            // Build envs with subsequencers.
+            cpu0 = cpu_env_c.type_id.create("cpu0", this);
+            eth0 = eth_env_c.type_id.create("eth0", this);
 
-"v_sequencer.run_phase",
+            // Build the virtual sequencer. v_sequencer =
+            simple_virtual_sequencer.type_id.create("v_sequencer", this);
+        endfunction : build_phase
 
-"default_sequence", simple_virt_seq.type_id::get()); // Build envs
-with subsequencers. cpu0 = cpu_env_c.type_id.create("cpu0", this);
-eth0 = eth_env_c.type_id.create("eth0", this);
+        // Connect virtual sequencer to subsequencers.
 
-// Build the virtual sequencer. v_sequencer =
-simple_virtual_sequencer.type_id.create("v_sequencer",
+        function void connect_phase();
+            v_sequencer.cpu_seqr = cpu0.master[0].sequencer;
+            UVMConfigDb.set(this,“v_sequencer”, “eth_seqr”,eth0.tx_rx_agent.sequencer);
+        endfunction : connect_phase
 
-this); endfunction : build_phase
-
-// Connect virtual sequencer to subsequencers.
-
-function void connect_phase();
-
-v_sequencer.cpu_seqr = cpu0.master[0].sequencer;
-UVMConfigDb.set(this,“v_sequencer”,
-
-“eth_seqr”,eth0.tx_rx_agent.sequencer); endfunction : connect_phase
-
-endclass: simple_tb
-
+    endclass: simple_tb
 
 
 4.8 Checking for DUT Correctness
@@ -7122,7 +7088,7 @@ my_reg_sequence extends uvm_reg_sequence (VIP_sequence);
 To run the register sequence, assign the sequence model property and
 start it on the bus sequencer::
 
-    class my_test extends uvm_test;
+    class my_test extends UVMTest;
 
         block_env env;
 
@@ -7323,7 +7289,7 @@ endclass
 To run a register sequence, you register the model and start it on the
 register sequencer:
 
-class my_test extends uvm_test;
+class my_test extends UVMTest;
 
 block_env env;
 
@@ -7734,7 +7700,7 @@ environment.
 The first component override replaces all components of the specified
 type with the new specified type. The prototype is.
 
-<orig_type>::type_id::set_type_override(<override_type>::get_type(),
+<orig_type>.type_id.set_type_override(<override_type>::get_type(),
 
 bit replace = 1);
 
@@ -7759,7 +7725,7 @@ set_type_override method allows you to override this behavior in order
 to have an ubus_new_master_driver for all instances of
 ubus_master_driver.
 
-ubus_master_driver::type_id::set_type_override(ubus_new_master_driver::
+ubus_master_driver.type_id.set_type_override(ubus_new_master_driver::
 
 get_type);
 
@@ -7821,8 +7787,8 @@ ordering of the instance overrides in your code affects the application
 of the instance overrides. You should execute more-specific instance
 overrides first. For example,
 
-mytype::type_id::set_inst_override(newtype::get_type(), "a.b.*");
-my_type::type_id::set_inst_override(different_type::get_type(),
+mytype.type_id.set_inst_override(newtype::get_type(), "a.b.*");
+my_type.type_id.set_inst_override(different_type::get_type(),
 "a.b.c");
 
 will create a.b.c with different_type. All other objects under a.b of
@@ -7830,8 +7796,8 @@ mytype are created using newtype. If you switch the order of the
 instance override calls then all of the objects under a.b will get
 newtype and the instance override a.b.c is ignored.
 
-my_type::type_id::set_inst_override(different_type::get_type(),
-"a.b.c"); mytype::type_id::set_inst_override(newtype::get_type(),
+my_type.type_id.set_inst_override(different_type::get_type(),
+"a.b.c"); mytype.type_id.set_inst_override(newtype::get_type(),
 "a.b.*");
 
 .. figure:: fig/32_hierarchy_created_with_both_overrides_applied.png
@@ -8080,7 +8046,7 @@ build() and end_of_elaboration() for exten- sions that need to apply for
 the entire duration of the test and in the run() method for extensions
 that need to apply for a specific portion of the testcase.
 
-class error_test extends uvm_test;
+class error_test extends UVMTest;
 
 function new(string name = “error_test”, uvm_component parent = null);
 
@@ -9743,7 +9709,7 @@ information.
 
 In UVM, the test is defined in a separate class, test_read_modify_write.
 It derives from ubus_example_base_test that, in turn, derives from
-uvm_test. The ubus_example_base_test test builds the ubus_example_tb
+UVMTest. The ubus_example_base_test test builds the ubus_example_tb
 object and manages the run_phase() phase of the test. Subsequent derived
 tests, such as test_read_modify_write, can leverage this functionality
 as shown in the example below.
@@ -9761,7 +9727,7 @@ simulation phases. Refer to Section 4.5 for more information.
 *Example: test_lib.sv*
 
 1 \`include "ubus_example_tb.sv" 2
-:sub:`3 class ubus_example_base_test extends uvm_test;` 4
+:sub:`3 class ubus_example_base_test extends UVMTest;` 4
 :sub:`5 ubus_example_tb ubus_example_tb0; // UBus verification environment`
 6 uvm_table_printer printer; 7 bit test_pass = 1; 8
 :sub:`9 function new(string name = "ubus_example_base_test",` 10
@@ -9803,10 +9769,9 @@ Line1 Include the necessary file for the test. The testbench used in
 this example is the ubus_example_tb that contains, by default, the bus
 monitor, one master, and one slave. See Section 7.5.
 
-Line 3 All tests should derive from the uvm_test class and use the
-\`uvm_component_utils or the
-\`uvm_component_utils_begin/`uvm_component_utils_end macros. See the UVM
-*1.2 Class Reference* for more information.
+Line 3 All tests should derive from the UVMTest class and use the
+uvm_component_utils or the uvm_component_utils_begin/uvm_component_utils_end macros.
+See the UVM *1.2 Class Reference* for more information.
 
 Line 5 Declare the testbench. It will be constructed by the
 build_phase() function of the test.
@@ -9838,30 +9803,39 @@ end-of-test objections were dropped, a 50 micro-second delay is
 introduced before the run phase it terminated.
 
 Now that the base test is defined, a derived test will be examined. The
-following code is a continuation of the test_lib.sv file.
+following code is a continuation of the test_lib.sv file::
 
-class test_read_modify_write extends ubus_example_base_test;
+    class test_read_modify_write(ubus_example_base_test):
 
-\`uvm_component_utils(test_read_modify_write) function new(string name =
-"test_read_modify_write",
+        def __init__(self, name="test_read_modify_write", parent=None):
+            super().__init__(name, parent)
 
-uvm_component parent=null); super.new(name,parent); endfunction virtual
-function void build_phase();
+        def build_phase(self, phase):
+            UVMConfigDb.set(self, "ubus_example_tb0.ubus0.masters[0].sequencer.run_phase",
+                    "default_sequence", read_modify_write_seq.type_id.get())
+            UVMConfigDb.set(self, "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
+                    "default_sequence", slave_memory_seq.type_id.get())
+            #    // Create the tb
+            ubus_example_base_test.build_phase(self, phase)
 
+        
+        async def run_phase(self, phase):
+            phase.raise_objection(self, "test_read_modify_write OBJECTED")
+            master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
+            slave_sqr = self.ubus_example_tb0.ubus0.slaves[0].sequencer
 
+            uvm_info("TEST_TOP", "Forking master_proc now", UVM_LOW)
+            master_seq = read_modify_write_seq("r_mod_w_seq")
+            master_proc = cocotb.fork(master_seq.start(master_sqr))
 
-begin\ :sub:`// Set the default sequence for the master and slave. `
+            slave_seq = slave_memory_seq("mem_seq")
+            slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
+            #await [slave_proc, master_proc.join()]
+            await sv.fork_join_any([slave_proc, master_proc])
+            phase.drop_objection(self, "test_read_modify_write drop objection")
+            if not master_seq.test_pass:
+                self.test_pass = False
 
-   UVMConfigDb.set(this,
-
-   "ubus_example_tb0.ubus0.masters[0].sequencer.main_phase",
-   "default_sequence", read_modify_write_seq::type_id::get());
-   UVMConfigDb.set(this,
-
-"ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
-"default_sequence", slave_memory_seq::type_id::get());
-
-// Create the tb super.build_phase(phase); end endfunction endclass
 
 The build_phase() function of the derivative test,
 test_read_modify_write, is of interest. The build_phase() function uses
@@ -9885,7 +9859,7 @@ This section discusses the testbench created in the *Example:
 test_lib.sv* in Section 7.4. The code that creates the ubus_example_tb
 is repeated here::
 
-    ubus_example_tb0 = ubus_example_tb.type_id.create("ubus_example_tb0", this);
+    ubus_example_tb0 = ubus_example_tb.type_id.create("ubus_example_tb0", self)
 
 In general, testbenches can contain any number of envs (verification
 components) of any type: ubus, pci, ahb, ethernet, and so on. The UBus
@@ -9893,48 +9867,38 @@ example creates a simple testbench consisting of a single UBus
 environment (verification component) with one master agent, slave agent,
 and bus monitor (see Figure 41).
 
+.. figure:: fig/41_testbench_derived_from_uvm_env.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-
-**ubus_example_tb0**
-
-ubus_example_tb
-
-**ubus_example_tb0.ubus0**
-
-ubus_env
-
-ubus_master_agent
-
-ubus_slave_agent
-
-ubus_bus_monitor
-
-**ubus_example_tb0.scoreboard0**
-
-ubus_example_scoreboard
-
-**Figure 41–Testbench derived from uvm_env**
+    Testbench derived from UVMEnv
 
 The following code defines a class that specifies this configuration.
 The test will create an instance of this class.
 
-*Example: ubus_example_tb.sv*
+*Example: ubus_example_tb.sv*::
 
-1 function void ubus_example_tb::build_phase(); 2 super.build_phase(); 3
-UVMConfigDb.set(this,".ubus0", 4 "num_masters", 1); 5
-UVMConfigDb.set(this,".ubus0", 6 "num_slaves", 1); 7 ubus0 =
-ubus_env.type_id.create("ubus0", this); 8 scoreboard0 =
-ubus_example_scoreboard.type_id.create("scoreboard0",
-
-this); 9 endfunction : build 10
-:sub:`11 function void ubus_example_tb::connect_phase(uvm_phase phase);`
-12 // Connect the slave0 monitor to scoreboard. 13
-ubus0.slaves[0].monitor.item_collected_port.connect( 14
-scoreboard0.item_collected_export); 15 endfunction : connect_phase 16
-:sub:`17 function void end_of_elaboration_phase();` 18 // Set up slave
-address map for ubus0 (basic default). 19
-ubus0.set_slave_address_map("slaves[0]", 0, 16'hffff); 20 endfunction :
-end_of_elaboration
+    1 function void ubus_example_tb::build_phase();
+    2 super.build_phase();
+    3 UVMConfigDb.set(this,".ubus0",
+    4 "num_masters", 1);
+    5 UVMConfigDb.set(this,".ubus0",
+    6 "num_slaves", 1);
+    7 ubus0 = ubus_env.type_id.create("ubus0", this);
+    8 scoreboard0 = ubus_example_scoreboard.type_id.create("scoreboard0", this);
+    9 endfunction : build
+    10
+    11 function void ubus_example_tb::connect_phase(uvm_phase phase);
+    12 // Connect the slave0 monitor to scoreboard.
+    13 ubus0.slaves[0].monitor.item_collected_port.connect(
+    14 scoreboard0.item_collected_export);
+    15 endfunction : connect_phase
+    16
+    17 function void end_of_elaboration_phase();
+    18 // Set up slave address map for ubus0 (basic default).
+    19 ubus0.set_slave_address_map("slaves[0]", 0, 16'hffff);
+    20 endfunction : end_of_elaboration
 
 Line 1 Declare the build_phase() function.
 
@@ -9979,23 +9943,12 @@ contain just one master and one slave agent.
 
 NOTE–The bus monitor is created by default.
 
-   **ubus_example_tb0.ubus0**
+.. figure:: fig/42_instance_of_ubus_env.png
+    :align: center
+    :alt: alternate text
+    :figclass: align-center
 
-ubus_env
-
-**ubus_example_tb0.ubus0.master0**
-
-**ubus_example_tb0.ubus0.slave0**
-
-ubus_master_agent
-
-ubus_slave_agent
-
-**ubus_example_tb0.ubus0.bus_monitor**
-
-ubus_bus_monitor
-
-**Figure 42–Instance of ubus_env**
+    Instance of ubus_env
 
 The build_phase() function of the ubus_env creates the master agents,
 slave agents, and the bus monitor. Three properties control whether
@@ -10068,7 +10021,6 @@ for the slave agent.
 The ubus_master_agent (shown in Figure 43) and ubus_slave_agent are
 structured identically; the only difference is the protocol-specific
 function of its subcomponents.
-
 
 The UBus master agent contains up to three subcomponents: the sequencer,
 driver, and monitor. By default, all three are created. However, the
@@ -10274,7 +10226,7 @@ interface API, ubus_env::set_slave_address_map(), to set the address map
 for the slave as well as the bus monitor. The prototype for this
 function is::
 
-    set_slave_address_map(self, slave_name, min_addr, max_addr);
+    set_slave_address_map(self, slave_name, min_addr, max_addr)
 
 For each slave, call set_slave_address_map() with the minimum and
 maximum address values to which the slave should respond. This function
@@ -10297,13 +10249,14 @@ information on the different types of activity occurring on the UBus
 signal-level interface
 
 a) state_port–This port provides a ubus_status object which contains an
-enumerated bus_state property. The bus_state property reflects bus-state
-changes. For example, when the bus enters reset, the bus_state property
-is set to RST_START and the ubus_status object is written to the
-analysis port. b) item_collected_port–This port provides the UBus
-transfer that is collected from the signal interface after a transfer is
-complete. This collected transfer is written to the item_collect-
-ed_port analysis port.
+    enumerated bus_state property. The bus_state property reflects bus-state
+    changes. For example, when the bus enters reset, the bus_state property
+    is set to RST_START and the ubus_status object is written to the
+    analysis port.
+b) item_collected_port–This port provides the UBus
+    transfer that is collected from the signal interface after a transfer is
+    complete. This collected transfer is written to the item_collect-
+    ed_port analysis port.
 
 NOTE–Any component provided by the appropriate TLM interfaces can attach
 to these TLM ports and listen to the information provided.
@@ -10347,7 +10300,6 @@ assertAddrUnknown:assert property ( disable iff(!has_checks)
 (($onehot(sig_grant) \|-> ! $isunknown(sig_addr)))
 else\ :sub:`$error("ERR_ADDR_XZ\n Address went to X or Z during Address Phase");`
 end
-
 
 
 8. UBus Specification
@@ -10644,9 +10596,7 @@ Table 16 specifies how data is driven in the UBus specification.
 **start** Driven to 1 by arbiter Driven to 0 by arbiter Driven to 0 by
 arbiter
 
-**addr** Not driven Driven by master (or to 0 by arbiter
-
-for NOP)
+**addr** Not driven Driven by master (or to 0 by arbiter for NOP)
 
 8.7 Optional Pipelining Scheme
 ##############################
@@ -10746,8 +10696,18 @@ master must drive *error*, *bip*, and *wait* low during the Data Phase
 
 Figure 47 and Figure 48 show sample timing diagrams.
 
-**Figure 47–Example Write Waveform**
+.. figure:: fig/47_example_write_waveform.png
+    :align: center
+    :alt: Timing diagram for ubus write operation.
+    :figclass: align-center
 
-**Figure 48–Example Read Waveform**
+    Example Write Waveform
+
+.. figure:: fig/48_example_read_waveform.png
+    :align: center
+    :alt: Timing diagram for ubus read operation.
+    :figclass: align-center
+
+    Example Read Waveform
 
 
