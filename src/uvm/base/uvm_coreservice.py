@@ -1,16 +1,35 @@
+#//----------------------------------------------------------------------
+#//   Copyright 2013 Cadence Design Inc
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
+#//   All Rights Reserved Worldwide
+#//
+#//   Licensed under the Apache License, Version 2.0 (the
+#//   "License"); you may not use this file except in
+#//   compliance with the License.  You may obtain a copy of
+#//   the License at
+#//
+#//       http://www.apache.org/licenses/LICENSE-2.0
+#//
+#//   Unless required by applicable law or agreed to in
+#//   writing, software distributed under the License is
+#//   distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+#//   CONDITIONS OF ANY KIND, either express or implied.  See
+#//   the License for the specific language governing
+#//   permissions and limitations under the License.
+#//----------------------------------------------------------------------
 
 from .uvm_factory import UVMDefaultFactory
 from .uvm_report_server import UVMReportServer
 
 
-#//----------------------------------------------------------------------
-#// Class: uvm_default_coreservice_t
-#//
-#// uvm_default_coreservice_t provides a default implementation of the
-#// uvm_coreservice_t API. It instantiates uvm_default_factory, uvm_default_report_server,
-#// uvm_root.
-#//----------------------------------------------------------------------
 class UVMCoreService:
+    """
+    Class: UVMCoreService
+
+    UVMCoreService provides a default implementation of the
+    UVMCoreService API. It instantiates uvm_default_factory, uvm_default_report_server,
+    uvm_root.
+    """
 
     m_inst = None
 
@@ -22,10 +41,16 @@ class UVMCoreService:
 
     @classmethod
     def get(cls):
+        """
+
+        Returns:
+            UVMCoreService: Core service singleton.
+
+        """
         if UVMCoreService.m_inst is None:
             UVMCoreService.m_inst = UVMCoreService()
         return UVMCoreService.m_inst
-    
+
     @staticmethod
     def reset():
         """Reset the state of coreservices. Used for unit testing"""
@@ -35,40 +60,46 @@ class UVMCoreService:
         UVMObjectRegistry.reset()
 
     def get_root(self):
+        """
+
+        Returns:
+            UVMRoot: Singleton instance of UVMRoot.
+        """
         from .uvm_root import UVMRoot
         return UVMRoot.m_uvm_get_root()
 
     def get_factory(self):
-        """         
+        """
         Function: get_factory
 
         Returns the currently enabled uvm factory.
         When no factory has been set before, instantiates a uvm_default_factory
+
         Returns:
+            UVMFactory: Enabled UVM factory.
         """
         if self.factory is None:
             self.factory = UVMDefaultFactory()
         return self.factory
 
     def set_factory(self, factory):
-        """         
-        Function: set_factory
-
+        """
         Sets the current uvm factory.
         Please note: it is up to the user to preserve the contents of the original factory or
         delegate calls to the original factory
+
         Args:
-            factory (UVMFactory): 
+            factory (UVMFactory):
         """
         self.factory = factory
 
     def get_default_tr_database(self):
-        """         
-        Function: get_default_tr_database
-        returns the current default record database
+        """
+        Returns the current default record database
 
         If no default record database has been set before this method
         is called, returns an instance of `UVMTextTrDatabase`
+
         Returns:
             UVMTrDatabase: Default transaction database
         """
@@ -90,15 +121,20 @@ class UVMCoreService:
 
 
     def set_default_tr_database(self, db):
-        """         
+        """
         Function: set_default_tr_database
         Sets the current default record database to `db`
+
         Args:
             db (UVMTrDatabase): Default transaction database to use
         """
         self.tr_database = db
 
     def get_report_server(self):
+        """
+        Returns:
+            UVMReportServer: Report server singleton instance.
+        """
         if self.report_server is None:
             self.report_server = UVMReportServer()
         return self.report_server
