@@ -9,8 +9,9 @@ This is a port of SystemVerilog (SV) Universal Verification Methodology (UVM)
 testing the code so
 far, but the plan is to include verilator in the regressions as well.
 
-[uvm-python Documentation](https://uvm-python.readthedocs.io/).
-[uvm-python User's Guide](https://uvm-python.readthedocs.io/en/latest/uvm_users_guide_1.2.html)
+See documentation for more details:
+  - [uvm-python Documentation](https://uvm-python.readthedocs.io/).
+  - [uvm-python User's Guide](https://uvm-python.readthedocs.io/en/latest/uvm_users_guide_1.2.html)
 
 Why bother?
 -----------
@@ -140,7 +141,7 @@ status:
 | Sequences  | Partially done, hier sequences work                       |
 | Registers  | Reg/mem access working, built-in sequences partially done |
 
-NOTE: Despite the working state, the project is under development, and still
+NOTE: Despite many working examples, the project is under development, and still
 missing a lot of functionality. Please try it out, and let me know if
 something you require should be added, or even better, add it yourself, test it
 and create a pull request!
@@ -149,7 +150,7 @@ and create a pull request!
 HDL Simulators
 --------------
 
-Icarus Verilog (iverilog v11.0) and verilator (v4.020+) are free simulators, which can
+Icarus Verilog (iverilog v11.0) and verilator (v4.030+) are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.
 Memory backdoor access has issues with packed multi-dimensional arrays in
 verilator.
