@@ -71,6 +71,7 @@ can create a symlink to the `uvm` source folder:
 ```shell
 cd test/examples/minimal
 ln -s ../../../src/uvm uvm
+SIM=icarus make
 ```
 
 You can find the
