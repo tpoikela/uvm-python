@@ -15,9 +15,10 @@ class NewTest2(NewTest):
     pass
 
 @cocotb.test()
-def test_dut(dut):
+async def test_dut(dut):
     await run_test('NewTest')
 
-@cocotb.test()
-def test_dut2(dut):
-    await run_test('NewTest2')
+# Cannot run 2 tests with same run yet
+#@cocotb.test()
+#async def test_dut2(dut):
+#    await run_test('NewTest2')
