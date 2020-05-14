@@ -73,11 +73,15 @@ module master_dut#(
   input err
 );
 
-reg[15:0] count = 16'h0;
+reg[15:0] count;
 
-  always_ff@(posedge clk) begin
+  always_ff@(posedge clk or negedge rst) begin
+    if (!rst) begin
+      count <= '0;
+    end else begin
       count <= count + 1;
       $display({"dut: ", "posedge clk: %0d"}, count);
       //...
+    end
   end
 endmodule

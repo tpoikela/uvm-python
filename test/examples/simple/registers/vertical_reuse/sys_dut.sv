@@ -39,7 +39,7 @@ module sys_dut #(
    output [31:0] apb_prdata,
    input [31:0] apb_pwdata,
 
-   input bit rst
+   input rst
 );
 
 /*
