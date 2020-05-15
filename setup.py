@@ -16,7 +16,7 @@ setup(
     long_description_content_type="text/markdown",
     license="Apache 2.0",
     keywords=["UVM", "SystemVerilog", "Verilog", "RTL", "Coverage"],
-    packages=find_packages(),
+    packages=find_packages(where="src"),
     package_dir={"": "src"},
     setup_requires=["setuptools_scm",],
     python_requires=">=3.6",
