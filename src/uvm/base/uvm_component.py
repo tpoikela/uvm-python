@@ -60,6 +60,7 @@ INV_WARN5 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s
 INV_WARN6 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s, "
     + "Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>")
 
+
 class VerbositySetting:
     """
     The verbosity settings may have a specific phase to start at.
@@ -179,7 +180,7 @@ class UVMComponent(UVMReportObject):
         #// By default, all children are printed. However, this bit allows a parent
         #// component to disable the printing of specific children.
         self.print_enabled = True
-        self.m_current_phase = None  #  the most recently executed phase
+        self.m_current_phase = None  # the most recently executed phase
         self.m_parent = None
         self.m_children_by_handle = {}
         self.m_children_ordered = []
@@ -300,7 +301,7 @@ class UVMComponent(UVMReportObject):
         """
         return self.m_parent
 
-    def get_full_name(self):
+    def get_full_name(self) -> str:
         """
         Returns the full hierarchical name of this object. The default
         implementation concatenates the hierarchical name of the parent, if any,
@@ -356,22 +357,23 @@ class UVMComponent(UVMReportObject):
         """
         These methods are used to iterate through this component's children, if
         any. For example, given a component with an object handle, `comp`, the
-        following code calls <uvm_object::print> for each child:
+        following code calls `UVMObject.print` for each child:
 
         .. code-block:: python
 
-            string name
-            uvm_component child
-            if (comp.get_first_child(name))
-              do begin
-                child = comp.get_child(name)
+            name = ""
+            child = comp.get_first_child()
+            while child is not None:
                 child.print()
-              end while (comp.get_next_child(name))
+                child = comp.get_next_child()
+
         Returns:
             UVMComponent: First child component.
         """
         self.child_ptr = 0
-        return self.m_children_ordered[0]
+        if len(self.m_children_ordered) > 0:
+            return self.m_children_ordered[0]
+        return None
 
     def get_num_children(self):
         """
@@ -394,6 +396,7 @@ class UVMComponent(UVMReportObject):
         """
         Renames this component to `name` and recalculates all descendants'
         full names. This is an internal function for now.
+
         Args:
             name (str): New name
         """
@@ -442,7 +445,7 @@ class UVMComponent(UVMReportObject):
         return comp.m_children[leaf]
 
 
-    def get_depth(self):
+    def get_depth(self) -> int:
         """
         Returns the component's depth from the root level. uvm_top has a
         depth of 0. The test and any other top level components have a depth
@@ -487,8 +490,9 @@ class UVMComponent(UVMReportObject):
         do not call super().build_phase(phase).
 
         This method should never be called directly.
+
         Args:
-            phase:
+            phase (UVMPhase):
         """
         self.m_build_done = True
         self.build()
@@ -508,8 +512,9 @@ class UVMComponent(UVMReportObject):
         The `UVMConnectPhase` phase implementation method.
 
         This method should never be called directly.
+
         Args:
-            phase:
+            phase (UVMPhase):
         """
         pass
 
@@ -521,8 +526,9 @@ class UVMComponent(UVMReportObject):
         The `UVMEndOfElaborationPhase` phase implementation method.
 
         This method should never be called directly.
+
         Args:
-            phase:
+            phase (UVMPhase):
         """
         pass
 
@@ -533,8 +539,11 @@ class UVMComponent(UVMReportObject):
     def start_of_simulation_phase(self, phase):
         """
         The `UVMStartOfSimulationPhase` phase implementation method.
-        #
-        # This method should never be called directly.
+
+        This method should never be called directly.
+
+        Args:
+            phase (UVMPhase):
         """
         self.start_of_simulation()
         return
@@ -1412,7 +1421,7 @@ class UVMComponent(UVMReportObject):
     def create_component(self, requested_type_name, name):
         factory = _get_factory()
         return factory.create_component_by_name(requested_type_name,
-            self.get_full_name(), name, self) 
+            self.get_full_name(), name, self)
 
     #// Function: create_object
     #//
@@ -1436,7 +1445,7 @@ class UVMComponent(UVMReportObject):
 
     #// Function: set_type_override_by_type
     #//
-    #// A convenience function for <uvm_factory::set_type_override_by_type>, this
+    #// A convenience function for `UVMFactory.set_type_override_by_type`, this
     #// method registers a factory override for components and objects created at
     #// this level of hierarchy or below. This method is equivalent to:
     #//
@@ -1444,19 +1453,22 @@ class UVMComponent(UVMReportObject):
     #//
     #// The `relative_inst_path` is relative to this component and may include
     #// wildcards. The `original_type` represents the type that is being overridden.
-    #// In subsequent calls to <uvm_factory::create_object_by_type> or
-    #// <uvm_factory::create_component_by_type>, if the requested_type matches the
+    #// In subsequent calls to `UVMFactory.create_object_by_type` or
+    #// `UVMFactory.create_component_by_type`, if the requested_type matches the
     #// `original_type` and the instance paths match, the factory will produce
     #// the `override_type`.
     #//
     #// The original and override type arguments are lightweight proxies to the
     #// types they represent. See <set_inst_override_by_type> for information
     #// on usage.
-
     #extern static function void set_type_override_by_type
     #                                           (uvm_object_wrapper original_type,
     #                                            uvm_object_wrapper override_type,
     #                                            bit replace=1)
+    @classmethod
+    def set_type_override_by_type(cls, original_type, override_type, replace=1):
+        factory= _get_factory()
+        factory.set_type_override_by_type(original_type, override_type, replace)
 
 
     #// Function: set_inst_override_by_type
@@ -1473,8 +1485,8 @@ class UVMComponent(UVMReportObject):
     #//
     #// The `relative_inst_path` is relative to this component and may include
     #// wildcards. The `original_type` represents the type that is being overridden.
-    #// In subsequent calls to <uvm_factory::create_object_by_type> or
-    #// <uvm_factory::create_component_by_type>, if the requested_type matches the
+    #// In subsequent calls to `UVMFactory.create_object_by_type` or
+    #// `UVMFactory.create_component_by_type`, if the requested_type matches the
     #// `original_type` and the instance paths match, the factory will produce the
     #// `override_type`.
     #//
@@ -1509,10 +1521,24 @@ class UVMComponent(UVMReportObject):
     #//|    endfunction
     #//|    ...
     #//|  endclass
-
     #extern function void set_inst_override_by_type(string relative_inst_path,
     #                                               uvm_object_wrapper original_type,
     #                                               uvm_object_wrapper override_type)
+    #function void uvm_component::set_inst_override_by_type (string relative_inst_path,
+    #                                                        uvm_object_wrapper original_type,
+    #                                                        uvm_object_wrapper override_type)
+    #  string full_inst_path
+    #  uvm_coreservice_t cs = uvm_coreservice_t::get()
+    #  uvm_factory factory=cs.get_factory()
+    #
+    #  if (relative_inst_path == "")
+    #    full_inst_path = get_full_name()
+    #  else
+    #    full_inst_path = {get_full_name(), ".", relative_inst_path}
+    #
+    #  factory.set_inst_override_by_type(original_type, override_type, full_inst_path)
+    #
+    #endfunction
 
 
     #// Function: set_type_override
@@ -1530,10 +1556,11 @@ class UVMComponent(UVMReportObject):
     #// create_component or create_object with the same string and matching
     #// instance path will produce the type represented by override_type_name.
     #// The `override_type_name` must refer to a preregistered type in the factory.
-
-    #extern static function void set_type_override(string original_type_name,
-    #                                              string override_type_name,
-    #                                              bit    replace=1)
+    @classmethod
+    def set_type_override(cls, original_type_name, override_type_name,
+            replace=1):
+        factory = _get_factory()
+        factory.set_type_override_by_name(original_type_name,override_type_name, replace)
 
 
     #// Function: set_inst_override
@@ -2607,27 +2634,7 @@ class UVMComponent(UVMReportObject):
 #// Factory Methods
 #//
 #//------------------------------------------------------------------------------
-#
-#// set_type_override (static)
-#// -----------------
-#
-#function void uvm_component::set_type_override (string original_type_name,
-#                                                string override_type_name,
-#                                                bit    replace=1)
-#   factory= _get_factory()
-#   factory.set_type_override_by_name(original_type_name,override_type_name, replace)
-#endfunction
-#
-#
-#// set_type_override_by_type (static)
-#// -------------------------
-#
-#function void uvm_component::set_type_override_by_type (uvm_object_wrapper original_type,
-#                                                        uvm_object_wrapper override_type,
-#                                                        bit    replace=1)
-#   factory= _get_factory()
-#   factory.set_type_override_by_type(original_type, override_type, replace)
-#endfunction
+
 #
 #
 #// set_inst_override
@@ -2651,24 +2658,6 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#// set_inst_override_by_type
-#// -------------------------
-#
-#function void uvm_component::set_inst_override_by_type (string relative_inst_path,
-#                                                        uvm_object_wrapper original_type,
-#                                                        uvm_object_wrapper override_type)
-#  string full_inst_path
-#  uvm_coreservice_t cs = uvm_coreservice_t::get()
-#  uvm_factory factory=cs.get_factory()
-#
-#  if (relative_inst_path == "")
-#    full_inst_path = get_full_name()
-#  else
-#    full_inst_path = {get_full_name(), ".", relative_inst_path}
-#
-#  factory.set_inst_override_by_type(original_type, override_type, full_inst_path)
-#
-#endfunction
 #
 #
 #//------------------------------------------------------------------------------
