@@ -81,7 +81,7 @@ else begin
     end
 end
 
-`define VCD
+//`define VCD
 `ifndef VERILATOR
 `ifdef COCOTB_SIM
     `ifdef VCD

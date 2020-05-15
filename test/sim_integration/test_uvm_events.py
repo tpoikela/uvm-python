@@ -36,7 +36,7 @@ from uvm.base.uvm_event import UVMEvent
 #        e.set()
 
 @cocotb.test(skip=False)
-def test_single_event(dut):
+async def test_single_event(dut):
     e1 = UVMEvent('e1')
     #e2 = UVMEvent('e2')
     #yield wait_events([e1])
@@ -55,7 +55,7 @@ def test_single_event(dut):
 
 
 @cocotb.test(skip=False)
-def test_uvm_event(dut):
+async def test_uvm_event(dut):
     evt1 = UVMEvent('MyEvent1')
     evt2 = UVMEvent('MyEvent2')
     n1 = cocotb.fork(notify_event(evt1, 10))
