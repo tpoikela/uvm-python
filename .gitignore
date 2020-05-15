@@ -29,3 +29,40 @@ test-results.xml
 .eggs
 *egg-info*
 *.bak
+
+# Synopsys VCS
+*.tab
+sim_build
+ucli.key
+
+# Cadence Incisive/Xcelium
+*.elog
+irun.log
+xrun.log
+irun.key
+xrun.key
+irun.history
+xrun.history
+INCA_libs
+xcelium.d
+ncelab_*.err
+xmelab_*.err
+ncsim_*.err
+xmsim_*.err
+bpad_*.err
+.bpad/
+.simvision/
+waves.shm/
+
+# Mentor Modelsim/Questa
+test/examples/**/modelsim.ini
+test/examples/**/transcript
+*.wlf
+
+# Aldec Riviera
+test/examples/**/library.cfg
+test/examples/**/dataset.asdb
+test/examples/**/compile
+
+# Tachyon DA CVC
+test/examples/**/verilog.log
