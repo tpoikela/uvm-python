@@ -121,7 +121,7 @@ class UVMAnalysisExport(UVMPortBase):
             name (str): Name of the export.
             parent (UVMComponent): Parent component.
         """
-        UVMPortBase.__init__(self, name, parent, UVM_EXPORT, 1, UVM_UNBOUNDED_CONNECTIONS)
+        UVMPortBase.__init__(self, name, parent, UVM_EXPORT, 0, UVM_UNBOUNDED_CONNECTIONS)
         self.m_if_mask = UVM_TLM_ANALYSIS_MASK
 
     def get_type_name(self):
