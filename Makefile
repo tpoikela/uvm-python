@@ -5,9 +5,12 @@ else
     UNIT_ARGS = unit.$(TEST)
 endif
 
-test: test-unit test-simple test-integrated
+test: test-unit test-minimal test-simple test-integrated
 	find test/examples -name results.xml -exec cat {} \; > results.log
 	bash ci/check_errors.sh
+
+test-minimal:
+	make -C test/examples/minimal
 
 test-simple:
 	make -C test/examples/simple
