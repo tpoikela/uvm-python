@@ -29,7 +29,7 @@ class MyTest(UVMTest):
 uvm_component_utils(MyTest)
 
 @cocotb.test(skip=True)
-def mailbox_test(dut):
+async def mailbox_test(dut):
     npackets = 10
     fifo = UVMMailbox()
     #yield write_packets(fifo, 10)
@@ -60,7 +60,7 @@ class CompPhaseTest(UVMTest):
 
 # Runs the test without using uvm_top and the full framework
 @cocotb.test(skip=True)
-def uvm_component_test(dut):
+async def uvm_component_test(dut):
     #comp = UVMComponent('top', None)
     comp = TestParentComp('top', None)
     caller = UVMPhaseCaller(comp)
@@ -75,14 +75,14 @@ def uvm_component_test(dut):
     await Timer(100)
 
 @cocotb.test(skip=True)
-def uvm_basic_top_test(dut):
+async def uvm_basic_top_test(dut):
     """ Test for checking that UVM is up and running """
     test = UVMTest('my test', None)
     test.dut = dut
     await run_test('MyTest')
 
 @cocotb.test(skip=False)
-def uvm_phase_test(dut):
+async def uvm_phase_test(dut):
     uvm_root = UVMRoot.get()
     test_comp = CompPhaseTest('comp_phase_test', uvm_root)
     clp = UVMCmdlineProcessor.get_inst()

@@ -29,7 +29,7 @@ module dut #(
    parameter int BASE_ADDR='h0
 ) (
    input apb_pclk,
-   input bit rst,
+   input rst,
    input wire [31:0] apb_paddr,
    input        apb_psel,
    input        apb_penable,

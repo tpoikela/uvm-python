@@ -19,7 +19,7 @@ endif
 export PYTHONPATH
 
 ifeq ($(TOPLEVEL_LANG),verilog)
-    VERILOG_SOURCES ?= $(MAKEDIR)/common_stub.v
+    VERILOG_SOURCES ?= $(MAKEDIR)/common_stub.sv
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
