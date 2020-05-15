@@ -655,12 +655,10 @@ class UVMRoot(UVMComponent):
         args = []
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_INT|uvm_set_config_int)=/", args)
-        print("uvm_set_config_int args " + str(args))
         for i in range(len(args)):
             self.m_process_config(args[i][20:len(args[i])], 1)
 
         self.clp.get_arg_matches("/^\\+(UVM_SET_CONFIG_STRING|uvm_set_config_string)=/",args)
-        print("uvm_set_config_string args " + str(args))
         for i in range(len(args)):
             self.m_process_config(args[i][23:len(args[i])], 0)
 
