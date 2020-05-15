@@ -41,6 +41,13 @@ class TestUVMComponent(unittest.TestCase):
         self.assertEqual(c1, child)
         self.assertEqual(sub_child, sc)
 
+    def test_errors(self):
+        comp = UVMComponent("parent12345", None)
+        child = comp.get_first_child()
+        self.assertIsNone(child)
+        child = comp.get_next_child()
+        self.assertIsNone(child)
+
     #def test_clp_args(self):
     #    # "+uvm_set_verbosity=<comp>,<id>,<verbosity>,<phase|time>,<offset>"
     #    UVMCmdlineProcessor.m_test_mode = True
