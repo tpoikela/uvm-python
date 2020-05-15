@@ -50,5 +50,4 @@ endif
 TOPLEVEL := common_stub
 MODULE   ?= tb_run
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

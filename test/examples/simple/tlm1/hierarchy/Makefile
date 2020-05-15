@@ -50,5 +50,4 @@ endif
 TOPLEVEL := module_top
 MODULE   ?= hierarchy
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

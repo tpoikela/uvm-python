@@ -64,5 +64,4 @@ SIM_ARGS = "+UVM_TEST_NAME=xxx -lsim.log"
 TOPLEVEL := uvm_test
 MODULE   ?= test_uvm
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

@@ -40,5 +40,4 @@ include ../../MakefileCommon.mk
 TOPLEVEL := common_stub
 MODULE   ?= top
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

@@ -65,5 +65,4 @@ SIM_ARGS = ""
 TOPLEVEL := common_stub
 MODULE   ?= test_forks
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

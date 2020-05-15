@@ -7,5 +7,4 @@ MODULE   ?= new_test
 PYTHONPATH := ../../../src:$(PYTHONPATH)
 export PYTHONPATH
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

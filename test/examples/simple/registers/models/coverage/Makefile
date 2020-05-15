@@ -45,5 +45,4 @@ VERILOG_SOURCES := $(WPWD)/reg_mem_dut.sv
 TOPLEVEL := reg_mem_dut
 MODULE   ?= tb_run
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

@@ -40,5 +40,4 @@ PLUSARGS = "+UVM_VERBOSITY=UVM_DEBUG"
 TOPLEVEL := common_stub
 MODULE   ?= test
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim
