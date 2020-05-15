@@ -33,7 +33,7 @@ module slave#(
 )
 (
    // apb_if    apb,
-   input bit rst,
+   input rst,
    input apb_pclk,
    input wire [31:0] apb_paddr,
    input        apb_psel,
