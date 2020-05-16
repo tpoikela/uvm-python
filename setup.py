@@ -22,7 +22,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         #"cocotb>=1.3.0",
-        "cocotb @ git+git://github.com/cocotb/cocotb@c1a88599#egg=cocotb",
+        "cocotb @ git+git://github.com/cocotb/cocotb@1e270ac9#egg=cocotb",
         "cocotb-coverage>=1.0.0",
         "regex>=2019.11.1"
     ],
