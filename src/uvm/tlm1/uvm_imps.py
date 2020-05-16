@@ -3,6 +3,7 @@
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
+#//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -19,12 +20,50 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//-------------.----------------------------------------------------------------
+"""
+Title: uvm_*_imp ports
 
-#//------------------------------------------------------------------------------
-#// Title: uvm_*_imp ports
-#//
-#// The following defines the TLM implementation (imp) classes.
-#//------------------------------------------------------------------------------
+The following defines the TLM implementation (imp) classes.
+
+CLASS: uvm_*_imp #(T,IMP)
+
+Unidirectional implementation (imp) port classes. An imp port provides access
+to an implementation of the associated interface to all connected ~ports~ and
+~exports~. Each imp port instance ~must~ be connected to the component instance
+that implements the associated interface, typically the imp port's parent.
+All other connections-- e.g. to other ports and exports are prohibited.
+
+The asterisk in ~uvm_*_imp~ may be any of the following::
+
+    blocking_put
+    nonblocking_put
+    put
+
+    blocking_get
+    nonblocking_get
+    get
+
+    blocking_peek
+    nonblocking_peek
+    peek
+
+    blocking_get_peek
+    nonblocking_get_peek
+    get_peek
+
+The interface methods are implemented in a component of type ~IMP~, a handle
+to which is passed in a constructor argument.  The imp port delegates all
+interface calls to this component.
+
+Function: __init__
+
+Creates a new unidirectional imp port with the given ~name~ and ~parent~.
+The ~parent~ must implement the interface associated with this port.
+Its type must be the type specified in the imp's type-parameter, ~IMP~::
+
+    def __init__(self, name, parent):
+
+"""
 
 from .uvm_tlm_imps import (UVM_BLOCKING_GET_IMP, UVM_BLOCKING_GET_PEEK_IMP, UVM_BLOCKING_PEEK_IMP,
                            UVM_BLOCKING_PUT_IMP, UVM_BLOCKING_TRANSPORT_IMP, UVM_GET_IMP,
@@ -46,55 +85,6 @@ from ..macros.uvm_tlm_defines import (UVM_TLM_BLOCKING_GET_MASK, UVM_TLM_BLOCKIN
                                       UVM_TLM_NONBLOCKING_TRANSPORT_MASK, UVM_TLM_PEEK_MASK,
                                       UVM_TLM_PUT_MASK, UVM_TLM_SLAVE_MASK, UVM_TLM_TRANSPORT_MASK)
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_*_imp #(T,IMP)
-#//
-#// Unidirectional implementation (imp) port classes--An imp port provides access
-#// to an implementation of the associated interface to all connected ~ports~ and
-#// ~exports~. Each imp port instance ~must~ be connected to the component instance
-#// that implements the associated interface, typically the imp port's parent.
-#// All other connections-- e.g. to other ports and exports-- are prohibited.
-#//
-#// The asterisk in ~uvm_*_imp~ may be any of the following
-#//
-#//|  blocking_put
-#//|  nonblocking_put
-#//|  put
-#//|
-#//|  blocking_get
-#//|  nonblocking_get
-#//|  get
-#//|
-#//|  blocking_peek
-#//|  nonblocking_peek
-#//|  peek
-#//|
-#//|  blocking_get_peek
-#//|  nonblocking_get_peek
-#//|  get_peek
-#//
-#// Type parameters
-#//
-#// T   - The type of transaction to be communicated by the imp
-#//
-#// IMP - The type of the component implementing the interface. That is, the class
-#//       to which this imp will delegate.
-#//
-#// The interface methods are implemented in a component of type ~IMP~, a handle
-#// to which is passed in a constructor argument.  The imp port delegates all
-#// interface calls to this component.
-#//
-#//------------------------------------------------------------------------------
-
-
-#// Function: new
-#//
-#// Creates a new unidirectional imp port with the given ~name~ and ~parent~.
-#// The ~parent~ must implement the interface associated with this port.
-#// Its type must be the type specified in the imp's type-parameter, ~IMP~.
-#//
-#//|  function new (string name, IMP parent);
 
 #class uvm_blocking_put_imp #(type T=int, type IMP=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));

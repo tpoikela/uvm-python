@@ -35,7 +35,7 @@ from .uvm_tlm_imps import UVM_EXPORT, UVM_IMP_COMMON, UVM_PORT
 
 class UVMAnalysisPort(UVMPortBase):
     """
-    Broadcasts a value to all subscribers implementing a <uvm_analysis_imp>.
+    Broadcasts a value to all subscribers implementing a `UVMAnalysisImp`.
 
     .. code-block:: python
         class mon(UVMComponent):
@@ -60,8 +60,8 @@ class UVMAnalysisPort(UVMPortBase):
 
     def write(self, t):
         """
-        Method: write
         Send specified value to all connected interface
+
         Args:
             t (any): Transaction to broadcast.
         """
@@ -103,6 +103,7 @@ class UVMAnalysisImp:
             t (any): Transaction to write.
         """
         self.m_imp.write(t)
+
 
 UVMAnalysisImp = UVM_IMP_COMMON(UVMAnalysisImp, UVM_TLM_ANALYSIS_MASK, "uvm_analysis_imp")
 

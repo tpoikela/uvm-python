@@ -20,6 +20,52 @@
 #   the License for the specific language governing
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
+"""
+Title: TLM Export Classes
+
+The following classes define the TLM export classes.
+
+CLASS: UVM*Export
+
+The unidirectional UVM*Export is a port that ~forwards~ or ~promotes~
+an interface implementation from a child component to its parent.
+An export can be connected to any compatible child export or imp port.
+It must ultimately be connected to at least one implementation
+of its associated interface.
+
+The interface type represented by the asterisk is any of the following
+
+  blocking_put
+  nonblocking_put
+  put
+
+  blocking_get
+  nonblocking_get
+  get
+
+  blocking_peek
+  nonblocking_peek
+  peek
+
+  blocking_get_peek
+  nonblocking_get_peek
+  get_peek
+
+Exports are connected to interface implementations directly via
+UVM*Imp ports or indirectly via other UVM*Export exports.
+
+
+
+Function: __init__
+
+The ~name~ and ~parent~ are the standard `UVMComponent` constructor arguments.
+The ~min_size~ and ~max_size~ specify the minimum and maximum number of
+interfaces that must have been supplied to this port by the end of elaboration.
+
+.. code-block:: python
+    def __init__(self, name, parent, min_size=1, max_size=1):
+
+"""
 
 from ..base.uvm_port_base import UVMPortBase
 from .uvm_tlm_imps import (UVM_BLOCKING_GET_IMP, UVM_BLOCKING_GET_PEEK_IMP, UVM_BLOCKING_PEEK_IMP,
@@ -41,60 +87,6 @@ from ..macros.uvm_tlm_defines import (UVM_TLM_BLOCKING_GET_MASK, UVM_TLM_BLOCKIN
   UVM_TLM_NONBLOCKING_TRANSPORT_MASK, UVM_TLM_PEEK_MASK,
   UVM_TLM_PUT_MASK, UVM_TLM_SLAVE_MASK, UVM_TLM_TRANSPORT_MASK)
 
-#------------------------------------------------------------------------------
-# Title: TLM Export Classes
-#------------------------------------------------------------------------------
-# The following classes define the TLM export classes.
-#------------------------------------------------------------------------------
-
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_*_export #(T)
-#
-# The unidirectional uvm_*_export is a port that ~forwards~ or ~promotes~
-# an interface implementation from a child component to its parent.
-# An export can be connected to any compatible child export or imp port.
-# It must ultimately be connected to at least one implementation
-# of its associated interface.
-#
-# The interface type represented by the asterisk is any of the following
-#
-#|  blocking_put
-#|  nonblocking_put
-#|  put
-#|
-#|  blocking_get
-#|  nonblocking_get
-#|  get
-#|
-#|  blocking_peek
-#|  nonblocking_peek
-#|  peek
-#|
-#|  blocking_get_peek
-#|  nonblocking_get_peek
-#|  get_peek
-#
-# Type parameters
-#
-# T - The type of transaction to be communicated by the export
-#
-# Exports are connected to interface implementations directly via
-# <uvm_*_imp #(T,IMP)> ports or indirectly via other <uvm_*_export #(T)> exports.
-#
-#------------------------------------------------------------------------------
-#
-#
-# Function: new
-#
-# The ~name~ and ~parent~ are the standard <uvm_component> constructor arguments.
-# The ~min_size~ and ~max_size~ specify the minimum and maximum number of
-# interfaces that must have been supplied to this port by the end of elaboration.
-#
-#|  function new (string name,
-#|                uvm_component parent,
-#|                int min_size=1,
-#|                int max_size=1)
 
 #class uvm_blocking_put_export #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
