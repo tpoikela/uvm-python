@@ -26,10 +26,7 @@ before_script:
   - pip install virtualenv
   - virtualenv venv
   - source venv/bin/activate
-  #- git clone https://github.com/cocotb/cocotb.git
-  #- pip install ./cocotb
-  #- pip install cocotb-coverage
-  #- pip install regex
+  - pip freeze
   - pip install -r ci/requirements.txt
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
