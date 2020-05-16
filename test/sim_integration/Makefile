@@ -88,5 +88,4 @@ endif
 # Will be passed to compilation
 EXTRA_ARGS=""
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

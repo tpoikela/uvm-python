@@ -41,5 +41,4 @@ VERILOG_SOURCES = $(WPWD)/dut.sv
 TOPLEVEL := master_dut
 MODULE   ?= interface
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

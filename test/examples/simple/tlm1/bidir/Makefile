@@ -48,5 +48,4 @@ endif
 TOPLEVEL := common_stub
 MODULE   ?= bidir
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

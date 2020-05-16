@@ -63,5 +63,4 @@ endif
 TOPLEVEL := common_stub
 MODULE   ?= test_cmdline_args
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

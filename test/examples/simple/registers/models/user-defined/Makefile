@@ -43,5 +43,4 @@ VERILOG_SOURCES := $(WPWD)/dut.sv
 TOPLEVEL := dut
 MODULE   ?= tb_run
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim

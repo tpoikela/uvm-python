@@ -40,5 +40,4 @@ PLUSARGS += "+UVM_TESTNAME=ComparatorTest"
 TOPLEVEL := common_stub
 MODULE   ?= test_comparators
 
-include $(shell cocotb-config --makefiles)/Makefile.inc
 include $(shell cocotb-config --makefiles)/Makefile.sim
