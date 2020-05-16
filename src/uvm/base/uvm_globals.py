@@ -423,6 +423,13 @@ def get_cs():
 #
 #----------------------------------------------------------------------------
 
+def uvm_is_sim_active():
+    """
+    Returns true if a simulator is active/attached. Returns False for example
+    when running unit tests without cocotb Makefiles.
+    """
+    return hasattr(cocotb, 'SIM_NAME')
+
 
 def uvm_sim_time(units='NS'):
     """
@@ -433,7 +440,7 @@ def uvm_sim_time(units='NS'):
     Returns:
         int: Simulation time in specified units
     """
-    if simulator is not None:
+    if uvm_is_sim_active():
         return get_sim_time(units=units)
     return 0
 

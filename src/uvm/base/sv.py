@@ -105,13 +105,17 @@ class sv:
         return res
 
     @classmethod
+    def is_simulator_active(cls):
+        return hasattr(cocotb, 'SIM_NAME')
+
+    @classmethod
     def display(cls, msg, *args):
         form_msg = sv.sformatf(msg, *args)
         print(form_msg)
 
     @classmethod
     def realtime(cls, unit=None):
-        if simulator is None:
+        if cls.is_simulator_active() is False:
             return 0
         elif unit is None:
             return get_sim_time(cls.default_time_unit)
