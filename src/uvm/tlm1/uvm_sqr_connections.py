@@ -19,32 +19,31 @@
 #   the License for the specific language governing
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
+"""
+Title: Sequence Item Pull Ports
+
+This section defines the port, export, and imp port classes for
+communicating sequence items between `UVMSequencer` and
+`UVMDriver`.
+"""
 
 from ..base.uvm_port_base import UVMPortBase
 from ..macros.uvm_tlm_defines import *
 from .uvm_tlm_imps import *
 
-#-----------------------------------------------------------------------------
-# Title: Sequence Item Pull Ports
-#
-# This section defines the port, export, and imp port classes for
-# communicating sequence items between <uvm_sequencer #(REQ,RSP)> and
-# <uvm_driver #(REQ,RSP)>.
-#-----------------------------------------------------------------------------
 
-#-----------------------------------------------------------------------------
-#
-# Class: uvm_seq_item_pull_port #(REQ,RSP)
-#
-# UVM provides a port, export, and imp connector for use in sequencer-driver
-# communication. All have standard port connector constructors, except that
-# uvm_seq_item_pull_port's default min_size argument is 0; it can be left
-# unconnected.
-#
-#-----------------------------------------------------------------------------
 
 
 class UVMSeqItemPullPort():
+    """
+    Class: uvm_seq_item_pull_port #(REQ,RSP)
+    
+    UVM provides a port, export, and imp connector for use in sequencer-driver
+    communication. All have standard port connector constructors, except that
+    uvm_seq_item_pull_port's default min_size argument is 0; it can be left
+    unconnected.
+    """
+    
     pass
 
 
@@ -60,7 +59,6 @@ UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullPort, 'm_if')
 #
 #-----------------------------------------------------------------------------
 
-#class uvm_seq_item_pull_export #(type REQ=int, type RSP=REQ)
 class UVMSeqItemPullExport():
     pass
     #  extends uvm_port_base #(uvm_sqr_if_base #(REQ, RSP));
@@ -83,18 +81,3 @@ class UVMSeqItemPullImp():
 UVMSeqItemPullImp = UVM_IMP_COMMON(UVMSeqItemPullImp, UVM_SEQ_ITEM_PULL_MASK,
         "uvm_seq_item_pull_imp")
 UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullImp, 'm_imp')
-
-#-----------------------------------------------------------------------------
-# Unit tests
-#-----------------------------------------------------------------------------
-
-import unittest
-
-class TestUVMSeqItemPullExport(unittest.TestCase):
-
-    def test_new(self):
-        pull_exp = UVMSeqItemPullExport('pull_export', None)
-
-if __name__ == '__main__':
-    unittest.main()
-
