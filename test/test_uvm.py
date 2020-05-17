@@ -28,7 +28,7 @@ class MyTest(UVMTest):
 
 uvm_component_utils(MyTest)
 
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def mailbox_test(dut):
     npackets = 10
     fifo = UVMMailbox()
@@ -37,7 +37,7 @@ async def mailbox_test(dut):
     read_proc = cocotb.fork(read_packets(fifo, npackets))
     print("Waiting to join() the forked procs")
     #yield Timer(10)
-    await [write_proc.join(), read_proc.join()]
+    await write_proc.join(), read_proc.join()
     await Timer(10000)
 
 class TestParentComp(UVMComponent):
@@ -59,7 +59,7 @@ class CompPhaseTest(UVMTest):
         self.m_done_event.set()
 
 # Runs the test without using uvm_top and the full framework
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def uvm_component_test(dut):
     #comp = UVMComponent('top', None)
     comp = TestParentComp('top', None)
@@ -74,14 +74,14 @@ async def uvm_component_test(dut):
     await caller.call_topdown_task_phase(comp, 'run_phase')
     await Timer(100)
 
-@cocotb.test(skip=True)
+@cocotb.test(skip=False)
 async def uvm_basic_top_test(dut):
     """ Test for checking that UVM is up and running """
     test = UVMTest('my test', None)
     test.dut = dut
     await run_test('MyTest')
 
-@cocotb.test(skip=False)
+@cocotb.test(skip=True)
 async def uvm_phase_test(dut):
     uvm_root = UVMRoot.get()
     test_comp = CompPhaseTest('comp_phase_test', uvm_root)

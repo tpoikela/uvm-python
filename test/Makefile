@@ -50,6 +50,8 @@ PYTHONPATH := $(WPWD)/../src:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/..:$(PYTHONPATH)
 endif
 
+export PYTHONPATH
+
 ifeq ($(TOPLEVEL_LANG),verilog)
     VERILOG_SOURCES ?= $(WPWD)/hdl/uvm_test.v
 else
@@ -60,7 +62,7 @@ ifneq ($(VLOG),)
 	VERILOG_SOURCES := $(VLOG)
 endif
 
-SIM_ARGS = "+UVM_TEST_NAME=xxx -lsim.log"
+PLUSARGS = "+UVM_TEST_NAME=xxx"
 TOPLEVEL := uvm_test
 MODULE   ?= test_uvm
 

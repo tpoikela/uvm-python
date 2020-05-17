@@ -52,13 +52,11 @@ PYTHONPATH := $(UVM_PYTHON):$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../../../..:$(PYTHONPATH)
 endif
 
+export PYTHONPATH
+
 
 ifeq ($(TOPLEVEL_LANG),verilog)
-    ifeq ($(IMG),BLK)
-        VERILOG_SOURCES ?= $(WPWD)/module_top.sv
-    else
-        VERILOG_SOURCES ?= $(WPWD)/module_top.sv
-    endif
+    VERILOG_SOURCES ?= $(WPWD)/module_top.sv
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
@@ -77,15 +75,10 @@ ifneq ($(SIMARGS),)
     PLUSARGS += $(SIMARGS)
 endif
 
-ifeq ($(IMG),BLK)
-    TOPLEVEL := module_top
-    MODULE   ?= hierarchy
-else
-    TOPLEVEL := module_top
-    MODULE   ?= hierarchy
-endif
+TOPLEVEL := module_top
+MODULE   ?= test_uvm_events
 
 # Will be passed to compilation
-EXTRA_ARGS=""
+#EXTRA_ARGS=""
 
 include $(shell cocotb-config --makefiles)/Makefile.sim

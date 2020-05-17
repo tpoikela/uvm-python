@@ -5,7 +5,7 @@ else
     UNIT_ARGS = unit.$(TEST)
 endif
 
-test: test-unit test-minimal test-simple test-integrated
+test: test-unit test-minimal test-simple test-integrated test-sim-integration
 	find test/examples -name results.xml -exec cat {} \; > results.log
 	bash ci/check_errors.sh
 
@@ -21,9 +21,9 @@ test-integrated:
 test-unit:
 	python -m unittest $(UNIT_ARGS)
 
-# Unused at the moment, TODO cleanup and add to 'make test'
 test-sim-integration:
 	make -C test/sim_integration MODULE=test_uvm_events
+	make -C test
 
 lint:
 	flake8 ./uvm --count --select=E9,F63,F7,F82 --show-source --statistics
