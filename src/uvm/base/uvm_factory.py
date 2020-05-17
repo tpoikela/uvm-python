@@ -931,7 +931,7 @@ class UVMDefaultFactory(UVMFactory):
                 if self.m_override_info[i].selected:
                     is_sel_str = "  "
 
-                qs.append(sv.sformatf("%s%0s%0s\n",
+                qs.append(sv.sformatf("%s%0s%0s",
                     is_sel_str,
                     self.m_override_info[i].orig_type_name,
                     space[1:max1-orig_type_len]))
