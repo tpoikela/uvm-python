@@ -42,6 +42,8 @@ class TestUVMDefaultFactory(unittest.TestCase):
         ovrd = fact.find_override_by_type(requested_type=XXX.get_type(), full_inst_path='')
         self.assertIsNotNone(ovrd, 'Override XXX->YYY should exist')
         self.assertEqual(ovrd.get_type_name(), 'YYY')
+        fact.debug_create_by_name('XXX')
+        #fact.debug_create_by_type(XXX.get_type())
 
 
     def test_type_double_override(self):
