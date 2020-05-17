@@ -55,13 +55,13 @@ class UVMPrinter():
     A user-defined printer format can be created, or one of the following four
     built-in printers can be used:
 
-    - <UVMPrinter> - provides base printer functionality; must be overridden.
+    - `UVMPrinter` - provides base printer functionality; must be overridden.
 
-    - <uvm_table_printer> - prints the object in a tabular form.
+    - `UVMTablePrinter` - prints the object in a tabular form.
 
-    - <uvm_tree_printer> - prints the object in a tree form.
+    - `UVMTreePrinter` - prints the object in a tree form.
 
-    - <uvm_line_printer> - prints the information on a single line, but uses the
+    - `UVMLinePrinter` - prints the information on a single line, but uses the
       same object separators as the tree printer.
 
     Printers have knobs that you use to control what and how information is printed.
@@ -430,9 +430,9 @@ class UVMPrinter():
     # print_real
     # ----------
 
-    def print_real (self, name, value, scope_separator="."):
+    def print_real(self, name, value, scope_separator="."):
         row_info = UVMPrinterRowInfo()
-        if  name != "" and name != "...":
+        if name != "" and name != "...":
             self.m_scope.set_arg(name)
             name = self.m_scope.get()
 
@@ -619,29 +619,28 @@ class UVMPrinterKnobs:
             return self.unsigned_radix
         return ""
 
-#------------------------------------------------------------------------------
-#
-# Class: uvm_table_printer
-#
-# The table printer prints output in a tabular format.
-#
-# The following shows sample output from the table printer.
-#
-#|  ---------------------------------------------------
-#|  Name        Type            Size        Value
-#|  ---------------------------------------------------
-#|  c1          container       -           @1013
-#|  d1          mydata          -           @1022
-#|  v1          integral        32          'hcb8f1c97
-#|  e1          enum            32          THREE
-#|  str         string          2           hi
-#|  value       integral        12          'h2d
-#|  ---------------------------------------------------
-#
-#------------------------------------------------------------------------------
 
 
 class UVMTablePrinter(UVMPrinter):
+    """
+    Class: UVMTablePrinter
+
+    The table printer prints output in a tabular format.
+
+    The following shows sample output from the table printer::
+
+        ---------------------------------------------------
+        Name        Type            Size        Value
+        ---------------------------------------------------
+        c1          container       -           @1013
+        d1          mydata          -           @1022
+        v1          integral        32          'hcb8f1c97
+        e1          enum            32          THREE
+        str         string          2           hi
+        value       integral        12          'h2d
+        ---------------------------------------------------
+
+    """
 
     def __init__(self):
         UVMPrinter.__init__(self)
@@ -679,8 +678,8 @@ class UVMTablePrinter(UVMPrinter):
         """
         s = ""
         user_format = ""
-        dash = "" # = "---------------------------------------------------------------------------------------------------"
-        space = "" #= "                                                                                                   "
+        dash = ""
+        space = ""
         dashes = ""
         linefeed = "\n" + self.knobs.prefix
         self.calculate_max_widths()
@@ -862,7 +861,7 @@ class UVMTreePrinter(UVMPrinter):
 
 class UVMLinePrinter(UVMTreePrinter):
     """
-    Class: uvm_line_printer
+    Class: UVMLinePrinter
 
     The line printer prints output in a line format.
 
