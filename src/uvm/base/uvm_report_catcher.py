@@ -22,7 +22,7 @@
 
 from .uvm_callback import (UVMCallback, UVMCallbacks, UVMCallbackIter,
     UVMCallbacksBase)
-from .uvm_object_globals import *
+from .uvm_object_globals import UVM_ERROR, UVM_FATAL, UVM_NONE, UVM_WARNING
 
 
 class sev_id_struct:
@@ -48,73 +48,6 @@ class UVMReportCb(UVMCallbacks):
 
 UVMReportCbIter = UVMCallbackIter
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_report_catcher
-#
-# The uvm_report_catcher is used to catch messages issued by the uvm report
-# server. Catchers are
-# uvm_callbacks#(<uvm_report_object>,uvm_report_catcher) objects,
-# so all facilities in the <uvm_callback> and <uvm_callbacks#(T,CB)>
-# classes are available for registering catchers and controlling catcher
-# state.
-#
-# The uvm_callbacks#(<uvm_report_object>,uvm_report_catcher) class is
-# aliased to ~uvm_report_cb~ to make it easier to use.
-# Multiple report catchers can be
-# registered with a report object. The catchers can be registered as default
-# catchers which catch all reports on all <uvm_report_object> reporters,
-# or catchers can be attached to specific report objects (i.e. components).
-#
-# User extensions of <uvm_report_catcher> must implement the <catch> method in
-# which the action to be taken on catching the report is specified. The catch
-# method can return ~CAUGHT~, in which case further processing of the report is
-# immediately stopped, or return ~THROW~ in which case the (possibly modified) report
-# is passed on to other registered catchers. The catchers are processed in the order
-# in which they are registered.
-#
-# On catching a report, the <catch> method can modify the severity, id, action,
-# verbosity or the report string itself before the report is finally issued by
-# the report server. The report can be immediately issued from within the catcher
-# class by calling the <issue> method.
-#
-# The catcher maintains a count of all reports with FATAL,ERROR or WARNING severity
-# and a count of all reports with FATAL, ERROR or WARNING severity whose severity
-# was lowered. These statistics are reported in the summary of the <uvm_report_server>.
-#
-# This example shows the basic concept of creating a report catching
-# callback and attaching it to all messages that get emitted:
-#
-#| class my_error_demoter extends uvm_report_catcher
-#|   function new(string name="my_error_demoter")
-#|     super.new(name)
-#|   endfunction
-#|   //This example demotes "MY_ID" errors to an info message
-#|   function action_e catch()
-#|     if(get_severity() == UVM_ERROR && get_id() == "MY_ID")
-#|       set_severity(UVM_INFO)
-#|     return THROW
-#|   endfunction
-#| endclass
-#|
-#| my_error_demoter demoter = new
-#| initial begin
-#|  // Catchers are callbacks on report objects (components are report
-#|  // objects, so catchers can be attached to components).
-#|
-#|  // To affect all reporters, use ~null~ for the object
-#|  uvm_report_cb::add(null, demoter)
-#|
-#|  // To affect some specific object use the specific reporter
-#|  uvm_report_cb::add(mytest.myenv.myagent.mydriver, demoter)
-#|
-#|  // To affect some set of components (any "*driver" under mytest.myenv)
-#|  // using the component name
-#|  uvm_report_cb::add_by_name("*driver", demoter, mytest.myenv)
-#| end
-#
-#
-#------------------------------------------------------------------------------
 
 
 
@@ -124,6 +57,69 @@ CAUGHT = 2
 
 
 class UVMReportCatcher(UVMCallback):
+    """
+    The UVMReportCatcher is used to catch messages issued by the uvm report
+    server. Catchers are
+    UVMCallbacks objects,
+    so all facilities in the `UVMCallback` and `UVMCallbacks`
+    classes are available for registering catchers and controlling catcher
+    state.
+
+    The `UVMCallbacks` class is
+    aliased to `UVMReportCb` to make it easier to use.
+    Multiple report catchers can be
+    registered with a report object. The catchers can be registered as default
+    catchers which catch all reports on all `UVMReportObject` reporters,
+    or catchers can be attached to specific report objects (i.e. components).
+
+    User extensions of `UVMReportCatcher` must implement the <catch> method in
+    which the action to be taken on catching the report is specified. The catch
+    method can return ~CAUGHT~, in which case further processing of the report is
+    immediately stopped, or return ~THROW~ in which case the (possibly modified) report
+    is passed on to other registered catchers. The catchers are processed in the order
+    in which they are registered.
+
+    On catching a report, the <catch> method can modify the severity, id, action,
+    verbosity or the report string itself before the report is finally issued by
+    the report server. The report can be immediately issued from within the catcher
+    class by calling the <issue> method.
+
+    The catcher maintains a count of all reports with FATAL,ERROR or WARNING severity
+    and a count of all reports with FATAL, ERROR or WARNING severity whose severity
+    was lowered. These statistics are reported in the summary of the <uvm_report_server>.
+
+    This example shows the basic concept of creating a report catching
+    callback and attaching it to all messages that get emitted::
+
+        class my_error_demoter(UVMReportCatcher):
+            def __init__(self, name="my_error_demoter"):
+                super().__init__(name)
+
+            # This example demotes "MY_ID" errors to an info message
+            def catch(self):
+                if self.get_severity() == UVM_ERROR and self.get_id() == "MY_ID":
+                    self.set_severity(UVM_INFO)
+                return THROW
+
+        @cocotb.test()
+        async initial_begin(dut):
+            demoter = my_error_demoter()
+            # Catchers are callbacks on report objects (components are report
+            # objects, so catchers can be attached to components).
+
+            # To affect all reporters, use ~null~ for the object
+            UVMReportCb.add(None, demoter)
+
+            # To affect some specific object use the specific reporter
+            UVMReportCb.add(mytest.myenv.myagent.mydriver, demoter)
+
+            # To affect some set of components (any "*driver" under mytest.myenv)
+            # using the component name
+            UVMReportCb.add_by_name("*driver", demoter, mytest.myenv)
+
+    """
+
+
     #`uvm_register_cb(uvm_report_object,uvm_report_catcher)
     m_modified_report_message = None  # UMVReportMessage
     m_orig_report_message = None  # UVMReportMessage
@@ -170,7 +166,7 @@ class UVMReportCatcher(UVMCallback):
     #// severity is the modified value.
     def get_severity(self):
         return UVMReportCatcher.m_modified_report_message.get_severity()
-    #
+
     #// Function: get_context
     #//
     #// Returns the context name of the message that is currently being
@@ -248,12 +244,10 @@ class UVMReportCatcher(UVMCallback):
     #// Function: get_element_container
     #//
     #// Returns the element container of the message.
-    #
     def get_element_container(self):
         return self.m_modified_report_message.get_element_container()
 
 
-    #
     #// Group: Change Message State
     #
     #// Function: set_severity
@@ -677,7 +671,7 @@ class UVMReportCatcher(UVMCallback):
     #// It prints the statistics for the active catchers.
     @classmethod
     def summarize(cls):
-        s = ""
+        # s = ""
         q = []
         if UVMReportCatcher.do_report:
             q.append("\n--- UVM Report catcher Summary ---\n\n\n")
@@ -688,4 +682,3 @@ class UVMReportCatcher(UVMCallback):
             q.append("Number of caught UVM_ERROR reports   :{}\n".format(cls.m_caught_error))
             q.append("Number of caught UVM_WARNING reports :{}\n".format(cls.m_caught_warning))
             #`uvm_info_context("UVM/REPORT/CATCHER",`UVM_STRING_QUEUE_STREAMING_PACK(q),UVM_LOW,uvm_top)
-
