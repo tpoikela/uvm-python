@@ -596,10 +596,10 @@ class UVMPortBase():
         #
         elif res_from.is_port() and (provider.is_export() or provider.is_imp()) and from_gparent != to_gparent:
             s = (provider.get_full_name()
-                     + " (of type " + provider.get_type_name()
-                     + ") is not at the same level of hierarchy as this port. "
-                     + "A port-to-export connection takes the form "
-                     + "component1.port.connect(component2.export)")
+                + " (of type " + provider.get_type_name()
+                + ") is not at the same level of hierarchy as this port. "
+                + "A port-to-export connection takes the form "
+                + "component1.port.connect(component2.export)")
             self.m_comp.uvm_report_warning(s_connection_warning_id, s, UVM_NONE)
             return 0
 
