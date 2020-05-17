@@ -20,9 +20,11 @@
 #------------------------------------------------------------------------------
 
 from .uvm_component import UVMComponent
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_EXPORT, UVM_IMPLEMENTATION, UVM_NONE, UVM_PHASE_DONE,
+                                 UVM_PHASE_EXECUTING, UVM_PORT)
 from .uvm_domain import end_of_elaboration_ph
 from .sv import sv
+from ..macros.uvm_message_defines import uvm_report_fatal
 
 UVM_UNBOUNDED_CONNECTIONS = -1
 s_connection_error_id = "Connection Error"
@@ -36,30 +38,22 @@ ERR_MSG2 = ("Port parent: {}. Cannot call an imp port's connect method. "
 ERR_MSG3 = ("Cannot connect exports to ports Try calling port.connect(export)"
     + " instead. (You attempted to bind this export to {}).")
 
-## typedef class uvm_port_component_base
 ## typedef uvm_port_component_base uvm_port_list[string]
-
-# TITLE: Port Base Classes
-#
-
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_port_component_base
-#
-#------------------------------------------------------------------------------
-# This class defines an interface for obtaining a port's connectivity lists
-# after or during the end_of_elaboration phase.    The sub-class,
-# <uvm_port_component #(PORT)>, implements this interface.
-#
-# The connectivity lists are returned in the form of handles to objects of this
-# type. This allowing traversal of any port's fan-out and fan-in network
-# through recursive calls to <get_connected_to> and <get_provided_to>. Each
-# port's full name and type name can be retrieved using ~get_full_name~ and
-# ~get_type_name~ methods inherited from <uvm_component>.
-#------------------------------------------------------------------------------
 
 
 class UVMPortComponentBase(UVMComponent):
+    """
+    This class defines an interface for obtaining a port's connectivity lists
+    after or during the end_of_elaboration phase.    The sub-class,
+    `UVMPortComponent` implements this interface.
+
+    The connectivity lists are returned in the form of handles to objects of this
+    type. This allowing traversal of any port's fan-out and fan-in network
+    through recursive calls to <get_connected_to> and <get_provided_to>. Each
+    port's full name and type name can be retrieved using ~get_full_name~ and
+    ~get_type_name~ methods inherited from <uvm_component>.
+    """
+
 
     def __init__(self, name, parent):
         UVMComponent.__init__(self, name, parent)
@@ -69,7 +63,6 @@ class UVMPortComponentBase(UVMComponent):
     # For a port or export type, this function fills ~list~ with all
     # of the ports, exports and implementations that this port is
     # connected to.
-
     def get_connected_to(self, port_list):
         pass  # pure virtual
 
@@ -78,19 +71,18 @@ class UVMPortComponentBase(UVMComponent):
     # For an implementation or export type, this function fills ~list~ with all
     # of the ports, exports and implementations that this port is
     # provides its implementation to.
-
     def get_provided_to(self, port_list):
         pass  # pure virtual
 
     def is_port(self):
-        """         
+        """
         Function: is_port
 
         """
         pass  # pure virtual
 
     def is_export(self):
-        """         
+        """
         Function: is_export
 
         """
@@ -101,15 +93,15 @@ class UVMPortComponentBase(UVMComponent):
     # These function determine the type of port. The functions are
     # mutually exclusive; one will return 1 and the other two will
     # return 0.
-
     def is_imp(self):
         pass  # pure virtual
 
     def build_phase(self, phase):
-        """         
+        """
         Turn off auto config by not calling build_phase()
+
         Args:
-            phase: 
+            phase:
         """
         self.build()  # for backward compat
         return
@@ -117,17 +109,12 @@ class UVMPortComponentBase(UVMComponent):
     def do_task_phase(self, phase):
         pass
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_port_component #(PORT)
-#
-#------------------------------------------------------------------------------
-# See description of <uvm_port_component_base> for information about this class
-#------------------------------------------------------------------------------
-#class uvm_port_component #(type PORT=uvm_object) extends uvm_port_component_base
 
 
 class UVMPortComponent(UVMPortComponentBase):
+    """
+    See description of `UVMPortComponentBase` for information about this class
+    """
 
     def __init__(self, name, parent, port):
         UVMPortComponentBase.__init__(self, name, parent)
@@ -144,7 +131,7 @@ class UVMPortComponent(UVMPortComponentBase):
         self.m_port.resolve_bindings()
 
     def get_port(self):
-        """         
+        """
         Function: get_port
 
         Retrieve the actual port object that this proxy refers to.
@@ -167,46 +154,34 @@ class UVMPortComponent(UVMPortComponentBase):
     def is_imp(self):
         return self.m_port.is_imp()
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_port_base #(IF)
-#
-#------------------------------------------------------------------------------
-#
-# Transaction-level communication between components is handled via its ports,
-# exports, and imps, all of which derive from this class.
-#
-# The uvm_port_base extends IF, which is the type of the interface implemented
-# by derived port, export, or implementation. IF is also a type parameter to
-# uvm_port_base.
-#
-#     IF    - The interface type implemented by the subtype to this base port
-#
-# The UVM provides a complete set of ports, exports, and imps for the OSCI-
-# standard TLM interfaces. They can be found in the ../src/tlm/ directory.
-# For the TLM interfaces, the IF parameter is always <uvm_tlm_if_base #(T1,T2)>.
-#
-# Just before <uvm_component::end_of_elaboration_phase>, an internal
-# <uvm_component::resolve_bindings> process occurs, after which each port and
-# export holds a list of all imps connected to it via hierarchical connections
-# to other ports and exports. In effect, we are collapsing the port's fanout,
-# which can span several levels up and down the component hierarchy, into a
-# single array held local to the port. Once the list is determined, the port's
-# min and max connection settings can be checked and enforced.
-#
-# uvm_port_base possesses the properties of components in that they have a
-# hierarchical instance path and parent. Because SystemVerilog does not support
-# multiple inheritance, uvm_port_base cannot extend both the interface it
-# implements and <uvm_component>. Thus, uvm_port_base contains a local instance
-# of uvm_component, to which it delegates such commands as get_name,
-# get_full_name, and get_parent.
-#
-#------------------------------------------------------------------------------
-
 ## virtual class uvm_port_base #(type IF=uvm_void) extends IF
 
 
 class UVMPortBase():
+    """
+    Transaction-level communication between components is handled via its ports,
+    exports, and imps, all of which derive from this class.
+
+    The UVM provides a complete set of ports, exports, and imps for the OSCI-
+    standard TLM interfaces. They can be found in the ../src/tlm/ directory.
+
+    Just before `UVMComponent.end_of_elaboration_phase`, an internal
+    `UVMComponent.resolve_bindings` process occurs, after which each port and
+    export holds a list of all imps connected to it via hierarchical connections
+    to other ports and exports. In effect, we are collapsing the port's fanout,
+    which can span several levels up and down the component hierarchy, into a
+    single array held local to the port. Once the list is determined, the port's
+    min and max connection settings can be checked and enforced.
+
+    uvm_port_base possesses the properties of components in that they have a
+    hierarchical instance path and parent. Because SystemVerilog does not support
+    multiple inheritance, uvm_port_base cannot extend both the interface it
+    implements and <uvm_component>. Thus, uvm_port_base contains a local instance
+    of uvm_component, to which it delegates such commands as get_name,
+    get_full_name, and get_parent.
+    """
+
+
 
 
     # Function: new
@@ -279,7 +254,7 @@ class UVMPortBase():
             return "implementation"
 
     def max_size(self):
-        """         
+        """
         Function: max_size
 
         Returns the maximum number of implementation ports that must
@@ -290,7 +265,7 @@ class UVMPortBase():
 
 
     def min_size(self):
-        """         
+        """
         Function: min_size
 
         Returns the minimum number of implementation ports that must
@@ -350,7 +325,7 @@ class UVMPortBase():
         self.m_def_index = index
 
     def connect(self, provider):
-        """         
+        """
         Function: connect
 
         Connects this port to the given `provider` port. The ports must be
@@ -387,11 +362,11 @@ class UVMPortBase():
 
         If any relationship check is violated, a warning is issued.
 
-        Note- the <uvm_component::connect_phase> method is related to but not the same
+        Note- the `UVMComponent.connect_phase` method is related to but not the same
         as this method. The component's `connect` method is a phase callback where
         port's `connect` method calls are made.
         Args:
-            provider: 
+            provider:
         """
         from .uvm_coreservice import UVMCoreService
         cs = UVMCoreService.get()
@@ -444,6 +419,10 @@ class UVMPortBase():
         self.m_provided_by[provider.get_full_name()] = provider
         provider.m_provided_to[self.get_full_name()] = self
 
+
+    indent = ""
+    save = ""
+
     # Function: debug_connected_to
     #
     # The ~debug_connected_to~ method outputs a visual text display of the
@@ -452,23 +431,18 @@ class UVMPortBase():
     #
     # This method must not be called before the end_of_elaboration phase, as port
     # connections are not resolved until then.
-
-    indent = ""
-    save = ""
-
     def debug_connected_to(self, level=0, max_level=-1):
         sz = 0
         num = 0
         curr_num = 0
-        s_sz = ""
         port = None
-        save = ""
+        # indent = ""
 
         if level < 0:
             level = 0
         if level == 0:
-            save = ""
-            indent = "    "
+            UVMPortBase.save = ""
+            UVMPortBase.indent = "    "
 
         if max_level != -1 and level >= max_level:
             return
@@ -479,36 +453,39 @@ class UVMPortBase():
             for nm in self.m_provided_by:
                 port = self.m_provided_by[nm]
                 curr_num += 1
-                save = save + indent + "    | \n"
-                save = save + indent + "    |_" + nm + " (" + port.get_type_name() + ")\n"
+                UVMPortBase.save += UVMPortBase.indent + "    | \n"
+                UVMPortBase.save += UVMPortBase.indent + "    |_" + nm + " (" + port.get_type_name() + ")\n"
                 if num > 1 and curr_num != num:
-                    indent = indent + "    | "
+                    UVMPortBase.indent += "    | "
                 else:
-                    indent = indent + "        "
+                    UVMPortBase.indent += "        "
                 port.debug_connected_to(level+1, max_level)
                 #indent = indent.substr(0,indent.len()-4-1); TODO
 
         if level == 0:
-            if save != "":
-                save = "This port's fanout network:\n\n    " + self.get_full_name() + " (" + self.get_type_name() + ")\n" + save + "\n"
+            if UVMPortBase.save != "":
+                UVMPortBase.save = ("This port's fanout network:\n\n    " + self.get_full_name()
+                    + " (" + self.get_type_name() + ")\n" + UVMPortBase.save + "\n")
             if len(self.m_imp_list) == 0:
                 from .uvm_coreservice import UVMCoreService
                 cs = UVMCoreService.get()
                 top = cs.get_root()
                 if end_of_elaboration_ph is not None:
-                    if end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING or end_of_elaboration_ph.get_state() == UVM_PHASE_DONE:
-                        save = save + "    Connected implementations: none\n"
+                    if (end_of_elaboration_ph.get_state() == UVM_PHASE_EXECUTING or
+                            end_of_elaboration_ph.get_state() == UVM_PHASE_DONE):
+                        UVMPortBase.save += "    Connected implementations: none\n"
                     else:
-                        save = save + "    Connected implementations: not resolved until end-of-elab\n"
+                        UVMPortBase.save += "    Connected implementations: not resolved until end-of-elab\n"
             else:
-                save = save + "    Resolved implementation list:\n"
+                UVMPortBase.save += "    Resolved implementation list:\n"
                 for nm in self.m_imp_list:
                     port = self.m_imp_list[nm]
-                    s_sz.itoa(sz)
-                    save = save + indent + s_sz + ": " + nm + " (" + port.get_type_name() + ")\n"
+                    s_sz = str(sz)
+                    UVMPortBase.save += (UVMPortBase.indent + s_sz + ": " + nm + " (" +
+                        port.get_type_name() + ")\n")
                     sz += 1
-        self.m_comp.uvm_report_info("debug_connected_to", save)
-        return save
+            self.m_comp.uvm_report_info("debug_connected_to", UVMPortBase.save)
+        return UVMPortBase.save
 
     # Function: debug_provided_to
     #
@@ -517,7 +494,6 @@ class UVMPortBase():
     #
     # This method must not be called before the end_of_elaboration phase, as port
     # connections are not resolved until then.
-
     def debug_provided_to(self, level=0, max_level=-1):
         nm = ""
         num = 0
@@ -527,8 +503,8 @@ class UVMPortBase():
         if level < 0:
             level = 0
         if level == 0:
-            save = ""
-            indent = "    "
+            UVMPortBase.save = ""
+            UVMPortBase.indent = "    "
 
         if max_level != -1 and level > max_level:
             return
@@ -539,23 +515,24 @@ class UVMPortBase():
             for nm in self.m_provided_to:
                 port = self.m_provided_to[nm]
                 curr_num += 1
-                save = save + indent + "    | \n"
-                save = save + indent + "    |_" + nm + " (" + port.get_type_name() +")\n"
+                UVMPortBase.save += UVMPortBase.indent + "    | \n"
+                UVMPortBase.save += UVMPortBase.indent + "    |_" + nm + " (" + port.get_type_name() + ")\n"
                 if num > 1 and curr_num != num:
-                    indent = indent + "    | "
+                    UVMPortBase.indent += "    | "
                 else:
-                    indent = indent + "        "
+                    UVMPortBase.indent += "        "
                 port.debug_provided_to(level+1, max_level)
                 # indent = indent.substr(0,indent.len()-4-1); #TODO
 
         if level == 0:
-            if save != "":
-                save = ("This port's fanin network:\n\n    "
+            if UVMPortBase.save != "":
+                UVMPortBase.save = ("This port's fanin network:\n\n    "
                 + self.get_full_name() + " (" + self.get_type_name()
-                + ")\n" + save + "\n")
+                + ")\n" + UVMPortBase.save + "\n")
             if len(self.m_provided_to) == 0:
-                save = save + indent + "This port has not been bound\n"
-            self.m_comp.uvm_report_info("debug_provided_to", save)
+                UVMPortBase.save += UVMPortBase.indent + "This port has not been bound\n"
+            self.m_comp.uvm_report_info("debug_provided_to", UVMPortBase.save)
+        return UVMPortBase.save
 
     # get_connected_to
     # ----------------
@@ -640,12 +617,12 @@ class UVMPortBase():
         return 1
 
     def m_add_list(self, provider):
-        """         
+        """
         m_add_list
 
         Internal method.
         Args:
-            provider: 
+            provider:
         """
         sz = ""
         for i in range(0, provider.size()):
@@ -663,7 +640,6 @@ class UVMPortBase():
     #
     # This method is automatically called just before the start of the
     # end_of_elaboration phase. Users should not need to call it directly.
-
     def resolve_bindings(self):
         if self.m_resolved:  # don't repeat ourselves
             return
@@ -697,7 +673,6 @@ class UVMPortBase():
     # imps this port is connected to. Use <size> to get the valid range for index.
     # This method can only be called at the end_of_elaboration phase or after, as
     # port connections are not resolved before then.
-
     def get_if(self, index=0):
         s = ""
         if self.size() == 0:
