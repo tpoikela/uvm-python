@@ -1,7 +1,7 @@
 
 test: test-trivial test-basic_examples test-sequence test-interfaces test-hello_world\
     test-registers test-tlm1 test-configuration test-callbacks test-factory\
-    test-objections test-phases test-tlm2 test-cmdline
+    test-objections test-phases test-tlm2 test-cmdline test-reporting test-comps
 
 test-trivial:
 	make -C trivial/
