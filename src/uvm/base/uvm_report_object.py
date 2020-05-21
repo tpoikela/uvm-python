@@ -37,59 +37,56 @@ def get_verbosity(severity):
 
 
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_report_object
-#
-#------------------------------------------------------------------------------
-#
-# The uvm_report_object provides an interface to the UVM reporting facility.
-# Through this interface, components issue the various messages that occur
-# during simulation. Users can configure what actions are taken and what
-# file(s) are output for individual messages from a particular component
-# or for all messages from all components in the environment. Defaults are
-# applied where there is no explicit configuration.
-#
-# Most methods in uvm_report_object are delegated to an internal instance of a
-# <uvm_report_handler>, which stores the reporting configuration and determines
-# whether an issued message should be displayed based on that configuration.
-# Then, to display a message, the report handler delegates the actual
-# formatting and production of messages to a central <uvm_report_server>.
-#
-# A report consists of an id string, severity, verbosity level, and the textual
-# message itself. They may optionally include the filename and line number from
-# which the message came. If the verbosity level of a report is greater than the
-# configured maximum verbosity level of its report object, it is ignored.
-# If a report passes the verbosity filter in effect, the report's action is
-# determined. If the action includes output to a file, the configured file
-# descriptor(s) are determined.
-#
-# Actions - can be set for (in increasing priority) severity, id, and
-# (severity,id) pair. They include output to the screen <UVM_DISPLAY>,
-# whether the message counters should be incremented <UVM_COUNT>, and
-# whether a $finish should occur <UVM_EXIT>.
-#
-# Default Actions - The following provides the default actions assigned to
-# each severity. These can be overridden by any of the ~set_*_action~ methods.
-#|    UVM_INFO -       UVM_DISPLAY
-#|    UVM_WARNING -    UVM_DISPLAY
-#|    UVM_ERROR -      UVM_DISPLAY | UVM_COUNT
-#|    UVM_FATAL -      UVM_DISPLAY | UVM_EXIT
-#
-# File descriptors - These can be set by (in increasing priority) default,
-# severity level, an id, or (severity,id) pair.  File descriptors are
-# standard SystemVerilog file descriptors; they may refer to more than one file.
-# It is the user's responsibility to open and close them.
-#
-# Default file handle - The default file handle is 0, which means that reports
-# are not sent to a file even if a UVM_LOG attribute is set in the action
-# associated with the report. This can be overridden by any of the ~set_*_file~
-# methods.
-#
-#------------------------------------------------------------------------------
 
 
 class UVMReportObject(UVMObject):
+    """
+    CLASS: UVMReportObject
+
+    The uvm_report_object provides an interface to the UVM reporting facility.
+    Through this interface, components issue the various messages that occur
+    during simulation. Users can configure what actions are taken and what
+    file(s) are output for individual messages from a particular component
+    or for all messages from all components in the environment. Defaults are
+    applied where there is no explicit configuration.
+
+    Most methods in uvm_report_object are delegated to an internal instance of a
+    <uvm_report_handler>, which stores the reporting configuration and determines
+    whether an issued message should be displayed based on that configuration.
+    Then, to display a message, the report handler delegates the actual
+    formatting and production of messages to a central <uvm_report_server>.
+
+    A report consists of an id string, severity, verbosity level, and the textual
+    message itself. They may optionally include the filename and line number from
+    which the message came. If the verbosity level of a report is greater than the
+    configured maximum verbosity level of its report object, it is ignored.
+    If a report passes the verbosity filter in effect, the report's action is
+    determined. If the action includes output to a file, the configured file
+    descriptor(s) are determined.
+
+    Actions - can be set for (in increasing priority) severity, id, and
+    (severity,id) pair. They include output to the screen <UVM_DISPLAY>,
+    whether the message counters should be incremented <UVM_COUNT>, and
+    whether a $finish should occur <UVM_EXIT>.
+
+    Default Actions - The following provides the default actions assigned to
+    each severity. These can be overridden by any of the ~set_*_action~
+    methods::
+        UVM_INFO -       UVM_DISPLAY
+        UVM_WARNING -    UVM_DISPLAY
+        UVM_ERROR -      UVM_DISPLAY | UVM_COUNT
+        UVM_FATAL -      UVM_DISPLAY | UVM_EXIT
+
+    File descriptors - These can be set by (in increasing priority) default,
+    severity level, an id, or (severity,id) pair.  File descriptors are
+    standard SystemVerilog file descriptors; they may refer to more than one file.
+    It is the user's responsibility to open and close them.
+
+    Default file handle - The default file handle is 0, which means that reports
+    are not sent to a file even if a UVM_LOG attribute is set in the action
+    associated with the report. This can be overridden by any of the ~set_*_file~
+    methods.
+    """
 
     def __init__(self, name=""):
         UVMObject.__init__(self, name)
@@ -150,14 +147,15 @@ class UVMReportObject(UVMObject):
             line=0, context_name="", report_enabled_checked=False):
         """
         Function: uvm_report_info
+
         Args:
-            id:
-            message:
-            verbosity:
-            filename:
-            line:
-            context_name:
-            report_enabled_checked:
+            id (str): Message ID/tag.
+            message (str): Message string.
+            verbosity (int): Verbosity of the message.
+            filename (str): Filename of the caller.
+            line (int): Line from where this is called.
+            context_name (str): Name of the calling context.
+            report_enabled_checked (bool): Checks report enabled.
         """
         self.uvm_report(UVM_INFO, id, message, verbosity,
                   filename, line, context_name, report_enabled_checked)
@@ -233,6 +231,7 @@ class UVMReportObject(UVMObject):
         with verbosity greater than this will be filtered out. The severity
         and tag arguments check if the verbosity level has been modified for
         specific severity/tag combinations.
+
         Args:
             severity:
             id (str):
@@ -247,7 +246,9 @@ class UVMReportObject(UVMObject):
         Gets the maximum verbosity level in effect for this report object.
         Any report from this component whose verbosity exceeds this maximum will
         be ignored.
+
         Returns:
+            int: Maximum verbosity level.
         """
         return self.m_rh.m_max_verbosity_level
 
@@ -258,6 +259,7 @@ class UVMReportObject(UVMObject):
         This method sets the maximum verbosity level for reports for this component.
         Any report from this component whose verbosity exceeds this maximum will
         be ignored.
+
         Args:
             verbosity_level:
         """
