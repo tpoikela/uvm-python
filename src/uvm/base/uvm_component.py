@@ -917,7 +917,8 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        self.m_rh._close_files()
+        # self.m_rh._close_files()
+        pass
 
     def phase_started(self, phase):
         """
