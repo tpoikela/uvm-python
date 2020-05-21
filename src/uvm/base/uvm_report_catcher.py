@@ -22,7 +22,13 @@
 
 from .uvm_callback import (UVMCallback, UVMCallbacks, UVMCallbackIter,
     UVMCallbacksBase)
-from .uvm_object_globals import UVM_ERROR, UVM_FATAL, UVM_NONE, UVM_WARNING
+from .uvm_object_globals import (UVM_ERROR, UVM_FATAL, UVM_NONE, UVM_WARNING,
+    UVM_LOG, UVM_RM_RECORD, UVM_LOW, UVM_INFO, UVM_NO_ACTION, UVM_DISPLAY)
+from .sv import sv
+from ..macros import uvm_info_context
+from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
+from .uvm_report_message import UVMReportMessage
+from .uvm_globals import uvm_report_enabled
 
 
 class sev_id_struct:
@@ -121,8 +127,8 @@ class UVMReportCatcher(UVMCallback):
 
 
     #`uvm_register_cb(uvm_report_object,uvm_report_catcher)
-    m_modified_report_message = None  # UMVReportMessage
-    m_orig_report_message = None  # UVMReportMessage
+    m_modified_report_message = None  # type: UVMReportMessage
+    m_orig_report_message = None  # type: UVMReportMessage
     m_set_action_called = False
 
     # Counts for the demoteds and caughts
@@ -144,7 +150,6 @@ class UVMReportCatcher(UVMCallback):
     #//
     #// Create a new report catcher. The name argument is optional, but
     #// should generally be provided to aid in debugging.
-
     def __init__(self, name="uvm_report_catcher"):
         super().__init__(name)
         UVMReportCatcher.do_report = True
@@ -187,7 +192,6 @@ class UVMReportCatcher(UVMCallback):
     #// processed. If the verbosity was modified by a previously executed
     #// catcher (which re-threw the message), then the returned
     #// verbosity is the modified value.
-    #
     def get_verbosity(self):
         return self.m_modified_report_message.get_verbosity()
 
@@ -198,7 +202,6 @@ class UVMReportCatcher(UVMCallback):
     #// processed. If the id was modified by a previously executed
     #// catcher (which re-threw the message), then the returned
     #// id is the modified value.
-    #
     def get_id(self):
         return self.m_modified_report_message.get_id()
 
@@ -209,7 +212,6 @@ class UVMReportCatcher(UVMCallback):
     #// processed. If the message was modified by a previously executed
     #// catcher (which re-threw the message), then the returned
     #// message is the modified value.
-    #
     def get_message(self):
         return self.m_modified_report_message.get_message()
 
@@ -220,7 +222,6 @@ class UVMReportCatcher(UVMCallback):
     #// processed. If the action was modified by a previously executed
     #// catcher (which re-threw the message), then the returned
     #// action is the modified value.
-    #
     def get_action(self):
         return self.m_modified_report_message.get_action()
 
@@ -228,7 +229,6 @@ class UVMReportCatcher(UVMCallback):
     #// Function: get_fname
     #//
     #// Returns the file name of the message.
-    #
     def get_fname(self):
         return self.m_modified_report_message.get_filename()
 
@@ -236,7 +236,6 @@ class UVMReportCatcher(UVMCallback):
     #// Function: get_line
     #//
     #// Returns the line number of the message.
-    #
     def get_line(self):
         return self.m_modified_report_message.get_line()
 
@@ -309,60 +308,46 @@ class UVMReportCatcher(UVMCallback):
     #// record the field. Any other report catchers will see the newly
     #// added element.
     #//
-    #
-    #protected function void add_int(string name,
-    #      			  uvm_bitstream_t value,
-    #      			  int size,
-    #      			  uvm_radix_enum radix,
-    #      			  uvm_action action = (UVM_LOG|UVM_RM_RECORD))
-    #  self.m_modified_report_message.add_int(name, value, size, radix, action)
-    #endfunction
-    #
-    #
+    def add_int(self, name, value, size, radix, action=(UVM_LOG | UVM_RM_RECORD)):
+        self.m_modified_report_message.add_int(name, value, size, radix, action)
+
+
     #// Function: add_string
     #//
     #// Adds a string of the name ~name~ and value ~value~ to the
     #// message. Any other report catchers will see the newly
     #// added element.
     #//
-    #
-    #protected function void add_string(string name,
-    #      			     string value,
-    #                                   uvm_action action = (UVM_LOG|UVM_RM_RECORD))
-    #  self.m_modified_report_message.add_string(name, value, action)
-    #endfunction
-    #
-    #
+    def add_string(self, name, value, action=(UVM_LOG | UVM_RM_RECORD)):
+        self.m_modified_report_message.add_string(name, value, action)
+
+
     #// Function: add_object
     #//
     #// Adds a uvm_object of the name ~name~ and reference ~obj~ to
     #// the message. Any other report catchers will see the newly
     #// added element.
     #//
-    #
-    #protected function void add_object(string name,
-    #      			     uvm_object obj,
-    #                                   uvm_action action = (UVM_LOG|UVM_RM_RECORD))
-    #  self.m_modified_report_message.add_object(name, obj, action)
-    #endfunction
+    def add_object(self, name, obj, action=(UVM_LOG | UVM_RM_RECORD)):
+        self.m_modified_report_message.add_object(name, obj, action)
 
 
     #// Group: Debug
 
+    cb_iter = None  # static variable for get_report_catcher iterator
+
     #// Function: get_report_catcher
     #//
     #// Returns the first report catcher that has ~name~.
-
-    #static function uvm_report_catcher get_report_catcher(string name)
-    #  static uvm_report_cb_iter iter = new(null)
-    #  get_report_catcher = iter.first()
-    #  while(get_report_catcher != null) begin
-    #    if(get_report_catcher.get_name() == name)
-    #      return get_report_catcher
-    #    get_report_catcher = iter.next()
-    #  end
-    #  return null
-    #endfunction
+    @classmethod
+    def get_report_catcher(cls, name):
+        cls.cb_iter = UVMReportCbIter(None)
+        get_report_catcher = cls.cb_iter.first()
+        while get_report_catcher is not None:
+            if get_report_catcher.get_name() == name:
+                return get_report_catcher
+            get_report_catcher = cls.cb_iter.next()
+        return None
 
 
     #// Function: print_catcher
@@ -370,42 +355,40 @@ class UVMReportCatcher(UVMCallback):
     #// Prints information about all of the report catchers that are
     #// registered. For finer grained detail, the <uvm_callbacks #(T,CB)::display>
     #// method can be used by calling uvm_report_cb::display(<uvm_report_object>).
+    @classmethod
+    def print_catcher(cls, file=0):
+        # msg = ""
+        enabled = ""
+        catcher = None  # UVMReportCatcher
+        cls.cb_iter = UVMReportCbIter(None)
+        q = []
 
-    #static function void print_catcher(UVM_FILE file = 0)
-    #        string msg
-    #        string enabled
-    #        uvm_report_catcher catcher
-    #        static uvm_report_cb_iter iter = new(null)
-    #        string q[$]
-    #
-    #        q.push_back("-------------UVM REPORT CATCHERS----------------------------\n")
-    #
-    #        catcher = iter.first()
-    #        while(catcher != null) begin
-    #      	  if(catcher.callback_mode())
-    #      		  enabled = "ON"
-    #      	  else
-    #      		  enabled = "OFF"
-    #
-    #      	  q.push_back($sformatf("%20s : %s\n", catcher.get_name(),enabled))
-    #      	  catcher = iter.next()
-    #        end
-    #        q.push_back("--------------------------------------------------------------\n")
-    #
-    #        `uvm_info_context("UVM/REPORT/CATCHER",`UVM_STRING_QUEUE_STREAMING_PACK(q),UVM_LOW,uvm_top)
-    #endfunction
+        q.append("-------------UVM REPORT CATCHERS----------------------------\n")
 
-    #// Funciton: debug_report_catcher
+        catcher = cls.cb_iter.first()
+        while catcher is not None:
+            if catcher.callback_mode():
+                enabled = "ON"
+            else:
+                enabled = "OFF"
+
+            q.append(sv.sformatf("%20s : %s\n", catcher.get_name(),enabled))
+            catcher = cls.cb_iter.next()
+
+        q.append("--------------------------------------------------------------\n")
+        from .uvm_root import uvm_top
+        uvm_info_context("UVM/REPORT/CATCHER", UVM_STRING_QUEUE_STREAMING_PACK(q), UVM_LOW, uvm_top)
+
+
+    #// Function: debug_report_catcher
     #//
     #// Turn on report catching debug information. ~what~ is a bitwise AND of
     #// * DO_NOT_CATCH  -- forces catch to be ignored so that all catchers see the
     #//   the reports.
     #// * DO_NOT_MODIFY -- forces the message to remain unchanged
-    #
-    #static function void debug_report_catcher(int what= 0)
-    #  m_debug_flags = what
-    #endfunction
-    #
+    @classmethod
+    def debug_report_catcher(cls, what=0):
+        cls.m_debug_flags = what
 
     #// Group: Callback Interface
 
@@ -415,7 +398,6 @@ class UVMReportCatcher(UVMCallback):
     #// There are no arguments to this function. The <Current Message State>
     #// interface methods can be used to access information about the
     #// current message being processed.
-    #
     def catch(self):
         raise Exception("catch() must be implemented in user-class")
 
@@ -427,17 +409,11 @@ class UVMReportCatcher(UVMCallback):
     # // Issues a fatal message using the current message's report object.
     # // This message will bypass any message catching callbacks.
     #
-    # protected function void uvm_report_fatal(string id,
-    #      				    string message,
-    #      				    int verbosity,
-    #      				    string fname = "",
-    #      				    int line = 0,
-    #      				    string context_name = "",
-    #      				    bit report_enabled_checked = 0)
-    #
-    #   self.uvm_report(UVM_FATAL, id, message, UVM_NONE, fname, line,
-    #                   context_name, report_enabled_checked)
-    # endfunction
+    def uvm_report_fatal(self, id, message, verbosity, fname="", line=0,
+            context_name="", report_enabled_checked=0):
+
+        self.uvm_report(UVM_FATAL, id, message, UVM_NONE, fname, line,
+            context_name, report_enabled_checked)
 
 
     # // Function: uvm_report_error
@@ -445,100 +421,76 @@ class UVMReportCatcher(UVMCallback):
     # // Issues an error message using the current message's report object.
     # // This message will bypass any message catching callbacks.
     #
-    # protected function void uvm_report_error(string id,
-    #      				    string message,
-    #      				    int verbosity,
-    #      				    string fname = "",
-    #      				    int line = 0,
-    #      				    string context_name = "",
-    #      				    bit report_enabled_checked = 0)
-    #
-    #   self.uvm_report(UVM_ERROR, id, message, UVM_NONE, fname, line,
-    #                   context_name, report_enabled_checked)
-    # endfunction
-
+    def uvm_report_error(self, id, message, verbosity, fname="", line=0,
+            context_name="", report_enabled_checked=0):
+        self.uvm_report(UVM_ERROR, id, message, UVM_NONE, fname, line,
+            context_name, report_enabled_checked)
 
     # // Function: uvm_report_warning
     # //
     # // Issues a warning message using the current message's report object.
     # // This message will bypass any message catching callbacks.
     #
-    # protected function void uvm_report_warning(string id,
-    #      				      string message,
-    #      				      int verbosity,
-    #      				      string fname = "",
-    #      				      int line = 0,
-    #      				      string context_name = "",
-    #      				      bit report_enabled_checked = 0)
-    #
-    #   self.uvm_report(UVM_WARNING, id, message, UVM_NONE, fname, line,
-    #                   context_name, report_enabled_checked)
-    # endfunction
-    #
-    #
+    def uvm_report_warning(self, id, message, verbosity, fname="", line=0,
+            context_name="", report_enabled_checked=0):
+        self.uvm_report(UVM_WARNING, id, message, UVM_NONE, fname, line,
+            context_name, report_enabled_checked)
+
+
     # // Function: uvm_report_info
     # //
     # // Issues a info message using the current message's report object.
     # // This message will bypass any message catching callbacks.
     #
-    # protected function void uvm_report_info(string id,
-    #      				   string message,
-    #      				   int verbosity,
-    #      				   string fname = "",
-    #      				   int line = 0,
-    #      				   string context_name = "",
-    #      				   bit report_enabled_checked = 0)
-    #
-    #   self.uvm_report(UVM_INFO, id, message, verbosity, fname, line,
-    #                   context_name, report_enabled_checked)
-    # endfunction
-    #
+    def uvm_report_info(self, id, message, verbosity, fname="", line=0,
+            context_name="", report_enabled_checked=0):
+        self.uvm_report(UVM_INFO, id, message, verbosity, fname, line,
+            context_name, report_enabled_checked)
+
+
     # // Function: uvm_report
     # //
     # // Issues a message using the current message's report object.
     # // This message will bypass any message catching callbacks.
     #
-    # protected function void uvm_report(uvm_severity severity,
-    #      			      string id,
-    #      			      string message,
-    #      			      int verbosity,
-    #      			      string fname = "",
-    #      			      int line = 0,
-    #      			      string context_name = "",
-    #      			      bit report_enabled_checked = 0)
-    #
-    #   uvm_report_message l_report_message
-    #   if (report_enabled_checked == 0) begin
-    #     if (!uvm_report_enabled(verbosity, severity, id))
-    #       return
-    #   end
-    #
-    #   l_report_message = uvm_report_message::new_report_message()
-    #   l_report_message.set_report_message(severity, id, message,
-    #      				 verbosity, fname, line, context_name)
-    #   self.uvm_process_report_message(l_report_message)
-    # endfunction
-    #
-    # protected function void uvm_process_report_message(uvm_report_message msg)
-    #   uvm_report_object ro = m_modified_report_message.get_report_object()
-    #   uvm_action a = ro.get_report_action(msg.get_severity(), msg.get_id())
-    #
-    #   if(a) begin
-    #     string composed_message
-    #     uvm_report_server rs = m_modified_report_message.get_report_server()
-    #
-    #     msg.set_report_object(ro)
-    #     msg.set_report_handler(m_modified_report_message.get_report_handler())
-    #     msg.set_report_server(rs)
-    #     msg.set_file(ro.get_report_file_handle(msg.get_severity(), msg.get_id()))
-    #     msg.set_action(a)
-    #
-    #     // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-    #     if (a & (UVM_LOG|UVM_DISPLAY))
-    #       composed_message = rs.compose_report_message(msg)
-    #     rs.execute_report_message(msg, composed_message)
-    #   end
-    # endfunction
+    def uvm_report(self, severity,
+        id,
+        message,
+        verbosity,
+        fname="",
+        line=0,
+        context_name="",
+        report_enabled_checked=0):
+
+        l_report_message = None
+        if report_enabled_checked == 0:
+            if not uvm_report_enabled(verbosity, severity, id):
+                return
+
+        l_report_message = UVMReportMessage.new_report_message()
+        l_report_message.set_report_message(severity, id, message,
+                            verbosity, fname, line, context_name)
+        self.uvm_process_report_message(l_report_message)
+
+
+    def uvm_process_report_message(self, msg: UVMReportMessage):
+        ro = UVMReportCatcher.m_modified_report_message.get_report_object()
+        a = ro.get_report_action(msg.get_severity(), msg.get_id())
+
+        if a:
+            composed_message = ""
+            rs = UVMReportCatcher.m_modified_report_message.get_report_server()
+
+            msg.set_report_object(ro)
+            msg.set_report_handler(UVMReportCatcher.m_modified_report_message.get_report_handler())
+            msg.set_report_server(rs)
+            msg.set_file(ro.get_report_file_handle(msg.get_severity(), msg.get_id()))
+            msg.set_action(a)
+
+            # no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
+            if a & (UVM_LOG | UVM_DISPLAY):
+                composed_message = rs.compose_report_message(msg)
+            rs.execute_report_message(msg, composed_message)
 
 
     #// Function: issue
@@ -547,19 +499,16 @@ class UVMReportCatcher(UVMCallback):
     #//
     #// Issuing a message will update the report_server stats, possibly multiple
     #// times if the message is not ~CAUGHT~.
+    def issue(self):
+        composed_message = ""
+        modded_msg = UVMReportCatcher.m_modified_report_message
+        rs = modded_msg.get_report_server()
 
-    #protected function void issue()
-    #   string composed_message
-    #   uvm_report_server rs = m_modified_report_message.get_report_server()
-    #
-    #   if(uvm_action_type'(m_modified_report_message.get_action()) != UVM_NO_ACTION)
-    #   begin
-    #     // no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
-    #     if (m_modified_report_message.get_action() & (UVM_LOG|UVM_DISPLAY))
-    #       composed_message = rs.compose_report_message(m_modified_report_message)
-    #     rs.execute_report_message(m_modified_report_message, composed_message)
-    #   end
-    #endfunction
+        if modded_msg.get_action() != UVM_NO_ACTION:
+            # no need to compose when neither UVM_DISPLAY nor UVM_LOG is set
+            if (modded_msg.get_action() & (UVM_LOG | UVM_DISPLAY)):
+                composed_message = rs.compose_report_message(modded_msg)
+            rs.execute_report_message(modded_msg, composed_message)
 
 
     in_catcher = 0
@@ -646,7 +595,6 @@ class UVMReportCatcher(UVMCallback):
         return thrown
 
 
-    #
     #//process_report_catcher
     #//internal method to call user <catch()> method
     #//
@@ -667,7 +615,7 @@ class UVMReportCatcher(UVMCallback):
 
     #// Function: summarize
     #//
-    #// This function is called automatically by <uvm_report_server::report_summarize()>.
+    #// This function is called automatically by `UVMReportServer.report_summarize()`.
     #// It prints the statistics for the active catchers.
     @classmethod
     def summarize(cls):
@@ -681,4 +629,5 @@ class UVMReportCatcher(UVMCallback):
             q.append("Number of caught UVM_FATAL reports   :{}\n".format(cls.m_caught_fatal))
             q.append("Number of caught UVM_ERROR reports   :{}\n".format(cls.m_caught_error))
             q.append("Number of caught UVM_WARNING reports :{}\n".format(cls.m_caught_warning))
-            #`uvm_info_context("UVM/REPORT/CATCHER",`UVM_STRING_QUEUE_STREAMING_PACK(q),UVM_LOW,uvm_top)
+            from .uvm_root import uvm_top
+            uvm_info_context("UVM/REPORT/CATCHER", UVM_STRING_QUEUE_STREAMING_PACK(q),UVM_LOW,uvm_top)
