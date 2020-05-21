@@ -41,6 +41,9 @@ test-tlm2:
 test-callbacks:
 	make -C callbacks/
 
+test-reporting:
+	make -C reporting/
+
 test-comps:
 	make -C comps/comparator
 
