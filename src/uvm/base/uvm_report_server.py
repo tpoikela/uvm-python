@@ -68,6 +68,7 @@ class UVMReportServer(UVMObject):
         self.reset_quit_count()
         self.reset_severity_counts()
         self.set_max_quit_count(0)
+        self.print_on_closed_file = True
 
     def get_type_name(self):
         return "uvm_report_server"
@@ -149,6 +150,7 @@ class UVMReportServer(UVMObject):
         Function: get_max_quit_count
 
         Returns:
+            int: Max quit count allowed for the server.
         """
         return self.m_max_quit_count
 
@@ -191,7 +193,7 @@ class UVMReportServer(UVMObject):
 
     def incr_quit_count(self):
         """
-        Function: incr_quit_count
+        Increment quit count by one.
         """
         self.m_quit_count += 1
 
@@ -208,7 +210,7 @@ class UVMReportServer(UVMObject):
         the maximum.
 
         Returns:
-            int: True is maximum quit count reached, False otherwise.
+            bool: True is maximum quit count reached, False otherwise.
         """
         return self.m_quit_count >= self.m_max_quit_count
 
@@ -219,6 +221,8 @@ class UVMReportServer(UVMObject):
 
     def get_severity_count(self, severity):
         """
+        Returns number of messages reported for given severity.
+
         Args:
             severity (int): Severity level
         Returns:
@@ -243,11 +247,13 @@ class UVMReportServer(UVMObject):
         else:
             self.m_severity_count.add(severity, 1)
 
-    # Function: reset_severity_counts
-    #
-    # Set, get, or increment the counter for the given severity, or reset
-    # all severity counters to 0.
     def reset_severity_counts(self):
+        """
+        Function: reset_severity_counts
+
+        Set, get, or increment the counter for the given severity, or reset
+        all severity counters to 0.
+        """
         for s in UVM_SEVERITY_LEVELS:
             self.m_severity_count.add(s, 0)
 
@@ -321,6 +327,7 @@ class UVMReportServer(UVMObject):
 
         This method sends string severity to the command line if file is 0 and to
         the file(s) specified by file if it is not 0.
+
         Args:
             file:
             _str:
@@ -328,9 +335,13 @@ class UVMReportServer(UVMObject):
         if file == 0:
             #import logging
             #logging.info("%s", str)
-            print("%s\n", _str)
+            print(_str)
         else:
-            file.write(_str + "\n")
+            if not file.closed:
+                file.write(_str + "\n")
+            else:
+                if self.print_on_closed_file:
+                    print('UVM_WARNING. File already closed for msg ' + _str)
 
     def process_report_message(self, report_message):
         l_report_handler = report_message.get_report_handler()
