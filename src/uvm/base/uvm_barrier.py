@@ -152,7 +152,7 @@ class UVMBarrier(UVMObject):
 
 
     type_name = "UVMBarrier"
-    #
+
     def create(self, name=""):
         v = UVMBarrier(name)
         return v
@@ -178,14 +178,12 @@ class UVMBarrier(UVMObject):
                 ".", "bit")
 
 
-    #  def do_copy(self,uvm_object rhs):
-    #    UVMBarrier b
-    #    super().do_copy(rhs)
-    #    if(!sv.cast(b, rhs)  or  (b is None)) return
-    #
-    #    threshold = b.threshold
-    #    num_waiters = b.num_waiters
-    #    at_threshold = b.at_threshold
-    #    auto_reset = b.auto_reset
-    #    m_event = b.m_event
-    #  endfunction
+    def do_copy(self, rhs):
+        b = None
+        super().do_copy(rhs)
+        #    if(!sv.cast(b, rhs)  or  (b is None)) return
+        self.threshold = b.threshold
+        self.num_waiters = b.num_waiters
+        self.at_threshold = b.at_threshold
+        self.auto_reset = b.auto_reset
+        self.m_event = b.m_event
