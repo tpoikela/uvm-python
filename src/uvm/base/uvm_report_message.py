@@ -202,40 +202,35 @@ class UVMReportMessage(UVMObject):
 
     @classmethod
     def new_report_message(cls, name="uvm_report_message"):
-        """         
-        Function: new_report_message
-
+        """
+        Creates a new uvm_report_message object.
+        This function is the same as new(), but keeps the random stability.
 
         Args:
-            cls: 
-            name: 
+            name (str): Name of the message
         Returns:
-        """
-        """ Creates a new uvm_report_message object.
-        This function is the same as new(), but keeps the random stability.
+            UVMReportMessage: Created report message
         """
         p = None
-        rand_state = ""
+        # rand_state = ""
         #p = process::self()
 
         if p is not None:
             pass
             #rand_state = p.get_randstate()
         new_report_message = UVMReportMessage(name)
-        #if (p != null):
-            #p.set_randstate(rand_state)
+        # if (p != null):
+        #   p.set_randstate(rand_state)
         return new_report_message
 
     def do_print(self, printer):
-        """         
-        Function: print
-
-        The uvm_report_message implements <uvm_object::do_print()> such that
+        """
+        The uvm_report_message implements `UVMObject.do_print()` such that
         `print` method provides UVM printer formatted output
         of the message.  A snippet of example output is shown here:
 
         Args:
-            printer: 
+            printer (UVMPrinter): Printer used for printing the msg
         """
         l_verbosity = 0
         UVMObject.do_print(self, printer)
@@ -274,55 +269,60 @@ class UVMReportMessage(UVMObject):
     #----------------------------------------------------------------------------
 
     def get_report_object(self):
-        """         
+        """
         Function: get_report_object
+
         Returns:
+            UVMReportObject: Report object for this msg.
         """
         return self._report_object
 
     def set_report_object(self, ro):
-        """         
-        Function: set_report_object
-
+        """
         Get or set the uvm_report_object that originated the message.
+
         Args:
-            ro: 
+            ro (UVMReportObject):
         """
         self._report_object = ro
 
     def get_report_handler(self):
-        """         
-        Function: get_report_handler
+        """
+        Get the UVMReportHandler that is responsible for checking
+        whether the message is enabled, should be upgraded/downgraded, etc.
+
         Returns:
+            UVMReportHandler: Report handler for this msg.
         """
         return self._report_handler
 
     def set_report_handler(self, rh):
-        """         
-        Function: set_report_handler
-
-        Get or set the uvm_report_handler that is responsible for checking
+        """
+        Set the UVMReportHandler that is responsible for checking
         whether the message is enabled, should be upgraded/downgraded, etc.
+
         Args:
-            rh: 
+            rh:
         """
         self._report_handler = rh
 
     def get_report_server(self):
-        """         
-        Function: get_report_server
+        """
+        Get the `UVMReportServer` that is responsible for servicing
+        the message's actions.
+
         Returns:
+            UVMReportServer: Report server for this object
         """
         return self._report_server
 
     def set_report_server(self, rs):
-        """         
-        Function: set_report_server
-
-        Get or set the uvm_report_server that is responsible for servicing
+        """
+        Set the `UVMReportServer` that is responsible for servicing
         the message's actions.
+
         Args:
-            rs: 
+            rs (UVMReportServer): Report server for this object.
         """
         self._report_server = rs
 
@@ -331,33 +331,33 @@ class UVMReportMessage(UVMObject):
     #----------------------------------------------------------------------------
 
     def get_severity(self):
-        """         
+        """
         Function: get_severity
         Returns:
         """
         return self._severity
 
     def set_severity(self, sev):
-        """         
+        """
         Function: set_severity
 
         Get or set the severity (UVM_INFO, UVM_WARNING, UVM_ERROR or
         UVM_FATAL) of the message.  The value of this field is determined via
         the API used (`uvm_info(), `uvm_waring(), etc.) and populated for the user.
         Args:
-            sev: 
+            sev:
         """
         self._severity = sev
 
     def get_id(self):
-        """         
+        """
         Function: get_id
         Returns:
         """
         return self._id
 
     def set_id(self, id):
-        """         
+        """
         Function: set_id
 
         Get or set the id of the message.  The value of this field is
@@ -365,163 +365,169 @@ class UVMReportMessage(UVMObject):
         consistent convention.  Settings in the uvm_report_handler allow various
         messaging controls based on this field.  See `uvm_report_handler`.
         Args:
-            id: 
+            id:
         """
         self._id = id
 
     def get_message(self):
-        """         
+        """
         Function: get_message
         Returns:
         """
         return self._message
 
     def set_message(self, msg):
-        """         
+        """
         Function: set_message
 
         Get or set the user message content string.
         Args:
-            msg: 
+            msg:
         """
         self._message = msg
 
     def get_verbosity(self):
-        """         
+        """
         Function: get_verbosity
         Returns:
         """
         return self._verbosity
 
     def set_verbosity(self, ver):
-        """         
+        """
         Function: set_verbosity
 
         Get or set the message threshold value.  This value is compared
         against settings in the `uvm_report_handler` to determine whether this
         message should be executed.
         Args:
-            ver: 
+            ver:
         """
         self._verbosity = ver
 
     def get_filename(self):
-        """         
+        """
         Function: get_filename
         Returns:
         """
         return self._filename
 
     def set_filename(self, fname):
-        """         
+        """
         Function: set_filename
 
         Get or set the file from which the message originates.  This value
         is automatically populated by the messaging macros.
         Args:
-            fname: 
+            fname:
         """
         self._filename = fname
 
     def get_line(self):
-        """         
+        """
         Function: get_line
         Returns:
         """
         return self._line
 
     def set_line(self, ln):
-        """         
+        """
         Function: set_line
 
         Get or set the line in the `file` from which the message originates.
         This value is automatically populate by the messaging macros.
         Args:
-            ln: 
+            ln:
         """
         self._line = ln
 
     def get_context(self):
-        """         
-        Function: get_context
+        """
+        Get the optional user-supplied string that is meant to convey
+        the context of the message.  It can be useful in scopes that are not
+        inherently UVM like modules, interfaces, etc.
+
         Returns:
+            str: Context for the msg.
         """
         return self._context_name
 
     def set_context(self, cn):
-        """         
-        Function: set_context
-
-        Get or set the optional user-supplied string that is meant to convey
+        """
+        Set the optional user-supplied string that is meant to convey
         the context of the message.  It can be useful in scopes that are not
         inherently UVM like modules, interfaces, etc.
+
         Args:
-            cn: 
+            cn (str): Context for the msg.
         """
         self._context_name = cn
 
     def get_action(self):
-        """         
-        Function: get_action
+        """
+        Get the action(s) that the `UVMReportServer` should perform
+        for this message.  This field is populated by the `UVMReportHandler` during
+        message execution flow.
+
         Returns:
         """
         return self._action
 
     def set_action(self, act):
-        """         
-        Function: set_action
-
-        Get or set the action(s) that the uvm_report_server should perform
-        for this message.  This field is populated by the uvm_report_handler during
+        """
+        Set the action(s) that the `UVMReportServer` should perform
+        for this message.  This field is populated by the `UVMReportHandler` during
         message execution flow.
+
         Args:
-            act: 
+            act:
         """
         self._action = act
 
     def get_file(self):
-        """         
-        Function: get_file
+        """
+        Get or set the file that the message is to be written to when the
+        message's action is UVM_LOG.  This field is populated by the
+        `UVMReportHandler` during message execution flow.
+
         Returns:
+            str: Filename associated with this msg.
         """
         return self._file
 
     def set_file(self, fl):
-        """         
-        Function: set_file
-
-        Get or set the file that the message is to be written to when the
+        """
+        Set the file that the message is to be written to when the
         message's action is UVM_LOG.  This field is populated by the
-        uvm_report_handler during message execution flow.
+        `UVMReportHandler` during message execution flow.
+
         Args:
-            fl: 
+            fl (str): Filename associated with this msg.
         """
         self._file = fl
 
     def get_element_container(self):
-        """         
-        Function: get_element_container
-
+        """
         Get the element_container of the message
+
         Returns:
+            UVMReportMessageElementContainer: Element_container of the message
         """
         return self._report_message_element_container
 
     def set_report_message(self, severity, id, message, verbosity, filename,
             line, context_name):
-        """         
-        Function: set_report_message
-
+        """
         Set all the common fields of the report message in one shot.
 
         Args:
-            severity: 
-            id: 
-            message: 
-            verbosity: 
-            filename: 
-            line: 
-            context_name: 
+            severity:
+            id:
+            message:
+            verbosity:
+            filename:
+            line:
+            context_name:
         """
         self._context_name = context_name
         self._filename = filename
@@ -536,14 +542,14 @@ class UVMReportMessage(UVMObject):
     #----------------------------------------------------------------------------
     # TODO
 
-    def add(self, name, value, action=UVM_LOG|UVM_RM_RECORD):
-         """          
+    def add(self, name, value, action=UVM_LOG | UVM_RM_RECORD):
+         """
          #----------------------------------------------------------------------------
          Group:  Message Element APIs
          #----------------------------------------------------------------------------
          Args:
-             name: 
-             value: 
-             action: 
+             name:
+             value:
+             action:
          """
          self._report_message_element_container.add(name, value, action)
