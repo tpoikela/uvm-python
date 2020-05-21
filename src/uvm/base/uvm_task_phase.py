@@ -24,9 +24,10 @@
 import cocotb
 from cocotb.triggers import Timer
 from .uvm_phase import UVMPhase, ph2str
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_DEBUG, UVM_PHASE_ENDED, UVM_PHASE_EXECUTING, UVM_PHASE_IMP,
+                                 UVM_PHASE_READY_TO_END, UVM_PHASE_STARTED)
 from .uvm_debug import uvm_debug
-from .uvm_globals import *
+from .uvm_globals import uvm_empty_delay, uvm_report_fatal, uvm_report_info
 
 #------------------------------------------------------------------------------
 #
