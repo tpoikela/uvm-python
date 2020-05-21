@@ -211,8 +211,11 @@ def uvm_fatal(ID, MSG):
 #// explicitly supplied as a macro argument.
 
 def uvm_info_context(ID, MSG, VERBOSITY, RO):
-    if RO.uvm_report_enabled(VERBOSITY,UVM_INFO,ID):
-        RO.uvm_report_info(ID, MSG, VERBOSITY, uvm_file(), uvm_line(), "", 1)
+    if RO.uvm_report_enabled(VERBOSITY, UVM_INFO, ID):
+        caller = getframeinfo(stack()[1][0])
+        fname = caller.filename
+        lineno = caller.lineno
+        RO.uvm_report_info(ID, MSG, VERBOSITY, fname, lineno, "", 1)
 
 
 #// MACRO: `uvm_warning_context
@@ -228,8 +231,8 @@ def uvm_info_context(ID, MSG, VERBOSITY, RO):
 #     if (RO.uvm_report_enabled(UVM_NONE,UVM_WARNING,ID)) \
 #       RO.uvm_report_warning (ID, MSG, UVM_NONE, uvm_file(), uvm_line(), "", 1); \
 #   end
-#
-#
+
+
 #// MACRO: `uvm_error_context
 #//
 #//| `uvm_error_context(ID, MSG, RO)
