@@ -39,7 +39,6 @@ def ename(sever):
 
 
 
-
 class UVMReportServer(UVMObject):
     """
     UVMReportServer is a global server that processes all of the reports
@@ -69,6 +68,7 @@ class UVMReportServer(UVMObject):
         self.reset_severity_counts()
         self.set_max_quit_count(0)
         self.print_on_closed_file = True
+        self.logger = print  # By default, use print to emit the messages
 
     def get_type_name(self):
         return "uvm_report_server"
@@ -84,12 +84,38 @@ class UVMReportServer(UVMObject):
         cs = get_cs()
         return cs.get_report_server()
 
+    def set_logger(self, logger):
+        """
+        Sets the logger function used to print the messages. Default is python
+        built-in print.
+
+        logger (func): Logging function to use.
+        """
+        self.logger = logger
+
     # Function: print
     #
-    # The uvm_report_server implements the <uvm_object::do_print()> such that
+    # The uvm_report_server implements the `UVMObject.do_print()` such that
     # ~print~ method provides UVM printer formatted output
-    # of the current configuration.    A snippet of example output is shown here:
+    # of the current configuration. A snippet of example output is shown here::
     #
+    #  uvm_report_server                 uvm_report_server  -     @13
+    #    quit_count                      int                32    'd0
+    #    max_quit_count                  int                32    'd5
+    #    max_quit_overridable            bit                1     'b1
+    #    severity_count                  severity counts    4     -
+    #      [UVM_INFO]                    integral           32    'd4
+    #      [UVM_WARNING]                 integral           32    'd2
+    #      [UVM_ERROR]                   integral           32    'd50
+    #      [UVM_FATAL]                   integral           32    'd10
+    #    id_count                        id counts          4     -
+    #      [ID1]                         integral           32    'd1
+    #      [ID2]                         integral           32    'd2
+    #      [RNTST]                       integral           32    'd1
+    #    enable_report_id_count_summary  bit                1     'b1
+    #    record_all_messages             bit                1     `b0
+    #    show_verbosity                  bit                1     `b0
+    #    show_terminator                 bit                1     `b0
 
     def do_print(self, printer):
         """
@@ -333,15 +359,14 @@ class UVMReportServer(UVMObject):
             _str:
         """
         if file == 0:
-            #import logging
-            #logging.info("%s", str)
-            print(_str)
+            self.logger(_str)
+            # print(_str)
         else:
             if not file.closed:
                 file.write(_str + "\n")
             else:
                 if self.print_on_closed_file:
-                    print('UVM_WARNING. File already closed for msg ' + _str)
+                    self.logger('UVM_WARNING. File already closed for msg ' + _str)
 
     def process_report_message(self, report_message):
         l_report_handler = report_message.get_report_handler()
@@ -426,7 +451,7 @@ class UVMReportServer(UVMObject):
 
         # DISPLAY action
         if report_message.get_action() & UVM_DISPLAY:
-            print(composed_message)
+            self.logger(composed_message)
 
         # LOG action
         # if log is set we need to send to the file but not resend to the
