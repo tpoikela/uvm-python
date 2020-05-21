@@ -32,19 +32,19 @@ from ..macros.uvm_object_defines import uvm_object_utils
 
 class UVMReportHandler(UVMObject):
     """
-    The uvm_report_handler is the class to which most methods in
+    The UVMReportHandler is the class to which most methods in
     `UVMReportObject` delegate. It stores the maximum verbosity, actions,
     and files that affect the way reports are handled.
 
     The report handler is not intended for direct use. See `UVMReportObject`
     for information on the UVM reporting mechanism.
 
-    The relationship between `UVMReportObject` (a base class for uvm_component)
-    and uvm_report_handler is typically one to one, but it can be many to one
+    The relationship between `UVMReportObject` (a base class for UVMComponent)
+    and UVMReportHandler is typically one to one, but it can be many to one
     if several uvm_report_objects are configured to use the same
-    uvm_report_handler_object. See <uvm_report_object::set_report_handler>.
+    `UVMReportHandler` object. See `UVMReportObject.set_report_handler`.
 
-    The relationship between uvm_report_handler and <uvm_report_server> is many
+    The relationship between UVMReportHandler and `UVMReportServer` is many
     to one.
     """
 
@@ -74,8 +74,6 @@ class UVMReportHandler(UVMObject):
 
     def do_print(self, printer):
         """
-        Function: print
-
         The uvm_report_handler implements the <uvm_object::do_print()> such that
         `print` method provides UVM printer formatted output
         of the current configuration.  A snippet of example output is shown
