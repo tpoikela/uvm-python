@@ -42,3 +42,8 @@ cov-all:
 	COVERAGE=1 COVERAGE_RCFILE=$(PWD)/.coveragerc make test
 	find -name '.coverage.*' | xargs coverage combine  # Merge cov from all tests
 	COVERAGE_RCFILE=$(PWD)/.coveragerc coverage html
+
+# Target to clean up the sim directories, logfiles etc
+clean:
+	find test/ -name 'sim_build' -exec rm -rf {} \;
+	find test/ -name 'results.xml' -exec rm -vf {} \;
