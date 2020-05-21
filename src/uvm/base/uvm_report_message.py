@@ -21,7 +21,8 @@
 #------------------------------------------------------------------------------
 
 from .uvm_object import UVMObject
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_DISPLAY, UVM_HEX, UVM_INFO, UVM_LOG,
+    UVM_RM_RECORD, UVM_UNSIGNED)
 
 #------------------------------------------------------------------------------
 #
@@ -132,7 +133,7 @@ class UVMReportMessageElementContainer(UVMObject):
     def get_elements(self):
         return self.elements
 
-    def add(self, name, val, action=UVM_LOG|UVM_RM_RECORD):
+    def add(self, name, val, action=UVM_LOG | UVM_RM_RECORD):
         elem = UVMReportMessageElementBase()
         elem.set_name(name)
         elem.set_val(val)
@@ -243,7 +244,7 @@ class UVMReportMessage(UVMObject):
         printer.print_int("line", self._line, 32, UVM_UNSIGNED)
         printer.print_string("context_name", self._context_name)
         if self._report_message_element_container.size() != 0:
-            self._report_message_element_container.pprint(printer)
+            self._report_message_element_container.print(printer)
 
     def do_copy(self, rhs):
         report_message = rhs

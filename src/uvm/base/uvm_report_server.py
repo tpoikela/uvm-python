@@ -1,5 +1,5 @@
 
-from cocotb.utils import get_sim_time
+# from cocotb.utils import get_sim_time
 
 from .uvm_object import UVMObject
 from .uvm_object_globals import (UVM_BIN, UVM_COUNT, UVM_DEC, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
@@ -110,7 +110,8 @@ class UVMReportServer(UVMObject):
 
         if self.m_severity_count.has_first():
             l_severity_count_index = self.m_severity_count.first()
-            printer.print_array_header("severity_count",self.m_severity_count.num(),"severity counts")
+            sev_count = self.m_severity_count.num()
+            printer.print_array_header("severity_count",sev_count,"severity counts")
             ok = True
             while ok:
                 printer.print_int("[{}]".format(ename(l_severity_count_index)),
@@ -147,7 +148,9 @@ class UVMReportServer(UVMObject):
 
     def get_max_quit_count(self):
         """
-        Function: get_max_quit_count
+        Get the maximum number of COUNT actions that can be tolerated
+        before a UVM_EXIT action is taken. The default is 0, which specifies
+        no maximum.
 
         Returns:
             int: Max quit count allowed for the server.
@@ -159,7 +162,6 @@ class UVMReportServer(UVMObject):
     # Get or set the maximum number of COUNT actions that can be tolerated
     # before a UVM_EXIT action is taken. The default is 0, which specifies
     # no maximum.
-
     def set_max_quit_count(self, count, overridable=True):
         if self.max_quit_overridable is False:
             uvm_report_info("NOMAXQUITOVR",
@@ -323,8 +325,6 @@ class UVMReportServer(UVMObject):
 
     def f_display(self, file, _str):
         """
-        Function- f_display
-
         This method sends string severity to the command line if file is 0 and to
         the file(s) specified by file if it is not 0.
 
