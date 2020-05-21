@@ -137,12 +137,15 @@ class UVMCallbacksBase(UVMObject):
         Check registration. To test registration, start at this class and
         work down the class hierarchy. If any class returns true then
         the pair is legal.
+
         Args:
-            obj:
-            cb:
+            obj (UVMObject):
+            cb (UVMCallback):
+
         Returns:
+            bool: True if obj is registered, False otherwise
         """
-        st = None
+        # st = None
         dt = None
 
         if self.m_is_registered(obj,cb):
@@ -191,7 +194,7 @@ class UVMCallbacksBase(UVMObject):
                 if cb is not None and cb.callback_mode():
                     return cb
         return None
-    #endclass
+
 
 #------------------------------------------------------------------------------
 #
@@ -208,7 +211,7 @@ class UVMCallbacksBase(UVMObject):
 # The <add>, <delete>, and <display> methods are implemented in this class.
 
 
-class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_callbacks_base
+class UVMTypedCallbacks(UVMCallbacksBase):  # (type T=uvm_object) extends uvm_callbacks_base
 
     #  static uvm_queue#(uvm_callback) m_tw_cb_q
     m_tw_cb_q = []
@@ -416,7 +419,7 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
         tname = ""
         strr = ""
         max_cb_name = 0
-        max_inst_name= 0
+        max_inst_name = 0
 
         prev_trace = cls.m_tracing
         cls.m_tracing = False  # don't allow tracing during display
@@ -439,11 +442,11 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
                 mode_q.append("OFF")
 
             strr = cb.get_name()
-            if max_cb_name <= strr.len():
-                max_cb_name = strr.len()
+            if max_cb_name <= len(strr):
+                max_cb_name = len(strr)
             strr = "(*)"
-            if max_inst_name <= strr.len():
-                max_inst_name = strr.len()
+            if max_inst_name <= len(strr):
+                max_inst_name = len(strr)
 
         # tpoikela: TODO finalize this
         #    if(obj is None):
@@ -521,9 +524,6 @@ class UVMTypedCallbacks(UVMCallbacksBase):  #(type T=uvm_object) extends uvm_cal
                 mode_q[i]))
         uvm_info("UVM/CB/DISPLAY", UVM_STRING_QUEUE_STREAMING_PACK(qs), UVM_NONE)
         cls.m_tracing = prev_trace  # allow tracing to be resumed
-        #  endfunction
-    #
-    #endclass
 
 
 
@@ -556,9 +556,6 @@ class UVMCallbacks(UVMTypedCallbacks):
     disabling that particular hook. A demonstration of this methodology is
     provided in an example included in the kit.
     """
-
-
-    #(type T=uvm_object, type CB=uvm_callback) extends UVMTypedCallbacks#(T)
 
     # Singleton instance is used for type checking
     m_inst = None
@@ -701,11 +698,8 @@ class UVMCallbacks(UVMTypedCallbacks):
     #
     #| uvm_callbacks#(my_comp)::add(comp_a, cb)
     #| uvm_callbacks#(my_comp, my_callback)::add(comp_a,cb)
-    #  static function void add(T obj, uvm_callback cb, uvm_apprepend ordering=UVM_APPEND)
-
     @classmethod
     def add(cls, obj, cb, ordering=UVM_APPEND):
-        # pass
         q = []  # uvm_queue#(uvm_callback) q
         nm = ""
         tnm = ""
