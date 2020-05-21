@@ -21,10 +21,11 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 
+from typing import Dict
+
 from .uvm_phase import UVMPhase
-from .uvm_object_globals import *
-from .uvm_globals import *
-from .uvm_debug import *
+from .uvm_object_globals import UVM_PHASE_DOMAIN, UVM_PHASE_SCHEDULE
+from .uvm_debug import uvm_debug
 from ..macros import uvm_error
 
 
@@ -45,55 +46,54 @@ extract_ph = None
 check_ph = None
 report_ph = None
 
-#------------------------------------------------------------------------------
-#
-# Class: uvm_domain
-#
-#------------------------------------------------------------------------------
-#
-# Phasing schedule node representing an independent branch of the schedule.
-# Handle used to assign domains to components or hierarchies in the testbench
-#
 
 
 class UVMDomain(UVMPhase):
+    """
+    Class: UVMDomain
+
+    Phasing schedule node representing an independent branch of the schedule.
+    Handle used to assign domains to components or hierarchies in the testbench.
+    Domain is basically a container for the uvm phases, or custom phases if
+    custom schedule is created.
+    """
 
     m_common_domain = None
     m_uvm_domain = None
-    m_domains = {}  # string -> UVMDomain
-    m_uvm_schedule = None
+    m_domains = {}  # type: Dict[str, UVMDomain]
+    m_uvm_schedule = None  # type: UVMPhase
 
-    def get_domains(domains=None):
-        """         
-        Function: get_domains
-
-        Provides a list of all domains in the provided `domains` argument.
+    @classmethod
+    def get_domains(cls, domains=None):
+        """
+        Returns a list of all domains.
 
         Args:
-            domains: 
+            domains:
         Returns:
+            list[UVMDomain]: List of all domains
         Raises:
+            Exception
         """
         if domains is not None:
             raise Exception("get_domains() you must capture the retval")
-        return UVMDomain.m_domains
+        return cls.m_domains
 
     @classmethod
     def get_uvm_schedule(cls):
-        """         
-        Function: get_uvm_schedule
-
+        """
         Get the "UVM" schedule, which consists of the run-time phases that
         all components execute when participating in the "UVM" domain.
 
         Returns:
+            UVMPhase: Returns UVM schedule consisting of uvm phases.
         """
         cls.get_uvm_domain()
-        return UVMDomain.m_uvm_schedule
+        return cls.m_uvm_schedule
 
     @classmethod
     def get_common_domain(cls):
-        """         
+        """
         Function: get_common_domain
 
         Get the "common" domain, which consists of the common phases that
@@ -148,20 +148,16 @@ class UVMDomain(UVMPhase):
         domain = UVMDomain.get_uvm_domain()
         UVMDomain.m_common_domain.add(domain,
                 with_phase=UVMDomain.m_common_domain.find(UVMRunPhase.get()))
-        #
-        #
+
         return UVMDomain.m_common_domain
 
     @classmethod
     def add_uvm_phases(cls, schedule):
-        """         
-        Function: add_uvm_phases
-
+        """
         Appends to the given `schedule` the built-in UVM phases.
 
         Args:
-            cls: 
-            schedule: 
+            schedule (UVMPhase): Phase to be added to the schedule.
         """
         schedule.add(UVMPreResetPhase.get())
         schedule.add(UVMResetPhase.get())
@@ -178,12 +174,11 @@ class UVMDomain(UVMPhase):
 
     @classmethod
     def get_uvm_domain(cls):
-        """         
-        Function: get_uvm_domain
-
+        """
         Get a handle to the singleton `uvm` domain
 
         Returns:
+            UVMDomain: Singleton instance of uvm domain
         """
         if UVMDomain.m_uvm_domain is None:
             UVMDomain.m_uvm_domain = UVMDomain("uvm")
@@ -193,12 +188,11 @@ class UVMDomain(UVMPhase):
         return UVMDomain.m_uvm_domain
 
     def __init__(self, name):
-        """         
-        Function: new
-
+        """
         Create a new instance of a phase domain.
+
         Args:
-            name: 
+            name:
         """
         super().__init__(name, UVM_PHASE_DOMAIN)
         if name in UVMDomain.m_domains:
@@ -224,15 +218,14 @@ class UVMDomain(UVMPhase):
 
     @classmethod
     def jump_all(cls, phase):
-        """         
+        """
         jump_all
         --------
         Args:
-            cls: 
-            phase: 
+            phase:
         """
         #  uvm_domain domains[string];
-        domains = UVMDomain.get_domains() # string -> uvm_domain
+        domains = UVMDomain.get_domains()  # string -> uvm_domain
         for idx in domains:
             domains[idx].jump(phase)
 
