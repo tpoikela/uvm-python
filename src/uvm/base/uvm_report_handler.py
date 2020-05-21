@@ -24,7 +24,9 @@
 
 from .uvm_object import UVMObject
 from .uvm_pool import UVMPool
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
+                                 UVM_FATAL, UVM_INFO, UVM_LOG, UVM_MEDIUM, UVM_NO_ACTION,
+                                 UVM_RM_RECORD, UVM_STOP, UVM_WARNING)
 from .uvm_globals import uvm_report_enabled
 from ..macros.uvm_object_defines import uvm_object_utils
 

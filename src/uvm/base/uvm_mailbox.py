@@ -22,7 +22,7 @@
 
 from .uvm_queue import UVMQueue
 from cocotb.triggers import Event, Timer
-from .uvm_debug import *
+from .uvm_debug import UVMDebug, uvm_debug
 
 
 def _uvm_debug(self, func, msg):

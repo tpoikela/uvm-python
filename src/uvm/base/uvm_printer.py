@@ -23,7 +23,8 @@
 
 
 from .uvm_scope_stack import UVMScopeStack
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_BIN, UVM_DEC, UVM_HEX, UVM_NORADIX, UVM_OCT, UVM_STRING,
+                                 UVM_TIME, UVM_UNSIGNED)
 from .uvm_misc import (uvm_leaf_scope, uvm_integral_to_string,
         uvm_bitstream_to_string, uvm_object_value_str)
 from .uvm_globals import uvm_report_error

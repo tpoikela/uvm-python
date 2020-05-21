@@ -22,10 +22,11 @@
 #----------------------------------------------------------------------
 
 from .uvm_phase import UVMPhase
-from .uvm_object_globals import *
+from .uvm_object_globals import (UVM_DEBUG, UVM_PHASE_ENDED, UVM_PHASE_EXECUTING, UVM_PHASE_IMP,
+                                 UVM_PHASE_READY_TO_END, UVM_PHASE_STARTED)
 from .uvm_domain import UVMDomain
-from .uvm_debug import *
-from .uvm_globals import *
+from .uvm_debug import uvm_debug
+from .uvm_globals import uvm_report_fatal, uvm_report_info
 
 
 class UVMBottomupPhase(UVMPhase):
