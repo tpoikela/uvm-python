@@ -24,6 +24,8 @@
 #   preserved where possible.
 #----------------------------------------------------------------------
 
+from typing import Dict, List, Optional
+
 from .sv import sv
 from .uvm_object import UVMObject
 from .uvm_report_object import UVMReportObject
@@ -64,10 +66,10 @@ class UVMTypeIDBase:
     typename = ""
 
     # UVMTypeIDBase -> uvm_callbacks
-    typeid_map = {}
+    typeid_map: Dict['UVMTypeIDBase', 'UVMCallbacks'] = {}
 
     # uvm_callbacks_base -> UVMTypeIDBase
-    type_map = {}
+    type_map: Dict['UVMCallbacksBase', 'UVMTypeIDBase'] = {}
 
 
 class UVMTypeID(UVMTypeIDBase):
@@ -117,7 +119,7 @@ class UVMCallbacksBase(UVMObject):
     def m_am_i_a(self, obj):
         return 0
 
-    def m_is_for_me(self, cb):
+    def m_is_for_me(self, cb: 'UVMCallback'):
         return 0
 
     def m_is_registered(self, obj, cb):
@@ -166,7 +168,7 @@ class UVMCallbacksBase(UVMObject):
         return False
 
     @classmethod
-    def get_first(cls, itr, obj, CB=None):
+    def get_first(cls, itr, obj, CB=None) -> Optional['UVMCallback']:
         """
         Returns the first enabled callback of type CB which resides in the queue for `obj`.
         If `obj` is `None` then the typewide queue for T is searched. `itr` is the iterator
@@ -177,12 +179,13 @@ class UVMCallbacksBase(UVMObject):
 
         The iterator class `uvm_callback_iter` may be used as an alternative, simplified,
         iterator interface.
+
         Args:
-            cls:
             itr:
             obj:
-            CB:
+            CB: Type of the callback
         Returns:
+            UVMCallback: First found callback.
         """
         cb = None
         cls.get()
@@ -214,13 +217,11 @@ class UVMCallbacksBase(UVMObject):
 class UVMTypedCallbacks(UVMCallbacksBase):  # (type T=uvm_object) extends uvm_callbacks_base
 
     #  static uvm_queue#(uvm_callback) m_tw_cb_q
-    m_tw_cb_q = []
+    m_tw_cb_q: List['UVMCallback'] = []
 
     #  static string m_typename
     m_typename = ""
 
-    #  typedef UVMTypedCallbacks#(T) this_type
-    #  typedef uvm_callbacks_base      super_type
 
     #  #The actual global object from the derivative class. Note that this is
     #  #just a reference to the object that is generated in the derived class.
@@ -560,8 +561,8 @@ class UVMCallbacks(UVMTypedCallbacks):
     # Singleton instance is used for type checking
     m_inst = None
     # typeinfo
-    m_typeid = None  # UVMTypeIDBase
-    m_cb_typeid = None  # UVMTypeIDBase
+    m_typeid = None  # type: UVMTypeIDBase
+    m_cb_typeid = None  # type: UVMTypeIDBase
 
     m_typename = ''
     m_cb_typename = ''
@@ -569,7 +570,7 @@ class UVMCallbacks(UVMTypedCallbacks):
     m_base_inst = None  # uvm_callbacks#(T,uvm_callback)
 
     # tpoikela: Added for containing callbacks for each class
-    _m_cb_table = {}  # UVMCallbacks[str]
+    _m_cb_table: Dict[str, 'UVMCallbacks'] = {}  # UVMCallbacks[str]
 
     def __init__(self, name='uvm_callbacks', T=ALL_TYPES, CB=ALL_TYPES):
         super().__init__(name)
@@ -1223,11 +1224,11 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
             CB:
         """
         self.m_i = 0
-        self.m_cb = None  # UVMCallback
+        self.m_cb: Optional[UVMCallback] = None  # UVMCallback
         self.m_obj = obj
         self.CB = CB
 
-    def first(self):
+    def first(self) -> Optional['UVMCallback']:
         """
         Function: first
 
@@ -1239,7 +1240,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
         self.m_cb = UVMCallbacks.get_first(self, self.m_obj, self.CB)
         return self.m_cb
 
-    def last(self):
+    def last(self) -> Optional['UVMCallback']:
         """
         Function: last
 
@@ -1251,7 +1252,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
         self.m_cb = UVMCallbacks.get_last(self, self.m_obj, self.CB)
         return self.m_cb
 
-    def next(self):
+    def next(self) -> Optional['UVMCallback']:
         """
         Returns the next valid (enabled) callback of the callback type (or
         a derivative) that is in the queue of the context object. If there
@@ -1262,7 +1263,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
         self.m_cb = UVMCallbacks.get_next(self, self.m_obj, self.CB)
         return self.m_cb
 
-    def prev(self):
+    def prev(self) -> Optional['UVMCallback']:
         """
         Returns the previous valid (enabled) callback of the callback type (or
         a derivative) that is in the queue of the context object. If there
@@ -1273,7 +1274,7 @@ class UVMCallbackIter:  # (type T = uvm_object, type CB = uvm_callback)
         self.m_cb = UVMCallbacks.get_prev(self, self.m_obj, self.CB)
         return self.m_cb
 
-    def get_cb(self):
+    def get_cb(self) -> Optional['UVMCallback']:
         """
         Returns the last callback accessed via a first() or next()
         call.
