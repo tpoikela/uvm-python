@@ -1,4 +1,4 @@
-#
+# type: ignore
 #----------------------------------------------------------------------
 #   Copyright 2007-2011 Mentor Graphics Corporation
 #   Copyright 2007-2010 Cadence Design Systems, Inc.

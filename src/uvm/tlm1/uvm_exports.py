@@ -94,7 +94,8 @@ from ..macros.uvm_tlm_defines import (UVM_TLM_BLOCKING_GET_MASK, UVM_TLM_BLOCKIN
 #  `UVM_BLOCKING_PUT_IMP ('m_if', T, t)
 class UVMBlockingPutExport(UVMPortBase):
     pass
-UVMBlockingPutExport = UVM_EXPORT_COMMON(UVMBlockingPutExport, UVM_TLM_BLOCKING_PUT_MASK,"uvm_blocking_put_export")
+UVMBlockingPutExport = UVM_EXPORT_COMMON(UVMBlockingPutExport,  # type: ignore
+    UVM_TLM_BLOCKING_PUT_MASK,"uvm_blocking_put_export")
 UVM_BLOCKING_PUT_IMP('m_if', UVMBlockingPutExport)
 
 #class uvm_nonblocking_put_export #(type T=int)
@@ -103,8 +104,9 @@ UVM_BLOCKING_PUT_IMP('m_if', UVMBlockingPutExport)
 #  `UVM_NONBLOCKING_PUT_IMP ('m_if', T, t)
 class uvm_nonblocking_put_export(UVMPortBase):
     pass
-uvm_nonblocking_put_export = UVM_EXPORT_COMMON(uvm_nonblocking_put_export, UVM_TLM_NONBLOCKING_PUT_MASK,"uvm_nonblocking_put_export")
-UVM_NONBLOCKING_PUT_IMP ('m_if', uvm_nonblocking_put_export)
+uvm_nonblocking_put_export = UVM_EXPORT_COMMON(uvm_nonblocking_put_export,  # type: ignore
+    UVM_TLM_NONBLOCKING_PUT_MASK,"uvm_nonblocking_put_export")
+UVM_NONBLOCKING_PUT_IMP('m_if', uvm_nonblocking_put_export)
 UVMNonBlockingPutExport = uvm_nonblocking_put_export
 
 #class uvm_put_export #(type T=int)
@@ -113,7 +115,8 @@ UVMNonBlockingPutExport = uvm_nonblocking_put_export
 #  `UVM_PUT_IMP ('m_if', T, t)
 class uvm_put_export(UVMPortBase):
     pass
-uvm_put_export = UVM_EXPORT_COMMON(uvm_put_export, UVM_TLM_PUT_MASK,"uvm_put_export")
+uvm_put_export = UVM_EXPORT_COMMON(uvm_put_export, UVM_TLM_PUT_MASK,  # type: ignore
+    "uvm_put_export")
 UVM_PUT_IMP('m_if', uvm_put_export)
 UVMPutExport = uvm_put_export
 
@@ -123,9 +126,9 @@ UVMPutExport = uvm_put_export
 #  `UVM_BLOCKING_GET_IMP ('m_if', T, t)
 class uvm_blocking_get_export(UVMPortBase):
     pass
-uvm_blocking_get_export= UVM_EXPORT_COMMON(uvm_blocking_get_export,
+uvm_blocking_get_export = UVM_EXPORT_COMMON(uvm_blocking_get_export,  # type: ignore
     UVM_TLM_BLOCKING_GET_MASK,"uvm_blocking_get_export")
-UVM_BLOCKING_GET_IMP ('m_if', uvm_blocking_get_export)
+UVM_BLOCKING_GET_IMP('m_if', uvm_blocking_get_export)
 UVMBlockingGetExport = uvm_blocking_get_export
 
 #class uvm_nonblocking_get_export #(type T=int)
@@ -134,9 +137,10 @@ UVMBlockingGetExport = uvm_blocking_get_export
 #  `UVM_NONBLOCKING_GET_IMP ('m_if', T, t)
 class uvm_nonblocking_get_export(UVMPortBase):
     pass
-uvm_nonblocking_get_export = UVM_EXPORT_COMMON(uvm_nonblocking_get_export, UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_export")
-UVM_NONBLOCKING_GET_IMP ('m_if', uvm_nonblocking_get_export)
-UVMBlockingGetExport = uvm_nonblocking_get_export
+uvm_nonblocking_get_export = UVM_EXPORT_COMMON(uvm_nonblocking_get_export,  # type: ignore
+    UVM_TLM_NONBLOCKING_GET_MASK,"uvm_nonblocking_get_export")
+UVM_NONBLOCKING_GET_IMP('m_if', uvm_nonblocking_get_export)
+UVMNonBlockingGetExport = uvm_nonblocking_get_export
 
 #class uvm_get_export #(type T=int)
 #  extends uvm_port_base #(uvm_tlm_if_base #(T,T));
@@ -144,8 +148,9 @@ UVMBlockingGetExport = uvm_nonblocking_get_export
 #  `UVM_GET_IMP ('m_if', T, t)
 class uvm_get_export(UVMPortBase):
     pass
-uvm_get_export = UVM_EXPORT_COMMON(uvm_get_export, UVM_TLM_GET_MASK,"uvm_get_export")
-UVM_GET_IMP ('m_if', uvm_get_export)
+uvm_get_export = UVM_EXPORT_COMMON(uvm_get_export, UVM_TLM_GET_MASK,  # type: ignore
+    "uvm_get_export")
+UVM_GET_IMP('m_if', uvm_get_export)
 UVMGetExport = uvm_get_export
 
 #class uvm_blocking_peek_export #(type T=int)
@@ -154,8 +159,9 @@ UVMGetExport = uvm_get_export
 #  `UVM_BLOCKING_PEEK_IMP ('m_if', T, t)
 class uvm_blocking_peek_export(UVMPortBase):
     pass
-uvm_blocking_peek_export = UVM_EXPORT_COMMON(uvm_blocking_peek_export, UVM_TLM_BLOCKING_PEEK_MASK,"uvm_blocking_peek_export")
-UVM_BLOCKING_PEEK_IMP ('m_if', uvm_blocking_peek_export)
+uvm_blocking_peek_export = UVM_EXPORT_COMMON(uvm_blocking_peek_export,  # type: ignore
+    UVM_TLM_BLOCKING_PEEK_MASK,"uvm_blocking_peek_export")
+UVM_BLOCKING_PEEK_IMP('m_if', uvm_blocking_peek_export)
 UVMBlockingPeekExport = uvm_blocking_peek_export
 
 #class uvm_nonblocking_peek_export #(type T=int)
@@ -164,9 +170,9 @@ UVMBlockingPeekExport = uvm_blocking_peek_export
 #  `UVM_NONBLOCKING_PEEK_IMP ('m_if', T, t)
 class uvm_nonblocking_peek_export(UVMPortBase):
     pass
-uvm_nonblocking_peek_export = UVM_EXPORT_COMMON(uvm_nonblocking_peek_export,
+uvm_nonblocking_peek_export = UVM_EXPORT_COMMON(uvm_nonblocking_peek_export,  # type: ignore
     UVM_TLM_NONBLOCKING_PEEK_MASK,"uvm_nonblocking_peek_export")
-UVM_NONBLOCKING_PEEK_IMP ('m_if', uvm_nonblocking_peek_export)
+UVM_NONBLOCKING_PEEK_IMP('m_if', uvm_nonblocking_peek_export)
 UVMNonBlockingPeekExport = uvm_nonblocking_peek_export
 
 #class uvm_peek_export #(type T=int)
@@ -175,7 +181,8 @@ UVMNonBlockingPeekExport = uvm_nonblocking_peek_export
 #  `UVM_PEEK_IMP ('m_if', T, t)
 class uvm_peek_export(UVMPortBase):
     pass
-uvm_peek_export = UVM_EXPORT_COMMON(uvm_peek_export, UVM_TLM_PEEK_MASK,"uvm_peek_export")
+uvm_peek_export = UVM_EXPORT_COMMON(uvm_peek_export, UVM_TLM_PEEK_MASK,  # type: ignore
+    "uvm_peek_export")
 UVM_PEEK_IMP ('m_if', uvm_peek_export)
 UVMPeekExport = uvm_peek_export
 
@@ -185,7 +192,7 @@ UVMPeekExport = uvm_peek_export
 #  `UVM_BLOCKING_GET_PEEK_IMP ('m_if', T, t)
 class uvm_blocking_get_peek_export(UVMPortBase):
     pass
-uvm_blocking_get_peek_export = UVM_EXPORT_COMMON(uvm_blocking_get_peek_export,
+uvm_blocking_get_peek_export = UVM_EXPORT_COMMON(uvm_blocking_get_peek_export, # type: ignore
     UVM_TLM_BLOCKING_GET_PEEK_MASK,"uvm_blocking_get_peek_export")
 UVM_BLOCKING_GET_PEEK_IMP('m_if', uvm_blocking_get_peek_export)
 UVMBlockingGetPeekExport = uvm_blocking_get_peek_export
@@ -196,7 +203,7 @@ UVMBlockingGetPeekExport = uvm_blocking_get_peek_export
 #  `UVM_NONBLOCKING_GET_PEEK_IMP ('m_if', T, t)
 class uvm_nonblocking_get_peek_export(UVMPortBase):
     pass
-uvm_nonblocking_get_peek_export = UVM_EXPORT_COMMON(uvm_nonblocking_get_peek_export,
+uvm_nonblocking_get_peek_export = UVM_EXPORT_COMMON(uvm_nonblocking_get_peek_export,  # type: ignore
     UVM_TLM_NONBLOCKING_GET_PEEK_MASK,"uvm_nonblocking_get_peek_export")
 UVM_NONBLOCKING_GET_PEEK_IMP ('m_if', uvm_nonblocking_get_peek_export)
 UVMNonBlockingGetPeekExport = uvm_nonblocking_get_peek_export
@@ -207,7 +214,7 @@ UVMNonBlockingGetPeekExport = uvm_nonblocking_get_peek_export
 #  `UVM_GET_PEEK_IMP ('m_if', T, t)
 class uvm_get_peek_export(UVMPortBase):
     pass
-uvm_get_peek_export = UVM_EXPORT_COMMON(uvm_get_peek_export,
+uvm_get_peek_export = UVM_EXPORT_COMMON(uvm_get_peek_export,  # type: ignore
     UVM_TLM_GET_PEEK_MASK,"uvm_get_peek_export")
 UVM_GET_PEEK_IMP('m_if', uvm_get_peek_export)
 UVMGetPeekExport = uvm_get_peek_export
@@ -266,7 +273,7 @@ UVMGetPeekExport = uvm_get_peek_export
 #  `UVM_BLOCKING_GET_PEEK_IMP ('m_if', RSP, t)
 class uvm_blocking_master_export:
     pass
-uvm_blocking_master_export = UVM_EXPORT_COMMON(uvm_blocking_master_export,
+uvm_blocking_master_export = UVM_EXPORT_COMMON(uvm_blocking_master_export,  # type: ignore
     UVM_TLM_BLOCKING_MASTER_MASK,"uvm_blocking_master_export")
 UVM_BLOCKING_PUT_IMP('m_if', uvm_blocking_master_export)
 UVM_BLOCKING_GET_PEEK_IMP('m_if', uvm_blocking_master_export)
@@ -279,7 +286,7 @@ UVMBlockingMasterExport = uvm_blocking_master_export
 #  `UVM_NONBLOCKING_GET_PEEK_IMP ('m_if', RSP, t)
 class uvm_nonblocking_master_export:
     pass
-uvm_nonblocking_master_export = UVM_EXPORT_COMMON(uvm_nonblocking_master_export,
+uvm_nonblocking_master_export = UVM_EXPORT_COMMON(uvm_nonblocking_master_export,  # type: ignore
     UVM_TLM_NONBLOCKING_MASTER_MASK, "uvm_nonblocking_master_export")
 UVM_NONBLOCKING_PUT_IMP('m_if', uvm_nonblocking_master_export)
 UVM_NONBLOCKING_GET_PEEK_IMP('m_if', uvm_nonblocking_master_export)
@@ -292,7 +299,8 @@ UVMNonBlockingMasterExport = uvm_nonblocking_master_export
 #  `UVM_GET_PEEK_IMP ('m_if', RSP, t)
 class uvm_master_export:
     pass
-uvm_master_export = UVM_EXPORT_COMMON(uvm_master_export, UVM_TLM_MASTER_MASK, "uvm_master_port")
+uvm_master_export = UVM_EXPORT_COMMON(uvm_master_export,  # type: ignore
+    UVM_TLM_MASTER_MASK, "uvm_master_port")
 UVM_PUT_IMP('m_if', uvm_master_export)
 UVM_GET_PEEK_IMP('m_if', uvm_master_export)
 UVMMasterExport = uvm_master_export
@@ -304,7 +312,7 @@ UVMMasterExport = uvm_master_export
 #  `UVM_BLOCKING_GET_PEEK_IMP ('m_if', REQ, t)
 class uvm_blocking_slave_export:  #(type REQ=int, type RSP=REQ)
     pass
-uvm_blocking_slave_export = UVM_EXPORT_COMMON(uvm_blocking_slave_export,
+uvm_blocking_slave_export = UVM_EXPORT_COMMON(uvm_blocking_slave_export,  # type: ignore
     UVM_TLM_BLOCKING_SLAVE_MASK, "uvm_blocking_slave_export")
 UVM_BLOCKING_PUT_IMP('m_if', uvm_blocking_slave_export)
 UVM_BLOCKING_GET_PEEK_IMP('m_if', uvm_blocking_slave_export)
@@ -316,7 +324,7 @@ UVM_BLOCKING_GET_PEEK_IMP('m_if', uvm_blocking_slave_export)
 #  `UVM_NONBLOCKING_GET_PEEK_IMP ('m_if', REQ, t)
 class uvm_nonblocking_slave_export:  #(type REQ=int, type RSP=REQ)
     pass
-uvm_nonblocking_slave_export = UVM_EXPORT_COMMON(uvm_nonblocking_slave_export,
+uvm_nonblocking_slave_export = UVM_EXPORT_COMMON(uvm_nonblocking_slave_export, # type: ignore
     UVM_TLM_NONBLOCKING_SLAVE_MASK,"uvm_nonblocking_slave_export")
 UVM_NONBLOCKING_PUT_IMP('m_if', uvm_nonblocking_slave_export)
 UVM_NONBLOCKING_GET_PEEK_IMP('m_if', uvm_nonblocking_slave_export)
@@ -330,7 +338,8 @@ UVMNonBlockingSlaveExport = uvm_nonblocking_slave_export
 #  `UVM_GET_PEEK_IMP ('m_if', REQ, t)
 class uvm_slave_export:  # (type REQ=int, type RSP=REQ)
     pass
-uvm_slave_export = UVM_EXPORT_COMMON(uvm_slave_export, UVM_TLM_SLAVE_MASK, "uvm_slave_export")
+uvm_slave_export = UVM_EXPORT_COMMON(uvm_slave_export,  # type: ignore
+    UVM_TLM_SLAVE_MASK, "uvm_slave_export")
 UVM_PUT_IMP('m_if', uvm_slave_export)
 UVM_GET_PEEK_IMP('m_if', uvm_slave_export)
 UVMSlaveExport = uvm_slave_export
@@ -341,7 +350,7 @@ UVMSlaveExport = uvm_slave_export
 #  `UVM_BLOCKING_TRANSPORT_IMP ('m_if', REQ, RSP, req, rsp)
 class uvm_blocking_transport_export:  #(type REQ=int, type RSP=REQ)
     pass
-uvm_blocking_transport_export = UVM_EXPORT_COMMON(uvm_blocking_transport_export,
+uvm_blocking_transport_export = UVM_EXPORT_COMMON(uvm_blocking_transport_export,  # type: ignore
     UVM_TLM_BLOCKING_TRANSPORT_MASK, "uvm_blocking_transport_export")
 UVM_BLOCKING_TRANSPORT_IMP('m_if', uvm_blocking_transport_export)
 UVMBlockingTransportExport = uvm_blocking_transport_export
@@ -353,7 +362,7 @@ UVMBlockingTransportExport = uvm_blocking_transport_export
 #  `UVM_NONBLOCKING_TRANSPORT_IMP ('m_if', REQ, RSP, req, rsp)
 class uvm_nonblocking_transport_export:  #(type REQ=int, type RSP=REQ)
     pass
-uvm_nonblocking_transport_export = UVM_EXPORT_COMMON(uvm_nonblocking_transport_export,
+uvm_nonblocking_transport_export = UVM_EXPORT_COMMON(uvm_nonblocking_transport_export,  # type: ignore
     UVM_TLM_NONBLOCKING_TRANSPORT_MASK,"uvm_nonblocking_transport_export")
 UVM_NONBLOCKING_TRANSPORT_IMP('m_if', uvm_nonblocking_transport_export)
 UVMNonBlockingTransportExport = uvm_nonblocking_transport_export
@@ -364,7 +373,7 @@ UVMNonBlockingTransportExport = uvm_nonblocking_transport_export
 #  `UVM_TRANSPORT_IMP ('m_if', REQ, RSP, req, rsp)
 class uvm_transport_export:  #(type REQ=int, type RSP=REQ)
     pass
-uvm_transport_export = UVM_EXPORT_COMMON(uvm_transport_export,
+uvm_transport_export = UVM_EXPORT_COMMON(uvm_transport_export,  # type: ignore
     UVM_TLM_TRANSPORT_MASK,"uvm_transport_export")
 UVM_TRANSPORT_IMP ('m_if', uvm_transport_export)
 UVMTransportExport = uvm_transport_export
