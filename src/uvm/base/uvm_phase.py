@@ -28,8 +28,9 @@
 #   preserved where possible.
 #----------------------------------------------------------------------
 
+from typing import Dict
 import cocotb
-from cocotb.triggers import Timer, Event, Combine
+from cocotb.triggers import Event, Combine
 
 from ..macros.uvm_object_defines import uvm_object_utils
 from ..macros.uvm_message_defines import uvm_fatal, uvm_info
@@ -58,18 +59,18 @@ def UVM_PH_TRACE(ID,MSG,PH,VERB):
 
 
 
-async def my_combine(events):
-    pproc = []
-    for e in events:
-        e.clear()
-
-        async def my_task(ee):
-            await ee.wait()
-        my_fork  = cocotb.fork(my_task(e))
-        pproc.append(my_fork)
-    for pp in pproc:
-        # Crashes after this call
-        await pp.join()
+#async def my_combine(events):
+#    pproc = []
+#    for e in events:
+#        e.clear()
+#
+#        async def my_task(ee):
+#            await ee.wait()
+#        my_fork  = cocotb.fork(my_task(e))
+#        pproc.append(my_fork)
+#    for pp in pproc:
+#        # Crashes after this call
+#        await pp.join()
 
 #------------------------------------------------------------------------------
 #
@@ -101,8 +102,6 @@ class UVMPhaseStateChange(UVMObject):
 
     def get_state(self):
         """
-        Function: get_state()
-
         Returns the state the phase just transitioned to.
         Functionally equivalent to <uvm_phase::get_state()>.
 
@@ -112,8 +111,6 @@ class UVMPhaseStateChange(UVMObject):
 
     def get_prev_state(self):
         """
-        Function: get_prev_state()
-
         Returns the state the phase just transitioned from.
 
         Returns:
@@ -121,114 +118,113 @@ class UVMPhaseStateChange(UVMObject):
         return self.m_prev_state
 
     def jump_to(self):
-      """
-      Function: jump_to()
+        """
+        If the current state is `UVM_PHASE_ENDED` or `UVM_PHASE_JUMPING` because of
+        a phase jump, returns the phase that is the target of jump.
+        Returns `None` otherwise.
 
-      If the current state is `UVM_PHASE_ENDED` or `UVM_PHASE_JUMPING` because of
-      a phase jump, returns the phase that is the target of jump.
-      Returns `null` otherwise.
+        Returns:
+        """
+        return self.m_jump_to
 
-      Returns:
-      """
-      return self.m_jump_to
 
 uvm_object_utils(UVMPhaseStateChange)
 
-#------------------------------------------------------------------------------
-#
-# Class: uvm_phase
-#
-#------------------------------------------------------------------------------
-#
-# This base class defines everything about a phase: behavior, state, and context.
-#
-# To define behavior, it is extended by UVM or the user to create singleton
-# objects which capture the definition of what the phase does and how it does it.
-# These are then cloned to produce multiple nodes which are hooked up in a graph
-# structure to provide context: which phases follow which, and to hold the state
-# of the phase throughout its lifetime.
-# UVM provides default extensions of this class for the standard runtime phases.
-# VIP Providers can likewise extend this class to define the phase functor for a
-# particular component context as required.
-#
-# This base class defines everything about a phase: behavior, state, and context.
-#
-# To define behavior, it is extended by UVM or the user to create singleton
-# objects which capture the definition of what the phase does and how it does it.
-# These are then cloned to produce multiple nodes which are hooked up in a graph
-# structure to provide context: which phases follow which, and to hold the state
-# of the phase throughout its lifetime.
-# UVM provides default extensions of this class for the standard runtime phases.
-# VIP Providers can likewise extend this class to define the phase functor for a
-# particular component context as required.
-#
-# *Phase Definition*
-#
-# Singleton instances of those extensions are provided as package variables.
-# These instances define the attributes of the phase (not what state it is in)
-# They are then cloned into schedule nodes which point back to one of these
-# implementations, and calls its virtual task or function methods on each
-# participating component.
-# It is the base class for phase functors, for both predefined and
-# user-defined phases. Per-component overrides can use a customized imp.
-#
-# To create custom phases, do not extend uvm_phase directly: see the
-# three predefined extended classes below which encapsulate behavior for
-# different phase types: task, bottom-up function and top-down function.
-#
-# Extend the appropriate one of these to create a uvm_YOURNAME_phase class
-# (or YOURPREFIX_NAME_phase class) for each phase, containing the default
-# implementation of the new phase, which must be a uvm_component-compatible
-# delegate, and which may be a ~null~ implementation. Instantiate a singleton
-# instance of that class for your code to use when a phase handle is required.
-# If your custom phase depends on methods that are not in uvm_component, but
-# are within an extended class, then extend the base YOURPREFIX_NAME_phase
-# class with parameterized component class context as required, to create a
-# specialized functor which calls your extended component class methods.
-# This scheme ensures compile-safety for your extended component classes while
-# providing homogeneous base types for APIs and underlying data structures.
-#
-# *Phase Context*
-#
-# A schedule is a coherent group of one or mode phase/state nodes linked
-# together by a graph structure, allowing arbitrary linear/parallel
-# relationships to be specified, and executed by stepping through them in
-# the graph order.
-# Each schedule node points to a phase and holds the execution state of that
-# phase, and has optional links to other nodes for synchronization.
-#
-# The main operations are: construct, add phases, and instantiate
-# hierarchically within another schedule.
-#
-# Structure is a DAG (Directed Acyclic Graph). Each instance is a node
-# connected to others to form the graph. Hierarchy is overlaid with m_parent.
-# Each node in the graph has zero or more successors, and zero or more
-# predecessors. No nodes are completely isolated from others. Exactly
-# one node has zero predecessors. This is the root node. Also the graph
-# is acyclic, meaning for all nodes in the graph, by following the forward
-# arrows you will never end up back where you started but you will eventually
-# reach a node that has no successors.
-#
-# *Phase State*
-#
-# A given phase may appear multiple times in the complete phase graph, due
-# to the multiple independent domain feature, and the ability for different
-# VIP to customize their own phase schedules perhaps reusing existing phases.
-# Each node instance in the graph maintains its own state of execution.
-#
-# *Phase Handle*
-#
-# Handles of this type uvm_phase are used frequently in the API, both by
-# the user, to access phasing-specific API, and also as a parameter to some
-# APIs. In many cases, the singleton phase handles can be
-# used (eg. <uvm_run_phase::get()>) in APIs. For those APIs that need to look
-# up that phase in the graph, this is done automatically.
 
 class UVMPhase(UVMObject):
+    """
+    Class: uvm_phase
+
+
+
+    This base class defines everything about a phase: behavior, state, and context.
+
+    To define behavior, it is extended by UVM or the user to create singleton
+    objects which capture the definition of what the phase does and how it does it.
+    These are then cloned to produce multiple nodes which are hooked up in a graph
+    structure to provide context: which phases follow which, and to hold the state
+    of the phase throughout its lifetime.
+    UVM provides default extensions of this class for the standard runtime phases.
+    VIP Providers can likewise extend this class to define the phase functor for a
+    particular component context as required.
+
+    This base class defines everything about a phase: behavior, state, and context.
+
+    To define behavior, it is extended by UVM or the user to create singleton
+    objects which capture the definition of what the phase does and how it does it.
+    These are then cloned to produce multiple nodes which are hooked up in a graph
+    structure to provide context: which phases follow which, and to hold the state
+    of the phase throughout its lifetime.
+    UVM provides default extensions of this class for the standard runtime phases.
+    VIP Providers can likewise extend this class to define the phase functor for a
+    particular component context as required.
+
+    *Phase Definition*
+
+    Singleton instances of those extensions are provided as package variables.
+    These instances define the attributes of the phase (not what state it is in)
+    They are then cloned into schedule nodes which point back to one of these
+    implementations, and calls its virtual task or function methods on each
+    participating component.
+    It is the base class for phase functors, for both predefined and
+    user-defined phases. Per-component overrides can use a customized imp.
+
+    To create custom phases, do not extend uvm_phase directly: see the
+    three predefined extended classes below which encapsulate behavior for
+    different phase types: task, bottom-up function and top-down function.
+
+    Extend the appropriate one of these to create a uvm_YOURNAME_phase class
+    (or YOURPREFIX_NAME_phase class) for each phase, containing the default
+    implementation of the new phase, which must be a uvm_component-compatible
+    delegate, and which may be a ~null~ implementation. Instantiate a singleton
+    instance of that class for your code to use when a phase handle is required.
+    If your custom phase depends on methods that are not in uvm_component, but
+    are within an extended class, then extend the base YOURPREFIX_NAME_phase
+    class with parameterized component class context as required, to create a
+    specialized functor which calls your extended component class methods.
+    This scheme ensures compile-safety for your extended component classes while
+    providing homogeneous base types for APIs and underlying data structures.
+
+    *Phase Context*
+
+    A schedule is a coherent group of one or mode phase/state nodes linked
+    together by a graph structure, allowing arbitrary linear/parallel
+    relationships to be specified, and executed by stepping through them in
+    the graph order.
+    Each schedule node points to a phase and holds the execution state of that
+    phase, and has optional links to other nodes for synchronization.
+
+    The main operations are: construct, add phases, and instantiate
+    hierarchically within another schedule.
+
+    Structure is a DAG (Directed Acyclic Graph). Each instance is a node
+    connected to others to form the graph. Hierarchy is overlaid with m_parent.
+    Each node in the graph has zero or more successors, and zero or more
+    predecessors. No nodes are completely isolated from others. Exactly
+    one node has zero predecessors. This is the root node. Also the graph
+    is acyclic, meaning for all nodes in the graph, by following the forward
+    arrows you will never end up back where you started but you will eventually
+    reach a node that has no successors.
+
+    *Phase State*
+
+    A given phase may appear multiple times in the complete phase graph, due
+    to the multiple independent domain feature, and the ability for different
+    VIP to customize their own phase schedules perhaps reusing existing phases.
+    Each node instance in the graph maintains its own state of execution.
+
+    *Phase Handle*
+
+    Handles of this type uvm_phase are used frequently in the API, both by
+    the user, to access phasing-specific API, and also as a parameter to some
+    APIs. In many cases, the singleton phase handles can be
+    used (eg. <uvm_run_phase::get()>) in APIs. For those APIs that need to look
+    up that phase in the graph, this is done automatically.
+    """
     m_phase_trace = False
     m_use_ovm_run_semantic = False
     m_phase_hopper = UVMMailbox()
-    m_executing_phases = {}  # UVMPhase -> bool
+    m_executing_phases: Dict['UVMPhase', bool] = {}  # UVMPhase -> bool
 
     #--------------------
     # Group: Construction
@@ -247,8 +243,8 @@ class UVMPhase(UVMObject):
 
         self.m_ready_to_end_count = 0
         self.max_ready_to_end_iter = 20
-        self.m_successors = {}  # UVMPhase -> bit
-        self.m_predecessors = {}  # UVMPhase -> bit
+        self.m_successors: Dict['UVMPhase', bool] = {}  # UVMPhase -> bit
+        self.m_predecessors: Dict['UVMPhase', bool] = {}  # UVMPhase -> bit
         self.m_end_node = None
         self.m_sync = []  # UVMPhase
         self.m_imp = None  # UVMPhase to call when we execute this node
@@ -952,7 +948,7 @@ class UVMPhase(UVMObject):
     #  // schedules that share that phase to jump as well. In that situation, the
     #  // jump_all static function should be used. This function causes all schedules
     #  // that share a phase to jump to that phase.
-    #
+
     #  // Function: jump
     #  //
     #  // Jump to a specified ~phase~. If the destination ~phase~ is within the current
@@ -961,7 +957,7 @@ class UVMPhase(UVMObject):
     #  // share the phase.
     #  //
     #  extern function void jump(uvm_phase phase)
-    #
+
     #  // Function: set_jump_phase
     #  //
     #  // Specify a phase to transition to when phase is complete.
@@ -985,22 +981,22 @@ class UVMPhase(UVMObject):
     #  // i.e. a global jump.
     #  //
     #  extern static function void jump_all(uvm_phase phase)
-    #
-    #
+
+
     #  // Function: get_jump_target
     #  //
     #  // Return handle to the target phase of the current jump, or ~null~ if no jump
     #  // is in progress. Valid for use during the phase_ended() callback
     #  //
     #  extern function uvm_phase get_jump_target()
-    #
+
 
     #// m_find_predecessor
     #// ------------------
     #
-    def m_find_predecessor(self, phase, stay_in_scope=True, orig_phase=None):
+    def m_find_predecessor(self, phase: 'UVMPhase', stay_in_scope=True, orig_phase=None):
         uvm_debug(self, 'm_find_pred', "called with phase as {}, orig_phase {}".format(
-                phase, orig_phase))
+            phase, orig_phase))
         if phase is None:
             return None
         uvm_debug(self, 'm_find_pred', "  Comparing now {} to {} and self {}".format(phase, self.m_imp,
@@ -1009,13 +1005,13 @@ class UVMPhase(UVMObject):
             uvm_debug(self, 'm_find_pred', "returning self now from")
             return self
         for key in self.m_predecessors.keys():
-            uvm_debug (self, 'm_find_pred', "  key is now {}".format(key))
+            uvm_debug(self, 'm_find_pred', "  key is now {}".format(key))
             pred = key
             if orig_phase is None:
                 orig = self
             else:
                 orig = orig_phase
-            uvm_debug (self, 'm_find_pred', "pred is {}, orig is {}".format(pred, orig))
+            uvm_debug(self, 'm_find_pred', "pred is {}, orig is {}".format(pred, orig))
             if (not stay_in_scope or
                     (pred.get_schedule() == orig.get_schedule()) or
                     (pred.get_domain() == orig.get_domain())):
@@ -1029,7 +1025,7 @@ class UVMPhase(UVMObject):
     #// ----------------
     #
     # @return uvm_phase
-    def m_find_successor(self, phase, stay_in_scope=True, orig_phase=None):
+    def m_find_successor(self, phase: 'UVMPhase', stay_in_scope=True, orig_phase=None):
         found = None
         #uvm_debug(self, 'm_find_succ', "called with phase as {}, orig_phase {}".format(
         #        phase, orig_phase))
@@ -1073,11 +1069,7 @@ class UVMPhase(UVMObject):
     #
     #  // Implementation - Schedule
     #  //--------------------------
-    #  protected bit  self.m_predecessors[uvm_phase]
-    #  protected bit  self.m_successors[uvm_phase]
-    #  protected uvm_phase self.m_end_node
     #  // Track the currently executing real task phases (used for debug)
-    #  static protected bit m_executing_phases[uvm_phase]
     #  function uvm_phase get_begin_node(); if (m_imp != null) return this; return null; endfunction
     #  function uvm_phase get_end_node();   return self.m_end_node; endfunction
 
@@ -1163,20 +1155,31 @@ class UVMPhase(UVMObject):
         await uvm_empty_delay()
 
 
-    #  // Implementation - Jumping
-    #  //-------------------------
-    #  local bit                m_jump_bkwd
-    #  local bit                m_jump_fwd
-    #  local uvm_phase          m_jump_phase
-    #  local bit                m_premature_end
     #  extern function void clear(uvm_phase_state state = UVM_PHASE_DORMANT)
+    #// for internal graph maintenance after a forward jump
+    def clear(self, state=UVM_PHASE_DORMANT):
+        self.set_state(state)
+        self.m_phase_proc = None
+        if self.phase_done is not None:
+            self.phase_done.clear(self)
+
+
     #  extern function void clear_successors(
     #                             uvm_phase_state state = UVM_PHASE_DORMANT,
     #                             uvm_phase end_state=null)
-    #
-    #  // Implementation - Overall Control
-    #  //---------------------------------
-    #  local static mailbox #(uvm_phase) self.m_phase_hopper = new()
+    #// clear_successors
+    #// ----------------
+    #// for internal graph maintenance after a forward jump
+    #// - called only by execute_phase()
+    #// - depth-first traversal of the DAG, calliing clear() on each node
+    #// - do not clear the end phase or beyond
+    def clear_successors(self, state=UVM_PHASE_DORMANT, end_state=None):
+        if self == end_state:
+            return
+        self.clear(state)
+        for succ in self.m_successors:
+            succ.clear_successors(state, end_state)
+
 
     # m_run_phases
     # ------------
@@ -1185,7 +1188,6 @@ class UVMPhase(UVMObject):
     # processes.  By hosting the phase processes here we avoid problems
     # associated with phase processes related as parents/children
     @classmethod
-
     async def m_run_phases(cls):
         cs = get_cs()
         top = cs.get_root()
@@ -1465,12 +1467,12 @@ class UVMPhase(UVMObject):
                     state_chg.m_phase = succ
                     succ.set_state(UVM_PHASE_SCHEDULED)
                     uvm_do_callbacks(self, UVMPhaseCb, 'phase_state_change', succ, state_chg)
-                    await uvm_empty_delay()  #0; // LET ANY WAITERS WAKE UP
+                    await uvm_empty_delay()  # LET ANY WAITERS WAKE UP
                     if not UVMPhase.m_phase_hopper.try_put(succ):
                         raise Exception('Failed try_put(succ). Should not ever fail')
                     if UVMPhase.m_phase_trace:
                          UVM_PH_TRACE("PH/TRC/SCHEDULED", ("Scheduled from phase "
-                             + self.get_full_name()) ,succ, UVM_LOW)
+                             + self.get_full_name()), succ, UVM_LOW)
         uvm_debug(self, 'execute_phase', 'End of task reached. Yay!')
         #endtask
 
@@ -2046,32 +2048,8 @@ class UVMPhaseCb(UVMCallback):
     #endfunction
     #
     #
-    #// clear
-    #// -----
-    #// for internal graph maintenance after a forward jump
-    #function void uvm_phase::clear(uvm_phase_state state = UVM_PHASE_DORMANT)
-    #  self.set_state(state)
-    #  self.m_phase_proc = null
-    #  if (self.phase_done != null)
-    #    self.phase_done.clear(this)
-    #endfunction
     #
     #
-    #// clear_successors
-    #// ----------------
-    #// for internal graph maintenance after a forward jump
-    #// - called only by execute_phase()
-    #// - depth-first traversal of the DAG, calliing clear() on each node
-    #// - do not clear the end phase or beyond
-    #function void uvm_phase::clear_successors(uvm_phase_state state = UVM_PHASE_DORMANT,
-    #    uvm_phase end_state=null)
-    #  if(this == end_state)
-    #    return
-    #  clear(state)
-    #  foreach(self.m_successors[succ]) begin
-    #    succ.clear_successors(state, end_state)
-    #  end
-    #endfunction
     #
 
     #
