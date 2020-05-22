@@ -24,10 +24,6 @@
 from ..macros.uvm_message_defines import uvm_info
 from .uvm_object_globals import UVM_NONE
 
-#----------------------------------------------------------------------
-# class uvm_spell_chkr
-#----------------------------------------------------------------------
-
 
 class UVMSpellChkr:
 
@@ -38,11 +34,8 @@ class UVMSpellChkr:
 
     @classmethod
     def check(cls, strtab, s):
-        """         
-        #--------------------------------------------------------------------
-        check
-
-        primary interface to the spell checker.  The function takes two
+        """
+        Primary interface to the spell checker.  The function takes two
         arguments, a table of strings and a string to check.  The table is
         organized as an associative array of type T.  E.g.
 
@@ -75,12 +68,12 @@ class UVMSpellChkr:
         have to find ways to optimize this algorithm.
 
         note: strtab should not be modified inside check()
-        #--------------------------------------------------------------------
+
         Args:
-            cls: 
-            strtab: 
-            s: 
+            strtab:
+            s:
         Returns:
+            bool: True if check matches, False otherwise
         """
         key = ""
         distance = 0
@@ -113,8 +106,8 @@ class UVMSpellChkr:
 
         # if (min == max) then the string table is empty
         if min_val == UVMSpellChkr.max_val:
-            uvm_info("UVM/CONFIGDB/SPELLCHK","".format(
-                "{1} not located, no alternatives to suggest", s),UVM_NONE)
+            uvm_info("UVM/CONFIGDB/SPELLCHK",
+                "{} not located, no alternatives to suggest".format(s), UVM_NONE)
         else:
             # dump all the alternatives with the minimum distance
             q = []
@@ -124,15 +117,13 @@ class UVMSpellChkr:
                 if len(q) > 0:
                     q.pop()
                     uvm_info("UVM/CONFIGDB/SPELLCHK",
-                            "".format("{1} not located, did you mean {2}", s,
+                            "{} not located, did you mean {}".format(s,
                                 "".join(q)),UVM_NONE)
-
         return False
 
     @classmethod
-    def levenshtein_distance(cls, s, t):
-        """         
-        #--------------------------------------------------------------------
+    def levenshtein_distance(cls, s, t) -> int:
+        """
         levenshtein_distance
 
         Compute levenshtein distance between s and t
@@ -148,11 +139,10 @@ class UVMSpellChkr:
         This implementation of the Levenshtein
         distance computation algorithm is a SystemVerilog adaptation of the
         C implementatiion located at http:#www.merriampark.com/ldc.htm.
-        #--------------------------------------------------------------------
+
         Args:
-            cls: 
-            s: 
-            t: 
+            s:
+            t:
         Returns:
         """
         k        = 0
@@ -193,22 +183,15 @@ class UVMSpellChkr:
         return distance
 
     @classmethod
-    def minimum(cls, a, b, c):
-        """         
-        #--------------------------------------------------------------------
+    def minimum(cls, a: int, b: int, c: int) -> int:
+        """
         Gets the minimum of three values
-        #--------------------------------------------------------------------
+
         Args:
-            cls: 
-            a: 
-            b: 
-            c: 
+            a (int):
+            b (int):
+            c (int):
         Returns:
+            int: Minimum of given value.
         """
         return min(a, b, c)
-        #min_val = a
-        #if b < min_val:
-        #    min_val = b
-        #if c < min_val:
-        #    min_val = c
-        #return min_val
