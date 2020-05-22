@@ -167,7 +167,8 @@ def UVM_TLM_B_TRANSPORT_IMP(imp, T):
 class UVMTLMBTransportImp(UVMPortBase):
     pass
 
-UVMTLMBTransportImp = UVM_IMP_COMMON(UVMTLMBTransportImp, UVM_TLM_B_MASK, "uvm_tlm_b_transport_imp")
+UVMTLMBTransportImp = UVM_IMP_COMMON(UVMTLMBTransportImp,  # type: ignore
+        UVM_TLM_B_MASK, "uvm_tlm_b_transport_imp")
 UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTLMBTransportImp)
 
 
@@ -177,7 +178,8 @@ UVM_TLM_B_TRANSPORT_IMP('m_imp', UVMTLMBTransportImp)
 class UVMTLMNbTransportFwImp(UVMPortBase):
     pass
 
-UVMTLMNbTransportFwImp = UVM_IMP_COMMON(UVMTLMNbTransportFwImp, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_imp")
+UVMTLMNbTransportFwImp = UVM_IMP_COMMON(UVMTLMNbTransportFwImp,  # type: ignore
+        UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_imp")
 UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTLMNbTransportFwImp)
 
 
@@ -187,6 +189,7 @@ UVM_TLM_NB_TRANSPORT_FW_IMP('m_imp', UVMTLMNbTransportFwImp)
 class UVMTLMNbTransportBwImp(UVMPortBase):
     pass
 
-UVMTLMNbTransportBwImp = UVM_IMP_COMMON(UVMTLMNbTransportBwImp, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp")
+UVMTLMNbTransportBwImp = UVM_IMP_COMMON(UVMTLMNbTransportBwImp,  # type: ignore
+        UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_imp")
 UVM_TLM_NB_TRANSPORT_BW_IMP('m_imp', UVMTLMNbTransportBwImp)
 

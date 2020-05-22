@@ -43,7 +43,8 @@ from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
 class UVMTLMBTransportPort(UVMPortBase):
     pass
 
-UVMTLMBTransportPort = UVM_PORT_COMMON(UVMTLMBTransportPort, UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
+UVMTLMBTransportPort = UVM_PORT_COMMON(UVMTLMBTransportPort,  # type: ignore
+        UVM_TLM_B_MASK, "uvm_tlm_b_transport_port")
 UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBTransportPort)
 
 #
@@ -58,7 +59,8 @@ UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBTransportPort)
 class UVMTLMNbTransportFwPort(UVMPortBase):
     pass
 
-UVMTLMNbTransportFwPort = UVM_PORT_COMMON(UVMTLMNbTransportFwPort, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
+UVMTLMNbTransportFwPort = UVM_PORT_COMMON(UVMTLMNbTransportFwPort,  # type: ignore
+        UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_port")
 UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbTransportFwPort)
 
 #// class: uvm_tlm_nb_transport_bw_port
@@ -73,6 +75,6 @@ UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbTransportFwPort)
 class UVMTLMNbTransportBwPort(UVMPortBase):
     pass
 
-UVMTLMNbTransportBwPort = UVM_PORT_COMMON(UVMTLMNbTransportBwPort, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
+UVMTLMNbTransportBwPort = UVM_PORT_COMMON(UVMTLMNbTransportBwPort,  # type: ignore
+        UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_port")
 UVM_TLM_NB_TRANSPORT_BW_IMP('m_if', UVMTLMNbTransportBwPort)
-
