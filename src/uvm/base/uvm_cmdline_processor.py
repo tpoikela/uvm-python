@@ -201,6 +201,7 @@ The implementation of this is in `UVMRoot`.
 
 import regex
 import cocotb
+from typing import List, Optional
 
 from .uvm_report_object import UVMReportObject
 from .uvm_debug import uvm_debug
@@ -273,7 +274,7 @@ class UVMCmdlineProcessor(UVMReportObject):
     """
 
 
-    m_inst = None
+    m_inst: Optional['UVMCmdlineProcessor'] = None
     uvm_cmdline_proc = None
 
     # Used in unit tests only (not part of original UVM)
@@ -284,11 +285,10 @@ class UVMCmdlineProcessor(UVMReportObject):
     # Group: Singleton
 
     @classmethod
-    def get_inst(cls):
+    def get_inst(cls) -> 'UVMCmdlineProcessor':
         """
-        Function: get_inst
-
         Returns the singleton instance of the UVM command line processor.
+
         Returns:
         """
         if UVMCmdlineProcessor.m_inst is None:
@@ -297,7 +297,7 @@ class UVMCmdlineProcessor(UVMReportObject):
 
     # Group: Basic Arguments
 
-    def get_args(self):
+    def get_args(self) -> List[str]:
         """
         This function returns a queue with all of the command line
         arguments that were used to start the simulation. Note that
