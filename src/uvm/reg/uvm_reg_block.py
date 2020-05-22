@@ -25,7 +25,7 @@
 
 #import cocotb
 
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 from ..base.sv import sv
 from ..base.uvm_object import UVMObject
@@ -594,7 +594,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function UVMRegMap get_map_by_name (string name)
     def get_map_by_name(self, name) -> Optional[UVMRegMap]:
-        maps = []  #   UVMRegMap
+        maps: List[UVMRegMap] = []
         self.get_maps(maps)
 
         for i in range(len(maps)):
@@ -602,7 +602,7 @@ class UVMRegBlock(UVMObject):
                 return maps[i]
 
         for i in range(len(maps)):
-            submaps = []  # UVMRegMap
+            submaps: List[UVMRegMap] = []
             maps[i].get_submaps(submaps, UVM_HIER)
 
             for j in range(len(submaps)):
@@ -627,7 +627,7 @@ class UVMRegBlock(UVMObject):
     #   // If no registers are found, returns ~None~.
     #   //
     #   extern virtual function uvm_reg get_reg_by_name (string name)
-    def get_reg_by_name(self, name):
+    def get_reg_by_name(self, name) -> Optional[UVMReg]:
 
         for rg in self.regs.key_list():
             if rg.get_name() == name:
@@ -1223,7 +1223,10 @@ class UVMRegBlock(UVMObject):
     #   // uses the default design abstraction specified for this block or
     #   // the nearest block ancestor with a specified default design abstraction.
     #   //
-    #   extern function bit has_hdl_path (string kind = "")
+    def has_hdl_path(self, kind=""):
+        if kind == "":
+            kind = self.get_default_hdl_path()
+        return self.hdl_paths_pool.exists(kind)
 
 
     #   // Function:  get_hdl_path
@@ -1308,7 +1311,8 @@ class UVMRegBlock(UVMObject):
             if self.parent is None:
                 uvm_error("RegModel", ("Block has no parent. " +
                    "Must specify a valid HDL abstraction (kind)"))
-            kind = self.parent.get_default_hdl_path()
+            else:
+                kind = self.parent.get_default_hdl_path()
         self.default_hdl_path = kind
 
 
@@ -1822,14 +1826,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# has_hdl_path
-#
-#function bit  uvm_reg_block::has_hdl_path(string kind = "")
-#  if (kind == ""):
-#    kind = get_default_hdl_path()
-#  end
-#  return hdl_paths_pool.exists(kind)
-#endfunction
 #
 #
 # get_hdl_path
