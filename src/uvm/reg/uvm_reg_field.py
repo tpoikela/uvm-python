@@ -23,6 +23,7 @@
 #    TODO add modifications
 #-------------------------------------------------------------
 
+from typing import Dict
 
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import uvm_report_error, uvm_report_warning
@@ -64,7 +65,7 @@ class UVMRegField(UVMObject):
     """
 
     m_max_size = 0
-    m_policy_names = {}  # string -> bit
+    m_policy_names = {}  # type: Dict[str, int]
     m_predefined = False
 
 

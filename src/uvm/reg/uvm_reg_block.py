@@ -23,7 +23,10 @@
 #    Original SV code has been adapter to Python.
 # -------------------------------------------------------------
 
-import cocotb
+#import cocotb
+
+from typing import Dict, Optional
+
 from ..base.sv import sv
 from ..base.uvm_object import UVMObject
 from ..base.uvm_globals import uvm_check_output_args
@@ -58,7 +61,7 @@ class UVMRegBlock(UVMObject):
     interface on the block.
     """
 
-    m_roots = {}  # static bit[uvm_reg_block]
+    m_roots = {}  # type: Dict[UVMRegBlock, int]
     id = 0
 
 
@@ -116,8 +119,6 @@ class UVMRegBlock(UVMObject):
     #   // structure (e.g. it is physically flattened) and does not contribute
     #   // to the hierarchical HDL path of any contained registers or memories.
     #   //
-    #   extern function void configure(uvm_reg_block parent=None,
-    #                                  string hdl_path="")
     def configure(self, parent=None, hdl_path=""):
         self.parent = parent
         if parent is not None:
@@ -153,8 +154,8 @@ class UVMRegBlock(UVMObject):
     #                                                  int unsigned n_bytes,
     #                                                  uvm_endianness_e endian,
     #                                                  bit byte_addressing = 1)
-    def create_map(self, name, base_addr, n_bytes, endian,
-            byte_addressing=True):
+    def create_map(self, name: str, base_addr: int, n_bytes: int, endian: int,
+            byte_addressing=True) -> Optional[UVMRegMap]:
         #   UVMRegMap  map
         if self.locked is True:
             uvm_error("RegModel", "Cannot add map to locked model")
@@ -181,7 +182,16 @@ class UVMRegBlock(UVMObject):
     #   //|   ...
     #   //| endclass
     #   //
-    #   extern protected static function bit check_data_width(int unsigned width)
+    def check_data_width(self, width: int) -> int:
+        # if width <= sv.bits(uvm_reg_data_t):
+        if width <= UVM_REG_DATA_WIDTH:
+            return 1
+
+        uvm_fatal("RegModel", sv.sformatf(
+            "Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d",
+            width, UVM_REG_DATA_WIDTH))
+        return 0
+
 
     #   // Function: set_default_map
     #   //
@@ -191,7 +201,7 @@ class UVMRegBlock(UVMObject):
     #   // block. The address map must be a map of this address block.
     #   //
     #   extern function void set_default_map (UVMRegMap map)
-    def set_default_map(self, _map):
+    def set_default_map(self, _map: UVMRegMap):
         if _map not in self.maps:
             uvm_warning("RegModel", "Map '" + _map.get_full_name() + "' does not exist in block")
         self.default_map = _map
@@ -213,17 +223,17 @@ class UVMRegBlock(UVMObject):
     #
     #   extern function UVMRegMap get_default_map ()
     #
-    def get_default_map(self):
+    def get_default_map(self) -> UVMRegMap:
         return self.default_map
 
     #   extern virtual function void set_parent(uvm_reg_block parent)
-    def set_parent(self, parent):
+    def set_parent(self, parent: 'UVMRegBlock'):
         if self != parent:
             self.parent = parent
 
 
     # function void add_block (uvm_reg_block blk)
-    def add_block(self, blk):
+    def add_block(self, blk: 'UVMRegBlock'):
         if self.is_locked():
             uvm_error("RegModel", "Cannot add subblock to locked block model")
             return
@@ -237,12 +247,10 @@ class UVMRegBlock(UVMObject):
         UVMRegBlock.id += 1
         if blk in UVMRegBlock.m_roots:
             del UVMRegBlock.m_roots[blk]
-        #endfunction
-        #
-        #
+
 
     #   /*local*/ extern function void add_map   (UVMRegMap map)
-    def add_map(self, _map):
+    def add_map(self, _map: UVMRegMap):
         if (self.locked):
             uvm_error("RegModel", "Cannot add map to locked model")
             return
@@ -254,11 +262,10 @@ class UVMRegBlock(UVMObject):
         self.maps[_map] = 1
         if self.maps.num() == 1:
             self.default_map = _map
-        #
-        #endfunction: add_map
+
 
     # add_reg
-    def add_reg(self, rg):
+    def add_reg(self, rg: UVMReg):
         if self.is_locked():
             uvm_error("RegModel", "Cannot add register to locked block model")
             return
@@ -275,7 +282,7 @@ class UVMRegBlock(UVMObject):
     #   /*local*/ extern function void add_vreg  (uvm_vreg vreg)
 
     #   /*local*/ extern function void add_mem   (uvm_mem  mem)
-    def add_mem(self, mem):
+    def add_mem(self, mem: UVMMem):
         if self.is_locked():
             uvm_error("RegModel", "Cannot add memory to locked block model")
             return
@@ -288,7 +295,6 @@ class UVMRegBlock(UVMObject):
 
         self.mems[mem] = UVMRegBlock.id
         UVMRegBlock.id += 1
-    #endfunction: add_mem
 
 
     #   // Function: lock_model
@@ -306,7 +312,6 @@ class UVMRegBlock(UVMObject):
     #   //
     #   // It is not possible to unlock a model.
     #   //
-    #   extern virtual function void lock_model()
     def lock_model(self):
         if self.is_locked():
             return
@@ -349,8 +354,7 @@ class UVMRegBlock(UVMObject):
 
                 if (n > 1):
                     uvm_error("UVM/REG/DUPLROOT", sv.sformatf(ERR_MSG1, n, self.get_name()))
-        #
-        #endfunction: lock_model
+
 
     #   // Function: is_locked
     #   //
@@ -381,12 +385,11 @@ class UVMRegBlock(UVMObject):
     #   // The base of the hierarchical name is the root block.
     #   //
     #   extern virtual function string get_full_name()
-    def get_full_name(self):
+    def get_full_name(self) -> str:
         if self.parent is None:
             return self.get_name()
 
         return self.parent.get_full_name() + "." + self.get_name()
-        #endfunction: get_full_name
 
 
     #   // Function: get_parent
@@ -396,11 +399,10 @@ class UVMRegBlock(UVMObject):
     #   // If this a top-level block, returns ~None~.
     #   //
     #   extern virtual function uvm_reg_block get_parent()
-    def get_parent(self):
+    def get_parent(self) -> Optional['UVMRegBlock']:
         return self.parent
 
-    #
-    #
+
     #   // Function: get_root_blocks
     #   //
     #   // Get the all root blocks
@@ -408,6 +410,9 @@ class UVMRegBlock(UVMObject):
     #   // Returns an array of all root blocks in the simulation.
     #   //
     #   extern static  function void get_root_blocks(ref uvm_reg_block blks[$])
+    def get_root_blocks(self, blks):
+        for blk in UVMRegBlock.m_roots:
+            blks.append(blk)
 
 
     #   // Function: find_blocks
@@ -423,8 +428,7 @@ class UVMRegBlock(UVMObject):
     #                                          ref   uvm_reg_block blks[$],
     #                                          input uvm_reg_block root = None,
     #                                          input uvm_object    accessor = None)
-    #
-    #
+
 
     #   // Function: find_block
     #   //
@@ -455,12 +459,9 @@ class UVMRegBlock(UVMObject):
         for blk_ in self.blks.key_list():
             blk = blk_
             blks.append(blk)
-            if (hier == UVM_HIER):
+            if hier == UVM_HIER:
                 blk.get_blocks(blks)
-        #endfunction: get_blocks
 
-    #
-    #
 
     #   // Function: get_maps
     #   //
@@ -473,8 +474,7 @@ class UVMRegBlock(UVMObject):
         for key in self.maps.key_list():
             maps.append(key)
 
-    #
-    #
+
     #   // Function: get_registers
     #   //
     #   // Get the registers
@@ -499,7 +499,7 @@ class UVMRegBlock(UVMObject):
             for blk_ in self.blks.key_list():
                 blk = blk_
                 blk.get_registers(regs)
-    #endfunction: get_registers
+
 
     #   // Function: get_fields
     #   //
@@ -512,8 +512,7 @@ class UVMRegBlock(UVMObject):
     #   extern virtual function void get_fields (ref uvm_reg_field  fields[$],
     #                                            input uvm_hier_e hier=UVM_HIER)
 
-    #
-    #
+
     #   // Function: get_memories
     #   //
     #   // Get the memories
@@ -564,8 +563,7 @@ class UVMRegBlock(UVMObject):
     #   extern virtual function void get_virtual_fields (ref uvm_vreg_field fields[$],
     #                                                 input uvm_hier_e hier=UVM_HIER)
 
-    #
-    #
+
     #   // Function: get_block_by_name
     #   //
     #   // Finds a sub-block with the specified simple name.
@@ -595,7 +593,7 @@ class UVMRegBlock(UVMObject):
     #   // If no address maps are found, returns ~None~.
     #   //
     #   extern virtual function UVMRegMap get_map_by_name (string name)
-    def get_map_by_name(self, name):
+    def get_map_by_name(self, name) -> Optional[UVMRegMap]:
         maps = []  #   UVMRegMap
         self.get_maps(maps)
 
@@ -1305,6 +1303,14 @@ class UVMRegBlock(UVMObject):
     #   // Set the default design abstraction for this block instance.
     #   //
     #   extern function void   set_default_hdl_path (string kind)
+    def set_default_hdl_path(self, kind: str):
+        if kind == "":
+            if self.parent is None:
+                uvm_error("RegModel", ("Block has no parent. " +
+                   "Must specify a valid HDL abstraction (kind)"))
+            kind = self.parent.get_default_hdl_path()
+        self.default_hdl_path = kind
+
 
     #   // Function:  get_default_hdl_path
     #   //
@@ -1317,11 +1323,10 @@ class UVMRegBlock(UVMObject):
     #   // Returns "" if no default design abstraction has been specified.
     #   //
     #   extern function string get_default_hdl_path ()
-    def get_default_hdl_path(self):
+    def get_default_hdl_path(self) -> str:
         if self.default_hdl_path == "" and self.parent is not None:
             return self.parent.get_default_hdl_path()
         return self.default_hdl_path
-        #endfunction
 
 
     #   // Function: set_hdl_path_root
@@ -1385,15 +1390,6 @@ class UVMRegBlock(UVMObject):
 # Initialization
 #---------------
 #
-# check_data_width
-#
-#function bit uvm_reg_block::check_data_width(int unsigned width)
-#   if (width <= $bits(uvm_reg_data_t)) return 1
-#
-#   `uvm_fatal("RegModel", $sformatf("Register model requires that UVM_REG_DATA_WIDTH be defined as %0d or greater. Currently defined as %0d", width, `UVM_REG_DATA_WIDTH))
-#
-#   return 0
-#endfunction
 #
 #
 # add_vreg
@@ -1478,15 +1474,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# get_root_blocks
-#
-#function void uvm_reg_block::get_root_blocks(ref uvm_reg_block blks[$])
-#
-#   foreach (UVMRegBlock.m_roots[blk]):
-#      blks.push_back(blk)
-#   end
-#
-#endfunction: get_root_blocks
 #
 #
 # find_blocks
@@ -1871,20 +1858,6 @@ class UVMRegBlock(UVMObject):
 #
 #
 #
-# set_default_hdl_path
-#
-#function void uvm_reg_block::set_default_hdl_path(string kind)
-#
-#  if (kind == ""):
-#    if (parent is None):
-#      `uvm_error("RegModel",{"Block has no parent. ",
-#           "Must specify a valid HDL abstraction (kind)"})
-#    end
-#    kind = parent.get_default_hdl_path()
-#  end
-#
-#  default_hdl_path = kind
-#endfunction
 #
 #
 #
