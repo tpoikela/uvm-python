@@ -43,11 +43,11 @@ class UVMSeqItemPullPort():
     uvm_seq_item_pull_port's default min_size argument is 0; it can be left
     unconnected.
     """
-    
     pass
 
 
-UVMSeqItemPullPort = UVM_SEQ_PORT(UVMSeqItemPullPort, UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_port")
+UVMSeqItemPullPort = UVM_SEQ_PORT(UVMSeqItemPullPort,  # type: ignore
+        UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_port")
 UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullPort, 'm_if')
 
 #-----------------------------------------------------------------------------
@@ -62,7 +62,8 @@ UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullPort, 'm_if')
 class UVMSeqItemPullExport():
     pass
     #  extends uvm_port_base #(uvm_sqr_if_base #(REQ, RSP));
-UVMSeqItemPullExport = UVM_EXPORT_COMMON(UVMSeqItemPullExport, UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_export")
+UVMSeqItemPullExport = UVM_EXPORT_COMMON(UVMSeqItemPullExport,  # type: ignore
+        UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_export")
 UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullExport, 'm_if')
 
 #-----------------------------------------------------------------------------
@@ -78,6 +79,6 @@ UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullExport, 'm_if')
 class UVMSeqItemPullImp():
     pass
 
-UVMSeqItemPullImp = UVM_IMP_COMMON(UVMSeqItemPullImp, UVM_SEQ_ITEM_PULL_MASK,
-        "uvm_seq_item_pull_imp")
+UVMSeqItemPullImp = UVM_IMP_COMMON(UVMSeqItemPullImp,  # type: ignore
+        UVM_SEQ_ITEM_PULL_MASK, "uvm_seq_item_pull_imp")
 UVM_SEQ_ITEM_PULL_IMP(UVMSeqItemPullImp, 'm_imp')
