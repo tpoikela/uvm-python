@@ -54,6 +54,7 @@ class UVMObject(sv_obj):
     instance name.
     """
 
+    depth = 0
     m_inst_count = 0
 
     m_inst_count = 0
@@ -270,7 +271,7 @@ class UVMObject(sv_obj):
         """
         return None
 
-    def clone(self) -> 'UVMObject':
+    def clone(self) -> Optional['UVMObject']:
         """
         The `clone` method creates and returns an exact copy of this object.
 
@@ -317,16 +318,17 @@ class UVMObject(sv_obj):
             uvm_report_error("NonePRINTER", "uvm_default_printer is None")
         sv.fwrite(printer.knobs.mcd, self.sprint(printer))
 
-    def sprint(self, printer=None):
+    def sprint(self, printer=None) -> str:
         """
-          The `sprint` method works just like the `print` method, except the output
-          is returned in a string rather than displayed.
+        The `sprint` method works just like the `print` method, except the output
+        is returned in a string rather than displayed.
 
-          The `sprint` method is not virtual and must not be overloaded. To include
-          additional fields in the `print` and `sprint` operation, derived classes
-          must override the `do_print` method and use the provided printer policy
-          class to format the output. The printer policy will manage all string
-          concatenations and provide the string to `sprint` to return to the caller.
+        The `sprint` method is not virtual and must not be overloaded. To include
+        additional fields in the `print` and `sprint` operation, derived classes
+        must override the `do_print` method and use the provided printer policy
+        class to format the output. The printer policy will manage all string
+        concatenations and provide the string to `sprint` to return to the caller.
+
         Args:
             printer (UVMPrinter): Printer that is used in printing.
         Returns:
@@ -348,44 +350,43 @@ class UVMObject(sv_obj):
 
     def do_print(self, printer):
         """
-          Function: do_print
+        The `do_print` method is the user-definable hook called by `print` and
+        `sprint` that allows users to customize what gets printed or sprinted
+        beyond the field information provided by the `uvm_field_* macros,
+        <Utility and Field Macros for Components and Objects>.
 
-          The `do_print` method is the user-definable hook called by `print` and
-          `sprint` that allows users to customize what gets printed or sprinted
-          beyond the field information provided by the `uvm_field_* macros,
-          <Utility and Field Macros for Components and Objects>.
+        The `printer` argument is the policy object that governs the format and
+        content of the output. To ensure correct `print` and `sprint` operation,
+        and to ensure a consistent output format, the `printer` must be used
+        by all `do_print` implementations. That is, instead of using ~$display~ or
+        string concatenations directly, a `do_print` implementation must call
+        through the ~printer's~ API to add information to be printed or sprinted.
 
-          The `printer` argument is the policy object that governs the format and
-          content of the output. To ensure correct `print` and `sprint` operation,
-          and to ensure a consistent output format, the `printer` must be used
-          by all `do_print` implementations. That is, instead of using ~$display~ or
-          string concatenations directly, a `do_print` implementation must call
-          through the ~printer's~ API to add information to be printed or sprinted.
+        An example implementation of `do_print` is as follows::
 
-          An example implementation of `do_print` is as follows:
+          class mytype (UVMObject):
+            data_obj data
+            int f1
+            virtual function void do_print (uvm_printer printer)
+              super.do_print(printer)
+              printer.print_field_int("f1", f1, $bits(f1), UVM_DEC)
+              printer.print_object("data", data)
+            endfunction
 
-         | class mytype (UVMObject):
-         |   data_obj data
-         |   int f1
-         |   virtual function void do_print (uvm_printer printer)
-         |     super.do_print(printer)
-         |     printer.print_field_int("f1", f1, $bits(f1), UVM_DEC)
-         |     printer.print_object("data", data)
-         |   endfunction
+        Then, to print and sprint the object, you could write::
 
-          Then, to print and sprint the object, you could write:
+          t = mytype()
+          t.print()
+          uvm_report_info("Received",t.sprint())
 
-         | mytype t = new
-         | t.print()
-         | uvm_report_info("Received",t.sprint())
+        See `UVMPrinter` for information about the printer API.
 
-          See `UVMPrinter` for information about the printer API.
         Args:
             printer (UVMPrinter): Printer that is used in printing.
         """
         return
 
-    def convert2string(self):
+    def convert2string(self) -> str:
         """
         This virtual function is a user-definable hook, called directly by the
         user, that allows users to provide object information in the form of
@@ -499,7 +500,7 @@ class UVMObject(sv_obj):
         """
         return
 
-    def copy(self, rhs):
+    def copy(self, rhs: 'UVMObject'):
         """
         The copy makes this object a copy of the specified object.
 
@@ -555,7 +556,7 @@ class UVMObject(sv_obj):
         """
         return
 
-    def compare(self, rhs, comparer=None):
+    def compare(self, rhs, comparer=None) -> bool:
         """
         Deep compares members of this data object with those of the object provided
         in the `rhs` (right-hand side) argument, returning 1 on a match, 0 otherwise.
@@ -877,7 +878,7 @@ class UVMObject(sv_obj):
     def do_unpack(self, packer):
         return
 
-    def set_int_local(self, field_name, value, recurse=True):
+    def set_int_local(self, field_name: str, value: int, recurse=True):
         """
         Group: Configuration
 
@@ -899,7 +900,7 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.cycle_check.clear()
 
 
-    def set_string_local(self, field_name, value, recurse=True):
+    def set_string_local(self, field_name: str, value: str, recurse=True):
         """
         Function: set_string_local
 
@@ -922,7 +923,7 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.cycle_check.clear()
 
 
-    def set_object_local(self, field_name, value, clone=1, recurse=1):
+    def set_object_local(self, field_name: str, value: 'UVMObject', clone=1, recurse=1):
         """
         These methods provide write access to integral, string, and
         uvm_object-based properties indexed by a `field_name` string. The object

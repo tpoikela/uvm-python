@@ -31,6 +31,8 @@ UVM functionality, but such classes may be placed in :class:`UVMVoid`-typed
 containers along with other UVM objects.
 """
 
+from typing import Dict
+
 import re
 from ..macros.uvm_message_defines import uvm_error, uvm_warning
 from .uvm_object_globals import (UVM_BIN, UVM_COMPARE, UVM_COPY, UVM_DEC, UVM_FLAGS, UVM_NONE,
@@ -77,7 +79,7 @@ def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
     return res
 
 
-def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
+def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str="") -> str:
     """
     Function- uvm_bitstream_to_string
 
@@ -104,9 +106,10 @@ def uvm_bitstream_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     return num_with_radix(radix, radix_str, value)
 
 
-def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
+def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str="") -> str:
     """
     Function- uvm_integral_to_string
+
     Args:
         value (int):
         size (int):
@@ -130,7 +133,7 @@ def uvm_integral_to_string(value, size, radix=UVM_NORADIX, radix_str=""):
     return num_with_radix(radix, radix_str, value)
 
 
-def uvm_object_value_str(v):
+def uvm_object_value_str(v) -> str:
     """
     Function- uvm_object_value_str
 
@@ -150,9 +153,10 @@ def uvm_object_value_str(v):
     return res
 
 
-def uvm_leaf_scope(full_name, scope_separator="."):
+def uvm_leaf_scope(full_name: str, scope_separator=".") -> str:
     """
     Function- uvm_leaf_scope
+
     Args:
         full_name (str):
         scope_separator (str):
@@ -197,7 +201,7 @@ def uvm_leaf_scope(full_name, scope_separator="."):
     return res
 
 
-def get_bracket_match(scope_separator):
+def get_bracket_match(scope_separator: str) -> str:
     bracket_match = ""
     if scope_separator == "[":
         bracket_match = "]"
@@ -210,7 +214,7 @@ def get_bracket_match(scope_separator):
     return bracket_match
 
 
-def num_with_radix(radix, radix_str, value):
+def num_with_radix(radix, radix_str: str, value) -> str:
     if radix == UVM_BIN:
         return "{}{:b}".format(radix_str, value)
     if radix == UVM_OCT:
@@ -239,7 +243,7 @@ class UVMStatusContainer:
     """
 
     #  static bit field_array[string];
-    field_array = {}
+    field_array: Dict[str, bool] = {}
     #  static bit print_matches;
     print_matches = False
 
@@ -272,6 +276,13 @@ class UVMStatusContainer:
         #  //leak.
         self.cycle_check = {}  # bit cycle_check[uvm_object];
 
+        #  //These are the policy objects currently in use. The policy object gets set
+        #  //when a function starts up. The macros use this.
+        self.comparer = None  # UVMComparer
+        self.packer = None  # UVMPacker
+        self.recorder = None  # UVMRecorder
+        self.printer = None  # UVMPrinter
+
     def do_field_check(self, field, obj):
         if UVM_ENABLE_FIELD_CHECKS:
             if field in self.field_array:
@@ -279,7 +290,7 @@ class UVMStatusContainer:
                 format(field, obj.get_type_name()), UVM_NONE)
         UVMStatusContainer.field_array[field] = 1
 
-    def get_function_type(self, what):
+    def get_function_type(self, what: int) -> str:
         if what == UVM_COPY:
             return "copy"
         elif what == UVM_COMPARE:
@@ -308,15 +319,9 @@ class UVMStatusContainer:
 
         Returns:
         """
-        return self.scope.get();
+        return self.scope.get()
 
 
-    #  //These are the policy objects currently in use. The policy object gets set
-    #  //when a function starts up. The macros use this.
-    #  uvm_comparer    comparer;
-    #  uvm_packer      packer;
-    #  uvm_recorder    recorder;
-    #  uvm_printer     printer;
 
     #  // utility function used to perform a cycle check when config setting are pushed
     #  // to uvm_objects. the function has to look at the current object stack representing
@@ -368,17 +373,16 @@ def m_uvm_string_queue_join(i):
 
 class UVMUtils():  # (type TYPE=int, string FIELD="config")
 
-    #  typedef TYPE types_t[$]
 
-
+    @classmethod
     def find_all(cls, start, TYPE):
         """
-          Function: find_all
+        Function: find_all
 
-          Recursively finds all component instances of the parameter type `TYPE`,
-          starting with the component given by `start`. Uses <uvm_root::find_all>.
+        Recursively finds all component instances of the parameter type `TYPE`,
+        starting with the component given by `start`. Uses <uvm_root::find_all>.
+
         Args:
-            cls:
             start:
             TYPE:
         Returns:
@@ -388,7 +392,7 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
         types = []
         cs = UVMCoreService.get()
         top = cs.get_root()
-        top.find_all("*",comp_list,start)
+        top.find_all("*", comp_list, start)
         for comp in comp_list:
             typ = []
             if sv.cast(typ, comp, TYPE):
@@ -433,12 +437,11 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
     @classmethod
     def get_config(cls, comp, is_fatal):
         """
-          Function: get_config
+        This method gets the object config of type `TYPE`
+        associated with component `comp`.
+        We check for the two kinds of error which may occur with this kind of
+        operation.
 
-          This method gets the object config of type `TYPE`
-          associated with component `comp`.
-          We check for the two kinds of error which may occur with this kind of
-          operation.
         Args:
             cls:
             comp:
