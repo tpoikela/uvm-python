@@ -47,3 +47,10 @@ cov-all:
 clean:
 	find test/ -name 'sim_build' -exec rm -rf {} \;
 	find test/ -name 'results.xml' -exec rm -vf {} \;
+
+stubgen:
+	stubgen .venv/lib/python3.7/site-packages/cocotb_coverage
+	stubgen ../cocotb/cocotb
+
+typecheck:
+	mypy src ./out/*
