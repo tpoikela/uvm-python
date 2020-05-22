@@ -22,6 +22,8 @@
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
 
+from typing import Dict, Optional
+
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
 from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
@@ -56,10 +58,10 @@ class UVMObject(sv_obj):
 
     m_inst_count = 0
     use_uvm_seeding = True
-    uvm_global_copy_map = {}  # dict UVMObject[UVMObject]
+    uvm_global_copy_map = {}  # type: Dict[UVMObject, UVMObject]
     _m_uvm_status_container = UVMStatusContainer()
 
-    def __init__(self, name):
+    def __init__(self, name: str):
         """ Creates a new uvm_object with the given instance `name`. If `name` is not
         supplied, the object is unnamed.
         """
@@ -82,7 +84,7 @@ class UVMObject(sv_obj):
         if (UVMObject.use_uvm_seeding):
             pass
 
-    def set_name(self, name):
+    def set_name(self, name: str):
         """
         Group: Identification
 
@@ -93,7 +95,7 @@ class UVMObject(sv_obj):
         """
         self.leaf_name = name
 
-    def get_name(self):
+    def get_name(self) -> str:
         """
         Returns the name of the object, as provided by the `name` argument in the
         `new` constructor or `set_name` method.
@@ -103,7 +105,7 @@ class UVMObject(sv_obj):
         """
         return self.leaf_name
 
-    def get_full_name(self):
+    def get_full_name(self) -> str:
         """
         Objects possessing hierarchy, such as <uvm_components>, override the default
         implementation. Other objects might be associated with component hierarchy
@@ -120,7 +122,7 @@ class UVMObject(sv_obj):
         """
         return self.get_name()
 
-    def get_inst_id(self):
+    def get_inst_id(self) -> int:
         """
         Returns:
             int: The object's unique, numeric instance identifier.
@@ -129,7 +131,7 @@ class UVMObject(sv_obj):
 
 
     @classmethod
-    def get_inst_count(self):
+    def get_inst_count(self) -> int:
         """
         Returns:
             int: The current value of the instance counter, which represents the
@@ -141,8 +143,6 @@ class UVMObject(sv_obj):
 
     def get_type(self):
         """
-        Function: get_type
-
         Returns the type-proxy (wrapper) for this object. The `UVMFactory`'s
         type-based override and creation methods take arguments of
         `uvm_object_wrapper`. This method, if implemented, can be used as convenient
@@ -217,10 +217,8 @@ class UVMObject(sv_obj):
             return None
         return factory.find_wrapper_by_name(self.get_type_name())
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         """
-        Function: get_type_name
-
         This function returns the type name of the object, which is typically the
         type identifier enclosed in quotes. It is used for various debugging
         functions in the library, and it is used by the factory for creating
@@ -247,7 +245,7 @@ class UVMObject(sv_obj):
         """
         return "<unknown>"
 
-    def create(self, name=""):
+    def create(self, name="") -> Optional['UVMObject']:
         """
         Group: Creation
 
@@ -272,7 +270,7 @@ class UVMObject(sv_obj):
         """
         return None
 
-    def clone(self):
+    def clone(self) -> 'UVMObject':
         """
         The `clone` method creates and returns an exact copy of this object.
 
