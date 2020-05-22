@@ -890,6 +890,7 @@ class UVMSequencerBase(UVMComponent):
         #  end
         #
         uvm_fatal("Sequencer", "Internal error: Failed to choose sequence")
+        return -1
 
 
     async def m_wait_for_arbitration_completed(self, request_id):
