@@ -21,6 +21,7 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
+from typing import List
 from ..macros.uvm_message_defines import uvm_info
 from .uvm_object_globals import UVM_NONE
 
@@ -152,7 +153,7 @@ class UVMSpellChkr:
         m        = 0
         cost     = 0
         distance = 0
-        d        = []
+        d: List[int] = []
 
         #Step 1
         n = len(s) + 1
@@ -161,7 +162,7 @@ class UVMSpellChkr:
         if n == 1 or m == 1:
             return -1  # negative return value means that one or both strings are empty.
 
-        d = m*n * ['']
+        d = m*n * [0]
 
         #Step 2
         for k in range(0, n):
