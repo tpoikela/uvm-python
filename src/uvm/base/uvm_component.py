@@ -22,6 +22,8 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
+from typing import List
+
 import cocotb
 from cocotb.triggers import Timer
 from .uvm_report_object import UVMReportObject
@@ -150,7 +152,7 @@ class UVMComponent(UVMReportObject):
     """
 
     print_config_matches = False
-    m_time_settings = []
+    m_time_settings: List[VerbositySetting] = []
 
     def __init__(self, name, parent):
         """
@@ -2511,7 +2513,6 @@ class UVMComponent(UVMReportObject):
         #  // _ALL_ can be used for ids or severities
         #  //  +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>
         #  //  +uvm_set_severity=uvm_test_top.env0.*,BAD_CRC,UVM_ERROR,UVM_WARNING
-        pass
 
         orig_sev = 0
         sev = 0
@@ -2567,8 +2568,8 @@ class UVMComponent(UVMReportObject):
                 self.set_report_severity_id_override(orig_sev,args[1],sev)
 
 
-    m_uvm_applied_cl_action = []  # uvm_cmdline_parsed_arg_t[$]
-    m_uvm_applied_cl_sev = []  # uvm_cmdline_parsed_arg_t [$]
+    m_uvm_applied_cl_action: List[uvm_cmdline_parsed_arg_t] = []
+    m_uvm_applied_cl_sev: List[uvm_cmdline_parsed_arg_t] = []
 
     def m_add_child(self, child):
         if child.get_name() in self.m_children:
