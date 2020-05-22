@@ -43,7 +43,7 @@ class UVMPacker(object):
     """
 
 
-    bitstream = []   # local bits for (un)pack_bytes
+    bitstream = []  # local bits for (un)pack_bytes
     fabitstream = []  # field automation bits for (un)pack_bytes
 
     #  //----------------//
@@ -168,9 +168,7 @@ class UVMPacker(object):
     #  // pack array.  The ~size~ is the number of bits to pack, usually obtained by
     #  // ~$bits~. This optimized version of <pack_field> is useful for sizes up
     #  // to 64 bits.
-    #
-    #  extern def pack_field_int(self,uvm_integral_t value, int size):
-    def pack_field_int(self, value, size):
+    def pack_field_int(self, value: int, size: int):
         if self.big_endian == 1:
             flipped = self.flip_bit_order(value, size)
             self.m_bits |= flipped << self.count
@@ -731,7 +729,7 @@ class UVMPacker(object):
         self.m_bits = 0
         self.m_packed_size = 0
 
-    def flip_bit_order(self, value, size):
+    def flip_bit_order(self, value, size) -> int:
         flipped = 0x0
         num_bits = len(bin(value)) - 2
         while value:
