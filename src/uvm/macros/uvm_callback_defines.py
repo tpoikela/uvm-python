@@ -319,5 +319,5 @@ def uvm_do_obj_callbacks_exit_on(OBJ, CB, METHOD, VAL, *args):
 def uvm_cb_trace_noobj(CB, OPER):
     from ..base.uvm_callback import UVMCallbacksBase
     if UVMCallbacksBase.m_tracing:
-        uvm_report_info("UVMCB_TRC", ("{} : callback {} (%s@{})".format(
+        uvm_report_info("UVMCB_TRC", ("{} : callback {} ({}@{})".format(
             OPER, CB.get_name(), CB.get_type_name(), CB.get_inst_id())), UVM_NONE)
