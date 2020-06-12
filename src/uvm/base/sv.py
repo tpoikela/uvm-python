@@ -106,7 +106,7 @@ class sv:
 
     @classmethod
     def is_simulator_active(cls):
-        return hasattr(cocotb, 'SIM_NAME')
+        return simulator.is_running()
 
     @classmethod
     def display(cls, msg, *args):
