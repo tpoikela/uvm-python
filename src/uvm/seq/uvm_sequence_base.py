@@ -392,13 +392,13 @@ class UVMSequenceBase(UVMSequenceItem):
         if self.get_automatic_phase_objection():
             self.m_safe_raise_starting_phase("automatic phase objection")
 
-        self.pre_start()
+        await self.pre_start()
 
         if call_pre_post == 1:
             self.m_sequence_state = UVM_PRE_BODY
             #0
             await uvm_empty_delay()
-            self.pre_body()
+            await self.pre_body()
 
         if parent_sequence is not None:
             parent_sequence.pre_do(0)    # task
@@ -420,12 +420,12 @@ class UVMSequenceBase(UVMSequenceItem):
             self.m_sequence_state = UVM_POST_BODY
             #0
             await uvm_empty_delay()
-            self.post_body()
+            await self.post_body()
 
         self.m_sequence_state = UVM_POST_START
         #0
         await uvm_empty_delay()
-        self.post_start()
+        await self.post_start()
 
         # Drop the objection if enabled
         if self.get_automatic_phase_objection():
@@ -438,7 +438,7 @@ class UVMSequenceBase(UVMSequenceItem):
         #join
 
 
-    def pre_start(self):
+    async def pre_start(self):
         """
           Task: pre_start
 
@@ -450,16 +450,15 @@ class UVMSequenceBase(UVMSequenceItem):
         """
         return
 
-    def pre_body(self):
+    async def pre_body(self):
         """
-          Task: pre_body
+        Task: pre_body
 
-          This task is a user-definable callback that is called before the
-          execution of `body` `only` when the sequence is started with `start`.
-          If `start` is called with `call_pre_post` set to 0, `pre_body` is not
-          called.
-          This method should not be called directly by the user.
-         virtual task pre_body()
+        This task is a user-definable callback that is called before the
+        execution of `body` `only` when the sequence is started with `start`.
+        If `start` is called with `call_pre_post` set to 0, `pre_body` is not
+        called.
+        This method should not be called directly by the user.
         """
         return
 
@@ -518,7 +517,7 @@ class UVMSequenceBase(UVMSequenceItem):
         """
         return
 
-    def post_body(self):
+    async def post_body(self):
         """
           Task: post_body
 
@@ -532,7 +531,7 @@ class UVMSequenceBase(UVMSequenceItem):
         """
         return
 
-    def post_start(self):
+    async def post_start(self):
         """
 
           Task: post_start
@@ -783,10 +782,10 @@ class UVMSequenceBase(UVMSequenceItem):
         """
         e = Event('e')
         wait_rel_default = True
-        if (is_rel_default != wait_rel_default):
+        if self.is_rel_default != wait_rel_default:
             uvm_fatal("RELMSM",
                 "is_relevant() was implemented without defining wait_for_relevant()")
-        await e.wait() # this is intended to never return
+        await e.wait()  # this is intended to never return
 
 
     #  // Task: lock
@@ -1268,7 +1267,7 @@ class UVMSequenceBase(UVMSequenceItem):
         i = 0
 
         if self.response_queue.size() == 0:
-            await wait(lambda : self.response_queue.size() == 0,
+            await wait(lambda: self.response_queue.size() != 0,
                  self.m_resp_queue_event)
 
         if transaction_id == -1:
@@ -1285,7 +1284,7 @@ class UVMSequenceBase(UVMSequenceItem):
                     self.m_resp_queue_event.set()
                     return
             #wait (self.response_queue.size() != queue_size)
-            await wait(lambda : self.response_queue.size() != queue_size,
+            await wait(lambda: self.response_queue.size() != queue_size,
                        self.m_resp_queue_event)
 
 
