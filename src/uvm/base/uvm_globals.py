@@ -302,21 +302,24 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 # other processes any number of delta cycles (#0) to settle out before
 # continuing. See `UVMSequencerBase.wait_for_sequences` for example usage.
 #
+# TODO: Requires some work for cocotb. Right now, high enough
+# UVM_POUND_ZERO_COUNT works, but it depends on number of components/processes.
+# Also, putting very high number (> 1000) decreases simulation performance a
+# lot (100 = runtime 5ns, 1500 = runtime 15ns).
+#
 #----------------------------------------------------------------------------
 
-# verilator = True
+#verilator = True
 verilator = False
-
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = True
-# UVM_NO_WAIT_FOR_NBA = False
+#UVM_NO_WAIT_FOR_NBA = False
 
 UVM_AFTER_NBA_WAIT = 10
 
 if hasattr(cocotb, 'SIM_NAME') and getattr(cocotb, 'SIM_NAME') == 'Verilator':
-    UVM_POUND_ZERO_COUNT = 15
-
+    UVM_POUND_ZERO_COUNT = 100
 
 
 async def uvm_wait_for_nba_region():
@@ -428,7 +431,8 @@ def uvm_is_sim_active():
     Returns true if a simulator is active/attached. Returns False for example
     when running unit tests without cocotb Makefiles.
     """
-    return hasattr(cocotb, 'SIM_NAME')
+    # return hasattr(cocotb, 'SIM_NAME')
+    return simulator.is_running()
 
 
 def uvm_sim_time(units='NS'):
