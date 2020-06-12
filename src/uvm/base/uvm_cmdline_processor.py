@@ -497,8 +497,11 @@ class UVMCmdlineProcessor(UVMReportObject):
 
 
         argv = []
-        if hasattr(cocotb, 'argv'):
+        if hasattr(cocotb, 'argv') and cocotb.argv is not None:
             argv = cocotb.argv
+        else:
+            import sys
+            argv = sys.argv
         if UVMCmdlineProcessor.m_test_mode is True:
             argv = UVMCmdlineProcessor.m_test_argv
         self.extract_args(argv)
