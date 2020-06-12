@@ -22,7 +22,7 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
-from cocotb.triggers import Event, Timer
+from cocotb.triggers import Event
 
 from .sv import sv, wait
 from .uvm_object import UVMObject
@@ -126,7 +126,7 @@ class UVMEventBase(UVMObject):
         """
         if self.on is False:
             if delta is True:
-                await uvm_empty_delay()  #0
+                await uvm_empty_delay()
             return
         self.num_waiters += 1
         await wait(lambda: self.on is False, self.m_value_changed_event)
@@ -210,18 +210,12 @@ class UVMEventBase(UVMObject):
         self.trigger_time = 0
 
 
-    #    //--------------//
-    #    // waiters list //
-    #    //--------------//
-
-
     #    // Function: cancel
     #    //
     #    // Decrements the number of waiters on the event.
     #    //
     #    // This is used if a process that is waiting on an event is disabled or
     #    // activated by some other means.
-    #
     def cancel(self):
         if self.num_waiters > 0:
             self.num_waiters -= 1
@@ -234,13 +228,12 @@ class UVMEventBase(UVMObject):
         return self.num_waiters
 
 
-    #    virtual function string get_type_name()
-    #        return type_name
-    #    endfunction
-
+    def get_type_name(self) -> str:
+        return UVMEventBase.type_name
 
     #    virtual function void do_print (uvm_printer printer)
-    #        printer.print_field_int("self.num_waiters", self.num_waiters, $bits(self.num_waiters), UVM_DEC, ".", "int")
+    #        printer.print_field_int("self.num_waiters",
+    #            self.num_waiters, $bits(self.num_waiters), UVM_DEC, ".", "int")
     #        printer.print_field_int("on", self.on, $bits(self.on), UVM_BIN, ".", "bit")
     #        printer.print_time("self.trigger_time", self.trigger_time)
     #        printer.m_scope.down("self.callbacks")
@@ -267,32 +260,30 @@ class UVMEventBase(UVMObject):
 
     #endclass
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_event#(T)
-#
-# The uvm_event class is an extension of the abstract uvm_event_base class.
-#
-# The optional parameter ~T~ allows the user to define a data type which
-# can be passed during an event trigger.
-#------------------------------------------------------------------------------
 
 
 class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
+    """
+    CLASS: UVMEvent
+
+    The UVMEvent class is an extension of the abstract `UVMEventBase` class.
+
+    The optional parameter ~T~ allows the user to define a data type which
+    can be passed during an event trigger.
+    """
     type_name = "uvm_event"
 
     def __init__(self, name="", T=None):
         """
-        Function: __init__
-
         Creates a new event object.
+
         Args:
-            name:
-            T:
+            name (str): Name of the event.
+            T (any): Optional data type.
         """
-        UVMEventBase.__init__(self, name)
+        super().__init__(name)
         self.trigger_data = None
-        self.T = None
+        self.T = T
 
 
     async def wait_trigger_data(self):  # output T data)
@@ -301,6 +292,7 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
 
         This method calls <uvm_event_base::wait_trigger> followed by `get_trigger_data`.
         Returns:
+            any: Trigger data.
         """
         await self.wait_trigger()
         return self.get_trigger_data()
@@ -386,19 +378,19 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
         else:
             self.callbacks.insert(0, cb)
 
-    #    // Function: delete_callback
-    #    //
-    #    // Unregisters the given callback, ~cb~, from this event.
-    #
-    #    virtual function void delete_callback (uvm_event_callback#(T) cb)
-    #        for (int i=0;i<self.callbacks.size();i++) begin
-    #            if (cb == self.callbacks[i]) begin
-    #                self.callbacks.delete(i)
-    #                return
-    #            end
-    #        end
-    #        uvm_report_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.", UVM_NONE)
-    #    endfunction
+
+    def delete_callback(self, cb):
+        """
+        Unregisters the given callback, ~cb~, from this event.
+
+        Args:
+            cb (UVMCallback): Callback to delete from this event.
+        """
+        for i in range(len(self.callbacks)):
+            if cb == self.callbacks[i]:
+                self.callbacks.delete(i)
+                return
+        uvm_warning("CBNTFD", "delete_callback: Callback not found. Ignoring delete request.")
 
     def do_print(self, printer):
         super().do_print(printer)
