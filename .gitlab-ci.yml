@@ -23,8 +23,9 @@ cache:
 
 before_script:
   - python -V  # Print out python version for debugging
-  - pip install virtualenv
-  - virtualenv venv
+  # - pip install virtualenv
+  # - virtualenv venv
+  - python -m venv venv
   - source venv/bin/activate
   - pip freeze
   - pip install -r ci/requirements.txt
