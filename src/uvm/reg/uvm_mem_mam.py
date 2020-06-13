@@ -22,6 +22,8 @@
 #// -------------------------------------------------------------
 
 import cocotb
+from ..macros import uvm_error, uvm_info
+from ..base import sv, UVM_MEDIUM
 
 #//------------------------------------------------------------------------------
 #//
@@ -167,7 +169,7 @@ class UVMMemMam:
     #   //-------------------------
     #   // Group: Memory Management
     #   //-------------------------
-    #
+
     #   // Function: reserve_region
     #   //
     #   // Reserve a specific memory region
@@ -188,7 +190,55 @@ class UVMMemMam:
     #                                                 int unsigned n_bytes,
     #                                                 string       fname = "",
     #                                                 int          lineno = 0)
-    #
+    def reserve_region(self, start_offset, n_bytes, fname = "", lineno=0):
+        end_offset = 0
+        self.fname = fname
+        self.lineno = lineno
+        if n_bytes == 0:
+            uvm_error("RegModel", "Cannot reserve 0 bytes")
+            return None
+
+        if start_offset < self.cfg.start_offset:
+            uvm_error("RegModel", sv.sformatf(
+                "Cannot reserve before start of memory space: 'h%h < 'h%h",
+                start_offset, self.cfg.start_offset))
+            return None
+
+        end_offset = start_offset + int((n_bytes-1) / self.cfg.n_bytes)
+        n_bytes = (end_offset - start_offset + 1) * self.cfg.n_bytes
+
+        if end_offset > self.cfg.end_offset:
+            uvm_error("RegModel", sv.sformatf("Cannot reserve past end of memory space: 'h%h > 'h%h",
+                end_offset, self.cfg.end_offset))
+            return None
+
+        uvm_info("RegModel",sv.sformatf("Attempting to reserve ['h%h:'h%h]...",
+            start_offset, end_offset),UVM_MEDIUM)
+
+        for i in range(len(self.in_use)):
+            if (start_offset <= self.in_use[i].get_end_offset()  and
+                    end_offset >= self.in_use[i].get_start_offset()):
+               # Overlap!
+               uvm_error("RegModel", sv.sformatf(
+                   "Cannot reserve ['h%h:'h%h] because it overlaps with %s",
+                   start_offset, end_offset,
+                   self.in_use[i].convert2string()))
+               return None
+
+        
+            # Regions are stored in increasing start offset
+            if start_offset > self.in_use[i].get_start_offset():
+                reserve_region = UVMMemRegion(start_offset, end_offset,
+                        end_offset - start_offset + 1, n_bytes, self)
+                self.in_use.insert(i, reserve_region)
+                return reserve_region
+        
+        reserve_region = UVMMemRegion(start_offset, end_offset,
+                end_offset - start_offset + 1, n_bytes, self)
+        self.in_use.append(reserve_region)
+        return reserve_region
+        #endfunction: reserve_region
+    
 
     #   // Function: request_region
     #   //
@@ -728,62 +778,6 @@ class UVMMemMamCfg:
 #endfunction: reconfigure
 #
 #
-#function UVMMemRegion UVMMemMam::reserve_region(bit [63:0]   start_offset,
-#                                                int unsigned n_bytes,
-#                                                string       fname = "",
-#                                                int          lineno = 0)
-#   bit [63:0] end_offset
-#   self.fname = fname
-#   self.lineno = lineno
-#   if (n_bytes == 0):
-#      `uvm_error("RegModel", "Cannot reserve 0 bytes")
-#      return None
-#   end
-#
-#   if (start_offset < self.cfg.start_offset):
-#      `uvm_error("RegModel", sv.sformatf("Cannot reserve before start of memory space: 'h%h < 'h%h",
-#                                     start_offset, self.cfg.start_offset))
-#      return None
-#   end
-#
-#   end_offset = start_offset + ((n_bytes-1) / self.cfg.n_bytes)
-#   n_bytes = (end_offset - start_offset + 1) * self.cfg.n_bytes
-#
-#   if (end_offset > self.cfg.end_offset):
-#      `uvm_error("RegModel", sv.sformatf("Cannot reserve past end of memory space: 'h%h > 'h%h",
-#                                     end_offset, self.cfg.end_offset))
-#      return None
-#   end
-#
-#    `uvm_info("RegModel",sv.sformatf("Attempting to reserve ['h%h:'h%h]...",
-#          start_offset, end_offset),UVM_MEDIUM)
-#
-#
-#
-#
-#   foreach (self.in_use[i]):
-#      if (start_offset <= self.in_use[i].get_end_offset()  and
-#          end_offset >= self.in_use[i].get_start_offset()):
-#         // Overlap!
-#         `uvm_error("RegModel", sv.sformatf("Cannot reserve ['h%h:'h%h] because it overlaps with %s",
-#                                        start_offset, end_offset,
-#                                        self.in_use[i].convert2string()))
-#         return None
-#      end
-#
-#      // Regions are stored in increasing start offset
-#      if (start_offset > self.in_use[i].get_start_offset()):
-#         reserve_region = new(start_offset, end_offset,
-#                              end_offset - start_offset + 1, n_bytes, self)
-#         self.in_use.insert(i, reserve_region)
-#         return reserve_region
-#      end
-#   end
-#
-#   reserve_region = new(start_offset, end_offset,
-#                        end_offset - start_offset + 1, n_bytes, self)
-#   self.in_use.push_back(reserve_region)
-#endfunction: reserve_region
 #
 #
 #function UVMMemRegion UVMMemMam::request_region(int unsigned      n_bytes,

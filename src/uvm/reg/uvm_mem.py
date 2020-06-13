@@ -70,7 +70,6 @@ class UVMMem(UVMObject):
 
 
 
-    #   local bit               m_vregs[uvm_vreg]
     #   local uvm_object_string_pool
     #               #(uvm_queue #(uvm_hdl_path_concat)) m_hdl_paths_pool
     #
@@ -124,6 +123,7 @@ class UVMMem(UVMObject):
         self.m_is_powered_down = False
         self.m_cover_on = 0
 
+        self.m_vregs = UVMPool()  # [uvm_vreg]
         self.m_maps = UVMPool()  # bit[uvm_reg_map]
         if (n_bits > UVMMem.m_max_size):
             UVMMem.m_max_size = n_bits
@@ -211,6 +211,10 @@ class UVMMem(UVMObject):
         self.m_locked = 1
 
     #   /*local*/ extern function void Xadd_vregX(uvm_vreg vreg)
+    def Xadd_vregX(self, vreg):
+        self.m_vregs[vreg] = 1
+
+
     #   /*local*/ extern function void Xdelete_vregX(uvm_vreg vreg)
 
 
@@ -2203,11 +2207,6 @@ class UVMMem(UVMObject):
 #endfunction
 #
 #
-#// Xadd_vregX
-#
-#function void uvm_mem::Xadd_vregX(uvm_vreg vreg)
-#  m_vregs[vreg] = 1
-#endfunction
 #
 #
 #// Xdelete_vregX
