@@ -9,6 +9,7 @@ results_coverage.xml
 tags
 vimproject
 .mypy_cache
+.pytype
 
 *.vcd
 
