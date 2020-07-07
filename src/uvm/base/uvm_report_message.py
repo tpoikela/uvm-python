@@ -236,7 +236,7 @@ class UVMReportMessage(UVMObject):
         l_verbosity = 0
         UVMObject.do_print(self, printer)
         printer.print_generic("severity", "uvm_severity",
-                          32, self._severity.name())
+                          32, str(self._severity))
         printer.print_string("id", self._id)
         printer.print_string("message", self._message)
         printer.print_int("verbosity", self._verbosity, 32, UVM_HEX)
