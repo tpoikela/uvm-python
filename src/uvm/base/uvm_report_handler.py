@@ -30,6 +30,8 @@ from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERRO
 from .uvm_globals import uvm_report_enabled
 from ..macros.uvm_object_defines import uvm_object_utils
 
+from typing import TextIO, Dict, Union
+
 
 
 class UVMReportHandler(UVMObject):
@@ -56,19 +58,19 @@ class UVMReportHandler(UVMObject):
 
         # id verbosity settings : default and severity
         self.id_verbosities = UVMPool()
-        self.severity_id_verbosities = {}  # string -> UVMPool()
+        self.severity_id_verbosities: Dict[str, UVMPool] = {}  # string -> UVMPool()
 
         # actions
         self.id_actions = UVMPool()
         self.severity_actions = UVMPool()
-        self.severity_id_actions = {}  # string -> UVMPool
+        self.severity_id_actions: Dict[str, UVMPool] = {}  # string -> UVMPool
 
         # severity overrides
         self.sev_overrides = UVMPool()
-        self.sev_id_overrides = {}  # string -> UVMPool
+        self.sev_id_overrides: Dict[str, UVMPool] = {}  # string -> UVMPool
 
         # file handles : default, severity, action, (severity,id)
-        self.default_file_handle = 1
+        self.default_file_handle: Union[int, TextIO] = 1
         self.id_file_handles = UVMPool()
         self.severity_file_handles = {}  # severity -> UVM_FILE
         self.severity_id_file_handles = {}  # severity -> UVMPool
@@ -361,15 +363,15 @@ class UVMReportHandler(UVMObject):
         """
         self.set_default_file(0)
         self.m_max_verbosity_level = UVM_MEDIUM
-        self.set_severity_action(UVM_INFO,    UVM_DISPLAY)
+        self.set_severity_action(UVM_INFO, UVM_DISPLAY)
         self.set_severity_action(UVM_WARNING, UVM_DISPLAY)
-        self.set_severity_action(UVM_ERROR,   UVM_DISPLAY | UVM_COUNT)
-        self.set_severity_action(UVM_FATAL,   UVM_DISPLAY | UVM_EXIT)
+        self.set_severity_action(UVM_ERROR, UVM_DISPLAY | UVM_COUNT)
+        self.set_severity_action(UVM_FATAL, UVM_DISPLAY | UVM_EXIT)
 
         self.set_severity_file(UVM_INFO, self.default_file_handle)
         self.set_severity_file(UVM_WARNING, self.default_file_handle)
-        self.set_severity_file(UVM_ERROR,   self.default_file_handle)
-        self.set_severity_file(UVM_FATAL,   self.default_file_handle)
+        self.set_severity_file(UVM_ERROR, self.default_file_handle)
+        self.set_severity_file(UVM_FATAL, self.default_file_handle)
 
     def get_severity_id_file(self, severity, id):
         """
@@ -394,7 +396,7 @@ class UVMReportHandler(UVMObject):
             return self.severity_file_handles[severity]
         return self.default_file_handle
 
-    def set_verbosity_level(self, verbosity_level):
+    def set_verbosity_level(self, verbosity_level: int):
         """
         Internal method called by uvm_report_object.
         Args:
@@ -402,7 +404,7 @@ class UVMReportHandler(UVMObject):
         """
         self.m_max_verbosity_level = verbosity_level
 
-    def get_verbosity_level(self, severity=UVM_INFO, id=""):
+    def get_verbosity_level(self, severity=UVM_INFO, id="") -> int:
         """
         Returns the verbosity associated with the given `severity` and `id`.
 
@@ -619,10 +621,12 @@ class UVMReportHandler(UVMObject):
 
     def _close_files(self):
         if self.default_file_handle != 0:
-            self.default_file_handle.close()
+            if hasattr(self.default_file_handle, 'close'):
+                self.default_file_handle.close()
         for sev in self.severity_file_handles:
             if self.severity_file_handles[sev] != 0:
-                self.severity_file_handles[sev].close()
+                if hasattr(self.severity_file_handles[sev], 'close'):
+                    self.severity_file_handles[sev].close()
 
         #for id in self.severity_id_file_handles[severity].add(id, file)
 

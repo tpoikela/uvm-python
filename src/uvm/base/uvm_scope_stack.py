@@ -94,8 +94,7 @@ class UVMScopeStack:
         self.m_arg = arg
 
     def set_arg_element(self, arg, ele):
-        tmp_value_str = ""
-        tmp_value_str.itoa(ele)
+        tmp_value_str = str(ele)
         self.m_arg = {arg, "[", tmp_value_str, "]"}
 
     def unset_arg(self, arg):

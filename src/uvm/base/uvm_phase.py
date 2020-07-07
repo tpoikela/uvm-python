@@ -28,7 +28,7 @@
 #   preserved where possible.
 #----------------------------------------------------------------------
 
-from typing import Dict
+from typing import Dict, List
 import cocotb
 from cocotb.triggers import Event, Combine
 
@@ -57,6 +57,11 @@ def UVM_PH_TRACE(ID,MSG,PH,VERB):
     uvm_info(ID, (sv.sformatf("Phase '%0s' (id=%0d) ", PH.get_full_name(),
         PH.get_inst_id()) + MSG), UVM_LOW)
 
+
+def ph2str(state) -> str:
+    if state is not None:
+        return UVM_PHASE2STR[state]
+    return "<State: NONE>"
 
 
 #async def my_combine(events):
@@ -246,7 +251,7 @@ class UVMPhase(UVMObject):
         self.m_successors: Dict['UVMPhase', bool] = {}  # UVMPhase -> bit
         self.m_predecessors: Dict['UVMPhase', bool] = {}  # UVMPhase -> bit
         self.m_end_node = None
-        self.m_sync = []  # UVMPhase
+        self.m_sync: List['UVMPhase'] = []  # UVMPhase
         self.m_imp = None  # UVMPhase to call when we execute this node
         self.m_phase_done_event = Event(name + '_phase_done_event')
         self.m_phase_synced_event = Event(name + '_phase_synced')
@@ -540,16 +545,16 @@ class UVMPhase(UVMObject):
             for pred in before_phase.m_predecessors:
                 del pred.m_successors[before_phase]
                 pred.m_successors[begin_node] = 1
-            before_phase.m_predecessors = {}
+            before_phase.m_predecessors.clear()
             before_phase.m_predecessors[end_node] = 1
         # INSERT AFTER PHASE
         elif before_phase is None and after_phase is not None:
             end_node.m_successors = after_phase.m_successors
             begin_node.m_predecessors[after_phase] = 1
-            for succ in after_phase.m_successors[succ]:
-                succ.m_predecessors.delete(after_phase)
+            for succ in after_phase.m_successors:
+                del succ.m_predecessors[after_phase]
                 succ.m_predecessors[end_node] = 1
-            after_phase.m_successors.delete()
+            after_phase.m_successors.clear()
             after_phase.m_successors[begin_node] = 1
         # IN BETWEEN 'BEFORE' and 'AFTER' PHASES
         elif before_phase is not None and after_phase is not None:
@@ -562,8 +567,8 @@ class UVMPhase(UVMObject):
             after_phase.m_successors[begin_node] = 1
             before_phase.m_predecessors[end_node] = 1
             if before_phase in after_phase.m_successors:
-                after_phase.m_successors.delete(before_phase)
-                before_phase.m_successors.delete(after_phase)
+                del after_phase.m_successors[before_phase]
+                del before_phase.m_successors[after_phase]
 
         # Transition nodes to DORMANT state
         if new_node is None:
@@ -2113,6 +2118,3 @@ class UVMPhaseCb(UVMCallback):
     #  end
 
 
-def ph2str(state):
-    if state is not None:
-        return UVM_PHASE2STR[state]

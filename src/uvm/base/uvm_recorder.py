@@ -29,6 +29,7 @@ from .uvm_misc import uvm_bitstream_to_string, uvm_integral_to_string
 from .sv import sv
 from ..macros import uvm_object_utils, uvm_warning, uvm_error
 from .uvm_scope_stack import UVMScopeStack
+from .uvm_globals import uvm_string_to_bits
 
 
 """
@@ -865,7 +866,7 @@ class UVMTextRecorder(UVMRecorder):
     def do_record_field_int(self, name, value, size, radix):
         self.scope.set_arg(name)
         if not radix:
-            radix = default_radix
+            radix = self.default_radix
         self.write_attribute_int(self.scope.get(), value, radix, size)
 
 

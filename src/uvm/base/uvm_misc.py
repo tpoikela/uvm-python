@@ -287,7 +287,7 @@ class UVMStatusContainer:
         if UVM_ENABLE_FIELD_CHECKS:
             if field in self.field_array:
                 uvm_error("MLTFLD", "Field {} is defined multiple times in type '{}'".
-                format(field, obj.get_type_name()), UVM_NONE)
+                    format(field, obj.get_type_name()))
         UVMStatusContainer.field_array[field] = 1
 
     def get_function_type(self, what: int) -> str:
@@ -396,7 +396,7 @@ class UVMUtils():  # (type TYPE=int, string FIELD="config")
         for comp in comp_list:
             typ = []
             if sv.cast(typ, comp, TYPE):
-                types.push_back(typ[0])
+                types.append(typ[0])
 
         if len(types) == 0:
             uvm_warning("find_type-no match", "Instance of type '" + TYPE.type_name

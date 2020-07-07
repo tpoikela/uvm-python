@@ -179,7 +179,7 @@ class UVMBarrier(UVMObject):
 
 
     def do_copy(self, rhs):
-        b = None
+        b = rhs
         super().do_copy(rhs)
         #    if(!sv.cast(b, rhs)  or  (b is None)) return
         self.threshold = b.threshold

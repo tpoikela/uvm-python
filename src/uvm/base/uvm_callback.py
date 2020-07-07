@@ -348,9 +348,9 @@ class UVMTypedCallbacks(UVMCallbacksBase):  # (type T=uvm_object) extends uvm_ca
                                 + me.get_full_name())
 
                     if ordering == UVM_APPEND:
-                        q.push_back(cb)
+                        q.append(cb)
                     else:
-                        q.push_front(cb)
+                        q.insert(0, cb)
 
                 if cls.m_t_inst.m_pool.has_next() is False:
                     break

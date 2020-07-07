@@ -44,7 +44,7 @@ class UVMPool(UVMObject):
         self.T = T
 
     @classmethod
-    def get_global_pool(cls):
+    def get_global_pool(cls) -> 'UVMPool':
         """
         Returns the singleton global pool. Unlike in SV, uvm-python has only one
         global pool.
@@ -117,14 +117,14 @@ class UVMPool(UVMObject):
         keys = self.pool.keys()
         if len(keys) > 0:
             self.ptr = self.num() - 1
-            return next(reversed(self.pool))
+            return next(reversed(self.pool))  # type: ignore
         else:
             return False
 
-    def has_first(self):
+    def has_first(self) -> bool:
         return self.num() > 0
 
-    def has_last(self):
+    def has_last(self) -> bool:
         return self.num() > 0
 
     def first(self):
@@ -134,7 +134,7 @@ class UVMPool(UVMObject):
             return k
         return False
 
-    def has_next(self):
+    def has_next(self) -> bool:
         if self.ptr < (self.num() - 1):
             return True
         return False
@@ -146,7 +146,7 @@ class UVMPool(UVMObject):
             return key
         return None
 
-    def has_prev(self):
+    def has_prev(self) -> bool:
         if self.ptr > 0:
             return True
         return False
@@ -158,7 +158,7 @@ class UVMPool(UVMObject):
             return key
         return None
 
-    def create(self, name=""):
+    def create(self, name="") -> 'UVMPool':
         return UVMPool(name, self.T)
 
     def do_print(self, printer):

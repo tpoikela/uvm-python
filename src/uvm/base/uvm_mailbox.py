@@ -23,12 +23,14 @@
 from .uvm_queue import UVMQueue
 from cocotb.triggers import Event, Timer
 from .uvm_debug import UVMDebug, uvm_debug
+from typing import List, Any
 
 
 def _uvm_debug(self, func, msg):
     if self.debug_enabled or UVMDebug.DEBUG:
         uvm_debug(self, func, msg)
 
+OutputItem = List[Any]
 
 class UVMMailbox():
     """
@@ -44,7 +46,7 @@ class UVMMailbox():
         self.debug_enabled = False
 
 
-    async def put(self, item):
+    async def put(self, item: Any):
         _uvm_debug(self, 'put', 'Starting to check can_put()')
         can_put = self.can_put()
         while can_put is False:
@@ -59,7 +61,7 @@ class UVMMailbox():
         _uvm_debug(self, 'put', 'Finished')
 
 
-    async def get(self, itemq):
+    async def get(self, itemq: OutputItem):
         can_get = self.can_get()
         while can_get is False:
             _uvm_debug(self, 'get', 'waiting write event to get item')
@@ -79,7 +81,7 @@ class UVMMailbox():
         itemq.append(item)
 
 
-    async def peek(self, itemq):
+    async def peek(self, itemq: OutputItem):
         """ Peeks (with blocking) next item from mailbox without removing it """
         if not self.can_get():
             _uvm_debug(self, 'get', 'waiting write event to get item')
@@ -90,7 +92,7 @@ class UVMMailbox():
         item = self.m_queue.front()
         itemq.append(item)
 
-    def try_put(self, item):
+    def try_put(self, item: Any) -> bool:
         _uvm_debug(self, 'try_put', 'Starting function')
         if self.can_put() is True:
             _uvm_debug(self, 'try_put', 'can_put is True')
@@ -101,13 +103,15 @@ class UVMMailbox():
             return True
         return False
 
-    def try_get(self, itemq):
-        """         
+    def try_get(self, itemq: OutputItem) -> bool:
+        """
         Tries to retrieve an item and append it to given list.
         Returns True if success, False otherwise.
+
         Args:
-            itemq: 
+            itemq: List[Any]
         Returns:
+            bool - True if got an item, False otherwise.
         """
         if self.can_get() is True:
             item = self.m_queue.pop_front()
@@ -117,7 +121,17 @@ class UVMMailbox():
             return True
         return False
 
-    def try_peek(self, itemq):
+    def try_peek(self, itemq: OutputItem) -> bool:
+        """
+        Tries to "peek" an item and append it to given list.
+        Returns True if success, False otherwise. Does not modify
+        contents of the mailbox.
+
+        Args:
+            itemq: List[Any]
+        Returns:
+            bool - True if got an item, False otherwise.
+        """
         if self.can_get() is True:
             item = self.m_queue.front()
             itemq.append(item)
@@ -125,14 +139,13 @@ class UVMMailbox():
             return True
         return False
 
-    def can_get(self):
+    def can_get(self) -> bool:
         return self.m_queue.size() > 0
 
-    def can_put(self):
+    def can_put(self) -> bool:
         if self.max_size <= 0:
             return True
         return self.m_queue.size() < self.max_size
 
-    def num(self):
+    def num(self) -> int:
         return self.m_queue.size() > 0
-

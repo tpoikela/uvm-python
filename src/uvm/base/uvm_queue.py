@@ -41,7 +41,7 @@ class UVMQueue(UVMObject):
         gqueue = UVMQueue.get_global_queue()
         return gqueue.get(index)
 
-    def get(self, index):
+    def get(self, index: int):
         """
         Function: get
 
@@ -61,7 +61,7 @@ class UVMQueue(UVMObject):
             return default_value
         return self.queue[index]
 
-    def size(self):
+    def size(self) -> int:
         """
         Function: size
 
@@ -70,14 +70,14 @@ class UVMQueue(UVMObject):
         """
         return len(self.queue)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         len() operator
         Returns:
         """
         return self.size()
 
-    def __setitem__(self, i, value):
+    def __setitem__(self, i: int, value):
         """
         Implements aa[x] = y
         Args:
@@ -91,7 +91,7 @@ class UVMQueue(UVMObject):
             raise Exception("UVMQueue set index {} ouf of bounds (size: {})".format(
                 i, self.size()))
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int):
         """
         Implements aa[x]
         Args:
@@ -105,7 +105,7 @@ class UVMQueue(UVMObject):
             raise IndexError("UVMQueue get index {} ouf of bounds (size: {})".format(
                 i, self.size()))
 
-    def insert(self, index, item):
+    def insert(self, index: int, item):
         """
         Function: insert
 
@@ -196,7 +196,7 @@ class UVMQueue(UVMObject):
         """
         self.queue.append(item)
 
-    def create(self, name=""):
+    def create(self, name="") -> 'UVMQueue':
         v = UVMQueue(name)
         return v
 
@@ -237,4 +237,3 @@ class UVMQueue(UVMObject):
                 idx = i
                 break
         return idx
-

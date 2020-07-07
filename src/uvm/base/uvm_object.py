@@ -59,7 +59,7 @@ class UVMObject(sv_obj):
 
     m_inst_count = 0
     use_uvm_seeding = True
-    uvm_global_copy_map = {}  # type: Dict[UVMObject, UVMObject]
+    uvm_global_copy_map = {}  # type: Dict['UVMObject', 'UVMObject']
     _m_uvm_status_container = UVMStatusContainer()
 
     def __init__(self, name: str):

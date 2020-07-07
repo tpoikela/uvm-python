@@ -277,9 +277,15 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #// length is approximately 14000 characters.
 #//----------------------------------------------------------------------------
 
-#function logic[UVM_LARGE_STRING:0] uvm_string_to_bits(string str)
-#  $swrite(uvm_string_to_bits, "%0s", str)
-#endfunction
+
+def uvm_string_to_bits(string: str) -> int:
+    bytearr = string.encode()
+    result = 0
+    shift = 0
+    for bb in bytearr:
+        result = (result << shift) | bb
+        shift += 8
+    return result
 
 
 #//----------------------------------------------------------------------------

@@ -27,7 +27,8 @@ def create_reg_block(name, num_regs=1):
     for i in range(num_regs):
         reg = create_reg("reg_" + str(i))
         reg.configure(rb, None)
-        rb.default_map.add_reg(reg, offset, "RW")
+        if rb.default_map is not None:
+            rb.default_map.add_reg(reg, offset, "RW")
         offset += 4
     rb.configure(hdl_path='path.to.top')
     return rb

@@ -28,15 +28,11 @@ from .uvm_report_object import UVMReportObject
 from .uvm_debug import uvm_debug
 from .uvm_globals import *
 from .uvm_object_globals import (UVM_RAISED, UVM_DROPPED, UVM_ALL_DROPPED)
+from .sv import sv
+from ..macros import uvm_error
+from typing import List, Optional, Dict, Any
 
 UVM_USE_PROCESS_CONTAINER = 1
-
-#typedef class uvm_objection_context_object
-#typedef class uvm_objection
-#typedef class uvm_sequence_base
-#typedef class uvm_objection_callback
-#typedef uvm_callbacks #(uvm_objection,uvm_objection_callback) uvm_objection_cbs_t
-#typedef class uvm_cmdline_processor
 
 
 def classmethod_named(func):
@@ -51,6 +47,10 @@ class UVMObjectionEvents():
         self.raised = Event('raised')
         self.dropped = Event('dropped')
         self.all_dropped = Event('all_dropped')
+
+
+ObjContextDict = Dict[Any, 'UVMObjectionContextObject']
+ObjContextList = List['UVMObjectionContextObject']
 
 #//------------------------------------------------------------------------------
 #// Title: Objection Mechanism
@@ -118,7 +118,7 @@ class UVMObjection(UVMReportObject):
     #  // retrieval by the background process, but which the
     #  // background process hasn't seen yet.
     #  local static uvm_objection_context_object m_scheduled_list[$]
-    m_scheduled_list = []
+    m_scheduled_list: ObjContextList = []
 
     #  // Once a context is seen by the background process, it is
     #  // removed from the scheduled list, and placed in the forked
@@ -143,28 +143,28 @@ class UVMObjection(UVMReportObject):
     #
     def __init__(self, name=""):
         #uvm_cmdline_processor clp
-        #uvm_coreservice_t cs_ 
-        trace_args = [] # string [$]
+        #uvm_coreservice_t cs_
+        trace_args = []  # string [$]
         UVMReportObject.__init__(self, name)
         from .uvm_coreservice import UVMCoreService
         cs_ = UVMCoreService.get()
         #cs_ = uvm_coreservice_t::get()
-        self.m_top  = cs_.get_root()
+        self.m_top = cs_.get_root()
 
-        self.m_cleared = 0 #  protected bit /* for checking obj count<0 */
+        self.m_cleared = 0  # protected bit /* for checking obj count<0 */
 
-        self.m_forked_list = [] # uvm_objection_context_object[$]
+        self.m_forked_list: ObjContextList = []  # uvm_objection_context_object[$]
 
-        self.m_scheduled_contexts = {} # uvm_objection_context_object[uvm_object]
-        self.m_forked_contexts = {} # uvm_objection_context_object[uvm_object]
+        self.m_scheduled_contexts: ObjContextDict = {}  # uvm_objection_context_object[uvm_object]
+        self.m_forked_contexts: ObjContextDict = {}  # uvm_objection_context_object[uvm_object]
 
-        self.m_source_count = {} #  int[uvm_object]
-        self.m_total_count = {} #  int[uvm_object]
-        self.m_drain_time = {} #  time [uvm_object]
-        self.m_events = {} #  uvm_objection_events[uvm_object]
+        self.m_source_count = {}  # int[uvm_object]
+        self.m_total_count = {}  # int[uvm_object]
+        self.m_drain_time = {}  # time [uvm_object]
+        self.m_events: Dict[Any, UVMObjectionEvents] = {}  # uvm_objection_events[uvm_object]
         self.m_top_all_dropped = 0
 
-        self.m_drain_proc = {} # process_container_c [uvm_object]
+        self.m_drain_proc = {}  # process_container_c [uvm_object]
 
         self.set_report_verbosity_level(self.m_top.get_report_verbosity_level())
 
@@ -176,7 +176,7 @@ class UVMObjection(UVMReportObject):
         self.m_prop_mode = 1
         self.m_trace_mode = 0
         if clp.get_arg_matches("+UVM_OBJECTION_TRACE", trace_args):
-            self.m_trace_mode=1
+            self.m_trace_mode = 1
         UVMObjection.m_objections.append(self)
 
     #  // Function: trace_mode
@@ -197,40 +197,60 @@ class UVMObjection(UVMReportObject):
     #  //
     #  // Internal method for reporting count updates
     #
-    #  function void m_report(uvm_object obj, uvm_object source_obj, string description, int count, string action)
-    #    string desc
-    #    int _count = self.m_source_count.exists(obj) ? self.m_source_count[obj] : 0
-    #    int _total = self.m_total_count.exists(obj) ? self.m_total_count[obj] : 0
-    #    if (!uvm_report_enabled(UVM_NONE,UVM_INFO,"OBJTN_TRC") || !self.m_trace_mode) return
-    #
-    #    //desc = description == "" ? "" : {" ", description, "" }
-    #    if (source_obj == obj)
-    #
-    #      uvm_report_info("OBJTN_TRC",
-    #        $sformatf("Object %0s %0s %0d objection(s)%s: count=%0d  total=%0d",
-    #           obj.get_full_name()==""?"uvm_top":obj.get_full_name(), action,
-    #           count, description != ""? {" (",description,")"}:"", _count, _total), UVM_NONE)
-    #    else begin
-    #      int cpath = 0, last_dot=0
-    #      string sname = source_obj.get_full_name(), nm = obj.get_full_name()
-    #      int max = sname.len() > nm.len() ? nm.len() : sname.len()
-    #
-    #      // For readability, only print the part of the source obj hierarchy underneath
-    #      // the current object.
-    #      while((sname[cpath] == nm[cpath]) && (cpath < max)) begin
-    #        if(sname[cpath] == ".") last_dot = cpath
-    #        cpath++
-    #      end
-    #
-    #      if(last_dot) sname = sname.substr(last_dot+1, sname.len())
-    #      uvm_report_info("OBJTN_TRC",
-    #        $sformatf("Object %0s %0s %0d objection(s) %0s its total (%s from source object %s%s): count=%0d  total=%0d",
-    #           obj.get_full_name()==""?"uvm_top":obj.get_full_name(), action=="raised"?"added":"subtracted",
-    #            count, action=="raised"?"to":"from", action, sname,
-    #            description != ""?{", ",description}:"", _count, _total), UVM_NONE)
-    #    end
-    #  endfunction
-    #
+    #def m_report(uvm_object obj, uvm_object source_obj, string description, int count, string action)
+    def m_report(self, obj, source_obj, description: str, count: int, action: str) -> None:
+        _count = 0
+        if obj in self.m_source_count:
+            _count = self.m_source_count[obj]
+        _total = 0
+        if obj in self.m_total_count:
+            _total = self.m_total_count[obj]
+        if (not uvm_report_enabled(UVM_NONE, UVM_INFO,"OBJTN_TRC") or (not self.m_trace_mode)):
+            return
+
+        descr = ""
+        if description != "":
+            descr = " (" + description + ")"
+
+        if source_obj is obj:
+            name = obj.get_full_name()
+            if name == "":
+                name = "uvm_top"
+            uvm_report_info("OBJTN_TRC",
+                sv.sformatf("Object %0s %0s %0d objection(s)%s: count=%0d  total=%0d",
+                name, action, count, descr, _count, _total), UVM_NONE)
+        else:
+            cpath = 0
+            last_dot = 0
+            sname = source_obj.get_full_name()
+            nm = obj.get_full_name()
+            _max = sname.len()
+            if sname.len() > nm.len():
+                _max = nm.len()
+
+            # For readability, only print the part of the source obj hierarchy underneath
+            # the current object.
+            while ((sname[cpath] == nm[cpath]) and (cpath < _max)):
+                if (sname[cpath] == "."):
+                    last_dot = cpath
+                cpath += 1
+
+            if last_dot:
+                sname = sname.substr(last_dot+1, sname.len())
+
+        name = obj.get_full_name()
+        if name == "":
+            name = "uvm_top"
+        act_type = "subtracted"
+        if action=="raised":
+            act_type = "added"
+        act_dir = "from"
+        if action=="raised":
+            act_dir = "to"
+        uvm_report_info("OBJTN_TRC",
+            sv.sformatf("Object %0s %0s %0d objection(s) %0s its total (%s from"
+            " source object %s%s): count=%0d  total=%0d", name, act_type, count,
+            act_dir, action, sname, descr, _count, _total), UVM_NONE)
 
     #  // Function- m_get_parent
     #  //
@@ -657,10 +677,10 @@ class UVMObjection(UVMReportObject):
         for o in self.m_forked_contexts:
             if UVM_USE_PROCESS_CONTAINER:
                 self.m_drain_proc[o].kill()
-                self.m_drain_proc.delete(o)
+                del self.m_drain_proc[o]
             else:
                 self.m_drain_proc[o].p.kill()
-                self.m_drain_proc.delete(o)
+                del self.m_drain_proc[o]
 
             self.m_forked_contexts[o].clear()
             UVMObjection.m_context_pool.append(self.m_forked_contexts[o])
@@ -674,7 +694,7 @@ class UVMObjection(UVMReportObject):
     #  // m_execute_scheduled_forks
     #  // -------------------------
     #  // background process; when non
-    
+
     async def m_execute_scheduled_forks(self):
         while True:
             #wait(UVMObjection.m_scheduled_list.size() != 0)
@@ -683,23 +703,28 @@ class UVMObjection(UVMReportObject):
             UVMObjection.m_scheduled_list_not_empty_event.clear()
 
             if len(UVMObjection.m_scheduled_list) != 0:
-                c = None  # uvm_objection_context_object
-                o = None  # uvm_objection
+                # c = None  # uvm_objection_context_object
+                # o = None  # uvm_objection
                 # Save off the context before the fork
                 c = UVMObjection.m_scheduled_list[0]
                 UVMObjection.m_scheduled_list.remove(c)
                 # A re-raise can use this to figure out props (if any)
-                c.objection.m_scheduled_contexts[c.obj] = c
-                # The fork below pulls out from the forked list
-                c.objection.m_forked_list.append(c)
-                # The fork will guard the m_forked_drain call, but
-                # a re-raise can kill self.m_forked_list contexts in the delta
-                # before the fork executes.
-                pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks_fork_join_none(c))
+                objection = c.objection
+                if objection is not None:
+                    objection.m_scheduled_contexts[c.obj] = c
+                    # The fork below pulls out from the forked list
+                    objection.m_forked_list.append(c)
+                    # The fork will guard the m_forked_drain call, but
+                    # a re-raise can kill self.m_forked_list contexts in the delta
+                    # before the fork executes.
+                    pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks_fork_join_none(c))
+                else:
+                    uvm_error("UVMObjection", "Null objection in objection context")
         #endtask
 
-    
-    async def m_execute_scheduled_forks_fork_join_none(self, c):
+
+    async def m_execute_scheduled_forks_fork_join_none(self,
+            c: 'UVMObjectionContextObject'):
         objection = c.objection  # automatic uvm_objection
         # Check to maike sure re-raise didn't empty the fifo
         uvm_debug(self, 'm_execute_scheduled_forks_fork_join_none', 'check list len')
@@ -741,7 +766,7 @@ class UVMObjection(UVMReportObject):
     #                       string description="",
     #                       int count=1,
     #                       int in_top_thread=0)
-    
+
     async def m_forked_drain(self, obj, source_obj, description="", count=1,
             in_top_thread=0):
         diff_count = 0
@@ -778,7 +803,7 @@ class UVMObjection(UVMReportObject):
     #  // -----------------
     #
     #  // Forks off the single background process
-    
+
     async def m_init_objections(self):
         #uvm_debug(cls, 'm_init_objections', "Forking m_execute_scheduled_forks")
         pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks())
@@ -878,7 +903,6 @@ class UVMObjection(UVMReportObject):
     #  // for that event have been executed.
     #  //
     #  task wait_for(uvm_objection_event objt_event, uvm_object obj=null)
-    
     async def wait_for(self, objt_event, obj=None):
         if obj is None:
             obj = self.m_top
@@ -898,7 +922,6 @@ class UVMObjection(UVMReportObject):
 
         if self.m_events[obj].waiters == 0:
             del self.m_events[obj]
-    #endtask
 
     #
     #   task wait_for_total_count(uvm_object obj=null, int count=0)
@@ -912,8 +935,8 @@ class UVMObjection(UVMReportObject):
     #     else
     #        wait (self.m_total_count.exists(obj) && self.m_total_count[obj] == count)
     #   endtask
-    #
-    #
+
+
     #  // Function: get_objection_count
     #  //
     #  // Returns the current number of objections raised by the given ~object~.
@@ -926,7 +949,7 @@ class UVMObjection(UVMReportObject):
     #      return 0
     #    return self.m_source_count[obj]
     #  endfunction
-    #
+
 
     #  // Function: get_objection_total
     #  //
@@ -1350,7 +1373,7 @@ class UVMObjection(UVMReportObject):
 class UVMObjectionContextObject:
 
     def __init__(self):
-        """         
+        """
            uvm_object obj
            uvm_object source_obj
            string description
@@ -1361,10 +1384,11 @@ class UVMObjectionContextObject:
         self.source_obj = None
         self.description = ""
         self.count = 0
-        self.objection = None
+        #self.objection: Optional[UVMObjection] = None
+        self.objection = UVMObjection()
 
     def clear(self):
-        """         
+        """
         Clears the values stored within the object,
         preventing memory leaks from reused objects
         """
@@ -1372,7 +1396,8 @@ class UVMObjectionContextObject:
         self.source_obj = None
         self.description = ""
         self.count = 0
-        self.objection = None
+        self.objection = UVMObjection()
+        # self.objection = None
     #endclass
 
 #// Typedef - Exists for backwards compat

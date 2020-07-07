@@ -279,7 +279,7 @@ class UVMPacker(object):
         size = 8 * len(bytearr)
         bits = int(bytearr.hex(), 16)
         if self.big_endian == 1:
-            bits = self.flip_bit_order(bits)
+            bits = self.flip_bit_order(bits, -1)
         self.m_bits |= bits << self.count
         self.count += size
         if self.use_metadata == 1:
@@ -334,8 +334,8 @@ class UVMPacker(object):
     #  extern def pack_object(self,uvm_object value):
     def pack_object(self, value):
         if value in value._m_uvm_status_container.cycle_check:
-            uvm_report_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack",
-                value.get_inst_id()), UVM_NONE)
+            uvm_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack",
+                value.get_inst_id()))
             return
 
         value._m_uvm_status_container.cycle_check[value] = 1
@@ -729,7 +729,7 @@ class UVMPacker(object):
         self.m_bits = 0
         self.m_packed_size = 0
 
-    def flip_bit_order(self, value, size) -> int:
+    def flip_bit_order(self, value, size: int) -> int:
         flipped = 0x0
         num_bits = len(bin(value)) - 2
         while value:

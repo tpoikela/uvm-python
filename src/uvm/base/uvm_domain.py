@@ -60,11 +60,11 @@ class UVMDomain(UVMPhase):
 
     m_common_domain = None
     m_uvm_domain = None
-    m_domains = {}  # type: Dict[str, UVMDomain]
+    m_domains: Dict[str, 'UVMDomain'] = {}
     m_uvm_schedule = None  # type: UVMPhase
 
     @classmethod
-    def get_domains(cls, domains=None):
+    def get_domains(cls, domains=None) -> Dict[str, 'UVMDomain']:
         """
         Returns a list of all domains.
 
@@ -133,7 +133,7 @@ class UVMDomain(UVMPhase):
         check_phase_exists('connect', connect_ph)
         end_of_elaboration_ph  = domain.find(UVMEndOfElaborationPhase.get())
         check_phase_exists('end_of_elaboration', end_of_elaboration_ph)
-        start_of_simulation_ph = domain.find(UVMStartofSimulationPhase.get());
+        start_of_simulation_ph = domain.find(UVMStartofSimulationPhase.get())
         check_phase_exists('start_of_simulation', start_of_simulation_ph)
         run_ph                 = domain.find(UVMRunPhase.get())
         check_phase_exists('run', run_ph)

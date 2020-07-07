@@ -1,7 +1,7 @@
 #//
 #//-----------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
-#//   Copyright 2007-2011 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
@@ -20,7 +20,6 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//-----------------------------------------------------------------------------
-
 """
 Title: uvm_pair classes
 
@@ -28,15 +27,16 @@ This section defines container classes for handling value pairs.
 
 """
 
+from uvm.base.sv import sv
 from uvm.base.uvm_object import UVMObject
-from uvm.macros import *
+from uvm.macros import uvm_object_utils, uvm_error
 
 
 
 class UVMClassPair(UVMObject):  # (type T1=int, T2=T1) extends uvm_object
     """
     Class: UVMClassPair #(T1,T2)
-    
+
     Container holding handles to two objects whose types are specified by the
     type parameters, T1 and T2.
     """
@@ -76,14 +76,13 @@ class UVMClassPair(UVMObject):  # (type T1=int, T2=T1) extends uvm_object
         #    second = s
 
 
-
     #  def get_type_name(self):
     #    return type_name
     #  endfunction
-    #
+
     def convert2string(self):
         s = sv.sformatf("pair : %s, %s",
-             first.convert2string(), second.convert2string())
+             self.first.convert2string(), self.second.convert2string())
         return s
 
 
@@ -154,7 +153,8 @@ class UVMBuiltInPair(UVMObject):
     def do_compare(self, rhs, comparer):
         rhs_ = []
         if not sv.cast(rhs_,rhs, UVMBuiltInPair):
-            uvm_error("WRONG_TYPE", {"do_compare: rhs argument is not of type '",get_type_name(),"'"})
+            uvm_error("WRONG_TYPE", {"do_compare: rhs argument is not of type '",
+                self.get_type_name(),"'"})
             return 0
         rhs_ = rhs[0]
         return self.first == rhs_.first and self.second == rhs_.second
