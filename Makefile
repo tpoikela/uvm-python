@@ -54,3 +54,6 @@ stubgen:
 
 typecheck:
 	mypy src ./out/*
+
+pytype:
+	pytype --config=./pytype.cfg
