@@ -545,7 +545,7 @@ class UVMPhase(UVMObject):
             for pred in before_phase.m_predecessors:
                 del pred.m_successors[before_phase]
                 pred.m_successors[begin_node] = 1
-            before_phase.m_predecessors.clear()
+            before_phase.m_predecessors = {}
             before_phase.m_predecessors[end_node] = 1
         # INSERT AFTER PHASE
         elif before_phase is None and after_phase is not None:
@@ -554,7 +554,7 @@ class UVMPhase(UVMObject):
             for succ in after_phase.m_successors:
                 del succ.m_predecessors[after_phase]
                 succ.m_predecessors[end_node] = 1
-            after_phase.m_successors.clear()
+            after_phase.m_successors = {}
             after_phase.m_successors[begin_node] = 1
         # IN BETWEEN 'BEFORE' and 'AFTER' PHASES
         elif before_phase is not None and after_phase is not None:
