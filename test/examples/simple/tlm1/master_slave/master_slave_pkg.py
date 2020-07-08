@@ -427,7 +427,7 @@ class env_top(UVMEnv):
     async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_info("ENV_TOP", "run_phase started", UVM_MEDIUM)
-        await Timer(NUM_ITEMS * 100, "NS")
+        await Timer(NUM_ITEMS * 110, "NS")
         phase.drop_objection(self)
 
 
@@ -441,6 +441,9 @@ class env_top(UVMEnv):
             num_mem_cmds += self.mems[i].num_cmds()
 
         if (num_slave_cmds + num_mem_cmds) != num_master_cmds:
+            slv_cmd = num_slave_cmds + num_mem_cmds
+            uvm_error("ENV_TOP", "Cmd mismatch: {} vs master: {}".format(
+                slv_cmd, num_master_cmds))
             return False
         else:
             return True

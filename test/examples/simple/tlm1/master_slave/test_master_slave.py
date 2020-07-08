@@ -6,7 +6,7 @@ from uvm.macros import (uvm_component_utils, uvm_fatal)
 
 from master_slave_pkg import env_top
 
-test_dur = 1000  # NS
+test_dur = 1200  # NS
 
 
 class master_slave_test(UVMTest):
