@@ -26,6 +26,7 @@ from .uvm_object_globals import *
 from .uvm_scope_stack import UVMScopeStack
 from .sv import sv
 from ..macros.uvm_message_defines import uvm_error, uvm_warning
+from typing import List
 
 
 SIZEOF_INT = 32
@@ -151,7 +152,7 @@ class UVMPacker(object):
     #  // packed array. ~size~ is the number of bits of ~value~ to pack.
     #
     #  extern def pack_field(self,uvm_bitstream_t value, int size):
-    def pack_field(self, value, size):
+    def pack_field(self, value, size) -> None:
         #  for (int i=0; i<size; i++)
         if self.big_endian == 1:
             flipped = self.flip_bit_order(value, size)
@@ -168,7 +169,7 @@ class UVMPacker(object):
     #  // pack array.  The ~size~ is the number of bits to pack, usually obtained by
     #  // ~$bits~. This optimized version of <pack_field> is useful for sizes up
     #  // to 64 bits.
-    def pack_field_int(self, value: int, size: int):
+    def pack_field_int(self, value: int, size: int) -> None:
         if self.big_endian == 1:
             flipped = self.flip_bit_order(value, size)
             self.m_bits |= flipped << self.count
@@ -193,7 +194,7 @@ class UVMPacker(object):
     #  //
     #  // See <pack_ints> for additional information.
     #  extern def pack_bytes(self,ref byte value[], input int size = -1):
-    def pack_bytes(self, value, size=-1):
+    def pack_bytes(self, value, size=-1) -> None:
         max_size = len(value) * 8
 
         if size < 0:
@@ -241,7 +242,7 @@ class UVMPacker(object):
     #  // size of the source array.
     #  //
     #  extern def pack_ints(self,ref int value[], input int size = -1):
-    def pack_ints(self, value, size=-1):
+    def pack_ints(self, value, size=-1) -> None:
         max_size = len(value) * SIZEOF_INT
 
         if size < 0:
@@ -273,7 +274,7 @@ class UVMPacker(object):
     #  // outside of SystemVerilog UVM.
     #
     #  extern def pack_string(self,string value):
-    def pack_string(self, value):
+    def pack_string(self, value) -> None:
         bytearr = value.encode()
 
         size = 8 * len(bytearr)
@@ -332,7 +333,7 @@ class UVMPacker(object):
     #  // outside of UVM.
     #
     #  extern def pack_object(self,uvm_object value):
-    def pack_object(self, value):
+    def pack_object(self, value) -> None:
         if value in value._m_uvm_status_container.cycle_check:
             uvm_warning("CYCFND", sv.sformatf("Cycle detected for object @%0d during pack",
                 value.get_inst_id()))
@@ -405,7 +406,7 @@ class UVMPacker(object):
     #  // smaller vectors.
     #
     #  extern def unpack_field_int(self,int size):
-    def unpack_field_int(self, size):
+    def unpack_field_int(self, size) -> int:
         unpack_field_int = 0x0
         count_before = self.count
         if self.enough_bits(size,"integral"):
@@ -621,7 +622,7 @@ class UVMPacker(object):
     #  // Function: get_packed_size
     #  //
     #  // Returns the number of bits that were packed.
-    def get_packed_size(self):
+    def get_packed_size(self) -> int:
         return self.m_packed_size
 
 
@@ -629,12 +630,12 @@ class UVMPacker(object):
 
 
     #  extern def get_packed_bits(self):
-    def get_packed_bits(self):
+    def get_packed_bits(self) -> int:
         return self.m_bits
 
 
     #  extern def bit  unsigned get_bit  (self,int unsigned index):
-    def get_bit(self, index):
+    def get_bit(self, index) -> int:
         if index >= self.m_packed_size:
             self.index_error(index, "bit",1)
         return (self.m_bits >> index) & 0x1
@@ -644,11 +645,11 @@ class UVMPacker(object):
     #  extern def int  unsigned get_int  (self,int unsigned index):
 
     #  extern def get_bits(self,ref bit unsigned bits[]):
-    def get_bits(self):
+    def get_bits(self) -> int:
         return self.m_bits
 
     #  extern def get_bytes(self,ref byte unsigned bytes[]):
-    def get_bytes(self):
+    def get_bytes(self) -> List[int]:
         sz = 0
         v = 0x00
         sz = int((self.m_packed_size+7) / 8)
@@ -666,7 +667,7 @@ class UVMPacker(object):
 
 
     #  extern def get_ints(self):
-    def get_ints(self):
+    def get_ints(self) -> List[int]:
         sz = 0
         v = 0
         sz = int((self.m_packed_size+31) / SIZEOF_INT)
