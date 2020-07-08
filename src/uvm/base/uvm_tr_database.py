@@ -278,7 +278,8 @@ class UVMTrDatabase(UVMObject):
 
         if ((s_lhs is not None) and (s_lhs.get_db() != self)):
             db = s_lhs.get_db()
-            uvm_warning("UVM/TR_DB/BAD_LINK", sv.sformatf("attempt to link stream from '%s' into '%s'",
+            uvm_warning("UVM/TR_DB/BAD_LINK",
+                sv.sformatf("attempt to link stream from '%s' into '%s'",
                 db.get_name(), self.get_name()))
             return
 
@@ -299,8 +300,9 @@ class UVMTrDatabase(UVMObject):
     #
     #   // Function: do_open_db
     #   // Backend implementation of <open_db>
-    #   pure virtual protected function bit do_open_db()
-    #
+    def do_open_db(self):
+        raise Exception('do_open_db is pure virtual function')
+
     #   // Function: do_close_db
     #   // Backend implementation of <close_db>
     #   pure virtual protected function bit do_close_db()
@@ -314,8 +316,8 @@ class UVMTrDatabase(UVMObject):
     #   // Function: do_establish_link
     #   // Backend implementation of <establish_link>
     #   pure virtual protected function void do_establish_link(uvm_link_base link)
-    #
-    #endclass : UVMTrDatabase
+    def do_establish_link(self, link):
+        raise Exception('do_establish_link is pure virtual function')
 
 
 
@@ -351,7 +353,7 @@ class UVMTextTrDatabase(UVMTrDatabase):
         self.m_filename_dap.set("tr_db.log")
         self.m_file = NO_FILE_OPEN
 
-    def do_open_db(self):
+    def do_open_db(self) -> bool:
         """
            Group: Implementation Agnostic API
 
@@ -373,7 +375,7 @@ class UVMTextTrDatabase(UVMTrDatabase):
                 self.m_filename_dap.lock()
         return (self.m_file != NO_FILE_OPEN)
 
-    def do_close_db(self):
+    def do_close_db(self) -> int:
         """
 
            Function: do_close_db
@@ -394,7 +396,7 @@ class UVMTextTrDatabase(UVMTrDatabase):
             self.m_filename_dap.unlock()
         return 1
 
-    def do_open_stream(self, name, scope, typename):
+    def do_open_stream(self, name: str, scope: str, typename: str) -> UVMTextTrStream:
         """
            Function: do_open_stream
            Provides a reference to a `stream` within the
@@ -415,7 +417,7 @@ class UVMTextTrDatabase(UVMTrDatabase):
         return m_stream
 
 
-    def do_establish_link(self, link):
+    def do_establish_link(self, link) -> None:
         """
            Function: do_establish_link
            Establishes a `link` between two elements in the database
@@ -424,21 +426,21 @@ class UVMTextTrDatabase(UVMTrDatabase):
         Args:
             link:
         """
-        r_lhs = None
-        r_rhs = None  # uvm_recorder
+        cast_r_lhs = []
+        cast_r_rhs = []  # uvm_recorder
         lhs = link.get_lhs()
         rhs = link.get_rhs()
 
-        sv.cast(r_lhs, lhs, UVMRecorder)
-        sv.cast(r_rhs, rhs, UVMRecorder)
-        r_lhs = r_lhs[0]
-        r_rhs = r_rhs[0]
+        sv.cast(cast_r_lhs, lhs, UVMRecorder)
+        sv.cast(cast_r_rhs, rhs, UVMRecorder)
+        r_lhs = cast_r_lhs[0]
+        r_rhs = cast_r_rhs[0]
 
         if (r_lhs is None or r_rhs is None):
             return
         else:
-            pc_link = None  # uvm_parent_child_link
-            re_link = None  # uvm_related_link
+            pc_link = []  # uvm_parent_child_link
+            re_link = []  # uvm_related_link
             if sv.cast(pc_link, link, UVMParentChildLink):
                 sv.fdisplay(self.m_file, "  LINK @%0t {{TXH1:%0d TXH2:%0d RELATION=%0s}}",
                     sv.time(), r_lhs.get_handle(), r_rhs.get_handle(), "child")
@@ -456,7 +458,7 @@ class UVMTextTrDatabase(UVMTrDatabase):
     #   // The ~set_file_name~ method can only be called prior to ~open_db~.
     #   //
     #   // By default, the database will use a file named "tr_db.log".
-    def set_file_name(self, filename):
+    def set_file_name(self, filename: str) -> None:
         if filename == "":
             uvm_warning("UVM/TXT_DB/EMPTY_NAME",
                        "Ignoring attempt to set file name to ''!")

@@ -21,6 +21,8 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
+from typing import List
+
 import cocotb
 from cocotb.triggers import Timer, Event
 
@@ -106,7 +108,7 @@ class UVMRoot(UVMComponent):
     m_relnotes_done = False
 
     @classmethod
-    def get(cls):
+    def get(cls) -> 'UVMRoot':
         """
         Static accessor for `UVMRoot`.
 
@@ -161,7 +163,7 @@ class UVMRoot(UVMComponent):
         #  // includes the uvm_test_top component that is created by <run_test> as
         #  // well as any other top level components that have been instantiated
         #  // anywhere in the hierarchy.
-        self.top_levels = []
+        self.top_levels: List[UVMComponent] = []
         #  // Variable- phase_timeout
         #  //
         #  // Specifies the timeout for the run phase. Default is `UVM_DEFAULT_TIMEOUT
@@ -422,7 +424,7 @@ class UVMRoot(UVMComponent):
 
         return comp_list[0]
 
-    def find_all(self, comp_match, comps, comp=None):
+    def find_all(self, comp_match, comps: List[UVMComponent], comp=None):
         """
         Returns the component handle (find) or list of components handles
         (find_all) matching a given string. The string may contain the wildcards,
@@ -466,7 +468,7 @@ class UVMRoot(UVMComponent):
 
 
 
-    def m_find_all_recurse(self, comp_match, comps, comp=None):
+    def m_find_all_recurse(self, comp_match, comps: List[UVMComponent], comp=None):
         """
           PRIVATE members
          extern function void m_find_all_recurse(string comp_match,
@@ -494,7 +496,7 @@ class UVMRoot(UVMComponent):
 
     #  extern protected function new ()
 
-    def m_add_child(self, child):
+    def m_add_child(self, child: UVMComponent) -> bool:
         """
         Add child to the top levels array.
         Args:
@@ -510,10 +512,9 @@ class UVMRoot(UVMComponent):
             return True
         else:
             return False
-        #endfunction
-        #
 
-    def build_phase(self, phase):
+
+    def build_phase(self, phase: UVMPhase) -> None:
         """
          extern function void build_phase(uvm_phase phase)
         Args:
@@ -529,7 +530,7 @@ class UVMRoot(UVMComponent):
         self.m_do_dump_args()
 
 
-    def m_do_verbosity_settings(self):
+    def m_do_verbosity_settings(self) -> None:
         """
          extern local function void m_do_verbosity_settings()
         """
@@ -555,7 +556,7 @@ class UVMRoot(UVMComponent):
         #
         #
 
-    def m_do_timeout_settings(self):
+    def m_do_timeout_settings(self) -> None:
         """
          extern local function void m_do_timeout_settings()
         """
@@ -595,7 +596,7 @@ class UVMRoot(UVMComponent):
                 self.set_timeout(timeout_int, 1)
 
 
-    def m_do_factory_settings(self):
+    def m_do_factory_settings(self) -> None:
         """
          extern local function void m_do_factory_settings()
         """
@@ -612,7 +613,7 @@ class UVMRoot(UVMComponent):
             self.m_process_type_override(value)
 
 
-    def m_process_inst_override(self, ovr):
+    def m_process_inst_override(self, ovr) -> None:
         """
         extern local function void m_process_inst_override(string ovr)
         Args:
@@ -632,7 +633,8 @@ class UVMRoot(UVMComponent):
             return
 
         uvm_info("INSTOVR",
-            "Applying instance override from the command line: +uvm_set_inst_override=", ovr, UVM_NONE)
+            "Applying instance override from the command line: +uvm_set_inst_override=" + str(ovr),
+            UVM_NONE)
         factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2])
         #endfunction
         #
@@ -847,7 +849,7 @@ class UVMRoot(UVMComponent):
             elif verb_string == "DEBUG":
                 verbosity = UVM_DEBUG
             else:
-                verbosity = verb_string.atoi()
+                verbosity = int(verb_string)
                 if verbosity > 0:
                     self.uvm_report_info("NSTVERB",
                             sv.sformatf(NON_STD_VERB, verbosity), UVM_NONE)
@@ -859,7 +861,7 @@ class UVMRoot(UVMComponent):
 
         #endfunction
 
-    def report_header(self, _file=0):
+    def report_header(self, _file=0) -> None:
         """
          extern virtual function void report_header(UVM_FILE file = 0)
         Args:
@@ -900,7 +902,7 @@ class UVMRoot(UVMComponent):
     #  // For error checking
     #  extern virtual task run_phase (uvm_phase phase)
 
-    def phase_started(self, phase):
+    def phase_started(self, phase) -> None:
         """
         At end of elab phase we need to do tlm binding resolution.
 
@@ -933,7 +935,7 @@ class UVMRoot(UVMComponent):
 # Group: Global Variables
 #----------------------------------------------------------------------------
 
-def get_report_server():
+def get_report_server() -> 'UVMReportServer':
     from .uvm_report_server import UVMReportServer
     return UVMReportServer.get_server()
 
@@ -943,7 +945,7 @@ def get_report_server():
 # This is the top-level that governs phase execution and provides component
 # search interface. See <uvm_root> for more information.
 #------------------------------------------------------------------------------
-uvm_top = UVMRoot.get()
+uvm_top: UVMRoot = UVMRoot.get()
 
 #//-----------------------------------------------------------------------------
 #// IMPLEMENTATION

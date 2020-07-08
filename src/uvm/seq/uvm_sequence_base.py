@@ -29,9 +29,9 @@ from ..base.uvm_queue import UVMQueue
 from .uvm_sequence_item import UVMSequenceItem
 from ..base.uvm_object_globals import *
 from ..base.uvm_globals import uvm_empty_delay
-from ..macros import uvm_fatal, uvm_warning
+from ..macros import uvm_fatal, uvm_warning, uvm_error
 from ..base.uvm_pool import UVMPool
-from ..dap import uvm_get_to_lock_dap
+from ..dap.uvm_get_to_lock_dap import uvm_get_to_lock_dap
 from ..base.uvm_recorder import UVMRecorder
 from uvm.base.sv import wait
 
@@ -1242,7 +1242,7 @@ class UVMSequenceBase(UVMSequenceItem):
             self.m_resp_queue_event.set()
             return
         if self.response_queue_error_report_disabled == 0:
-            uvm_report_error(self.get_full_name(), "Response queue overflow, response was dropped", UVM_NONE)
+            uvm_error(self.get_full_name(), "Response queue overflow, response was dropped")
 
     def put_response(self, response_item):
         """

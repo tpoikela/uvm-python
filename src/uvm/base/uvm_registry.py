@@ -51,6 +51,12 @@ from .uvm_globals import uvm_report_warning, uvm_report_fatal
 from .uvm_object_globals import UVM_NONE
 
 
+def get_factory():
+    from .uvm_coreservice import UVMCoreService
+    cs = UVMCoreService.get()
+    return cs.get_factory()
+
+
 class UVMComponentRegistry(UVMObjectWrapper):
 
     # dict of UVMComponentRegistry
@@ -69,16 +75,16 @@ class UVMComponentRegistry(UVMObjectWrapper):
         UVMComponentRegistry.comps[tname] = Constr
         UVMComponentRegistry.registered[tname] = False
         UVMComponentRegistry.registry_db[tname] = self.get()
-        
-    @staticmethod
-    def reset():
+
+    @classmethod
+    def reset(cls):
         """Resets the state of the component registry. Used for unit testing"""
         UVMComponentRegistry.registry_db.clear()
         UVMComponentRegistry.registered.clear()
         UVMComponentRegistry.comps.clear()
 
     def create_component(self, name, parent):
-        """         
+        """
         Function: create_component
 
         Creates a component of type T having the provided `name` and `parent`.
@@ -86,14 +92,14 @@ class UVMComponentRegistry(UVMObjectWrapper):
         called by the factory after determining the type of object to create.
         You should not call this method directly. Call `create` instead.
         Args:
-            name: 
-            parent: 
+            name:
+            parent:
         Returns:
         """
         return UVMComponentRegistry.comps[self.tname](name, parent)
 
     def get_type_name(self):
-        """         
+        """
         Function: get_type_name
 
         Returns the value given by the string parameter, `Tname`. This method
@@ -103,7 +109,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
         return self.tname
 
     def get(self):
-        """         
+        """
         Function: get
 
         Returns the singleton instance of this type. Type-based factory operation
@@ -117,7 +123,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
         return self
 
     def create(self, name, parent, contxt=""):
-        """         
+        """
         Function: create
 
         Returns an instance of the component type, `T`, represented by this proxy,
@@ -126,9 +132,9 @@ class UVMComponentRegistry(UVMObjectWrapper):
         `parent`'s context. The new instance will have the given leaf `name`
         and `parent`.
         Args:
-            name: 
-            parent: 
-            contxt: 
+            name:
+            parent:
+            contxt:
         Returns:
         Raises:
         """
@@ -163,7 +169,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
         uvm_report_fatal("FCTTYP", msg, UVM_NONE)
 
     def set_type_override(self, override_type, replace=True):
-        """         
+        """
         Function: set_type_override
 
         Configures the factory to create an object of the type represented by
@@ -171,14 +177,14 @@ class UVMComponentRegistry(UVMObjectWrapper):
         `T`, represented by this proxy, provided no instance override applies. The
         original type, `T`, is typically a super class of the override type.
         Args:
-            override_type: 
-            replace: 
+            override_type:
+            replace:
         """
         factory = get_factory()
         factory.set_type_override_by_type(self.get(),override_type,replace)
 
     def set_inst_override(self, override_type, inst_path, parent=None):
-        """         
+        """
         Function: set_inst_override
 
         Configures the factory to create a component of the type represented by
@@ -194,9 +200,9 @@ class UVMComponentRegistry(UVMObjectWrapper):
         registered with the override. The `inst_path` may contain wildcards for
         matching against multiple contexts.
         Args:
-            override_type: 
-            inst_path: 
-            parent: 
+            override_type:
+            inst_path:
+            parent:
         """
         if parent is not None:
             if inst_path == "":
@@ -226,7 +232,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         UVMObjectRegistry.objs[tname] = Constr
         UVMObjectRegistry.registered[tname] = False
         UVMObjectRegistry.registry_db[tname] = self.get()
-        
+
     @staticmethod
     def reset():
         """Resets the state of the object registry. Used for unit testing"""
@@ -245,7 +251,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         return UVMObjectRegistry.objs[self.tname](name)
 
     def get_type_name(self):
-        """         
+        """
         Function: get_type_name
 
         Returns the value given by the string parameter, `Tname`. This method
@@ -255,7 +261,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         return self.type_name
 
     def get(self):
-        """         
+        """
         Function: get
 
         Returns the singleton instance of this type. Type-based factory operation
@@ -269,7 +275,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         return self
 
     def create(self, name, parent=None, contxt=""):
-        """         
+        """
         Function: create
 
         Returns an instance of the object type, `T`, represented by this proxy,
@@ -278,9 +284,9 @@ class UVMObjectRegistry(UVMObjectWrapper):
         `parent`'s context. The new instance will have the given leaf `name`,
         if provided.
         Args:
-            name: 
-            parent: 
-            contxt: 
+            name:
+            parent:
+            contxt:
         Returns:
         """
         factory = get_factory()
@@ -302,7 +308,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         return create
 
     def set_type_override(self, override_type, replace=True):
-        """         
+        """
         Function: set_type_override
 
         Configures the factory to create an object of the type represented by
@@ -310,14 +316,14 @@ class UVMObjectRegistry(UVMObjectWrapper):
         represented by this proxy, provided no instance override applies. The
         original type, `T`, is typically a super class of the override type.
         Args:
-            override_type: 
-            replace: 
+            override_type:
+            replace:
         """
         factory = get_factory()
-        factory.set_type_override_by_type(self.get(),override_type,replace)
+        factory.set_type_override_by_type(self.get(), override_type, replace)
 
     def set_inst_override(self, override_type, inst_path, parent=None):
-        """         
+        """
         Function: set_inst_override
 
         Configures the factory to create an object of the type represented by
@@ -333,9 +339,9 @@ class UVMObjectRegistry(UVMObjectWrapper):
         registered with the override. The `inst_path` may contain wildcards for
         matching against multiple contexts.
         Args:
-            override_type: 
-            inst_path: 
-            parent: 
+            override_type:
+            inst_path:
+            parent:
         """
         factory = get_factory()
 
@@ -344,12 +350,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
                 inst_path = parent.get_full_name()
             else:
                 inst_path = parent.get_full_name() + "." + inst_path
-        factory.set_inst_override_by_type(self.get(),override_type,inst_path)
-    #endclass
+        factory.set_inst_override_by_type(self.get(), override_type, inst_path)
 
 
 
-def get_factory():
-    from .uvm_coreservice import UVMCoreService
-    cs = UVMCoreService.get()
-    return cs.get_factory()

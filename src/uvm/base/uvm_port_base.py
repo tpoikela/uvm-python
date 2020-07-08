@@ -583,11 +583,11 @@ class UVMPortBase():
         # Connecting port-to-port: CHILD.port.connect(PARENT.port)
         #
         if res_from.is_port() and provider.is_port() and from_gparent != to_parent:
-            s = provider.get_full_name()
-            + " (of type " + provider.get_type_name()
-            + ") is not up one level of hierarchy from this port. "
-            + "A port-to-port connection takes the form "
-            + "child_component.child_port.connect(parent_port)"
+            s = (provider.get_full_name()
+                + " (of type " + provider.get_type_name()
+                + ") is not up one level of hierarchy from this port. "
+                + "A port-to-port connection takes the form "
+                + "child_component.child_port.connect(parent_port)")
             self.m_comp.uvm_report_warning(s_connection_warning_id, s, UVM_NONE)
             return 0
 

@@ -1,4 +1,4 @@
-#// 
+#//
 #//------------------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
@@ -32,10 +32,9 @@ from ..base.uvm_object import UVMObject
 #//
 #virtual class uvm_set_get_dap_base#(type T=int) extends uvm_object;
 
+
 class uvm_set_get_dap_base(UVMObject):
-    #
-    # Used for self references
-    # typedef uvm_set_get_dap_base#(T) this_type;
+
 
     def __init__(self, name="unnamed-uvm_set_get_dap_base#(T)"):
         UVMObject.__init__(self, name)
@@ -46,7 +45,7 @@ class uvm_set_get_dap_base(UVMObject):
     #   // provide an implementation of the four basic "Set and Get"
     #   // accessors.
     #   //
-    #
+
     #   // Function: set
     #   // Sets the value contained within the resource.
     #   //
@@ -54,7 +53,7 @@ class uvm_set_get_dap_base(UVMObject):
     #   // it is illegal to 'set' the value at this time.
     #   pure virtual function void set(T value);
     def set(self, value):
-        raise Exception('Pure virtual function')
+        raise NotImplementedError('Pure virtual function')
 
     #   // Function: try_set
     #   // Attempts to set the value contained within the resource.
@@ -64,14 +63,18 @@ class uvm_set_get_dap_base(UVMObject):
     #   // reported.  Otherwise, the method will return 1, and
     #   // will be treated like a standard <set> call.
     #   pure virtual function bit try_set(T value);
-    #   
+    def try_set(self, value):
+        raise NotImplementedError('Pure virtual function')
+
     #   // Function: get
     #   // Retrieves the value contained within the resource.
     #   //
     #   // Depending on the DAP policies, an error may be reported
     #   // if it is illegal to 'get' the value at this time.
     #   pure virtual function T get();
-    #
+    def get(self):
+        raise NotImplementedError('Pure virtual function')
+
     #   // Function: try_get
     #   // Attempts to retrieve the value contained within the resource.
     #   //
@@ -80,3 +83,5 @@ class uvm_set_get_dap_base(UVMObject):
     #   // reported.  Otherwise, the method will return 1, and will
     #   // be treated like a standard <get> call.
     #   pure virtual function bit try_get(output T value);
+    def try_get(self, value):
+        raise NotImplementedError('Pure virtual function')

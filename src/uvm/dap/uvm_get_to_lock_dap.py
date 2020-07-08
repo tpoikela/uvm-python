@@ -22,11 +22,14 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------------
 
+from typing import Any
+
 from .uvm_set_get_dap_base import uvm_set_get_dap_base
 from ..base.sv import sv
-from ..macros import *
+from ..macros import uvm_error, uvm_object_utils
 
-ERR_MSG1 = "Attempt to set new value on '%s', but the data access policy forbids setting after a get!"
+ERR_MSG1 = ("Attempt to set new value on '%s', but the data access policy " +
+    "forbids setting after a get!")
 
 #// Class: uvm_get_to_lock_dap
 #// Provides a 'Get-To-Lock' Data Access Policy.
@@ -47,13 +50,7 @@ class uvm_get_to_lock_dap(uvm_set_get_dap_base):
     # Used for self-references
     # typedef uvm_get_to_lock_dap#(T) this_type;
 
-    # Parameterized Utils
-    #
-    #   // Stored data
-    #   local T m_value;
-    #
-    #   // Lock state
-    #   local bit m_locked;
+    type_id = None  # type: Any
 
     def __init__(self, name="unnamed-uvm_get_to_lock_dap#(T)"):
         uvm_set_get_dap_base.__init__(self, name)

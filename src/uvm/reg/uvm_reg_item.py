@@ -201,7 +201,7 @@ class UVMRegItem(UVMSequenceItem):
             value_s = "'{"
             for i in range(len(self.value)):
                 value_s = value_s + sv.sformatf("%0h,", self.value[i])
-            value_s[value_s.len()-1]="}"
+            value_s[len(value_s)-1] = "}"
         else:
             value_s = sv.sformatf("%0h", self.value[0])
         s = s + " value=" + value_s

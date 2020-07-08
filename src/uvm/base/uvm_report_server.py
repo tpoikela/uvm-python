@@ -11,10 +11,12 @@ from .uvm_pool import UVMPool
 from .uvm_global_vars import uvm_default_printer
 from .sv import sv
 from ..macros.uvm_message_defines import uvm_info
+from .uvm_tr_database import UVMTrDatabase, UVMTextTrDatabase
+from typing import List, Any, Callable
 
 
 
-def ename(sever):
+def ename(sever) -> str:
     """
     Converts given severity level into string.
 
@@ -62,7 +64,7 @@ class UVMReportServer(UVMObject):
         self.show_verbosity = False
         self.show_terminator = False
 
-        self.m_message_db = {}  # uvm_tr_database
+        self.m_message_db: UVMTrDatabase = UVMTextTrDatabase()  # uvm_tr_database
         self.m_streams = {}
         self.reset_quit_count()
         self.reset_severity_counts()
@@ -70,7 +72,7 @@ class UVMReportServer(UVMObject):
         self.print_on_closed_file = True
         self.logger = print  # By default, use print to emit the messages
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         return "uvm_report_server"
 
     @classmethod
@@ -80,11 +82,11 @@ class UVMReportServer(UVMObject):
         cs.set_report_server(server)
 
     @classmethod
-    def get_server(cls):
+    def get_server(cls) -> 'UVMReportServer':
         cs = get_cs()
         return cs.get_report_server()
 
-    def set_logger(self, logger):
+    def set_logger(self, logger: Callable):
         """
         Sets the logger function used to print the messages. Default is python
         built-in print.
@@ -321,7 +323,7 @@ class UVMReportServer(UVMObject):
     #
     #----------------------------------------------------------------------------
 
-    def set_message_database(self, database):
+    def set_message_database(self, database: UVMTrDatabase):
         """
         Function: set_message_database
         sets the `UVMTrDatabase` used for recording messages
@@ -331,7 +333,7 @@ class UVMReportServer(UVMObject):
         """
         self.m_message_db = database
 
-    def get_message_database(self):
+    def get_message_database(self) -> UVMTrDatabase:
         """
         Function: get_message_database
         returns the `uvm_tr_database` used for recording messages
@@ -341,15 +343,15 @@ class UVMReportServer(UVMObject):
         """
         return self.m_message_db
 
-    def get_severity_set(self, q):
+    def get_severity_set(self, q: List[Any]) -> None:
         while self.m_severity_count.has_next():
             q.append(self.m_severity_count.next())
 
-    def get_id_set(self, q):
+    def get_id_set(self, q: List[Any]) -> None:
         while self.m_id_count.has_next():
             q.append(self.m_id_count.next())
 
-    def f_display(self, file, _str):
+    def f_display(self, file, _str) -> None:
         """
         This method sends string severity to the command line if file is 0 and to
         the file(s) specified by file if it is not 0.
@@ -368,7 +370,7 @@ class UVMReportServer(UVMObject):
                 if self.print_on_closed_file:
                     self.logger('UVM_WARNING. File already closed for msg ' + _str)
 
-    def process_report_message(self, report_message):
+    def process_report_message(self, report_message) -> None:
         l_report_handler = report_message.get_report_handler()
         #process p = process::self()
         report_ok = True
@@ -399,7 +401,7 @@ class UVMReportServer(UVMObject):
     #----------------------------------------------------------------------------
 
 
-    def execute_report_message(self, report_message, composed_message):
+    def execute_report_message(self, report_message, composed_message) -> None:
         """
         Processes the provided message per the actions contained within.
 
@@ -483,7 +485,7 @@ class UVMReportServer(UVMObject):
             raise Exception("$stop from uvm_report_server, msg: " +
                     report_message.sprint())
 
-    def compose_report_message(self, report_message, report_object_name=""):
+    def compose_report_message(self, report_message, report_object_name="") -> str:
         """
         Constructs the actual string sent to the file or command line
         from the severity, component name, report id, and the message itself.
@@ -554,7 +556,7 @@ class UVMReportServer(UVMObject):
         return result
 
 
-    def report_summarize(self, file=0):
+    def report_summarize(self, file=0) -> None:
         """
         Outputs statistical information on the reports issued by this central
         report server. This information will be sent to the command line if
@@ -565,7 +567,7 @@ class UVMReportServer(UVMObject):
         rpt = self.get_summary_string()
         uvm_info("UVM/REPORT/SERVER", rpt, UVM_LOW)
 
-    def get_summary_string(self):
+    def get_summary_string(self) -> str:
         """
         Returns the statistical information on the reports issued by this central report
         server as multi-line string.

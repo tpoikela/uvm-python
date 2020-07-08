@@ -19,8 +19,81 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
+"""
+Title: Resources
 
-import cocotb
+Topic: Intro
+
+A resource is a parameterized container that holds arbitrary data.
+Resources can be used to configure components, supply data to
+sequences, or enable sharing of information across disparate parts of
+a testbench.  They are stored using scoping information so their
+visibility can be constrained to certain parts of the testbench.
+Resource containers can hold any type of data, constrained only by
+the data types available in SystemVerilog.  Resources can contain
+scalar objects, class handles, queues, lists, or even virtual
+interfaces.
+
+Resources are stored in a resource database so that each resource can
+be retrieved by name or by type. The database has both a name table
+and a type table and each resource is entered into both. The database
+is globally accessible.
+
+Each resource has a set of scopes over which it is visible.  The set
+of scopes is represented as a regular expression.  When a resource is
+looked up the scope of the entity doing the looking up is supplied to
+the lookup function.  This is called the ~current scope~.  If the
+current scope is in the set of scopes over which a resource is
+visible then the resource can be retuned in the lookup.
+
+Resources can be looked up by name or by type. To support type lookup
+each resource has a static type handle that uniquely identifies the
+type of each specialized resource container.
+
+Multiple resources that have the same name are stored in a queue.
+Each resource is pushed into a queue with the first one at the front
+of the queue and each subsequent one behind it.  The same happens for
+multiple resources that have the same type.  The resource queues are
+searched front to back, so those placed earlier in the queue have
+precedence over those placed later.
+
+The precedence of resources with the same name or same type can be
+altered.  One way is to set the ~precedence~ member of the resource
+container to any arbitrary value.  The search algorithm will return
+the resource with the highest precedence.  In the case where there
+are multiple resources that match the search criteria and have the
+same (highest) precedence, the earliest one located in the queue will
+be one returned.  Another way to change the precedence is to use the
+set_priority function to move a resource to either the front or back
+of the queue.
+
+The classes defined here form the low level layer of the resource
+database.  The classes include the resource container and the database
+that holds the containers.  The following set of classes are defined
+here:
+
+<uvm_resource_types>: A class without methods or members, only
+typedefs and enums. These types and enums are used throughout the
+resources facility.  Putting the types in a class keeps them confined
+to a specific name space.
+
+<uvm_resource_options>: policy class for setting options, such
+as auditing, which effect resources.
+
+<uvm_resource_base>: the base (untyped) resource class living in the
+resource database.  This class includes the interface for setting a
+resource as read-only, notification, scope management, altering
+search priority, and managing auditing.
+
+<uvm_resource#(T)>: parameterized resource container.  This class
+includes the interfaces for reading and writing each resource.
+Because the class is parameterized, all the access functions are type
+safe.
+
+<uvm_resource_pool>: the resource database. This is a singleton
+class object.
+"""
+
 from cocotb.triggers import Event
 
 from .uvm_object import UVMObject
@@ -34,80 +107,6 @@ from .uvm_pool import UVMPool
 from .uvm_printer import UVMLinePrinter
 from .uvm_queue import UVMQueue
 
-#//----------------------------------------------------------------------
-#// Title: Resources
-#//
-#// Topic: Intro
-#//
-#// A resource is a parameterized container that holds arbitrary data.
-#// Resources can be used to configure components, supply data to
-#// sequences, or enable sharing of information across disparate parts of
-#// a testbench.  They are stored using scoping information so their
-#// visibility can be constrained to certain parts of the testbench.
-#// Resource containers can hold any type of data, constrained only by
-#// the data types available in SystemVerilog.  Resources can contain
-#// scalar objects, class handles, queues, lists, or even virtual
-#// interfaces.
-#//
-#// Resources are stored in a resource database so that each resource can
-#// be retrieved by name or by type. The database has both a name table
-#// and a type table and each resource is entered into both. The database
-#// is globally accessible.
-#//
-#// Each resource has a set of scopes over which it is visible.  The set
-#// of scopes is represented as a regular expression.  When a resource is
-#// looked up the scope of the entity doing the looking up is supplied to
-#// the lookup function.  This is called the ~current scope~.  If the
-#// current scope is in the set of scopes over which a resource is
-#// visible then the resource can be retuned in the lookup.
-#//
-#// Resources can be looked up by name or by type. To support type lookup
-#// each resource has a static type handle that uniquely identifies the
-#// type of each specialized resource container.
-#//
-#// Multiple resources that have the same name are stored in a queue.
-#// Each resource is pushed into a queue with the first one at the front
-#// of the queue and each subsequent one behind it.  The same happens for
-#// multiple resources that have the same type.  The resource queues are
-#// searched front to back, so those placed earlier in the queue have
-#// precedence over those placed later.
-#//
-#// The precedence of resources with the same name or same type can be
-#// altered.  One way is to set the ~precedence~ member of the resource
-#// container to any arbitrary value.  The search algorithm will return
-#// the resource with the highest precedence.  In the case where there
-#// are multiple resources that match the search criteria and have the
-#// same (highest) precedence, the earliest one located in the queue will
-#// be one returned.  Another way to change the precedence is to use the
-#// set_priority function to move a resource to either the front or back
-#// of the queue.
-#//
-#// The classes defined here form the low level layer of the resource
-#// database.  The classes include the resource container and the database
-#// that holds the containers.  The following set of classes are defined
-#// here:
-#//
-#// <uvm_resource_types>: A class without methods or members, only
-#// typedefs and enums. These types and enums are used throughout the
-#// resources facility.  Putting the types in a class keeps them confined
-#// to a specific name space.
-#//
-#// <uvm_resource_options>: policy class for setting options, such
-#// as auditing, which effect resources.
-#//
-#// <uvm_resource_base>: the base (untyped) resource class living in the
-#// resource database.  This class includes the interface for setting a
-#// resource as read-only, notification, scope management, altering
-#// search priority, and managing auditing.
-#//
-#// <uvm_resource#(T)>: parameterized resource container.  This class
-#// includes the interfaces for reading and writing each resource.
-#// Because the class is parameterized, all the access functions are type
-#// safe.
-#//
-#// <uvm_resource_pool>: the resource database. This is a singleton
-#// class object.
-#//----------------------------------------------------------------------
 
 #----------------------------------------------------------------------
 # Class: uvm_resource_types
@@ -161,31 +160,28 @@ class Access_t:
         self.read_count = 0
         self.write_count = 0
 
-#----------------------------------------------------------------------
-# Class: uvm_resource_options
-#
-# Provides a namespace for managing options for the
-# resources facility.  The only thing allowed in this class is static
-# local data members and static functions for manipulating and
-# retrieving the value of the data members.  The static local data
-# members represent options and settings that control the behavior of
-# the resources facility.
-#
-# Options include:
-#
-#  * auditing:  on/off
-#
-#    The default for auditing is on.  You may wish to turn it off to
-#    for performance reasons.  With auditing off memory is not
-#    consumed for storage of auditing information and time is not
-#    spent collecting and storing auditing information.  Of course,
-#    during the period when auditing is off no audit trail information
-#    is available
-#
-#----------------------------------------------------------------------
-
 
 class UVMResourceOptions:
+    """
+    Provides a namespace for managing options for the
+    resources facility.  The only thing allowed in this class is static
+    local data members and static functions for manipulating and
+    retrieving the value of the data members.  The static local data
+    members represent options and settings that control the behavior of
+    the resources facility.
+
+    Options include:
+
+     * auditing:  on/off
+
+       The default for auditing is on.  You may wish to turn it off to
+       for performance reasons.  With auditing off memory is not
+       consumed for storage of auditing information and time is not
+       spent collecting and storing auditing information.  Of course,
+       during the period when auditing is off no audit trail information
+       is available
+    """
+
 
     auditing = True
 
@@ -229,20 +225,20 @@ class UVMResourceBase(UVMObject):
     default_precedence = 1000
 
     def __init__(self, name="", s="*"):
-        """         
+        """
         Function: new
 
         constructor for uvm_resource_base.  The constructor takes two
         arguments, the name of the resource and a regular expression which
         represents the set of scopes over which this resource is visible.
         Args:
-            name: 
-            s: 
+            name:
+            s:
         Raises:
         """
         UVMObject.__init__(self, name)
         if s is None:
-            raise TypeError('s/scope must be string (or use "*" default) ' 
+            raise TypeError('s/scope must be string (or use "*" default) '
                     + ', got: ' + str(s))
         #self.scope = ""
         self.set_scope(s)
@@ -256,9 +252,11 @@ class UVMResourceBase(UVMObject):
         # and name. Resources are set to the <default_precedence> initially,
         # and may be set to a higher or lower precedence as desired.
         self.precedence = UVMResourceBase.default_precedence
+        self.event_modified = Event(name + '_' + 'event_modified')
+        self.modified = False
 
     def get_type_handle(self):
-        """         
+        """
         Function: get_type_handle
 
         Pure virtual function that returns the type handle of the resource
@@ -292,7 +290,7 @@ class UVMResourceBase(UVMObject):
         self.read_only = False
 
     def is_read_only(self):
-        """         
+        """
         Function: is_read_only
 
         Returns one if this resource has been set to read-only, zero
@@ -315,7 +313,7 @@ class UVMResourceBase(UVMObject):
 
 
     async def wait_modified(self):
-        """             
+        """
         """
         await wait(lambda: self.modified is True, self.event_modified)
         self.modified = False
@@ -400,7 +398,7 @@ class UVMResourceBase(UVMObject):
 
 
     def set_scope(self, s):
-        """         
+        """
         Function: set_scope
 
         Set the value of the regular expression that identifies the set of
@@ -409,13 +407,13 @@ class UVMResourceBase(UVMObject):
         before it is stored.
 
         Args:
-            s: 
+            s:
         """
         scope = uvm_glob_to_re(s)
         self.scope = scope
 
     def get_scope(self):
-        """         
+        """
         Function: get_scope
 
         Retrieve the regular expression string that identifies the set of
@@ -426,14 +424,14 @@ class UVMResourceBase(UVMObject):
         return self.scope
 
     def match_scope(self, s):
-        """         
+        """
         Function: match_scope
 
         Using the regular expression facility, determine if this resource
         is visible in a scope.  Return one if it is, zero otherwise.
 
         Args:
-            s: 
+            s:
         Returns:
         """
         err = uvm_re_match(self.scope, s)
@@ -480,7 +478,7 @@ class UVMResourceBase(UVMObject):
 
 
     def record_read_access(self, accessor=None):
-        """         
+        """
         #-------------------
         Group: Audit Trail
         #-------------------
@@ -518,7 +516,7 @@ class UVMResourceBase(UVMObject):
         function: record_read_access
         #function void record_read_access(uvm_object accessor = None)
         Args:
-            accessor: 
+            accessor:
         """
         _str = ""
         access_record = None  # uvm_resource_types::access_t access_record
@@ -550,11 +548,11 @@ class UVMResourceBase(UVMObject):
         self.access[_str] = access_record
 
     def record_write_access(self, accessor=None):
-        """         
+        """
         function: record_write_access
 
         Args:
-            accessor: 
+            accessor:
         """
         # If an accessor object is supplied then get the accessor record.
         # Otherwise create a new access record.  In either case populate
@@ -602,13 +600,13 @@ class UVMResourceBase(UVMObject):
     #endfunction
 
     def init_access_record(self, access_record):
-        """         
+        """
         Function: init_access_record
 
         Initialize a new access record
 
         Args:
-            access_record: 
+            access_record:
         """
         # inout uvm_resource_types::access_t access_record)
         access_record.read_time = 0
@@ -631,8 +629,6 @@ class UVMResource(UVMResourceBase):
         UVMResourceBase.__init__(self, name, scope)
         self.val = None   # Resource value
         self.m_r2s = None  # Res2string converter
-        self.modified = False
-        self.event_modified = Event(name + '_' + 'event_modified')
 
     def convert2string(self):
         if UVM_USE_RESOURCE_CONVERTER:
@@ -662,7 +658,7 @@ class UVMResource(UVMResourceBase):
             return UVMResource.my_type
 
     def get_type_handle(self):
-        """         
+        """
         Function: get_type_handle
 
         Returns the static type handle of this resource in a polymorphic
@@ -686,7 +682,7 @@ class UVMResource(UVMResourceBase):
     #// resource pool as this is done for him here.
 
     def set(self):
-        """         
+        """
         Function: set
 
         Simply put this resource into the global resource pool
@@ -696,7 +692,7 @@ class UVMResource(UVMResourceBase):
         pool.set(self)
 
     def set_override(self, override=NAME_OVERRIDE):
-        """         
+        """
         Function: set_override
 
         Put a resource into the global resource pool as an override.  This
@@ -706,15 +702,15 @@ class UVMResource(UVMResourceBase):
         type maps.  However, using the `override` argument you can specify
         that either the name map or type map is overridden.
         Args:
-            override: 
-            NAME_OVERRIDE: 
+            override:
+            NAME_OVERRIDE:
         """
         rp = UVMResourcePool.get()
         rp.set(self, override)
 
     @classmethod
     def get_by_name(cls, scope, name, rpterr=True):
-        """         
+        """
         Function: get_by_name
 
         looks up a resource by `name` in the name map. The first resource
@@ -726,10 +722,10 @@ class UVMResource(UVMResourceBase):
         on resource names that exist in the database, gathered by the spell
         checker.
         Args:
-            cls: 
-            scope: 
-            name: 
-            rpterr: 
+            cls:
+            scope:
+            name:
+            rpterr:
         Returns:
         """
         rp = UVMResourcePool.get()
@@ -794,7 +790,7 @@ class UVMResource(UVMResourceBase):
         return self.val
 
     def write(self, t, accessor=None):
-        """         
+        """
         Function: write
         Modify the object stored in this resource container.  If the
         resource is read-only then issue an error message and return
@@ -808,8 +804,8 @@ class UVMResource(UVMResourceBase):
         write is not done.  That also means that the accessor record is not
         updated and the modified bit is not set.
         Args:
-            t: 
-            accessor: 
+            t:
+            accessor:
         """
         if self.is_read_only():
             uvm_report_error("resource", sv.sformatf("resource %s is read only -- cannot modify",
@@ -848,7 +844,7 @@ class UVMResource(UVMResourceBase):
 
     @classmethod
     def get_highest_precedence(cls, q, T=None):
-        """         
+        """
         Function: get_highest_precedence
 
         In a queue of resources, locate the first one with the highest
@@ -856,9 +852,8 @@ class UVMResource(UVMResourceBase):
         be called from anywhere.
         #static function this_type get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
         Args:
-            cls: 
-            q: 
-            T: 
+            q:
+            T:
         Returns:
         """
         rsrc = None
@@ -875,7 +870,8 @@ class UVMResource(UVMResourceBase):
             first = i
             q_val = q[first]
             if T is not None:
-                if sv.cast(rsrc, q_val, T):
+                arr_rsrc = []
+                if sv.cast(arr_rsrc, q_val, T):
                     rsrc = q_val
                     break
             else:
@@ -893,7 +889,8 @@ class UVMResource(UVMResourceBase):
         # for(int i = first+1; i < q.size(); ++i):
         for i in range(first + 1, len(q)):
             if T is not None:
-                if sv.cast(r, q[i], T):
+                arr_r = []
+                if sv.cast(arr_r, q[i], T):
                     r = q[i]
                     if r.precedence > prec:
                         rsrc = r
@@ -978,7 +975,7 @@ class UVMResourcePool:
 
     @classmethod
     def get(cls):
-        """         
+        """
         Function: get
 
         Returns the singleton handle to the resource pool
@@ -989,14 +986,14 @@ class UVMResourcePool:
         return UVMResourcePool.rp
 
     def spell_check(self, s):
-        """         
+        """
         Function: spell_check
 
         Invokes the spell checker for a string s.  The universe of
         correctly spelled strings -- i.e. the dictionary -- is the name
         map.
         Args:
-            s: 
+            s:
         Returns:
         """
         return UVMSpellChkr.check(self.rtab, s)
@@ -1006,7 +1003,7 @@ class UVMResourcePool:
     #-----------
 
     def set(self, rsrc, override=False):
-        """         
+        """
         Function: set
 
         Add a new resource to the resource pool.  The resource is inserted
@@ -1026,8 +1023,8 @@ class UVMResourcePool:
         functions.
 
         Args:
-            rsrc: 
-            override: 
+            rsrc:
+            override:
         """
         rq = list()
         name = ""
@@ -1103,16 +1100,16 @@ class UVMResourcePool:
 
 
     def push_get_record(self, name, scope, rsrc):
-        """         
+        """
         function - push_get_record
 
         Insert a new record into the get history list.
         #function void push_get_record(string name, string scope,
                                        uvm_resource_base rsrc)
         Args:
-            name: 
-            scope: 
-            rsrc: 
+            name:
+            scope:
+            rsrc:
         """
         impt = None  # get_t impt
 
@@ -1173,7 +1170,7 @@ class UVMResourcePool:
 
 
     def lookup_name(self, scope, name, type_handle=None, rpterr=True):
-        """         
+        """
         Function: lookup_name
 
         Lookup resources by `name`.  Returns a queue of resources that
@@ -1184,10 +1181,10 @@ class UVMResourcePool:
         not made and resources are returned that match only `name` and
         `scope`.
         Args:
-            scope: 
-            name: 
-            type_handle: 
-            rpterr: 
+            scope:
+            name:
+            type_handle:
+            rpterr:
         Returns:
         """
         rq = list()
@@ -1224,7 +1221,7 @@ class UVMResourcePool:
         return q
 
     def get_highest_precedence(self, q):
-        """         
+        """
         Function: get_highest_precedence
 
         Traverse a queue, `q`, of resources and return the one with the highest
@@ -1234,7 +1231,7 @@ class UVMResourcePool:
 
         #function uvm_resource_base get_highest_precedence(ref uvm_resource_types::rsrc_q_t q)
         Args:
-            q: 
+            q:
         Returns:
         """
 
@@ -1262,7 +1259,7 @@ class UVMResourcePool:
 
     @classmethod
     def sort_by_precedence(cls, q):
-        """         
+        """
         Function: sort_by_precedence
 
         Given a list of resources, obtained for example from `lookup_scope`,
@@ -1272,8 +1269,8 @@ class UVMResourcePool:
         will be ordered by most recently set first.
         #static function queue sort_by_precedence(ref uvm_resource_types::rsrc_q_t q)
         Args:
-            cls: 
-            q: 
+            cls:
+            q:
         Returns:
         """
         #  uvm_resource_types::rsrc_q_t all[int]
@@ -1295,7 +1292,7 @@ class UVMResourcePool:
         #endfunction
 
     def get_by_name(self, scope, name, type_handle, rpterr=True):
-        """         
+        """
         Function: get_by_name
 
         Lookup a resource by `name`, `scope`, and `type_handle`.  Whether
@@ -1310,10 +1307,10 @@ class UVMResourcePool:
                                               uvm_resource_base type_handle,
                                               bit rpterr = 1)
         Args:
-            scope: 
-            name: 
-            type_handle: 
-            rpterr: 
+            scope:
+            name:
+            type_handle:
+            rpterr:
         Returns:
         """
         q = []  # uvm_resource_types::rsrc_q_t q
@@ -1385,7 +1382,7 @@ class UVMResourcePool:
 
 
     def lookup_regex_names(self, scope, name, type_handle=None):
-        """         
+        """
         Function: lookup_regex_names
 
         This utility function answers the question, for a given `name`,
@@ -1397,9 +1394,9 @@ class UVMResourcePool:
                                                                 string name,
                                                                 uvm_resource_base type_handle = None)
         Args:
-            scope: 
-            name: 
-            type_handle: 
+            scope:
+            name:
+            type_handle:
         Returns:
         """
         return self.lookup_name(scope, name, type_handle, 0)
@@ -1433,7 +1430,7 @@ class UVMResourcePool:
     #endfunction
 
     def lookup_scope(self, scope):
-        """         
+        """
         Function: lookup_scope
 
         This is a utility function that answers the question: For a given
@@ -1443,7 +1440,7 @@ class UVMResourcePool:
         database.
         #function uvm_resource_types::rsrc_q_t lookup_scope(string scope)
         Args:
-            scope: 
+            scope:
         Returns:
         """
         rq = None  # uvm_resource_types::rsrc_q_t rq
@@ -1488,14 +1485,14 @@ class UVMResourcePool:
     #// the front or back of the queue.
 
     def set_priority_queue(self, rsrc, q, pri):
-        """         
+        """
         #local function void set_priority_queue(uvm_resource_base rsrc,
                                               ref uvm_resource_types::rsrc_q_t q,
                                               uvm_resource_types::priority_e pri)
         Args:
-            rsrc: 
-            q: 
-            pri: 
+            rsrc:
+            q:
+            pri:
         """
         r = None  # uvm_resource_base
         i = 0
@@ -1561,12 +1558,12 @@ class UVMResourcePool:
     #// the name map, leaving the type map untouched.
 
     def set_priority_name(self, rsrc, pri):
-        """         
+        """
         #function void set_priority_name(uvm_resource_base rsrc,
                                        uvm_resource_types::priority_e pri)
         Args:
-            rsrc: 
-            pri: 
+            rsrc:
+            pri:
         """
         name = ""
         msg = ""
@@ -1641,7 +1638,7 @@ class UVMResourcePool:
     #// Function: print_resources
 
     def print_resources(self, rq, audit=False):
-        """         
+        """
 
         Print the resources that are in a single queue, `rq`.  This is a utility
         function that can be used to print any collection of resources
@@ -1650,8 +1647,8 @@ class UVMResourcePool:
         value, and scope regular expression.
         #function void print_resources(uvm_resource_types::rsrc_q_t rq, bit audit = 0)
         Args:
-            rq: 
-            audit: 
+            rq:
+            audit:
         """
         i = 0
         r = None  # uvm_resource_base r

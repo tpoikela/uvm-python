@@ -39,7 +39,7 @@ from ..base.uvm_object_globals import (UVM_FINISHED, UVM_FULL, UVM_NONE,
 from ..base.uvm_pool import UVMPool
 from ..base.uvm_queue import UVMQueue
 from ..base.uvm_globals import uvm_wait_for_nba_region, uvm_empty_delay
-from uvm.base.sv import wait
+from ..base.sv import wait
 from typing import List
 
 
@@ -1143,7 +1143,8 @@ class UVMSequencerBase(UVMComponent):
         # The other path in the fork is for any queue entry to change
         forked_proc2 = self.m_wait_arb_not_equal()
         started_forks.append(forked_proc2)
-        await started_forks  # join_any
+        ## await started_forks  # join_any
+        await sv.fork_join_any(started_forks)
         # disable fork
         for p in started_forks:
             p.kill()

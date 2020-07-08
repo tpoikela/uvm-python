@@ -1,4 +1,6 @@
 
+from typing import Union
+
 from .uvm_object import UVMObject
 from .uvm_globals import uvm_report_warning
 
@@ -91,7 +93,7 @@ class UVMQueue(UVMObject):
             raise Exception("UVMQueue set index {} ouf of bounds (size: {})".format(
                 i, self.size()))
 
-    def __getitem__(self, i: int):
+    def __getitem__(self, i: Union[int, slice]):
         """
         Implements aa[x]
         Args:
@@ -99,7 +101,12 @@ class UVMQueue(UVMObject):
         Returns:
         Raises:
         """
-        if i < self.size():
+        if isinstance(i, slice):
+            res = []
+            for i in range(slice.start, slice.stop):
+                res.append(self.queue[i])
+            return res
+        elif i < self.size():
             return self.queue[i]
         else:
             raise IndexError("UVMQueue get index {} ouf of bounds (size: {})".format(
