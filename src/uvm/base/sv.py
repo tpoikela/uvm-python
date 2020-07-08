@@ -306,6 +306,23 @@ class sv:
         return res
 
 
+    @classmethod
+    def set_bit(cls, int_val: int, idx: int, bit_val=1) -> int:
+        if bit_val == 1:
+            return int_val | (1 << idx)
+        if bit_val == 0:
+            return cls.clear_bit(int_val, idx)
+        raise ValueError("bit_val must be 0/1. Got: " + str(bit_val))
+
+    @classmethod
+    def get_bit(cls, int_val: int, idx: int) -> int:
+        return (int_val >> idx) & 0x1
+
+    @classmethod
+    def clear_bit(cls, int_val: int, idx: int) -> int:
+        return int_val & ~(1 << idx)
+
+
 random.seed(0)
 
 SV_MAX_INT_VALUE = (1 << 31) - 1

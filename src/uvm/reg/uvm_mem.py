@@ -375,7 +375,7 @@ class UVMMem(UVMObject):
             return "RW"
 
         _map = self.get_local_map(_map,"get_rights()")
-        if map is None:
+        if _map is None:
             return "RW"
 
         info = _map.get_mem_map_info(self)
@@ -403,7 +403,7 @@ class UVMMem(UVMObject):
         if (self.get_n_maps() == 1):
             return get_access
         _map = self.get_local_map(_map, "get_access()")
-        if (map is None):
+        if _map is None:
             return get_access
 
         # // Is the memory restricted in this map?

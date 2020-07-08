@@ -213,6 +213,7 @@ class UVMPortBase():
         self.m_provided_by = {}
         self.m_provided_to = {}
         self.m_if = None
+        self.m_imp = None
         #if (!uvm_config_int::get(m_comp, "", "check_connection_relationships",tmp))
         #   self.m_comp.set_report_id_action(s_connection_warning_id, UVM_NO_ACTION)
 

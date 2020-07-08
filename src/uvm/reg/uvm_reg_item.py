@@ -72,10 +72,10 @@ class UVMRegItem(UVMSequenceItem):
 
     #  // Variable: local_map
     #  //
-    #  // The local map used to obtain addresses. Users may customize 
+    #  // The local map used to obtain addresses. Users may customize
     #  // address-translation using this map. Access to the sequencer
     #  // and bus adapter can be obtained by getting this map's root map,
-    #  // then calling <uvm_reg_map::get_sequencer> and 
+    #  // then calling <uvm_reg_map::get_sequencer> and
     #  // <uvm_reg_map::get_adapter>.
     #  //
     #  uvm_reg_map local_map
@@ -104,7 +104,7 @@ class UVMRegItem(UVMSequenceItem):
 
     #  // Variable: bd_kind
     #  //
-    #  // If path is UVM_BACKDOOR, this member specifies the abstraction 
+    #  // If path is UVM_BACKDOOR, this member specifies the abstraction
     #  // kind for the backdoor access, e.g. "RTL" or "GATES".
     #  //
     #  string bd_kind
@@ -118,19 +118,19 @@ class UVMRegItem(UVMSequenceItem):
 
     #  // Variable: lineno
     #  //
-    #  // The file name from where this transaction originated, if provided 
+    #  // The file name from where this transaction originated, if provided
     #  // at the call site.
     #  //
     #  int lineno
 
     def __init__(self, name=""):
-        """         
+        """
           Function: new
-         
+
           Create a new instance of this type, giving it the optional `name`.
-         
+
         Args:
-            name: 
+            name:
         """
         UVMSequenceItem.__init__(self, name)
         #  // Variable: value
@@ -181,11 +181,11 @@ class UVMRegItem(UVMSequenceItem):
         self.local_map = None
 
     def convert2string(self):
-        """         
+        """
           Function: convert2string
-         
+
           Returns a string showing the contents of this transaction.
-         
+
         Returns:
         """
         value_s = ""
@@ -196,12 +196,12 @@ class UVMRegItem(UVMSequenceItem):
         s = ("kind=" + kind_str +
              " ele_kind=" + str(self.element_kind) +
              " ele_name=" + ele_name)
-        
+
         if (len(self.value) > 1 and uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
             value_s = "'{"
             for i in range(len(self.value)):
                 value_s = value_s + sv.sformatf("%0h,", self.value[i])
-            value_s[len(value_s)-1] = "}"
+            value_s = value_s[:-1] + "}"
         else:
             value_s = sv.sformatf("%0h", self.value[0])
         s = s + " value=" + value_s
@@ -226,7 +226,7 @@ class UVMRegItem(UVMSequenceItem):
     #  virtual function void do_copy(uvm_object rhs)
     #    uvm_reg_item rhs_
     #    if (rhs == null)
-    #     `uvm_fatal("REG/NULL","do_copy: rhs argument is null") 
+    #     `uvm_fatal("REG/NULL","do_copy: rhs argument is null")
     #
     #    if (!$cast(rhs_,rhs)):
     #      `uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item")
@@ -261,8 +261,8 @@ uvm_object_utils(UVMRegItem)
 #// ~kind~ (read or write), ~address~, ~data~, and ~byte enable~ information.
 #// If the bus is narrower than the register or memory location being accessed,
 #// there will be multiple of these bus operations for every abstract
-#// <uvm_reg_item> transaction. In this case, ~data~ represents the portion 
-#// of <uvm_reg_item::value> being transferred during this bus cycle. 
+#// <uvm_reg_item> transaction. In this case, ~data~ represents the portion
+#// of <uvm_reg_item::value> being transferred during this bus cycle.
 #// If the bus is wide enough to perform the register or memory operation in
 #// a single cycle, ~data~ will be the same as <uvm_reg_item::value>.
 #//------------------------------------------------------------------------------
@@ -292,7 +292,7 @@ class UVMRegBusOp():
     #  //
     #  uvm_reg_data_t data
     #
-    #   
+    #
     #  // Variable: n_bits
     #  //
     #  // The number of bits of <uvm_reg_item::value> being transferred by
@@ -327,7 +327,7 @@ class UVMRegBusOp():
     #} uvm_reg_bus_op
 
     def __init__(self):
-        """         
+        """
         Constructor
         """
         self.kind = UVM_READ

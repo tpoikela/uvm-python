@@ -40,7 +40,7 @@ from ..base.uvm_pool import UVMPool
 from ..base.uvm_queue import UVMQueue
 from ..base.uvm_globals import uvm_wait_for_nba_region, uvm_empty_delay
 from ..base.sv import wait
-from typing import List
+from typing import List, cast
 
 
 SEQ_ERR1_MSG = ("The task responsible for requesting a lock on sequencer '%s' "
@@ -87,6 +87,8 @@ SEQ_TYPE_REQ = 0
 SEQ_TYPE_LOCK = 1
 SEQ_TYPE_GRAB = 2
 
+SeqReqQueue = UVMQueue['uvm_sequence_request']
+SeqReqList = List['uvm_sequence_request']
 
 class UVMSequencerBase(UVMComponent):
     """
@@ -116,8 +118,8 @@ class UVMSequencerBase(UVMComponent):
         self.m_default_sequences = UVMPool()  # uvm_sequence_process_wrapper[uvm_phase]
 
         # queue of sequences waiting for arbitration
-        self.arb_sequence_q = UVMQueue()  # uvm_sequence_request [$]
-        self.lock_list = UVMQueue()  # uvm_sequence_base lock_list[$]
+        self.arb_sequence_q = SeqReqQueue()  # uvm_sequence_request [$]
+        self.lock_list = UVMQueue[UVMSequenceBase]()  # uvm_sequence_base lock_list[$]
 
         self.m_arbitration = UVM_SEQ_ARB_FIFO  # uvm_sequencer_arb_mode
         self.m_lock_arb_size = 0  # used for waiting processes
@@ -139,7 +141,7 @@ class UVMSequencerBase(UVMComponent):
         self.m_max_zero_time_wait_relevant_count = 10
         self.m_last_wait_relevant_time = 0
 
-    def is_child(self, parent, child):
+    def is_child(self, parent: UVMSequenceBase, child: UVMSequenceBase):
         """
         Returns 1 if the child sequence is a child of the parent sequence,
         0 otherwise.
@@ -497,9 +499,9 @@ class UVMSequencerBase(UVMComponent):
                            "self.is_blocked passed None sequence_ptr", UVM_NONE)
 
         for i in range(len(self.lock_list)):
-            if ((self.lock_list[i].get_inst_id() !=
+            if ((self.lock_list.get(i).get_inst_id() !=
                  sequence_ptr.get_inst_id()) and
-                 (self.is_child(self.lock_list[i], sequence_ptr) == 0)):
+                 (self.is_child(self.lock_list.get(i), sequence_ptr) == 0)):
                 return 1
         return 0
 
@@ -696,12 +698,12 @@ class UVMSequencerBase(UVMComponent):
                 #    [process::KILLED, process::FINISHED])
         for idx in range(len(q)):
             uvm_error("SEQLCKZMB", sv.sformatf(SEQ_ERR1_MSG, self.get_full_name(),
-                q[idx].sequence_ptr.get_full_name()))
-            self.remove_sequence_from_queues(q[idx].sequence_ptr)
+                q.get(idx).sequence_ptr.get_full_name()))
+            self.remove_sequence_from_queues(q.get(idx).sequence_ptr)
 
         # now move all self.is_blocked() into self.lock_list
         # uvm_sequence_request leading_lock_reqs[$],blocked_seqs[$],not_blocked_seqs[$];
-        leading_lock_reqs = UVMQueue()
+        # leading_lock_reqs = UVMQueue()
         blocked_seqs = UVMQueue()
         not_blocked_seqs = UVMQueue()
 
@@ -715,7 +717,7 @@ class UVMSequencerBase(UVMComponent):
 
         if b != 0:  # at least one lock
             # set of locks; arb_sequence[b] is the first req!=SEQ_TYPE_LOCK
-            leading_lock_reqs = self.arb_sequence_q[0:b-1]
+            leading_lock_reqs = cast(SeqReqList, self.arb_sequence_q[0:b-1])
             # split into blocked/not-blocked requests
             for i in range(len(leading_lock_reqs)):
                 item: uvm_sequence_request = leading_lock_reqs[i]
@@ -727,12 +729,14 @@ class UVMSequencerBase(UVMComponent):
             if b > (self.arb_sequence_q.size()-1):
                 self.arb_sequence_q = blocked_seqs
             else:
-                blocked_seqs.push_back(self.arb_sequence_q[b:self.arb_sequence_q.size()-1])
+                bseqs = cast(SeqReqList, self.arb_sequence_q[b:self.arb_sequence_q.size()-1])
+                for seq in bseqs:
+                    blocked_seqs.push_back(seq)
                 self.arb_sequence_q = blocked_seqs
 
             for idx in range(len(not_blocked_seqs)):
-                self.lock_list.push_back(not_blocked_seqs[idx].sequence_ptr)
-                self.m_set_arbitration_completed(not_blocked_seqs[idx].request_id)
+                self.lock_list.push_back(not_blocked_seqs.get(idx).sequence_ptr)
+                self.m_set_arbitration_completed(not_blocked_seqs.get(idx).request_id)
 
             # trigger listeners if lock list has changed
             if(not_blocked_seqs.size()):
@@ -756,7 +760,7 @@ class UVMSequencerBase(UVMComponent):
 
         # issue grant
         if selected_sequence >= 0:
-            self.m_set_arbitration_completed(self.arb_sequence_q[selected_sequence].request_id)
+            self.m_set_arbitration_completed(self.arb_sequence_q.get(selected_sequence).request_id)
             self.arb_sequence_q.delete(selected_sequence)
             self.m_update_lists()
 
@@ -775,25 +779,25 @@ class UVMSequencerBase(UVMComponent):
         temp = 0
         avail_sequence_count: int = 0  # int avail_sequence_count
         sum_priority_val: int = 0  # int sum_priority_val
-        avail_sequences: UVMQueue = UVMQueue()  # integer [$]
-        highest_sequences:UVMQueue = UVMQueue()  # integer [$]
-        highest_pri: int = 0  # int highest_pri
-        s: str = ""  # string s
+        avail_sequences: UVMQueue[int] = UVMQueue()  # integer [$]
+        highest_sequences: UVMQueue[int] = UVMQueue()  # integer [$]
+        highest_pri: int = 0 
+        s: str = ""
 
         self.grant_queued_locks()
         i = 0
         while i < self.arb_sequence_q.size():
-            if ((self.arb_sequence_q[i].process_id.status == process.KILLED) or
-                    (self.arb_sequence_q[i].process_id.status == process.FINISHED)):
+            if ((self.arb_sequence_q.get(i).process_id.status == process.KILLED) or
+                    (self.arb_sequence_q.get(i).process_id.status == process.FINISHED)):
                 uvm_error("SEQREQZMB", sv.sformatf(SEQ_ERR2_MSG, self.get_full_name(),
-                   self.arb_sequence_q[i].sequence_ptr.get_full_name()))
-                self.remove_sequence_from_queues(self.arb_sequence_q[i].sequence_ptr)
+                   self.arb_sequence_q.get(i).sequence_ptr.get_full_name()))
+                self.remove_sequence_from_queues(self.arb_sequence_q.get(i).sequence_ptr)
                 continue
 
             if i < self.arb_sequence_q.size():
-                if self.arb_sequence_q[i].request == SEQ_TYPE_REQ:
-                    if (self.is_blocked(self.arb_sequence_q[i].sequence_ptr) == 0):
-                        if self.arb_sequence_q[i].sequence_ptr.is_relevant() == 1:
+                if self.arb_sequence_q.get(i).request == SEQ_TYPE_REQ:
+                    if (self.is_blocked(self.arb_sequence_q.get(i).sequence_ptr) == 0):
+                        if self.arb_sequence_q.get(i).sequence_ptr.is_relevant() == 1:
                             if (self.m_arbitration == UVM_SEQ_ARB_FIFO):
                                 return i
                             else:
@@ -807,19 +811,20 @@ class UVMSequencerBase(UVMComponent):
             return -1
 
         if avail_sequences.size() == 1:
-            return avail_sequences[0]
+            return cast(int, avail_sequences[0])
 
         # If any locks are in place, then the available queue must
         # be checked to see if a lock prevents any sequence from proceeding
         if self.lock_list.size() > 0:
             for i in range(len(avail_sequences)):
-                if self.is_blocked(self.arb_sequence_q[avail_sequences[i]].sequence_ptr) != 0:
+                idx = avail_sequences.get(i)
+                if self.is_blocked(self.arb_sequence_q.get(idx).sequence_ptr) != 0:
                     avail_sequences.delete(i)
                     i -= 1
             if (avail_sequences.size() < 1):
                 return -1
             if (avail_sequences.size() == 1):
-                return avail_sequences[0]
+                return cast(int, avail_sequences[0])
 
         # TODO finish this function
         #  //  Weighted Priority Distribution
@@ -847,7 +852,7 @@ class UVMSequencerBase(UVMComponent):
         # Random Distribution
         if self.m_arbitration == UVM_SEQ_ARB_RANDOM:
             i = sv.urandom_range(0, avail_sequences.size()-1)
-            return avail_sequences[i]
+            return cast(int, avail_sequences[i])
 
 
         #  //  Strict Fifo
@@ -944,11 +949,11 @@ class UVMSequencerBase(UVMComponent):
         # Remove all queued items for this sequence and any child sequences
         while (True):
             if (self.arb_sequence_q.size() > i):
-                if ((self.arb_sequence_q[i].sequence_id == seq_id) or
-                      (self.is_child(sequence_ptr, self.arb_sequence_q[i].sequence_ptr))):
+                if ((self.arb_sequence_q.get(i).sequence_id == seq_id) or
+                      (self.is_child(sequence_ptr, self.arb_sequence_q.get(i).sequence_ptr))):
                     if (sequence_ptr.get_sequence_state() == UVM_FINISHED):
                         uvm_error("SEQFINERR", sv.sformatf(SEQ_ERR3_MSG, sequence_ptr.get_full_name(),
-                            self.arb_sequence_q[i].sequence_ptr.get_full_name()))
+                            self.arb_sequence_q.get(i).sequence_ptr.get_full_name()))
                     self.arb_sequence_q.delete(i)
                     self.m_update_lists()
                 else:
@@ -960,11 +965,11 @@ class UVMSequencerBase(UVMComponent):
         i = 0
         while (True):
             if self.lock_list.size() > i:
-                if ((self.lock_list[i].get_inst_id() == sequence_ptr.get_inst_id()) or
-                        (self.is_child(sequence_ptr, self.lock_list[i]))):
+                if ((self.lock_list.get(i).get_inst_id() == sequence_ptr.get_inst_id()) or
+                        (self.is_child(sequence_ptr, self.lock_list.get(i)))):
                     if (sequence_ptr.get_sequence_state() == UVM_FINISHED):
                         uvm_error("SEQFINERR", sv.sformatf(SEQ_ERR4_MSG,sequence_ptr.get_full_name(),
-                            self.lock_list[i].get_full_name()))
+                            self.lock_list.get(i).get_full_name()))
                     self.lock_list.delete(i)
                     self.m_update_lists()
                 else:
@@ -1101,9 +1106,9 @@ class UVMSequencerBase(UVMComponent):
         self.set_value('m_arb_size', self.m_lock_arb_size)
 
         for i in range(len(self.arb_sequence_q)):
-            if (self.arb_sequence_q[i].request == SEQ_TYPE_REQ):
-                if (self.is_blocked(self.arb_sequence_q[i].sequence_ptr) == 0):
-                    if (self.arb_sequence_q[i].sequence_ptr.is_relevant() == 0):
+            if (self.arb_sequence_q.get(i).request == SEQ_TYPE_REQ):
+                if (self.is_blocked(self.arb_sequence_q.get(i).sequence_ptr) == 0):
+                    if (self.arb_sequence_q.get(i).sequence_ptr.is_relevant() == 0):
                         is_relevant_entries.append(i)
 
         # Typical path - don't need fork if all queued entries are relevant
@@ -1117,14 +1122,21 @@ class UVMSequencerBase(UVMComponent):
         #join
 
 
-    async def _rel_entry_fork_proc(self, i, is_relevant_entries):
+    async def _rel_entry_fork_proc(self, i: int, is_relevant_entries: List[int]):
         """
         Args:
             i:
             is_relevant_entries:
         """
         k = i
-        await self.arb_sequence_q[is_relevant_entries[k]].sequence_ptr.wait_for_relevant()
+        idx = is_relevant_entries[k]
+        seq_req: uvm_sequence_request = self.arb_sequence_q.get(idx)
+        if seq_req is not None and seq_req.sequence_ptr is not None:
+            await seq_req.sequence_ptr.wait_for_relevant()
+        else:
+            uvm_fatal("SEQREQISNONE",
+                sv.sformatf("seq_req[%d] is None or seq_ptr is None", idx))
+
         if sv.realtime() != self.m_last_wait_relevant_time:
             self.m_last_wait_relevant_time = sv.realtime()
             self.m_wait_relevant_count = 0
@@ -1147,7 +1159,7 @@ class UVMSequencerBase(UVMComponent):
         await sv.fork_join_any(started_forks)
         # disable fork
         for p in started_forks:
-            p.kill()
+            p.kill()  # type: ignore
 
 
     async def _fork_first_proc_sub_fork1(self, is_relevant_entries):
@@ -1193,9 +1205,9 @@ class UVMSequencerBase(UVMComponent):
 #function void uvm_sequencer_base::do_print (uvm_printer printer)
 #  super.do_print(printer)
 #  printer.print_array_header("arbitration_queue", self.arb_sequence_q.size())
-#  foreach (self.arb_sequence_q[i])
+#  foreach (self.arb_sequence_q.get(i))
 #    printer.print_string($sformatf("[%0d]", i),
-#       $sformatf("%s@seqid%0d",self.arb_sequence_q[i].request.name(),self.arb_sequence_q[i].sequence_id), "[")
+#       $sformatf("%s@seqid%0d",self.arb_sequence_q.get(i).request.name(),self.arb_sequence_q.get(i).sequence_id), "[")
 #  printer.print_array_footer(self.arb_sequence_q.size())
 #
 #  printer.print_array_header("lock_queue", self.lock_list.size())
@@ -1213,8 +1225,8 @@ class UVMSequencerBase(UVMComponent):
 #  string s
 #
 #  $sformat(s, "  -- arb i/id/type: ")
-#  foreach (self.arb_sequence_q[i]):
-#    $sformat(s, "%s %0d/%0d/%s ", s, i, self.arb_sequence_q[i].sequence_id, self.arb_sequence_q[i].request.name())
+#  foreach (self.arb_sequence_q.get(i)):
+#    $sformat(s, "%s %0d/%0d/%s ", s, i, self.arb_sequence_q.get(i).sequence_id, self.arb_sequence_q.get(i).request.name())
 #  end
 #  $sformat(s, "%s\n -- self.lock_list i/id: ", s)
 #  foreach (self.lock_list[i]):
@@ -1433,9 +1445,9 @@ class UVMSequencerBase(UVMComponent):
 #
 #function bit uvm_sequencer_base::has_do_available()
 #
-#  foreach (self.arb_sequence_q[i]):
-#    if ((self.arb_sequence_q[i].sequence_ptr.is_relevant() == 1) &&
-#        (self.is_blocked(self.arb_sequence_q[i].sequence_ptr) == 0)):
+#  foreach (self.arb_sequence_q.get(i)):
+#    if ((self.arb_sequence_q.get(i).sequence_ptr.is_relevant() == 1) &&
+#        (self.is_blocked(self.arb_sequence_q.get(i).sequence_ptr) == 0)):
 #      return 1
 #    end
 #  end
@@ -1467,5 +1479,5 @@ class uvm_sequence_request:
         #  process    process_id
         self.process_id = process()
         self.request = None  # uvm_sequencer_base::seq_req_t
-        self.sequence_ptr = None  # uvm_sequence_base
+        self.sequence_ptr: UVMSequenceBase = None  # uvm_sequence_base
         #endclass

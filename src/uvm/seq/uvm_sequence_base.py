@@ -20,11 +20,12 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+from typing import Dict
+
 import cocotb
-from cocotb.triggers import Timer, Event
+from cocotb.triggers import Event
 
 from ..base.sv import sv
-from ..base.uvm_event import UVMEvent
 from ..base.uvm_queue import UVMQueue
 from .uvm_sequence_item import UVMSequenceItem
 from ..base.uvm_object_globals import *
@@ -36,6 +37,8 @@ from ..base.uvm_recorder import UVMRecorder
 from uvm.base.sv import wait
 
 SEQ_ERR1_MSG = "neither the item's sequencer nor dedicated sequencer has been supplied to start item in "
+
+SeqItemQueue = UVMQueue[UVMSequenceItem]
 
 #//------------------------------------------------------------------------------
 #//
@@ -185,7 +188,7 @@ class UVMSequenceBase(UVMSequenceItem):
         # sequencers, each sequence_id is managed separately
         self.m_sqr_seq_ids = UVMPool()
         self.children_array = {}  # bit[uvm_sequence_base]
-        self.response_queue = UVMQueue()
+        self.response_queue = SeqItemQueue()
         self.response_queue_depth = 8
         self.response_queue_error_report_disabled = False
         #  bits to detect if is_relevant()/wait_for_relevant() are implemented
@@ -196,10 +199,10 @@ class UVMSequenceBase(UVMSequenceItem):
         #self.m_resp_queue_event = UVMEvent("resp_queue_event")
         self.m_resp_queue_event = Event("resp_queue_event")
         self.m_resp_queue_event.clear()
-        self.m_events = {}
+        self.m_events: Dict[int, Event] = {}
         self.m_events[UVM_FINISHED] = Event("UVM_FINISHED")
 
-    def is_item(self):
+    def is_item(self) -> bool:
         """
           Function: is_item
 
@@ -292,7 +295,7 @@ class UVMSequenceBase(UVMSequenceItem):
           `post_body` tasks will be called before and after the sequence
           `body` is called.
 
-         virtual task start (uvm_sequencer_base sequencer,
+         async def start(self, uvm_sequencer_base sequencer,
                              uvm_sequence_base parent_sequence = None,
                              int this_priority = -1,
                              bit call_pre_post = 1)
@@ -1255,7 +1258,7 @@ class UVMSequenceBase(UVMSequenceItem):
         """
         self.put_base_response(response_item)
 
-    async def get_base_response(self, response, transaction_id=-1):
+    async def get_base_response(self, response: SeqItemQueue, transaction_id=-1):
         """
           Function- get_base_response
          virtual task get_base_response(output uvm_sequence_item response, input int transaction_id = -1)
@@ -1278,8 +1281,9 @@ class UVMSequenceBase(UVMSequenceItem):
         while True:
             queue_size = self.response_queue.size()
             for i in range(queue_size):
-                if (self.response_queue[i].get_transaction_id() == transaction_id):
-                    response.append(self.response_queue[i])
+                seq_item = self.response_queue.get(i)
+                if (seq_item.get_transaction_id() == transaction_id):
+                    response.append(seq_item)
                     self.response_queue.delete(i)
                     self.m_resp_queue_event.set()
                     return

@@ -43,30 +43,32 @@ from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_B_TRANSPORT_IMP,\
 class UVMTLMBTransportExport(UVMPortBase):
     pass
 
-UVM_EXPORT_COMMON(UVMTLMBTransportExport, UVM_TLM_B_MASK, "uvm_tlm_b_transport_export")
+UVMTLMBTransportExport = UVM_EXPORT_COMMON(UVMTLMBTransportExport, UVM_TLM_B_MASK, "uvm_tlm_b_transport_export")
 UVM_TLM_B_TRANSPORT_IMP('m_if', UVMTLMBTransportExport)
 
 
 
 #// Class: uvm_tlm_nb_transport_fw_export
 #//
-#// Non-blocking forward transport export class 
+#// Non-blocking forward transport export class
 
-class UVMTLMNbTransportFwExport(UVMPortBase): 
+class UVMTLMNbTransportFwExport(UVMPortBase):
     pass
 
-UVM_EXPORT_COMMON(UVMTLMNbTransportFwExport, UVM_TLM_NB_FW_MASK, "uvm_tlm_nb_transport_fw_export")
+UVMTLMNbTransportFwExport = UVM_EXPORT_COMMON(UVMTLMNbTransportFwExport, UVM_TLM_NB_FW_MASK,
+        "uvm_tlm_nb_transport_fw_export")
 UVM_TLM_NB_TRANSPORT_FW_IMP('m_if', UVMTLMNbTransportFwExport)
 
 
 
 #// Class: uvm_tlm_nb_transport_bw_export
 #//
-#// Non-blocking backward transport export class 
+#// Non-blocking backward transport export class
 
-class UVMTLMNbTransportBwExport(UVMPortBase): 
+class UVMTLMNbTransportBwExport(UVMPortBase):
     pass
 
-UVM_EXPORT_COMMON(UVMTLMNbTransportBwExport, UVM_TLM_NB_BW_MASK, "uvm_tlm_nb_transport_bw_export")
+UVMTLMNbTransportBwExport = UVM_EXPORT_COMMON(UVMTLMNbTransportBwExport, UVM_TLM_NB_BW_MASK,
+        "uvm_tlm_nb_transport_bw_export")
 UVM_TLM_NB_TRANSPORT_BW_IMP('m_if', UVMTLMNbTransportBwExport)
 

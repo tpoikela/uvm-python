@@ -262,16 +262,16 @@ class UVMTLMBPassthroughInitiatorSocket(UVMTLMBPassthroughInitiatorSocketBase):
     #//
     #// Connect this socket to the specified <uvm_tlm_b_target_socket>
     def connect(self, provider):
-        valid_providers=(UVMTLMBPassthroughInitiatorSocketBase,
+        valid_providers = (UVMTLMBPassthroughInitiatorSocketBase,
             UVMTLMBPassthroughTargetSocketBase, UVMTLMBTargetSocketBase)
 
-        super.connect(provider);
+        super().connect(provider)
 
         if not isinstance(provider, valid_providers):
             # TODO:
-#            uvm_error_context(get_type_name(),
-#                "type mismatch in connect -- connection cannot be completed",
-#                self.get_comp())
+            # uvm_error_context(get_type_name(),
+            #    "type mismatch in connect -- connection cannot be completed",
+            #    self.get_comp())
             pass
 
 #//----------------------------------------------------------------------
@@ -288,16 +288,16 @@ class UVMTLMBPassthroughTargetSocket(UVMTLMBPassthroughTargetSocketBase):
     #//
     #// Connect this socket to the specified <uvm_tlm_b_initiator_socket>
     def connect(self, provider):
-        valid_providers=(UVMTLMBPassthroughTargetSocketBase,
+        valid_providers = (UVMTLMBPassthroughTargetSocketBase,
             UVMTLMBTargetSocketBase)
 
         super().connect(provider)
 
         if not isinstance(provider, valid_providers):
             # TODO:
-#            uvm_error_context(self.get_type_name(),
-#               "type mismatch in connect -- connection cannot be completed",
-#               self.get_comp())
+            # uvm_error_context(self.get_type_name(),
+            #    "type mismatch in connect -- connection cannot be completed",
+            #    self.get_comp())
             pass
 
 
@@ -317,16 +317,16 @@ class UVMTLMNbPassthroughInitiatorSocket(UVMTLMNbPassthroughInitiatorSocketBase)
     #//
     #// Connect this socket to the specified <uvm_tlm_nb_target_socket>
     def connect(self, provider):
-        valid_providers=(UVMTLMNbPassthroughInitiatorSocketBase,
+        valid_providers = (UVMTLMNbPassthroughInitiatorSocketBase,
             UVMTLMNbPassthroughTargetSocketBase, UVMTLMNbTargetSocketBase)
 
         super().connect(provider)
 
         if not isinstance(provider, valid_providers):
             # TODO:
-#             uvm_error_context(self.get_type_name(),
-#                 "type mismatch in connect -- connection cannot be completed",
-#                 self.get_comp())
+            # uvm_error_context(self.get_type_name(),
+            #     "type mismatch in connect -- connection cannot be completed",
+            #     self.get_comp())
             pass
 
 #//----------------------------------------------------------------------
@@ -344,17 +344,14 @@ class UVMTLMNbPassthroughTargetSocket(UVMTLMNbPassthroughTargetSocketBase):
     #//
     #// Connect this socket to the specified <uvm_tlm_nb_initiator_socket>
     def connect(self, provider):
-        valid_providers=(UVMTLMNbPassthroughTargetSocketBase,
+        valid_providers = (UVMTLMNbPassthroughTargetSocketBase,
             UVMTLMNbTargetSocketBase)
 
         super().connect(provider)
 
         if not isinstance(provider, valid_providers):
             # TODO:
-#             uvm_error_context(self.get_type_name(),
-#                 "type mismatch in connect -- connection cannot be completed",
-#                 self.get_comp())
+            # uvm_error_context(self.get_type_name(),
+            #     "type mismatch in connect -- connection cannot be completed",
+            #     self.get_comp())
             pass
-
-#
-#//----------------------------------------------------------------------

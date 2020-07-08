@@ -1,36 +1,40 @@
 
-from typing import Union
+from typing import Union, Generic, TypeVar, List, Optional, Any
 
 from .uvm_object import UVMObject
 from .uvm_globals import uvm_report_warning
 
+T = TypeVar('T')
 
-class UVMQueue(UVMObject):
+
+class UVMQueue(UVMObject, Generic[T]):
 
     type_name = "uvm_queue"
     m_global_queue: 'UVMQueue' = None
 
     def __init__(self, name=""):
         UVMObject.__init__(self, name)
-        self.queue = list()
+        self.queue: List[T] = list()
 
     @classmethod
     def get_global_queue(cls) -> 'UVMQueue':
         """
         Function: get_global_queue
 
-        Returns the singleton global queue for the item type, T.
+        Returns the singleton global queue.
 
         This allows items to be shared amongst components throughout the
         verification environment.
+
         Returns:
+            UVMQueue: The global singleton queue
         """
         if UVMQueue.m_global_queue is None:
             UVMQueue.m_global_queue = UVMQueue("global_queue")
         return UVMQueue.m_global_queue
 
     @classmethod
-    def get_global(cls, index):
+    def get_global(cls, index) -> Any:
         """
         Function: get_global
 
@@ -43,7 +47,7 @@ class UVMQueue(UVMObject):
         gqueue = UVMQueue.get_global_queue()
         return gqueue.get(index)
 
-    def get(self, index: int):
+    def get(self, index: int) -> T:
         """
         Function: get
 
@@ -93,7 +97,8 @@ class UVMQueue(UVMObject):
             raise Exception("UVMQueue set index {} ouf of bounds (size: {})".format(
                 i, self.size()))
 
-    def __getitem__(self, i: Union[int, slice]):
+
+    def __getitem__(self, i: Union[int, slice]) -> Union[T, List[T]]:
         """
         Implements aa[x]
         Args:
@@ -102,6 +107,7 @@ class UVMQueue(UVMObject):
         Raises:
         """
         if isinstance(i, slice):
+            # TODO should handle slices like [:] and [:-1]
             res = []
             for i in range(slice.start, slice.stop):
                 res.append(self.queue[i])
@@ -112,7 +118,7 @@ class UVMQueue(UVMObject):
             raise IndexError("UVMQueue get index {} ouf of bounds (size: {})".format(
                 i, self.size()))
 
-    def insert(self, index: int, item):
+    def insert(self, index: int, item: T) -> None:
         """
         Function: insert
 
@@ -126,9 +132,9 @@ class UVMQueue(UVMObject):
                 "insert: given index {} out of range for queue of size {}. Ignoring insert request"
                 .format(index, self.size()))
             return
-        self.queue.insert(index,item)
+        self.queue.insert(index, item)
 
-    def delete(self, index=-1):
+    def delete(self, index=-1) -> None:
         """
         Function: delete
 
@@ -147,7 +153,7 @@ class UVMQueue(UVMObject):
         else:
             self.queue.pop(index)
 
-    def pop_front(self):
+    def pop_front(self) -> T:
         """
         Function: pop_front
 
@@ -163,17 +169,17 @@ class UVMQueue(UVMObject):
         else:
             raise Exception('pop_front() called on empty queue')
 
-    def front(self):
+    def front(self) -> Optional[T]:
         if self.size() > 0:
             return self.queue[0]
         return None
 
-    def back(self):
+    def back(self) -> Optional[T]:
         if self.size() > 0:
             return self.queue[len(self.queue) - 1]
         return None
 
-    def pop_back(self):
+    def pop_back(self) -> Optional[T]:
         """
         Function: pop_back
 
@@ -183,7 +189,7 @@ class UVMQueue(UVMObject):
         """
         return self.queue.pop()
 
-    def push_front(self, item):
+    def push_front(self, item: T) -> None:
         """
         Function: push_front
 
@@ -193,7 +199,7 @@ class UVMQueue(UVMObject):
         """
         self.queue.insert(0, item)
 
-    def push_back(self, item):
+    def push_back(self, item: T) -> None:
         """
         Function: push_back
 
@@ -203,14 +209,14 @@ class UVMQueue(UVMObject):
         """
         self.queue.append(item)
 
-    def create(self, name="") -> 'UVMQueue':
+    def create(self, name="") -> 'UVMQueue[T]':
         v = UVMQueue(name)
         return v
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         return UVMQueue.type_name
 
-    def do_copy(self, rhs):
+    def do_copy(self, rhs) -> None:
         if rhs is None:
             return
         UVMObject.do_copy(self, rhs)
@@ -219,10 +225,10 @@ class UVMQueue(UVMObject):
     def convert2string(self) -> str:
         return str(self.queue)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.convert2string()
 
-    def find_with(self, find_func):
+    def find_with(self, find_func) -> 'UVMQueue[T]':
         """
         Group: find functions
         Added by tpoikela to mimic SystemVerilog find API

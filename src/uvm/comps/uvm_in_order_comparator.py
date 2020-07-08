@@ -157,15 +157,16 @@ class UVMInOrderComparator(UVMComponent):
         await super().run_phase(phase)  # Is this needed?
         while True:
 
-            b = []
-            a = []
+            arr_b = []
+            arr_a = []
 
-            await self.m_before_fifo.get(b)
-            await self.m_after_fifo.get(a)
+            await self.m_before_fifo.get(arr_b)
+            await self.m_after_fifo.get(arr_a)
 
-            b = b[0]
-            a = a[0]
+            b = arr_b[0]
+            a = arr_a[0]
 
+            # pytype: disable=wrong-arg-types
             if self.CompType.comp(b, a) is False:
                 s = sv.sformatf("%s differs from %s", self.Convert.convert2string(a),
                     self.Convert.convert2string(b))
@@ -182,6 +183,7 @@ class UVMInOrderComparator(UVMComponent):
             # Hence, it is safe not to clone a and b.
 
             pair = self.PairType("after/before")
+            # pytype: enable=wrong-arg-types
             pair.first = a
             pair.second = b
             self.pair_ap.write(pair)

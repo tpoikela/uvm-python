@@ -68,9 +68,10 @@ class UVMAnalysisPort(UVMPortBase):
         for i in range(0, self.size()):
             tif = self.get_if(i)
             if tif is None:
-                uvm_fatal("NTCONN", ("No uvm_tlm interface is connected to ",
-                  + self.get_full_name() + " for executing write()"))
-            tif.write(t)
+                uvm_fatal("NTCONN", ("No uvm_tlm interface is connected to " +
+                    self.get_full_name() + " for executing write()"))
+            else:
+                tif.write(t)
 
 
 class UVMAnalysisImp:
@@ -102,7 +103,7 @@ class UVMAnalysisImp:
         Args:
             t (any): Transaction to write.
         """
-        self.m_imp.write(t)
+        self.m_imp.write(t)  # type: ignore
 
 
 UVMAnalysisImp = UVM_IMP_COMMON(UVMAnalysisImp, UVM_TLM_ANALYSIS_MASK, "uvm_analysis_imp")
@@ -142,4 +143,5 @@ class UVMAnalysisExport(UVMPortBase):
             if tif is None:
                 uvm_fatal("NTCONN", ("No uvm_tlm interface is connected to "
                     + self.get_full_name() + " for executing write()"))
-            tif.write(t)
+            else:
+                tif.write(t)

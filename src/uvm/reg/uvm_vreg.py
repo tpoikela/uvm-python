@@ -41,6 +41,7 @@ from ..base import (UVMObject, sv, UVMMailbox)
 from ..macros import (uvm_error, uvm_object_utils, UVM_REG_DATA_WIDTH,
     uvm_fatal)
 from ..base.uvm_callback import *
+from ..base.uvm_object_globals import (UVM_MEDIUM)
 
 
 class UVMVReg(UVMObject):

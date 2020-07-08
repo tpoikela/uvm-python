@@ -420,9 +420,12 @@ class UVMRegField(UVMObject):
                 field_access = "WO"
         else:
             field_access = "NOACCESS"
+            fname = ""
+            if reg_map is not None:
+                fname = reg_map.get_full_name()
             uvm_report_warning("RegModel", ("Register '" + self.m_parent.get_full_name()
                 + "' containing field '" + self.get_name() + "' is mapped in reg_map '"
-                + reg_map.get_full_name() + "' with unknown access right '"
+                + fname + "' with unknown access right '"
                 + self.m_parent.get_rights(reg_map) + "'"))
         return field_access
 

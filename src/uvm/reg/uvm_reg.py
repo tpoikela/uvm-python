@@ -1385,18 +1385,20 @@ class UVMReg(UVMObject):
         await uvm_zero_delay()
         # TODO finish this
         cbs = UVMRegCbIter(self)  # uvm_reg_cb_iter  cbs = new(this)
-        map_info = []  # uvm_reg_map_info
+        arr_map_info = []  # uvm_reg_map_info
         value = 0  # uvm_reg_data_t   value
 
         self.m_fname  = rw.fname
         self.m_lineno = rw.lineno
 
-        if self.Xcheck_accessX(rw, map_info, "write()") is False:
+        if self.Xcheck_accessX(rw, arr_map_info, "write()") is False:
             await uvm_zero_delay()
             return
+
+        map_info = None
         # May be not be set for BACKDOOR, so check len
-        if len(map_info) > 0:
-            map_info = map_info[0]
+        if len(arr_map_info) > 0:
+            map_info = arr_map_info[0]
         self.m_write_in_progress = True
 
         rw.value[0] &= ((1 << self.m_n_bits)-1)
@@ -1477,7 +1479,7 @@ class UVMReg(UVMObject):
             self.m_is_busy = True
 
             # ...VIA USER FRONTDOOR
-            if map_info.frontdoor is not None:
+            if map_info is not None and map_info.frontdoor is not None:
                 fd = map_info.frontdoor  # uvm_reg_frontdoor
                 fd.rw_info = rw
                 if fd.sequencer is None:
@@ -1568,12 +1570,13 @@ class UVMReg(UVMObject):
         self.m_fname   = rw.fname
         self.m_lineno  = rw.lineno
 
-        map_info = []
-        if not(self.Xcheck_accessX(rw,map_info,"read()")):
+        arr_map_info = []
+        if not(self.Xcheck_accessX(rw, arr_map_info, "read()")):
             return
         # May be not be set for BACKDOOR, so check len
-        if len(map_info) > 0:
-            map_info = map_info[0]
+        map_info = None
+        if len(arr_map_info) > 0:
+            map_info = arr_map_info[0]
 
         self.m_read_in_progress = 1
         rw.status = UVM_IS_OK
@@ -1674,7 +1677,7 @@ class UVMReg(UVMObject):
                 exp = self.get()
 
             #  ...VIA USER FRONTDOOR
-            if (map_info.frontdoor is not None):
+            if map_info.frontdoor is not None:
                 fd = map_info.frontdoor  # uvm_reg_frontdoor
                 fd.rw_info = rw
                 if fd.sequencer is None:
@@ -2126,7 +2129,8 @@ class UVMReg(UVMObject):
                 ok &= uvm_hdl.uvm_hdl_read(hdl_concat.slices[j].path, _slice)
 
                 for _ in range(hdl_concat.slices[j].size):
-                    val[k] = _slice[0]
+                    bit_val = _slice & 0x1
+                    val = sv.set_bit(val, k, bit_val)
                     k += 1
                     _slice >>= 1
 

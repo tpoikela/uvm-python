@@ -39,6 +39,7 @@ from ..uvm_reg_map import UVMRegMap
 from ..uvm_reg_sequence import UVMRegSequence
 from ...macros import uvm_object_utils, uvm_error, uvm_info, uvm_warning
 from ...base import UVMResourceDb, UVM_LOW, uvm_empty_delay
+from ...base.uvm_globals import uvm_report_info
 
 
 #//------------------------------------------------------------------------------
@@ -150,7 +151,7 @@ class UVMRegSingleAccessSeq(UVMRegSequence):
 
             if status != UVM_IS_OK:
                 uvm_error("UVMRegAccessSeq", ("Status was '" + status.name()
-                   + "' when writing '" + rg.get_full_name() +
+                   + "' when writing '" + rg.get_full_name()
                    + "' through map '" + maps[j].get_full_name() + "'"))
             await Timer(1, "NS")  # tpoikela: Original UVM has #1
 
@@ -324,7 +325,7 @@ class UVMRegMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             return
 
         uvm_report_info("STARTING_SEQ",
-                "\n\nStarting " + self.get_name() + " sequence...\n", UVM_LOW)
+            "\n\nStarting " + self.get_name() + " sequence...\n", UVM_LOW)
 
         if reg_test_on(model, "NO_REG_TESTS") and reg_test_on(model,
                 "NO_REG_ACCESS_TEST"):

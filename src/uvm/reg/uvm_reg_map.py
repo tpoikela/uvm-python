@@ -1367,13 +1367,14 @@ class UVMRegMap(UVMObject):
                 temp_be = n_access_extra
                 value = value << n_access_extra
                 while temp_be >= 8:
-                    byte_en[idx] = 0
+                    byte_en = sv.clear_bit(byte_en, idx)
                     idx += 1
                     temp_be -= 8
 
                 temp_be += n_bits_init
                 while temp_be > 0:
-                    byte_en[idx] = 1
+                    byte_en = sv.set_bit(byte_en, idx)
+                    # byte_en[idx] = 1
                     idx += 1
                     temp_be -= 8
                 byte_en &= (1 << idx)-1
@@ -1395,7 +1396,9 @@ class UVMRegMap(UVMObject):
 
                 if rw.element_kind == UVM_FIELD:
                     for z in range(bus_width):
-                        rw_access.byte_en[z] = byte_en[curr_byte+z]
+                        bit_val = sv.get_bit(byte_en, curr_byte + z)
+                        # rw_access.byte_en[z] = byte_en[curr_byte+z]
+                        rw_access.byte_en = sv.set_bit(rw_access.byte_en, z, bit_val)
 
                 rw_access.kind    = rw.kind
                 rw_access.addr    = addrs[i]
@@ -1409,8 +1412,6 @@ class UVMRegMap(UVMObject):
                 accesses.append(rw_access)
                 curr_byte += bus_width
                 n_bits -= bus_width * 8
-
-            #end: foreach_addr
 
             # if set utilizy the order policy
             if (self.policy is not None):
@@ -1447,7 +1448,7 @@ class UVMRegMap(UVMObject):
                 else:
                     rw_access = adapter.bus2reg(bus_req, rw_access)
                     if rw_access is None:
-                        uvm_error("ADAPTER_BUS2REG_NONE", sv.sformatf("Adapter %s",
+                        uvm_error("ADAPTER_BUS2REG_NONE", sv.sformatf("Adapter %s"
                             + " returned None for RW item %s",
                             adapter.get_name(),
                             bus_req.convert2string())
@@ -1519,16 +1520,18 @@ class UVMRegMap(UVMObject):
                 n_access = n_access_extra + n_bits
                 temp_be = n_access_extra
                 while (temp_be >= 8):
-                    byte_en[ii] = 0
+                    # byte_en[ii] = 0
+                    byte_en = sv.clear_bit(byte_en, ii)
                     ii += 1
                     temp_be -= 8
 
                 temp_be += n_bits
                 while(temp_be > 0):
-                    byte_en[ii] = 1
+                    # byte_en[ii] = 1
+                    byte_en = sv.set_bit(byte_en, ii)
                     ii += 1
                     temp_be -= 8
-                byte_en &= (1<<ii)-1
+                byte_en &= (1 << ii) - 1
                 for i in range(skip):
                     addrs.pop_front()
                 while addrs.size() > (int(n_bits/(bus_width*8)) + 1):
@@ -1548,7 +1551,9 @@ class UVMRegMap(UVMObject):
                 if (rw.element_kind == UVM_FIELD):
                     #for (int z=0;z<bus_width;z++)
                     for z in range(bus_width):
-                        rw_access.byte_en[z] = byte_en[curr_byte+z]
+                        # rw_access.byte_en[z] = byte_en[curr_byte+z]
+                        bit_val = sv.get_bit(byte_en, curr_byte + z)
+                        rw_access.byte_en = sv.set_bit(rw_access.byte_en, z, bit_val)
 
                 rw_access.kind = rw.kind
                 rw_access.addr = addrs[i]
