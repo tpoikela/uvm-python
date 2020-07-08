@@ -115,7 +115,7 @@ def uvm_info(ID, MSG, VERBOSITY):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        f_locals = inspect.currentframe().f_back.f_locals
+        f_locals = inspect.currentframe().f_back.f_locals  # type: ignore
         if 'self' in f_locals:
             parent_self = f_locals['self']
             if hasattr(parent_self, 'uvm_report_info'):
@@ -141,7 +141,7 @@ def uvm_warning(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        f_locals = inspect.currentframe().f_back.f_locals
+        f_locals = inspect.currentframe().f_back.f_locals  # type: ignore
         if 'self' in f_locals:
             parent_self = f_locals['self']
             if hasattr(parent_self, 'uvm_report_warning'):
@@ -166,7 +166,7 @@ def uvm_error(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        f_locals = inspect.currentframe().f_back.f_locals
+        f_locals = inspect.currentframe().f_back.f_locals  # type: ignore
         if 'self' in f_locals:
             parent_self = f_locals['self']
             if hasattr(parent_self, 'uvm_report_error'):
@@ -192,7 +192,7 @@ def uvm_fatal(ID, MSG):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
         lineno = caller.lineno
-        f_locals = inspect.currentframe().f_back.f_locals
+        f_locals = inspect.currentframe().f_back.f_locals  # type: ignore
         if 'self' in f_locals:
             parent_self = f_locals['self']
             if hasattr(parent_self, 'uvm_report_fatal'):
