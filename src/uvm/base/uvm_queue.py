@@ -8,14 +8,14 @@ from .uvm_globals import uvm_report_warning
 class UVMQueue(UVMObject):
 
     type_name = "uvm_queue"
-    m_global_queue = None
+    m_global_queue: 'UVMQueue' = None
 
     def __init__(self, name=""):
         UVMObject.__init__(self, name)
         self.queue = list()
 
     @classmethod
-    def get_global_queue(cls):
+    def get_global_queue(cls) -> 'UVMQueue':
         """
         Function: get_global_queue
 

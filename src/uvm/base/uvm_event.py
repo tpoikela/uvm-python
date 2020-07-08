@@ -338,7 +338,7 @@ class UVMEvent(UVMEventBase):  # (type T=uvm_object) extends uvm_event_base
                 for i in range(0, self.callbacks.size()):
                     #uvm_event_callback#(T) tmp=self.callbacks[i]
                     tmp = self.callbacks[i]
-                    tmp.post_trigger(self,data)
+                    tmp.post_trigger(self,data)  # type: ignore
             self.num_waiters = 0
             self.set_value("on", True)
             self.trigger_time = sv.realtime()
