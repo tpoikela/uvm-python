@@ -22,7 +22,7 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
-from typing import List
+from typing import List, Dict
 
 import cocotb
 from cocotb.triggers import Timer
@@ -172,7 +172,7 @@ class UVMComponent(UVMReportObject):
             parent (UVMComponent): Parent component.
         """
         super().__init__(name)
-        self.m_children = {}  # uvm_component[string]
+        self.m_children: Dict[str, 'UVMComponent'] = {}  # uvm_component[string]
 
         #// Variable: print_enabled
         #//
@@ -184,8 +184,8 @@ class UVMComponent(UVMReportObject):
         self.print_enabled = True
         self.m_current_phase = None  # the most recently executed phase
         self.m_parent = None
-        self.m_children_by_handle = {}
-        self.m_children_ordered = []
+        self.m_children_by_handle: Dict['UVMComponent', 'UVMComponent'] = {}
+        self.m_children_ordered: List['UVMComponent'] = []
 
         self.m_build_done = False
         self.m_phasing_active = 0
@@ -1096,7 +1096,7 @@ class UVMComponent(UVMReportObject):
     #extern virtual task resume ()
 
 
-    def resolve_bindings(self):
+    def resolve_bindings(self) -> None:
         """
         Processes all port, export, and imp connections. Checks whether each port's
         min and max connection requirements are met.
@@ -1108,7 +1108,7 @@ class UVMComponent(UVMReportObject):
         return
 
     #extern function string massage_scope(string scope)
-    def massage_scope(self, scope):
+    def massage_scope(self, scope: str) -> str:
         # uvm_top
         if scope == "":
             return "^$"
@@ -1138,7 +1138,7 @@ class UVMComponent(UVMReportObject):
     #//
     #//----------------------------------------------------------------------------
 
-    def check_config_usage(self, recurse=1):
+    def check_config_usage(self, recurse=1) -> None:
         """
         Check all configuration settings in a components configuration table
         to determine if the setting has been used, overridden or not used.
@@ -1298,7 +1298,7 @@ class UVMComponent(UVMReportObject):
         UVMComponent.have_been_warned = True
         self.print_config(recurse, 1)
 
-    def print_config(self, recurse=False, audit=False):
+    def print_config(self, recurse=False, audit=False) -> None:
         """
         Function: print_config
 
@@ -1470,7 +1470,7 @@ class UVMComponent(UVMReportObject):
     #                                            bit replace=1)
     @classmethod
     def set_type_override_by_type(cls, original_type, override_type, replace=1):
-        factory= _get_factory()
+        factory = _get_factory()
         factory.set_type_override_by_type(original_type, override_type, replace)
 
 
@@ -1597,7 +1597,7 @@ class UVMComponent(UVMReportObject):
     #// information about what type of object would be created given the
     #// provided arguments.
     def print_override_info(self, requested_type_name, name=""):
-        factory= _get_factory()
+        factory = _get_factory()
         factory.debug_create_by_name(requested_type_name, self.get_full_name(), name)
 
 
