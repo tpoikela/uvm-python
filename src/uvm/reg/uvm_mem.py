@@ -967,12 +967,12 @@ class UVMMem(UVMObject):
     #   extern virtual task do_write (uvm_reg_item rw)
     async def do_write(self, rw):  # task
         cbs = UVMMemCbIter(self)
-        map_info = []  # uvm_reg_map_info
+        arr_map_info = []  # uvm_reg_map_info
 
         self.m_fname  = rw.fname
         self.m_lineno = rw.lineno
 
-        if self.Xcheck_accessX(rw, map_info, "burst_write()") is False:
+        if self.Xcheck_accessX(rw, arr_map_info, "burst_write()") is False:
             await uvm_empty_delay()
             return
 
@@ -996,7 +996,7 @@ class UVMMem(UVMObject):
 
         # FRONTDOOR
         if rw.path == UVM_FRONTDOOR:
-            map_info = map_info[0]
+            map_info = arr_map_info[0]
 
             system_map = rw.local_map.get_root_map()
             if map_info.frontdoor is not None:
@@ -1022,10 +1022,11 @@ class UVMMem(UVMObject):
             # // Mimick front door access, i.e. do not write read-only memories
             if self.get_access(rw.map) == "RW":
                 bkdr = self.get_backdoor()  # uvm_reg_backdoor
-                if (bkdr is not None):
+                if bkdr is not None:
                     await bkdr.write(rw)
                 else:
-                    await self.backdoor_write(rw)
+                    # await self.backdoor_write(rw)
+                    self.backdoor_write(rw)
             else:
                 rw.status = UVM_IS_OK
 
@@ -1056,7 +1057,7 @@ class UVMMem(UVMObject):
                 pre_s = "Burst "
                 for i in range(len(rw.value)):
                     value_s = value_s + sv.sformatf("%0h,",rw.value[i])
-                value_s[len(value_s)-1] = "}"
+                value_s = value_s[:-1] + "}"
                 range_s = sv.sformatf("[%0d:%0d]",rw.offset,rw.offset+len(rw.value))
             else:
                 value_s = sv.sformatf("=%0h",rw.value[0])
@@ -1069,12 +1070,12 @@ class UVMMem(UVMObject):
     #   extern virtual task do_read  (uvm_reg_item rw)
     async def do_read(self, rw):  # task
         cbs = UVMMemCbIter(self)
-        map_info = []  # uvm_reg_map_info
+        arr_map_info = []  # uvm_reg_map_info
 
         self.m_fname = rw.fname
         self.m_lineno = rw.lineno
 
-        if self.Xcheck_accessX(rw, map_info, "burst_read()") is False:
+        if self.Xcheck_accessX(rw, arr_map_info, "burst_read()") is False:
             await uvm_empty_delay()
             return
 
@@ -1096,7 +1097,7 @@ class UVMMem(UVMObject):
 
         # FRONTDOOR
         if rw.path == UVM_FRONTDOOR:
-            map_info = map_info[0]
+            map_info = arr_map_info[0]
             system_map = rw.local_map.get_root_map()
 
             if (map_info.frontdoor is not None):
@@ -1121,7 +1122,8 @@ class UVMMem(UVMObject):
             if bkdr is not None:
                 await bkdr.read(rw)
             else:
-                await self.backdoor_read(rw)
+                # await self.backdoor_read(rw)
+                self.backdoor_read(rw)
 
         # POST-READ CBS
         await self.post_read(rw)
@@ -1132,6 +1134,7 @@ class UVMMem(UVMObject):
 
         # REPORT
         if uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel"):
+            map_info = arr_map_info[0]
             path_s = ""
             value_s = ""
             pre_s = ""
@@ -1150,7 +1153,7 @@ class UVMMem(UVMObject):
                 pre_s = "Burst "
                 for i in range(len(rw.value)):
                     value_s = value_s + sv.sformatf("%0h,", int(rw.value[i]))
-                value_s[len(value_s)-1] = "}"
+                value_s = value_s[:-1] + "}"
                 range_s = sv.sformatf("[%0d:%0d]",rw.offset,rw.offset+len(rw.value))
             else:
                 value_s = sv.sformatf("=%0h", int(rw.value[0]))

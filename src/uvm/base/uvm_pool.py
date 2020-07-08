@@ -21,13 +21,16 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
+from typing import TypeVar, Dict, Generic, List, Optional
 import collections
 
 from .uvm_object import UVMObject
 from ..macros import uvm_warning
 
+KEY = TypeVar('KEY')
+VAL = TypeVar('VAL')
 
-class UVMPool(UVMObject):
+class UVMPool(UVMObject, Generic[KEY, VAL]):
     """
     Implements a class-based dynamic associative array. Allows sparse arrays to
     be allocated on demand, and passed and stored by reference.
@@ -72,7 +75,7 @@ class UVMPool(UVMObject):
         gpool = UVMPool.get_global_pool()
         return gpool.get(key)
 
-    def get(self, key):
+    def get(self, key: KEY) -> VAL:
         """
         Function: get
 
@@ -91,16 +94,16 @@ class UVMPool(UVMObject):
             return self.pool[key]
         return None
 
-    def add(self, key, item):
+    def add(self, key: KEY, item: VAL) -> None:
         self.pool[key] = item
 
-    def num(self):
+    def num(self) -> int:
         return len(self.pool.keys())
 
     def keys(self):
         return self.pool.keys()
 
-    def key_list(self):
+    def key_list(self) -> List[KEY]:
         return list(self.pool.keys())
 
     def delete(self, key=None):
@@ -110,7 +113,7 @@ class UVMPool(UVMObject):
             if key in self.pool:
                 del self.pool[key]
 
-    def exists(self, key):
+    def exists(self, key: KEY) -> bool:
         return key in self.pool
 
     def last(self):
@@ -139,7 +142,7 @@ class UVMPool(UVMObject):
             return True
         return False
 
-    def next(self):
+    def next(self) -> Optional[KEY]:
         if self.has_next() is True:
             self.ptr += 1
             key = list(self.pool.keys())[self.ptr]
@@ -151,7 +154,7 @@ class UVMPool(UVMObject):
             return True
         return False
 
-    def prev(self):
+    def prev(self) -> Optional[KEY]:
         if self.has_prev() is True:
             self.ptr -= 1
             key = list(self.pool.keys())[self.ptr]
@@ -161,7 +164,7 @@ class UVMPool(UVMObject):
     def create(self, name="") -> 'UVMPool':
         return UVMPool(name, self.T)
 
-    def do_print(self, printer):
+    def do_print(self, printer) -> None:
         while self.has_next():
             key = self.next()
             item = self.pool[key]
@@ -181,7 +184,7 @@ class UVMPool(UVMObject):
         """
         return self.num()
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """
         Implements X in Y operator
         Args:

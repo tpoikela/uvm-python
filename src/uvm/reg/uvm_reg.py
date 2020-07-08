@@ -1395,10 +1395,10 @@ class UVMReg(UVMObject):
             await uvm_zero_delay()
             return
 
-        map_info = None
+        # map_info = None
         # May be not be set for BACKDOOR, so check len
-        if len(arr_map_info) > 0:
-            map_info = arr_map_info[0]
+        # if len(arr_map_info) > 0:
+        # map_info = arr_map_info[0]
         self.m_write_in_progress = True
 
         rw.value[0] &= ((1 << self.m_n_bits)-1)
@@ -1478,6 +1478,9 @@ class UVMReg(UVMObject):
             system_map = rw.local_map.get_root_map()  # uvm_reg_map
             self.m_is_busy = True
 
+            # This should be safe, but...
+            map_info = arr_map_info[0]
+
             # ...VIA USER FRONTDOOR
             if map_info is not None and map_info.frontdoor is not None:
                 fd = map_info.frontdoor  # uvm_reg_frontdoor
@@ -1530,6 +1533,8 @@ class UVMReg(UVMObject):
         rw.element_kind = UVM_REG
 
         # REPORT
+
+        map_info = arr_map_info[0]
         self._report_op_with(rw, map_info)
 
         self.m_write_in_progress = False
@@ -1543,11 +1548,11 @@ class UVMReg(UVMObject):
             value_s = ""
             if (rw.path == UVM_FRONTDOOR):
                 path_s = "map " + rw.map.get_full_name()
-                if (map_info.frontdoor is not None):
+                if map_info.frontdoor is not None:
                     path_s = "user frontdoor"
             else:
                 path_s = "DPI backdoor"
-                if (self.get_backdoor() is not None):
+                if self.get_backdoor() is not None:
                     path_s = "user backdoor"
 
             op_s = "Wrote"
@@ -1574,9 +1579,9 @@ class UVMReg(UVMObject):
         if not(self.Xcheck_accessX(rw, arr_map_info, "read()")):
             return
         # May be not be set for BACKDOOR, so check len
-        map_info = None
-        if len(arr_map_info) > 0:
-            map_info = arr_map_info[0]
+        # map_info = None
+        # if len(arr_map_info) > 0:
+        # map_info = arr_map_info[0]
 
         self.m_read_in_progress = 1
         rw.status = UVM_IS_OK
@@ -1676,6 +1681,7 @@ class UVMReg(UVMObject):
             if (rw.local_map.get_check_on_read()):
                 exp = self.get()
 
+            map_info = arr_map_info[0]
             #  ...VIA USER FRONTDOOR
             if map_info.frontdoor is not None:
                 fd = map_info.frontdoor  # uvm_reg_frontdoor
@@ -1732,6 +1738,7 @@ class UVMReg(UVMObject):
         rw.element_kind = UVM_REG
 
         # REPORT
+        map_info = arr_map_info[0]
         self._report_op_with(rw, map_info)
         self.m_read_in_progress = False
         #endtask: do_read

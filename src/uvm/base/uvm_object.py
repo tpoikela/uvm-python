@@ -993,7 +993,7 @@ class UVMObject(sv_obj):
             clone (bool):
             recurse (bool):
         """
-        cc = None  # uvm_object cc
+        # cc = None  # uvm_object cc
         UVMObject._m_uvm_status_container.cycle_check.clear()
         UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
 

@@ -61,7 +61,7 @@ class UVMRegBlock(UVMObject):
     interface on the block.
     """
 
-    m_roots = {}  # type: Dict[UVMRegBlock, int]
+    m_roots: Dict['UVMRegBlock', int] = {}
     id = 0
 
 

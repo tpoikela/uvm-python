@@ -21,7 +21,7 @@
 #// -------------------------------------------------------------
 #//
 
-import cocotb
+from typing import List
 
 from .uvm_reg import UVMReg
 from .uvm_reg_model import *
@@ -29,9 +29,9 @@ from .uvm_reg_item import UVMRegItem
 from .uvm_reg_sequence import UVMRegFrontdoor
 from ..base.uvm_resource_db import UVMResourceDb
 from ..base.sv import sv
-from ..macros import uvm_fatal, uvm_error
+from ..macros import uvm_fatal, uvm_error, uvm_warning
+from ..base.uvm_globals import uvm_check_output_args
 
-#typedef class uvm_reg_indirect_ftdr_seq
 
 #//-----------------------------------------------------------------
 #// CLASS: uvm_reg_indirect_data
@@ -374,14 +374,11 @@ class uvm_reg_indirect_ftdr_seq(UVMRegFrontdoor):
         """             
         Body of indirect sequence
         """
-        rw = None  # uvm_reg_item
-
-        arr = []
-        if sv.cast(arr, self.rw_info.clone(), UVMRegItem):
-            rw = arr[0]
-        else:
+        arr: List[UVMRegItem] = []
+        if not sv.cast(arr, self.rw_info.clone(), UVMRegItem):
             uvm_fatal("CAST_FAIL", "Expected UVMRegItem, got " + str(self.rw_info))
 
+        rw = arr[0]
         rw.element = self.m_addr_reg
         rw.kind    = UVM_WRITE
         rw.value[0] = self.m_idx
