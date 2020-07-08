@@ -1134,13 +1134,13 @@ class UVMMem(UVMObject):
 
         # REPORT
         if uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel"):
-            map_info = arr_map_info[0]
             path_s = ""
             value_s = ""
             pre_s = ""
             range_s = ""
             if rw.path == UVM_FRONTDOOR:
                 path_s = "map " + rw.map.get_full_name()
+                map_info = arr_map_info[0]
                 if map_info.frontdoor is not None:
                     path_s = "user frontdoor"
             else:

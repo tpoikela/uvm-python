@@ -1534,7 +1534,9 @@ class UVMReg(UVMObject):
 
         # REPORT
 
-        map_info = arr_map_info[0]
+        map_info = None
+        if len(arr_map_info) > 0:
+            map_info = arr_map_info[0]
         self._report_op_with(rw, map_info)
 
         self.m_write_in_progress = False
@@ -1738,7 +1740,9 @@ class UVMReg(UVMObject):
         rw.element_kind = UVM_REG
 
         # REPORT
-        map_info = arr_map_info[0]
+        map_info = None
+        if len(arr_map_info) > 0:
+            map_info = arr_map_info[0]
         self._report_op_with(rw, map_info)
         self.m_read_in_progress = False
         #endtask: do_read
