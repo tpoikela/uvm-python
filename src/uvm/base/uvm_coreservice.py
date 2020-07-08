@@ -19,7 +19,6 @@
 #//----------------------------------------------------------------------
 
 from .uvm_factory import UVMDefaultFactory
-from .uvm_report_server import UVMReportServer
 
 
 class UVMCoreService:
@@ -31,7 +30,7 @@ class UVMCoreService:
     uvm_root.
     """
 
-    m_inst = None
+    m_inst: 'UVMCoreService' = None
 
     def __init__(self):
         self.report_server = None
@@ -51,8 +50,8 @@ class UVMCoreService:
             UVMCoreService.m_inst = UVMCoreService()
         return UVMCoreService.m_inst
 
-    @staticmethod
-    def reset():
+    @classmethod
+    def reset(cls):
         """Reset the state of coreservices. Used for unit testing"""
         UVMCoreService.m_inst = None
         from .uvm_registry import UVMComponentRegistry, UVMObjectRegistry
@@ -61,7 +60,6 @@ class UVMCoreService:
 
     def get_root(self):
         """
-
         Returns:
             UVMRoot: Singleton instance of UVMRoot.
         """
@@ -136,6 +134,7 @@ class UVMCoreService:
             UVMReportServer: Report server singleton instance.
         """
         if self.report_server is None:
+            from .uvm_report_server import UVMReportServer
             self.report_server = UVMReportServer()
         return self.report_server
 
