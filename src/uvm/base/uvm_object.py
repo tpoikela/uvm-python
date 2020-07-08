@@ -22,7 +22,7 @@
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
@@ -53,6 +53,9 @@ class UVMObject(sv_obj):
     The `UVMComponent` class is an example of a type that has a unique
     instance name.
     """
+
+    # Should be set by uvm_*_utils macro
+    type_id = None  # type: Any
 
     depth = 0
     m_inst_count = 0
