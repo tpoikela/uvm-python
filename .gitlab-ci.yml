@@ -20,11 +20,10 @@ cache:
     - venv/
     - iverilog/
     - iverilog/*.o
+    - .pytype/
 
 before_script:
   - python -V  # Print out python version for debugging
-  # - pip install virtualenv
-  # - virtualenv venv
   - python -m venv venv
   - source venv/bin/activate
   - pip freeze
@@ -34,6 +33,11 @@ before_script:
   - bash ci/install_iverilog.sh
   - ln -s src/uvm ./uvm
 
+pytype:
+  script:
+    - pip install pytype
+    - make pytype
+
 lint:
   script:
     - pip install flake8
@@ -42,10 +46,6 @@ lint:
 test:
   script:
     - SIM=icarus make test || exit 1
-    # - RET_VAL=`grep failure results.log`
-    # - python setup.py test
-    # - pip install tox flake8  # you can also use tox
-    # - tox -e py36,flake8
 
 #coverage:
 #  script:
