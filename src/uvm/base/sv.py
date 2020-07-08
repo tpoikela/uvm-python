@@ -28,6 +28,8 @@ access. cocotb is already hiding these details from us.
 from inspect import getframeinfo, stack
 import re
 import random
+from typing import List, Any
+
 import cocotb
 
 from cocotb_coverage import crv
@@ -48,7 +50,7 @@ def uvm_re_match(rex, _str):
     return RET_ERR
 
 
-def uvm_glob_to_re(_str):
+def uvm_glob_to_re(_str: str) -> str:
     """
     Converts a glob-style pattern to Python
     regular expression syntax.
@@ -70,7 +72,7 @@ def uvm_glob_to_re(_str):
     return res
 
 
-def uvm_split_string(_str, sep, split_vals):
+def uvm_split_string(_str, sep: str, split_vals: List[str]) -> List[str]:
     res = _str.split(sep)
     for val in res:
         split_vals.append(val)
@@ -163,7 +165,7 @@ class sv:
                 print(form_msg)
 
     @classmethod
-    def cast(cls, dest, src, T):
+    def cast(cls, dest: List, src: Any, T) -> bool:
         if isinstance(src, T):
             if hasattr(dest, 'append'):
                 dest.append(src)
@@ -175,7 +177,7 @@ class sv:
             "%p", "%0t", "%t", "%x"]
 
     @classmethod
-    def sscanf(cls, scan_str, formats, *results):
+    def sscanf(cls, scan_str: str, formats: str, *results):
         """
         Scans the input string with given format pattern.
 
@@ -221,7 +223,7 @@ class sv:
         return res
 
     @classmethod
-    def sformatf(cls, msg, *args):
+    def sformatf(cls, msg: str, *args) -> str:
         """
         This is to make porting faster, but should be switched to native python
         formatting inside UVM code
