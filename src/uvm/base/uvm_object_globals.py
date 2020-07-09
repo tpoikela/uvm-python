@@ -93,10 +93,13 @@ UVM_RADIX_TO_STRING_DICT = {
     UVM_REAL_EXP: "e"
 }
 
-def uvm_radix_to_string(radix):
-    """     
+
+def uvm_radix_to_string(radix: int) -> str:
+    """
     Function- uvm_radix_to_string
+
     Returns:
+        str: Letter for the given radix constant.
     """
     if radix in UVM_RADIX_TO_STRING_DICT:
         return UVM_RADIX_TO_STRING_DICT[radix]
@@ -352,7 +355,7 @@ UVM_PRE_START = 2
 UVM_PRE_BODY  = 4
 UVM_BODY      = 8
 UVM_POST_BODY = 16
-UVM_POST_START= 32
+UVM_POST_START = 32
 UVM_ENDED     = 64
 UVM_STOPPED   = 128
 UVM_FINISHED  = 256
