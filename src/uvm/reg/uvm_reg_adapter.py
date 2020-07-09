@@ -19,18 +19,49 @@
 #//    the License for the specific language governing
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
+"""
+Title: Classes for Adapting Between Register and Bus Operations
+
+This section defines classes used to convert transaction streams between
+generic register address/data reads and writes and physical bus accesses.
+
+Group: Example
+
+The following example illustrates how to implement a RegModel-BUS adapter class
+for the APB bus protocol::
+
+    class rreg2apb_adapter(UVMRegAdapter):
+
+        def __init__(self, name="reg2apb_adapter"):
+            super().__init__(name)
+
+        def reg2bus(self, rw) -> UVMSequenceItem:
+            apb_item apb = apb_item.type_id.create("apb_item")
+            apb.op   = (rw.kind == UVM_READ) ? apb.READ : apb.WRITE
+            apb.addr = rw.addr
+            apb.data = rw.data
+            return apb
+
+        def bus2reg(self, bus_item, rw):
+            arr_apb = []
+            if not sv.cast(arr_apb, bus_item, apb_item)) begin
+              uvm_fatal("CONVERT_APB2REG","Bus item is not of type apb_item")
+            end
+            apb = arr_apb[0]
+
+            rw.kind  = apb.op==apb.READ ? UVM_READ : UVM_WRITE
+            rw.addr = apb.addr
+            rw.data = apb.data
+            rw.status = UVM_IS_OK
+
+    uvm_object_utils(reg2apb_adapter)
+"""
 
 from ..base.uvm_object import UVMObject
 from ..macros.uvm_message_defines import *
 
-#//------------------------------------------------------------------------------
-#// Title: Classes for Adapting Between Register and Bus Operations
-#//
-#// This section defines classes used to convert transaction streams between
-#// generic register address/data reads and writes and physical bus accesses.
-#//------------------------------------------------------------------------------
-#
-#
+
+
 #//------------------------------------------------------------------------------
 #//
 #// Class: uvm_reg_adapter
@@ -38,17 +69,17 @@ from ..macros.uvm_message_defines import *
 #// This class defines an interface for converting between <uvm_reg_bus_op>
 #// and a specific bus transaction.
 #//------------------------------------------------------------------------------
-#virtual class uvm_reg_adapter extends uvm_object
+
 
 class UVMRegAdapter(UVMObject):
 
     def __init__(self, name=""):
-        """ 
+        """
           Function: new
-         
+
           Create a new instance of this type, giving it the optional `name`.
         Args:
-            name: 
+            name:
         """
         UVMObject.__init__(self, name)
         self.supports_byte_enable = False
@@ -79,13 +110,13 @@ class UVMRegAdapter(UVMObject):
     #  uvm_sequence_base parent_sequence
 
     def reg2bus(self, rw):
-        """         
+        """
           Function: reg2bus
-         
+
           Extensions of this class `must` implement this method to convert the specified
           `uvm_reg_bus_op` to a corresponding `uvm_sequence_item` subtype that defines the bus
           transaction.
-         
+
           The method must allocate a new bus-specific `uvm_sequence_item`,
           assign its members from
           the corresponding members from the given generic `rw` bus operation, then
@@ -93,16 +124,16 @@ class UVMRegAdapter(UVMObject):
 
          pure virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw)
         Args:
-            rw: 
+            rw:
         Raises:
         """
-        raise Exception("Pure virtual function")
+        raise NotImplementedError("Pure virtual function")
 
 
     def bus2reg(self, bus_item, rw):
-        """         
+        """
           Function: bus2reg
-         
+
           Extensions of this class `must` implement this method to copy members
           of the given bus-specific `bus_item` to corresponding members of the provided
           `bus_rw` instance. Unlike `reg2bus`, the resulting transaction
@@ -114,11 +145,11 @@ class UVMRegAdapter(UVMObject):
 
 
         Args:
-            bus_item: 
-            rw: 
+            bus_item:
+            rw:
         Raises:
         """
-        raise Exception("Pure virtual function")
+        raise NotImplementedError("Pure virtual function")
 
     #  // function: get_item
     #  //
@@ -130,16 +161,15 @@ class UVMRegAdapter(UVMObject):
     #  // It returns ~null~ at all other times.
     #  // The content of the return <uvm_reg_item> instance must not be modified
     #  // and used strictly to obtain additional information about the operation.
-    #  virtual function uvm_reg_item get_item()
-    #    return m_item
-    #  endfunction
+    def get_item(self):
+        return self.m_item
 
 
     def m_set_item(self, item):
-        """         
+        """
          virtual function void m_set_item(uvm_reg_item item)
         Args:
-            item: 
+            item:
         """
         if item is not None and isinstance(item.offset, int) is False:
             uvm_fatal("OFFSET/NOT_INT", "Item offset must be int. Got: {}"
@@ -147,45 +177,7 @@ class UVMRegAdapter(UVMObject):
 
         self.m_item = item
 
-    #endclass
 
-#//------------------------------------------------------------------------------
-#// Group: Example
-#//
-#// The following example illustrates how to implement a RegModel-BUS adapter class
-#// for the APB bus protocol.
-#//
-#//|class rreg2apb_adapter extends uvm_reg_adapter
-#//|  `uvm_object_utils(reg2apb_adapter)
-#//|
-#//|  function new(string name="reg2apb_adapter")
-#//|    super.new(name)
-#//|
-#//|  endfunction
-#//|
-#//|  virtual function uvm_sequence_item reg2bus(uvm_reg_bus_op rw)
-#//|    apb_item apb = apb_item::type_id::create("apb_item")
-#//|    apb.op   = (rw.kind == UVM_READ) ? apb::READ : apb::WRITE
-#//|    apb.addr = rw.addr
-#//|    apb.data = rw.data
-#//|    return apb
-#//|  endfunction
-#//|
-#//|  virtual function void bus2reg(uvm_sequencer_item bus_item,
-#//|                                uvm_reg_bus_op rw)
-#//|    apb_item apb
-#//|    if (!$cast(apb,bus_item)) begin
-#//|      `uvm_fatal("CONVERT_APB2REG","Bus item is not of type apb_item")
-#//|    end
-#//|    rw.kind  = apb.op==apb::READ ? UVM_READ : UVM_WRITE
-#//|    rw.addr = apb.addr
-#//|    rw.data = apb.data
-#//|    rw.status = UVM_IS_OK
-#//|  endfunction
-#//|
-#//|endclass
-#//
-#//------------------------------------------------------------------------------
 
 
 #//------------------------------------------------------------------------------

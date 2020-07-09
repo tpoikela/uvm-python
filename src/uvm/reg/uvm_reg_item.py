@@ -2,6 +2,7 @@
 #//--------------------------------------------------------------
 #//    Copyright 2004-2009 Synopsys, Inc.
 #//    Copyright 2010 Mentor Graphics Corporation
+#//    Copyright 2019-2020 Tuomas Poikela
 #//    All Rights Reserved Worldwide
 #//
 #//    Licensed under the Apache License, Version 2.0 (the
@@ -18,34 +19,38 @@
 #//    the License for the specific language governing
 #//    permissions and limitations under the License.
 #//--------------------------------------------------------------
-#//
+"""
+Title: Generic Register Operation Descriptors
+
+This section defines the abstract register transaction item. It also defines
+a descriptor for a physical bus operation that is used by <uvm_reg_adapter>
+subtypes to convert from a protocol-specific address/data/rw operation to
+a bus-independent, canonical r/w operation.
+"""
+
 
 from ..seq.uvm_sequence_item import UVMSequenceItem
 from ..macros.uvm_object_defines import uvm_object_utils
+from ..macros.uvm_message_defines import uvm_error, uvm_fatal
 from .uvm_reg_model import (UVM_READ, UVM_NOT_OK, UVM_MEM, UVM_FRONTDOOR,
     UVM_ACCESS_NAMES)
 from ..base.uvm_object_globals import UVM_HIGH, UVM_INFO
 from ..base.sv import sv
 from ..base.uvm_globals import uvm_report_enabled
+from typing import TypeVar, List
 
-#//------------------------------------------------------------------------------
-#// Title: Generic Register Operation Descriptors
-#//
-#// This section defines the abstract register transaction item. It also defines
-#// a descriptor for a physical bus operation that is used by <uvm_reg_adapter>
-#// subtypes to convert from a protocol-specific address/data/rw operation to
-#// a bus-independent, canonical r/w operation.
-#//------------------------------------------------------------------------------
+_T0 = TypeVar('_T0')
 
-#//------------------------------------------------------------------------------
-#// CLASS: uvm_reg_item
-#//
-#// Defines an abstract register transaction item. No bus-specific information
-#// is present, although a handle to a <uvm_reg_map> is provided in case a user
-#// wishes to implement a custom address translation algorithm.
-#//------------------------------------------------------------------------------
 
 class UVMRegItem(UVMSequenceItem):
+    """
+    CLASS: uvm_reg_item
+
+    Defines an abstract register transaction item. No bus-specific information
+    is present, although a handle to a <uvm_reg_map> is provided in case a user
+    wishes to implement a custom address translation algorithm.
+    """
+
     #  // Variable: element_kind
     #  //
     #  // Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
@@ -123,7 +128,7 @@ class UVMRegItem(UVMSequenceItem):
     #  //
     #  int lineno
 
-    def __init__(self, name=""):
+    def __init__(self, name="") -> None:
         """
           Function: new
 
@@ -138,7 +143,7 @@ class UVMRegItem(UVMSequenceItem):
         #  // The value to write to, or after completion, the value read from the DUT.
         #  // Burst operations use the <values> property.
         #  //
-        self.value = [0]  # rand uvm_reg_data_t value[]
+        self.value: List[int] = [0]  # rand uvm_reg_data_t value[]
 
         #  // Variable: path
         #  //
@@ -180,13 +185,14 @@ class UVMRegItem(UVMSequenceItem):
 
         self.local_map = None
 
-    def convert2string(self):
+    def convert2string(self) -> str:
         """
-          Function: convert2string
+        Function: convert2string
 
-          Returns a string showing the contents of this transaction.
+        Returns a string showing the contents of this transaction.
 
         Returns:
+            str: Reg item as string.
         """
         value_s = ""
         ele_name = "null"
@@ -214,60 +220,60 @@ class UVMRegItem(UVMSequenceItem):
         s = s + " map=" + map_name + " path=" + str(self.path)
         s = s + " status=" + str(self.status)
         return s
-        #  endfunction
 
 
+    def do_copy(self, rhs) -> None:
+        """
+        Function: do_copy
 
-    #  // Function: do_copy
-    #  //
-    #  // Copy the ~rhs~ object into this object. The ~rhs~ object must
-    #  // derive from <uvm_reg_item>.
-    #  //
-    #  virtual function void do_copy(uvm_object rhs)
-    #    uvm_reg_item rhs_
-    #    if (rhs == null)
-    #     `uvm_fatal("REG/NULL","do_copy: rhs argument is null")
-    #
-    #    if (!$cast(rhs_,rhs)):
-    #      `uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item")
-    #      return
-    #    end
-    #    super.copy(rhs)
-    #    element_kind = rhs_.element_kind
-    #    element = rhs_.element
-    #    kind = rhs_.kind
-    #    value = rhs_.value
-    #    offset = rhs_.offset
-    #    status = rhs_.status
-    #    local_map = rhs_.local_map
-    #    map = rhs_.map
-    #    path = rhs_.path
-    #    extension = rhs_.extension
-    #    bd_kind = rhs_.bd_kind
-    #    parent = rhs_.parent
-    #    prior = rhs_.prior
-    #    fname = rhs_.fname
-    #    lineno = rhs_.lineno
-    #  endfunction
+        Copy the ~rhs~ object into this object. The ~rhs~ object must
+        derive from `UVMRegItem`.
+        """
+        if rhs is None:
+            uvm_fatal("REG/NULL","do_copy: rhs argument is null")
+
+        arr_rhs_ = []
+        if not sv.cast(arr_rhs_, rhs, UVMRegItem):
+            uvm_error("WRONG_TYPE","Provided rhs is not of type uvm_reg_item")
+            return
+        rhs_ = arr_rhs_[0]
+
+        super().copy(rhs)
+        self.element_kind = rhs_.element_kind
+        self.element = rhs_.element
+        self.kind = rhs_.kind
+        self.value = rhs_.value
+        self.offset = rhs_.offset
+        self.status = rhs_.status
+        self.local_map = rhs_.local_map
+        self.map = rhs_.map
+        self.path = rhs_.path
+        self.extension = rhs_.extension
+        self.bd_kind = rhs_.bd_kind
+        self.parent = rhs_.parent
+        self.prior = rhs_.prior
+        self.fname = rhs_.fname
+        self.lineno = rhs_.lineno
+
 
 
 uvm_object_utils(UVMRegItem)
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_reg_bus_op
-#//
-#// Struct that defines a generic bus transaction for register and memory accesses, having
-#// ~kind~ (read or write), ~address~, ~data~, and ~byte enable~ information.
-#// If the bus is narrower than the register or memory location being accessed,
-#// there will be multiple of these bus operations for every abstract
-#// <uvm_reg_item> transaction. In this case, ~data~ represents the portion
-#// of <uvm_reg_item::value> being transferred during this bus cycle.
-#// If the bus is wide enough to perform the register or memory operation in
-#// a single cycle, ~data~ will be the same as <uvm_reg_item::value>.
-#//------------------------------------------------------------------------------
-#
+
 class UVMRegBusOp():
+    """
+    CLASS: UVMRegBusOp
+
+    Class that defines a generic bus transaction for register and memory accesses, having
+    ~kind~ (read or write), ~address~, ~data~, and ~byte enable~ information.
+    If the bus is narrower than the register or memory location being accessed,
+    there will be multiple of these bus operations for every abstract
+    `UVMRegItem` transaction. In this case, ~data~ represents the portion
+    of <uvm_reg_item::value> being transferred during this bus cycle.
+    If the bus is wide enough to perform the register or memory operation in
+    a single cycle, ~data~ will be the same as <uvm_reg_item::value>.
+    """
+
     #typedef struct {
     #
     #  // Variable: kind
@@ -326,7 +332,7 @@ class UVMRegBusOp():
     #
     #} uvm_reg_bus_op
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Constructor
         """
