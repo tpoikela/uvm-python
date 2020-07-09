@@ -20,11 +20,14 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 
-#typedef class uvm_sequence_base
-#typedef class uvm_sequencer_base
+from typing import Any
 
 from ..base.uvm_transaction import UVMTransaction
 from ..base.uvm_globals import *
+
+
+UVMSequencerBase = Any
+UVMSequenceBase = Any
 
 #------------------------------------------------------------------------------
 #
@@ -46,7 +49,7 @@ class UVMSequenceItem(UVMTransaction):
     issued1 = False
     issued2 = False
 
-    def __init__(self, name="UVMSequenceItem"):
+    def __init__(self, name="UVMSequenceItem") -> None:
         """
         Function: new
 
@@ -59,16 +62,16 @@ class UVMSequenceItem(UVMTransaction):
         self.m_sequence_id = -1
         self.m_use_sequence_info = False
         self.m_depth = -1
-        self.m_sequencer = None
-        self.p_sequencer = None
+        self.m_sequencer: UVMSequencerBase = None
+        self.p_sequencer: UVMSequenceBase = None
         self.m_parent_sequence = None
         self.print_sequence_info = False
     #  endfunction
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         return "UVMSequenceItem"
 
-    def set_sequence_id(self, id):
+    def set_sequence_id(self, id: int) -> None:
         """
           Function- set_sequence_id
         Args:
@@ -76,7 +79,7 @@ class UVMSequenceItem(UVMTransaction):
         """
         self.m_sequence_id = id
 
-    def get_sequence_id(self):
+    def get_sequence_id(self) -> int:
         """
           Function: get_sequence_id
 
@@ -110,13 +113,13 @@ class UVMSequenceItem(UVMTransaction):
         Returns:
         """
         return (self.m_sequence_id)
-    # endfunction
 
-    def set_item_context(self, parent_seq, sequencer=None):
+
+    def set_item_context(self, parent_seq, sequencer=None) -> None:
         """
-          Function: set_item_context
+        Function: set_item_context
 
-          Set the sequence and sequencer execution context for a sequence item
+        Set the sequence and sequencer execution context for a sequence item
 
         Args:
             parent_seq:
@@ -132,43 +135,44 @@ class UVMSequenceItem(UVMTransaction):
             self.set_depth(self.m_parent_sequence.get_depth() + 1)
         self.reseed()
 
-    def set_use_sequence_info(self, value):
+    def set_use_sequence_info(self, value) -> None:
         """
-          Function: set_use_sequence_info
-
+        Function: set_use_sequence_info
 
         Args:
             value:
         """
         self.m_use_sequence_info = value
-    #  endfunction
-
-    #  // Function: get_use_sequence_info
-    #  //
-    #  // These methods are used to set and get the status of the use_sequence_info
-    #  // bit. Use_sequence_info controls whether the sequence information
-    #  // (sequencer, parent_sequence, sequence_id, etc.) is printed, copied, or
-    #  // recorded. When use_sequence_info is the default value of 0, then the
-    #  // sequence information is not used. When use_sequence_info is set to 1,
-    #  // the sequence information will be used in printing and copying.
-
-    def get_use_sequence_info(self):
-        return (self.m_use_sequence_info)
-    #  endfunction
 
 
-    def set_id_info(self, item):
+    def get_use_sequence_info(self) -> bool:
         """
-          Function: set_id_info
+        Function: get_use_sequence_info
 
-          Copies the sequence_id and transaction_id from the referenced item into
-          the calling item.  This routine should always be used by drivers to
-          initialize responses for future compatibility.
+        These methods are used to set and get the status of the use_sequence_info
+        bit. Use_sequence_info controls whether the sequence information
+        (sequencer, parent_sequence, sequence_id, etc.) is printed, copied, or
+        recorded. When use_sequence_info is the default value of 0, then the
+        sequence information is not used. When use_sequence_info is set to 1,
+        the sequence information will be used in printing and copying.
+        """
+        return (self.m_use_sequence_info)
+
+
+    def set_id_info(self, item: 'UVMSequenceItem') -> None:
+        """
+        Function: set_id_info
+
+        Copies the sequence_id and transaction_id from the referenced item into
+        the calling item.  This routine should always be used by drivers to
+        initialize responses for future compatibility.
+
         Args:
             item:
         """
         if item is None:
-            uvm_report_fatal(self.get_full_name(), "set_id_info called with None parameter", UVM_NONE)
+            uvm_report_fatal(self.get_full_name(),
+                "set_id_info called with None parameter", UVM_NONE)
         self.set_transaction_id(item.get_transaction_id())
         self.set_sequence_id(item.get_sequence_id())
 
@@ -178,18 +182,17 @@ class UVMSequenceItem(UVMTransaction):
     #  // effect immediately, so it should not be called while the sequence is
     #  // actively communicating with the sequencer.
 
-    def set_sequencer(self, sequencer):
+    def set_sequencer(self, sequencer: UVMSequencerBase) -> None:
         self.m_sequencer = sequencer
         self.m_set_p_sequencer()
-    #  endfunction
+
 
     #  // Function: get_sequencer
     #  //
     #  // Returns a reference to the default sequencer used by this sequence.
 
-    def get_sequencer(self):
+    def get_sequencer(self) -> UVMSequencerBase:
         return self.m_sequencer
-    #  endfunction
 
 
     #  // Function: set_parent_sequence
@@ -197,24 +200,24 @@ class UVMSequenceItem(UVMTransaction):
     #  // Sets the parent sequence of this sequence_item.  This is used to identify
     #  // the source sequence of a sequence_item.
 
-    def set_parent_sequence(self, parent):
+    def set_parent_sequence(self, parent: UVMSequenceBase) -> None:
         self.m_parent_sequence = parent
-    #  endfunction
 
 
-    def get_parent_sequence(self):
+    def get_parent_sequence(self) -> UVMSequenceBase:
         """
-          Function: get_parent_sequence
+        Function: get_parent_sequence
 
-          Returns a reference to the parent sequence of any sequence on which this
-          method was called. If this is a parent sequence, the method returns `None`.
+        Returns a reference to the parent sequence of any sequence on which this
+        method was called. If this is a parent sequence, the method returns `None`.
 
         Returns:
+            UVMSequenceBase: Parent sequence of this item.
         """
         return (self.m_parent_sequence)
-    #  endfunction
 
-    def set_depth(self, value):
+
+    def set_depth(self, value: int) -> None:
         """
           Function: set_depth
 
@@ -229,7 +232,7 @@ class UVMSequenceItem(UVMTransaction):
         self.m_depth = value
     #  endfunction
 
-    def get_depth(self):
+    def get_depth(self) -> int:
         """
           Function: get_depth
 
@@ -251,25 +254,25 @@ class UVMSequenceItem(UVMTransaction):
             self.m_depth = self.m_parent_sequence.get_depth() + 1
 
         return self.m_depth
-    #  endfunction
 
 
-    def is_item(self):
+    def is_item(self) -> bool:
         """
-          Function: is_item
+        Function: is_item
 
-          This function may be called on any sequence_item or sequence. It will
-          return 1 for items and 0 for sequences (which derive from this class).
+        This function may be called on any sequence_item or sequence. It will
+        return 1 for items and 0 for sequences (which derive from this class).
+
         Returns:
         """
         return True
-    #  endfunction
 
-    def get_full_name(self):
+
+    def get_full_name(self) -> str:
         """
-          Function- get_full_name
+        Function- get_full_name
 
-          Internal method; overrides must follow same naming convention
+        Internal method; overrides must follow same naming convention
 
         Returns:
         """
@@ -283,9 +286,9 @@ class UVMSequenceItem(UVMTransaction):
         else:
             get_full_name = get_full_name + "_item"
         return get_full_name
-    #  endfunction
 
-    def get_root_sequence_name(self):
+
+    def get_root_sequence_name(self) -> str:
         """
           Function: get_root_sequence_name
 
@@ -301,7 +304,7 @@ class UVMSequenceItem(UVMTransaction):
             return root_seq.get_name()
     #  endfunction
 
-    def m_set_p_sequencer(self):
+    def m_set_p_sequencer(self) -> None:
         """
           Function- m_set_p_sequencer
 
@@ -309,7 +312,7 @@ class UVMSequenceItem(UVMTransaction):
         """
         self.p_sequencer = self.m_sequencer
 
-    def get_root_sequence(self):
+    def get_root_sequence(self) -> Any:
         """
           Function: get_root_sequence
 
@@ -327,9 +330,9 @@ class UVMSequenceItem(UVMTransaction):
                 root_seq = root_seq_base
             else:
                 return root_seq
-        #  endfunction
 
-    def get_sequence_path(self):
+
+    def get_sequence_path(self) -> str:
         """
         Function: get_sequence_path
 
