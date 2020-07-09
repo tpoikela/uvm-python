@@ -21,7 +21,7 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
-from typing import TypeVar, Dict, Generic, List, Optional
+from typing import TypeVar, Dict, Generic, List, Optional, Any
 import collections
 
 from .uvm_object import UVMObject
@@ -63,7 +63,7 @@ class UVMPool(UVMObject, Generic[KEY, VAL]):
         return UVMPool.m_global_pool
 
     @classmethod
-    def get_global(cls, key):
+    def get_global(cls, key) -> Any:
         """
         Returns the specified item instance from the global item pool.
 
@@ -106,7 +106,7 @@ class UVMPool(UVMObject, Generic[KEY, VAL]):
     def key_list(self) -> List[KEY]:
         return list(self.pool.keys())
 
-    def delete(self, key=None):
+    def delete(self, key=None) -> None:
         if key is None:
             self.pool = {}
         else:
@@ -218,7 +218,7 @@ class UVMPool(UVMObject, Generic[KEY, VAL]):
 
 
 
-class UVMObjectStringPool(UVMPool):
+class UVMObjectStringPool(UVMPool[str, UVMObject]):
     """
     This provides a specialization of the generic `UVMPool` class for
     an associative array of `UVMObject`-based objects indexed by string.
@@ -242,7 +242,7 @@ class UVMObjectStringPool(UVMPool):
         self.Constructor = Constr
 
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         """
         Returns the type name of this object.
 
@@ -253,7 +253,7 @@ class UVMObjectStringPool(UVMPool):
 
 
     @classmethod
-    def get_global_pool(cls):
+    def get_global_pool(cls) -> 'UVMObjectStringPool':
         """
         Returns the singleton global pool.
 
@@ -269,7 +269,7 @@ class UVMObjectStringPool(UVMPool):
 
 
     @classmethod
-    def get_global(cls, key):
+    def get_global(cls, key: str) -> UVMObject:
         """
         Returns the specified item instance from the global item pool.
 
@@ -283,7 +283,7 @@ class UVMObjectStringPool(UVMPool):
         return gpool.get(key)
 
 
-    def get(self, key):
+    def get(self, key: str) -> UVMObject:
         """
         Returns the object item at the given string `key`.
 
@@ -300,7 +300,7 @@ class UVMObjectStringPool(UVMPool):
         return self.pool[key]
 
 
-    def delete(self, key):
+    def delete(self, key: str) -> None:
         """
         Removes the item with the given string `key` from the pool.
 
@@ -313,7 +313,7 @@ class UVMObjectStringPool(UVMPool):
         self.delete(key)
     #  endfunction
 
-    def do_print(self, printer):
+    def do_print(self, printer) -> None:
         """
           Function- do_print
 
