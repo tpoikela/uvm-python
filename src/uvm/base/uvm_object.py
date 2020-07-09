@@ -22,13 +22,14 @@
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
 
-from typing import Dict, Optional, Any
+from typing import Dict, Any
 
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
 from .uvm_object_globals import (UVM_PRINT, UVM_NONE, UVM_COPY, UVM_COMPARE,
         UVM_RECORD, UVM_SETINT, UVM_SETOBJ, UVM_SETSTR, UVM_PACK, UVM_UNPACK)
 from .uvm_globals import uvm_report_error, uvm_report_warning, uvm_report_info
+from typing import Tuple
 
 
 class UVMObject(sv_obj):
@@ -76,7 +77,7 @@ class UVMObject(sv_obj):
         self.leaf_name = name
 
 
-    def reseed(self):
+    def reseed(self) -> None:
         """
         Calls `srandom` on the object to reseed the object using the UVM seeding
         mechanism, which sets the seed based on type name and instance name instead
@@ -145,7 +146,7 @@ class UVMObject(sv_obj):
         """
         return UVMObject.m_inst_count
 
-    def get_type(self):
+    def get_type(self) -> None:
         """
         Returns the type-proxy (wrapper) for this object. The `UVMFactory`'s
         type-based override and creation methods take arguments of
@@ -181,7 +182,7 @@ class UVMObject(sv_obj):
                 + str(self), UVM_NONE)
         return None
 
-    def get_object_type(self):
+    def get_object_type(self) -> Any:
         """
         Function: get_object_type
 
@@ -249,7 +250,7 @@ class UVMObject(sv_obj):
         """
         return "<unknown>"
 
-    def create(self, name="") -> Optional['UVMObject']:
+    def create(self, name="") -> 'UVMObject':
         """
         Group: Creation
 
@@ -272,9 +273,9 @@ class UVMObject(sv_obj):
         Returns:
             obj: New object.
         """
-        return None
+        return UVMObject(name)
 
-    def clone(self) -> Optional['UVMObject']:
+    def clone(self) -> 'UVMObject':
         """
         The `clone` method creates and returns an exact copy of this object.
 
@@ -293,7 +294,7 @@ class UVMObject(sv_obj):
             tmp.copy(self)
         return tmp
 
-    def print_obj(self, printer=None):
+    def print_obj(self, printer=None) -> None:
         """
         Group: Printing
 
@@ -351,7 +352,7 @@ class UVMObject(sv_obj):
             return printer.m_string
         return printer.emit()
 
-    def do_print(self, printer):
+    def do_print(self, printer) -> None:
         """
         The `do_print` method is the user-definable hook called by `print` and
         `sprint` that allows users to customize what gets printed or sprinted
@@ -443,10 +444,10 @@ class UVMObject(sv_obj):
         """
         return ""
 
-    def _m_uvm_field_automation(self, tmp_data__, what__, str__):
+    def _m_uvm_field_automation(self, tmp_data__, what__, str__) -> None:
         pass
 
-    def record(self, recorder=None):
+    def record(self, recorder=None) -> None:
         """
         Group: Recording
 
@@ -475,7 +476,7 @@ class UVMObject(sv_obj):
         recorder.recording_depth -= 1
 
 
-    def do_record(self, recorder):
+    def do_record(self, recorder) -> None:
         """
         The `do_record` method is the user-definable hook called by the `record`
         method. A derived class should override this method to include its fields
@@ -533,7 +534,7 @@ class UVMObject(sv_obj):
         if UVMObject.depth == 0:
             UVMObject.uvm_global_copy_map = {}
 
-    def do_copy(self, rhs):
+    def do_copy(self, rhs) -> None:
         """
         The `do_copy` method is the user-definable hook called by the `copy` method.
         A derived class should override this method to include its fields in a `copy`
@@ -641,7 +642,7 @@ class UVMObject(sv_obj):
         return (comparer.result == 0 and dc == 1)
 
 
-    def do_compare(self, rhs, comparer):
+    def do_compare(self, rhs, comparer) -> bool:
         """
         The `do_compare` method is the user-definable hook called by the `compare`
         method. A derived class should override this method to include its fields
@@ -686,7 +687,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack (ref bit bitstream[],
     #                            input uvm_packer packer=None)
-    def pack(self, packer=None):
+    def pack(self, packer=None) -> Tuple[Any, Any]:
         packer = self.m_pack(packer)
         return packer.get_packed_size(), packer.get_bits()
 
@@ -695,7 +696,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack_bytes (ref byte unsigned bytestream[],
     #                                  input uvm_packer packer=None)
-    def pack_bytes(self, bytestream, packer=None):
+    def pack_bytes(self, bytestream, packer=None) -> Any:
         packer = self.m_pack(packer)
         packed_bytes = packer.get_bytes()
         for b in packed_bytes:
@@ -720,7 +721,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int pack_ints (ref int unsigned intstream[],
     #                                 input uvm_packer packer=None)
-    def pack_ints(self, intstream, packer=None):
+    def pack_ints(self, intstream, packer=None) -> Any:
         packer = self.m_pack(packer)
         ints = packer.get_ints()
         for i in ints:
@@ -779,7 +780,7 @@ class UVMObject(sv_obj):
     #  //
     #  // Packing order does not need to match declaration order. However, unpacking
     #  // order must match packing order.
-    def do_pack(self, packer):
+    def do_pack(self, packer) -> None:
         return
 
 
@@ -789,7 +790,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack (ref   bit        bitstream[],
     #                              input uvm_packer packer=None)
-    def unpack(self, bitstream, packer=None):
+    def unpack(self, bitstream, packer=None) -> Any:
         packer = self.m_unpack_pre(packer)
         packer.put_bits(bitstream)
         self.m_unpack_post(packer)
@@ -801,7 +802,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack_bytes (ref byte unsigned bytestream[],
     #                                    input uvm_packer packer=None)
-    def unpack_bytes(self, bytestream, packer=None):
+    def unpack_bytes(self, bytestream, packer=None) -> Any:
         packer = self.m_unpack_pre(packer)
         packer.put_bytes(bytestream)
         self.m_unpack_post(packer)
@@ -830,7 +831,7 @@ class UVMObject(sv_obj):
     #
     #  extern function int unpack_ints (ref   int unsigned intstream[],
     #                                   input uvm_packer packer=None)
-    def unpack_ints(self, intstream, packer=None):
+    def unpack_ints(self, intstream, packer=None) -> Any:
         packer = self.m_unpack_pre(packer)
         packer.put_ints(intstream)
         self.m_unpack_post(packer)
@@ -878,7 +879,7 @@ class UVMObject(sv_obj):
     #  //   is 0, the target object should be set to `None` and unpacking continues to
     #  //   the next property, if any. If the least significant bit is 1, then the
     #  //   target object should be allocated and its properties unpacked.
-    def do_unpack(self, packer):
+    def do_unpack(self, packer) -> None:
         return
 
     def set_int_local(self, field_name: str, value: int, recurse=True):
@@ -1022,7 +1023,7 @@ class UVMObject(sv_obj):
     #
 
     #  extern local function void m_pack        (inout uvm_packer packer)
-    def m_pack(self, packer):
+    def m_pack(self, packer) -> Any:
         if packer is not None:
             UVMObject._m_uvm_status_container.packer = packer
         else:
@@ -1041,7 +1042,7 @@ class UVMObject(sv_obj):
 
 
     #  extern local function void m_unpack_pre  (inout uvm_packer packer)
-    def m_unpack_pre(self, packer):
+    def m_unpack_pre(self, packer) -> Any:
         if packer is not None:
             UVMObject._m_uvm_status_container.packer = packer
         else:
@@ -1052,7 +1053,7 @@ class UVMObject(sv_obj):
         return packer
 
     #  extern local function void m_unpack_post (uvm_packer packer)
-    def m_unpack_post(self, packer):
+    def m_unpack_post(self, packer) -> None:
         provided_size = packer.get_packed_size()
         # Put this object into the hierarchy
         packer.scope.down(self.get_name())
