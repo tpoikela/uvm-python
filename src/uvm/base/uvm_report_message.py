@@ -202,7 +202,7 @@ class UVMReportMessage(UVMObject):
         self._report_message_element_container = UVMReportMessageElementContainer()
 
     @classmethod
-    def new_report_message(cls, name="uvm_report_message"):
+    def new_report_message(cls, name="uvm_report_message") -> 'UVMReportMessage':
         """
         Creates a new uvm_report_message object.
         This function is the same as new(), but keeps the random stability.
@@ -264,6 +264,9 @@ class UVMReportMessage(UVMObject):
         self._message = report_message.get_message()
         self._verbosity = report_message.get_verbosity()
         self._report_message_element_container.copy(report_message._report_message_element_container)
+
+    def create(self, name="") -> 'UVMReportMessage':
+        return UVMReportMessage(name)
 
     #----------------------------------------------------------------------------
     # Group:  Infrastructure References
@@ -544,13 +547,13 @@ class UVMReportMessage(UVMObject):
     # TODO
 
     def add(self, name, value, action=UVM_LOG | UVM_RM_RECORD):
-         """
-         #----------------------------------------------------------------------------
-         Group:  Message Element APIs
-         #----------------------------------------------------------------------------
-         Args:
-             name:
-             value:
-             action:
-         """
-         self._report_message_element_container.add(name, value, action)
+        """
+        #----------------------------------------------------------------------------
+        Group:  Message Element APIs
+        #----------------------------------------------------------------------------
+        Args:
+            name:
+            value:
+            action:
+        """
+        self._report_message_element_container.add(name, value, action)
