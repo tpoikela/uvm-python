@@ -21,7 +21,7 @@ setup(
     setup_requires=["setuptools_scm",],
     python_requires=">=3.6",
     install_requires=[
-        "cocotb @ git+git://github.com/cocotb/cocotb@8de3aced#egg=cocotb",
+        "cocotb @ git+git://github.com/cocotb/cocotb@79792d1b#egg=cocotb",
         "cocotb-coverage>=1.0.0",
         "regex>=2019.11.1"
     ],
