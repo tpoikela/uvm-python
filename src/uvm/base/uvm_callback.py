@@ -765,7 +765,7 @@ class UVMCallbacks(UVMTypedCallbacks):
 
                 # for(int i=0; i<m_t_inst.m_tw_cb_q.size(); ++i)
                 for i in range(len(cls.m_t_inst.m_tw_cb_q)):
-                    q.append(cls.m_t_inst.m_tw_cb_q.get(i))
+                    q.append(cls.m_t_inst.m_tw_cb_q[i])
 
 
             #check if already exists in the queue
