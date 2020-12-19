@@ -37,9 +37,19 @@
 include ../../../MakefileCommon.mk
 PYTHONPATH := $(WPWD)/../../../../integrated:$(PYTHONPATH)
 
-VERILOG_SOURCES := $(WPWD)/dut.sv
+ifeq ($(TOPLEVEL_LANG),verilog)
+        VERILOG_SOURCES += $(WPWD)/dut.sv
+else ifeq ($(TOPLEVEL_LANG),vhdl)
+        VHDL_SOURCES += $(WPWD)/dut.vhd
+else
+    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
+endif
 
 TOPLEVEL := dut
 MODULE   ?= tb_run
+
+ifeq ($(SIM),$(filter $(SIM),ius xcelium))
+    COMPILE_ARGS=-v93
+endif
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
