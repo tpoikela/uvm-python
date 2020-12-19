@@ -17,7 +17,7 @@ Why bother?
 -----------
 
 UVM is not currently supported by any open source/free tools. cocotb offers
-excellent solution to interact with any simulator (free/commercial), so
+excellent solution to interact with any simulator (free/proprietary), so
 testbenches can be written in Python as well. `uvm-python` tries to offer
 an API similar to the original SV version. This means that many UVM verificaton
 skills are transferable from SV to Python very easily.
@@ -155,5 +155,5 @@ be used with cocotb. uvm-python uses cocotb to interface with these simulators.
 Memory backdoor access has issues with packed multi-dimensional arrays in
 verilator.
 
-Commercial simulators that work with cocotb can of course be used with
+Proprietary simulators that work with cocotb can of course be used with
 uvm-python as well.
