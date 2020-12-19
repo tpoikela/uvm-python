@@ -9,7 +9,7 @@ __pycache__
 *.log
 *.pyc
 build
-sim_build
+sim_build*
 .mypy_cache
 .pytype
 
