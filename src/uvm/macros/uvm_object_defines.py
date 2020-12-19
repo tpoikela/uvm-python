@@ -240,7 +240,7 @@ def uvm_field_utils_start(T):
                             uvm_report_warning("UVM_SETOBJ NULL", sv.sformatf("Tried to set null obj to %s",
                                 T_cont.get_full_scope_arg()), UVM_NONE)
                         setattr(self, v, T_cont_obj.object)
-                        T_cont_obj.status = 1
+                        T_cont_obj.status = True
                 elif ARG is not None and (mask_v & UVM_READONLY == 0):
                     cnt = 0
                     # Only traverse if there is a possible match.
