@@ -43,6 +43,13 @@ ifeq ($(TOPLEVEL_LANG),verilog)
     else
         VERILOG_SOURCES := $(WPWD)/sys_dut.sv
     endif
+else ifeq ($(TOPLEVEL_LANG),vhdl)
+    ifeq ($(IMG),BLK)
+        VHDL_SOURCES += $(WPWD)/blk_dut.vhd
+    else
+        VHDL_SOURCES += $(WPWD)/blk_dut.vhd
+        VHDL_SOURCES += $(WPWD)/sys_dut.vhd
+    endif
 else
     $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
 endif
@@ -72,7 +79,7 @@ else
 endif
 
 ifeq ($(SIM),$(filter $(SIM),ius xcelium))
-    COMPILE_ARGS=-gpg "PBASE_ADDR => 'h100"
+    COMPILE_ARGS=-gpg "BASE_ADDR => 'h100" -v93
 else
     ifeq ($(SIM), icarus)
         COMPILE_ARGS="-PBASE_ADDR='h100"
