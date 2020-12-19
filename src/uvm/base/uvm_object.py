@@ -894,7 +894,7 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.cycle_check.clear()
         UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
 
-        UVMObject._m_uvm_status_container.status = 0
+        UVMObject._m_uvm_status_container.status = False
         UVMObject._m_uvm_status_container.bitstream = value
 
         self._m_uvm_field_automation(None, UVM_SETINT, field_name)
@@ -916,7 +916,7 @@ class UVMObject(sv_obj):
         UVMObject._m_uvm_status_container.cycle_check.clear()
         UVMObject._m_uvm_status_container.m_uvm_cycle_scopes.clear()
 
-        UVMObject._m_uvm_status_container.status = 0
+        UVMObject._m_uvm_status_container.status = False
         UVMObject._m_uvm_status_container.stringv = value
         self._m_uvm_field_automation(None, UVM_SETSTR, field_name)
 
@@ -1004,7 +1004,7 @@ class UVMObject(sv_obj):
                 cc.set_name(field_name)
             value = cc
 
-        UVMObject._m_uvm_status_container.status = 0
+        UVMObject._m_uvm_status_container.status = False
         UVMObject._m_uvm_status_container.object = value
         UVMObject._m_uvm_status_container.clone = clone
 
