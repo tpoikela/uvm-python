@@ -1655,10 +1655,10 @@ class UVMResourcePool:
         UVMResourcePool.printer = UVMLinePrinter()
         printer = UVMResourcePool.printer
         printer.knobs.separator = ""
-        printer.knobs.full_name = 0
-        printer.knobs.identifier = 0
-        printer.knobs.type_name = 0
-        printer.knobs.reference = 0
+        printer.knobs.full_name = False
+        printer.knobs.identifier = False
+        printer.knobs.type_name = False
+        printer.knobs.reference = False
 
         if rq is None or len(rq) == 0:
             uvm_info("UVM/RESOURCE/PRINT","<none>",UVM_NONE)
@@ -1684,6 +1684,3 @@ class UVMResourcePool:
             rq = self.rtab[name]
             self.print_resources(rq, audit)
         uvm_info("UVM/RESOURCE/DUMP","=== end of resource pool ===",UVM_NONE)
-
-    #endfunction
-
