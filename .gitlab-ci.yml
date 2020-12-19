@@ -31,7 +31,9 @@ before_script:
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
   - bash ci/install_iverilog.sh
+  - bash ci/install_ghdl.sh
   - ln -s src/uvm ./uvm
+  - ls -la
 
 pytype:
   script:
