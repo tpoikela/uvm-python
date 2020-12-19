@@ -1,24 +1,20 @@
+uvm-1.2
+uvm_ref/
+uvm_logfile.txt
+
+tags
+vimproject
 
 __pycache__
 *.log
 *.pyc
 build
 sim_build
-results.xml
-results_coverage.xml
-tags
-vimproject
 .mypy_cache
 .pytype
 
-*.vcd
-
-uvm-1.2
-uvm_ref/
 obj_dir
 .venv
-
-[xi]run.history
 
 .coverage
 htmlcov/
@@ -30,6 +26,34 @@ test-results.xml
 .eggs
 *egg-info*
 *.bak
+
+# Vim tmp files
+*.swp
+*~
+
+# Emacs tmp files
+\#*\#
+\.\#*
+
+# Mergetool tmp files
+*.orig
+*.bak
+
+# Waveforms
+*.vcd
+*.fst
+*.fst.hier
+
+# Results
+results.xml
+results_coverage.xml
+combined_results.xml
+
+# Debuggers
+.gdb_history
+
+# Pytest
+.pytest_cache
 
 # Synopsys VCS
 *.tab
@@ -59,6 +83,7 @@ waves.shm/
 test/examples/**/modelsim.ini
 test/examples/**/transcript
 *.wlf
+vish_stacktrace.vstf
 
 # Aldec Riviera
 test/examples/**/library.cfg
