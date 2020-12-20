@@ -30,6 +30,7 @@ jobs:
         #sudo apt-get install iverilog
         sudo apt-get install -y -qq flex bison gperf
         sudo bash ci/install_iverilog.sh
+        sudo bash ci/install_ghdl.sh
     - name: Install uvm-python package
       run: |
         python -m pip install --user .
@@ -40,9 +41,15 @@ jobs:
         flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with make test
+    - name: Test with make test and Icarus
       run: |
         export SIM=icarus
         export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
         make test
+    - name: Test with make test and ghdl
+      run: |
+        export SIM=ghdl
+        export PYTHONPATH=`pwd`
+        ln -s src/uvm uvm
+        make test TOPLEVEL_LANG=vhdl
