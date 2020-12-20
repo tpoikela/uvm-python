@@ -47,7 +47,7 @@ class apb_monitor(UVMMonitor):
         self.errors = 0
         self.num_items = 0
         self.tag = "APB_MONITOR"
-        #   endfunction: new
+
 
     def build_phase(self, phase):
         super().build_phase(phase)
@@ -56,10 +56,11 @@ class apb_monitor(UVMMonitor):
             self.sigs = agent.vif
         else:
             arr = []
-            if (not UVMConfigDb.get(self, "", "vif", arr)):
-                uvm_fatal("APB/MON/NOVIF", "No virtual interface specified for self monitor instance")
-            else:
+            if UVMConfigDb.get(self, "", "vif", arr):
+                uvm_info("APB/MON/NOVIF", "Got vif through ConfigDb for APB monitor instance")
                 self.sigs = arr[0]
+        if self.sigs is None:
+            uvm_fatal("APB/MON/NOVIF", "No virtual interface specified for self monitor instance")
 
 
     
@@ -84,9 +85,9 @@ class apb_monitor(UVMMonitor):
             await self.sample_delay()
             if int(self.sigs.penable) != 1:
                 val = int(self.sigs.penable)
+                self.errors += 1
                 uvm_error("APB", "APB protocol violation: SETUP cycle not followed by ENABLE cycle"
                         + " |Exp: 1, got: " + str(val))
-                self.errors += 1
 
             if tr.kind == apb_rw.READ:
                 tr.data = self.sigs.prdata.value.integer
@@ -94,7 +95,7 @@ class apb_monitor(UVMMonitor):
                 tr.data = self.sigs.pwdata.value.integer
 
             self.trans_observed(tr)
-            #uvm_do_callbacks(apb_monitor,apb_monitor_cbs, self.trans_observed(self, tr))
+            #TODO uvm_do_callbacks(apb_monitor,apb_monitor_cbs, self.trans_observed(self, tr))
             self.num_items += 1
             self.ap.write(tr)
             uvm_info(self.tag, "Sampled APB item: " + tr.convert2string(),
