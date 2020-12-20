@@ -63,8 +63,8 @@ class apb_agent(UVMAgent):
         if self.mon.errors > 0:
             self.error = True
         if self.mon.num_items == 0:
+            uvm_error("APB/AGT", "APB monitor did not get any items")
             self.error = True
 
-    #endclass: apb_agent
 
 uvm_component_utils(apb_agent)
