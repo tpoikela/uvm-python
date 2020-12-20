@@ -332,6 +332,8 @@ class sv_obj(crv.Randomized):
     """ sv_obj implement some basic features from SystemVerilog objects like
     constrained randomisation """
 
+    num_objs = 0
+
     def __init__(self):
         crv.Randomized.__init__(self)
         self._sv_seed = sv.urandom()
@@ -339,6 +341,9 @@ class sv_obj(crv.Randomized):
         random.seed(self._sv_seed)
         self._sv_rand_state = random.getstate()
         self._rand_mode = True
+        sv_obj.num_objs += 1
+        # print("Created SVObj@{}: Seed {}, State: {}".format(sv_obj.num_objs,
+        # self._sv_seed, self._sv_rand_state))
 
 
     def constraint(self, c):
@@ -397,6 +402,7 @@ class sv_obj(crv.Randomized):
         if self._rand_mode is False:
             return True
         try:
+            random.setstate(self._sv_rand_state)
             self.pre_randomize()
             ok = True
             if recurse:
@@ -407,6 +413,7 @@ class sv_obj(crv.Randomized):
                     ok = ok and obj.randomize()
             super().randomize()
             self.post_randomize()
+            self._sv_rand_state = random.getstate()
             return True and ok
         except Exception as e:
             raise RandomizeError('randomize() failed for ' + str(self) + '\n' + e)
