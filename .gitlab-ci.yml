@@ -45,9 +45,13 @@ lint:
     - pip install flake8
     - make lint
 
-test:
+test_icarus:
   script:
     - SIM=icarus make test || exit 1
+
+test_ghdl:
+  script:
+    - SIM=ghdl make test TOPLEVEL_LANG=vhdl || exit 1
 
 #coverage:
 #  script:
