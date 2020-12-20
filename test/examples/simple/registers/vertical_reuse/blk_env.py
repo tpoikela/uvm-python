@@ -50,7 +50,7 @@ class blk_env(UVMEnv):
 
 
     def connect_phase(self, phase):
-        if (self.model.get_parent() is None):
+        if self.model.get_parent() is None:
             reg2apb = reg2apb_adapter()
             self.model.default_map.set_sequencer(self.apb.sqr, reg2apb)
             self.model.default_map.set_auto_predict()
@@ -59,7 +59,8 @@ class blk_env(UVMEnv):
     def report_phase(self, phase):
         if self.apb is not None and self.apb.error is False:
             self.all_ok = True
-
+        elif self.apb is not None and self.apb.error is True:
+            uvm_error("BLK_ENV", "Found errors in APB agent")
 
 
 uvm_component_utils(blk_env)
