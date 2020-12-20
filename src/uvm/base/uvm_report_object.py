@@ -21,6 +21,8 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
+import random
+
 from .uvm_object import UVMObject
 from .uvm_object_globals import (UVM_WARNING, UVM_INFO, UVM_ERROR, UVM_FATAL, UVM_LOW, UVM_NONE,
         UVM_MEDIUM)
@@ -132,6 +134,8 @@ class UVMReportObject(UVMObject):
             context_name="",
             report_enabled_checked=False):
 
+        rng_state = random.getstate()  # tpoikela: Added to ensure logging does
+        # not affect Random Stability
         if verbosity == -1:
             verbosity = get_verbosity(severity)
         l_report_message = None
@@ -142,6 +146,7 @@ class UVMReportObject(UVMObject):
         l_report_message.set_report_message(severity, id, message,
                                             verbosity, filename, line, context_name)
         self.uvm_process_report_message(l_report_message)
+        random.setstate(rng_state)
 
     def uvm_report_info(self, id, message, verbosity=UVM_MEDIUM, filename="",
             line=0, context_name="", report_enabled_checked=False):
