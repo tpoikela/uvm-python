@@ -65,3 +65,37 @@ class top(UVMComponent):
             self.uvm_report_error("COUNT_ERR", "Count was 0")
 
 uvm_component_utils(top)
+
+class top2(UVMComponent):
+
+    def __init__(self, name, parent=None):
+        super().__init__(name, parent)
+        self.prods = []
+        self.prods2 = []
+        self.cons = []
+        self.fifos = []
+        self.n = 128
+
+        for i in range(self.n):
+            self.prods.append(producer("producer" + str(i), self))
+            self.prods2.append(producer("producer2_" + str(i), self))
+            self.cons.append(consumer("consumer" + str(i), self))
+            self.fifos.append(UVMTLMFIFO("fifo" + str(i), self))
+        for i in range(self.n):
+            self.prods[i].out.connect(self.cons[i].input)
+            self.prods2[i].out.connect(self.fifos[i].blocking_put_export)
+            self.cons[i].out.connect(self.fifos[i].get_export)
+
+    async def run_phase(self, phase):
+        print("top2 run_Phase started XYZ")
+        phase.raise_objection(self)
+        await Timer(1000, "NS")
+        phase.drop_objection(self)
+
+    def check_phase(self, phase):
+        for i in range(self.n):
+            if self.cons[i].count == 0:
+                self.error = True
+                self.uvm_report_error("COUNT_ERR", "Count was 0")
+
+uvm_component_utils(top2)
