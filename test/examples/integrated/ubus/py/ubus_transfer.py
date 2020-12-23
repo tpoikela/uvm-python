@@ -95,10 +95,18 @@ class ubus_transfer(UVMSequenceItem):
         return new_obj
 
     def convert2string(self):
+        rw_str = "READ"
+        if self.read_write == WRITE:
+            rw_str = "WRITE"
+        elif self.read_write == NOP:
+            rw_str = "NOP"
         res = "ID: " + str(self.m_transaction_id)
-        res += ", addr: " + str(self.addr) + ", read_write: " + str(self.read_write)
+        res += ", addr: " + str(self.addr) + ", read_write: " + rw_str
         res += ", size: " + str(self.size) + ", wait_state: " + str(self.wait_state)
-        res += "\ndata: " + str(self.data)
+        res += "\ndata: "
+        for d in self.data:
+            res += hex(d) + ','
+        res += "\n"
         return res
 
 
