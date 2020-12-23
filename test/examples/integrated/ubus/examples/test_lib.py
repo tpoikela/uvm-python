@@ -108,7 +108,7 @@ class test_read_modify_write(ubus_example_base_test):
         UVMConfigDb.set(self, "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
                 "default_sequence", slave_memory_seq.type_id.get())
         #    // Create the tb
-        ubus_example_base_test.build_phase(self, phase)
+        super().build_phase(phase)
 
     
     async def run_phase(self, phase):
