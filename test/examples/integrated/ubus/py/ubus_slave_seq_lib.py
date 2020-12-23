@@ -124,7 +124,7 @@ class slave_memory_seq(UVMSequence):
     
     async def body(self):
         #p = None  # uvm_phase
-        uvm_info(self.get_type_name(), sv.sformatf("ubus_slave_seq %s starting...",
+        uvm_info(self.get_name(), sv.sformatf("ubus_slave_seq %s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
 
         #$cast(req, create_item(ubus_transfer::get_type(), p_sequencer, "req"))
@@ -141,7 +141,7 @@ class slave_memory_seq(UVMSequence):
 
             # Need to raise/drop objection before each item because we don't want
             # to be stopped in the middle of a transfer.
-            #p.raise_objection(self)
+            # p.raise_objection(self)
 
             _print("BEFORE start_item. req is " +
                 self.req.convert2string())
@@ -149,10 +149,7 @@ class slave_memory_seq(UVMSequence):
             _print("after start_item")
             await self.finish_item(self.req)
             _print("after finish_item")
-
             #p.drop_objection(self)
-        #  endtask : body
-        #
 
-    #endclass : slave_memory_seq
+
 uvm_object_utils(slave_memory_seq)
