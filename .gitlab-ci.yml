@@ -21,6 +21,7 @@ cache:
     - iverilog/
     - iverilog/*.o
     - .pytype/
+    - verilator/
 
 before_script:
   - python -V  # Print out python version for debugging
@@ -31,7 +32,8 @@ before_script:
   - apt-get update -qq
   - apt-get install -y -qq flex bison gperf
   - bash ci/install_iverilog.sh
-  - bash ci/install_ghdl.sh
+  # - bash ci/install_ghdl.sh
+  # - bash ci/install_verilator.sh
   - ln -s src/uvm ./uvm
   - ls -la
 
@@ -49,9 +51,13 @@ test_icarus:
   script:
     - SIM=icarus make test || exit 1
 
-test_ghdl:
-  script:
-    - SIM=ghdl make test TOPLEVEL_LANG=vhdl || exit 1
+#test_ghdl:
+#  script:
+#    - SIM=ghdl make test TOPLEVEL_LANG=vhdl || exit 1
+
+#test_verilator:
+#  script:
+#    - SIM=verilator make test || exit 1
 
 #coverage:
 #  script:
