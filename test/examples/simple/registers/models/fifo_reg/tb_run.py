@@ -25,7 +25,7 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import FallingEdge
+from cocotb.triggers import FallingEdge, Timer
 
 from uvm import (UVMConfigDb, run_test, UVMCoreService, sv,
     uvm_fatal, UVMUtils, uvm_hdl)
@@ -60,6 +60,11 @@ class FIFORegTest(tb_env):
     def __init__(self, name="FIFORegTest", parent=None):
         super().__init__(name, parent)
 
+    def report_phase(self, phase):
+        uvm_info("FIFO example", "report_phase", UVM_LOW)
+
+    def check_phase(self, phase):
+        uvm_info("FIFO example", "check_phase", UVM_LOW)
 
     async def run_phase(self, phase):
         status = 0x0
@@ -126,7 +131,9 @@ class FIFORegTest(tb_env):
             else:
                 uvm_info("FIFO Read OK", "Read {}, got data: {}".format(i,
                     data), UVM_LOW)
+        uvm_info("FIFO example", "Dropping run_phase objection now", UVM_LOW)
         phase.drop_objection(self)
+        uvm_info("FIFO example", "After Dropping run_phase objection", UVM_LOW)
 
 
 
@@ -143,6 +150,8 @@ async def test_reg_fifo(dut):
 
     cocotb.fork(Clock(vif.clk, 10, "NS").start())
     await run_test(dut=dut)
+
+    #await Timer(1, "NS")  # Required for verilator
 
     num_errors = svr.get_severity_count(UVM_ERROR)
     if num_errors > 0:
