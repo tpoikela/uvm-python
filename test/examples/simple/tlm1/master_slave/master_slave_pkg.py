@@ -44,9 +44,14 @@ from uvm import *
 from enum import Enum
 
 # These can be changed to vary the topology
-NUM_MASTERS = 5
-NUM_SLAVES = 50
-NUM_MEMS = 10
+NUM_MASTERS = 5  # 6 fatals out
+NUM_SLAVES = 34  # 35 gets stuck, >= 36 fatals out
+NUM_MEMS = 10 # 11 gets stuck
+
+#ratio = 3
+#NUM_MASTERS = 2 * ratio
+#NUM_SLAVES = 4 * ratio
+#NUM_MEMS = 4 * ratio
 
 
 class Cmd(Enum):
@@ -447,3 +452,4 @@ class env_top(UVMEnv):
             return False
         else:
             return True
+# uvm_component_utils(env_top)
