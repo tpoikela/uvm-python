@@ -19,6 +19,7 @@ test-sequence:
 
 test-hello_world:
 	make -C hello_world/
+	make -C hello_world/ PLUSARGS="+UVM_TESTNAME=top2"
 
 test-objections:
 	make -C objections/
@@ -61,7 +62,6 @@ test-configuration:
 test-registers:
 	make -C registers/models/user-defined/
 	make -C registers/vertical_reuse/ IMG=BLK SIMARGS="+UVM_TESTNAME=blk_R_test" SIM_BUILD=sim_build_blk
-	#make -C registers/vertical_reuse/ clean
 	make -C registers/vertical_reuse/ SIMARGS="+UVM_TESTNAME=sys_R_test" SIM_BUILD=sim_build_sys
 	make -C registers/primer/ UVM_TEST=cmdline_test UVM_REG_SEQ=UVMRegHWResetSeq
 	make -C registers/primer/ UVM_TEST=cmdline_test UVM_REG_SEQ=user_test_seq
