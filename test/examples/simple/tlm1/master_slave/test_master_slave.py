@@ -1,13 +1,14 @@
 
 import cocotb
 from cocotb.triggers import Timer
-from uvm import (UVMTest, run_test)
+from uvm import (UVMTest, run_test, UVMDebug)
 from uvm.macros import (uvm_component_utils, uvm_fatal)
 
 from master_slave_pkg import env_top
 
 test_dur = 1200  # NS
 
+#UVMDebug.full_debug()
 
 class master_slave_test(UVMTest):
 
