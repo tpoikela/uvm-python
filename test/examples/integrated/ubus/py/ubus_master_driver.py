@@ -59,6 +59,7 @@ class ubus_master_driver(UVMDriver):
 
 
     def build_phase(self, phase):
+        super().build_phase(phase)
         arr = []
         if UVMConfigDb.get(self, "", "vif", arr):
             self.vif = arr[0]
@@ -107,7 +108,6 @@ class ubus_master_driver(UVMDriver):
     
     async def reset_signals(self):
         _id = str(self.master_id)
-        print("RRR master_driver " + _id + " resetting signals")
         while True:
             await RisingEdge(self.vif.sig_reset)
             self.vif.rw = 0
@@ -118,11 +118,7 @@ class ubus_master_driver(UVMDriver):
             self.vif.sig_read           <= 0
             self.vif.sig_write          <= 0
             self.vif.sig_bip            <= 0
-        #  endtask : reset_signals
 
-    #  // drive_transfer
-    #  virtual protected task drive_transfer (ubus_transfer trans)g
-    
     async def drive_transfer(self, trans):
         if trans.transmit_delay > 0:
             for i in range(trans.transmit_delay):
@@ -131,7 +127,6 @@ class ubus_master_driver(UVMDriver):
         await self.arbitrate_for_bus()
         await self.drive_address_phase(trans)
         await self.drive_data_phase(trans)
-        #  endtask : drive_transfer
 
 
     def get_req_val(self, val):
@@ -204,19 +199,18 @@ class ubus_master_driver(UVMDriver):
 
 
     #  // read_byte
-    
     async def read_byte(self, data, error):
         self.vif.rw <= 0
         while True:
             await RisingEdge(self.vif.sig_clock)
             if self.vif.sig_wait == 0:
                 break
+        uvm_info("READ_BYTE", "Got byte {}".format(hex(self.vif.sig_data.value)), UVM_LOW)
         data.append(self.vif.sig_data.value)
         #  endtask : read_byte
 
 
     #  // write_byte
-    
     async def write_byte(self, data, error):
         uvm_info("MASTER_DRV", "Setting rw to 1 now", UVM_LOW)
         self.vif.rw <= 1
@@ -226,12 +220,9 @@ class ubus_master_driver(UVMDriver):
             if self.vif.sig_wait == 0:
                 break
         self.vif.rw <= 0
-        #  endtask : write_byte
 
-    #
     #  // drive_size
     def drive_size(self, size):
-        #case (size)
         if size == 1:
             self.vif.sig_size <= 0
         elif size == 2:
@@ -240,10 +231,7 @@ class ubus_master_driver(UVMDriver):
             self.vif.sig_size <= 2
         elif size == 8:
             self.vif.sig_size <= 3
-        #endcase
-        #  endtask : drive_size
 
-    #
     #  // drive_read_write
     def drive_read_write(self, rw):
         uvm_info("MASTER_DRV", "Driving rw-value: " + str(rw), UVM_LOW)
@@ -257,9 +245,6 @@ class ubus_master_driver(UVMDriver):
         elif rw == WRITE:
             self.vif.sig_read <= 0
             self.vif.sig_write <= 1
-        #endcase
-    #  endtask : drive_read_write
 
-    #
-    #endclass : ubus_master_driver
+
 uvm_component_utils(ubus_master_driver)
