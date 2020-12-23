@@ -78,11 +78,10 @@ class read_byte_seq(ubus_base_sequence):
         rsp = []
         await self.get_response(rsp)
         self.rsp = rsp[0]
-        uvm_info(self.get_type_name(),
+        uvm_info(self.get_name(),
             sv.sformatf("%s read : addr = `x{}, data[0] = `x{}",
                 self.get_sequence_path(), self.rsp.addr, self.rsp.data[0]),
             UVM_HIGH)
-        #  endtask
 
 
 uvm_object_utils(read_byte_seq)
