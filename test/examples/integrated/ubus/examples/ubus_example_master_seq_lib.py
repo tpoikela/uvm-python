@@ -197,8 +197,6 @@ class read_modify_write_seq(ubus_base_sequence):
         self.addr_check = self.read_byte_seq0.rsp.addr
         self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
         
-        print("HHH data is here: " + str(self.m_data0_check))
-
         # WRITE MODIFIED READ DATA
         self.write_byte_seq0 = write_byte_seq("write_byte_seq")
         self.write_byte_seq0.start_addr = self.addr_check
@@ -214,12 +212,12 @@ class read_modify_write_seq(ubus_base_sequence):
         await uvm_do_with(self, self.read_byte_seq0,
             lambda start_addr: start_addr == self.addr_check)
 
-        if self.m_data0_check != int(self.read_byte_seq0.rsp.data[0]):
+        data0_got = int(self.read_byte_seq0.rsp.data[0])
+        if self.m_data0_check != data0_got:
             uvm_error(self.get_type_name(),
                 sv.sformatf("%s Read Modify Write Read error!\n\tADDR: %h, EXP: %h, ACT: %h", 
                     self.get_sequence_path(),
-                    self.addr_check, self.m_data0_check,
-                    int(self.read_byte_seq0.rsp.data[0])))
+                    self.addr_check, self.m_data0_check, data0_got))
         else:
             self.test_pass = True
 
