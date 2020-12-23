@@ -71,7 +71,7 @@ class ubus_if(sv_if):
         while True:
             await Combine(Edge(self.sig_data_out), Edge(self.sig_data))
             if self.slave_en == 1:
-                self.sig_data <= self.sig_data_out
+                self.sig_data <= self.sig_data_out.value
 
     
     async def always(self):
@@ -166,7 +166,3 @@ class ubus_if(sv_if):
         #                     $error("ERR_READ_OR_WRITE\n Read and Write true at \
         #                             the same time");
         #
-        #end
-    #
-    #endinterface : ubus_if
-#
