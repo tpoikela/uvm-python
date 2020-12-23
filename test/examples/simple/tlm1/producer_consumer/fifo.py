@@ -46,6 +46,10 @@ from uvm.base.uvm_object_globals import UVM_DEBUG, UVM_MEDIUM
 from uvm.comps.uvm_env import UVMEnv
 from uvm.macros import *
 
+from uvm.base.uvm_debug import UVMDebug
+
+# UVMDebug.full_debug()
+
 #  //----------------------------------------------------------------------
 #  // class producer
 #  //----------------------------------------------------------------------
@@ -68,6 +72,7 @@ class producer(UVMComponent):
             uvm_info("producer", sv.sformatf("sending %d", randval), UVM_MEDIUM)
             await self.put_port.put(randval)
             self.num_items += 1
+        uvm_info("PRODUCER", "Finished run_phase", UVM_LOW)
 
 
 class consumer(UVMComponent):
@@ -87,6 +92,7 @@ class consumer(UVMComponent):
             val = arr[0]
             uvm_info("consumer", sv.sformatf("receiving %d", val), UVM_MEDIUM)
             self.num_items += 1
+        uvm_info("CONSUMER", "Finished run_phase", UVM_LOW)
 
 
 #  //----------------------------------------------------------------------
