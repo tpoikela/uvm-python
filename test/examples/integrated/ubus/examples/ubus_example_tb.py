@@ -29,15 +29,7 @@ from ubus_env import ubus_env
 
 
 class ubus_example_tb(UVMEnv):
-    #
     #  // Provide implementations of virtual methods such as get_type_name and create
-    #
-    #  // ubus environment
-    #  ubus_env ubus0
-    #
-    #  // Scoreboard to check the memory operation of the slave.
-    #  ubus_example_scoreboard scoreboard0
-    #
 
     def __init__(self, name, parent=None):
         UVMEnv.__init__(self, name, parent)
@@ -65,19 +57,15 @@ class ubus_example_tb(UVMEnv):
         self.ubus0 = ubus_env.type_id.create("ubus0", self)
         self.scoreboard0 = ubus_example_scoreboard.type_id.create("scoreboard0",
             self)
-        #  endfunction : build_phase
 
     def connect_phase(self, phase):
         # Connect slave0 monitor to scoreboard
         self.ubus0.slaves[0].monitor.item_collected_port.connect(
             self.scoreboard0.item_collected_export)
-    #  endfunction : connect_phase
 
     def end_of_elaboration_phase(self, phase):
         # Set up slave address map for ubus0 (basic default)
         self.ubus0.set_slave_address_map("slaves[0]", 0, 0xffff)
-        #  endfunction : end_of_elaboration_phase
 
-    #endclass : ubus_example_tb
 
 uvm_component_utils(ubus_example_tb)
