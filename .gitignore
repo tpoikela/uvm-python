@@ -45,7 +45,7 @@ test-results.xml
 *.fst.hier
 
 # Results
-results.xml
+results*.xml
 results_coverage.xml
 combined_results.xml
 
