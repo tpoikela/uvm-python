@@ -88,8 +88,7 @@ class ubus_slave_driver(UVMDriver):
             await RisingEdge(self.vif.sig_reset)
             self.vif.sig_error      <= 0
             self.vif.sig_wait       <= 0
-            self.vif.slave_en       <= 0
-        #  endtask : reset_signals
+            self.vif.slave_en       = 0
 
 
     #  // respond_to_transfer
@@ -99,7 +98,7 @@ class ubus_slave_driver(UVMDriver):
             self.vif.sig_error <= 0
             for i in range(resp.size):
                 if resp.read_write == READ:
-                    self.vif.slave_en <= 1
+                    self.vif.slave_en = 1
                     self.vif.sig_data_out <= resp.data[i]
                 if resp.wait_state[i] > 0:
                     self.vif.sig_wait <= 1
@@ -108,7 +107,7 @@ class ubus_slave_driver(UVMDriver):
                 self.vif.sig_wait <= 0
                 await RisingEdge(self.vif.sig_clock)
                 resp.data[i] = int(self.vif.sig_data)
-            self.vif.slave_en <= 0
+            self.vif.slave_en = 0
             self.vif.sig_wait  <= 0  # 1'bz
             self.vif.sig_error <= 0  # 1'bz
         else:
