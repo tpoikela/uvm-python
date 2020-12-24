@@ -20,11 +20,6 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 
-#package user_pkg;
-
-#import uvm_pkg::*;
-#`include "uvm_macros.svh"
-
 import cocotb
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time
