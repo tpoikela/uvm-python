@@ -318,6 +318,13 @@ def uvm_string_to_bits(string: str) -> int:
 #verilator = True
 verilator = False
 
+sim_product = ''
+if simulator.is_running():
+    sim_product = simulator.get_simulator_product()
+    print("SIM_PRODUCT IS |" + sim_product + "|")
+    if sim_product == "Verilator":
+        verilator = True
+
 UVM_POUND_ZERO_COUNT = 1000
 #UVM_NO_WAIT_FOR_NBA = True
 UVM_NO_WAIT_FOR_NBA = False
@@ -332,23 +339,10 @@ rw_event = ReadWrite()
 
 async def uvm_wait_for_nba_region():
     if verilator is True:
-        from .uvm_scheduler import UVMScheduler
-        await UVMScheduler.get().wait_nba(None)
+        await rw_event
     else:
-
-        # Note that this requires dut.nba signal to exist. Also, verilator does not
-        # finish the UVM phases correctly with this one
         if UVM_NO_WAIT_FOR_NBA is False:
             await rw_event
-            #from .uvm_root import UVMRoot
-            #dut = UVMRoot.get_dut()
-            #for _ in range(1):
-            #    next_nba = int(dut.nba)
-            #    next_nba += 1
-            #    dut.nba <= next_nba
-            #    await Edge(dut.nba)
-            #for _ in range(UVM_AFTER_NBA_WAIT):
-            #    await Timer(0)
         else:
             for _ in range(0, UVM_POUND_ZERO_COUNT):
                 await Timer(0)
@@ -460,23 +454,17 @@ def uvm_sim_time(units='NS'):
 rw_event2 = ReadWrite()
 
 async def uvm_empty_delay():
-    if verilator is False:
-        #await Timer(0, "NS")
+    if verilator is True:
         await rw_event2
     else:
-        await rw_event2
-        #from .uvm_scheduler import UVMScheduler
-        #await UVMScheduler.get().wait_zero(None)
+        await Timer(0, "NS")
 
 
 async def uvm_zero_delay():
-    if verilator is False:
-        # await Timer(0, "NS")
+    if verilator is True:
         await rw_event2
     else:
-        await rw_event2
-        #from .uvm_scheduler import UVMScheduler
-        #await UVMScheduler.get().wait_zero(None)
+        await Timer(0, "NS")
 
 
 def uvm_check_output_args(arr):
