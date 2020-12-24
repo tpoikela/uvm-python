@@ -31,33 +31,35 @@ from ...base import UVM_LOW, UVM_HIGH
 from ...base.uvm_globals import uvm_zero_delay
 from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 
-#//
-#// class: UVMRegHWResetSeq
-#// Test the hard reset values of registers
-#//
-#// The test sequence performs the following steps
-#//
-#// 1. resets the DUT and the
-#// block abstraction class associated with this sequence.
-#//
-#// 2. reads all of the registers in the block,
-#// via all of the available address maps,
-#// comparing the value read with the expected reset value.
-#//
-#// If bit-type resource named
-#// "NO_REG_TESTS" or "NO_REG_HW_RESET_TEST"
-#// in the "REG::" namespace
-#// matches the full name of the block or register,
-#// the block or register is not tested.
-#//
-#//| UVMResourceDb#(bit)::set({"REG::",regmodel.blk.get_full_name(),".*"},
-#//|                            "NO_REG_TESTS", 1, this)
-#//
-#// This is usually the first test executed on any DUT.
-#//
 
+class UVMRegHWResetSeq(UVMRegSequence):
+    """
 
-class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
+     class: UVMRegHWResetSeq
+     Test the hard reset values of registers
+
+     The test sequence performs the following steps
+
+     1. resets the DUT and the
+     block abstraction class associated with this sequence.
+
+     2. reads all of the registers in the block,
+     via all of the available address maps,
+     comparing the value read with the expected reset value.
+
+     If bit-type resource named
+     "NO_REG_TESTS" or "NO_REG_HW_RESET_TEST"
+     in the "REG::" namespace
+     matches the full name of the block or register,
+     the block or register is not tested.
+
+     .. code-block:: python
+         UVMResourceDb.set("REG::" + regmodel.blk.get_full_name() + ".*",
+                               "NO_REG_TESTS", 1, self)
+
+    This is usually the first test executed on any DUT.
+    """
+
 
     def __init__(self, name="UVMRegHWResetSeq"):
         super().__init__(name)
