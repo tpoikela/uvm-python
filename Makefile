@@ -45,8 +45,8 @@ cov-all:
 
 # Target to clean up the sim directories, logfiles etc
 clean:
-	find test/ -name 'sim_build' -exec rm -rf {} \;
-	find test/ -name 'results.xml' -exec rm -vf {} \;
+	find test/ -name 'sim_build*' -exec rm -rf {} \;
+	find test/ -name 'results*.xml' -exec rm -vf {} \;
 
 stubgen:
 	stubgen .venv/lib/python3.7/site-packages/cocotb_coverage
