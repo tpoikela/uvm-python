@@ -27,7 +27,7 @@ from .uvm_phase import UVMPhase, ph2str
 from .uvm_object_globals import (UVM_DEBUG, UVM_PHASE_ENDED, UVM_PHASE_EXECUTING, UVM_PHASE_IMP,
                                  UVM_PHASE_READY_TO_END, UVM_PHASE_STARTED)
 from .uvm_debug import uvm_debug
-from .uvm_globals import uvm_empty_delay, uvm_report_fatal, uvm_report_info
+from .uvm_globals import uvm_zero_delay, uvm_report_fatal, uvm_report_info
 
 #------------------------------------------------------------------------------
 #
@@ -193,7 +193,7 @@ class UVMTaskPhase(UVMPhase):
         #phase.m_num_procs_not_yet_returned += 1
         proc = cocotb.fork(self._execute_fork_join_none(comp,phase))
         #phase.m_num_procs_not_yet_returned -= 1
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         #join_none
 
 

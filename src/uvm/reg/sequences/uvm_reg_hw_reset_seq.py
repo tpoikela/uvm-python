@@ -28,7 +28,7 @@ from .. import UVMRegSequence
 from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base import UVM_LOW, UVM_HIGH
-from ...base.uvm_globals import uvm_empty_delay
+from ...base.uvm_globals import uvm_zero_delay
 from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
 
 #//
@@ -162,7 +162,7 @@ class UVMRegHWResetSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   virtual task reset_blk(uvm_reg_block blk)
     
     async def reset_blk(self, blk):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     #endclass: UVMRegHWResetSeq
 uvm_object_utils(UVMRegHWResetSeq)

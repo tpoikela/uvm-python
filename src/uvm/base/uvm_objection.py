@@ -757,7 +757,7 @@ class UVMObjection(UVMReportObject):
             ctxt.clear()
             # Save the context in the pool for later reuse
             UVMObjection.m_context_pool.append(ctxt)
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     #  // m_forked_drain
     #  // -------------
@@ -782,7 +782,7 @@ class UVMObjection(UVMReportObject):
         self.all_dropped(obj,source_obj,description, count)
 
         # wait for all_dropped cbs to complete
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         # TODO wait fork
 
         # we are ready to delete the 0-count entries for the current
@@ -807,7 +807,7 @@ class UVMObjection(UVMReportObject):
     async def m_init_objections(self):
         #uvm_debug(cls, 'm_init_objections', "Forking m_execute_scheduled_forks")
         pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks())
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     #  // Function: set_drain_time
     #  //

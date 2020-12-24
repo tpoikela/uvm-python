@@ -38,7 +38,7 @@ from ..uvm_reg_model import *
 from ..uvm_reg_map import UVMRegMap
 from ..uvm_reg_sequence import UVMRegSequence
 from ...macros import uvm_object_utils, uvm_error, uvm_info, uvm_warning
-from ...base import UVMResourceDb, UVM_LOW, uvm_empty_delay
+from ...base import UVMResourceDb, UVM_LOW, uvm_zero_delay
 from ...base.uvm_globals import uvm_report_info
 
 
@@ -291,7 +291,7 @@ class UVMRegAccessSeq(UVMRegSequence):
     #   // in an extension to reset the DUT.
     #   //
     async def reset_blk(self, blk):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
 uvm_object_utils(UVMRegAccessSeq)
@@ -346,7 +346,7 @@ class UVMRegMemAccessSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // Any additional steps required to reset the block
     #   // and make it accessibl
     async def reset_blk(self, blk):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
 uvm_object_utils(UVMRegMemAccessSeq)

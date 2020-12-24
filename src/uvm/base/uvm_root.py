@@ -32,7 +32,7 @@ from .uvm_version import (uvm_cdn_copyright, uvm_cy_copyright, uvm_mgc_copyright
                           uvm_revision_string, uvm_snps_copyright, uvm_tpoikela_copyright)
 from .uvm_cmdline_processor import UVMCmdlineProcessor
 from .uvm_globals import (uvm_is_match, uvm_report_error, uvm_report_warning,
-    uvm_empty_delay)
+    uvm_zero_delay)
 from .uvm_object_globals import (UVM_DEBUG, UVM_ERROR, UVM_FULL, UVM_HIGH,
     UVM_LOW, UVM_MEDIUM, UVM_NONE)
 from .uvm_phase import UVMPhase
@@ -285,7 +285,7 @@ class UVMRoot(UVMComponent):
                 uvm_fatal("TTINST",
                     "An uvm_test_top already exists via a previous call to run_test")
             #0; // forces shutdown because $finish is forked
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             uvm_debug(self, 'run_test', "factory.create in UVMRoot testname " + test_name)
 
             uvm_test_top = factory.create_component_by_name(test_name,
@@ -297,7 +297,7 @@ class UVMRoot(UVMComponent):
                 else:
                     msg = "call to run_test(" + test_name + ")"
                 uvm_fatal("INVTST", "Requested test from " + msg + " not found.")
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
         if len(self.m_children) == 0:
             uvm_fatal("NOCOMP", ("No components instantiated. You must either instantiate"
@@ -318,7 +318,7 @@ class UVMRoot(UVMComponent):
         uvm_debug(self, 'run_test', 'After phase-fork executing')
         #end
         #join_none
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         ##0; // let the phase runner start
 
         uvm_debug(self, 'run_test', 'Waiting all phases to complete JKJK')

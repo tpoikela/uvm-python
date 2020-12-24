@@ -40,7 +40,7 @@ from .sv import sv, uvm_split_string
 from ..macros import uvm_info, uvm_fatal, uvm_warning, uvm_error
 from .uvm_recorder import UVMRecorder
 from .uvm_globals import (uvm_is_match, uvm_string_to_action,
-        uvm_string_to_severity, uvm_empty_delay)
+        uvm_string_to_severity, uvm_zero_delay)
 from .uvm_factory import UVMObjectWrapper
 from .uvm_links import (UVMRelatedLink, UVMParentChildLink)
 
@@ -585,7 +585,7 @@ class UVMComponent(UVMReportObject):
 
     async def run(self):
         uvm_debug(self, 'run', self.get_name() + ' yield Timer(0) in self.run()')
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def pre_reset_phase(self, phase):
         """
@@ -609,7 +609,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def reset_phase(self, phase):
         """
@@ -633,7 +633,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def post_reset_phase(self, phase):
         """
@@ -657,7 +657,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def pre_configure_phase(self, phase):
         """
@@ -681,7 +681,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def configure_phase(self, phase):
         """
@@ -705,7 +705,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def post_configure_phase(self, phase):
         """
@@ -729,7 +729,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def pre_main_phase(self, phase):
         """
@@ -753,7 +753,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def main_phase(self, phase):
         """
@@ -777,7 +777,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def post_main_phase(self, phase):
         """
@@ -801,7 +801,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def pre_shutdown_phase(self, phase):
         """
@@ -825,7 +825,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def shutdown_phase(self, phase):
         """
@@ -849,7 +849,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def post_shutdown_phase(self, phase):
         """
@@ -873,7 +873,7 @@ class UVMComponent(UVMReportObject):
         Args:
             phase:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     def extract_phase(self, phase):
         """

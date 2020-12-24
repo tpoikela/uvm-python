@@ -26,7 +26,7 @@ import cocotb
 from cocotb.triggers import Timer
 
 from ..base.uvm_callback import UVMCallback, UVMCallbackIter, UVMCallbacks
-from ..base.uvm_globals import uvm_empty_delay
+from ..base.uvm_globals import uvm_zero_delay
 from ..macros import uvm_object_utils
 
 #//------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ class UVMRegCbs(UVMCallback):
         Args:
             rw:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def post_write(self, rw):
         """
@@ -141,7 +141,7 @@ class UVMRegCbs(UVMCallback):
         Args:
             rw:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     async def pre_read(self, rw):
         """
@@ -190,7 +190,7 @@ class UVMRegCbs(UVMCallback):
         Args:
             rw:
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     def post_read(self, rw):

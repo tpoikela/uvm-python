@@ -27,7 +27,7 @@ from cocotb.triggers import Event
 from .sv import sv, wait
 from .uvm_object import UVMObject
 from ..macros.uvm_message_defines import uvm_warning
-from .uvm_globals import uvm_empty_delay
+from .uvm_globals import uvm_zero_delay
 from .uvm_queue import UVMQueue
 
 
@@ -104,8 +104,8 @@ class UVMEventBase(UVMObject):
         if self.on is True:
             if delta is True:
                 #0
-                await uvm_empty_delay()
-            await uvm_empty_delay()  # TODO tpoikela: redundant, should be removed?
+                await uvm_zero_delay()
+            await uvm_zero_delay()  # TODO tpoikela: redundant, should be removed?
             return
         self.num_waiters += 1
         await wait(lambda: self.on is True, self.m_value_changed_event)
@@ -126,7 +126,7 @@ class UVMEventBase(UVMObject):
         """
         if self.on is False:
             if delta is True:
-                await uvm_empty_delay()
+                await uvm_zero_delay()
             return
         self.num_waiters += 1
         await wait(lambda: self.on is False, self.m_value_changed_event)

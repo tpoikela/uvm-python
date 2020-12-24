@@ -27,7 +27,7 @@ from uvm.base.uvm_object import UVMObject
 from uvm.base.uvm_callback import UVMCallbackIter
 from uvm.macros import (uvm_object_utils, uvm_fatal, uvm_do_obj_callbacks)
 from uvm.reg.uvm_reg_model import UVM_NOT_OK
-from uvm.base.uvm_globals import uvm_empty_delay
+from uvm.base.uvm_globals import uvm_zero_delay
 from .uvm_reg_cbs import UVMRegCbs
 
 #//------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ class UVMRegBackdoor(UVMObject):
         Args:
             rw: 
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     async def post_read(self, rw):
@@ -266,7 +266,7 @@ class UVMRegBackdoor(UVMObject):
         Args:
             rw: 
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     async def pre_write(self, rw):
@@ -283,7 +283,7 @@ class UVMRegBackdoor(UVMObject):
         Args:
             rw: 
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     async def post_write(self, rw):
@@ -297,7 +297,7 @@ class UVMRegBackdoor(UVMObject):
         Args:
             rw: 
         """
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     #`ifdef UVM_USE_PROCESS_CONTAINER

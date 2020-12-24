@@ -452,19 +452,13 @@ def uvm_sim_time(units='NS'):
 
 
 rw_event2 = ReadWrite()
-
-async def uvm_empty_delay():
-    if verilator is True:
-        await rw_event2
-    else:
-        await Timer(0, "NS")
-
+timer_zero = Timer(0, "NS")
 
 async def uvm_zero_delay():
     if verilator is True:
         await rw_event2
     else:
-        await Timer(0, "NS")
+        await timer_zero
 
 
 def uvm_check_output_args(arr):

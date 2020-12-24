@@ -26,7 +26,7 @@ from cocotb.triggers import Timer
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
 from ..macros import uvm_component_utils, uvm_info
-from ..base.uvm_globals import uvm_check_output_args, uvm_empty_delay
+from ..base.uvm_globals import uvm_check_output_args, uvm_zero_delay
 from ..base.uvm_object_globals import *
 
 FATAL_MSG1 = ("Item_done() called with no outstanding requests." +
@@ -153,7 +153,7 @@ class UVMSequencer(UVMSequencerParamBase):
             t (UVMSequenceItem): Response item.
         """
         self.put_response(t)
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     #  // Task: get

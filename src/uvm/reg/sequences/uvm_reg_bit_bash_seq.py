@@ -35,7 +35,7 @@ from ..uvm_reg_model import (UVM_NO_HIER, UVM_NO_CHECK,
         UVM_FRONTDOOR, UVM_IS_OK)
 from ...macros import (uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH,
     uvm_warning)
-from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_empty_delay
+from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_zero_delay
 
 
 #//----------------------------------------------------------------------------
@@ -304,7 +304,7 @@ class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
     #   // in an extension to reset the DUT.
     #   //
     async def reset_blk(self, blk):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
 uvm_object_utils(UVMRegBitBashSeq)

@@ -38,7 +38,7 @@ from ..base.uvm_object_globals import (UVM_FINISHED, UVM_FULL, UVM_NONE,
         UVM_SEQ_ARB_FIFO, UVM_SEQ_ARB_RANDOM, UVM_LOW)
 from ..base.uvm_pool import UVMPool
 from ..base.uvm_queue import UVMQueue
-from ..base.uvm_globals import uvm_wait_for_nba_region, uvm_empty_delay
+from ..base.uvm_globals import uvm_wait_for_nba_region, uvm_zero_delay
 from ..base.sv import wait
 from typing import List, cast
 
@@ -301,7 +301,7 @@ class UVMSequencerBase(UVMComponent):
                 if seq is None:
                     uvm_info("UVM/SQR/PH/DEF/SB/None", "Default phase sequence for phase '"
                             + phase.get_name() + "' explicitly disabled", UVM_FULL)
-                    await uvm_empty_delay()
+                    await uvm_zero_delay()
                     return
 
             # uvm_config_db#(uvm_object_wrapper)?
@@ -311,7 +311,7 @@ class UVMSequencerBase(UVMComponent):
                 if wrapper is None:
                     uvm_info("UVM/SQR/PH/DEF/OW/None", "Default phase sequence for phase '"
                             + phase.get_name() + "' explicitly disabled", UVM_FULL)
-                    await uvm_empty_delay()
+                    await uvm_zero_delay()
                     return
 
                 new_obj = f.create_object_by_type(wrapper, self.get_full_name(),
@@ -320,7 +320,7 @@ class UVMSequencerBase(UVMComponent):
                 if not(sv.cast(seq_arr, new_obj, UVMSequence) or seq_arr[0] is None):
                     uvm_warning("PHASESEQ", "Default sequence for phase '" +
                             phase.get_name() + "' %s is not a sequence type")
-                    await uvm_empty_delay()
+                    await uvm_zero_delay()
                     return
                 else:
                     seq = seq_arr[0]
@@ -328,7 +328,7 @@ class UVMSequencerBase(UVMComponent):
         if seq is None:
             uvm_info("PHASESEQ", "No default phase sequence for phase '"
                     + phase.get_name() + "'", UVM_FULL)
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             return
 
         uvm_info("PHASESEQ", "Starting default sequence '" + seq.get_type_name()
@@ -342,11 +342,11 @@ class UVMSequencerBase(UVMComponent):
         if (seq.do_not_randomize is False and seq.randomize() is False):
             uvm_warning("STRDEFSEQ", "Randomization failed for default sequence '"
                     + seq.get_type_name() + "' for phase '" + phase.get_name() + "'")
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             return
 
         cocotb.fork(self._seq_fork_proc(seq, phase))
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     async def _seq_fork_proc(self, seq, phase):

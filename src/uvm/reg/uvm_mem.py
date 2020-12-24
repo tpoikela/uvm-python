@@ -24,7 +24,7 @@
 from ..base.uvm_object import UVMObject
 from ..base.uvm_pool import UVMPool, UVMObjectStringPool
 from ..base.uvm_queue import UVMQueue
-from ..base.uvm_globals import (uvm_check_output_args, uvm_empty_delay, uvm_report_enabled,
+from ..base.uvm_globals import (uvm_check_output_args, uvm_zero_delay, uvm_report_enabled,
     uvm_report_info)
 from ..base.uvm_object_globals import UVM_DEBUG, UVM_HIGH, UVM_INFO
 from ..base.sv import sv
@@ -973,7 +973,7 @@ class UVMMem(UVMObject):
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, arr_map_info, "burst_write()") is False:
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             return
 
         self.m_write_in_progress = True
@@ -1076,7 +1076,7 @@ class UVMMem(UVMObject):
         self.m_lineno = rw.lineno
 
         if self.Xcheck_accessX(rw, arr_map_info, "burst_read()") is False:
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             return
 
         self.m_read_in_progress = True
@@ -1537,7 +1537,7 @@ class UVMMem(UVMObject):
     #   // of this method.
     #   //
     async def pre_write(self, rw):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     #   // Task: post_write
     #   //
@@ -1551,7 +1551,7 @@ class UVMMem(UVMObject):
     #   //
     #   virtual task post_write(uvm_reg_item rw); endtask
     async def post_write(self, rw):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     #   // Task: pre_read
@@ -1569,7 +1569,7 @@ class UVMMem(UVMObject):
     #   //
     #   virtual task pre_read(uvm_reg_item rw); endtask
     async def pre_read(self, rw):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     #   // Task: post_read
@@ -1585,7 +1585,7 @@ class UVMMem(UVMObject):
     #   //
     #   virtual task post_read(uvm_reg_item rw); endtask
     async def post_read(self, rw):
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
 
     #   //----------------

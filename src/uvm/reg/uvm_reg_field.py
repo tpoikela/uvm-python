@@ -1351,7 +1351,7 @@ class UVMRegField(UVMObject):
         Args:
             rw (UVMRegItem): Reg item associated with write.
         """
-        #await uvm_empty_delay()
+        #await uvm_zero_delay()
         pass
 
     async def post_write(self, rw):
@@ -1370,7 +1370,7 @@ class UVMRegField(UVMObject):
         Args:
             rw (UVMRegItem): Reg item associated with write.
         """
-        #await uvm_empty_delay()
+        #await uvm_zero_delay()
         pass
 
     async def pre_read(self, rw):
@@ -1391,7 +1391,6 @@ class UVMRegField(UVMObject):
         Args:
             rw (UVMRegItem): Reg item associated with read.
         """
-        #await uvm_empty_delay()
         pass
 
     async def post_read(self, rw):
@@ -1412,7 +1411,6 @@ class UVMRegField(UVMObject):
         Args:
             rw (UVMRegItem): Reg item associated with read.
         """
-        #await uvm_empty_delay()
         pass
 
     #   extern virtual function void do_print (uvm_printer printer)

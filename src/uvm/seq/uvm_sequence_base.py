@@ -29,7 +29,7 @@ from ..base.sv import sv
 from ..base.uvm_queue import UVMQueue
 from .uvm_sequence_item import UVMSequenceItem
 from ..base.uvm_object_globals import *
-from ..base.uvm_globals import uvm_empty_delay
+from ..base.uvm_globals import uvm_zero_delay
 from ..macros import uvm_fatal, uvm_warning, uvm_error
 from ..base.uvm_pool import UVMPool
 from ..dap.uvm_get_to_lock_dap import uvm_get_to_lock_dap
@@ -371,7 +371,7 @@ class UVMSequenceBase(UVMSequenceItem):
                 self.m_sequencer.m_sequence_exiting(self)
 
         #0; // allow stopped and finish waiters to resume
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
         if (self.m_parent_sequence is not None and
                 self in self.m_parent_sequence.children_array):
@@ -388,7 +388,7 @@ class UVMSequenceBase(UVMSequenceItem):
 
         # absorb delta to ensure PRE_START was seen
         #0
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
         # Raise the objection if enabled
         # (This will lock the uvm_get_to_lock_dap)
@@ -400,7 +400,7 @@ class UVMSequenceBase(UVMSequenceItem):
         if call_pre_post == 1:
             self.m_sequence_state = UVM_PRE_BODY
             #0
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             await self.pre_body()
 
         if parent_sequence is not None:
@@ -409,12 +409,12 @@ class UVMSequenceBase(UVMSequenceItem):
 
         self.m_sequence_state = UVM_BODY
         #0
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         await self.body()
 
         self.m_sequence_state = UVM_ENDED
         #0
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
         if parent_sequence is not None:
             parent_sequence.post_do(self)
@@ -422,12 +422,12 @@ class UVMSequenceBase(UVMSequenceItem):
         if call_pre_post == 1:
             self.m_sequence_state = UVM_POST_BODY
             #0
-            await uvm_empty_delay()
+            await uvm_zero_delay()
             await self.post_body()
 
         self.m_sequence_state = UVM_POST_START
         #0
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         await self.post_start()
 
         # Drop the objection if enabled
@@ -437,7 +437,7 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_sequence_state = UVM_FINISHED
         self.m_events[UVM_FINISHED].set()
         #0
-        await uvm_empty_delay()
+        await uvm_zero_delay()
         #join
 
 
@@ -505,7 +505,7 @@ class UVMSequenceBase(UVMSequenceItem):
           This method should not be called directly by the user.
         """
         uvm_warning("uvm_sequence_base", "Body definition undefined")
-        await uvm_empty_delay()
+        await uvm_zero_delay()
 
     def post_do(self, this_item):
         """
