@@ -36,9 +36,20 @@
 
 include ../../MakefileCommon.mk
 
-VERILOG_SOURCES := $(WPWD)/module_top.sv
+ifeq ($(TOPLEVEL_LANG),verilog)
+	VERILOG_SOURCES := $(WPWD)/module_top.sv
+else ifeq ($(TOPLEVEL_LANG),vhdl)
+	VHDL_SOURCES := $(WPWD)/module_top.vhd
+else
+    $(error "A valid value (verilog) was not provided for TOPLEVEL_LANG=$(TOPLEVEL_LANG)")
+endif
 
-PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_MEDIUM
+ifeq ($(TOPLEVEL_LANG),vhdl)
+	PLUSARGS=-- +UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_MEDIUM
+else
+	PLUSARGS=+UVM_CONFIG_DB_TRACE=1 +UVM_VERBOSITY=UVM_MEDIUM
+endif
+
 ifneq ($(UVM_TEST),)
     PLUSARGS += +UVM_TESTNAME=$(UVM_TEST)
 endif
@@ -46,6 +57,8 @@ endif
 ifneq ($(SIMARGS),)
     PLUSARGS += $(SIMARGS)
 endif
+
+
 
 TOPLEVEL := module_top
 MODULE   ?= fifo
