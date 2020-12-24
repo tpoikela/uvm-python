@@ -21,18 +21,14 @@
 #//----------------------------------------------------------------------
 
 import cocotb
+from cocotb.clock import Clock
+
+from cocotb.triggers import Timer
 from uvm.base.uvm_globals import run_test
 from top import top
 
 @cocotb.test()
 async def hello_world(dut):
-    #  `include "packet.sv"
-    #  `include "producer.sv"
-    #  `include "consumer.sv"
-    #  `include "top.sv"
-    #
-    #  top mytop;
-    #
     #  initial begin
     #    $timeformat(-9,0," ns",5);
     #    uvm_default_table_printer.knobs.name_width=20;
@@ -44,6 +40,9 @@ async def hello_world(dut):
     #    uvm_config_int::set(null, "*","recording_detail",UVM_LOW);
     #    //uvm_default_printer = uvm_default_tree_printer;
     #    uvm_default_printer.knobs.reference=0;
+
+    # Required by ghdl, otherwise sim ends in fatal error
+    cocotb.fork(Clock(dut.clk, 10, "NS").start())
     mytop = top("top", parent=None)
     #    uvm_default_table_printer.knobs.type_width=20;
     await run_test()
