@@ -23,6 +23,7 @@
 import cocotb
 from cocotb.triggers import Timer
 from cocotb.utils import get_sim_time
+from cocotb.clock import Clock
 
 from uvm import UVMObject, UVMComponent, UVMDebug, UVM_HEX, uvm_fatal
 from uvm.base.sv import sv
@@ -237,6 +238,9 @@ async def test_module_top(dut):
     mu.print_obj()
     factory.print_factory(1)
     mu.print_obj()
+
+    # tpoikela: Clock required by ghdl, otherwise scheduler throws error
+    cocotb.fork(Clock(dut.clk, 10, "NS").start())
 
     # Fork 2 initial tasks
     task1 = cocotb.fork(initial1())
