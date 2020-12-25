@@ -23,7 +23,9 @@
 import cocotb
 from cocotb.utils import get_sim_time
 from cocotb.triggers import Timer
+from cocotb.clock import Clock
 
+from uvm.macros import uvm_component_utils
 from uvm.base.uvm_globals import run_test
 from uvm.base.uvm_component import UVMComponent
 from uvm.base.uvm_object_globals import *
@@ -35,7 +37,7 @@ MARKER = "===============>>>>>>>>>"
 class MyComponent(UVMComponent):
 
     def __init__(self, name, parent):
-        UVMComponent.__init__(self, name, parent)
+        super().__init__(name, parent)
     
     
     async def run_phase(self, phase):
@@ -51,22 +53,26 @@ class MyComponent(UVMComponent):
         await Timer(1000, 'ns')
         self.uvm_report_info("component", "finishing up!", UVM_MEDIUM)
         phase.drop_objection(self)
-# uvm_component_utils(MyComponent)
+
+uvm_component_utils(MyComponent)
 
 
 @cocotb.test()
-async def component_test(dut):
+async def simple_trivial_component_test(dut):
     cc = MyComponent("Top", None)
     print(cc.get_full_name())
+
+    # tpoikela: Required by ghdl
+    cocotb.fork(Clock(dut.clk, 1, "NS").start())
     await run_test()
     sim_time = get_sim_time()
-    await Timer(1001, 'ns')
+    await Timer(501, 'ns')
 
     if sim_time == 0:
         raise Exception('Sim time has not progressed')
     else:
         sim_time = get_sim_time('ns')
         print("Sim time at the end is " + str(get_sim_time('ns')))
-        if str(sim_time) != "2004.0":
-            msg = "Exp: 2004.0, got: " + str(sim_time)
+        if str(sim_time) != "1504.0":
+            msg = "Exp: 1504.0, got: " + str(sim_time)
             raise Exception('Wrong sim time at the end: ' + msg)
