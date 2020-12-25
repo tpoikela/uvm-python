@@ -35,11 +35,11 @@ from .apb_rw import *
 class apb_master_cbs(UVMCallback):
     
     async def trans_received(self, xactor, cycle):
-        await Timer(0, "NS")
+        await Timer(1, "NS")
 
     
     async def trans_executed(self, xactor, cycle):
-        await Timer(0, "NS")
+        await Timer(1, "NS")
 
 
 class apb_master(UVMDriver):  #(apb_rw)
@@ -149,11 +149,11 @@ class apb_master(UVMDriver):  #(apb_rw)
 
     
     async def trans_received(self, tr):
-        await Timer(0, "NS")
+        await Timer(1, "NS")
 
     
     async def trans_executed(self, tr):
-        await Timer(0, "NS")
+        await Timer(1, "NS")
 
 
 uvm_component_utils(apb_master)
