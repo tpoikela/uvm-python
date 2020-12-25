@@ -1,7 +1,8 @@
 # Common makefile for uvm-python examples
+#
 
-COCOTB_HDL_TIMEUNIT=1ns
-COCOTB_HDL_TIMEPRECISION=1ns
+COCOTB_HDL_TIMEUNIT ?= 1ns
+COCOTB_HDL_TIMEPRECISION ?= 1ns
 
 TOPLEVEL_LANG ?= verilog
 
@@ -31,5 +32,9 @@ ifneq ($(VLOG),)
 endif
 
 ifneq ($(UVM_TEST),)
-	SIMARGS += +UVM_TESTNAME=$(UVM_TEST)
+    ifeq ($(TOPLEVEL_LANG),vhdl)
+	    SIMARGS += -- +UVM_TESTNAME=$(UVM_TEST)
+    else
+	    SIMARGS += +UVM_TESTNAME=$(UVM_TEST)
+	endif
 endif
