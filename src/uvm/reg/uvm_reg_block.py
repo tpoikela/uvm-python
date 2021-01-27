@@ -1300,7 +1300,7 @@ class UVMRegBlock(UVMObject):
 
             if len(parent_paths) == 0:
                 if hdl_path != "":
-                    paths.push_back(hdl_path)
+                    paths.append(hdl_path)
                 continue
 
             for j in range(len(parent_paths)):
