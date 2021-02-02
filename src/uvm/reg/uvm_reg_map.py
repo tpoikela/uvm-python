@@ -1335,7 +1335,7 @@ class UVMRegMap(UVMObject):
         addrs = []
         system_map = self.get_root_map()
         bus_width = self.get_n_bytes()
-        byte_en = -1
+        byte_en = int(''.join(['1' for bit in range(bus_width)]),2)
         map_info = None
         n_bits = 0
         lsb = 0
@@ -1346,7 +1346,7 @@ class UVMRegMap(UVMObject):
         n_bits_init = 0
         accesses = []
 
-        [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
+        [map_info, n_bits_init, lsb, skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         #addrs = map_info.addr
         addrs = map_info.addr.copy()
 
@@ -1486,8 +1486,8 @@ class UVMRegMap(UVMObject):
         """
         addrs = []  # uvm_reg_addr_t[$]
         system_map = self.get_root_map()
-        bus_width  = self.get_n_bytes()
-        byte_en    = -1
+        bus_width = self.get_n_bytes()
+        byte_en = int(''.join(['1' for bit in range(bus_width)]),2)
         map_info = None
         size = 0
         n_bits = 0
@@ -1500,7 +1500,7 @@ class UVMRegMap(UVMObject):
         accesses = []  # uvm_reg_bus_op[$]
 
         # print("do_bus_read Given rw was " + rw.convert2string())
-        [map_info, size, lsb, addr_skip] = self.Xget_bus_infoX(rw, map_info, n_bits, lsb, skip)
+        [map_info, n_bits_init, lsb, skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         # Need a copy as this will be modified later
         addrs = map_info.addr.copy()
 
@@ -1517,7 +1517,7 @@ class UVMRegMap(UVMObject):
                 temp_be = 0
                 ii = 0
                 n_access_extra = lsb % (bus_width*8)
-                n_access = n_access_extra + n_bits
+                n_access = n_access_extra + n_bits_init
                 temp_be = n_access_extra
                 while (temp_be >= 8):
                     # byte_en[ii] = 0
@@ -1525,7 +1525,7 @@ class UVMRegMap(UVMObject):
                     ii += 1
                     temp_be -= 8
 
-                temp_be += n_bits
+                temp_be += n_bits_init
                 while(temp_be > 0):
                     # byte_en[ii] = 1
                     byte_en = sv.set_bit(byte_en, ii)
@@ -1534,7 +1534,7 @@ class UVMRegMap(UVMObject):
                 byte_en &= (1 << ii) - 1
                 for i in range(skip):
                     addrs.pop_front()
-                while addrs.size() > (int(n_bits/(bus_width*8)) + 1):
+                while addrs.size() > (int(n_bits_init/(bus_width*8)) + 1):
                     addrs.pop_back()
             #end
             curr_byte = 0
