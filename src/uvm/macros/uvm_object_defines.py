@@ -16,6 +16,7 @@ def uvm_object_utils(T):
     m_uvm_object_registry_internal(T,Ts)
     m_uvm_object_create_func(T, Ts)
     m_uvm_get_type_name_func(T, Ts)
+    m_uvm_object_repr_func(T, Ts)
     return T
 
 
@@ -73,6 +74,13 @@ def m_uvm_object_create_func(T,S):
     def create(self, name=""):
         return T(name)
     setattr(T, 'create', create)
+
+
+def m_uvm_object_repr_func(T,S):
+    def __repr__(self):
+        return T.convert2string(self)
+    if hasattr(T, 'convert2string'):
+        setattr(T, '__repr__', __repr__)
 
 
 # Needed to make uvm_field_* macros work with similar args as in SV,
