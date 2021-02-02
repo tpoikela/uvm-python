@@ -205,6 +205,7 @@ UVM_BIG_FIFO = 4
 UVM_REG = 0
 UVM_FIELD = 1
 UVM_MEM = 2
+UVM_ELEMENT_KIND_NAMES = ["UVM_REG", "UVM_FIELD", "UVM_MEM"]
 #   } uvm_elem_kind_e
 
 # Enum: uvm_access_e

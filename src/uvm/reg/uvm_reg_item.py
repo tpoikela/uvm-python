@@ -33,7 +33,7 @@ from ..seq.uvm_sequence_item import UVMSequenceItem
 from ..macros.uvm_object_defines import uvm_object_utils
 from ..macros.uvm_message_defines import uvm_error, uvm_fatal
 from .uvm_reg_model import (UVM_READ, UVM_NOT_OK, UVM_MEM, UVM_FRONTDOOR,
-    UVM_ACCESS_NAMES)
+    UVM_ACCESS_NAMES, UVM_ELEMENT_KIND_NAMES)
 from ..base.uvm_object_globals import UVM_HIGH, UVM_INFO
 from ..base.sv import sv
 from ..base.uvm_globals import uvm_report_enabled
@@ -174,6 +174,7 @@ class UVMRegItem(UVMSequenceItem):
         #  // <uvm_mem>, or <uvm_reg_field>.
         #  //
         self.element = None
+        self.element_kind = None
 
         #  // Variable: map
         #  //
@@ -196,11 +197,15 @@ class UVMRegItem(UVMSequenceItem):
         """
         value_s = ""
         ele_name = "null"
+
         if self.element is not None:
             ele_name = self.element.get_full_name()
-        kind_str = UVM_ACCESS_NAMES[self.kind]
-        s = ("kind=" + kind_str +
-             " ele_kind=" + str(self.element_kind) +
+
+        kind_str         = UVM_ACCESS_NAMES[self.kind]
+        element_kind_str = UVM_ELEMENT_KIND_NAMES[self.element_kind]
+
+        s = ("kind="      + kind_str +
+             " ele_kind=" + element_kind_str +
              " ele_name=" + ele_name)
 
         if (len(self.value) > 1 and uvm_report_enabled(UVM_HIGH, UVM_INFO, "RegModel")):
@@ -211,6 +216,7 @@ class UVMRegItem(UVMSequenceItem):
         else:
             value_s = sv.sformatf("%0h", self.value[0])
         s = s + " value=" + value_s
+        
         if self.element_kind == UVM_MEM:
             s = s + sv.sformatf(" offset=%0h", self.offset)
 
