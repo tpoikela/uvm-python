@@ -96,7 +96,7 @@ class UVMRegField(UVMObject):
         self.m_lineno = 0
         self.m_cover_on = 0
         self.m_individually_accessible = False
-        self.m_check = UVM_NO_CHECK  # uvm_check_e
+        self.m_check = UVM_CHECK  # uvm_check_e
         if UVMRegField.m_predefined is False:
             UVMRegField.m_predefined = UVMRegField.m_predefine_policies()
 
