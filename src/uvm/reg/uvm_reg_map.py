@@ -1335,7 +1335,7 @@ class UVMRegMap(UVMObject):
         addrs = []
         system_map = self.get_root_map()
         bus_width = self.get_n_bytes()
-        byte_en = int(''.join(['1' for bit in range(bus_width)]),2)
+        byte_en = sv.get_vector_of_ones(bus_width)
         map_info = None
         n_bits = 0
         lsb = 0
@@ -1487,7 +1487,7 @@ class UVMRegMap(UVMObject):
         addrs = []  # uvm_reg_addr_t[$]
         system_map = self.get_root_map()
         bus_width = self.get_n_bytes()
-        byte_en = int(''.join(['1' for bit in range(bus_width)]),2)
+        byte_en = sv.get_vector_of_ones(bus_width)
         map_info = None
         size = 0
         n_bits = 0

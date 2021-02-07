@@ -322,6 +322,10 @@ class sv:
     def clear_bit(cls, int_val: int, idx: int) -> int:
         return int_val & ~(1 << idx)
 
+    @classmethod
+    def get_vector_of_ones(cls, width) -> int:
+        return int(''.join(['1' for bit in range(width)]),2)
+
 
 random.seed(0)
 
