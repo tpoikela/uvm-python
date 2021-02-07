@@ -174,7 +174,7 @@ class UVMRegItem(UVMSequenceItem):
         #  // <uvm_mem>, or <uvm_reg_field>.
         #  //
         self.element = None
-        self.element_kind = None
+        self.element_kind = -1
 
         #  // Variable: map
         #  //
