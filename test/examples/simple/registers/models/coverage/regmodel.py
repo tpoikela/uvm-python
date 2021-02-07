@@ -91,7 +91,7 @@ class reg_R(UVMReg):
         self.F1.set_compare()
 
         self.F2 = UVMRegField.type_id.create("F2",None,self.get_full_name())
-        self.F2.configure(self, 4, 4, "RO", 0, 0x00, 1, 1, 1)
+        self.F2.configure(self, 4, 4, "RO", 0, 0xA, 1, 1, 1)
         self.rand('F2')
 
 

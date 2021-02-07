@@ -26,7 +26,7 @@ module reg_mem_dut#(
 );
 
 reg[MEM_DATA_WIDTH-1:0] mem[0:MEM_SIZE-1];
-reg[DATA_WIDTH-1:0] reg_a, reg_d, data_reg;
+reg[DATA_WIDTH-1:0] reg_a, reg_b, data_reg;
 reg addr_err;
 
 
@@ -45,14 +45,14 @@ always_comb begin
     else if (reg_a_enable)
         data_out = reg_a;
     else if (reg_b_enable)
-        data_out = reg_d;
+        data_out = reg_b;
 end
 
 always_ff@(posedge clk or negedge rst)
 if (rst == 1'b0) begin
     addr_err <= 1'b0;
-    reg_a <= 16'h0;
-    reg_d <= 16'h0;
+    reg_a <= 16'h00A0;
+    reg_b <= 16'h00A0;
     data_reg <= 16'h0;
 end
 else begin
@@ -61,9 +61,9 @@ else begin
         if (mem_enable)
             mem[mem_addr] <= data_in[MEM_DATA_WIDTH-1:0];
         else if (reg_a_enable)
-            reg_a <= data_in;
+            reg_a[15:0] <= {data_in[15:8], 4'hA, data_in[3:0]};
         else if (reg_b_enable)
-            reg_d <= data_in;
+            reg_b <= {data_in[15:8], 4'hA, data_in[3:0]};
         else
             addr_err <= 1'b1;
     end
@@ -75,7 +75,7 @@ else begin
         else if (reg_a_enable)
             data_reg <= reg_a;
         else if (reg_b_enable)
-            data_reg <= reg_d;
+            data_reg <= reg_b;
         else
             addr_err <= 1'b1;
     end
