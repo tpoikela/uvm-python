@@ -35,7 +35,7 @@ import cocotb
 from cocotb_coverage import crv
 from cocotb.triggers import Lock, Timer, Combine, First
 from cocotb.utils import get_sim_time, simulator
-from cocotb.bus import Bus
+from cocotb_bus.bus import Bus
 
 from .uvm_exceptions import RandomizeError
 
