@@ -24,6 +24,7 @@ cache:
     - verilator/
 
 before_script:
+  - gcc --version
   - python -V  # Print out python version for debugging
   - python -m venv venv
   - source venv/bin/activate
