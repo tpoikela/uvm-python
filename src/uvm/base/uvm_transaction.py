@@ -184,10 +184,8 @@ class UVMTransaction(UVMObject):
         self.begin_time = -1
         self.end_time = -1
         self.accept_time = -1
-        #endfunction // uvm_transaction
 
-    #
-    #
+
     #  // Function: accept_tr
     #  //
     #  // Calling ~accept_tr~ indicates that the transaction item has been received by
@@ -237,7 +235,6 @@ class UVMTransaction(UVMObject):
     def do_accept_tr(self):
         return
 
-    #
     #
     #  // Function: begin_tr
     #  //
@@ -434,6 +431,8 @@ class UVMTransaction(UVMObject):
     #  // Returns 0 if the transaction has not been started.
     #
     #  extern function bit is_active ()
+    def is_active(self):
+        return self.end_time == -1
 
 
     #  // Function: get_event_pool
@@ -445,6 +444,8 @@ class UVMTransaction(UVMObject):
     #  // specialization of <uvm_pool#(KEY,T)>, e.g. a ~uvm_pool#(uvm_event)~.
     #
     #  extern function uvm_event_pool get_event_pool ()
+    def get_event_pool(self):
+        return self.events
 
 
     #  // Function: set_initiator
@@ -469,12 +470,13 @@ class UVMTransaction(UVMObject):
 
     #  // Function: get_accept_time
     #
-    #  extern function time   get_accept_time    ()
-
+    def get_accept_time(self):
+        return self.accept_time
 
     #  // Function: get_begin_time
     #
-    #  extern function time   get_begin_time     ()
+    def get_begin_time(self):
+        return self.begin_time
 
 
     #  // Function: get_end_time
@@ -483,7 +485,8 @@ class UVMTransaction(UVMObject):
     #  // as by a previous call to <accept_tr>, <begin_tr>, <begin_child_tr>, or <end_tr>.
     #
     #  extern function time   get_end_time       ()
-
+    def get_end_time(self):
+        return self.end_time
 
 
     #  // Function: set_transaction_id
@@ -590,49 +593,6 @@ class UVMTransaction(UVMObject):
 #function uvm_component uvm_transaction::get_initiator()
 #  return initiator
 #endfunction
-#
-# get_event_pool
-# --------------
-#
-#function uvm_event_pool uvm_transaction::get_event_pool()
-#  return events
-#endfunction
-#
-#
-# is_active
-# ---------
-#
-#function bit uvm_transaction::is_active()
-#  return (end_time == -1)
-#endfunction
-#
-#
-# get_begin_time
-# --------------
-#
-#function time uvm_transaction::get_begin_time ()
-#  return begin_time
-#endfunction
-#
-#
-# get_end_time
-# ------------
-#
-#function time uvm_transaction::get_end_time ()
-#  return end_time
-#endfunction
-#
-#
-# get_accept_time
-# ---------------
-#
-#function time uvm_transaction::get_accept_time ()
-#  return accept_time
-#endfunction
-#
-#
-#
-#
 #
 #
 #
