@@ -1,8 +1,9 @@
 # gitlab CI config for uvm-python.
 # Official language image. Look for the different tagged releases at:
 # https://hub.docker.com/r/library/python/tags/
-#image: python:latest
 image: python:3.7.6
+#image: python:3.8
+#image: gcc:10.2.0
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
@@ -25,16 +26,16 @@ cache:
 
 before_script:
   - uname -a
-  - add-apt-repository ppa:ubuntu-toolchain-r/test
   - gcc --version
+  - dpkg --list | grep compiler
   - python -V  # Print out python version for debugging
   - python -m venv venv
   - source venv/bin/activate
-  - pip freeze
-  - pip install -r ci/requirements.txt
+  - python -m pip freeze
+  - python -m pip install -r ci/requirements.txt
   - apt-get update -qq
   - apt-cache madison gcc
-  - apt-get install -y -qq flex bison gperf gcc-10.2.1
+  - apt-get install -y -qq flex bison gperf
   - bash ci/install_iverilog.sh
   # - bash ci/install_ghdl.sh
   # - bash ci/install_verilator.sh
