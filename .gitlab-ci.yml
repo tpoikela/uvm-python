@@ -24,6 +24,8 @@ cache:
     - verilator/
 
 before_script:
+  - uname -a
+  - add-apt-repository ppa:ubuntu-toolchain-r/test
   - gcc --version
   - python -V  # Print out python version for debugging
   - python -m venv venv
@@ -31,6 +33,7 @@ before_script:
   - pip freeze
   - pip install -r ci/requirements.txt
   - apt-get update -qq
+  - apt-cache madison gcc
   - apt-get install -y -qq flex bison gperf gcc-10.2.1
   - bash ci/install_iverilog.sh
   # - bash ci/install_ghdl.sh
