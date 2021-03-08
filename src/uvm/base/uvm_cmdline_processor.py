@@ -504,7 +504,8 @@ class UVMCmdlineProcessor(UVMReportObject):
             argv = sys.argv
         if UVMCmdlineProcessor.m_test_mode is True:
             argv = UVMCmdlineProcessor.m_test_argv
-        self.extract_args(argv)
+        if argv is not None:
+            self.extract_args(argv)
 
 
     def extract_args(self, argv):
