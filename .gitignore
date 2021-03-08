@@ -9,6 +9,8 @@ __pycache__
 *.log
 *.pyc
 build
+dist
+out
 sim_build*
 .mypy_cache
 .pytype
@@ -22,6 +24,11 @@ htmlcov/
 test-cocotb.xml
 test-results.xml
 .cocotb-results
+
+# ghdl files
+e~*.o
+
+common_stub
 
 .eggs
 *egg-info*
