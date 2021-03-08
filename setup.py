@@ -1,6 +1,10 @@
 from os import path
 from setuptools import setup, find_packages
 
+version = {}
+with open("src/uvm/version.py") as fp:
+    exec(fp.read(), version)
+
 
 def read_file(fname):
     return open(path.join(path.dirname(__file__), fname)).read()
@@ -20,9 +24,11 @@ setup(
     package_dir={"": "src"},
     setup_requires=["setuptools_scm",],
     python_requires=">=3.6",
+    version = version['__version__'],
     install_requires=[
         #"cocotb @ git+git://github.com/cocotb/cocotb@79792d1b#egg=cocotb",
-        "cocotb>=1.4.0",
+        "cocotb==1.5.0rc2",
+        "cocotb-bus==0.1.1",
         "cocotb-coverage>=1.0.0",
         "regex>=2019.11.1"
     ],
