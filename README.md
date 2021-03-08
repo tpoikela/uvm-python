@@ -36,6 +36,13 @@ You can install uvm-python as a normal Python package. It is recommended to use
 [venv](https://docs.python.org/3/library/venv.html) to create a virtual
 environment for Python prior to installation.
 
+Install from PyPi using pip:
+```shell
+python -m pip install uvm-python
+```
+
+or directly from source files (for latest development version):
+
 ```shell
 git clone https://github.com/tpoikela/uvm-python.git
 cd uvm-python
