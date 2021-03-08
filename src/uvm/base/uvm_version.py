@@ -21,13 +21,15 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
+from .. import version
+
 uvm_mgc_copyright  = "(C) 2007-2014 Mentor Graphics Corporation"
 uvm_cdn_copyright  = "(C) 2007-2014 Cadence Design Systems, Inc."
 uvm_snps_copyright = "(C) 2006-2014 Synopsys, Inc."
 uvm_cy_copyright   = "(C) 2011-2013 Cypress Semiconductor Corp."
 uvm_nv_copyright   = "(C) 2013-2014 NVIDIA Corporation"
-uvm_revision = "uvm-python 0.0.0 (Ported from UVM 1.2)"
-uvm_tpoikela_copyright = "(C) 2019-2020 Tuomas Poikela (tpoikela)"
+uvm_revision = "uvm-python {} (Ported from UVM 1.2)".format(version.__version__)
+uvm_tpoikela_copyright = "(C) 2019-2021 Tuomas Poikela (tpoikela)"
 
 def uvm_revision_string():
     return uvm_revision
