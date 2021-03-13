@@ -566,6 +566,11 @@ class UVMSequencerBase(UVMComponent):
     #  // idle state.
     #  //
     #  extern virtual function void stop_sequences()
+    def stop_sequences(self):
+        seq_ptr = self.m_find_sequence(-1)
+        while seq_ptr is not None:
+            self.kill_sequence(seq_ptr)
+            seq_ptr = self.m_find_sequence(-1)
 
 
     def is_grabbed(self):
@@ -989,7 +994,9 @@ class UVMSequencerBase(UVMComponent):
         self.remove_sequence_from_queues(sequence_ptr)
 
     #  extern function void kill_sequence(uvm_sequence_base sequence_ptr)
-
+    def kill_sequence(self, sequence_ptr: UVMSequenceBase):
+        self.remove_sequence_from_queues(sequence_ptr)
+        sequence_ptr.m_kill()
 
     def analysis_write(self, t):
         """
@@ -1402,29 +1409,9 @@ class UVMSequencerBase(UVMComponent):
 #
 #
 #
-#// stop_sequences
-#// --------------
-#
-#function void uvm_sequencer_base::stop_sequences()
-#  uvm_sequence_base seq_ptr
-#
-#  seq_ptr = m_find_sequence(-1)
-#  while (seq_ptr is not None)
-#    begin
-#      kill_sequence(seq_ptr)
-#      seq_ptr = m_find_sequence(-1)
-#    end
-#endfunction
 #
 #
 #
-#// kill_sequence
-#// -------------
-#
-#function void uvm_sequencer_base::kill_sequence(uvm_sequence_base sequence_ptr)
-#  remove_sequence_from_queues(sequence_ptr)
-#  sequence_ptr.m_kill()
-#endfunction
 #
 #
 #

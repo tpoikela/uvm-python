@@ -21,39 +21,80 @@
 // -------------------------------------------------------------
 //
 
-`include "uvm_macros.svh"
+// `timescale 1ns/1ns
+//
+module tx_fifo#(
+    parameter int DW=8,
+    parameter int DEPTH=1024
+)
+();
 
-`timescale 1ns/1ns
+localparam PTR_SIZE = $clog2(DEPTH);
 
-module dut(output bit tx,
-           input  bit rx,
-           input  bit sclk,
-           apb_if apb,
-           output bit intr,
-           input  bit clk,
-           input  bit rst);
+reg[DW-1:0] fifo_mem[0:DEPTH-1];
 
-import uvm_pkg::*;
-uvm_report_object rpt;
-initial rpt = new($sformatf("%m"));
+reg[PTR_SIZE:0] wptr;
+reg[PTR_SIZE:0] rptr;
+
+function int size();
+    return wptr - rptr;
+endfunction: size
+
+task delete();
+    wptr = 0;
+    rptr = 0;
+endtask: delete
+
+function void push_back(bit[DW-1:0] data);
+    fifo_mem[wptr] = data;
+    ++wptr;
+endfunction: push_back
+
+function bit[DW-1:0] front();
+    return fifo_mem[rptr];
+endfunction: front
+
+function bit[DW-1:0] pop_front();
+    return fifo_mem[rptr++];
+endfunction: pop_front
+
+endmodule: tx_fifo
+
+module dut(
+    output bit tx,
+    input  bit rx,
+    input  bit sclk,
+    input wire [31:0] apb_paddr,
+    input        apb_psel,
+    input        apb_penable,
+    input        apb_pwrite,
+    output [31:0] apb_prdata,
+    input [31:0] apb_pwdata,
+    output bit intr,
+    input  bit clk,
+    input  bit rst
+);
 
 reg [31:0] pr_data;
-assign apb.prdata = (apb.psel && apb.penable && !apb.pwrite) ? pr_data : 'z;
+assign apb_prdata = (apb_psel && apb_penable && !apb_pwrite) ? pr_data : 'z;
 
 reg TxEn;
 reg RxEn;
 
-reg [ 7:0] TxFIFO[$];
-const int  TxDepth = 32;  // Depth of Tx FIFO
+tx_fifo#(8) TxFIFO();
+
+// reg [ 7:0] TxFIFO[$];
+localparam int  TxDepth = 32;  // Depth of Tx FIFO
 reg [ 4:0] TxLWM;         // Low Water Mark on TxFIFO
 
-reg [ 7:0] RxFIFO[$];
-const int  RxDepth = 32;  // Depth of Rx FIFO
+tx_fifo#(8) RxFIFO();
+// reg [ 7:0] RxFIFO[$];
+localparam int  RxDepth = 32;  // Depth of Rx FIFO
 reg [ 4:0] RxHWM;         // High Water Mark on RxFIFO
 
-const bit [7:0] SYNC = 8'hB2;
-const bit [7:0] ESC  = 8'hE7;
-const bit [7:0] IDLE = 8'h81;
+localparam bit [7:0] SYNC = 8'hB2;
+localparam bit [7:0] ESC  = 8'hE7;
+localparam bit [7:0] IDLE = 8'h81;
 
 // Status bits
 reg TxEmpty;
@@ -95,21 +136,21 @@ begin
    else begin
       
       // Wait for a SETUP+READ or ENABLE+WRITE cycle
-      if (apb.psel == 1'b1 && apb.penable == apb.pwrite) begin
+      if (apb_psel == 1'b1 && apb_penable == apb_pwrite) begin
          pr_data <= 32'h0;
-         if (apb.pwrite) begin
-            casex (apb.paddr)
-             16'h0000: if (apb.pwdata[8]) SA = 0;
-             16'h0004: IntMask <= apb.pwdata;
-             16'h0010: TxEn  <= apb.pwdata;
-             16'h0014: TxLWM <= apb.pwdata;
-             16'h0020: RxEn  <= apb.pwdata;
-             16'h0024: RxHWM <= apb.pwdata;
-             16'h0100: if (TxFIFO.size() < TxDepth) TxFIFO.push_back(apb.pwdata);
+         if (apb_pwrite) begin
+            casex (apb_paddr)
+             16'h0000: if (apb_pwdata[8]) SA = 0;
+             16'h0004: IntMask <= apb_pwdata;
+             16'h0010: TxEn  <= apb_pwdata;
+             16'h0014: TxLWM <= apb_pwdata;
+             16'h0020: RxEn  <= apb_pwdata;
+             16'h0024: RxHWM <= apb_pwdata;
+             16'h0100: if (TxFIFO.size() < TxDepth) TxFIFO.push_back(apb_pwdata);
             endcase
          end
          else begin
-            casex (apb.paddr)
+            casex (apb_paddr)
              16'h0000: pr_data <= IntReq;
              16'h0004: pr_data <= IntMask;
              16'h0010: pr_data <= TxEn;
@@ -117,8 +158,8 @@ begin
              16'h0020: pr_data <= {aligned, RxEn};
              16'h0024: pr_data <= RxHWM;
              16'h0100: if (RxFIFO.size() > 0) begin
-                pr_data <= RxFIFO[0];
-                void'(RxFIFO.pop_front());
+                pr_data <= RxFIFO.front();
+                RxFIFO.pop_front(); // Discard return value
              end
             endcase
          end
@@ -129,9 +170,9 @@ begin
    // Tx
    //
    if (!TxValid && TxFIFO.size() > 0) begin
-      TxByte = TxFIFO[0];
+      TxByte = TxFIFO.front();
       TxValid = 1;
-      void'(TxFIFO.pop_front());
+      TxFIFO.pop_front(); // Discard return value
    end
    TxEmpty <= TxFIFO.size() == 0;
    TxLow   <= TxFIFO.size() <= TxLWM;
@@ -168,8 +209,9 @@ always begin: TX
    else send(IDLE);
 end
 
+int tx_cnt = 0;
+
 task automatic send(input bit [7:0] symbol);
-   static int tx_cnt = 0;
 
    if (tx_cnt == 0) begin
       bit [7:0] sync = 8'hB2;
@@ -202,15 +244,15 @@ always begin: RX
 
    wait (rst != 1 && RxEn);
 
-   `uvm_info_context("RX", "Rx Path Enabled...", UVM_MEDIUM, rpt)
+   // `uvm_info_context("RX", "Rx Path Enabled...", UVM_MEDIUM, rpt)
    
    // First, look for SYNC in the bit stream
-   `uvm_info_context("RX", "Looking for SYNC character...", UVM_MEDIUM, rpt)
+   // `uvm_info_context("RX", "Looking for SYNC character...", UVM_MEDIUM, rpt)
    while (symbol != SYNC) begin
       @(posedge sclk);
       symbol = {symbol[6:0], rx};
    end
-   `uvm_info_context("RX", "Found SYNC character!", UVM_MEDIUM, rpt)
+   // `uvm_info_context("RX", "Found SYNC character!", UVM_MEDIUM, rpt)
 
    // Next, look for SYNC every 7 bytes for 3 frames
    repeat (3) begin
@@ -219,10 +261,10 @@ always begin: RX
          symbol = {symbol[6:0], rx};
       end
       if (symbol != SYNC) disable RX;
-      `uvm_info_context("RX", "Found SYNC character!", UVM_MEDIUM, rpt)
+      // `uvm_info_context("RX", "Found SYNC character!", UVM_MEDIUM, rpt)
    end
 
-   `uvm_info_context("RX", "Symbol alignment acquired!", UVM_MEDIUM, rpt)
+   // `uvm_info_context("RX", "Symbol alignment acquired!", UVM_MEDIUM, rpt)
    
    // We are in phase!
    SA = 1'b1;
@@ -250,7 +292,7 @@ always begin: RX
          symbol = {symbol[6:0], rx};
       end
       if (symbol != SYNC) begin
-         `uvm_info_context("RX", "Symbol alignment lost!", UVM_MEDIUM, rpt)
+         // `uvm_info_context("RX", "Symbol alignment lost!", UVM_MEDIUM, rpt)
          SA = 1;
          disable RX;
       end

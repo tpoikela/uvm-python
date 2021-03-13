@@ -754,12 +754,12 @@ class UVMPhase(UVMObject):
         if obj is not None:
             m_obj_name = obj.get_full_name()
 
-        if ((action == "raise") or (action == "drop")):
+        if action == "raise" or action == "drop":
             if count != 1:
                 m_action = "{} {} objections".format(action, count)
             else:
                 m_action = "{} an objection".format(action)
-        elif (action == "get_objection_count"):
+        elif action == "get_objection_count":
             m_action = "call get_objection_count"
 
         if self.get_phase_type() == UVM_PHASE_IMP:
@@ -774,8 +774,10 @@ class UVMPhase(UVMObject):
     #  //
     #  // Return the <uvm_objection> that gates the termination of the phase.
     #  //
-    #  function uvm_objection get_objection(); return this.phase_done; endfunction
-    #
+    def get_objection(self):
+        return self.phase_done
+
+
     #  // Function: raise_objection
     #  //
     #  // Raise an objection to ending this phase

@@ -23,6 +23,8 @@
 import cocotb
 
 from ..base.uvm_globals import uvm_check_output_args
+from ..tlm1.uvm_tlm_imps import add_base_class, UVM_IMP_COMMON
+from ..base.uvm_port_base import UVMPortBase
 
 
 def uvm_check_ref_arg(func_name, req_arg):
@@ -508,6 +510,14 @@ def uvm_check_ref_arg(func_name, req_arg):
 #  endfunction \
 #  \
 #endclass
+def uvm_analysis_imp_decl(SFX):
+    TT = type("UVMAnalysisImp" + SFX, (), {})
+    T = add_base_class(TT, UVMPortBase)
+    T = UVM_IMP_COMMON(T, UVM_TLM_ANALYSIS_MASK, "UVMAnalysisImp" + SFX)
+    def write(self, t):
+        getattr(self.m_imp, "write" + SFX)(t)
+    setattr(T, "write", write)
+    return T
 
 
 # These imps are used in uvm_*_port, uvm_*_export and uvm_*_imp, using suffixes
