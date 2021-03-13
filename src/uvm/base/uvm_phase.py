@@ -996,6 +996,8 @@ class UVMPhase(UVMObject):
     #  // is in progress. Valid for use during the phase_ended() callback
     #  //
     #  extern function uvm_phase get_jump_target()
+    def get_jump_target(self):
+        return self.m_jump_phase
 
 
     #// m_find_predecessor
@@ -1244,7 +1246,6 @@ class UVMPhase(UVMObject):
             uvm_debug(self, 'execute_phase', 'PHASE_DONE_REACHED - returning now')
             return
 
-        #state_chg = uvm_phase_state_change::type_id::create(get_name())
         state_chg = UVMPhaseStateChange(self.get_name())
         state_chg.m_phase      = self
         state_chg.m_jump_to    = None
@@ -2045,17 +2046,6 @@ class UVMPhaseCb(UVMCallback):
     #function void uvm_phase::jump_all(uvm_phase phase)
     #    `uvm_warning("NOTIMPL","uvm_phase::jump_all is not implemented and has been replaced by uvm_domain::jump_all")
     #endfunction
-    #
-    #
-    #// get_jump_target
-    #// ---------------
-    #
-    #function uvm_phase uvm_phase::get_jump_target()
-    #  return m_jump_phase
-    #endfunction
-    #
-    #
-    #
     #
     #
 

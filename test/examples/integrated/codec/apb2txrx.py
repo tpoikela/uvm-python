@@ -21,6 +21,8 @@
 #//
 
 from uvm import *
+from apb.apb_rw import *
+from vip import *
 
 
 class apb2txrx(UVMComponent):
@@ -53,22 +55,18 @@ class apb2txrx(UVMComponent):
             self.wadd = arr[0]
 
 
-    #   def write(self,apb_rw rw):
-    #      vip_tr tr
-    #
-    #      // R from 'radd' are Rx characters
-    #      if (rw.kind == apb_rw::READ  and  rw.addr == radd):
-    #         tr = vip_tr.type_id.create("rx",,get_full_name())
-    #         tr.chr = rw.data
-    #         rx_ap.write(tr)
-    #      end
-    #      
-    #      // W from 'wadd' are Tx characters
-    #      if (rw.kind == apb_rw::WRITE  and  rw.addr == wadd):
-    #         tr = vip_tr.type_id.create("tx",,get_full_name())
-    #         tr.chr = rw.data
-    #         tx_ap.write(tr)
-    #      end
-    #   endfunction
+    def write(self, rw):
+       # R from 'radd' are Rx characters
+       if (rw.kind == apb_rw.READ and rw.addr == self.radd):
+          tr = vip_tr.type_id.create("rx",None,self.get_full_name())
+          tr.chr = rw.data
+          self.rx_ap.write(tr)
+       
+       # W from 'wadd' are Tx characters
+       if (rw.kind == apb_rw.WRITE  and  rw.addr == self.wadd):
+          tr = vip_tr.type_id.create("tx",None,self.get_full_name())
+          tr.chr = rw.data
+          self.tx_ap.write(tr)
+
 
 uvm_component_utils(apb2txrx)

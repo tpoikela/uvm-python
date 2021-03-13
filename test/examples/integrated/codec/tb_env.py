@@ -31,6 +31,9 @@ from vip import *
 from sym_sb import sym_sb
 from apb2txrx import apb2txrx
 
+err_msg = ("Environment does not support jumping to phase %s from phase %s. " +
+        "Only jumping to \"reset\" is supported")
+
 
 class rx_isr_seq(UVMRegSequence):
 
@@ -101,6 +104,8 @@ class tb_env(UVMEnv):
         UVMConfigDb.set(self, "tx_src.main_phase","default_sequence", vip_sentence_seq.type_id.get())
     
         self.m_isr = 0
+        self.m_in_shutdown = 0
+        self.pull_from_RxFIFO_thread = None
 
     def has_errors(self):
         return self.ingress.error or self.egress.error
@@ -122,7 +127,6 @@ class tb_env(UVMEnv):
         self.adapt.rx_ap.connect(self.ingress.observed)
 
 
-    #   local bit m_in_shutdown = 0
     #   local process pull_from_RxFIFO_thread
 
     # tpoikela: We should not fork anything in phase_started since it's not
@@ -130,62 +134,48 @@ class tb_env(UVMEnv):
     def phase_started(self, phase):
         name = phase.get_name()
         uvm_info("PHASE_STARTED/TB_ENV", "phase_started(): " + name, UVM_LOW)
-        #      
-        #      m_in_shutdown = 0
+
+        self.m_in_shutdown = 0
         #
-        #      case (name)
-        #       "reset":
-        #          // OK to jump back to reset phase
-        #          if (pull_from_RxFIFO_thread is not None):
-        #             pull_from_RxFIFO_thread.kill()
-        #             pull_from_RxFIFO_thread = None
-        #          end
-        #       
-        #       "main":
-        #          fork
-        #             begin
-        #                pull_from_RxFIFO_thread = process::self()
-        #                pull_from_RxFIFO(phase)
-        #             end
-        #          join_none
-        #       
-        #       "shutdown":
-        #          m_in_shutdown = 1
-        #
-        #      endcase
-        #   endfunction
+        if name == "reset":
+            # OK to jump back to reset phase
+            if self.pull_from_RxFIFO_thread is not None:
+                self.pull_from_RxFIFO_thread.kill()
+                self.pull_from_RxFIFO_thread = None
+
+        elif name == "main":
+            self.pull_from_RxFIFO_thread = cocotb.fork(self.pull_from_RxFIFO(phase))
+
+        elif name == "shutdown":
+            self.m_in_shutdown = 1
 
 
-    #   def phase_ended(self, phase):
-    #      uvm_phase goto = phase.get_jump_target()
-    #
-    #      // This environment supports jump to RESET *only*
-    #      if (goto is not None):
-    #         if (goto.get_name() != "reset"):
-    #            uvm_fatal("ENV/BADJMP", sv.sformatf("Environment does not support jumping to phase %s from phase %s. Only jumping to \"reset\" is supported",
-    #                                               goto.get_name(), phase.get_name()))
-    #         end
-    #      end
-    #      
-    #      case (phase.get_name())
-    #       "main":
-    #          m_isr[TX_ISR] = 0
-    #       
-    #       "shutdown":
-    #          begin
-    #             pull_from_RxFIFO_thread = None
-    #             m_in_shutdown = 0
-    #          end
-    #      endcase
-    #   endfunction
+    def phase_ended(self, phase):
+        goto = phase.get_jump_target()
+        name = phase.get_name()
+        uvm_info("PHASE_ENDED/TB_ENV", "phase_ended(): " + name, UVM_LOW)
+
+        # This environment supports jump to RESET *only*
+        if goto is not None:
+           if goto.get_name() != "reset":
+               uvm_fatal("ENV/BADJMP", sv.sformatf(err_msg,
+                   goto.get_name(), phase.get_name()))
 
 
-    #async
-    #   def pre_reset_phase(self, phase):
-    #      phase.raise_objection(self, "Waiting for reset to be valid")
-    #      wait (vif.rst != 1'bx)
-    #      phase.drop_objection(self, "Reset is no longer X")
-    #   endtask
+        if phase.get_name() == "main":
+            self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
+
+        elif "shutdown":
+            self.pull_from_RxFIFO_thread = None
+            self.m_in_shutdown = 0
+
+
+    async def pre_reset_phase(self, phase):
+        phase.raise_objection(self, "Waiting for reset to be valid")
+        while not (self.vif.rst.value.is_resolvable):
+            await RisingEdge(self.vif.clk)
+            uvm_info("WAIT_RST", "Waiting reset to become 0/1", UVM_MEDIUM)
+        phase.drop_objection(self, "Reset is no longer X")
 
     async def reset_phase(self, phase):
         phase.raise_objection(self, "Asserting reset for 10 clock cycles")
@@ -194,11 +184,11 @@ class tb_env(UVMEnv):
         
         self.vif.rst <= 1
         self.regmodel.reset()
-        self.vip.reset_and_suspend()
-        for i in range(10):
+        await self.vip.reset_and_suspend()
+        for _ in range(10):
             await RisingEdge(self.vif.clk)
         self.vif.rst = 0
-        self.vip.resume()
+        await self.vip.resume()
     
         self.m_isr = 0
         self.tx_src.stop_sequences()
@@ -208,146 +198,145 @@ class tb_env(UVMEnv):
     async def pre_configure_phase(self, phase):
         phase.raise_objection(self, "Letting the interfaces go idle")
         uvm_info("TB/TRACE", "Configuring DUT...", UVM_NONE)
-        for i in range(10):
+        for _ in range(10):
             await RisingEdge(self.vif.clk)
         phase.drop_objection(self, "Ready to configure")
 
 
-    #async
-    #   def configure_phase(self, phase):
-    #      phase.raise_objection(self, "Programming DUT")
-    #      regmodel.IntMask.SA.set(1)
-    #      
-    #      regmodel.TxStatus.TxEn.set(1)
-    #      regmodel.RxStatus.RxEn.set(1)
-    #      
-    #      // update the settings BUT without writing the TxRx data register
-    #      // regmodel.update(status);
-    #	begin
-    #		uvm_reg n[]='{regmodel.IntSrc, regmodel.IntMask, regmodel.TxStatus, regmodel.RxStatus}
-    #		foreach(n[idx])
-    #			n[idx].update(status)
-    #	end	
-    #
-    #      phase.drop_objection(self, "Everything is ready to go")
-    #   endtask
+    async def configure_phase(self, phase):
+        phase.raise_objection(self, "Programming DUT")
+        self.regmodel.IntMask.SA.set(1)
 
+        self.regmodel.TxStatus.TxEn.set(1)
+        self.regmodel.RxStatus.RxEn.set(1)
 
-    #async
-    #   def pre_main_phase(self, phase):
-    #      phase.raise_objection(self, "Waiting for VIPs and DUT to acquire SYNC")
-    #
-    #      uvm_info("TB/TRACE", "Synchronizing interfaces...", UVM_NONE)
-    #
-    #      fork
-    #         begin
-    #            repeat (100 * 8) @(posedge vif.sclk)
-    #            uvm_fatal("TB/TIMEOUT",
-    #                       "VIP and/or DUT failed to acquire syncs")
-    #         end
-    #      join_none
-    #
-    #      // Wait until the VIP has acquired symbol syncs
-    #      while (!vip.rx_mon.is_in_sync()):
-    #         vip.rx_mon.wait_for_sync_change()
-    #      end
-    #      while (!vip.tx_mon.is_in_sync()):
-    #         vip.tx_mon.wait_for_sync_change()
-    #      end
-    #
-    #      // Wait until the DUT has acquired symbol sync
-    #      regmodel.RxStatus.mirror(status)
-    #      if (!regmodel.RxStatus.Align.get()):
-    #         regmodel.IntMask.set( 0x000)
-    #         regmodel.IntMask.SA.set( 0b1)
-    #         regmodel.IntMask.update(status)
-    #         wait (vif.intr)
-    #      end
-    #      regmodel.IntMask.write(status,  0x000)
-    #      regmodel.IntSrc.write(status, -1)
-    #
-    #      phase.drop_objection(self, "Everyone is in SYNC")
-    #   endtask
+        # update the settings BUT without writing the TxRx data register
+        status = []
+        await self.regmodel.update(status);
+        #	begin
+        n = [self.regmodel.IntSrc, self.regmodel.IntMask,
+                self.regmodel.TxStatus, self.regmodel.RxStatus]
+        for reg in n:
+            status = []
+            await reg.update(status)
+        phase.drop_objection(self, "Everything is ready to go")
+
+    async def pre_main_phase_timeout(self):
+        for _ in range(100 * 8):
+            await RisingEdge(self.vif.sclk)
+        uvm_fatal("TB/TIMEOUT", "VIP and/or DUT failed to acquire syncs")
+
+    async def pre_main_phase(self, phase):
+        phase.raise_objection(self, "Waiting for VIPs and DUT to acquire SYNC")
+        uvm_info("TB/TRACE", "Synchronizing interfaces...", UVM_NONE)
+        
+        cocotb.fork(self.pre_main_phase_timeout())
+        
+        # Wait until the VIP has acquired symbol syncs
+        while not vip.rx_mon.is_in_sync():
+           await vip.rx_mon.wait_for_sync_change()
+
+        while not vip.tx_mon.is_in_sync():
+           await vip.tx_mon.wait_for_sync_change()
+
+        
+        # Wait until the DUT has acquired symbol sync
+        await self.regmodel.RxStatus.mirror(status)
+        if not regmodel.RxStatus.Align.get():
+           self.regmodel.IntMask.set( 0x000)
+           self.regmodel.IntMask.SA.set( 0b1)
+           await self.regmodel.IntMask.update(status)
+
+           #wait (vif.intr)
+           while vif.intr != 1:
+               await RisingEdge(self.vif.clk)
+
+        await self.regmodel.IntMask.write(status,  0x000)
+        await self.regmodel.IntSrc.write(status, -1)
+        phase.drop_objection(self, "Everyone is in SYNC")
 
 
     #
     # This task is a thread that will span the main and shutdown phase
     #
-    #async
-    #   def pull_from_RxFIFO(self, phase)
-    #      uvm_phase shutdown_ph = phase.find_by_name("shutdown")
-    #      shutdown_ph.raise_objection(self, "Pulling data from RxFIFO")
-    #      
-    #      while True:
-    #         m_isr[RX_ISR] = 0
-    #
-    #         // When in shutdown, don't wait for the interrupt
-    #         wait (vif.intr  or  m_in_shutdown)
-    #
-    #         m_isr[RX_ISR] = 1
-    #               
-    #         regmodel.IntSrc.mirror(status)
-    #         if (regmodel.IntSrc.SA.get()):
-    #            uvm_fatal("TB/DUT/SYNCLOSS", "DUT has lost SYNC")
-    #         end
-    #         if (!regmodel.IntSrc.RxHigh.get()  and  !m_in_shutdown):
-    #            m_isr[RX_ISR] = 0
-    #            wait (!m_isr)
-    #            continue
-    #         end
-    #
-    #         begin
-    #            uvm_reg_sequence rx_seq = rx_isr_seq.type_id.create("rx_seq",,get_full_name())
-    #            rx_seq.model = regmodel
-    #            rx_seq.start(None)
-    #         end
-    #         m_isr[RX_ISR] = 0
-    #
-    #         if (m_in_shutdown):
-    #            shutdown_ph.drop_objection(self, "All data pulled from RxFIFO")
-    #            break
-    #         end
-    #      end
-    #   endtask
+    async def pull_from_RxFIFO(self, phase):
+        shutdown_ph = phase.find_by_name("shutdown")
+        shutdown_ph.raise_objection(self, "Pulling data from RxFIFO")
+        #      
+        while True:
+            self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
+            #
+            # When in shutdown, don't wait for the interrupt
+            #   wait (vif.intr  or  m_in_shutdown)
+            while self.vif.intr == 0 and self.m_in_shutdown == 0:
+                await RisingEdge(self.vif.clk)
+
+            #   m_isr[RX_ISR] = 1
+            self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 1)
+
+            await self.regmodel.IntSrc.mirror(status)
+            if self.regmodel.IntSrc.SA.get():
+                uvm_fatal("TB/DUT/SYNCLOSS", "DUT has lost SYNC")
+
+            if not regmodel.IntSrc.RxHigh.get() and not self.m_in_shutdown:
+                self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
+                #wait (!m_isr)
+                while self.m_isr == 1:
+                    await RisingEdge(self.vif.clk)
+                continue
+
+            rx_seq = rx_isr_seq.type_id.create("rx_seq",None, self.get_full_name())
+            rx_seq.model = self.regmodel
+            await rx_seq.start(None)
+
+            #   m_isr[RX_ISR] = 0
+            self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
+
+            if self.m_in_shutdown:
+                shutdown_ph.drop_objection(self, "All data pulled from RxFIFO")
+                break
 
 
 
     async def main_phase(self, phase):
         uvm_info("TB/TRACE", "Applying primary stimulus...", UVM_NONE)
-        timeout_proc = cocotb.fork(self.timeout_and_finish())
+        timeout_proc = cocotb.fork(self.timeout_and_finish(phase))
         main_proc = cocotb.fork(self.run_main_proc(phase))
         await sv.fork_join([timeout_proc, main_proc])
 
-    async def timeout_and_finish(self):
-        await Timer(2000000, "NS")
+    async def timeout_and_finish(self, phase):
+        await Timer(200000, "NS")
         obj = phase.get_objection()
         obj.display_objections()
         uvm_fatal("ERR/TIMEOUT", "$finish. Timeout reached")
         # $finish
 
     async def run_main_proc(self, phase):
+        status = []
         ph_obj = phase.get_objection()
         phase.raise_objection(self, "Configuring ISR")
         self.regmodel.IntMask.set(0)
         self.regmodel.IntMask.SA.set(1)
         self.regmodel.IntMask.RxHigh.set(1)
         self.regmodel.IntMask.TxLow.set(1)
-        self.regmodel.IntMask.update(status)
+        await self.regmodel.IntMask.update(status)
 
         while True:
             phase.drop_objection(self, "ISR ready DUT-> stimulus")
             self.m_isr = sv.set_bit(self.m_isr, TX_ISR, 0)
             #   m_isr[TX_ISR] = 0
-            #
-            while self.vif.intr:
-                await RisingEdge(self.vif.clk)
+
+            uvm_info("TB_ENV", "Waiting vif.intr now")
+            while not self.vif.intr:
+                await RisingEdge(self.vif.intr)
                 #   wait (vif.intr)
 
             #   m_isr[TX_ISR] = 1
             self.m_isr = sv.set_bit(self.m_isr, TX_ISR, 1)
             phase.raise_objection(self, "Applying DUT-> stimulus")
 
-            self.regmodel.IntSrc.mirror(status)
+            status = []
+            await self.regmodel.IntSrc.mirror(status)
             if not self.regmodel.IntSrc.TxLow.get():
                 self.m_isr = sv.set_bit(self.m_isr, TX_ISR, 1)
                 # m_isr[TX_ISR] = 0
@@ -360,25 +349,22 @@ class tb_env(UVMEnv):
             self.m_isr = sv.set_bit(self.m_isr, TX_ISR, 0)
 
             self.regmodel.IntMask.TxLow.set(0)
-            self.regmodel.IntMask.update(status)
-            #   
-            #   // Stop supplying data once it is full
-            #   // or the egress scoreboard has had enough
-            #   while (!regmodel.IntSrc.TxFull.get() > 0):
-            #      vip_tr tr
-            #
-            #      phase.drop_objection(self, "Waiting for DUT-> stimulus from tx_src sequencer")
-            #      tx_src_seq_port.get_next_item(tr)
-            #      tx_src_seq_port.item_done()
-            #      phase.raise_objection(self, "Applying DUT-> stimulus from tx_src sequencer")
-            #      regmodel.TxRx.write(status, tr.chr)
-            #
-            #      regmodel.IntSrc.mirror(status)
-            #   end
-            #
-            #   regmodel.IntMask.TxLow.set(1)
-            #   regmodel.IntMask.update(status)
-            #end
+            status = []
+            await self.regmodel.IntMask.update(status)
+
+            # Stop supplying data once it is full
+            # or the egress scoreboard has had enough
+            while not self.regmodel.IntSrc.TxFull.get() > 0:
+               phase.drop_objection(self, "Waiting for DUT-> stimulus from tx_src sequencer")
+               await self.tx_src_seq_port.get_next_item(tr)
+               self.tx_src_seq_port.item_done()
+               phase.raise_objection(self, "Applying DUT-> stimulus from tx_src sequencer")
+               await self.regmodel.TxRx.write(status, tr.chr)
+            
+               await self.regmodel.IntSrc.mirror(status)
+            
+            self.regmodel.IntMask.TxLow.set(1)
+            await self.regmodel.IntMask.update(status)
 
 
     #async
@@ -397,18 +383,16 @@ class tb_env(UVMEnv):
     #
     #      phase.drop_objection(self, "DUT is empty")
     #   endtask
-    #
-    #   
-    #   def report_phase(self, phase):
-    #       uvm_coreservice_t cs_ = uvm_coreservice_t::get()
-    #
-    #      uvm_report_server svr
-    #      svr = cs_.get_report_server()
-    #
-    #      if (svr.get_severity_count(UVM_FATAL) +
-    #          svr.get_severity_count(UVM_ERROR) == 0)
-    #         $write("** UVM TEST PASSED **\n")
-    #      else
-    #         $write("!! UVM TEST FAILED !!\n")
+
+
+    def report_phase(self, phase):
+        cs_ = UVMCoreService.get()
+        svr = cs_.get_report_server()
+
+        if (svr.get_severity_count(UVM_FATAL) +
+            svr.get_severity_count(UVM_ERROR) == 0):
+           print("** UVM TEST PASSED **\n")
+        else:
+           print("!! UVM TEST FAILED !!\n")
 
 uvm_component_utils(tb_env)

@@ -5,6 +5,7 @@
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
 #//   Copyright 2013      NVIDIA Corporation
+#//   Copyright 2019-2021 Tuomas Poikela
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -29,8 +30,9 @@ from .uvm_debug import uvm_debug
 from .uvm_globals import *
 from .uvm_object_globals import (UVM_RAISED, UVM_DROPPED, UVM_ALL_DROPPED)
 from .sv import sv
-from ..macros import uvm_error
+from ..macros import uvm_error, uvm_info
 from typing import List, Optional, Dict, Any
+from .uvm_pool import UVMPool
 
 UVM_USE_PROCESS_CONTAINER = 1
 
@@ -51,6 +53,24 @@ class UVMObjectionEvents():
 
 ObjContextDict = Dict[Any, 'UVMObjectionContextObject']
 ObjContextList = List['UVMObjectionContextObject']
+
+def get_name_depth(curr_obj_name):
+    """ Returns the hier depth of the name """
+    depth = 0
+    for i in curr_obj_name:
+        if i == ".":
+            depth += 1
+    return depth
+
+
+def get_leaf_name(curr_obj_name):
+    name = curr_obj_name
+    rr = range(len(curr_obj_name)-1, -1, -1)
+    for i in rr:
+        if curr_obj_name[i] == ".":
+            name = curr_obj_name[i+1:len(curr_obj_name)] 
+            break
+    return name
 
 #//------------------------------------------------------------------------------
 #// Title: Objection Mechanism
@@ -187,17 +207,18 @@ class UVMObjection(UVMReportObject):
     #  // 0 turns tracing off. A trace mode of 1 turns tracing on.
     #  // The return value is the mode prior to being reset.
     #
-    #   function bit trace_mode (int mode=-1)
-    #    trace_mode = self.m_trace_mode
-    #    if(mode == 0) self.m_trace_mode = 0
-    #    else if(mode == 1) self.m_trace_mode = 1
-    #   endfunction
-    #
+    def trace_mode (self, mode=-1):
+        trace_mode = self.m_trace_mode
+        if mode == 0:
+            self.m_trace_mode = 0
+        elif mode == 1:
+            self.m_trace_mode = 1
+        return trace_mode
+
     #  // Function- m_report
     #  //
     #  // Internal method for reporting count updates
     #
-    #def m_report(uvm_object obj, uvm_object source_obj, string description, int count, string action)
     def m_report(self, obj, source_obj, description: str, count: int, action: str) -> None:
         _count = 0
         if obj in self.m_source_count:
@@ -733,6 +754,7 @@ class UVMObjection(UVMReportObject):
             ctxt = objection.m_forked_list.pop(0)
             # Clear it out of scheduled
             del objection.m_scheduled_contexts[ctxt.obj]
+
             # Move it in to forked (so re-raise can figure out props)
             objection.m_forked_contexts[ctxt.obj] = ctxt
             # Save off our process handle, so a re-raise can kill it...
@@ -797,13 +819,11 @@ class UVMObjection(UVMReportObject):
             self.m_drop(self.m_top,source_obj,description, count, 1)
         elif obj != self.m_top:
             self.m_propagate(obj, source_obj, description, count, 0, 1)
-    #  endtask
 
     #  // m_init_objections
     #  // -----------------
     #
     #  // Forks off the single background process
-
     async def m_init_objections(self):
         #uvm_debug(cls, 'm_init_objections', "Forking m_execute_scheduled_forks")
         pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks())
@@ -987,86 +1007,77 @@ class UVMObjection(UVMReportObject):
 
     #  // m_display_objections
     #
-    #  protected function string m_display_objections(uvm_object obj=null, bit show_header=1)
-    #
-    #    static string blank="                                                                                   "
-    #
-    #    string s
-    #    int total
-    #    uvm_object list[string]
-    #    uvm_object curr_obj
-    #    int depth
-    #    string name
-    #    string this_obj_name
-    #    string curr_obj_name
-    #
-    #    foreach (self.m_total_count[o]) begin
-    #      uvm_object theobj = o
-    #      if ( self.m_total_count[o] > 0)
-    #        list[theobj.get_full_name()] = theobj
-    #    end
-    #
-    #    if (obj==null)
-    #      obj = self.m_top
-    #
-    #    total = get_objection_total(obj)
-    #
-    #    s = $sformatf("The total objection count is %0d\n",total)
-    #
-    #    if (total == 0)
-    #      return s
-    #
-    #    s = {s,"---------------------------------------------------------\n"}
-    #    s = {s,"Source  Total   \n"}
-    #    s = {s,"Count   Count   Object\n"}
-    #    s = {s,"---------------------------------------------------------\n"}
-    #
-    #
-    #    this_obj_name = obj.get_full_name()
-    #    curr_obj_name = this_obj_name
-    #
-    #    do begin
-    #
-    #      curr_obj = list[curr_obj_name]
-    #
-    #      // determine depth
-    #      depth=0
-    #      foreach (curr_obj_name[i])
-    #        if (curr_obj_name[i] == ".")
-    #          depth++
-    #
-    #      // determine leaf name
-    #      name = curr_obj_name
-    #      for (int i=curr_obj_name.len()-1;i >= 0; i--)
-    #        if (curr_obj_name[i] == ".") begin
-    #           name = curr_obj_name.substr(i+1,curr_obj_name.len()-1)
-    #           break
-    #        end
-    #      if (curr_obj_name == "")
-    #        name = "uvm_top"
-    #      else
-    #        depth++
-    #
-    #      // print it
-    #      s = {s, $sformatf("%-6d  %-6d %s%s\n",
-    #         self.m_source_count.exists(curr_obj) ? self.m_source_count[curr_obj] : 0,
-    #         self.m_total_count.exists(curr_obj) ? self.m_total_count[curr_obj] : 0,
-    #         blank.substr(0,2*depth), name)}
-    #
-    #    end while (list.next(curr_obj_name) &&
-    #        curr_obj_name.substr(0,this_obj_name.len()-1) == this_obj_name)
-    #
-    #    s = {s,"---------------------------------------------------------\n"}
-    #
-    #    return s
-    #
-    #  endfunction
-    #
-    #
-    #  function string convert2string()
-    #    return m_display_objections(self.m_top,1)
-    #  endfunction
-    #
+    def m_display_objections(self, obj=None, show_header=1):
+        blank="                                                                                   "
+        s = ""
+        total = 0
+        lst = UVMPool()
+        curr_obj = None
+        depth = 0
+        name = ""
+        this_obj_name = ""
+        curr_obj_name = ""
+
+        for o in self.m_total_count:
+            theobj = o
+            if self.m_total_count[o] > 0:
+                lst[theobj.get_full_name()] = theobj
+
+        if obj is None:
+            obj = self.m_top
+
+        total = self.get_objection_total(obj)
+        s = sv.sformatf("The total objection count is %0d\n",total)
+
+        if total == 0:
+            return s
+
+        s = s + "---------------------------------------------------------\n"
+        s = s + "Source  Total   \n"
+        s = s + "Count   Count   Object\n"
+        s = s + "---------------------------------------------------------\n"
+
+        this_obj_name = obj.get_full_name()
+        curr_obj_name = this_obj_name
+
+        while True:
+            curr_obj = lst[curr_obj_name]
+
+            # determine depth, count dots "." in the name
+            depth = get_name_depth(curr_obj_name)
+
+            # determine leaf name
+            name = get_leaf_name(curr_obj_name)
+
+            if curr_obj_name == "":
+                name = "uvm_top"
+            else:
+                depth += 1
+
+            # print it
+            src_count = 0
+            if curr_obj in self.m_source_count:
+                self.m_source_count[curr_obj] 
+            total_count = 0
+            if curr_obj in self.m_total_count:
+                total_count = self.m_total_count[curr_obj]
+            s += sv.sformatf("%d       %d       %s'%s'\n", src_count, total_count,
+                    blank[0:2*depth], name)
+
+            if not ((lst.has_next() and
+                curr_obj_name[0:len(this_obj_name)] == this_obj_name)):
+                break
+            curr_obj_name = lst.next()
+
+        s = s + "---------------------------------------------------------\n"
+
+        return s
+
+
+
+    def convert2string(self):
+        return self.m_display_objections(self.m_top,1)
+
     #
     #  // Function: display_objections
     #  //
@@ -1074,12 +1085,10 @@ class UVMObjection(UVMReportObject):
     #  // not specified or ~null~, the implicit top-level component, <uvm_root>, is
     #  // chosen. The ~show_header~ argument allows control of whether a header is
     #  // output.
-    #
-    #  function void display_objections(uvm_object obj=null, bit show_header=1)
-    #	string m = m_display_objections(obj,show_header)
-    #    `uvm_info("UVM/OBJ/DISPLAY",m,UVM_NONE)
-    #  endfunction
-    #
+    def display_objections(self, obj=None, show_header=1):
+        m = self.m_display_objections(obj,show_header)
+        uvm_info("UVM/OBJ/DISPLAY", m, UVM_NONE)
+
     #
     #  // Below is all of the basic data stuff that is needed for a uvm_object
     #  // for factory registration, printing, comparing, etc.

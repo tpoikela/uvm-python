@@ -18,6 +18,7 @@ sim_build*
 obj_dir
 .venv
 
+# Code coverage
 .coverage
 htmlcov/
 .coveralls.yml

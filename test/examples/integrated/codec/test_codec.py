@@ -57,6 +57,13 @@ class tb_ctl_if():
         self.rst = rst
         self.intr = intr
 
+async def do_reset(dut):
+    await Timer(100, "NS")
+    dut.rst <= 1
+    await Timer(200, "NS")
+    dut.clk <= 0
+    dut.sclk <= 0
+
 @cocotb.test()
 async def test_codec(dut):
 
@@ -72,12 +79,7 @@ async def test_codec(dut):
     UVMConfigDb.set(None, "env.apb", "vif", apb_vif)
     UVMConfigDb.set(None, "env.vip", "vif", vip0)
 
-    await Timer(100, "NS")
-    ctl.rst <= 1
-    await Timer(200, "NS")
-    dut.clk <= 0
-    dut.sclk <= 0
-
+    cocotb.fork(do_reset(dut))
     cocotb.fork(Clock(dut.clk, 50, "NS").start())
     cocotb.fork(Clock(dut.sclk, 250, "NS").start())
  

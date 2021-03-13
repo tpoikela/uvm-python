@@ -28,10 +28,6 @@ from .vip_monitor import vip_monitor
 
 class vip_agent(UVMAgent):
 
-    #   vip_driver    drv
-    #   vip_monitor   tx_mon
-    #   vip_monitor   rx_mon
-    #   vip_vif       vif
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
@@ -57,12 +53,13 @@ class vip_agent(UVMAgent):
     async def pre_reset_phase(self, phase):
         phase.raise_objection(self, "Resetting agent")
         await self.reset_and_suspend()
+        print("vip_agent dropping objection")
         phase.drop_objection(self)
 
 
     async def reset_and_suspend(self):
         #fork
-        sv.fork_join([
+        await sv.fork_join([
            cocotb.fork(self.drv.reset_and_suspend()),
            cocotb.fork(self.tx_mon.reset_and_suspend()),
            cocotb.fork(self.rx_mon.reset_and_suspend())
@@ -70,22 +67,22 @@ class vip_agent(UVMAgent):
         #join
         self.sqr.stop_sequences()
 
-    #async
-    #   def suspend(self)
-    #      fork
-    #         drv.suspend()
-    #         tx_mon.suspend()
-    #         rx_mon.suspend()
-    #      join
-    #   endtask
+    async def suspend(self):
+        await sv.fork_join([
+        # fork
+            cocotb.fork(self.drv.suspend()),
+            cocotb.fork(self.tx_mon.suspend()),
+            cocotb.fork(self.rx_mon.suspend()),
+        ])
+        # join
 
     async def resume(self):
-        pass
         #      fork
-        #         drv.resume()
-        #         tx_mon.resume()
-        #         rx_mon.resume()
+        await sv.fork_join([
+            cocotb.fork(self.drv.resume()),
+            cocotb.fork(self.tx_mon.resume()),
+            cocotb.fork(self.rx_mon.resume()),
+        ])
         #      join
-        #   endtask
 
 uvm_component_utils(vip_agent)

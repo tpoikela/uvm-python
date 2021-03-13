@@ -57,12 +57,11 @@ class vip_driver(UVMDriver):
         await self.m_interrupt()
         phase.drop_objection(self)
 
-    #async
-    #   def reset_phase(self, phase):
-    #      phase.raise_objection(self, "Resetting driver")
-    #      reset_and_suspend()
-    #      phase.drop_objection(self)
-    #   endtask
+    async def reset_phase(self, phase):
+        phase.raise_objection(self, "Resetting driver")
+        uvm_info("VIP_DRV", "reset_phase started", UVM_LOW)
+        await self.reset_and_suspend()
+        phase.drop_objection(self)
 
 
     # Abruptly interrupt and suspend this driver
@@ -80,18 +79,19 @@ class vip_driver(UVMDriver):
         await self.m_interrupt()
 
 
-    #async
-    #   def suspend(self)
-    #      m_suspend = 1
-    #      wait (m_suspended)
-    #   endtask
-    #
-    #async
-    #   def resume(self)
-    #      m_suspend = 0
-    #      wait (!m_suspended)
-    #   endtask
-    #
+    async def suspend(self):
+        self.m_suspend = 1
+        #      wait (m_suspended)
+        while self.m_suspended != 1:
+            await RisingEdge(self.vif.clk)
+
+    async def resume(self):
+        self.m_suspend = 0
+        #wait (!m_suspended)
+        while self.m_suspended != 0:
+            await RisingEdge(self.vif.clk)
+
+
     #async
     #   def run_phase(self, phase):
     #      int    count = 0
@@ -148,8 +148,8 @@ class vip_driver(UVMDriver):
     #
     #      end
     #   endtask
-    #
-    #
+
+
     #async
     #   def send(self,input bit [7:0] data)
     #      pre_tx(data)
@@ -167,11 +167,11 @@ class vip_driver(UVMDriver):
     #      post_tx(data)
     #      `uvm_do_callbacks(vip_driver, vip_driver_cbs, post_tx(self, data))
     #   endtask: send
-    #
+
     #async
     #   def pre_tx(self,ref bit [7:0] chr)
     #   endtask
-    # 
+
     #async
     #   def post_tx(self,bit [7:0] chr)
     #   endtask

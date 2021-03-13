@@ -61,13 +61,13 @@ class vip_monitor(UVMMonitor):
             uvm_fatal("VIP/MON/NOVIF", "No virtual interface specified for self monitor instance")
         self.vif = vif[0]
 
-    #async
-    #   def reset_phase(self, phase):
-    #      phase.raise_objection(self, "Resetting driver")
-    #      reset_and_suspend()
-    #      phase.drop_objection(self)
-    #   endtask
-    #
+    async def reset_phase(self, phase):
+        phase.raise_objection(self, "Resetting monitor")
+        uvm_info("VIP_MON", "reset_phase started")
+        await self.reset_and_suspend()
+        phase.drop_objection(self)
+
+
     #
     #   //
     #   // Abruptly interrupt and suspend this monitor
@@ -78,18 +78,19 @@ class vip_monitor(UVMMonitor):
            self.m_proc.kill()
            self.m_proc = None
            #wait (m_suspended)
+           while self.m_suspended != 1:
+               await RisingEdge(self.vif.clk)
 
-    #async
-    #   def suspend(self)
-    #      reset_and_suspend()
-    #   endtask
-    #
-    #async
-    #   def resume(self)
-    #      m_suspend = 0
-    #      wait (!m_suspended)
-    #   endtask
-    #
+    async def suspend(self):
+        await self.reset_and_suspend()
+
+
+    async def resume(self):
+        self.m_suspend = 0
+        while self.m_suspended != 0:
+           await RisingEdge(self.vif.clk)
+
+
     #async
     #   def run_phase(self, phase):
     #      while True:
@@ -182,6 +183,7 @@ class vip_monitor(UVMMonitor):
     #         join
     #      end
     #   endtask
+
     #   virtual protected def rxed(self,ref bit [7:0] chr):
     #   endfunction
 
