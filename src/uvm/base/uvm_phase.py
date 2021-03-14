@@ -499,8 +499,6 @@ class UVMPhase(UVMObject):
                 uvm_debug(self, 'add', ("Adding objection to phase " +
                     phase.get_name()))
                 new_node.phase_done = UVMObjection(phase.get_name() + "_objection")
-                print("CCC111 Created objection " + str(new_node.phase_done) + ' for obj ' +
-                        str(new_node.convert2string()))
             else:
                 uvm_debug(self, 'add', (phase.get_name() +
                     " is not task-based phase, so no objections"))
