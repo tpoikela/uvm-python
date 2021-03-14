@@ -35,7 +35,7 @@ jobs:
       run: |
         python -m pip install -r ci/requirements.txt
         #sudo apt-get install iverilog
-        sudo apt-get install -y -qq flex bison gperf
+        sudo apt-get install -y -qq flex bison gperf glibc-devel
         sudo bash ci/install_iverilog.sh
         #sudo bash ci/install_ghdl.sh
         sudo bash ci/install_verilator.sh
