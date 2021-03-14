@@ -33,7 +33,9 @@ test-tlm1:
 	make -C tlm1/hierarchy/
 	make -C tlm1/fifo/
 	make -C tlm1/bidir/
+ifneq ($(SIM), verilator)
 	make -C tlm1/master_slave/
+endif
 
 test-tlm2:
 	make -C tlm2/blocking_simple/
