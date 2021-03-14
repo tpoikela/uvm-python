@@ -252,7 +252,7 @@ class UVMRoot(UVMComponent):
         # Needs to be done in run_test since it needs to be in an
         # initial block to fork a process.
         uvm_debug(self, 'run_test', 'Calling m_init_objections')
-        await UVMObjection().m_init_objections()
+        await UVMObjection.m_init_objections()
 
         # Retrieve the test names provided on the command line.  Command line
         # overrides the argument.

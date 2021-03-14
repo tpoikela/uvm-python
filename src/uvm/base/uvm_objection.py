@@ -308,13 +308,13 @@ class UVMObjection(UVMReportObject):
     #  // raise : indicator of whether the objection is being raised or lowered. A
     #  //   1 indicates the objection is being raised.
     #
-    def m_propagate (self, obj, source_obj, description, count, raise_, in_top_thread):
+    def m_propagate(self, obj, source_obj, description, count, raise_, in_top_thread):
         if obj is not None and obj != self.m_top:
-            obj = self.m_get_parent(obj)
-            if(raise_):
-                self.m_raise(obj, source_obj, description, count)
+            parent_obj = self.m_get_parent(obj)
+            if raise_:
+                self.m_raise(parent_obj, source_obj, description, count)
             else:
-                self.m_drop(obj, source_obj, description, count, in_top_thread)
+                self.m_drop(parent_obj, source_obj, description, count, in_top_thread)
 
     #  // Group: Objection Control
     #
@@ -414,12 +414,16 @@ class UVMObjection(UVMReportObject):
             self.m_total_count[obj] += count
         else:
             self.m_total_count[obj] = count
+        #rm print("Incremented total obj " + obj.get_name() + ' ' + str(self.m_total_count[obj]))
 
         if source_obj == obj:
             if obj in self.m_source_count:
                 self.m_source_count[obj] += count
             else:
                 self.m_source_count[obj] = count
+            #rm print("Incremented source, obj " + obj.get_name() + ' ' + str(self.m_source_count[obj]))
+
+        #rm print("Objection status\n:" + self.convert2string())
 
         if self.m_trace_mode:
             self.m_report(obj,source_obj,description,count,"raised")
@@ -443,7 +447,7 @@ class UVMObjection(UVMReportObject):
         if ctxt is None:
             idx = 0
             while idx < len(self.m_forked_list):
-                if (self.m_forked_list[idx].obj == obj):
+                if self.m_forked_list[idx].obj == obj:
                     # Caught it after the drain was forked,
                     # but before the fork started
                     ctxt = self.m_forked_list[idx]
@@ -480,7 +484,6 @@ class UVMObjection(UVMReportObject):
 
         else:
             # Otherwise we need to determine what exactly happened
-            diff_count = 0
 
             # Determine the diff count, if it's positive, then we're
             # looking at a 'raise' total, if it's negative, then
@@ -580,28 +583,36 @@ class UVMObjection(UVMReportObject):
     def m_drop(self, obj, source_obj, description="", count=1,
             in_top_thread=0):
         # Ignore drops if the count is 0
-        if (count == 0):
+        if count == 0:
             return
 
         if obj not in self.m_total_count or (count > self.m_total_count[obj]):
             if self.m_cleared:
                 return
-            uvm_report_fatal("OBJTN_ZERO", ("Object \"" + obj.get_full_name()
-              + "\" attempted to drop objection '" + self.get_name() + "' count below zero"))
+            uvm_report_fatal("OBJTN_ZERO", ("Object '" + obj.get_full_name()
+              + "' attempted to drop total objection '" + self.get_name() + "' count below zero. " +
+              "Description: '" + description + "' source_obj: " +
+              source_obj.get_name()))
             return
 
         if obj == source_obj:
             if obj not in self.m_source_count or (count > self.m_source_count[obj]):
-                if (self.m_cleared):
+                if self.m_cleared:
                     return
                 uvm_report_fatal("OBJTN_ZERO", ("Object \"" + obj.get_full_name()
-                  + "\" attempted to drop objection '" + self.get_name() + "' count below zero"))
+                  + "\" attempted to drop source objection '" + self.get_name() + "' count below zero"))
                 return
             self.m_source_count[obj] -= count
+            #rm print("Decremented source count " + obj.get_name() + ' ' + str(self.m_source_count[obj]))
 
         self.m_total_count[obj] -= count
+        if obj.get_name() == 'env':
+            print("XYZ env reduced total count to " + str(self.m_total_count[obj]))
+        #rm print("Decremented total count " + obj.get_name() + ' ' + str(self.m_total_count[obj]))
 
-        if (self.m_trace_mode):
+        #rm print("Objection status\n:" + self.convert2string())
+
+        if self.m_trace_mode:
             self.m_report(obj,source_obj,description,count,"dropped")
 
         self.dropped(obj, source_obj, description, count)
@@ -610,9 +621,12 @@ class UVMObjection(UVMReportObject):
         if self.m_total_count[obj] != 0:
             if not self.m_prop_mode and obj != self.m_top:
                 self.m_drop(self.m_top,source_obj,description, count, in_top_thread)
-            elif (obj != self.m_top):
+            elif obj != self.m_top:
                 self.m_propagate(obj, source_obj, description, count, 0, in_top_thread)
         else:
+            # tpoikela: Without propagate, total_count is not correctly cleared
+            # self.m_propagate(obj, source_obj, description, count, 0, in_top_thread)
+
             ctxt = None  # uvm_objection_context_object
             if (len(UVMObjection.m_context_pool) > 0):
                 ctxt = UVMObjection.m_context_pool.pop(0)
@@ -638,19 +652,18 @@ class UVMObjection(UVMReportObject):
             UVMObjection.m_scheduled_list.append(ctxt)
             UVMObjection.m_scheduled_list_not_empty_event.set()
         #end // else: !if(self.m_total_count[obj] != 0)
-        #
-        #  endfunction
 
-    #  // Function: clear
-    #  //
-    #  // Immediately clears the objection state. All counts are cleared and the
-    #  // any processes waiting on a call to wait_for(UVM_ALL_DROPPED, uvm_top)
-    #  // are released.
-    #  //
-    #  // The caller, if a uvm_object-based object, should pass its 'this' handle
-    #  // to the ~obj~ argument to document who cleared the objection.
-    #  // Any drain_times set by the user are not affected.
-    #  //
+
+    # Function: clear
+    # 
+    # Immediately clears the objection state. All counts are cleared and the
+    # any processes waiting on a call to wait_for(UVM_ALL_DROPPED, uvm_top)
+    # are released.
+    # 
+    # The caller, if a uvm_object-based object, should pass its 'this' handle
+    # to the ~obj~ argument to document who cleared the objection.
+    # Any drain_times set by the user are not affected.
+    # 
     def clear(self, obj=None):
         name = ""
         ctxt = None  # uvm_objection_context_object
@@ -659,13 +672,11 @@ class UVMObjection(UVMReportObject):
         uvm_debug(self, 'clear', 'START')
         if obj is None:
             obj = self.m_top
-        name = obj.get_full_name()
-        if (name == ""):
-            name = "uvm_top"
-        else:
-            name = obj.get_full_name()
 
-        uvm_debug(self, 'clear', 'KKK MMM')
+        name = obj.get_full_name()
+        if name == "":
+            name = "uvm_top"
+
         if (self.m_top_all_dropped is False and
                 self.get_objection_total(self.m_top) > 0):
             uvm_report_warning("OBJTN_CLEAR",("Object '" + name
@@ -674,7 +685,6 @@ class UVMObjection(UVMReportObject):
         self.m_source_count = {}
         self.m_total_count = {}
 
-        uvm_debug(self, 'clear', 'KKK MMM')
         # Remove any scheduled drains from the static queue
         idx = 0
         while (idx < len(UVMObjection.m_scheduled_list)):
@@ -716,10 +726,11 @@ class UVMObjection(UVMReportObject):
     #  // -------------------------
     #  // background process; when non
 
-    async def m_execute_scheduled_forks(self):
+    @classmethod
+    async def m_execute_scheduled_forks(cls):
         while True:
             #wait(UVMObjection.m_scheduled_list.size() != 0)
-            uvm_debug(self, 'm_execute_scheduled_forks', 'waiting list to not be empty')
+            uvm_debug(cls, 'm_execute_scheduled_forks', 'waiting list to not be empty')
             await UVMObjection.m_scheduled_list_not_empty_event.wait()
             UVMObjection.m_scheduled_list_not_empty_event.clear()
 
@@ -738,17 +749,17 @@ class UVMObjection(UVMReportObject):
                     # The fork will guard the m_forked_drain call, but
                     # a re-raise can kill self.m_forked_list contexts in the delta
                     # before the fork executes.
-                    pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks_fork_join_none(c))
+                    pproc = cocotb.fork(cls.m_execute_scheduled_forks_fork_join_none(c))
                 else:
                     uvm_error("UVMObjection", "Null objection in objection context")
-        #endtask
 
 
-    async def m_execute_scheduled_forks_fork_join_none(self,
+    @classmethod
+    async def m_execute_scheduled_forks_fork_join_none(cls,
             c: 'UVMObjectionContextObject'):
         objection = c.objection  # automatic uvm_objection
         # Check to maike sure re-raise didn't empty the fifo
-        uvm_debug(self, 'm_execute_scheduled_forks_fork_join_none', 'check list len')
+        uvm_debug(cls, 'm_execute_scheduled_forks_fork_join_none', 'check list len')
         if len(objection.m_forked_list) > 0:
             #uvm_objection_context_object ctxt
             ctxt = objection.m_forked_list.pop(0)
@@ -774,12 +785,15 @@ class UVMObjection(UVMReportObject):
                 del objection.m_drain_proc[ctxt.obj]
             else:
                 pass
-            del objection.m_forked_contexts[ctxt.obj]
+
+            # tpoikela: Added check since ctxt.obj becomes None
+            if ctxt.obj in objection.m_forked_contexts:
+                del objection.m_forked_contexts[ctxt.obj]
             # Clear out the context object (prevent memory leaks)
             ctxt.clear()
             # Save the context in the pool for later reuse
             UVMObjection.m_context_pool.append(ctxt)
-        await uvm_zero_delay()
+        #rm await uvm_zero_delay()
 
     #  // m_forked_drain
     #  // -------------
@@ -824,10 +838,11 @@ class UVMObjection(UVMReportObject):
     #  // -----------------
     #
     #  // Forks off the single background process
-    async def m_init_objections(self):
+    @classmethod
+    async def m_init_objections(cls):
         #uvm_debug(cls, 'm_init_objections', "Forking m_execute_scheduled_forks")
-        pproc = cocotb.fork(UVMObjection().m_execute_scheduled_forks())
-        await uvm_zero_delay()
+        pproc = cocotb.fork(cls.m_execute_scheduled_forks())
+        #await uvm_zero_delay()
 
     #  // Function: set_drain_time
     #  //
@@ -961,15 +976,13 @@ class UVMObjection(UVMReportObject):
     #  //
     #  // Returns the current number of objections raised by the given ~object~.
     #
-    #  function int get_objection_count (uvm_object obj=null)
-    #    if (obj==null)
-    #      obj = self.m_top
-    #
-    #    if (!self.m_source_count.exists(obj))
-    #      return 0
-    #    return self.m_source_count[obj]
-    #  endfunction
+    def get_objection_count(self, obj=None):
+        if obj is None:
+            obj = self.m_top
 
+        if obj not in self.m_source_count:
+            return 0
+        return self.m_source_count[obj]
 
     #  // Function: get_objection_total
     #  //
@@ -988,7 +1001,7 @@ class UVMObjection(UVMReportObject):
             cnt = self.m_total_count[obj]
             uvm_debug(self, 'get_objection_total', 'Returning cnt ' + str(cnt))
             return self.m_total_count[obj]
-        #endfunction
+
 
     #  // Function: get_drain_time
     #  //
@@ -1057,7 +1070,7 @@ class UVMObjection(UVMReportObject):
             # print it
             src_count = 0
             if curr_obj in self.m_source_count:
-                self.m_source_count[curr_obj] 
+                src_count = self.m_source_count[curr_obj] 
             total_count = 0
             if curr_obj in self.m_total_count:
                 total_count = self.m_total_count[curr_obj]
@@ -1106,17 +1119,15 @@ class UVMObjection(UVMReportObject):
     #  virtual function string get_type_name ()
     #    return "uvm_objection"
     #  endfunction
-    #
-    #  function void do_copy (uvm_object rhs)
-    #    uvm_objection _rhs
-    #    $cast(_rhs, rhs)
-    #    self.m_source_count = _rhs.m_source_count
-    #    self.m_total_count  = _rhs.m_total_count
-    #    self.m_drain_time   = _rhs.m_drain_time
-    #    self.m_prop_mode    = _rhs.self.m_prop_mode
-    #  endfunction
-    #
-    #endclass
+
+    def do_copy(self, rhs):
+        _rhs = rhs
+        # $cast(_rhs, rhs)
+        self.m_source_count = _rhs.m_source_count
+        self.m_total_count  = _rhs.m_total_count
+        self.m_drain_time   = _rhs.m_drain_time
+        self.m_prop_mode    = _rhs.self.m_prop_mode
+
 
 #// TODO: change to plusarg
 #//`define UVM_DEFAULT_TIMEOUT 9200s
@@ -1167,190 +1178,6 @@ class UVMObjection(UVMReportObject):
     #        "or component is required.", desc })
     #    end
     #  endfunction
-    #
-    #
-    #`ifndef UVM_NO_DEPRECATED
-    #  // m_do_stop_all
-    #  // -------------
-    #
-    #  task m_do_stop_all(uvm_component comp)
-    #
-    #    string name
-    #
-    #    // we use an external traversal to ensure all forks are
-    #    // made from a single threaad.
-    #    if (comp.get_first_child(name))
-    #      do begin
-    #        m_do_stop_all(comp.get_child(name))
-    #      end
-    #      while (comp.get_next_child(name))
-    #
-    #    if (comp.enable_stop_interrupt) begin
-    #      m_n_stop_threads++
-    #      fork begin
-    #        comp.stop_phase(run_ph)
-    #        m_n_stop_threads--
-    #      end
-    #      join_none
-    #    end
-    #  endtask
-    #
-    #
-    #  // Function- stop_request DEPRECATED
-    #  //
-    #  // Calling this function triggers the process of shutting down the currently
-    #  // running task-based phase. This process involves calling all components'
-    #  // stop tasks for those components whose enable_stop_interrupt bit is set.
-    #  // Once all stop tasks return, or once the optional global_stop_timeout
-    #  // expires, all components' kill method is called, effectively ending the
-    #  // current phase. The uvm_top will then begin execution of the next phase,
-    #  // if any.
-    #
-    #  function void stop_request()
-    #    `uvm_info_context("STOP_REQ",
-    #                      "Stop-request called. Waiting for all-dropped on uvm_test_done",
-    #                      UVM_FULL,self.m_top)
-    #    fork
-    #      m_stop_request()
-    #    join_none
-    #  endfunction
-    #
-    #  task m_stop_request()
-    #    raise_objection(self.m_top,"stop_request called; raising test_done objection")
-    #    uvm_wait_for_nba_region()
-    #    drop_objection(self.m_top,"stop_request called; dropping test_done objection")
-    #  endtask
-    #
-    #
-    #  // Variable- stop_timeout DEPRECATED
-    #  //
-    #  // These set watchdog timers for task-based phases and stop tasks. You cannot
-    #  // disable the timeouts. When set to 0, a timeout of the maximum time possible
-    #  // is applied. A timeout at this value usually indicates a problem with your
-    #  // testbench. You should lower the timeout to prevent "never-ending"
-    #  // simulations.
-    #
-    #  time stop_timeout = 0
-    #
-    #
-    #  // Task- all_dropped DEPRECATED
-    #  //
-    #  // This callback is called when the given ~object's~ objection count reaches
-    #  // zero; if the ~object~ is the implicit top-level, <uvm_root> then it means
-    #  // there are no more objections raised for the ~uvm_test_done~ objection.
-    #  // Thus, after calling <uvm_objection::all_dropped>, this method will call
-    #  // <global_stop_request> to stop the current task-based phase (e.g. run).
-    #
-    #  virtual task all_dropped (uvm_object obj,
-    #                            uvm_object source_obj,
-    #                            string description,
-    #                            int count)
-    #    if (obj != self.m_top) begin
-    #      super.all_dropped(obj,source_obj,description,count)
-    #      return
-    #    end
-    #
-    #    self.m_top.all_dropped(this, source_obj, description, count)
-    #
-    #    // All stop tasks are forked from a single thread within a 'guard' process
-    #    // so 'disable fork' can be used.
-    #
-    #    if(m_cleared == 0) begin
-    #      `uvm_info_context("TEST_DONE",
-    #          "All end-of-test objections have been dropped. Calling stop tasks",
-    #          UVM_FULL,self.m_top)
-    #      fork begin // guard
-    #        fork
-    #          begin
-    #            m_executing_stop_processes = 1
-    #            m_do_stop_all(self.m_top)
-    #            wait (m_n_stop_threads == 0)
-    #            m_executing_stop_processes = 0
-    #          end
-    #          begin
-    #            if (stop_timeout == 0)
-    #              wait(stop_timeout != 0)
-    #            `uvm_delay(stop_timeout)
-    #            `uvm_error("STOP_TIMEOUT",
-    #              {$sformatf("Stop-task timeout of %0t expired. ", stop_timeout),
-    #                 "'run' phase ready to proceed to extract phase"})
-    #          end
-    #        join_any
-    #        disable fork
-    #      end
-    #      join // guard
-    #
-    #      `uvm_info_context("TEST_DONE", {"'run' phase is ready ",
-    #                        "to proceed to the 'extract' phase"}, UVM_LOW,self.m_top)
-    #
-    #    end
-    #
-    #    if (self.m_events.exists(obj))
-    #      ->self.m_events[obj].all_dropped
-    #    self.m_top_all_dropped = 1
-    #
-    #  endtask
-    #
-    #
-    #  // Function- raise_objection DEPRECATED
-    #  //
-    #  // Calls <uvm_objection::raise_objection> after calling <qualify>.
-    #  // If the ~object~ is not provided or is ~null~, then the implicit top-level
-    #  // component, ~uvm_top~, is chosen.
-    #
-    #  virtual function void raise_objection (uvm_object obj=null,
-    #                                         string description="",
-    #                                         int count=1)
-    #    if(obj==null)
-    #      obj=self.m_top
-    #    else
-    #      qualify(obj, 1, description)
-    #
-    #    if (m_executing_stop_processes) begin
-    #      string desc = description == "" ? "" : {"(\"", description, "\") "}
-    #      `uvm_warning("ILLRAISE", {"The uvm_test_done objection was ",
-    #        "raised ", desc, "during processing of a stop_request, i.e. stop ",
-    #        "task execution. The objection is ignored by the stop process"})
-    #        return
-    #    end
-    #
-    #    super.raise_objection(obj,description,count)
-    #
-    #  endfunction
-    #
-    #
-    #  // Function- drop_objection DEPRECATED
-    #  //
-    #  // Calls <uvm_objection::drop_objection> after calling <qualify>.
-    #  // If the ~object~ is not provided or is ~null~, then the implicit top-level
-    #  // component, ~uvm_top~, is chosen.
-    #
-    #  virtual function void drop_objection (uvm_object obj=null,
-    #                                        string description="",
-    #                                        int count=1)
-    #    if(obj==null)
-    #      obj=self.m_top
-    #    else
-    #      qualify(obj, 0, description)
-    #    super.drop_objection(obj,description,count)
-    #  endfunction
-    #
-    #
-    #  // Task- force_stop DEPRECATED
-    #  //
-    #  // Forces the propagation of the all_dropped() callback, even if there are still
-    #  // outstanding objections. The net effect of this action is to forcibly end
-    #  // the current phase.
-    #
-    #  virtual task force_stop(uvm_object obj=null)
-    #    uvm_report_warning("FORCE_STOP",{"Object '",
-    #       (obj!=null?obj.get_name():"<unknown>"),"' called force_stop"})
-    #    m_cleared = 1
-    #    all_dropped(self.m_top,obj,"force_stop() called",1)
-    #    clear(obj)
-    #  endtask
-    #`endif
-    #
     #
     #  // Below are basic data operations needed for all uvm_objects
     #  // for factory registration, printing, comparing, etc.
@@ -1406,8 +1233,7 @@ class UVMObjectionContextObject:
         self.description = ""
         self.count = 0
         self.objection = UVMObjection()
-        # self.objection = None
-    #endclass
+
 
 #// Typedef - Exists for backwards compat
 #typedef uvm_objection uvm_callbacks_objection

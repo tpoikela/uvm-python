@@ -16,7 +16,9 @@ test-simple:
 	make -C test/examples/simple
 
 test-integrated:
+ifneq ($(SIM), verilator)
 	make -C test/examples/integrated
+endif
 
 test-unit:
 	python -m unittest $(UNIT_ARGS)

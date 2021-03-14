@@ -178,7 +178,7 @@ class tb_env(UVMEnv):
         phase.drop_objection(self, "Reset is no longer X")
 
     async def reset_phase(self, phase):
-        phase.raise_objection(self, "Asserting reset for 10 clock cycles")
+        phase.raise_objection(self, "Env: Asserting reset for 10 clock cycles")
     
         uvm_info("TB/TRACE", "Resetting DUT...", UVM_NONE)
         
@@ -192,7 +192,7 @@ class tb_env(UVMEnv):
     
         self.m_isr = 0
         self.tx_src.stop_sequences()
-        phase.drop_objection(self, "HW reset done")
+        phase.drop_objection(self, "Env: HW reset done")
 
 
     async def pre_configure_phase(self, phase):

@@ -61,7 +61,7 @@ class vip_driver(UVMDriver):
         phase.raise_objection(self, "Resetting driver")
         uvm_info("VIP_DRV", "reset_phase started", UVM_LOW)
         await self.reset_and_suspend()
-        phase.drop_objection(self)
+        phase.drop_objection(self, "VIP driver has been reset")
 
 
     # Abruptly interrupt and suspend this driver

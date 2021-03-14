@@ -499,6 +499,8 @@ class UVMPhase(UVMObject):
                 uvm_debug(self, 'add', ("Adding objection to phase " +
                     phase.get_name()))
                 new_node.phase_done = UVMObjection(phase.get_name() + "_objection")
+                print("CCC111 Created objection " + str(new_node.phase_done) + ' for obj ' +
+                        str(new_node.convert2string()))
             else:
                 uvm_debug(self, 'add', (phase.get_name() +
                     " is not task-based phase, so no objections"))
@@ -807,7 +809,12 @@ class UVMPhase(UVMObject):
     #  // The drop is expected to be matched with an earlier raise.
     #  //
     def drop_objection(self, obj, description="", count=1):
+        if self.get_name() == 'reset':
+            print("EEE object dropping reset obj now " + obj.get_name())
         if self.phase_done is not None:
+            if self.get_name() == 'reset':
+                print("Dropping reset objection\n" +
+                        self.phase_done.convert2string())
             self.phase_done.drop_objection(obj,description,count)
         else:
             self.m_report_null_objection(obj, description, count, "drop")

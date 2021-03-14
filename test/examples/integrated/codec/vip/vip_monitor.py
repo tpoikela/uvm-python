@@ -63,9 +63,9 @@ class vip_monitor(UVMMonitor):
 
     async def reset_phase(self, phase):
         phase.raise_objection(self, "Resetting monitor")
-        uvm_info("VIP_MON", "reset_phase started")
+        uvm_info("VIP_MON", "reset_phase started", UVM_MEDIUM)
         await self.reset_and_suspend()
-        phase.drop_objection(self)
+        phase.drop_objection(self, "VIP monitor has been reset")
 
 
     #
