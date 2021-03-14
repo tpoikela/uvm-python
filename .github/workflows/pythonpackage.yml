@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -r ci/requirements.txt
-        sudo apt-get install -y -qq flex bison gperf readline-devel
+        sudo apt-get install -y -qq flex bison gperf libreadline-dev
         sudo apt install -y --no-install-recommends make g++ perl python3 autoconf libfl2 libfl-dev zlibc zlib1g zlib1g-dev
         sudo bash ci/install_iverilog.sh
         #sudo bash ci/install_ghdl.sh
