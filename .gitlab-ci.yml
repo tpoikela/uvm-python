@@ -38,7 +38,7 @@ before_script:
   - apt-get install -y -qq flex bison gperf
   - bash ci/install_iverilog.sh
   # - bash ci/install_ghdl.sh
-  # - bash ci/install_verilator.sh
+  - bash ci/install_verilator.sh
   - ln -s src/uvm ./uvm
   - ls -la
 
@@ -55,6 +55,10 @@ lint:
 test_icarus:
   script:
     - SIM=icarus make test || exit 1
+
+test_verilator:
+  script:
+    - SIM=verilator make test || exit 1
 
 #test_ghdl:
 #  script:
