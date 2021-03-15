@@ -321,9 +321,12 @@ verilator = False
 sim_product = ''
 if simulator.is_running():
     sim_product = simulator.get_simulator_product()
-    print("SIM_PRODUCT IS |" + sim_product + "|")
+    print("uvm-python: SIM_PRODUCT IS |" + sim_product + "|")
     if sim_product == "Verilator":
         verilator = True
+
+def uvm_has_verilator():
+    return verilator
 
 UVM_POUND_ZERO_COUNT = 1000
 #UVM_NO_WAIT_FOR_NBA = True
