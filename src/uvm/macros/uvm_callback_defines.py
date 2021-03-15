@@ -147,6 +147,10 @@ def uvm_do_callbacks(self, CB, METHOD, *args):
     uvm_debug(self, 'uvm_do_callbacks', 'Exec CBs with ' + METHOD)
     uvm_do_obj_callbacks(self, CB, METHOD, *args)
 
+async def uvm_do_callbacks_async(self, CB, METHOD, *args):
+    uvm_debug(self, 'uvm_do_callbacks', 'Exec CBs with ' + METHOD)
+    await uvm_do_obj_callbacks_async(self, CB, METHOD, *args)
+
 #-----------------------------------------------------------------------------
 # MACRO: `uvm_do_obj_callbacks
 #
@@ -178,6 +182,19 @@ def uvm_do_obj_callbacks(OBJ, CB, METHOD, *args):
             .format(METHOD, cb.get_name(), OBJ.get_full_name())))
         m_to_call = getattr(cb, METHOD)
         m_to_call(*args)
+        cb = cb_iter.next()
+
+async def uvm_do_obj_callbacks_async(OBJ, CB, METHOD, *args):
+    from ..base.uvm_callback import UVMCallbackIter
+    cb_iter = UVMCallbackIter(OBJ, CB)
+    cb = cb_iter.first()
+
+    while cb is not None:
+        uvm_cb_trace_noobj(cb, (
+            "Executing callback method '{}' for callback {} (CB) from {} (T)"
+            .format(METHOD, cb.get_name(), OBJ.get_full_name())))
+        m_to_call = getattr(cb, METHOD)
+        await m_to_call(*args)
         cb = cb_iter.next()
 
 #//-----------------------------------------------------------------------------
