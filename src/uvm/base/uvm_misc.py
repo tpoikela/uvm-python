@@ -31,7 +31,7 @@ UVM functionality, but such classes may be placed in :class:`UVMVoid`-typed
 containers along with other UVM objects.
 """
 
-from typing import Dict
+from typing import Dict, Optional
 
 import re
 from ..macros.uvm_message_defines import uvm_error, uvm_warning
@@ -278,10 +278,10 @@ class UVMStatusContainer:
 
         #  //These are the policy objects currently in use. The policy object gets set
         #  //when a function starts up. The macros use this.
-        self.comparer = None  # UVMComparer
-        self.packer = None  # UVMPacker
-        self.recorder = None  # UVMRecorder
-        self.printer = None  # UVMPrinter
+        self.comparer: Optional['UVMComparer'] = None  # UVMComparer
+        self.packer: Optional['UVMPacker'] = None  # UVMPacker
+        self.recorder: Optional['UVMRecorder'] = None  # UVMRecorder
+        self.printer: Optional['UVMPrinter'] = None  # UVMPrinter
 
     def do_field_check(self, field, obj):
         if UVM_ENABLE_FIELD_CHECKS:
