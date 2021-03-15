@@ -278,10 +278,10 @@ class UVMStatusContainer:
 
         #  //These are the policy objects currently in use. The policy object gets set
         #  //when a function starts up. The macros use this.
-        self.comparer: Any  = None  # UVMComparer
-        self.packer: Any = None  # UVMPacker
-        self.recorder: Any  = None  # UVMRecorder
-        self.printer: Any = None  # UVMPrinter
+        # self.comparer = None  # UVMComparer
+        # self.packer = None  # UVMPacker
+        # self.recorder = None  # UVMRecorder
+        # self.printer = None  # UVMPrinter
 
     def do_field_check(self, field, obj):
         if UVM_ENABLE_FIELD_CHECKS:

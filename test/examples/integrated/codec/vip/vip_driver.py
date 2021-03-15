@@ -20,6 +20,7 @@
 #// -------------------------------------------------------------
 #// 
 
+from cocotb.triggers import RisingEdge
 from uvm import *
 
 

@@ -54,7 +54,8 @@ class UVMObjectionEvents():
 ObjContextDict = Dict[Any, 'UVMObjectionContextObject']
 ObjContextList = List['UVMObjectionContextObject']
 
-def get_name_depth(curr_obj_name):
+
+def get_name_depth(curr_obj_name: str) -> int:
     """ Returns the hier depth of the name """
     depth = 0
     for i in curr_obj_name:
@@ -63,12 +64,12 @@ def get_name_depth(curr_obj_name):
     return depth
 
 
-def get_leaf_name(curr_obj_name):
+def get_leaf_name(curr_obj_name: str) -> str:
     name = curr_obj_name
     rr = range(len(curr_obj_name)-1, -1, -1)
     for i in rr:
         if curr_obj_name[i] == ".":
-            name = curr_obj_name[i+1:len(curr_obj_name)] 
+            name = curr_obj_name[i+1:len(curr_obj_name)]
             break
     return name
 
@@ -207,7 +208,7 @@ class UVMObjection(UVMReportObject):
     #  // 0 turns tracing off. A trace mode of 1 turns tracing on.
     #  // The return value is the mode prior to being reset.
     #
-    def trace_mode (self, mode=-1):
+    def trace_mode(self, mode=-1):
         trace_mode = self.m_trace_mode
         if mode == 0:
             self.m_trace_mode = 0
@@ -263,10 +264,10 @@ class UVMObjection(UVMReportObject):
         if name == "":
             name = "uvm_top"
         act_type = "subtracted"
-        if action=="raised":
+        if action == "raised":
             act_type = "added"
         act_dir = "from"
-        if action=="raised":
+        if action == "raised":
             act_dir = "to"
         uvm_report_info("OBJTN_TRC",
             sv.sformatf("Object %0s %0s %0d objection(s) %0s its total (%s from"
@@ -434,11 +435,12 @@ class UVMObjection(UVMReportObject):
         # First go through the scheduled list
         idx = 0
         m_scheduled_list = UVMObjection.m_scheduled_list
-        while idx < len(m_scheduled_list):
-            if ((m_scheduled_list[idx].obj == obj) and
-                    (m_scheduled_list[idx].objection == self)):
+        # while idx < len(m_scheduled_list):
+        for entry in m_scheduled_list:
+            if ((entry.obj == obj) and
+                    (entry.objection == self)):
                 # Caught it before the drain was forked
-                ctxt = m_scheduled_list[idx]
+                ctxt = entry
                 del m_scheduled_list[idx]
                 break
             idx += 1
@@ -655,15 +657,15 @@ class UVMObjection(UVMReportObject):
 
 
     # Function: clear
-    # 
+    #
     # Immediately clears the objection state. All counts are cleared and the
     # any processes waiting on a call to wait_for(UVM_ALL_DROPPED, uvm_top)
     # are released.
-    # 
+    #
     # The caller, if a uvm_object-based object, should pass its 'this' handle
     # to the ~obj~ argument to document who cleared the objection.
     # Any drain_times set by the user are not affected.
-    # 
+    #
     def clear(self, obj=None):
         name = ""
         ctxt = None  # uvm_objection_context_object
@@ -1070,7 +1072,7 @@ class UVMObjection(UVMReportObject):
             # print it
             src_count = 0
             if curr_obj in self.m_source_count:
-                src_count = self.m_source_count[curr_obj] 
+                src_count = self.m_source_count[curr_obj]
             total_count = 0
             if curr_obj in self.m_total_count:
                 total_count = self.m_total_count[curr_obj]
@@ -1078,7 +1080,7 @@ class UVMObjection(UVMReportObject):
                     blank[0:2*depth], name)
 
             if not ((lst.has_next() and
-                curr_obj_name[0:len(this_obj_name)] == this_obj_name)):
+                    curr_obj_name[0:len(this_obj_name)] == this_obj_name)):
                 break
             curr_obj_name = lst.next()
 

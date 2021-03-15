@@ -25,6 +25,8 @@
     #    def rxed(self,vip_monitor xactor, ref bit [7:0] chr):;endfunction
     #endclass
 
+from cocotb.triggers import RisingEdge
+
 from uvm import *
 
 class vip_monitor(UVMMonitor):

@@ -420,7 +420,8 @@ class sv_obj(crv.Randomized):
             self._sv_rand_state = random.getstate()
             return True and ok
         except Exception as e:
-            raise RandomizeError('randomize() failed for ' + str(self) + '\n' + e)
+            raise RandomizeError('randomize() failed for ' + str(self) + '\n' +
+                    str(e))
             # return False
 
 
