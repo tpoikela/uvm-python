@@ -1377,7 +1377,7 @@ class UVMComponent(UVMReportObject):
         """
         pass
 
-    def all_dropped(self, objection, source_obj, description, count):
+    async def all_dropped(self, objection, source_obj, description, count):
         """
         The `all_droppped` callback is called when all objections have been
         dropped by this component and all its descendants.  The `source_obj` is the
