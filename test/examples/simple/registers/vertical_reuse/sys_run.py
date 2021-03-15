@@ -26,7 +26,7 @@ import cocotb
 from cocotb.clock import Clock
 
 from uvm import (uvm_fatal, uvm_info, UVMConfigDb, run_test,
-    UVM_NONE)
+    UVM_NONE, uvm_has_verilator)
 
 from apb.apb_if import apb_if
 from sys_env import sys_env
@@ -35,7 +35,8 @@ from sys_testlib import *
 
 @cocotb.test()
 async def initial(dut):
-    print("dut parameter NUM_BLKS: " + str(dut.NUM_BLKS))
+    if uvm_has_verilator() is False:
+        print("dut parameter #NUM_BLKS: " + str(dut.NUM_BLKS))
     env = sys_env("env")
     vif = apb_if(dut)
     UVMConfigDb.set(env, "apb", "vif", vif)
