@@ -1,16 +1,16 @@
-#// 
+#//
 #// -------------------------------------------------------------
 #//    Copyright 2011 Synopsys, Inc.
 #//    Copyright 2019-2020 Tuomas Poikela (tpoikela)
 #//    All Rights Reserved Worldwide
-#// 
+#//
 #//    Licensed under the Apache License, Version 2.0 (the
 #//    "License"); you may not use this file except in
 #//    compliance with the License.  You may obtain a copy of
 #//    the License at
-#// 
+#//
 #//        http://www.apache.org/licenses/LICENSE-2.0
-#// 
+#//
 #//    Unless required by applicable law or agreed to in
 #//    writing, software distributed under the License is
 #//    distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
@@ -46,7 +46,7 @@ class rx_isr_seq(UVMRegSequence):
 
     async def body(self):
         status = 0
-        
+
         # Keep reading data until FIFO is empty
         while not self.regmodel.IntSrc.RxEmpty.get():
             status = []
@@ -77,6 +77,7 @@ class tb_env(UVMEnv):
         self.egress = None
         self.adapt = None
         self.m_isr = 0x0
+        self.hier_objection = False
 
 
     def build_phase(self, phase):
@@ -94,6 +95,7 @@ class tb_env(UVMEnv):
         self.tx_src = vip_sequencer.type_id.create("tx_src", self)
         self.tx_src_seq_port = UVMSeqItemPullPort("tx_src_seq_port", self)
         self.vip = vip_agent.type_id.create("vip", self)
+        self.vip.hier_objection = self.hier_objection
 
         self.ingress = sym_sb.type_id.create("ingress", self)
         self.egress = sym_sb.type_id.create("egress", self)
@@ -102,7 +104,7 @@ class tb_env(UVMEnv):
         UVMConfigDb.set(self, "vip.sqr.main_phase", "default_sequence",
                 vip_sentence_seq.type_id.get())
         UVMConfigDb.set(self, "tx_src.main_phase","default_sequence", vip_sentence_seq.type_id.get())
-    
+
         self.m_isr = 0
         self.m_in_shutdown = 0
         self.pull_from_RxFIFO_thread = None
@@ -116,11 +118,11 @@ class tb_env(UVMEnv):
             self.reg2apb = reg2apb_adapter()
             self.regmodel.default_map.set_sequencer(self.apb.sqr,self.reg2apb)
             self.regmodel.default_map.set_auto_predict(1)
-    
+
         self.tx_src_seq_port.connect(self.tx_src.seq_item_export)
-    
+
         self.apb.mon.ap.connect(self.adapt.apb)
-    
+
         self.vip.tx_mon.ap.connect(self.ingress.expected)
         self.vip.rx_mon.ap.connect(self.egress.observed)
         self.adapt.tx_ap.connect(self.egress.expected)
@@ -179,17 +181,19 @@ class tb_env(UVMEnv):
 
     async def reset_phase(self, phase):
         phase.raise_objection(self, "Env: Asserting reset for 10 clock cycles")
-    
+
         uvm_info("TB/TRACE", "Resetting DUT...", UVM_NONE)
-        
+
         self.vif.rst <= 1
         self.regmodel.reset()
+        uvm_info("TB/TRACE", "Waiting VIP reset/suspend", UVM_NONE)
         await self.vip.reset_and_suspend()
         for _ in range(10):
             await RisingEdge(self.vif.clk)
-        self.vif.rst = 0
+        self.vif.rst <= 0
+        uvm_info("TB/TRACE", "Waiting VIP resume", UVM_NONE)
         await self.vip.resume()
-    
+
         self.m_isr = 0
         self.tx_src.stop_sequences()
         phase.drop_objection(self, "Env: HW reset done")
@@ -229,29 +233,33 @@ class tb_env(UVMEnv):
     async def pre_main_phase(self, phase):
         phase.raise_objection(self, "Waiting for VIPs and DUT to acquire SYNC")
         uvm_info("TB/TRACE", "Synchronizing interfaces...", UVM_NONE)
-        
+
         cocotb.fork(self.pre_main_phase_timeout())
-        
+
         # Wait until the VIP has acquired symbol syncs
-        while not vip.rx_mon.is_in_sync():
-           await vip.rx_mon.wait_for_sync_change()
+        while not self.vip.rx_mon.is_in_sync():
+            await self.vip.rx_mon.wait_for_sync_change()
 
-        while not vip.tx_mon.is_in_sync():
-           await vip.tx_mon.wait_for_sync_change()
+        while not self.vip.tx_mon.is_in_sync():
+            await self.vip.tx_mon.wait_for_sync_change()
 
-        
+
         # Wait until the DUT has acquired symbol sync
+        status = []
         await self.regmodel.RxStatus.mirror(status)
-        if not regmodel.RxStatus.Align.get():
-           self.regmodel.IntMask.set( 0x000)
-           self.regmodel.IntMask.SA.set( 0b1)
-           await self.regmodel.IntMask.update(status)
+        if not self.regmodel.RxStatus.Align.get():
+            self.regmodel.IntMask.set(0x000)
+            self.regmodel.IntMask.SA.set(0b1)
+            status = []
+            await self.regmodel.IntMask.update(status)
 
-           #wait (vif.intr)
-           while vif.intr != 1:
-               await RisingEdge(self.vif.clk)
+            #wait (vif.intr)
+            while self.vif.intr != 1:
+                await RisingEdge(self.vif.clk)
 
-        await self.regmodel.IntMask.write(status,  0x000)
+        status = []
+        await self.regmodel.IntMask.write(status, 0x000)
+        status = []
         await self.regmodel.IntSrc.write(status, -1)
         phase.drop_objection(self, "Everyone is in SYNC")
 
@@ -262,7 +270,7 @@ class tb_env(UVMEnv):
     async def pull_from_RxFIFO(self, phase):
         shutdown_ph = phase.find_by_name("shutdown")
         shutdown_ph.raise_objection(self, "Pulling data from RxFIFO")
-        #      
+        #
         while True:
             self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
             #
@@ -355,14 +363,15 @@ class tb_env(UVMEnv):
             # Stop supplying data once it is full
             # or the egress scoreboard has had enough
             while not self.regmodel.IntSrc.TxFull.get() > 0:
-               phase.drop_objection(self, "Waiting for DUT-> stimulus from tx_src sequencer")
-               await self.tx_src_seq_port.get_next_item(tr)
-               self.tx_src_seq_port.item_done()
-               phase.raise_objection(self, "Applying DUT-> stimulus from tx_src sequencer")
-               await self.regmodel.TxRx.write(status, tr.chr)
-            
-               await self.regmodel.IntSrc.mirror(status)
-            
+                phase.drop_objection(self, "Waiting for DUT-> stimulus from tx_src sequencer")
+                tr = []
+                await self.tx_src_seq_port.get_next_item(tr)
+                self.tx_src_seq_port.item_done()
+                phase.raise_objection(self, "Applying DUT-> stimulus from tx_src sequencer")
+                await self.regmodel.TxRx.write(status, tr[0].chr)
+
+                await self.regmodel.IntSrc.mirror(status)
+
             self.regmodel.IntMask.TxLow.set(1)
             await self.regmodel.IntMask.update(status)
 

@@ -31,6 +31,7 @@ class vip_agent(UVMAgent):
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
+        self.hier_objection = False
 
 
     def build_phase(self, phase):
@@ -38,6 +39,10 @@ class vip_agent(UVMAgent):
         self.drv = vip_driver.type_id.create("drv", self)
         self.tx_mon = vip_monitor.type_id.create("tx_mon", self)
         self.rx_mon = vip_monitor.type_id.create("rx_mon", self)
+
+        self.rx_mon.hier_objection = self.hier_objection
+        self.tx_mon.hier_objection = self.hier_objection
+        self.drv.hier_objection = self.hier_objection
 
         vif = []
         if not UVMConfigDb.get(self, "", "vif", vif):
@@ -51,10 +56,12 @@ class vip_agent(UVMAgent):
 
 
     async def pre_reset_phase(self, phase):
-        phase.raise_objection(self, "Resetting agent")
+        if self.hier_objection:
+            phase.raise_objection(self, "Resetting agent")
         await self.reset_and_suspend()
-        print("vip_agent dropping objection")
-        phase.drop_objection(self)
+        if self.hier_objection:
+            print("vip_agent dropping objection")
+            phase.drop_objection(self)
 
 
     async def reset_and_suspend(self):

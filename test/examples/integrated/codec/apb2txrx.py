@@ -32,10 +32,6 @@ class apb2txrx(UVMComponent):
     #   uvm_analysis_port#(vip_tr) tx_ap
     #   uvm_analysis_port#(vip_tr) rx_ap
     #
-    #   `uvm_component_utils(apb2txrx)
-    #
-    #   int radd
-    #   int wadd
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
@@ -56,17 +52,17 @@ class apb2txrx(UVMComponent):
 
 
     def write(self, rw):
-       # R from 'radd' are Rx characters
-       if (rw.kind == apb_rw.READ and rw.addr == self.radd):
-          tr = vip_tr.type_id.create("rx",None,self.get_full_name())
-          tr.chr = rw.data
-          self.rx_ap.write(tr)
-       
-       # W from 'wadd' are Tx characters
-       if (rw.kind == apb_rw.WRITE  and  rw.addr == self.wadd):
-          tr = vip_tr.type_id.create("tx",None,self.get_full_name())
-          tr.chr = rw.data
-          self.tx_ap.write(tr)
+        # R from 'radd' are Rx characters
+        if (rw.kind == apb_rw.READ and rw.addr == self.radd):
+            tr = vip_tr.type_id.create("rx",None,self.get_full_name())
+            tr.chr = rw.data
+            self.rx_ap.write(tr)
+        
+        # W from 'wadd' are Tx characters
+        if (rw.kind == apb_rw.WRITE  and  rw.addr == self.wadd):
+            tr = vip_tr.type_id.create("tx",None,self.get_full_name())
+            tr.chr = rw.data
+            self.tx_ap.write(tr)
 
 
 uvm_component_utils(apb2txrx)

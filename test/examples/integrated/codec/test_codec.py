@@ -31,11 +31,14 @@ from vip import *
 
 from apb.apb_if import apb_if
 
+hier_objection = False
+
 class test(UVMTest):
 
     def __init__(self, name, parent=None):
         super().__init__(name, parent)
         self.env = tb_env("env")
+        self.env.hier_objection = hier_objection
 
 
     def start_of_simulation_phase(self, phase):
