@@ -30,9 +30,11 @@ from .uvm_debug import uvm_debug
 from .uvm_globals import *
 from .uvm_object_globals import (UVM_RAISED, UVM_DROPPED, UVM_ALL_DROPPED)
 from .sv import sv
-from ..macros import uvm_error, uvm_info
+from ..macros import (uvm_error, uvm_info, uvm_do_callbacks,
+    uvm_do_callbacks_async)
 from typing import List, Optional, Dict, Any
 from .uvm_pool import UVMPool
+from .uvm_callback import UVMCallback
 
 UVM_USE_PROCESS_CONTAINER = 1
 
@@ -79,6 +81,64 @@ def get_leaf_name(curr_obj_name: str) -> str:
 #// The following classes define the objection mechanism and end-of-test
 #// functionality, which is based on <uvm_objection>.
 #//------------------------------------------------------------------------------
+
+#//------------------------------------------------------------------------------
+#//
+#// Class: uvm_objection_callback
+#//
+#//------------------------------------------------------------------------------
+#// The uvm_objection is the callback type that defines the callback
+#// implementations for an objection callback. A user uses the callback
+#// type uvm_objection_cbs_t to add callbacks to specific objections.
+#//
+#// For example:
+#//
+#//| class my_objection_cb extends uvm_objection_callback
+#//|   function new(string name)
+#//|     super.new(name)
+#//|   endfunction
+#//|
+#//|   virtual function void raised (uvm_objection objection, uvm_object obj,
+#//|       uvm_object source_obj, string description, int count)
+#//|       `uvm_info("RAISED","%0t: Objection %s: Raised for %s", $time, objection.get_name(),
+#//|       obj.get_full_name())
+#//|   endfunction
+#//| endclass
+#//| ...
+#//| initial begin
+#//|   my_objection_cb cb = new("cb")
+#//|   uvm_objection_cbs_t::add(null, cb); //typewide callback
+#//| end
+
+
+class UVMObjectionCallback(UVMCallback):
+    def __init__(self, name):
+        super().__init__(name)
+#  // Function: raised
+#  //
+#  // Objection raised callback function. Called by <uvm_objection::raised>.
+#
+#  virtual function void raised (uvm_objection objection, uvm_object obj,
+#      uvm_object source_obj, string description, int count)
+#  endfunction
+#
+#  // Function: dropped
+#  //
+#  // Objection dropped callback function. Called by <uvm_objection::dropped>.
+#
+#  virtual function void dropped (uvm_objection objection, uvm_object obj,
+#      uvm_object source_obj, string description, int count)
+#  endfunction
+#
+#  // Function: all_dropped
+#  //
+#  // Objection all_dropped callback function. Called by <uvm_objection::all_dropped>.
+#
+#  virtual task all_dropped (uvm_objection objection, uvm_object obj,
+#      uvm_object source_obj, string description, int count)
+#  endtask
+#
+#endclass
 
 #//------------------------------------------------------------------------------
 #//
@@ -293,7 +353,7 @@ class UVMObjection(UVMReportObject):
         if obj is None:
             obj = self.m_top
         return obj
-    #  endfunction
+
 
     #  // Function- m_propagate
     #  //
@@ -370,13 +430,12 @@ class UVMObjection(UVMReportObject):
     #
     #     self.m_prop_mode = prop_mode
     #  endfunction : set_propagate_mode
-    #
+
     #  // Function: get_propagate_mode
     #  // Returns the propagation mode for this objection.
-    #  function bit get_propagate_mode()
-    #     return self.m_prop_mode
-    #  endfunction : get_propagate_mode
-    #
+    def get_propagate_mode(self) -> int:
+        return self.m_prop_mode
+
     #  // Function: raise_objection
     #  //
     #  // Raises the number of objections for the source ~object~ by ~count~, which
@@ -394,7 +453,7 @@ class UVMObjection(UVMReportObject):
     #  //   <uvm_component::raised> method for all of the components up the
     #  //   hierarchy.
     #  //
-    def raise_objection (self, obj=None, description="", count=1):
+    def raise_objection(self, obj=None, description="", count=1):
         if obj is None:
             obj = self.m_top
         self.m_cleared = 0
@@ -415,16 +474,12 @@ class UVMObjection(UVMReportObject):
             self.m_total_count[obj] += count
         else:
             self.m_total_count[obj] = count
-        #rm print("Incremented total obj " + obj.get_name() + ' ' + str(self.m_total_count[obj]))
 
         if source_obj == obj:
             if obj in self.m_source_count:
                 self.m_source_count[obj] += count
             else:
                 self.m_source_count[obj] = count
-            #rm print("Incremented source, obj " + obj.get_name() + ' ' + str(self.m_source_count[obj]))
-
-        #rm print("Objection status\n:" + self.convert2string())
 
         if self.m_trace_mode:
             self.m_report(obj,source_obj,description,count,"raised")
@@ -578,6 +633,7 @@ class UVMObjection(UVMReportObject):
         if obj is None:
             obj = self.m_top
         uvm_debug(self, 'drop_objection', obj.get_name() + " Starting to drop objection")
+
         self.m_drop(obj, obj, description, count, 0)
 
     #  // Function- m_drop
@@ -605,14 +661,8 @@ class UVMObjection(UVMReportObject):
                   + "\" attempted to drop source objection '" + self.get_name() + "' count below zero"))
                 return
             self.m_source_count[obj] -= count
-            #rm print("Decremented source count " + obj.get_name() + ' ' + str(self.m_source_count[obj]))
 
         self.m_total_count[obj] -= count
-        if obj.get_name() == 'env':
-            print("XYZ env reduced total count to " + str(self.m_total_count[obj]))
-        #rm print("Decremented total count " + obj.get_name() + ' ' + str(self.m_total_count[obj]))
-
-        #rm print("Objection status\n:" + self.convert2string())
 
         if self.m_trace_mode:
             self.m_report(obj,source_obj,description,count,"dropped")
@@ -626,9 +676,6 @@ class UVMObjection(UVMReportObject):
             elif obj != self.m_top:
                 self.m_propagate(obj, source_obj, description, count, 0, in_top_thread)
         else:
-            # tpoikela: Without propagate, total_count is not correctly cleared
-            # self.m_propagate(obj, source_obj, description, count, 0, in_top_thread)
-
             ctxt = None  # uvm_objection_context_object
             if (len(UVMObjection.m_context_pool) > 0):
                 ctxt = UVMObjection.m_context_pool.pop(0)
@@ -737,23 +784,21 @@ class UVMObjection(UVMReportObject):
             UVMObjection.m_scheduled_list_not_empty_event.clear()
 
             if len(UVMObjection.m_scheduled_list) != 0:
-                # c = None  # uvm_objection_context_object
-                # o = None  # uvm_objection
                 # Save off the context before the fork
-                c = UVMObjection.m_scheduled_list[0]
-                UVMObjection.m_scheduled_list.remove(c)
+                c = UVMObjection.m_scheduled_list.pop(0)
+
                 # A re-raise can use this to figure out props (if any)
                 objection = c.objection
-                if objection is not None:
-                    objection.m_scheduled_contexts[c.obj] = c
-                    # The fork below pulls out from the forked list
-                    objection.m_forked_list.append(c)
-                    # The fork will guard the m_forked_drain call, but
-                    # a re-raise can kill self.m_forked_list contexts in the delta
-                    # before the fork executes.
-                    pproc = cocotb.fork(cls.m_execute_scheduled_forks_fork_join_none(c))
-                else:
-                    uvm_error("UVMObjection", "Null objection in objection context")
+                #rm if objection is not None:
+                objection.m_scheduled_contexts[c.obj] = c
+                # The fork below pulls out from the forked list
+                objection.m_forked_list.append(c)
+                # The fork will guard the m_forked_drain call, but
+                # a re-raise can kill self.m_forked_list contexts in the delta
+                # before the fork executes.
+                pproc = cocotb.fork(cls.m_execute_scheduled_forks_fork_join_none(c))
+                #else:
+                #    uvm_error("UVMObjection", "Null objection in objection context")
 
 
     @classmethod
@@ -789,8 +834,8 @@ class UVMObjection(UVMReportObject):
                 pass
 
             # tpoikela: Added check since ctxt.obj becomes None
-            if ctxt.obj in objection.m_forked_contexts:
-                del objection.m_forked_contexts[ctxt.obj]
+            #if ctxt.obj in objection.m_forked_contexts:
+            del objection.m_forked_contexts[ctxt.obj]
             # Clear out the context object (prevent memory leaks)
             ctxt.clear()
             # Save the context in the pool for later reuse
@@ -807,7 +852,7 @@ class UVMObjection(UVMReportObject):
 
     async def m_forked_drain(self, obj, source_obj, description="", count=1,
             in_top_thread=0):
-        diff_count = 0
+        #rm diff_count = 0
 
         if obj in self.m_drain_time:
             # pass
@@ -817,7 +862,7 @@ class UVMObjection(UVMReportObject):
         if self.m_trace_mode:
             self.m_report(obj,source_obj,description,count,"all_dropped")
 
-        self.all_dropped(obj,source_obj,description, count)
+        await self.all_dropped(obj,source_obj,description, count)
 
         # wait for all_dropped cbs to complete
         await uvm_zero_delay()
@@ -877,6 +922,7 @@ class UVMObjection(UVMReportObject):
         if hasattr(obj, 'raised'):
             obj.raised(self, source_obj, description, count)
         # TODO `uvm_do_callbacks(uvm_objection,uvm_objection_callback,raised(this,obj,source_obj,description,count))
+        uvm_do_callbacks(self, UVMObjectionCallback, 'raised', self,obj,source_obj,description,count)
         if obj in self.m_events:
             self.m_events[obj].raised.set()
 
@@ -894,9 +940,10 @@ class UVMObjection(UVMReportObject):
         #if($cast(comp,obj))
         comp.dropped(self, source_obj, description, count)
         # TODO `uvm_do_callbacks(uvm_objection,uvm_objection_callback,dropped(this,obj,source_obj,description,count))
+        uvm_do_callbacks(self,UVMObjectionCallback,'dropped', self,obj,source_obj,description,count)
         if obj in self.m_events:
             self.m_events[obj].dropped.set()
-    #  endfunction
+
 
     #  // Function: all_dropped
     #  //
@@ -908,11 +955,11 @@ class UVMObjection(UVMReportObject):
     #                            uvm_object source_obj,
     #                            string description,
     #                            int count)
-    def all_dropped(self, obj, source_obj, description, count):
+    async def all_dropped(self, obj, source_obj, description, count):
         comp = obj
-        #if($cast(comp,obj))
-        comp.all_dropped(self, source_obj, description, count)
+        await comp.all_dropped(self, source_obj, description, count)
         # TODO `uvm_do_callbacks(uvm_objection,uvm_objection_callback,all_dropped(this,obj,source_obj,description,count))
+        await uvm_do_callbacks_async(self, UVMObjectionCallback, 'all_dropped', self,obj, source_obj, description, count)
         if obj in self.m_events:
             self.m_events[obj].all_dropped.set()
         if obj == self.m_top:
@@ -1239,67 +1286,9 @@ class UVMObjectionContextObject:
 
 #// Typedef - Exists for backwards compat
 #typedef uvm_objection uvm_callbacks_objection
-#
-#//------------------------------------------------------------------------------
-#//
-#// Class: uvm_objection_callback
-#//
-#//------------------------------------------------------------------------------
-#// The uvm_objection is the callback type that defines the callback
-#// implementations for an objection callback. A user uses the callback
-#// type uvm_objection_cbs_t to add callbacks to specific objections.
-#//
-#// For example:
-#//
-#//| class my_objection_cb extends uvm_objection_callback
-#//|   function new(string name)
-#//|     super.new(name)
-#//|   endfunction
-#//|
-#//|   virtual function void raised (uvm_objection objection, uvm_object obj,
-#//|       uvm_object source_obj, string description, int count)
-#//|       `uvm_info("RAISED","%0t: Objection %s: Raised for %s", $time, objection.get_name(),
-#//|       obj.get_full_name())
-#//|   endfunction
-#//| endclass
-#//| ...
-#//| initial begin
-#//|   my_objection_cb cb = new("cb")
-#//|   uvm_objection_cbs_t::add(null, cb); //typewide callback
-#//| end
-#
-#
-#class uvm_objection_callback extends uvm_callback
-#  function new(string name)
-#    super.new(name)
-#  endfunction
-#
-#  // Function: raised
-#  //
-#  // Objection raised callback function. Called by <uvm_objection::raised>.
-#
-#  virtual function void raised (uvm_objection objection, uvm_object obj,
-#      uvm_object source_obj, string description, int count)
-#  endfunction
-#
-#  // Function: dropped
-#  //
-#  // Objection dropped callback function. Called by <uvm_objection::dropped>.
-#
-#  virtual function void dropped (uvm_objection objection, uvm_object obj,
-#      uvm_object source_obj, string description, int count)
-#  endfunction
-#
-#  // Function: all_dropped
-#  //
-#  // Objection all_dropped callback function. Called by <uvm_objection::all_dropped>.
-#
-#  virtual task all_dropped (uvm_objection objection, uvm_object obj,
-#      uvm_object source_obj, string description, int count)
-#  endtask
-#
-#endclass
-#
-#
+
+
+
+
 #`endif
 #
