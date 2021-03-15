@@ -16,17 +16,17 @@ jobs:
     - name: Cache iverilog
       uses: actions/cache@v1
       env:
-        cache-name: cache-iverilog
+        cache-name: cache-iverilog-new
       with:
         path: ./iverilog
-        key: ${{ runner.os }}-build${{ env.cache-name }}
+        key: ${{ runner.os }}-iverilog-v1${{ env.cache-name }}
     - name: Cache verilator
       uses: actions/cache@v1
       env:
-        cache-name: cache-verilator
+        cache-name: cache-verilator-new
       with:
         path: ./verilator
-        key: ${{ runner.os }}-build${{ env.cache-name }}
+        key: ${{ runner.os }}-verilator-v1${{ env.cache-name }}
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
