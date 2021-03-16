@@ -350,6 +350,14 @@ class UVMPhase(UVMObject):
     #  // domain.
     #  //
     #  extern function uvm_phase find_by_name(string name, bit stay_in_scope=1)
+    def find_by_name(self, name: str, stay_in_scope=1):
+        # TODO: full search
+        if self.get_name() == name:
+            return self
+        find_by_name = self.m_find_predecessor_by_name(name,stay_in_scope,self)
+        if find_by_name is None:
+            find_by_name = self.m_find_successor_by_name(name,stay_in_scope,self)
+        return find_by_name
 
     #  Function: find
     #
@@ -1056,15 +1064,44 @@ class UVMPhase(UVMObject):
             else:
                 orig = orig_phase
             if (not stay_in_scope or
-                (succ.get_schedule() == orig.get_schedule()) or
-                (succ.get_domain() == orig.get_domain())):
+                    (succ.get_schedule() == orig.get_schedule()) or
+                    (succ.get_domain() == orig.get_domain())):
                 found = succ.m_find_successor(phase,stay_in_scope,orig)
                 return found
         return None
 
 
     #  extern function uvm_phase m_find_predecessor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
+    def m_find_predecessor_by_name(self, name, stay_in_scope=1, orig_phase=None):
+        found = None
+        if self.get_name() == name:
+            return self
+        for pred in self.m_predecessors:
+            orig = self if (orig_phase is None) else orig_phase
+            if (not stay_in_scope or
+                    (pred.get_schedule() == orig.get_schedule()) or
+                    (pred.get_domain() == orig.get_domain())):
+                found = pred.m_find_predecessor_by_name(name,stay_in_scope,orig)
+                if found is not None:
+                    return found
+        return None
+
     #  extern function uvm_phase m_find_successor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
+    def m_find_successor_by_name(self, name, stay_in_scope=1, orig_phase=None):
+        found = None
+        if self.get_name() == name:
+            return self
+        for succ in self.m_successors:
+            orig = self if (orig_phase is None) else orig_phase
+            if (not stay_in_scope or
+                    (succ.get_schedule() == orig.get_schedule()) or
+                    (succ.get_domain() == orig.get_domain())):
+                found = succ.m_find_successor_by_name(name,stay_in_scope,orig)
+                if found is not None:
+                    return found
+        return None
+
+
     #  extern function void m_print_successors()
 
     #
@@ -1754,67 +1791,9 @@ class UVMPhaseCb(UVMCallback):
     #endfunction
     #
     #
-    #// m_find_predecessor_by_name
-    #// --------------------------
-    #
-    #function uvm_phase uvm_phase::m_find_predecessor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
-    #  uvm_phase found
-    #  //$display("  FIND PRED node '",name,"' - checking against ",get_name()," (",self.m_phase_type.name()," id=",$sformatf("%0d",get_inst_id()),(m_imp==null)?"":{"/",$sformatf("%0d",m_imp.get_inst_id())},")")
-    #  if (get_name() == name)
-    #    return this
-    #  foreach (self.m_predecessors[pred]) begin
-    #    uvm_phase orig
-    #    orig = (orig_phase==null) ? this : orig_phase
-    #    if (!stay_in_scope ||
-    #        (pred.get_schedule() == orig.get_schedule()) ||
-    #        (pred.get_domain() == orig.get_domain())) begin
-    #      found = pred.m_find_predecessor_by_name(name,stay_in_scope,orig)
-    #      if (found != null)
-    #        return found
-    #    end
-    #  end
-    #  return null
-    #endfunction
-    #
-    #
-    #// m_find_successor_by_name
-    #// ------------------------
-    #
-    #function uvm_phase uvm_phase::m_find_successor_by_name(string name, bit stay_in_scope=1, uvm_phase orig_phase=null)
-    #  uvm_phase found
-    #  //$display("  FIND SUCC node '",name,"' - checking against ",get_name()," (",self.m_phase_type.name()," id=",$sformatf("%0d",get_inst_id()),(m_imp==null)?"":{"/",$sformatf("%0d",m_imp.get_inst_id())},")")
-    #  if (get_name() == name)
-    #    return this
-    #  foreach (self.m_successors[succ]) begin
-    #    uvm_phase orig
-    #    orig = (orig_phase==null) ? this : orig_phase
-    #    if (!stay_in_scope ||
-    #        (succ.get_schedule() == orig.get_schedule()) ||
-    #        (succ.get_domain() == orig.get_domain())) begin
-    #      found = succ.m_find_successor_by_name(name,stay_in_scope,orig)
-    #      if (found != null)
-    #        return found
-    #    end
-    #  end
-    #  return null
-    #endfunction
-    #
-    #// find_by_name
-    #// ------------
-    #
-    #function uvm_phase uvm_phase::find_by_name(string name, bit stay_in_scope=1)
-    #  // TBD full search
-    #  //$display({"\nFIND node named '",name,"' within ",get_name()," (scope ",self.m_phase_type.name(),")", (stay_in_scope) ? " staying within scope" : ""})
-    #  if (get_name() == name)
-    #    return this
-    #  find_by_name = m_find_predecessor_by_name(name,stay_in_scope,this)
-    #  if (find_by_name == null)
-    #    find_by_name = m_find_successor_by_name(name,stay_in_scope,this)
-    #endfunction
-    #
-    #
-    #
-    #
+
+
+
     #function void uvm_phase::get_adjacent_predecessor_nodes(ref uvm_phase pred[])
     #   bit done
     #   bit predecessors[uvm_phase]
