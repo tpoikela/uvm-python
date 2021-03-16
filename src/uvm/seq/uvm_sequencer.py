@@ -23,6 +23,8 @@
 
 #rm from cocotb.triggers import Timer
 
+from typing import List
+
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
 from ..macros import uvm_component_utils, uvm_info
@@ -73,14 +75,23 @@ class UVMSequencer(UVMSequencerParamBase):
         self.sequence_item_requested = False
         self.get_next_item_called = False
 
-    #  // Function: stop_sequences
-    #  //
-    #  // Tells the sequencer to kill all sequences and child sequences currently
-    #  // operating on the sequencer, and remove all requests, locks and responses
-    #  // that are currently queued.  This essentially resets the sequencer to an
-    #  // idle state.
-    #  //
-    #  extern virtual function void stop_sequences()
+    def stop_sequences(self):
+        """
+        Tells the sequencer to kill all sequences and child sequences currently
+        operating on the sequencer, and remove all requests, locks and responses
+        that are currently queued.  This essentially resets the sequencer to an
+        idle state.
+        """
+        super().stop_sequences()
+        self.sequence_item_requested  = 0
+        self.get_next_item_called     = 0
+        # Empty the request fifo
+        if self.m_req_fifo.used():
+            uvm_report_info(self.get_full_name(),
+                "Sequences stopped. Removing request from sequencer fifo")
+            t = []
+            while self.m_req_fifo.try_get(t):
+                t = []
 
     #  extern virtual function string get_type_name()
 
@@ -94,7 +105,6 @@ class UVMSequencer(UVMSequencerParamBase):
             t (list): Empty list into which item is appended
         """
         uvm_check_output_args([t])
-        uvm_info("UVM_SEQUENCER YYY", "get_next_item called now", UVM_MEDIUM)
         # req_item = None
 
         # If a sequence_item has already been requested, then get_next_item()
@@ -113,16 +123,17 @@ class UVMSequencer(UVMSequencerParamBase):
         self.get_next_item_called = True
         await self.m_req_fifo.peek(t)
 
+    async def try_next_item(self, t: List):
+        """
+        Retrieves the next available item from a sequence if one is available.
 
-    #  // Task: try_next_item
-    #  // Retrieves the next available item from a sequence if one is available.
-    #  //
-    async def try_next_item(self, t):
-        #rm arb_time = 0
-
+        Args:
+            t (List): Empty list into which item is appended
+        """
         if self.get_next_item_called == 1:
             uvm_report_error(self.get_full_name(),
-                "get_next_item/try_next_item called twice without item_done or get in between", UVM_NONE)
+                "get_next_item/try_next_item called twice without item_done or get in between",
+                UVM_NONE)
             return
 
         # allow state from last transaction to settle such that sequences'
@@ -192,12 +203,12 @@ class UVMSequencer(UVMSequencerParamBase):
         await uvm_zero_delay()
 
 
-    #  // Task: get
-    #  // Retrieves the next available item from a sequence.
-    async def get(self, t):
+    async def get(self, t: List):
         """
+        Retrieves the next available item from a sequence.
+
         Args:
-            t:
+            t (List): List to hold the response
         """
         if self.sequence_item_requested == 0:
             await self.m_select_sequence()
@@ -205,15 +216,13 @@ class UVMSequencer(UVMSequencerParamBase):
         await self.m_req_fifo.peek(t)
         self.item_done()
 
-    #  // Task: peek
-    #  // Returns the current request item if one is in the FIFO.
-    #  //
-    #  extern task                  peek          (output REQ t)
 
-    async def peek(self, t):
+    async def peek(self, t: List):
         """
+        Returns the current request item if one is in the FIFO.
+
         Args:
-            t:
+            t (List): List for the output request.
         """
         if self.sequence_item_requested == 0:
             await self.m_select_sequence()
@@ -255,24 +264,6 @@ uvm_component_utils(UVMSequencer)
 #//------------------------------------------------------------------------------
 #
 #
-#// Function- stop_sequences
-#//
-#// Tells the sequencer to kill all sequences and child sequences currently
-#// operating on the sequencer, and remove all requests, locks and responses
-#// that are currently queued.  This essentially resets the sequencer to an
-#// idle state.
-#//
-#function void uvm_sequencer::stop_sequences()
-#  REQ t
-#  super.stop_sequences()
-#  sequence_item_requested  = 0
-#  get_next_item_called     = 0
-#  // Empty the request fifo
-#  if (m_req_fifo.used()) begin
-#    uvm_report_info(get_full_name(), "Sequences stopped.  Removing request from sequencer fifo")
-#    while (m_req_fifo.try_get(t))
-#  end
-#endfunction
 #
 #
 #function string uvm_sequencer::get_type_name()
