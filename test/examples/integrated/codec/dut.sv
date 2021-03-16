@@ -244,7 +244,7 @@ always begin: RX
 
    wait (rst != 1 && RxEn);
 
-   // `uvm_info_context("RX", "Rx Path Enabled...", UVM_MEDIUM, rpt)
+   $display("RX: Rx Path Enabled...");
    
    // First, look for SYNC in the bit stream
    // `uvm_info_context("RX", "Looking for SYNC character...", UVM_MEDIUM, rpt)
@@ -252,7 +252,7 @@ always begin: RX
       @(posedge sclk);
       symbol = {symbol[6:0], rx};
    end
-   // `uvm_info_context("RX", "Found SYNC character!", UVM_MEDIUM, rpt)
+   $display("Found SYNC character!");
 
    // Next, look for SYNC every 7 bytes for 3 frames
    repeat (3) begin
@@ -261,10 +261,10 @@ always begin: RX
          symbol = {symbol[6:0], rx};
       end
       if (symbol != SYNC) disable RX;
-      // `uvm_info_context("RX", "Found SYNC character!", UVM_MEDIUM, rpt)
+      $display("Found SYNC character!");
    end
 
-   // `uvm_info_context("RX", "Symbol alignment acquired!", UVM_MEDIUM, rpt)
+   $display("Symbol alignment acquired!");
    
    // We are in phase!
    SA = 1'b1;
@@ -313,5 +313,16 @@ begin
       if (!RxEn) disable RX;
    end
 end
+
+
+// the "macro" to dump signals
+`ifdef COCOTB_SIM
+initial begin
+  $dumpfile ("dump.vcd");
+  $dumpvars (0, dut);
+  //#1;
+end
+`endif
+
 
 endmodule

@@ -48,14 +48,14 @@ class sym_sb(UVMComponent):
 
 
     def write_sym_sb_observed(self, tr):
-       exp = 0x00
-       uvm_info("SB/OBS", sv.sformatf("Observed: 0x%h", tr.chr), UVM_MEDIUM)
-       exp = self.m_sb.pop(0)
-       if tr.chr != exp:
-           self.error = 1
-           uvm_error("SB/MISMTCH", sv.sformatf("Symbol 0x%h observed instead of expected 0x%h",
-               tr.chr, exp))
-       self.m_n_obs += 1
+        exp = 0x00
+        uvm_info("SB/OBS", sv.sformatf("Observed: 0x%h", tr.chr), UVM_MEDIUM)
+        exp = self.m_sb.pop(0)
+        if tr.chr != exp:
+            self.error = 1
+            uvm_error("SB/MISMTCH", sv.sformatf("Symbol 0x%h observed instead of expected 0x%h",
+                tr.chr, exp))
+        self.m_n_obs += 1
 
     async def reset_phase(self, phase):
         self.m_n_obs = 0
@@ -64,7 +64,7 @@ class sym_sb(UVMComponent):
     async def main_phase(self, phase):
         phase.raise_objection(self, "Have not checked enough data")
         while True:
-            await Timer(10, "NS")
+            await Timer(250, "NS")
             if self.m_n_obs > self.n_obs_thresh:
                 break
         phase.drop_objection(self, "Enough data has been observed")

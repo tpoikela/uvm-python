@@ -96,10 +96,14 @@ class vip_monitor(UVMMonitor):
            await RisingEdge(self.vif.clk)
 
 
+    def set_in_sync(self, val):
+        self.m_in_sync = val
+        self.m_evt_sync_changed.set()
+
     async def run_phase(self, phase):
         while True:
             self.m_suspended = 1
-            self.m_in_sync = 0
+            self.set_in_sync(0)
 
             #wait (!m_suspend)
             while self.m_suspend != 0:
@@ -131,6 +135,7 @@ class vip_monitor(UVMMonitor):
 
             # Must now find 3 more, 7 symbols apart
             ok = 1
+            num_sync = 0
             for _ in range(3):
                 for _ in range(7 * 8):
                     await FallingEdge(self.vif.clk)
@@ -138,13 +143,16 @@ class vip_monitor(UVMMonitor):
                     symbol = self.get_symbol(symbol)
 
                 if symbol == 0xB2:
-                    uvm_info("VIP/MON/SYM/FR", "Found another SYNC", UVM_MEDIUM)
+                    num_sync += 1
+                    uvm_info("VIP/MON/SYM/FR", "Found another SYNC, " + str(num_sync), UVM_MEDIUM)
                 else:
+                    uvm_info("VIP/MON/SYM/FR", "SYNC not found. Got: " + hex(symbol), UVM_MEDIUM)
                     ok = 0
                     break
             if ok:
-                self.m_in_sync = 1
+                self.set_in_sync(1)
             else:
+                uvm_info("VIP/MON/SYNC/NOT_ACQ", "SYNC NOT acquired!", UVM_MEDIUM)
                 break
 
             uvm_info("VIP/MON/SYNC/ACQ", "SYNC acquired!", UVM_MEDIUM)
@@ -153,7 +161,7 @@ class vip_monitor(UVMMonitor):
             while self.m_in_sync:
                 for _ in range(6):
                     for _ in range(8):
-                    #repeat (8):
+                    # repeat (8):
                         await FallingEdge(self.vif.clk)
                         #symbol = {symbol[6:0], vif.Rx}
                         symbol = self.get_symbol(symbol)
@@ -163,8 +171,7 @@ class vip_monitor(UVMMonitor):
                         self.rxed(symbol)
                         # TODO uvm_do_callbacks(vip_monitor, vip_monitor_cbs, rxed(self, symbol))
                         uvm_info("VIP/MON/RX", sv.sformatf("Received 0x%h", symbol),
-                                  UVM_HIGH)
-
+                            UVM_HIGH)
 
                         tr = vip_tr.type_id.create("tr",None,self.get_full_name())
                         tr.chr = symbol
@@ -180,12 +187,12 @@ class vip_monitor(UVMMonitor):
                     #symbol = {symbol[6:0], vif.Rx}
                     symbol = self.get_symbol(symbol)
                 if symbol != 0xB2:
-                    self.m_in_sync = 0
+                    self.set_in_sync(0)
                     uvm_warning("VIP/MON/SYNC/LOST", "SYNC lost!")
 
     def get_symbol(self, symbol):
         if self.vif.Rx.value.is_resolvable:
-            return (symbol << 1) | (0x1 & self.vif.Rx.value)
+            return (0xFF & (symbol << 1)) | (0x1 & self.vif.Rx.value)
         return 0
 
     #   virtual protected def rxed(self,ref bit [7:0] chr):

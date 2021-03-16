@@ -35,7 +35,7 @@ class vip_rx_if():
 
 class vip_if():
 
-    def __init__(self, clk, sclk, Tx, Rx):
+    def __init__(self, clk, Tx, Rx):
         self.clk = clk
         self.Tx = Tx
         self.Rx = Rx

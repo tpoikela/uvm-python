@@ -34,10 +34,12 @@ from apb2txrx import apb2txrx
 err_msg = ("Environment does not support jumping to phase %s from phase %s. " +
         "Only jumping to \"reset\" is supported")
 
+timeout_ns = 200000 * 10
+
 
 class rx_isr_seq(UVMRegSequence):
 
-    def __init__(self, name = ""):
+    def __init__(self, name=""):
         super().__init__(name)
 
 
@@ -129,7 +131,6 @@ class tb_env(UVMEnv):
         self.adapt.rx_ap.connect(self.ingress.observed)
 
 
-    #   local process pull_from_RxFIFO_thread
 
     # tpoikela: We should not fork anything in phase_started since it's not
     # async. The original SV example abuses this, and runs tasks.
@@ -234,7 +235,7 @@ class tb_env(UVMEnv):
         phase.raise_objection(self, "Waiting for VIPs and DUT to acquire SYNC")
         uvm_info("TB/TRACE", "Synchronizing interfaces...", UVM_NONE)
 
-        cocotb.fork(self.pre_main_phase_timeout())
+        timeout = cocotb.fork(self.pre_main_phase_timeout())
 
         # Wait until the VIP has acquired symbol syncs
         while not self.vip.rx_mon.is_in_sync():
@@ -243,6 +244,7 @@ class tb_env(UVMEnv):
         while not self.vip.tx_mon.is_in_sync():
             await self.vip.tx_mon.wait_for_sync_change()
 
+        timeout.kill()
 
         # Wait until the DUT has acquired symbol sync
         status = []
@@ -270,7 +272,7 @@ class tb_env(UVMEnv):
     async def pull_from_RxFIFO(self, phase):
         shutdown_ph = phase.find_by_name("shutdown")
         shutdown_ph.raise_objection(self, "Pulling data from RxFIFO")
-        #
+
         while True:
             self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
             #
@@ -282,11 +284,12 @@ class tb_env(UVMEnv):
             #   m_isr[RX_ISR] = 1
             self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 1)
 
+            status = []
             await self.regmodel.IntSrc.mirror(status)
             if self.regmodel.IntSrc.SA.get():
                 uvm_fatal("TB/DUT/SYNCLOSS", "DUT has lost SYNC")
 
-            if not regmodel.IntSrc.RxHigh.get() and not self.m_in_shutdown:
+            if not self.regmodel.IntSrc.RxHigh.get() and not self.m_in_shutdown:
                 self.m_isr = sv.set_bit(self.m_isr, RX_ISR, 0)
                 #wait (!m_isr)
                 while self.m_isr == 1:
@@ -313,7 +316,7 @@ class tb_env(UVMEnv):
         await sv.fork_join([timeout_proc, main_proc])
 
     async def timeout_and_finish(self, phase):
-        await Timer(200000, "NS")
+        await Timer(timeout_ns, "NS")
         obj = phase.get_objection()
         obj.display_objections()
         uvm_fatal("ERR/TIMEOUT", "$finish. Timeout reached")
@@ -334,7 +337,7 @@ class tb_env(UVMEnv):
             self.m_isr = sv.set_bit(self.m_isr, TX_ISR, 0)
             #   m_isr[TX_ISR] = 0
 
-            uvm_info("TB_ENV", "Waiting vif.intr now")
+            uvm_info("TB_ENV", "Waiting vif.intr now", UVM_MEDIUM)
             while not self.vif.intr:
                 await RisingEdge(self.vif.intr)
                 #   wait (vif.intr)
@@ -376,22 +379,26 @@ class tb_env(UVMEnv):
             await self.regmodel.IntMask.update(status)
 
 
-    #async
-    #   def shutdown_phase(self, phase):
-    #      phase.raise_objection(self, "Draining the DUT")
-    #
-    #      uvm_info("TB/TRACE", "Draining the DUT...", UVM_NONE)
-    #
-    #      if (!regmodel.IntSrc.TxEmpty.get()):
-    #         // Wait for TxFIFO to be empty
-    #         regmodel.IntMask.write(status,  0x001)
-    #         wait (vif.intr)
-    #      end
-    #      // Make sure the last symbol is transmitted
-    #      repeat (16) @(posedge vif.sclk)
-    #
-    #      phase.drop_objection(self, "DUT is empty")
-    #   endtask
+    async def shutdown_phase(self, phase):
+        phase.raise_objection(self, "Draining the DUT")
+
+        uvm_info("TB/TRACE", "Draining the DUT...", UVM_NONE)
+
+        if not regmodel.IntSrc.TxEmpty.get():
+            # Wait for TxFIFO to be empty
+            status = []
+            self.regmodel.IntMask.write(status, 0x001)
+
+            #wait (vif.intr)
+            while vif.intr != 1:
+                await RisingEdge(self.vif.clk)
+
+        # Make sure the last symbol is transmitted
+        # repeat (16) @(posedge vif.sclk)
+        for _ in range(16):
+            await RisingEdge(self.vif.clk)
+
+        phase.drop_objection(self, "DUT is empty")
 
 
     def report_phase(self, phase):
@@ -399,9 +406,9 @@ class tb_env(UVMEnv):
         svr = cs_.get_report_server()
 
         if (svr.get_severity_count(UVM_FATAL) +
-            svr.get_severity_count(UVM_ERROR) == 0):
-           print("** UVM TEST PASSED **\n")
+                svr.get_severity_count(UVM_ERROR) == 0):
+            print("** UVM TEST PASSED **\n")
         else:
-           print("!! UVM TEST FAILED !!\n")
+            print("!! UVM TEST FAILED !!\n")
 
 uvm_component_utils(tb_env)

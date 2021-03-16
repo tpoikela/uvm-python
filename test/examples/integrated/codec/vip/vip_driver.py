@@ -57,7 +57,7 @@ class vip_driver(UVMDriver):
     async def pre_reset_phase(self, phase):
         if self.hier_objection:
             phase.raise_objection(self, "Resetting driver")
-        self.vif.Tx = 0
+        self.vif.Tx <= 0
         await self.m_interrupt()
         if self.hier_objection:
             phase.drop_objection(self)
@@ -119,6 +119,7 @@ class vip_driver(UVMDriver):
             await sv.fork_join([self.m_proc])
 
     async def run_phase_fork(self, phase):
+        await Timer(2000, "NS")
         while True:
 
             # Suspend without reset
@@ -132,9 +133,8 @@ class vip_driver(UVMDriver):
             if self.count == 0:
                 await self.send(0xB2)  # SYNC
 
-
             tr = []
-            self.seq_item_port.try_next_item(tr)
+            await self.seq_item_port.try_next_item(tr)
             if len(tr) > 0:
                 self.tr = tr[0]
 
@@ -158,17 +158,16 @@ class vip_driver(UVMDriver):
     async def send(self, data):
         await self.pre_tx(data)
         #      `uvm_do_callbacks(vip_driver, vip_driver_cbs, pre_tx(self, data))
-        #
         uvm_info("VIP/DRV/TX", sv.sformatf("Sending 0x%h", data), UVM_HIGH)
 
         for _ in range(8):
             await FallingEdge(self.vif.clk)
             #vif.Tx = data[7]
-            self.vif.Tx = (0x80 & data) >> 7
+            msb = (0x80 & data) >> 7
+            self.vif.Tx <= msb
             #data = {data[6:0], data[7]}
-            data = (data << 1) | (0x80 & data) >> 7
+            data = (0xFF & (data << 1)) | msb
 
-        #
         #      post_tx(data)
         #      `uvm_do_callbacks(vip_driver, vip_driver_cbs, post_tx(self, data))
         #   endtask: send
