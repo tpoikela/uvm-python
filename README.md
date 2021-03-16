@@ -158,10 +158,10 @@ and create a pull request!
 HDL Simulators
 --------------
 
-Icarus Verilog (iverilog v11.0) and verilator (v4.030+) are free simulators, which can
+Icarus Verilog (iverilog v11.0) and verilator (v4.106) are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.
 Memory backdoor access has issues with packed multi-dimensional arrays in
-verilator.
+verilator. Also, some other examples are not working with verilator yet.
 
 Proprietary simulators that work with cocotb can of course be used with
 uvm-python as well.
