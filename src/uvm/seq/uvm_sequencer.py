@@ -21,7 +21,7 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-from cocotb.triggers import Timer
+#rm from cocotb.triggers import Timer
 
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
@@ -117,7 +117,43 @@ class UVMSequencer(UVMSequencerParamBase):
     #  // Task: try_next_item
     #  // Retrieves the next available item from a sequence if one is available.
     #  //
-    #  extern virtual task          try_next_item (output REQ t)
+    async def try_next_item(self, t):
+        #rm arb_time = 0
+
+        if self.get_next_item_called == 1:
+            uvm_report_error(self.get_full_name(),
+                "get_next_item/try_next_item called twice without item_done or get in between", UVM_NONE)
+            return
+
+        # allow state from last transaction to settle such that sequences'
+        # relevancy can be determined with up-to-date information
+        await self.wait_for_sequences()
+
+        # choose the sequence based on relevancy
+        selected_sequence = self.m_choose_next_request()
+
+        # return if none available
+        if selected_sequence == -1:
+            # t = None
+            return
+
+        # now, allow chosen sequence to resume
+        self.m_set_arbitration_completed(self.arb_sequence_q[selected_sequence].request_id)
+        seq = self.arb_sequence_q[selected_sequence].sequence_ptr
+        self.arb_sequence_q.delete(selected_sequence)
+        self.m_update_lists()
+        self.sequence_item_requested = True
+        self.get_next_item_called = 1
+
+        # give it one NBA to put a new item in the fifo
+        await self.wait_for_sequences()
+
+        # attempt to get the item; if it fails, produce an error and return
+        if not self.m_req_fifo.try_peek(t):
+            uvm_report_error("TRY_NEXT_BLOCKED", ("try_next_item: the selected sequence '" +
+                seq.get_full_name() + "' did not produce an item within an NBA delay. " +
+                "Sequences should not consume time between calls to start_item and finish_item. " +
+                "Returning null item."), UVM_NONE)
 
     def item_done(self, item=None):
         """
@@ -268,51 +304,6 @@ uvm_component_utils(UVMSequencer)
 #
 #
 #
-#// try_next_item
-#// -------------
-#
-#task uvm_sequencer::try_next_item(output REQ t)
-#  int selected_sequence
-#  time arb_time
-#  uvm_sequence_base seq
-#
-#  if (get_next_item_called == 1) begin
-#    uvm_report_error(get_full_name(), "get_next_item/try_next_item called twice without item_done or get in between", UVM_NONE)
-#    return
-#  end
-#
-#  // allow state from last transaction to settle such that sequences'
-#  // relevancy can be determined with up-to-date information
-#  wait_for_sequences()
-#
-#  // choose the sequence based on relevancy
-#  selected_sequence = m_choose_next_request()
-#
-#  // return if none available
-#  if (selected_sequence == -1) begin
-#    t = null
-#    return
-#  end
-#
-#  // now, allow chosen sequence to resume
-#  m_set_arbitration_completed(arb_sequence_q[selected_sequence].request_id)
-#  seq = arb_sequence_q[selected_sequence].sequence_ptr
-#  arb_sequence_q.delete(selected_sequence)
-#  m_update_lists()
-#  sequence_item_requested = 1
-#  get_next_item_called = 1
-#
-#  // give it one NBA to put a new item in the fifo
-#  wait_for_sequences()
-#
-#  // attempt to get the item; if it fails, produce an error and return
-#  if (!m_req_fifo.try_peek(t))
-#    uvm_report_error("TRY_NEXT_BLOCKED", {"try_next_item: the selected sequence '",
-#      seq.get_full_name(), "' did not produce an item within an NBA delay. ",
-#      "Sequences should not consume time between calls to start_item and finish_item. ",
-#      "Returning null item."}, UVM_NONE)
-#
-#endtask
 
 
 #// item_done_trigger
