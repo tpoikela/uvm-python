@@ -27,6 +27,12 @@
 #   python. Original code structures (including comments)
 #   preserved where possible.
 #----------------------------------------------------------------------
+"""
+Section: Phasing Definition classes
+
+The following class are used to specify a phase and its implied functionality.
+"""
+
 
 from typing import Dict, List
 import cocotb
@@ -64,39 +70,15 @@ def ph2str(state) -> str:
     return "<State: NONE>"
 
 
-#async def my_combine(events):
-#    pproc = []
-#    for e in events:
-#        e.clear()
-#
-#        async def my_task(ee):
-#            await ee.wait()
-#        my_fork  = cocotb.fork(my_task(e))
-#        pproc.append(my_fork)
-#    for pp in pproc:
-#        # Crashes after this call
-#        await pp.join()
-
-#------------------------------------------------------------------------------
-#
-# Section: Phasing Definition classes
-#
-#------------------------------------------------------------------------------
-#
-# The following class are used to specify a phase and its implied functionality.
-#
-
-
-#------------------------------------------------------------------------------
-#
-# Class: uvm_phase_state_change
-#
-#------------------------------------------------------------------------------
-# Phase state transition descriptor.
-# Used to describe the phase transition that caused a
-# <uvm_phase_cb::phase_state_changed()> callback to be invoked.
-
 class UVMPhaseStateChange(UVMObject):
+    """
+    Class: UVMPhaseStateChange
+
+    Phase state transition descriptor.
+    Used to describe the phase transition that caused a
+    `UVMPhaseCb.phase_state_changed()` callback to be invoked.
+    """
+
 
     def __init__(self, name="uvm_phase_state_change"):
         UVMObject.__init__(self, name)
@@ -138,9 +120,7 @@ uvm_object_utils(UVMPhaseStateChange)
 
 class UVMPhase(UVMObject):
     """
-    Class: uvm_phase
-
-
+    Class: UVMPhase
 
     This base class defines everything about a phase: behavior, state, and context.
 
@@ -299,6 +279,9 @@ class UVMPhase(UVMObject):
 
     # tpoikela: Used instead of $cast() to check phase type
     def is_task_phase(self):
+        """
+        Returns True if the given phase is task (async) phase.
+        """
         return self.m_is_task_phase
 
     # Function: get_phase_type

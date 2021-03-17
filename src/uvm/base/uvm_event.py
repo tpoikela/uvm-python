@@ -210,21 +210,21 @@ class UVMEventBase(UVMObject):
         self.trigger_time = 0
 
 
-    #    // Function: cancel
-    #    //
-    #    // Decrements the number of waiters on the event.
-    #    //
-    #    // This is used if a process that is waiting on an event is disabled or
-    #    // activated by some other means.
     def cancel(self):
+        """
+        Decrements the number of waiters on the event.
+
+        This is used if a process that is waiting on an event is disabled or
+        activated by some other means.
+        """
         if self.num_waiters > 0:
             self.num_waiters -= 1
 
 
-    #    // Function: get_num_waiters
-    #    //
-    #    // Returns the number of processes waiting on the event.
     def get_num_waiters(self):
+        """
+        Returns the number of processes waiting on the event.
+        """
         return self.num_waiters
 
 

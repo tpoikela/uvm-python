@@ -22,6 +22,12 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
+"""
+Title: Objection Mechanism
+
+The following classes define the objection mechanism and end-of-test
+functionality, which is based on <uvm_objection>.
+"""
 
 import cocotb
 from cocotb.triggers import Event, Timer
@@ -30,9 +36,9 @@ from .uvm_debug import uvm_debug
 from .uvm_globals import *
 from .uvm_object_globals import (UVM_RAISED, UVM_DROPPED, UVM_ALL_DROPPED)
 from .sv import sv
-from ..macros import (uvm_error, uvm_info, uvm_do_callbacks,
+from ..macros import (uvm_info, uvm_do_callbacks,
     uvm_do_callbacks_async)
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from .uvm_pool import UVMPool
 from .uvm_callback import UVMCallback
 
@@ -75,87 +81,71 @@ def get_leaf_name(curr_obj_name: str) -> str:
             break
     return name
 
-#//------------------------------------------------------------------------------
-#// Title: Objection Mechanism
-#//------------------------------------------------------------------------------
-#// The following classes define the objection mechanism and end-of-test
-#// functionality, which is based on <uvm_objection>.
-#//------------------------------------------------------------------------------
 
-#//------------------------------------------------------------------------------
-#//
-#// Class: uvm_objection_callback
-#//
-#//------------------------------------------------------------------------------
-#// The uvm_objection is the callback type that defines the callback
-#// implementations for an objection callback. A user uses the callback
-#// type uvm_objection_cbs_t to add callbacks to specific objections.
-#//
-#// For example:
-#//
-#//| class my_objection_cb extends uvm_objection_callback
-#//|   function new(string name)
-#//|     super.new(name)
-#//|   endfunction
-#//|
-#//|   virtual function void raised (uvm_objection objection, uvm_object obj,
-#//|       uvm_object source_obj, string description, int count)
-#//|       `uvm_info("RAISED","%0t: Objection %s: Raised for %s", $time, objection.get_name(),
-#//|       obj.get_full_name())
-#//|   endfunction
-#//| endclass
-#//| ...
-#//| initial begin
-#//|   my_objection_cb cb = new("cb")
-#//|   uvm_objection_cbs_t::add(null, cb); //typewide callback
-#//| end
 
 
 class UVMObjectionCallback(UVMCallback):
+    """
+    The UVMObjection is the callback type that defines the callback
+    implementations for an objection callback. A user uses the callback
+    type uvm_objection_cbs_t to add callbacks to specific objections.
+
+    .. code-block:: python
+
+      class my_objection_cb extends uvm_objection_callback
+        def __init__(self, name):
+          super().__init__(name)
+
+        def raised(objection, obj, source_obj, description, count):
+            uvm_info("RAISED","{}: Objection {}: Raised for {}".format(sv.time(),
+                objection.get_name(), obj.get_full_name())
+      ...
+      @cocotb.test()
+      async def initial_begin(dut):
+        cb = my_objection_cb ("cb")
+        uvm_objection_cbs_t.add(None, cb) # typewide callback
+    """
     def __init__(self, name):
         super().__init__(name)
-#  // Function: raised
-#  //
-#  // Objection raised callback function. Called by <uvm_objection::raised>.
-#
-#  virtual function void raised (uvm_objection objection, uvm_object obj,
-#      uvm_object source_obj, string description, int count)
-#  endfunction
-#
-#  // Function: dropped
-#  //
-#  // Objection dropped callback function. Called by <uvm_objection::dropped>.
-#
-#  virtual function void dropped (uvm_objection objection, uvm_object obj,
-#      uvm_object source_obj, string description, int count)
-#  endfunction
-#
-#  // Function: all_dropped
-#  //
-#  // Objection all_dropped callback function. Called by <uvm_objection::all_dropped>.
-#
-#  virtual task all_dropped (uvm_objection objection, uvm_object obj,
-#      uvm_object source_obj, string description, int count)
-#  endtask
-#
-#endclass
-
-#//------------------------------------------------------------------------------
-#//
-#// Class: uvm_objection
-#//
-#//------------------------------------------------------------------------------
-#// Objections provide a facility for coordinating status information between
-#// two or more participating components, objects, and even module-based IP.
-#//
-#// Tracing of objection activity can be turned on to follow the activity of
-#// the objection mechanism. It may be turned on for a specific objection
-#// instance with <uvm_objection::trace_mode>, or it can be set for all
-#// objections from the command line using the option +UVM_OBJECTION_TRACE.
-#//------------------------------------------------------------------------------
+    #  // Function: raised
+    #  //
+    #  // Objection raised callback function. Called by <uvm_objection::raised>.
+    #
+    #  virtual function void raised (uvm_objection objection, uvm_object obj,
+    #      uvm_object source_obj, string description, int count)
+    #  endfunction
+    #
+    #  // Function: dropped
+    #  //
+    #  // Objection dropped callback function. Called by <uvm_objection::dropped>.
+    #
+    #  virtual function void dropped (uvm_objection objection, uvm_object obj,
+    #      uvm_object source_obj, string description, int count)
+    #  endfunction
+    #
+    #  // Function: all_dropped
+    #  //
+    #  // Objection all_dropped callback function. Called by <uvm_objection::all_dropped>.
+    #
+    #  virtual task all_dropped (uvm_objection objection, uvm_object obj,
+    #      uvm_object source_obj, string description, int count)
+    #  endtask
 
 
 class UVMObjection(UVMReportObject):
+    """
+    Class: UVMObjection
+
+    Objections provide a facility for coordinating status information between
+    two or more participating components, objects, and even module-based IP.
+
+    Tracing of objection activity can be turned on to follow the activity of
+    the objection mechanism. It may be turned on for a specific objection
+    instance with <uvm_objection::trace_mode>, or it can be set for all
+    objections from the command line using the option +UVM_OBJECTION_TRACE.
+    """
+
+
     m_objections = []  # static uvm_objection[$]
     #  `uvm_register_cb(uvm_objection, uvm_objection_callback)
     #
@@ -260,15 +250,19 @@ class UVMObjection(UVMReportObject):
             self.m_trace_mode = 1
         UVMObjection.m_objections.append(self)
 
-    #  // Function: trace_mode
-    #  //
-    #  // Set or get the trace mode for the objection object. If no
-    #  // argument is specified (or an argument other than 0 or 1)
-    #  // the current trace mode is unaffected. A trace_mode of
-    #  // 0 turns tracing off. A trace mode of 1 turns tracing on.
-    #  // The return value is the mode prior to being reset.
-    #
     def trace_mode(self, mode=-1):
+        """
+        Set or get the trace mode for the objection object. If no
+        argument is specified (or an argument other than 0 or 1)
+        the current trace mode is unaffected. A trace_mode of
+        0 turns tracing off. A trace mode of 1 turns tracing on.
+        The return value is the mode prior to being reset.
+
+        Args:
+            mode (int): 0=disable, 1=enable
+
+        Returns int:
+        """
         trace_mode = self.m_trace_mode
         if mode == 0:
             self.m_trace_mode = 0
@@ -937,7 +931,6 @@ class UVMObjection(UVMReportObject):
     #                                 int count)
     def dropped(self, obj, source_obj, description, count):
         comp = obj
-        #if($cast(comp,obj))
         comp.dropped(self, source_obj, description, count)
         # TODO `uvm_do_callbacks(uvm_objection,uvm_objection_callback,dropped(this,obj,source_obj,description,count))
         uvm_do_callbacks(self,UVMObjectionCallback,'dropped', self,obj,source_obj,description,count)
@@ -945,17 +938,19 @@ class UVMObjection(UVMReportObject):
             self.m_events[obj].dropped.set()
 
 
-    #  // Function: all_dropped
-    #  //
-    #  // Objection callback that is called when a <drop_objection> has reached ~obj~,
-    #  // and the total count for ~obj~ goes to zero. This callback is executed
-    #  // after the drain time associated with ~obj~. The default implementation
-    #  // calls <uvm_component::all_dropped>.
-    #  virtual task all_dropped (uvm_object obj,
-    #                            uvm_object source_obj,
-    #                            string description,
-    #                            int count)
     async def all_dropped(self, obj, source_obj, description, count):
+        """
+        Objection callback that is called when a `drop_objection` has reached ~obj~,
+        and the total count for ~obj~ goes to zero. This callback is executed
+        after the drain time associated with ~obj~. The default implementation
+        calls `UVMComponent.all_dropped`.
+
+        Args:
+            obj (UVMObject):
+            source_obj (UVMObject):
+            description (str):
+            count (int):
+        """
         comp = obj
         await comp.all_dropped(self, source_obj, description, count)
         # TODO `uvm_do_callbacks(uvm_objection,uvm_objection_callback,all_dropped(this,obj,source_obj,description,count))
@@ -1021,11 +1016,10 @@ class UVMObjection(UVMReportObject):
     #   endtask
 
 
-    #  // Function: get_objection_count
-    #  //
-    #  // Returns the current number of objections raised by the given ~object~.
-    #
     def get_objection_count(self, obj=None):
+        """
+        Returns the current number of objections raised by the given ~object~.
+        """
         if obj is None:
             obj = self.m_top
 
@@ -1033,12 +1027,11 @@ class UVMObjection(UVMReportObject):
             return 0
         return self.m_source_count[obj]
 
-    #  // Function: get_objection_total
-    #  //
-    #  // Returns the current number of objections raised by the given ~object~
-    #  // and all descendants.
-    #
     def get_objection_total(self, obj=None):
+        """
+        Returns the current number of objections raised by the given ~object~
+        and all descendants.
+        """
         uvm_debug(self, 'get_objection_total', 'START')
         if obj is None:
             obj = self.m_top
@@ -1070,7 +1063,7 @@ class UVMObjection(UVMReportObject):
     #  // m_display_objections
     #
     def m_display_objections(self, obj=None, show_header=1):
-        blank="                                                                                   "
+        blank = "                                                                                   "
         s = ""
         total = 0
         lst = UVMPool()

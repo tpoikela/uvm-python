@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2021-03-17
+### Fixed
+- pytype errors in uvm_sequencer
+- Added missing dep for cocotb-bus for document generation
+
 ## [0.1.0] - 2021-03-15
 ### Added
 - First release
@@ -16,5 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - codec example further expanded, still some issues with test termination
 - cocotb bumped to version v1.5.0
 
-[Unreleased]: https://github.com/tpoikela/uvm-python/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/tpoikela/uvm-python/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/tpoikela/uvm-python//compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/tpoikela/uvm-python/releases/tag/v0.1.0

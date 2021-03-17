@@ -19,6 +19,27 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
+"""
+Title: UVM Configuration Database
+
+Topic: Intro
+
+Avoid using `UVMConfigDb` if possible. Instead, group the configuration values
+into configuration objects (object per agent), and use hierarchical
+configuration objects for passing the configuration from test-level to
+env-level, and from there to agents and other sub-components.
+
+The `UVMConfigDb` class provides a convenience interface
+on top of the `UVMResourceDb` to simplify the basic interface
+that is used for configuring `UVMComponent` instances.
+
+If the run-time `+UVM_CONFIG_DB_TRACE` command line option is specified,
+all configuration DB accesses (read and write) are displayed.
+
+NOTE: `UVMConfigDb` is not required for passing interfaces to the verification
+components. In uvm-python, you can use `run_test(..., dut=dut)` inside your `@cocotb.test()`
+function instead.
+"""
 
 from cocotb.triggers import Event
 
@@ -27,21 +48,6 @@ from .uvm_resource_db import UVMResourceDb
 from .uvm_pool import UVMPool
 from .sv import uvm_re_match, uvm_glob_to_re
 from .uvm_debug import uvm_debug
-
-"""
-Title: UVM Configuration Database
-
-Topic: Intro
-
-The `UVMConfigDb` class provides a convenience interface
-on top of the `UVMResourceDb` to simplify the basic interface
-that is used for configuring `UVMComponent` instances.
-
-If the run-time `+UVM_CONFIG_DB_TRACE` command line option is specified,
-all configuration DB accesses (read and write) are displayed.
-"""
-
-#//Internal class for config waiters
 
 
 class m_uvm_waiter:
@@ -366,7 +372,7 @@ class UVMConfigDb(UVMResourceDb):
 
 class UVMConfigDbOptions:
     """
-     Class: uvm_config_db_options
+     Class: UVMConfigDbOptions
 
      Provides a namespace for managing options for the
      configuration DB facility.  The only thing allowed in this class is static
@@ -429,4 +435,3 @@ class UVMConfigDbOptions:
         if clp.get_arg_matches("+UVM_CONFIG_DB_TRACE=", trace_args) > 0:
             UVMConfigDbOptions.tracing = 1
         UVMConfigDbOptions.ready = 1
-

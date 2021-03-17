@@ -25,6 +25,7 @@ Group: Command Line Debug
 
 This section lists most of the plusargs available for command line usage. Note
 that when used with `cocotb`, arguments are usually passed with SIM_ARGS="...".
+`cocotb` also supports PLUSARGS="...", so that can be used instead.
 For example::
 
     SIM=icarus make SIM_ARGS="+UVM_TESTNAME=reg_test"
@@ -290,6 +291,7 @@ class UVMCmdlineProcessor(UVMReportObject):
         Returns the singleton instance of the UVM command line processor.
 
         Returns:
+            UVMCmdlineProcessor: Singleton instance of UVM command line processor.
         """
         if UVMCmdlineProcessor.m_inst is None:
             UVMCmdlineProcessor.m_inst = UVMCmdlineProcessor("uvm_cmdline_proc")
@@ -305,7 +307,7 @@ class UVMCmdlineProcessor(UVMReportObject):
         executable which started the simulation.
 
         Returns:
-            list:
+            list: Queue of all the command line arguments.
         """
         return self.m_argv
 

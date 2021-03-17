@@ -284,14 +284,12 @@ class UVMComponent(UVMReportObject):
         self.m_set_cl_msg_args()
 
 
-    #----------------------------------------------------------------------------
-    # Group: Hierarchy Interface
-    #----------------------------------------------------------------------------
-    #
-    # These methods provide user access to information about the component
-    # hierarchy, i.e., topology.
-    #
-    #----------------------------------------------------------------------------
+    """
+    Group: Hierarchy Interface
+
+    These methods provide user access to information about the component
+    hierarchy, i.e., topology.
+    """
 
     def get_parent(self):
         """
@@ -1326,37 +1324,40 @@ class UVMComponent(UVMReportObject):
                 c.print_config(recurse, audit)
 
 
-    #// Function: print_config_with_audit
-    #//
-    #// Operates the same as print_config except that the audit bit is
-    #// forced to 1.  This interface makes user code a bit more readable as
-    #// it avoids multiple arbitrary bit settings in the argument list.
-    #//
-    #// If `recurse` is set, then configuration information for all
-    #// children and below are printed as well.
     def print_config_with_audit(self, recurse=0):
+        """
+        Function: print_config_with_audit
+
+        Operates the same as print_config except that the audit bit is
+        forced to 1.  This interface makes user code a bit more readable as
+        it avoids multiple arbitrary bit settings in the argument list.
+
+        If `recurse` is set, then configuration information for all
+        children and below are printed as well.
+        """
         self.print_config(recurse, 1)
 
 
-    #//----------------------------------------------------------------------------
-    #// Group: Objection Interface
-    #//----------------------------------------------------------------------------
-    #//
-    #// These methods provide object level hooks into the `UVMObjection`
-    #// mechanism.
-    #//
-    #//----------------------------------------------------------------------------
+    """
+    Group: Objection Interface
+
+    These methods provide object level hooks into the `UVMObjection`
+    mechanism.
+
+    """
 
 
-    #// Function: raised
-    #//
-    #// The `raised` callback is called when this or a descendant of this component
-    #// instance raises the specified `objection`. The `source_obj` is the object
-    #// that originally raised the objection.
-    #// The `description` is optionally provided by the `source_obj` to give a
-    #// reason for raising the objection. The `count` indicates the number of
-    #// objections raised by the `source_obj`.
     def raised(self, objection, source_obj, description, count):
+        """
+        Function: raised
+
+        The `raised` callback is called when this or a descendant of this component
+        instance raises the specified `objection`. The `source_obj` is the object
+        that originally raised the objection.
+        The `description` is optionally provided by the `source_obj` to give a
+        reason for raising the objection. The `count` indicates the number of
+        objections raised by the `source_obj`.
+        """
         pass
 
 

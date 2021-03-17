@@ -3,7 +3,7 @@
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2014 NVIDIA Corporation
-#//   Copyright 2019 Tuomas Poikela (tpoikela)
+#//   Copyright 2019-2021 Tuomas Poikela (tpoikela)
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -21,14 +21,13 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-#rm from cocotb.triggers import Timer
-
 from typing import List
 
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
-from ..macros import uvm_component_utils, uvm_info
-from ..base.uvm_globals import uvm_check_output_args, uvm_zero_delay
+from ..macros import uvm_component_utils
+from ..base.uvm_globals import (uvm_check_output_args, uvm_zero_delay,
+    uvm_report_info, uvm_report_error)
 from ..base.uvm_object_globals import *
 
 FATAL_MSG1 = ("Item_done() called with no outstanding requests." +
@@ -44,16 +43,16 @@ class UVMSequencer(UVMSequencerParamBase):
     The interface is defined as::
 
       Requests:
-       async def get_next_item      (output REQ request)
-       async def try_next_item      (output REQ request)
-       async def get                (output REQ request)
-       async def peek               (output REQ request)
+       async def get_next_item      (request: List)
+       async def try_next_item      (request: List)
+       async def get                (request: List)
+       async def peek               (request: List)
       Responses:
-       def item_done          (input RSP response=null)
-       async def put                (input RSP response)
+       def item_done          (response=None)
+       async def put          (response: UVMSequenceItem)
       Sync Control:
-       async def          wait_for_sequences()
-       def  has_do_available()
+       async def wait_for_sequences()
+       def has_do_available()
 
     See `UVMSqrIfBase` for information about this interface.
     """
@@ -64,8 +63,8 @@ class UVMSequencer(UVMSequencerParamBase):
         using the given `name` and `parent`, if any.
 
         Args:
-            name:
-            parent:
+            name (str): Name of the sequencer
+            parent (UVMComponent): Parent component
         """
         UVMSequencerParamBase.__init__(self, name, parent)
         #  // Variable: seq_item_export
@@ -171,7 +170,7 @@ class UVMSequencer(UVMSequencerParamBase):
         Indicates that the request is completed.
 
         Args:
-            item:
+            item (UVMSequenceItem): Related sequence item.
         """
         t = []
         # Set flag to allow next get_next_item or peek to get a new sequence_item
@@ -205,7 +204,7 @@ class UVMSequencer(UVMSequencerParamBase):
 
     async def get(self, t: List):
         """
-        Retrieves the next available item from a sequence.
+        Retrieves the next available item from a sequence into the given list.
 
         Args:
             t (List): List to hold the response
@@ -219,7 +218,7 @@ class UVMSequencer(UVMSequencerParamBase):
 
     async def peek(self, t: List):
         """
-        Returns the current request item if one is in the FIFO.
+        Gets the current request item if one is in the FIFO.
 
         Args:
             t (List): List for the output request.
@@ -233,16 +232,19 @@ class UVMSequencer(UVMSequencerParamBase):
         await self.m_req_fifo.peek(t)
 
 
-    #  /// Documented here for clarity, implemented in uvm_sequencer_base
-    #
-    #  // Task: wait_for_sequences
-    #  // Waits for a sequence to have a new item available.
-    #  //
-    #
-    #  // Function: has_do_available
-    #  // Returns 1 if any sequence running on this sequencer is ready to supply
-    #  // a transaction, 0 otherwise.
-    #  //
+    """
+    Documented here for clarity, implemented in `UVMSequencerBase`
+
+    Task: `wait_for_sequences`
+    Waits for a sequence to have a new item available.
+
+
+    Function: `has_do_available`
+    Returns 1 if any sequence running on this sequencer is ready to supply
+    a transaction, 0 otherwise.
+
+    """
+
     #
     #  //-----------------
     #  // Internal Methods
@@ -263,13 +265,9 @@ uvm_component_utils(UVMSequencer)
 #// IMPLEMENTATION
 #//------------------------------------------------------------------------------
 #
-#
-#
-#
 #function string uvm_sequencer::get_type_name()
 #  return "uvm_sequencer"
 #endfunction
-#
 #
 #//-----------------
 #// Internal Methods

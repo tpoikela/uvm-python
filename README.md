@@ -17,11 +17,14 @@ See documentation for more details:
 Why bother?
 -----------
 
-UVM is not currently supported by any open source/free tools. cocotb offers
+SystemVerilog UVM is not currently supported by any open source/free tools. cocotb offers
 excellent solution to interact with any simulator (free/proprietary), so
 testbenches can be written in Python as well. `uvm-python` tries to offer
 an API similar to the original SV version. This means that many UVM verificaton
 skills are transferable from SV to Python very easily.
+
+If you want to port a larger bulk of SV code to use `uvm-python`, you can try the
+script `bin/sv2py.pl` as the first step.
 
 Documentation
 -------------
@@ -146,6 +149,7 @@ status:
 | TLM2.0     | Started, 2/3 examples working                             |
 | Components | Done                                                      |
 | Phases     | Done                                                      |
+| Objections | Test and env-level objections work                        |
 | Sequences  | Partially done, hier sequences work                       |
 | Registers  | Reg/mem access working, built-in sequences partially done |
 
@@ -158,10 +162,18 @@ and create a pull request!
 HDL Simulators
 --------------
 
-Icarus Verilog (iverilog v11.0) and verilator (v4.106) are free simulators, which can
+Tested with Icarus Verilog (iverilog v11.0) and verilator (v4.106).
+
+Icarus Verilog and verilator are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.
 Memory backdoor access has issues with packed multi-dimensional arrays in
 verilator. Also, some other examples are not working with verilator yet.
 
-Proprietary simulators that work with cocotb can of course be used with
+Proprietary simulators that work with cocotb can be used with
 uvm-python as well.
+
+Related projects
+----------------
+
+  - [cocotb](https://github.com/cocotb/cocotb)cosimulation library for writing testbenches in Python
+  - [uvm-python-verification-lib](https://github.com/jg-fossh/uvm-python-verification-lib]

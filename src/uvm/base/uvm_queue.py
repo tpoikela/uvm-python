@@ -35,6 +35,9 @@ T = TypeVar('T')
 
 
 class UVMQueue(UVMObject, Generic[T]):
+    """
+    Implements a class-based dynamic queue.
+    """
 
     type_name = "uvm_queue"
     m_global_queue: 'UVMQueue' = None

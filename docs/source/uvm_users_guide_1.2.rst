@@ -684,15 +684,16 @@ functions::
 
     class consumer (UVMComponent):
 
-        uvm_get_port #(simple_trans) get_port;
+        def __init__(self, name, parent):
+            super().__init__(name, parent)
+            self.get_port = UVMGetPort("get_port", self)
 
-        task run;
+        async def run_phase(self phase):
             ...
-            for(int i=0; i<10; i++)
-                if(get_port.try_get(t)) //Do something with t.
+            for _ in range(10):
+                t = []
+                if (self.get_port.try_get(t)) # Do something with t[0]
                 ...
-         endtask
-     endclass
 
 If a transaction exists, it will be returned in the argument and the
 function call itself will return TRUE. If no transaction exists, the
@@ -736,8 +737,6 @@ are done in the parent’s connect() method::
             self.producer.blocking_put_port.connect(fifo.put_export);
             self.get_consumer.get_port.connect(fifo.get_export);
             ...
-        endfunction
-    endclass
 
 2.3.1.8 Port/Export Compatibility
 ---------------------------------
@@ -833,15 +832,14 @@ Conversely, port-to-port connections are of the form::
 
 so connection C would be coded as::
 
-    class producer (UVMComponent);
+    class producer (UVMComponent):
 
         uvm_put_port #(trans) put_port;
         conv c;
         ...
-        function void connect_phase(uvm_phase phase);
+        def connect_phase(self, phase):
             c.put_port.connect(put_port);
             ...
-        endfunction
 
 2.3.2.2 Connection Types
 ------------------------
@@ -917,12 +915,14 @@ Code example::
             self.ap = UVMAnalysisPort(“analysis_port”, self)
             ...
 
-        async def run_phase(self, phase);
+        async def run_phase(self, phase):
             ...
             for i in range(10):
+                t = []
                 if self.get_port.get(t):
                     # Do something with t.
-                    ap.write(t) # Write transaction.
+                    tx = t[0]
+                    self.ap.write(tx) # Write transaction.
 
 In the parent environment, the analysis port gets connected to the
 analysis export of the desired components, such as coverage
@@ -939,12 +939,10 @@ UVMSubscriber as::
 
     class sub1(UVMSubscriber):
 
-        my_env env;
+        # my_env env;
 
-        function void write(T t);
+        def write(self, t);
             # Call desired functionality in parent.
-        endfunction
-    endclass
 
 
 As with put() and get() described above, the TLM connection between
@@ -957,26 +955,23 @@ how many exports are connected to it::
 
     class my_env(UVMEnv):
 
-        get_component_with_ap g;
-        sub1 s1; sub2 s2;
+        # get_component_with_ap g;
+        # sub1 s1; sub2 s2;
 
-        function new(string name, uvm_component parent):
-            super.new(name,parent);
-            s1 = new("s1");
-            s1.env = this ;
-            s2 = new("s2");
-            s2.env = this;
+        def __init__(self, name, parent):
+            super().__init__(name,parent)
+            self.s1 = sub1("s1")
+            self.s1.env = self
+            self.s2 = sub2("s2")
+            self.s2.env = self
+            self.g = get_component_with_ap()
         endfunction
 
-        function void connect_phase(uvm_phase phase);
-            g.ap.connect(s1.analysis_export);
-            // to illustrate analysis port can be connected to multiple
-            // subscribers; usually the subscribers are in separate components
-            g.ap.connect(s2.analysis_export);
-            ...
-        endfunction
-
-    endclass
+        def connect_phase(self, phase):
+            self.g.ap.connect(s1.analysis_export);
+            # to illustrate analysis port can be connected to multiple
+            # subscribers; usually the subscribers are in separate components
+            self.g.ap.connect(s2.analysis_export);
 
 When multiple subscribers are connected to an analysis_port, each is
 passed a pointer to the same transaction object, the argument to the
@@ -1240,7 +1235,7 @@ interfaces and the phase argument.
 
 The blocking transport is implemented as follows::
 
-    task b_transport(T t, uvm_tlm_time delay);
+    async def b_transport(t, delay):
 
 The b_transport task transports a transaction from the initiator to
 the target in a blocking fashion. The call to b_transport by the
@@ -1412,66 +1407,37 @@ class definitions for these sockets are as follows::
     )
     extends uvm_tlm_b_passthrough_target_socket_base #(T);
 
-Target- terminator socket
+    class uvm_tlm_b_target_socket #(
+        type T=uvm_tlm_generic_payload,
+        type IMP=int
+    ) extends uvm_tlm_b_target_socket_base #(T);
 
-Initiator- passthrough Socket
+    class uvm_tlm_b_initiator_socket #(type T=uvm_tlm_generic_payload)
 
-Initiator- terminator socket
+    extends uvm_tlm_b_initiator_socket_base #(T);
 
-INTERCONNECT COMPONENT
+    class uvm_tlm_nb_target_socket #(
+        type T=uvm_tlm_generic_payload,
+        type P=uvm_tlm_phase_e, type IMP=int
+    ) extends uvm_tlm_nb_target_socket_base #(T,P);
 
-TARGET COMPONENT
-
-INITIATOR COMPONENT
-
-Initiator-terminator
-
-socket
-
-Target-terminator
-
-socket
-
-TARGET COMPONENT
-
-Target- passthrough Socket
-
-
-
-class uvm_tlm_b_target_socket #(type T=uvm_tlm_generic_payload,
-
-type IMP=int) extends uvm_tlm_b_target_socket_base #(T);
-
-class uvm_tlm_b_initiator_socket #(type T=uvm_tlm_generic_payload)
-
-extends uvm_tlm_b_initiator_socket_base #(T);
-
-class uvm_tlm_nb_target_socket #(type T=uvm_tlm_generic_payload,
-
-type P=uvm_tlm_phase_e, type IMP=int) extends
-uvm_tlm_nb_target_socket_base #(T,P);
-
-class uvm_tlm_nb_initiator_socket #(type T=uvm_tlm_generic_payload,
-
-type P=uvm_tlm_phase_e, type IMP=int) extends
-uvm_tlm_nb_initiator_socket_base #(T,P);
+    class uvm_tlm_nb_initiator_socket #(
+        type T=uvm_tlm_generic_payload,
+        type P=uvm_tlm_phase_e, type IMP=int
+    ) extends uvm_tlm_nb_initiator_socket_base #(T,P);
 
 Table 4 shows the different kinds of sockets and how they are
 constructed.
 
 **Table 4—Socket Construction**
 
-**Socket Blocking Nonblocking**
+.. csv-table:: uvm-python Checks and Coverage Construct Usage Overview
 
-initiator IS-A forward port IS-A forward port; HAS-A backward imp
-
-target IS-A forward imp IS-A forward imp; HAS-A backward port
-
-passthrough initiator IS-A forward port IS-A forward port; HAS-A
-backward export
-
-passthrough target IS-A forward export IS-A forward port; HAS-A backward
-export
+    **Socket**, **Blocking**, **Nonblocking**
+    initiator, IS-A forward port, IS-A forward port; HAS-A backward imp
+    target, IS-A forward imp, IS-A forward imp; HAS-A backward port
+    passthrough initiator, IS-A forward port, IS-A forward port; HAS-A backward export
+    passthrough target, IS-A forward export, IS-A forward port; HAS-A backward export
 
 IS-A and HAS-A are types of object relationships. IS-A refers to the
 inheritance relationship and HAS-A refers to the ownership
@@ -1488,15 +1454,9 @@ Each socket type provides an implementation of the connect() method.
 Connection is defined polymorphically using the base class type as
 the argument::
 
-    function void connect(this_type provider);
+    def connect(provider)
 
-where this_type is defined in uvm_port_base as::
-
-    uvm_port_base #(IF) this_type;
-
-Further, IF is defined by uvm_tlm_if#(T,P). Thus, compile-time
-interface type checking is achieved. However, this is not sufficient
-type checking. Additionally, each implementation of connect() in each
+Each implementation of connect() in each
 socket type does run-time type checking to ensure it is connected to
 allowable socket types. For example, an initiator socket can connect
 to an initiator passthrough socket, a target passthrough socket, or a
@@ -1767,40 +1727,38 @@ utilities that operate on this class, such as copy, compare, print,
 and so on. In particular, the uvm_object_utils function registers the
 class type with the common factory::
 
-    1 class simple_item extends UVMSequenceItem;
-    2 rand int unsigned addr;
-    3 rand int unsigned data;
-    4 rand int unsigned delay;
-    5 constraint c1 { addr < 16'h2000; }
-    6 constraint c2 { data < 16'h1000; }
-    7 // UVM automation macros for general objects
-    8 \`uvm_object_utils_begin(simple_item)
-    9 \`uvm_field_int(addr, UVM_ALL_ON)
-    10 \`uvm_field_int(data, UVM_ALL_ON)
-    11 \`uvm_field_int(delay, UVM_ALL_ON)
-    12 \`uvm_object_utils_end
-    13 // Constructor
-    14 function new (string name = "simple_item");
-    15 super.new(name);
-    16 endfunction : new
-    17 endclass : simple_item
+    1 class simple_item(UVMSequenceItem)
+    2 def __init__(self name="simple_item"):
+    3   super().__init__(name)
+    4   self.addr = 0x0
+    5   self.randr('addr', range(0x2000))
+    6   self.data = 0x0
+    7   self.randr('data', range(0x1000))
+    8   self.delay = 0x0
+    9   self.randr('delay', range(1 << 32 - 1))
+    10 # UVM automation macros for general objects
+    11 uvm_object_utils_begin(simple_item)
+    12 uvm_field_int('addr', UVM_ALL_ON)
+    13 uvm_field_int('data', UVM_ALL_ON)
+    14 uvm_field_int('delay', UVM_ALL_ON)
+    15 uvm_object_utils_end
 
 Line 1 Derives data items from `UVMSequenceItem` so they can be
 generated in a procedural sequence. See Section 3.10.2 for more
 information.
 
-Line 5 and Line 6
+Line 5,Line 7 and Line 9
 
 Add constraints to a data item definition in order to:
 
 Reflect specification rules. In this example, the address must be less
-than 16'h2000. Specify the default distribution for generated traffic.
+than 0x2000. Specify the default distribution for generated traffic.
 For example, in a typical test most transactions should be legal.
 
-Line 7-Line 12 Use the UVM macros to automatically implement
+Line 11-Line 15 Use the UVM functions to automatically implement
 functions such as copy(), compare(), print(), pack(), and so on.
 Refer to “Macros” in the UVM *1.2 Class Reference* for information on
-the \`uvm_object_utils_begin, \`uvm_object_utils_end, \`uvm_field_*,
+the `uvm_object_utils_begin`, `uvm_object_utils_end`, uvm_field_*,
 and their associated macros.
 
 3.1.1 Inheritance and Constraint Layering
@@ -2107,21 +2065,20 @@ implementation of the run_phase() task in the previous example (in
 Section 3.3), this time using try_next_item() to drive idle
 transactions as long as there is no real data item to execute::
 
-    task run_phase(uvm_phase phase);
+    async def run_phase(self, phase):
     forever begin
 
         // Try the next data item from sequencer (does not block).
-        seq_item_port.try_next_item(s_item);
-        if (s_item == null) begin
-            // No data item to execute, send an idle transaction. ...
+        t = []
+        seq_item_port.try_next_item(t)
+        s_item = t[0] if len(t) > 0 else None
+        if s_item is None:
+            # No data item to execute, send an idle transaction. ...
         end
-        else begin
-            // Got a valid item from the sequencer, execute it. ...
-            // Signal the sequencer; we are done.
+        else:
+            # Got a valid item from the sequencer, execute it. ...
+            # Signal the sequencer; we are done.
             seq_item_port.item_done();
-        end
-    end
-    endtask:run
 
 3.5.3 Fetching Consecutive Randomized Items
 -------------------------------------------
@@ -2196,7 +2153,7 @@ transaction as the peek(), so the transaction may be ignored.
 To provide a response using the blocking_slave_port, the driver would
 call::
 
-    seq_item_port.put(rsp);
+    await seq_item_port.put(rsp)
 
 The response may also be sent back using an analysis_port as well.
 
@@ -2333,27 +2290,21 @@ constructor (in bold below)::
 
     class my_component (UVMComponent);
 
-    my_driver driver;
+    # my_driver driver;
     ...
-    virtual function void build_phase(uvm_phase phase);
-        super.build_phase(phase);
-        **driver = new(“driver”,this)**;
-        ...
-        endfunction
-    endclass
+    def build_phase(self, phase):
+        super().build_phase(phase)
+        driver = my_driver(“driver”,self)
 
 components should be instantiated using the create() method::
 
     class my_component (UVMComponent);
 
-        my_driver driver;
+        # my_driver driver;
         ...
-        virtual function void build_phase(uvm_phase phase);
-            super.build_phase(phase);
-            **driver = my_driver.type_id.create("driver",this);**
-            ...
-        endfunction
-        endclass
+        def build_phase(self, phase):
+            super().build_phase(phase)
+            driver = my_driver.type_id.create("driver", self)
 
 The factory operation is explained in Section 6.2. The
 type_id::create() method is a type-specific static method that
@@ -2371,10 +2322,8 @@ change the driver. To change the driver for a specific test:
 a) Declare a new driver extended from the base component and add or
 modify functionality as desired::
 
-    class new_driver extends my_driver;
-
-    ... // Add more functionality here.
-    endclass: new_driver
+    class new_driver(my_driver):
+    ... # Add more functionality here.
 
 b) In your test, environment, or testbench, override the type to be returned
 by the factory::

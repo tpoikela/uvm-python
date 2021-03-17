@@ -22,7 +22,7 @@
 #   permissions and limitations under the License.
 #-----------------------------------------------------------------------------
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from .sv import sv, sv_obj
 from .uvm_misc import UVMStatusContainer
@@ -89,14 +89,18 @@ class UVMObject(sv_obj):
         if (UVMObject.use_uvm_seeding):
             pass
 
+
+    """
+        Group: Identification
+    """
+
     def set_name(self, name: str):
         """
-        Group: Identification
-
         Sets the instance name of this object, overwriting any previously
         given name.
+
         Args:
-            name:
+            name (str): Name for the object.
         """
         self.leaf_name = name
 
@@ -704,24 +708,26 @@ class UVMObject(sv_obj):
         return packer.get_packed_size()
 
 
-    #  // Function: pack_ints
-    #  //
-    #  // The pack methods bitwise-concatenate this object's properties into an array
-    #  // of bits, bytes, or ints. The methods are not virtual and must not be
-    #  // overloaded. To include additional fields in the pack operation, derived
-    #  // classes should override the <do_pack> method.
-    #  //
-    #  // The optional `packer` argument specifies the packing policy, which governs
-    #  // the packing operation. If a packer policy is not provided, the global
-    #  // <uvm_default_packer> policy is used. See <uvm_packer> for more information.
-    #  //
-    #  // The return value is the total number of bits packed into the given array.
-    #  // Use the array's built-in `size` method to get the number of bytes or ints
-    #  // consumed during the packing process.
-    #
-    #  extern function int pack_ints (ref int unsigned intstream[],
-    #                                 input uvm_packer packer=None)
-    def pack_ints(self, intstream, packer=None) -> Any:
+    def pack_ints(self, intstream: List, packer=None) -> Any:
+        """
+        Function: pack_ints
+
+        The pack methods bitwise-concatenate this object's properties into an array
+        of bits, bytes, or ints. The methods are not virtual and must not be
+        overloaded. To include additional fields in the pack operation, derived
+        classes should override the <do_pack> method.
+
+        The optional `packer` argument specifies the packing policy, which governs
+        the packing operation. If a packer policy is not provided, the global
+        <uvm_default_packer> policy is used. See <uvm_packer> for more information.
+
+        The return value is the total number of bits packed into the given array.
+        Use the array's built-in `size` method to get the number of bytes or ints
+        consumed during the packing process.
+        """
+        #
+        #  extern function int pack_ints (ref int unsigned intstream[],
+        #                                 input uvm_packer packer=None)
         packer = self.m_pack(packer)
         ints = packer.get_ints()
         for i in ints:
@@ -729,58 +735,62 @@ class UVMObject(sv_obj):
         return packer.get_packed_size()
 
 
-    #  // Function: do_pack
-    #  //
-    #  // The `do_pack` method is the user-definable hook called by the <pack> methods.
-    #  // A derived class should override this method to include its fields in a pack
-    #  // operation.
-    #  //
-    #  // The `packer` argument is the policy object for packing. The policy object
-    #  // should be used to pack objects.
-    #  //
-    #  // A typical example of an object packing itself is as follows
-    #  //
-    #  //|  class mysubtype extends mysupertype
-    #  //|    ...
-    #  //|    shortint myshort
-    #  //|    obj_type myobj
-    #  //|    byte myarray[]
-    #  //|    ...
-    #  //|    function void do_pack (uvm_packer packer)
-    #  //|      super.do_pack(packer); // pack mysupertype properties
-    #  //|      packer.pack_field_int(myarray.size(), 32)
-    #  //|      foreach (myarray)
-    #  //|        packer.pack_field_int(myarray[index], 8)
-    #  //|      packer.pack_field_int(myshort, $bits(myshort))
-    #  //|      packer.pack_object(myobj)
-    #  //|    endfunction
-    #  //
-    #  // The implementation must call ~super.do_pack~ so that base class properties
-    #  // are packed as well.
-    #  //
-    #  // If your object contains dynamic data (object, string, queue, dynamic array,
-    #  // or associative array), and you intend to unpack into an equivalent data
-    #  // structure when unpacking, you must include meta-information about the
-    #  // dynamic data when packing as follows.
-    #  //
-    #  //  - For queues, dynamic arrays, or associative arrays, pack the number of
-    #  //    elements in the array in the 32 bits immediately before packing
-    #  //    individual elements, as shown above.
-    #  //
-    #  //  - For string data types, append a zero byte after packing the string
-    #  //    contents.
-    #  //
-    #  //  - For objects, pack 4 bits immediately before packing the object. For `None`
-    #  //    objects, pack 4'b0000. For non-`None` objects, pack 4'b0001.
-    #  //
-    #  // When the `uvm_field_* macros are used,
-    #  // <Utility and Field Macros for Components and Objects>,
-    #  // the above meta information is included provided the <uvm_packer::use_metadata>
-    #  // variable is set for the packer.
-    #  //
-    #  // Packing order does not need to match declaration order. However, unpacking
-    #  // order must match packing order.
     def do_pack(self, packer) -> None:
+        """
+        Function: do_pack
+
+        The `do_pack` method is the user-definable hook called by the <pack> methods.
+        A derived class should override this method to include its fields in a pack
+        operation.
+
+        The `packer` argument is the policy object for packing. The policy object
+        should be used to pack objects.
+
+        A typical example of an object packing itself is as follows
+
+        .. code-block:: python
+
+          class mysubtype(mysupertype):
+            ...
+            # shortint myshort
+            # obj_type myobj
+            # byte myarray[]
+            ...
+            function void do_pack (uvm_packer packer)
+              super.do_pack(packer); // pack mysupertype properties
+              packer.pack_field_int(len(myarray), 32)
+              for index in range(len(myarray):
+                packer.pack_field_int(myarray[index], 8)
+              packer.pack_field_int(myshort, sv.bits(myshort))
+              packer.pack_object(myobj)
+            endfunction
+
+        The implementation must call ~super.do_pack~ so that base class properties
+        are packed as well.
+
+        If your object contains dynamic data (object, string, queue, dynamic array,
+        or associative array), and you intend to unpack into an equivalent data
+        structure when unpacking, you must include meta-information about the
+        dynamic data when packing as follows.
+
+         - For queues, dynamic arrays, or associative arrays, pack the number of
+           elements in the array in the 32 bits immediately before packing
+           individual elements, as shown above.
+
+         - For string data types, append a zero byte after packing the string
+           contents.
+
+         - For objects, pack 4 bits immediately before packing the object. For `None`
+           objects, pack 4'b0000. For non-`None` objects, pack 4'b0001.
+
+        When the uvm_field_* macros are used,
+        <Utility and Field Macros for Components and Objects>,
+        the above meta information is included provided the <uvm_packer::use_metadata>
+        variable is set for the packer.
+
+        Packing order does not need to match declaration order. However, unpacking
+        order must match packing order.
+        """
         return
 
 
@@ -810,28 +820,32 @@ class UVMObject(sv_obj):
         return packer.get_packed_size()
 
 
-    #  // Function: unpack_ints
-    #  //
-    #  // The unpack methods extract property values from an array of bits, bytes, or
-    #  // ints. The method of unpacking `must` exactly correspond to the method of
-    #  // packing. This is assured if (a) the same `packer` policy is used to pack
-    #  // and unpack, and (b) the order of unpacking is the same as the order of
-    #  // packing used to create the input array.
-    #  //
-    #  // The unpack methods are fixed (non-virtual) entry points that are directly
-    #  // callable by the user. To include additional fields in the <unpack>
-    #  // operation, derived classes should override the <do_unpack> method.
-    #  //
-    #  // The optional `packer` argument specifies the packing policy, which governs
-    #  // both the pack and unpack operation. If a packer policy is not provided,
-    #  // then the global `uvm_default_packer` policy is used. See uvm_packer for
-    #  // more information.
-    #  //
-    #  // The return value is the actual number of bits unpacked from the given array.
-    #
-    #  extern function int unpack_ints (ref   int unsigned intstream[],
-    #                                   input uvm_packer packer=None)
     def unpack_ints(self, intstream, packer=None) -> Any:
+        """
+        The unpack methods extract property values from an array of bits, bytes, or
+        ints. The method of unpacking `must` exactly correspond to the method of
+        packing. This is assured if (a) the same `packer` policy is used to pack
+        and unpack, and (b) the order of unpacking is the same as the order of
+        packing used to create the input array.
+
+        The unpack methods are fixed (non-virtual) entry points that are directly
+        callable by the user. To include additional fields in the <unpack>
+        operation, derived classes should override the <do_unpack> method.
+
+        The optional `packer` argument specifies the packing policy, which governs
+        both the pack and unpack operation. If a packer policy is not provided,
+        then the global `uvm_default_packer` policy is used. See uvm_packer for
+        more information.
+
+        The return value is the actual number of bits unpacked from the given array.
+
+        Args:
+            instream (List):
+            packer (UVMPacker):
+
+        Returns:
+            int: Packed size
+        """
         packer = self.m_unpack_pre(packer)
         packer.put_ints(intstream)
         self.m_unpack_post(packer)
