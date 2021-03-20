@@ -6,7 +6,15 @@
 #        USAGE: ./sv2py.pl
 #
 #  DESCRIPTION: Convert some SV structs into Python. Does not do full
-#               conversion.
+#               conversion. NOTE: This is regex/line-based tool, and does not
+#               do parsing of SV. The conversion is pretty dodgy, and can
+#               fail in many places. However, -dangerous option can be used
+#               to make even more conversions with more assumptions about the
+#               code.
+#
+#               One such assumption would be that no one would ever name a
+#               local variable in a function the same as member variable in a
+#               class.
 #
 #      OPTIONS: -f <FILE>, -all, -d|debug, --author <NAME>, -p, -f
 # REQUIREMENTS: ---
@@ -69,9 +77,24 @@ sub do_simple_subst {
     $$line =~ s/self file except/this file except/g;
     $$line =~ s/repeat\((\w+)\)/for i in range($1)/g;
     $$line =~ s/^\s*import (\w+)::\*/from $1 import */g;
+    $$line =~ s/(\w+)\+\+/$1 += 1/g;
+    $$line =~ s/(\w+)--/$1 -= 1/g;
+    $$line =~ s/\+\+(\w+)/$1 += 1/g;
+    $$line =~ s/--(\w+)/$1 -= 1/g;
+    $$line =~ s/int\s+unsigned\s+(\w+)/$1: int/g;
+    $$line =~ s/virtual\s+interface//g;
 
     # We don't want to match ## here because it's different operator than #
-    $$line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/yield Timer($1, $2)/g;
+    $$line =~ s/(?<!#)#(\w+)\s*$/await Timer($1, "ns")  # ns added by script/g;
+    $$line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/await Timer($1, $2)/g;
+}
+
+# Used to replace SV list/queue functions with python stuff
+sub do_list_subst {
+    my ($self, $line) = @_;
+    $$line =~ s/\.push_back\(/.append(/g;
+    $$line =~ s/\.pop_back\(/.pop(/g;
+    $$line =~ s/\.pop_front\(/.pop(0/g;
 }
 
 sub do_sv_uvm_subts {
@@ -92,8 +115,38 @@ sub do_sv_uvm_subts {
     $$line =~ s/uvm_component parent = None/parent=None/g;
     $$line =~ s/phase\(self,\s*uvm_phase\s+phase\s*\)$/phase(self, phase):/g;
     $$line =~ s/`uvm_(info|warning|fatal|error)\(/uvm_$1(/g;
+    $$line =~ s/`uvm_field_(int|string|object|)\s*\((\w+)/uvm_field_$1('$2'/g;
 }
 
+
+sub do_dangerous_subst {
+    my ($self, $outfile, $all_classes) = @_;
+    my $res = join("\n", @{$outfile});
+    my @classes = keys(%{$all_classes});
+    my $re = qr/^(\s*)(#)(\s*)/;
+    foreach my $cls (@classes) {
+        my $href = $all_classes->{$cls};
+        foreach my $func (keys %{$href->{func}}) {
+            foreach my $line (@{$outfile}) {
+                $line =~ s/^(\s*)(#)(\s*)$func\(/$1$2$3self.$func(/g;
+            }
+        }
+        foreach my $task (keys %{$href->{task}}) {
+            foreach my $line (@{$outfile}) {
+                $line =~ s/^(\s*)(#)(\s*)$task\(/$1$2$3await self.$task(/g;
+            }
+        }
+        foreach my $var (keys %{$href->{var}}) {
+            foreach my $line (@{$outfile}) {
+                if ($line !~ /,/) {
+                    $line =~ s/([ (])$var\b/$1self.$var/g;
+                }
+            }
+        }
+    }
+
+    return split("\n", $res);
+}
 
 1;
 
@@ -113,7 +166,8 @@ sub new {
         new_start => 0,
         new_end => 0,
         var => {},
-        func => {}
+        func => {},
+        task => {}
     };
     bless($self, $class);
 
@@ -128,6 +182,16 @@ sub new {
 sub add_var {
     my ($self, $name, $type) = @_;
     $self->{var}->{$name} = $type;
+}
+
+sub add_task {
+    my ($self, $name, $type) = @_;
+    $self->{task}->{$name} = $type;
+}
+
+sub add_func {
+    my ($self, $name, $type) = @_;
+    $self->{func}->{$name} = $type;
 }
 
 
@@ -149,6 +213,8 @@ GetOptions(
     "man"       => \$opt{man},
     "q|quiet"   => \$opt{quiet},
     "v|verbose" => \$opt{verbose},
+    "dangerous" => \$opt{dangerous},
+    "list" => \$opt{list},
 );
 
 pod2usage(1) if $opt{help};
@@ -326,17 +392,29 @@ sub process_file {
         }
 
         # Check for various tasks and functions
-        if ($line =~ /^\s*(virtual\s+)?(protected\s+)?task\s+(\w+)/) {
-            my $task_name = $1;
-            set_state($IN_TASK);
+        if ($line =~ /^\s*(extern)?\s*(virtual\s+)?(protected\s+)?task\s+(\w+)/) {
+            my $task_name = $4;
+            my $extern = $1;
+            if ($st == $IN_CLASS) {
+                $all_classes->{$curr_class}->add_task($task_name);
+            }
+            if (not defined $extern) {
+                set_state($IN_TASK);
+            }
             push(@outfile, "$ws#async\n");
         }
         elsif ($line =~ /^\s*endtask/) {
             clear_state($IN_TASK);
         }
-        elsif ($line =~ /^\s*(virtual\s+)?(protected\s+)?function\s+(\w+)/) {
-            my $func_name = $1;
-            set_state($IN_FUNC);
+        elsif ($line =~ /^\s*(extern)?\s*(virtual\s+)?(protected\s+)?function\s+(\w+)\s+(\w+)/) {
+            my $extern = $1;
+            my $func_name = $5;
+            if ($st == $IN_CLASS) {
+                $all_classes->{$curr_class}->add_func($func_name);
+            }
+            if (not defined $extern) {
+                set_state($IN_FUNC);
+            }
         }
         elsif ($line =~ /^\s*endfunction/) {
             clear_state($IN_FUNC);
@@ -355,6 +433,7 @@ sub process_file {
 
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bstring\b/ ) {$value = "";}
+                if ($var_type =~ /\bevent\b/ ) {$value = "Event('$var_name')";}
                 if (defined $var_init) {
                     $value = $var_init;
                     $value =~ s/=//;
@@ -369,6 +448,7 @@ sub process_file {
             ++$ind;
             $st = $IN_CLASS;
             $curr_class = $2;
+            push(@classes_file, $curr_class);
             $found_vars->{$curr_class} = [];
             my $class_info = ClassInfo->new({
                 name => $2,
@@ -406,6 +486,9 @@ sub process_file {
 
         $sv2py->do_simple_subst(\$line);
 
+        if ($opt{list}) {
+            $sv2py->do_list_subst(\$line);
+        }
 
         if ($line =~ $edge_re) {
             my $edge = $2;
@@ -419,7 +502,7 @@ sub process_file {
             else {
                 $edge = "Edge";
             }
-            push(@outfile, "$ws#${ii}yield $edge($sig)\n");
+            push(@outfile, "$ws#${ii}await $edge($sig)\n");
             add_import(\@imports, "from cocotb.triggers import *\n");
         }
 
@@ -457,6 +540,9 @@ sub process_file {
             $line =~ s/task (.*)\((.*)\)/def $1(self,$2):  # task/g;
         }
 
+        # Return types
+        $line =~ s/def\s+(.*)\s+(\w+::)(\w+)\s*\((.*)\):/def $2$3($4) -> $1:/g;
+
         do_coverage_subst(\$line, $lineno);
 
         #--------------------------------------------------
@@ -469,13 +555,18 @@ sub process_file {
         }
     }
 
+    my $offset = 0;
     foreach my $cls (@classes_file) {
-        splice(@outfile, $new_endfunction->{$cls}, 0,
-            $found_vars->{$cls});
+        splice(@outfile, $new_endfunction->{$cls} - 1 + $offset, 0,
+            @{$found_vars->{$cls}});
+        $offset += int(@{$found_vars->{$cls}});
     }
 
     # Add imports to the import line
     my $chosen_line = $import_line == -1 ? $include_line : $import_line;
+    if ($chosen_line == -1) {
+        $chosen_line = 0;
+    }
     splice(@outfile, $chosen_line, 0, @imports);
 
     if ($st != $GLOBAL) {
@@ -494,6 +585,9 @@ sub process_file {
     close($IFILE);
     if ($is_py) {
         return  wantarray ? @new_array : join('', @new_array );
+    }
+    if ($opt{dangerous}) {
+        $sv2py->do_dangerous_subst(\@outfile, $all_classes);
     }
     return wantarray ? @outfile : join('', @outfile);
 }
@@ -551,6 +645,10 @@ sub build_pkg_map {
 # Add safer check, ie if file would be overwritten
 sub is_safe_to_write {
     my ($py_file) = @_;
+    # User requested explicitly, so don't check
+    if (defined $opt{force}) {
+        return 1;
+    }
     my $ok = system("git ls-files --error-unmatch $py_file >& /dev/null");
     if ($ok != 0) {return 1;}
     print ("File $py_file under git, and will not be overwritten\n");
