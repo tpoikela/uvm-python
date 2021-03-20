@@ -2044,18 +2044,20 @@ driver signals the sequencer that the item was processed using
 item_done().Typically, the main loop within a driver resembles the
 following pseudo code::
 
-    forever begin
-        get_next_item(req); // Send item following the protocol. item_done();
+    while True:
+        t = []
+        await self.get_next_item(t) # Send item following the protocol. item_done();
+        req = t[0]
     end
 
-NOTE—get_next_item() is blocking until an item is provided by the
+NOTE—`get_next_item()` is blocking until an item is provided by the
 sequences running on that sequencer.
 
 3.5.2 Querying for the Randomized Item
 --------------------------------------
 
-In addition to the get_next_item() task, the uvm_seq_item_pull_port
-class provides another task, try_next_item(). This task will return
+In addition to the `get_next_item()` task, the `UVMSeqItemPullPort`
+class provides another task, `try_next_item()`. This task will return
 in the same simulation step if no data items are available for
 execution. You can use this task to have the driver execute some idle
 transactions, such as when the DUT has to be stimulated when there
@@ -2066,11 +2068,11 @@ Section 3.3), this time using try_next_item() to drive idle
 transactions as long as there is no real data item to execute::
 
     async def run_phase(self, phase):
-    forever begin
+        while True:
 
-        // Try the next data item from sequencer (does not block).
+        # Try the next data item from sequencer (does not block).
         t = []
-        seq_item_port.try_next_item(t)
+        await seq_item_port.try_next_item(t)
         s_item = t[0] if len(t) > 0 else None
         if s_item is None:
             # No data item to execute, send an idle transaction. ...
@@ -2103,15 +2105,15 @@ sequencer is copied by value, the driver needs to return the
 processed response back to the sequencer. Do this using the optional
 argument to item_done()::
 
-    seq_item_port.item_done(rsp);
+    seq_item_port.item_done(rsp)
 
 or using the put_response() method::
 
-    seq_item_port.put_response(rsp);
+    await seq_item_port.put_response(rsp)
 
-or using the built-in analysis port in uvm_driver::
+or using the built-in analysis port in `UVMDriver`::
 
-    rsp_port.write(rsp);
+    rsp_port.write(rsp)
 
 NOTE—Before providing the response, the response’s sequence and
 transaction id must be set to correspond to the request transaction
@@ -2137,11 +2139,11 @@ derived from uvm_driver, may still connect to and communicate with
 the sequencer. As with the seq_item_port, the methods to use depend
 on the interaction desired::
 
-    // Pause sequencer operation while the driver operates on the transaction.
-    peek(req); // Process req operation.
-    get(req); // Allow sequencer to proceed immediately upon driver receiving transaction.
+    # Pause sequencer operation while the driver operates on the transaction.
+    await peek(req) # Process req operation.
+    await get(req) # Allow sequencer to proceed immediately upon driver receiving transaction.
 
-    get(req); // Process req operation.
+    await get(req) # Process req operation.
 
 The following also apply.
 
@@ -2195,57 +2197,52 @@ Actual code for collection is not shown in this example. A complete
 example can be found in the UBus example in ubus_master_monitor.py::
 
 
-    class master_monitor extends UVMMonitor;
+    class master_monitor(UVMMonitor):
 
         virtual bus_if xmi; // SystemVerilog virtual interface bit
         checks_enable = 1; // Control checking in monitor and interface. bit
         coverage_enable = 1; // Control coverage in monitor and interface.
-        uvm_analysis_port #(simple_item) item_collected_port;
 
-        event cov_transaction; // Events needed to trigger covergroups
-        protected simple_item trans_collected;
-        `uvm_component_utils_begin(master_monitor)
-        `uvm_field_int(checks_enable, UVM_ALL_ON)
-        `uvm_field_int(coverage_enable, UVM_ALL_ON)
-        `uvm_component_utils_end
+        # event cov_transaction; // Events needed to trigger covergroups
 
-        covergroup cov_trans @cov_transaction;
-            option.per_instance = 1;
-            ... // Coverage bins definition
-        endgroup : cov_trans
+        #covergroup cov_trans @cov_transaction;
+        #    option.per_instance = 1;
+        #    ... // Coverage bins definition
+        #endgroup : cov_trans
 
-        function new (string name, uvm_component parent);
-            super.new(name, parent);
+        def __init__(self, name, parent):
+            super().__init__(name, parent);
             cov_trans = new();
             cov_trans.set_inst_name({get_full_name(), ".cov_trans"});
-            trans_collected = new();
-            item_collected_port = new("item_collected_port", this);
-        endfunction : new
+            trans_collected = simple_item()
+            self.item_collected_port = UVMAnalysisPort("item_collected_port", self)
+            self.xmi = None  # Obtain the bus handle somehow
+            self.cov_transaction = Event('evt_cov_transaction')
 
-        virtual task run_phase(uvm_phase phase);
-            collect_transactions(); // collector task.
-        endtask : run virtual
+        async def run_phase(self, phase):
+            await self.collect_transactions() # collector task.
 
-        protected task collect_transactions();
-            forever begin
-                @(posedge xmi.sig_clock);
-                ...// Collect the data from the bus into trans_collected.
-                if (checks_enable)
-                    perform_transfer_checks();
-                if (coverage_enable)
-                    perform_transfer_coverage();
-                item_collected_port.write(trans_collected);
+        async def collect_transactions();
+            while True:
+                await RisingEdge(self.xmi.sig_clock)
+                # Collect the data from the bus into trans_collected.
+                if (self.checks_enable):
+                    self.perform_transfer_checks()
+                if (self.coverage_enable)
+                    self.perform_transfer_coverage()
+                self.item_collected_port.write(trans_collected)
             end
-        endtask : collect_transactions
 
-        virtual protected function void perform_transfer_coverage();
-            -> cov_transaction;
-        endfunction : perform_transfer_coverage virtual
+        def perform_transfer_coverage(self):
+            self.cov_transaction.set()
 
-        protected function void perform_transfer_checks();
-            ... // Perform data checks on trans_collected.
-        endfunction : perform_transfer_checks
-    endclass : master_monitor
+        def perform_transfer_checks(self):
+            ... # Perform data checks on trans_collected.
+
+    uvm_component_utils_begin(master_monitor)
+    uvm_field_int('checks_enable', UVM_ALL_ON)
+    uvm_field_int('coverage_enable', UVM_ALL_ON)
+    uvm_component_utils_end(master_monitor)
 
 The collection is done in a task (collect_transactions) which is
 spawned at the beginning of the run() phase. It runs in an endless
@@ -9513,99 +9510,8 @@ when the test is simulated with UVM_VERBOSITY = UVM_LOW::
       READ to empty address...Updating address : b877 with data : 91
     # UVM_INFO ../sv/ubus_bus_monitor.sv(223) @ 110:
 
-    uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
-    Transfer collected : #
-    ---------------------------------------------------------- # Name Type
-    Size Value # ----------------------------------------------------------
-    # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
-    read_write ubus_read_write_enum 32 READ # size integral 32 'h1 # data
-    da(integral) 1 - # [0] integral 8 'h91 # wait_state da(integral) 0 - #
-    error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
-    string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 70
-    # end_time time 64 110 #
-    ----------------------------------------------------------
-    #\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(89) @ 200: `
+Rest of the original output removed.
 
-    uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
-    WRITE to existing address...Updating address : b877 with data : 92 #
-    UVM_INFO ../sv/ubus_bus_monitor.sv(223) @ 200:
-
-    uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
-    Transfer collected : #
-    ---------------------------------------------------------- # Name Type
-    Size Value # ----------------------------------------------------------
-    # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
-    read_write ubus_read_write_enum 32 WRITE # size integral 32 'h1 # data
-    da(integral) 1 - # [0] integral 8 'h92 # wait_state da(integral) 1 - #
-    error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
-    string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 160
-    # end_time time 64 200 #
-    ----------------------------------------------------------
-    #\ :sub:`# UVM_INFO ubus_example_scoreboard.sv(75) @ 310: `
-
-    uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard] READ
-    to existing address...Checking address : b877 with data : 92 # UVM_INFO
-    ../sv/ubus_bus_monitor.sv(223) @ 310:
-
-    uvm_test_top.ubus_example_tb0.ubus0.bus_monitor [ubus_bus_monitor]
-    Transfer collected :
-
-
-
-    # ---------------------------------------------------------- # Name Type
-    Size Value # ----------------------------------------------------------
-    # ubus_transfer_inst ubus_transfer - @429 # addr integral 16 'hb877 #
-    read_write ubus_read_write_enum 32 READ # size integral 32 'h1 # data
-    da(integral) 1 - # [0] integral 8 'h92 # wait_state da(integral) 1 - #
-    error_pos integral 32 'h0 # transmit_delay integral 32 'h0 # master
-    string 10 masters[0] # slave string 9 slaves[0] # begin_time time 64 270
-    # end_time time 64 310 #
-    ----------------------------------------------------------
-    #\ :sub:`# UVM_INFO ../../../../src/base/uvm_objection.svh(1271) @ 360: reporter `
-
-    [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase #
-    UVM_INFO ubus_example_scoreboard.sv(114) @ 360:
-
-    uvm_test_top.ubus_example_tb0.scoreboard0 [ubus_example_scoreboard]
-    Reporting scoreboard information... #
-    ------------------------------------------------------------------ #
-    Name Type Size Value #
-    ------------------------------------------------------------------ #
-    scoreboard0 ubus_example_scoreboard - @395 # item_collected_export
-    uvm_analysis_imp - @404 # recording_detail uvm_verbosity 32 UVM_FULL #
-    disable_scoreboard integral 1 'h0 # num_writes integral 32 'd1 #
-    num_init_reads integral 32 'd1 # num_uninit_reads integral 32 'd1 #
-    recording_detail uvm_verbosity 32 UVM_FULL #
-    ------------------------------------------------------------------
-    #\ :sub:`# UVM_INFO ../sv/ubus_master_monitor.sv(205) @ 360: `
-
-    uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor
-    [uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] Covergroup
-    'cov_trans' coverage: 23.750000 # UVM_INFO
-    ../sv/ubus_slave_monitor.sv(243) @ 360:
-
-    uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor
-    [uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] Covergroup
-    'cov_trans' coverage: 23.750000 # UVM_INFO test_lib.sv(70) @ 360:
-    uvm_test_top [test_read_modify_write] \*\* UVM
-
-    TEST PASSED \*\* # UVM_INFO
-    ../../../../src/base/uvm_report_server.svh(847) @ 360: reporter
-
-    [UVM/REPORT/SERVER] # --- UVM Report Summary ---
-    #\ :sub:`# ** Report counts by severity` # UVM_INFO : 14 # UVM_WARNING :
-    0 # UVM_ERROR : 0 # UVM_FATAL : 0 # \*\* Report counts by id # [RNTST] 1
-    # [TEST_DONE] 1 # [UVM/RELNOTES] 1
-
-
-
-    # [test_read_modify_write] 2 # [ubus_bus_monitor] 3 #
-    [ubus_example_scoreboard] 4 #
-    [uvm_test_top.ubus_example_tb0.ubus0.masters[0].monitor] 1 #
-    [uvm_test_top.ubus_example_tb0.ubus0.slaves[0].monitor] 1
-
-    # $finish called from file "../../../../src/base/uvm_root.svh", line
-    517. # $finish at simulation time 360
 
 7.2 UBus Example Architecture
 #############################
