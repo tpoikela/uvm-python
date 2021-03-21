@@ -175,5 +175,5 @@ uvm-python as well.
 Related projects
 ----------------
 
-  - [cocotb](https://github.com/cocotb/cocotb)cosimulation library for writing testbenches in Python
-  - [uvm-python-verification-lib](https://github.com/jg-fossh/uvm-python-verification-lib]
+  - [cocotb](https://github.com/cocotb/cocotb) cosimulation library for writing testbenches in Python
+  - [uvm-python-verification-lib](https://github.com/jg-fossh/uvm-python-verification-lib) UVM Python Verification Agents Library
