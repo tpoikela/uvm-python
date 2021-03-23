@@ -16,6 +16,10 @@ test-interfaces:
 
 test-sequence:
 	make -C sequence/basic_read_write_sequence/
+	make -C sequence/uvm_dos
+ifneq ($(SIM), verilator)
+	make -C sequence/forking
+endif
 
 test-hello_world:
 	make -C hello_world/
