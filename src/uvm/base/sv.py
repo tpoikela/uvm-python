@@ -333,8 +333,12 @@ SV_MAX_INT_VALUE = (1 << 31) - 1
 
 
 class sv_obj(crv.Randomized):
-    """ sv_obj implement some basic features from SystemVerilog objects like
-    constrained randomisation """
+    """ 
+    `sv_obj` implement some basic features from SystemVerilog objects like
+    constrained randomisation and random stability. Each object maintains
+    its own random state, and thus calls to `randomize` result in the 
+    same sequence of values, given the same seed.
+    """
 
     num_objs = 0
 
@@ -346,8 +350,6 @@ class sv_obj(crv.Randomized):
         self._sv_rand_state = random.getstate()
         self._rand_mode = True
         sv_obj.num_objs += 1
-        # print("Created SVObj@{}: Seed {}, State: {}".format(sv_obj.num_objs,
-        # self._sv_seed, self._sv_rand_state))
 
 
     def constraint(self, c):
@@ -371,7 +373,7 @@ class sv_obj(crv.Randomized):
     def rand(self, key, val_list=None):
         """
         Mark given class property as randomized. A call to `sv_obj.randomize()`
-        will then randomize this value.
+        or `sv_obj.randomize_with()` will then randomize this value.
 
         Args:
             key (str): Name of the property.
@@ -393,15 +395,28 @@ class sv_obj(crv.Randomized):
         return not isinstance(getattr(self, key), (int, str, float))
 
     def pre_randomize(self):
+        """
+        Classes derived from `sv_obj` can implement this callback, which is
+        called before the actual randomization in `randomize` or
+        `randomize_with`.
+        """
         pass
 
     def post_randomize(self):
+        """
+        Classes derived from `sv_obj` can implement this callback, which is
+        called after the actual randomization in `randomize` or
+        `randomize_with`.
+        """
         pass
 
     def randomize(self, recurse=True):
         """
-        Randomizes values in object marked with rand(). Recurses to sub-objects
+        Randomizes properties in object marked with rand(). Recurses to sub-objects
         randomizing them as well.
+
+        raises:
+            RandomizeError
         """
         if self._rand_mode is False:
             return True
@@ -422,10 +437,24 @@ class sv_obj(crv.Randomized):
         except Exception as e:
             raise RandomizeError('randomize() failed for ' + str(self) + '\n' +
                     str(e))
-            # return False
 
 
     def randomize_with(self, *constr):
+        """
+        Randomizes the object with inline constraints.
+
+        An example call::
+
+            pkt = Packet('packet')
+            pkt.randomize_with(
+                lambda addr: addr in [0, 1, 2, 3],
+                lambda data: data > 0
+            )
+
+        raises:
+            RandomizeError
+
+        """
         if self._rand_mode is False:
             return True
         try:
@@ -440,8 +469,8 @@ class sv_obj(crv.Randomized):
             self.post_randomize()
             return True and ok
         except Exception as e:
-            raise RandomizeError('randomize() failed for ' + str(self) + '\n' + str(e))
-            # return False
+            raise RandomizeError(
+                'randomize_with() failed for ' + str(self) + '\n' + str(e))
 
 
 class semaphore():
