@@ -289,7 +289,7 @@ async def uvm_send_pri(seq_obj, SEQ_OR_ITEM, PRIORITY):
     from ..seq.uvm_sequence import UVMSequence
     _seq = SEQ_OR_ITEM
     if isinstance(_seq, UVMSequence):
-        await _seq.start(_seq.get_sequencer(), self, PRIORITY, 0)
+        await _seq.start(_seq.get_sequencer(), seq_obj, PRIORITY, 0)
     else:
         await seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
         await seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
