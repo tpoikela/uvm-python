@@ -67,8 +67,8 @@ class UVMSequenceBase(UVMSequenceItem):
     
     User code::
     
-     sub_seq.randomize(...); // optional
-     sub_seq.start(seqr, parent_seq, priority, call_pre_post)
+     sub_seq.randomize(...)  # optional
+     await sub_seq.start(seqr, parent_seq, priority, call_pre_post)
     
     
     The following methods are called, in order::
@@ -113,7 +113,6 @@ class UVMSequenceBase(UVMSequenceItem):
     Remember, it is the *parent* sequence's pre|mid|post_do that are called, not
     the sequence being executed.
     
-    
     Executing sequence items via `start_item`/`finish_item` or uvm_do functions:
     
     Items are started in the `body` of a parent sequence via calls to
@@ -146,7 +145,6 @@ class UVMSequenceBase(UVMSequenceItem):
     
     Attempting to execute a sequence via `start_item`/`finish_item`
     will produce a run-time error.
-    -----------------------------------------------------------------------------
     """
 
     #  // Variable: do_not_randomize
@@ -224,14 +222,13 @@ class UVMSequenceBase(UVMSequenceItem):
 
     async def wait_for_sequence_state(self, state_mask):
         """
-          Task: wait_for_sequence_state
-
-          Waits until the sequence reaches one of the given `state`. If the sequence
-          is already in one of the state, this method returns immediately.
+        Waits until the sequence reaches one of the given `state`. If the sequence
+        is already in one of the state, this method returns immediately.
 
         .. code-block:: python
 
-         | wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED)
+            await wait_for_sequence_state(UVM_STOPPED|UVM_FINISHED)
+
         Args:
             state_mask:
         Raises:
@@ -245,11 +242,10 @@ class UVMSequenceBase(UVMSequenceItem):
 
     def get_tr_handle(self):
         """
-          Function: get_tr_handle
+        Returns the integral recording transaction handle for this sequence.
+        Can be used to associate sub-sequences and sequence items as
+        child transactions when calling <uvm_component::begin_child_tr>.
 
-          Returns the integral recording transaction handle for this sequence.
-          Can be used to associate sub-sequences and sequence items as
-          child transactions when calling <uvm_component::begin_child_tr>.
         Returns:
         """
         if (self.m_tr_recorder is not None):
@@ -257,36 +253,36 @@ class UVMSequenceBase(UVMSequenceItem):
         else:
             return 0
 
+    """
+    --------------------------
+    Group: Sequence Execution
+    --------------------------
+    """
 
     async def start(self, sequencer, parent_sequence=None, this_priority=-1,
             call_pre_post=1):
         """
-         --------------------------
-          Group: Sequence Execution
-         --------------------------
+        Task: start
 
+        Executes this sequence, returning when the sequence has completed.
 
-          Task: start
+        The `sequencer` argument specifies the sequencer on which to run this
+        sequence. The sequencer must be compatible with the sequence.
 
-          Executes this sequence, returning when the sequence has completed.
+        If `parent_sequence` is `None`, then this sequence is a root parent,
+        otherwise it is a child of `parent_sequence`. The `parent_sequence`'s
+        pre_do, mid_do, and post_do methods will be called during the execution
+        of this sequence.
 
-          The `sequencer` argument specifies the sequencer on which to run this
-          sequence. The sequencer must be compatible with the sequence.
+        By default, the `priority` of a sequence
+        is the priority of its parent sequence.
+        If it is a root sequence, its default priority is 100.
+        A different priority may be specified by `this_priority`.
+        Higher numbers indicate higher priority.
 
-          If `parent_sequence` is `None`, then this sequence is a root parent,
-          otherwise it is a child of `parent_sequence`. The `parent_sequence`'s
-          pre_do, mid_do, and post_do methods will be called during the execution
-          of this sequence.
-
-          By default, the `priority` of a sequence
-          is the priority of its parent sequence.
-          If it is a root sequence, its default priority is 100.
-          A different priority may be specified by `this_priority`.
-          Higher numbers indicate higher priority.
-
-          If `call_pre_post` is set to 1 (default), then the `pre_body` and
-          `post_body` tasks will be called before and after the sequence
-          `body` is called.
+        If `call_pre_post` is set to 1 (default), then the `pre_body` and
+        `post_body` tasks will be called before and after the sequence
+        `body` is called.
 
          async def start(self, uvm_sequencer_base sequencer,
                              uvm_sequence_base parent_sequence = None,
@@ -304,7 +300,6 @@ class UVMSequenceBase(UVMSequenceItem):
         if not(self.m_sequence_state in [UVM_CREATED,UVM_STOPPED,UVM_FINISHED]):
             uvm_fatal("SEQ_NOT_DONE",
                 "Sequence " + self.get_full_name() + " already started")
-        #end
 
         if self.m_parent_sequence is not None:
             self.m_parent_sequence.children_array[self] = 1

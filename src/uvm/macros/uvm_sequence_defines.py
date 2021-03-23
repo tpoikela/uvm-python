@@ -232,7 +232,7 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
     from ..seq.uvm_sequence import UVMSequence
     _seq = uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR)
     if isinstance(_seq, UVMSequence):
-        if not SEQ_OR_ITEM.do_not_randomize:
+        if SEQ_OR_ITEM.do_not_randomize == 0:
             if SEQ_OR_ITEM.randomize_with(*CONSTRAINTS) is False:
                 uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action")
         await SEQ_OR_ITEM.start(SEQR, seq_obj, PRIORITY, 0)
