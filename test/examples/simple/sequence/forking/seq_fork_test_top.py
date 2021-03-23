@@ -2,6 +2,7 @@
 #//   Copyright 2007-2010 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
+#//   Copyright 2019-2021 Tuomas Poikela
 #//   All Rights Reserved Worldwide
 #//
 #//   Licensed under the Apache License, Version 2.0 (the
@@ -20,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Timer, Combine
+from cocotb.triggers import Timer, ReadWrite
 from cocotb.utils import get_sim_time
 
 from uvm.base.uvm_debug import UVMDebug
@@ -58,8 +59,6 @@ class my_driver(UVMDriver):
 
     
     async def main_phase(self, phase):
-        # req = None
-        # rsp = None
 
         while True:
             uvm_info("DRIVER", "my_driver getting the req now..",
@@ -118,17 +117,17 @@ class env(UVMEnv):
     
     async def main_phase(self, phase):
         phase.raise_objection(self)
-        uvm_info("ENV", 'Before 1000 x await Timer(0)', UVM_LOW)
+        await Timer(10, "NS")
+        uvm_info("ENV", 'Before 1000 x await ReadWrite()', UVM_LOW)
         for _ in range(1000):
-            await Timer(0)
+            await ReadWrite()
         uvm_info("ENV", 'main_phase logic starting', UVM_LOW)
         fork_procs = []
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
             the_sequence.id = i
             fork_procs.append(cocotb.fork(the_sequence.start(self.sqr, None)))
-        sv.fork_join(fork_procs)
-        # join_list = list(map(lambda t: t.join(), fork_procs))
+        await sv.fork_join(fork_procs)
         await Timer(100, "NS")
         phase.drop_objection(self)
 
