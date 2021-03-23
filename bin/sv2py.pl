@@ -87,6 +87,8 @@ sub do_simple_subst {
     # We don't want to match ## here because it's different operator than #
     $$line =~ s/(?<!#)#(\w+)\s*$/await Timer($1, "ns")  # ns added by script/g;
     $$line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/await Timer($1, $2)/g;
+
+    $$line =~ s/([.a-zA-Z_0-9]+)\.size\(\)/len($1)/g;
 }
 
 # Used to replace SV list/queue functions with python stuff
@@ -109,6 +111,7 @@ sub do_sv_uvm_subts {
 
     # SystemVerilog functions
     $$line =~ s/\$(urandom|random|sformatf|bits|cast|display)\b/sv.$1/g;
+    $$line =~ s/\$(psprintf)\b/sv.sformatf/g;
 
     $$line =~ s/(virtual\s+)?(protected\s+)?task\s+(\w+)\s*\(/def $3(self,/g;
     $$line =~ s/super\.(\w+)_phase(phase)/super().$1_phase(phase)/g;
@@ -116,6 +119,10 @@ sub do_sv_uvm_subts {
     $$line =~ s/phase\(self,\s*uvm_phase\s+phase\s*\)$/phase(self, phase):/g;
     $$line =~ s/`uvm_(info|warning|fatal|error)\(/uvm_$1(/g;
     $$line =~ s/`uvm_field_(int|string|object|)\s*\((\w+)/uvm_field_$1('$2'/g;
+
+    $$line =~ s/uvm_(driver|monitor|agent|env|object|)\b/'UVM' . uc($1)/eg; # Eval subst
+    $$line =~ s/uvm_sequence_item/UVMSequenceItem/g;
+    $$line =~ s/uvm_sequence/UVMSequence/g;
 }
 
 
@@ -232,8 +239,9 @@ my $re_packed = qr/(\[.*\])?/;       # $5
 my $re_name = qr/(\w+)/;             # $6
 my $re_unpacked = qr/((\[.*\])+)/;   # $7, $8 (full)
 my $re_init_var = qr/(=[^;]+)/;      # $9
+my $re_var_end = qr/(?<!\))\s*;\s*/;
 
-my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?$re_init_var?\s*;\s*$/;
+my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?$re_init_var?$re_var_end$/;
 my $re_new_call = qr/(\w+)\s*=\s*new\s*\(/;
 
 my $conf_db_re = qr/uvm_config_db#\(.*\)::(set|get)/;
@@ -497,7 +505,12 @@ sub process_file {
             $ii = $1 if defined $1;
             $add_line = 0;
             if (defined $edge) {
-                $edge = $edge eq 'posedge' ? "RisingEdge" : "FallingEdge";
+                if ($edge =~ /posedge/) {
+                    $edge = 'posedge';
+                }
+                else {
+                    $edge = "FallingEdge";
+                }
             }
             else {
                 $edge = "Edge";

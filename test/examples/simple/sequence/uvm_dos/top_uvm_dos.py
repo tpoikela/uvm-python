@@ -50,7 +50,7 @@ class bus_trans(UVMSequenceItem):
         self.data = 0
         self.op = 0
         self.rand('addr', range(0, 1 << 30))
-        self.rand('data', range(0, (1 << 128) - 1))
+        self.rand('data', range(0, (1 << 30) - 1))
         self.rand('op', [BUS_READ, BUS_WRITE])
 
     def do_copy(self, rhs):
@@ -109,7 +109,7 @@ class my_driver(UVMDriver):
 
     def __init__(self, name, parent):
         UVMDriver.__init__(self, name, parent)
-        self.data_array = [0] * 512  # int data_array[511:0]
+        self.data_array = {}  # int data_array[511:0]
         self.nitems = 0
         self.recording_detail = UVM_HIGH
 
@@ -133,7 +133,10 @@ class my_driver(UVMDriver):
             # Actually do the read or write here
             if req.op == BUS_READ:
                 rsp.addr = req.addr  # [8:0]
-                rsp.data = self.data_array[rsp.addr]
+                if rsp.addr in self.data_array:
+                    rsp.data = self.data_array[rsp.addr]
+                else:
+                    rsp.data = 0xFFFFABCD
                 uvm_info("sending", to_string(rsp), UVM_MEDIUM)
             else:
                 self.data_array[req.addr] = req.data
@@ -179,7 +182,7 @@ class SubSysLevelSeq(UVMSequence):
             await Timer(self.blk_level_delay_ns, "NS")
 
 uvm_object_utils(SubSysLevelSeq)
-            
+
 
 class BlockLevelSeq(UVMSequence):
     def __init__(self, name=""):
@@ -192,8 +195,13 @@ class BlockLevelSeq(UVMSequence):
             uvm_fatal("NO_SEQR", "BlockLevelSeq did not get sequencer")
         seqr = arr[0]
         bs = bus_trans('bus_trans')
-        await self.start_item(bs, sequencer=seqr)
-        await self.finish_item(bs)
+        #await self.start_item(bs, sequencer=seqr)
+        self.m_sequencer = seqr
+        await uvm_do_with(self, bs)
+        #    lambda addr: addr in [0],
+        #    lambda data: 0xFFFFFFFF
+        #)
+        #await self.finish_item(bs)
 
 
 

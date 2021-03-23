@@ -71,37 +71,37 @@ class UVMRoot(UVMComponent):
     """
     The `UVMRoot` class serves as the implicit top-level and phase controller for
     all UVM components. Users do not directly instantiate `UVMRoot`. The UVM
-    automatically creates a single instance of <uvm_root> that users can
-    access via the global (uvm_pkg-scope) variable, ~uvm_top~.
+    automatically creates a single instance of `UVMRoot` that users can
+    access via the global (uvm-scope) variable, `uvm_top`.
 
-    (see uvm_ref_root.gif)
+    The `uvm_top` instance of ~uvm_root~ plays several key roles in the UVM.
 
-    The ~uvm_top~ instance of ~uvm_root~ plays several key roles in the UVM.
+    Implicit top-level - The `uvm_top` serves as an implicit top-level component.
+    Any component whose parent is specified as `None` becomes a child of `uvm_top`.
+    Thus, all UVM components in simulation are descendants of `uvm_top`.
 
-    Implicit top-level - The ~uvm_top~ serves as an implicit top-level component.
-    Any component whose parent is specified as ~None~ becomes a child of ~uvm_top~.
-    Thus, all UVM components in simulation are descendants of ~uvm_top~.
+    Phase control - `uvm_top` manages the phasing for all components.
 
-    Phase control - ~uvm_top~ manages the phasing for all components.
-
-    Search - Use ~uvm_top~ to search for components based on their
+    Search - Use `uvm_top` to search for components based on their
     hierarchical name. See `UVMRoot.find` and `UVMRoot.find_all`.
 
-    Report configuration - Use ~uvm_top~ to globally configure
+    Report configuration - Use `uvm_top` to globally configure
     report verbosity, log files, and actions. For example,
-    ~uvm_top.set_report_verbosity_level_hier(UVM_FULL)~ would set
+    `uvm_top.set_report_verbosity_level_hier(UVM_FULL)` would set
     full verbosity for all components in simulation.
 
-    Global reporter - Because ~uvm_top~ is globally accessible (in uvm_pkg
+    Global reporter - Because `uvm_top` is globally accessible (in uvm
     scope), UVM's reporting mechanism is accessible from anywhere
     outside ~uvm_component~, such as in modules and sequences.
-    See <uvm_report_error>, <self.uvm_report_warning>, and other global
+    See `uvm_report_error`, `uvm_report_warning`, and other global
     methods.
 
-
-    The ~uvm_top~ instance checks during the end_of_elaboration phase if any errors have
+    The `uvm_top` instance checks during the end_of_elaboration phase if any errors have
     been generated so far. If errors are found a UVM_FATAL error is being generated as result
     so that the simulation will not continue to the start_of_simulation_phase.
+
+    :cvar raise_exception_on_die: Selects if an Exception is raised when
+        `UVMRoot.die` is called.
     """
 
     raise_exception_on_die = True
@@ -116,15 +116,12 @@ class UVMRoot(UVMComponent):
         around retrieving the root via the `UVMCoreService.get_root`
         method::
 
-            # Using the uvm_coreservice_t:
-            uvm_coreservice_t cs
-            uvm_root r
-            cs = uvm_coreservice_t::get()
+            # Using the uvm coreservice:
+            cs = UVMCoreService.get()
             r = cs.get_root()
 
-            # Not using the uvm_coreservice_t:
-            uvm_root r
-            r = uvm_root::get()
+            # Not using the uvm coreservice:
+            r = UVMRoot.get()
 
         Returns:
             UVMRoot: Handle to the UVMRoot singleton.
@@ -210,11 +207,22 @@ class UVMRoot(UVMComponent):
 
     @classmethod
     def get_dut(cls):
+        """ Returns the current Design-under-Test (DUT), if dut= argument
+        was specified for call to `run_test`.
+        """
         return cls.get()._dut
-    #----------------------------------------------------------------------------
-    # Group: Simulation Control
-    #----------------------------------------------------------------------------
 
+    def get_uvm_testname(self) -> str:
+        """ Returns the test name specified with +UVM_TESTNAME= """
+        test_names = []
+        test_name_count = self.clp.get_arg_values("+UVM_TESTNAME=", test_names)
+        if len(test_names) > 0:
+            return test_names[0]
+        return ""
+
+    """
+    Group: Simulation Control
+    """
 
     async def run_test(self, test_name="", dut=None):
         """
@@ -241,9 +249,6 @@ class UVMRoot(UVMComponent):
         uvm_test_top = None  # uvm_component
         self._dut = dut
         ##process phase_runner_proc; // store thread forked below for final cleanup
-
-        # from .uvm_scheduler import UVMScheduler
-        # cocotb.fork(UVMScheduler.get().run_event_loop())
 
         # Set up the process that decouples the thread that drops objections from
         # the process that processes drop/all_dropped objections. Thus, if the
@@ -313,7 +318,7 @@ class UVMRoot(UVMComponent):
         #fork begin
         # spawn the phase runner task
         #phase_runner_proc = process::self()
-        uvm_debug(self, 'run_test', 'Forking now phases')
+        uvm_debug(self, 'run_test', 'Forking now all phases using m_run_phases')
         cocotb.fork(UVMPhase.m_run_phases())
         uvm_debug(self, 'run_test', 'After phase-fork executing')
         #end
@@ -321,9 +326,9 @@ class UVMRoot(UVMComponent):
         await uvm_zero_delay()
         ##0; // let the phase runner start
 
-        uvm_debug(self, 'run_test', 'Waiting all phases to complete JKJK')
+        uvm_debug(self, 'run_test', 'Awaiting all phases to complete')
         await self.wait_all_phases_done()
-        uvm_debug(self, 'run_test', 'All phases are done now JKJK')
+        uvm_debug(self, 'run_test', 'All phases are done now')
 
         #// clean up after ourselves
         #phase_runner_proc.kill()
@@ -344,9 +349,9 @@ class UVMRoot(UVMComponent):
         quit count or has a UVM_EXIT action associated with it, e.g., as with
         fatal errors.
 
-        Calls the <uvm_component::pre_abort()> method
-        on the entire `uvm_component` hierarchy in a bottom-up fashion.
-        It then calls <uvm_report_server::report_summarize> and terminates the simulation.
+        Calls the `UVMComponent.pre_abort()` method
+        on the entire `UVMComponent` hierarchy in a bottom-up fashion.
+        It then calls `UVMReportServer.report_summarize` and terminates the simulation.
 
         Raises:
             Exception:
@@ -369,20 +374,20 @@ class UVMRoot(UVMComponent):
                 + " (via factory override for test \"" + test_name + "\")..."), UVM_LOW)
 
     m_uvm_timeout_overridable = 1
-    #  // Function: set_timeout
-    #  //
-    #  // Specifies the timeout for the simulation. Default is <`UVM_DEFAULT_TIMEOUT>
-    #  //
-    #  // The timeout is simply the maximum absolute simulation time allowed before a
-    #  // ~FATAL~ occurs.  If the timeout is set to 20ns, then the simulation must end
-    #  // before 20ns, or a ~FATAL~ timeout will occur.
-    #  //
-    #  // This is provided so that the user can prevent the simulation from potentially
-    #  // consuming too many resources (Disk, Memory, CPU, etc) when the testbench is
-    #  // essentially hung.
-    #  //
-    #  //
     def set_timeout(self, timeout, overridable=1):
+        """
+        Specifies the timeout for the simulation. Default is
+        `UVM_DEFAULT_TIMEOUT`.
+        
+        The timeout is simply the maximum absolute simulation time allowed before a
+        FATAL occurs.  If the timeout is set to 20ns, then the simulation must end
+        before 20ns, or a FATAL timeout will occur.
+        
+        This is provided so that the user can prevent the simulation from potentially
+        consuming too many resources (Disk, Memory, CPU, etc) when the testbench is
+        essentially hung.
+        """
+        
         if UVMRoot.m_uvm_timeout_overridable == 0:
             self.uvm_report_info("NOTIMOUTOVR", sv.sformatf(
                 "Global timeout setting %0d is not overridable to %0d due to a previous setting.",
@@ -393,10 +398,9 @@ class UVMRoot(UVMComponent):
         self.phase_timeout = timeout
 
 
-    #  //----------------------------------------------------------------------------
-    #  // Group: Topology
-    #  //----------------------------------------------------------------------------
-
+    """
+    Group: Topology
+    """
 
     def find(self, comp_match):
         """
@@ -449,9 +453,8 @@ class UVMRoot(UVMComponent):
         default output.
 
         Args:
-            printer (UVMPrinter):
+            printer (UVMPrinter): Printer used for printing the topology
         """
-        # s = ""
         if len(self.m_children) == 0:
             self.uvm_report_warning("EMTCOMP", "print_topology - No UVM components to print.",
                     UVM_NONE)
@@ -516,9 +519,10 @@ class UVMRoot(UVMComponent):
 
     def build_phase(self, phase: UVMPhase) -> None:
         """
-         extern function void build_phase(uvm_phase phase)
+        `UVMBuildPhase` for `UVMRoot` class.
+
         Args:
-            phase:
+            phase (UVMPhase): Phase object.
         """
         UVMComponent.build_phase(self, phase)
         self.m_set_cl_msg_args()
@@ -532,11 +536,10 @@ class UVMRoot(UVMComponent):
 
     def m_do_verbosity_settings(self) -> None:
         """
-         extern local function void m_do_verbosity_settings()
+        extern local function void m_do_verbosity_settings()
         """
         set_verbosity_settings = []
         split_vals = []
-        #tmp_verb = 0
 
         # Retrieve them all into set_verbosity_settings
         self.clp.get_arg_values("+uvm_set_verbosity=", set_verbosity_settings)
@@ -552,13 +555,11 @@ class UVMRoot(UVMComponent):
                 self.uvm_report_warning("INVLCMDVERB",
                   sv.sformatf("Invalid verbosity found on the command line for setting '%s'.",
                   set_verbosity_settings[i]), UVM_NONE, "", "")
-        #endfunction
-        #
-        #
+
 
     def m_do_timeout_settings(self) -> None:
         """
-         extern local function void m_do_timeout_settings()
+        extern local function void m_do_timeout_settings()
         """
         timeout_settings = []
         timeout = ""
@@ -636,8 +637,7 @@ class UVMRoot(UVMComponent):
             "Applying instance override from the command line: +uvm_set_inst_override=" + str(ovr),
             UVM_NONE)
         factory.set_inst_override_by_name(split_val[0], split_val[1], split_val[2])
-        #endfunction
-        #
+
 
     def m_process_type_override(self, ovr):
         """
@@ -670,7 +670,6 @@ class UVMRoot(UVMComponent):
         #    self.m_process_default_sequence(args[i][26:len(args[i])])
 
 
-    #  extern local function void m_do_max_quit_settings()
     def m_do_max_quit_settings(self):
         max_quit_settings = []
         max_quit_count = 0
@@ -787,7 +786,7 @@ class UVMRoot(UVMComponent):
 
     def m_check_verbosity(self):
         """
-         extern function void m_check_verbosity()
+        extern function void m_check_verbosity()
         """
         verb_string = ""
         verb_settings = []
@@ -812,7 +811,7 @@ class UVMRoot(UVMComponent):
 
         # If more than one, provide the warning stating how many, which one will
         # be used and the complete list.
-        if (verb_count > 1):
+        if verb_count > 1:
             verb_list = ""
             sep = ""
             for i in range(len(verb_settings)):
@@ -823,7 +822,6 @@ class UVMRoot(UVMComponent):
               sv.sformatf(WARN_MSG1, verb_count, verb_string, verb_list), UVM_NONE)
 
         if (plusarg == 1):
-            # case(verb_string)
             if verb_string == "UVM_NONE":
                 verbosity = UVM_NONE
             elif verb_string == "NONE":
@@ -859,7 +857,6 @@ class UVMRoot(UVMComponent):
 
         self.set_report_verbosity_level_hier(verbosity)
 
-        #endfunction
 
     def report_header(self, _file=0) -> None:
         """
@@ -939,21 +936,15 @@ def get_report_server() -> 'UVMReportServer':
     from .uvm_report_server import UVMReportServer
     return UVMReportServer.get_server()
 
-#------------------------------------------------------------------------------
-# Variable: uvm_top
-#
-# This is the top-level that governs phase execution and provides component
-# search interface. See <uvm_root> for more information.
-#------------------------------------------------------------------------------
+"""
+:cvar uvm_top
+
+This is the top-level that governs phase execution and provides component
+search interface. See <uvm_root> for more information.
+"""
 uvm_top: UVMRoot = UVMRoot.get()
 
-#//-----------------------------------------------------------------------------
-#// IMPLEMENTATION
-#//-----------------------------------------------------------------------------
-#
-#
-#
-#
+
 #// m_process_type_override
 #// -----------------------
 #
@@ -984,9 +975,7 @@ uvm_top: UVMRoot = UVMRoot.get()
 #  self.uvm_report_info("UVM_CMDLINE_PROC", {"Applying type override from the command line: +uvm_set_type_override=", ovr}, UVM_NONE)
 #  factory.set_type_override_by_name(split_val[0], split_val[1], replace)
 #endfunction
-#
-#
-#
+
 #// m_process_default_sequence
 #// ----------------
 #
@@ -1029,10 +1018,9 @@ uvm_top: UVMRoot = UVMRoot.get()
 #  end
 #
 #endfunction : m_process_default_sequence
-#
-#
-#
-#
+
+
+
 #// It is required that the run phase start at simulation time 0
 #// TBD this looks wrong - taking advantage of uvm_root not doing anything else?
 #// TBD move to phase_started callback?

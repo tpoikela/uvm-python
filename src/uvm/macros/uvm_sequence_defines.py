@@ -19,86 +19,82 @@
 #//   the License for the specific language governing
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
+"""
+Title: Sequence-Related Functions
+
+Group: Sequence Action Functions
+
+NOTE: Each macro defines `seq_obj` argument, which is `self` argument within
+the sequence member functions. `seq_obj` is not present in SystemVerilog UVM
+since the context comes from where the macro is used.
+
+These functions are used to start sequences and sequence items on the default
+sequencer, `m_sequencer`. This is determined a number of ways.
+- the sequencer handle provided in the `UVMSequenceBase.start` method
+- the sequencer used by the parent sequence
+- the sequencer that was set using the `UVMSequenceItem::set_sequencer` method
+
+"""
 
 import cocotb
-from .uvm_message_defines import uvm_warning
+from .uvm_message_defines import uvm_warning, uvm_fatal
 
-#// Title: Sequence-Related Macros
-
-#//-----------------------------------------------------------------------------
-#//
-#// Group: Sequence Action Macros
-#//
-#// These macros are used to start sequences and sequence items on the default
-#// sequencer, ~m_sequencer~. This is determined a number of ways.
-#// - the sequencer handle provided in the <uvm_sequence_base::start> method
-#// - the sequencer used by the parent sequence
-#// - the sequencer that was set using the <uvm_sequence_item::set_sequencer> method
-#//-----------------------------------------------------------------------------
-
-#// MACRO: `uvm_create
-#//
-#//| `uvm_create(SEQ_OR_ITEM)
-#//
-#// This action creates the item or sequence using the factory.  It intentionally
-#// does zero processing.  After this action completes, the user can manually set
-#// values, manipulate rand_mode and constraint_mode, etc.
 
 #`define uvm_create(SEQ_OR_ITEM) \
 #  `uvm_create_on(T, SEQ_OR_ITEM, m_sequencer)
 def uvm_create(seq_obj, SEQ_OR_ITEM, m_sequencer):
+    """
+    This action creates the item or sequence using the factory.  It intentionally
+    does zero processing.  After this action completes, the user can manually set
+    values, manipulate rand_mode and constraint_mode, etc.
+
+    Args:
+        seq_obj (UVMSequence): Sequence from which the function is called
+    """
     return uvm_create_on(seq_obj, SEQ_OR_ITEM, m_sequencer)
 
 
-#// MACRO: `uvm_do
-#//
-#//| `uvm_do(SEQ_OR_ITEM)
-#//
-#// This macro takes as an argument a uvm_sequence_item variable or object.
-#// The argument is created using <`uvm_create> if necessary,
-#// then randomized.
-#// In the case of an item, it is randomized after the call to
-#// <uvm_sequence_base::start_item()> returns.
-#// This is called late-randomization.
-#// In the case of a sequence, the sub-sequence is started using
-#// <uvm_sequence_base::start()> with ~call_pre_post~ set to 0.
-#// In the case of an item,
-#// the item is sent to the driver through the associated sequencer.
-#//
-#// For a sequence item, the following are called, in order
-#//
-#//|
-#//|   `uvm_create(item)
-#//|   sequencer.wait_for_grant(prior) (task)
-#//|   this.pre_do(1)                  (task)
-#//|   item.randomize()
-#//|   this.mid_do(item)               (func)
-#//|   sequencer.send_request(item)    (func)
-#//|   sequencer.wait_for_item_done()  (task)
-#//|   this.post_do(item)              (func)
-#//|
-#//
-#// For a sequence, the following are called, in order
-#//
-#//|
-#//|   `uvm_create(sub_seq)
-#//|   sub_seq.randomize()
-#//|   sub_seq.pre_start()         (task)
-#//|   this.pre_do(0)              (task)
-#//|   this.mid_do(sub_seq)        (func)
-#//|   sub_seq.body()              (task)
-#//|   this.post_do(sub_seq)       (func)
-#//|   sub_seq.post_start()        (task)
-#//|
-#
-#`define uvm_do(seq_obj, SEQ_OR_ITEM) \
-#  `uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, m_sequencer, -1, {})
 
 
 async def uvm_do(seq_obj, SEQ_OR_ITEM):
+    """
+    This macro takes as an argument a uvm_sequence_item variable or object.
+    The argument is created using `uvm_create` if necessary,
+    then randomized.
+    In the case of an item, it is randomized after the call to
+    `UVMSequenceBase.start_item()` returns.
+    This is called late-randomization.
+    In the case of a sequence, the sub-sequence is started using
+    `UVMSequenceBase.start_item()` with `call_pre_post` set to 0.
+    In the case of an item,
+    the item is sent to the driver through the associated sequencer.
+    
+    For a sequence item, the following are called, in order::
+    
+       uvm_create(item)
+       sequencer.wait_for_grant(prior) (task)
+       this.pre_do(1)                  (task)
+       item.randomize()
+       this.mid_do(item)               (func)
+       sequencer.send_request(item)    (func)
+       sequencer.wait_for_item_done()  (task)
+       this.post_do(item)              (func)
+    
+    For a sequence, the following are called, in order::
+    
+       uvm_create(sub_seq)
+       sub_seq.randomize()
+       sub_seq.pre_start()         (task)
+       this.pre_do(0)              (task)
+       this.mid_do(sub_seq)        (func)
+       await sub_seq.body()              (task)
+       this.post_do(sub_seq)       (func)
+       sub_seq.post_start()        (task)
+   """
+    
     await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1, [])
-#
-#
+
+
 #// MACRO: `uvm_do_pri
 #//
 #//| `uvm_do_pri(SEQ_OR_ITEM, PRIORITY)
@@ -110,18 +106,15 @@ async def uvm_do(seq_obj, SEQ_OR_ITEM):
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, PRIORITY, {})
 
 
-#// MACRO: `uvm_do_with
-#//
-#//| `uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS)
-#//
-#// This is the same as `uvm_do except that the constraint block in the 2nd
-#// argument is applied to the item or sequence in a randomize with statement
-#// before execution.
-#
 #`define uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, CONSTRAINTS)
 
 async def uvm_do_with(seq_obj, SEQ_OR_ITEM, *CONSTRAINTS):
+    """
+    This is the same as `uvm_do except that the constraint block in the 2nd
+    argument is applied to the item or sequence in a randomize with statement
+    before execution.
+    """
     await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1,
             *CONSTRAINTS)
 
@@ -136,24 +129,16 @@ async def uvm_do_with(seq_obj, SEQ_OR_ITEM, *CONSTRAINTS):
 #
 #`define uvm_do_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, PRIORITY, CONSTRAINTS)
-#
-#
-#//-----------------------------------------------------------------------------
-#//
-#// Group: Sequence on Sequencer Action Macros
-#//
-#// These macros are used to start sequences and sequence items on a specific
-#// sequencer. The sequence or item is created and executed on the given
-#// sequencer.
-#//-----------------------------------------------------------------------------
-#
-#// MACRO: `uvm_create_on
-#//
-#//| `uvm_create_on(SEQ_OR_ITEM, SEQR)
-#//
-#// This is the same as <`uvm_create> except that it also sets the parent sequence
-#// to the sequence in which the macro is invoked, and it sets the sequencer to
-#// the specified ~SEQR~ argument.
+
+
+"""
+Group: Sequence on Sequencer Action Macros
+
+These macros are used to start sequences and sequence items on a specific
+sequencer. The sequence or item is created and executed on the given
+sequencer.
+"""
+
 
 #`define uvm_create_on(SEQ_OR_ITEM, SEQR) \
 #  begin \
@@ -162,22 +147,31 @@ async def uvm_do_with(seq_obj, SEQ_OR_ITEM, *CONSTRAINTS):
 #  $cast(SEQ_OR_ITEM , create_item(w_, SEQR, `"SEQ_OR_ITEM`"));\
 #  end
 def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
+    """
+    This is the same as <`uvm_create> except that it also sets the parent sequence
+    to the sequence in which the macro is invoked, and it sets the sequencer to
+    the specified ~SEQR~ argument.
+    """
     w_ = SEQ_OR_ITEM.get_type()
-    return seq_obj.create_item(w_, SEQR, "SEQ_OR_ITEM")
+    if w_ is None:
+        uvm_fatal("uvm_create_on",
+            "Object {} not registered with factory".format(SEQ_OR_ITEM.get_name()))
+        return None
+    else:
+        return seq_obj.create_item(w_, SEQR, "SEQ_OR_ITEM")
 
 
-#// MACRO: `uvm_do_on
-#//
-#//| `uvm_do_on(SEQ_OR_ITEM, SEQR)
-#//
-#// This is the same as <`uvm_do> except that it also sets the parent sequence to
-#// the sequence in which the macro is invoked, and it sets the sequencer to the
-#// specified ~SEQR~ argument.
-#
 #`define uvm_do_on(SEQ_OR_ITEM, SEQR) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, -1, {})
-#
-#
+async def uvm_do_on(seq_obj, SEQ_OR_ITEM, SEQR):
+    """
+    This is the same as <`uvm_do> except that it also sets the parent sequence to
+    the sequence in which the macro is invoked, and it sets the sequencer to the
+    specified ~SEQR~ argument.
+    """
+    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, -1, {})
+
+
 #// MACRO: `uvm_do_on_pri
 #//
 #//| `uvm_do_on_pri(SEQ_OR_ITEM, SEQR, PRIORITY)
@@ -188,28 +182,30 @@ def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
 #
 #`define uvm_do_on_pri(SEQ_OR_ITEM, SEQR, PRIORITY) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, PRIORITY, {})
-#
-#
-#// MACRO: `uvm_do_on_with
-#//
-#//| `uvm_do_on_with(SEQ_OR_ITEM, SEQR, CONSTRAINTS)
-#//
-#// This is the same as <`uvm_do_with> except that it also sets the parent
-#// sequence to the sequence in which the macro is invoked, and it sets the
-#// sequencer to the specified ~SEQR~ argument.
-#// The user must supply brackets around the constraints.
-#
+
+
 #`define uvm_do_on_with(SEQ_OR_ITEM, SEQR, CONSTRAINTS) \
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, -1, CONSTRAINTS)
+async def uvm_do_on_with(seq_obj, SEQ_OR_ITEM, SEQR, *CONSTRAINTS):
+    """
+    This is the same as `uvm_do_with` except that it also sets the parent
+    sequence to the sequence in which the macro is invoked, and it sets the
+    sequencer to the specified ~SEQR~ argument.
+    The user must supply the constraints using lambdas.
 
-#// MACRO: `uvm_do_on_pri_with
-#//
-#//| `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS)
-#//
-#// This is the same as `uvm_do_pri_with except that it also sets the parent
-#// sequence to the sequence in which the macro is invoked, and it sets the
-#// sequencer to the specified ~SEQR~ argument.
-#
+    An example call::
+
+        await uvm_do_on_with(self, sys0_seq, None,
+            lambda num_blk_seq: num_blk_seq == 10,
+            lambda blk_level_delay_ns: blk_level_delay_ns in [10, 20],
+        )
+
+    Note that variables used in lambdas must exist, or an exception is thrown
+    due to randomization error.
+    """
+    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, -1,
+            *CONSTRAINTS)
+
 #`define uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, PRIORITY, CONSTRAINTS) \
 #  begin \
 #  uvm_sequence_base __seq; \
@@ -221,7 +217,6 @@ def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
 #  if (!$cast(__seq,SEQ_OR_ITEM)) finish_item(SEQ_OR_ITEM, PRIORITY); \
 #  else __seq.start(SEQR, this, PRIORITY, 0); \
 #  end
-
 async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS):
     """
     This is the same as uvm_do_pri_with except that it also sets the parent
@@ -229,7 +224,7 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
     sequencer to the specified ~SEQR~ argument.
 
     Args:
-        seq_obj (UVMSequence): Seq to start.
+        seq_obj (UVMSequence): Sequence context.
         SEQ_OR_ITEM (UVMSequence|UVMSequenceItem): 
         SEQR (UVMSequencer): Runs sequence on this sequencer.
         CONSTRAINTS (constraints): Randomization constraints
@@ -237,6 +232,9 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
     from ..seq.uvm_sequence import UVMSequence
     _seq = uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR)
     if isinstance(_seq, UVMSequence):
+        if not SEQ_OR_ITEM.do_not_randomize:
+            if SEQ_OR_ITEM.randomize_with(*CONSTRAINTS) is False:
+                uvm_warning("RNDFLD", "Randomization failed in uvm_do_with action")
         await SEQ_OR_ITEM.start(SEQR, seq_obj, PRIORITY, 0)
     else:
         # TODO handle constraints
@@ -246,34 +244,29 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
         await seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
 
 
-#//-----------------------------------------------------------------------------
-#//
-#// Group: Sequence Action Macros for Pre-Existing Sequences
-#//
-#// These macros are used to start sequences and sequence items that do not
-#// need to be created.
-#//-----------------------------------------------------------------------------
+"""
+Group: Sequence Action Functions for Pre-Existing Sequences
 
-
-#// MACRO: `uvm_send
-#//
-#//| `uvm_send(SEQ_OR_ITEM)
-#//
-#// This macro processes the item or sequence that has been created using
-#// `uvm_create.  The processing is done without randomization.  Essentially, an
-#// `uvm_do without the create or randomization.
+These functions are used to start sequences and sequence items that do not
+need to be created.
+"""
 
 #`define uvm_send(SEQ_OR_ITEM) \
 #  `uvm_send_pri(SEQ_OR_ITEM, -1)
+async def uvm_send(seq_obj, SEQ_OR_ITEM):
+    """
+    This function processes the item or sequence that has been created using
+    `uvm_create`.  The processing is done without randomization.  Essentially, an
+    `uvm_do` without the create or randomization.
+
+    Args:
+        seq_obj (UVMSequence): Sequence context.
+        SEQ_OR_ITEM (UVMSequence|UVMSequenceItem): 
+    """
+    await uvm_send_pri(seq_obj, SEQ_OR_ITEM, -1)
 
 
-#// MACRO: `uvm_send_pri
-#//
-#//| `uvm_send_pri(SEQ_OR_ITEM, PRIORITY)
-#//
-#// This is the same as `uvm_send except that the sequence item or sequence is
-#// executed with the priority specified in the argument.
-#
+
 #`define uvm_send_pri(SEQ_OR_ITEM, PRIORITY) \
 #  begin \
 #  uvm_sequence_base __seq; \
@@ -283,6 +276,23 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #  end \
 #  else __seq.start(__seq.get_sequencer(), this, PRIORITY, 0);\
 #  end
+async def uvm_send_pri(seq_obj, SEQ_OR_ITEM, PRIORITY):
+    """
+    This is the same as `uvm_send` except that the sequence item or sequence is
+    executed with the priority specified in the argument.
+
+    Args:
+        seq_obj (UVMSequence): Sequence context.
+        SEQ_OR_ITEM (UVMSequence|UVMSequenceItem): 
+        PRIORITY (int): Priority of the sequence
+    """
+    from ..seq.uvm_sequence import UVMSequence
+    _seq = SEQ_OR_ITEM
+    if isinstance(_seq, UVMSequence):
+        await _seq.start(_seq.get_sequencer(), self, PRIORITY, 0)
+    else:
+        await seq_obj.start_item(SEQ_OR_ITEM, PRIORITY)
+        await seq_obj.finish_item(SEQ_OR_ITEM, PRIORITY)
 
 
 #// MACRO: `uvm_rand_send
@@ -295,8 +305,8 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #
 #`define uvm_rand_send(SEQ_OR_ITEM) \
 #  `uvm_rand_send_pri_with(SEQ_OR_ITEM, -1, {})
-#
-#
+
+
 #// MACRO: `uvm_rand_send_pri
 #//
 #//| `uvm_rand_send_pri(SEQ_OR_ITEM, PRIORITY)
@@ -306,8 +316,8 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #
 #`define uvm_rand_send_pri(SEQ_OR_ITEM, PRIORITY) \
 #  `uvm_rand_send_pri_with(SEQ_OR_ITEM, PRIORITY, {})
-#
-#
+
+
 #// MACRO: `uvm_rand_send_with
 #//
 #//| `uvm_rand_send_with(SEQ_OR_ITEM, CONSTRAINTS)
@@ -318,8 +328,8 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #
 #`define uvm_rand_send_with(SEQ_OR_ITEM, CONSTRAINTS) \
 #  `uvm_rand_send_pri_with(SEQ_OR_ITEM, -1, CONSTRAINTS)
-#
-#
+
+
 #// MACRO: `uvm_rand_send_pri_with
 #//
 #//| `uvm_rand_send_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS)
@@ -339,19 +349,18 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #  if (!$cast(__seq,SEQ_OR_ITEM)) finish_item(SEQ_OR_ITEM, PRIORITY);\
 #  else __seq.start(__seq.get_sequencer(), this, PRIORITY, 0);\
 #  end
-#
-#
+
+
 #`define uvm_create_seq(UVM_SEQ, SEQR_CONS_IF) \
 #  `uvm_create_on(UVM_SEQ, SEQR_CONS_IF.consumer_seqr) \
-#
+
 #`define uvm_do_seq(UVM_SEQ, SEQR_CONS_IF) \
 #  `uvm_do_on(UVM_SEQ, SEQR_CONS_IF.consumer_seqr) \
-#
+
 #`define uvm_do_seq_with(UVM_SEQ, SEQR_CONS_IF, CONSTRAINTS) \
 #  `uvm_do_on_with(UVM_SEQ, SEQR_CONS_IF.consumer_seqr, CONSTRAINTS) \
-#
-#
-#
+
+
 #//-----------------------------------------------------------------------------
 #//
 #// Group- Sequence Library
@@ -393,9 +402,9 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #`define uvm_add_to_seq_lib(TYPE,LIBTYPE) \
 #   static bit add_``TYPE``_to_seq_lib_``LIBTYPE =\
 #      LIBTYPE::m_add_typewide_sequence(TYPE::get_type());
-#
-#
-#
+
+
+
 #// MACRO: `uvm_sequence_library_utils
 #//
 #//| `uvm_sequence_library_utils(TYPE)
@@ -448,9 +457,9 @@ async def uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, SEQR, PRIORITY, *CONSTRAINTS)
 #     TYPE::add_typewide_sequence(seq_type); \
 #     return 1; \
 #   endfunction
-#
-#
-#
+
+
+
 #//-----------------------------------------------------------------------------
 #//
 #// Group: Sequencer Subtypes

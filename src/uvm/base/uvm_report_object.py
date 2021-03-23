@@ -38,9 +38,6 @@ def get_verbosity(severity):
         return UVM_MEDIUM
 
 
-
-
-
 class UVMReportObject(UVMObject):
     """
     CLASS: UVMReportObject

@@ -38,6 +38,6 @@ include ../../MakefileCommon.mk
 
 #SIM_ARGS = ""
 TOPLEVEL := common_stub
-MODULE   ?= top
+MODULE   ?= top_uvm_dos
 
 include $(shell cocotb-config --makefiles)/Makefile.sim

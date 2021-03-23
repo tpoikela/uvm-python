@@ -40,119 +40,114 @@ SEQ_ERR1_MSG = "neither the item's sequencer nor dedicated sequencer has been su
 
 SeqItemQueue = UVMQueue[UVMSequenceItem]
 
-#//------------------------------------------------------------------------------
-#//
-#// CLASS: uvm_sequence_base
-#//
-#// The uvm_sequence_base class provides the interfaces needed to create streams
-#// of sequence items and/or other sequences.
-#//
-#// A sequence is executed by calling its <start> method, either directly
-#// or invocation of any of the `uvm_do_* macros.
-#//
-#// Executing sequences via <start>:
-#//
-#// A sequence's <start> method has a ~parent_sequence~ argument that controls
-#// whether <pre_do>, <mid_do>, and <post_do> are called *in the parent*
-#// sequence. It also has a ~call_pre_post~ argument that controls whether its
-#// <pre_body> and <post_body> methods are called.
-#// In all cases, its <pre_start> and <post_start> methods are always called.
-#//
-#// When <start> is called directly, you can provide the appropriate arguments
-#// according to your application.
-#//
-#// The sequence execution flow looks like this
-#//
-#// User code
-#//
-#//| sub_seq.randomize(...); // optional
-#//| sub_seq.start(seqr, parent_seq, priority, call_pre_post)
-#//|
-#//
-#// The following methods are called, in order
-#//
-#//|
-#//|   sub_seq.pre_start()        (task)
-#//|   sub_seq.pre_body()         (task)  if call_pre_post==1
-#//|     parent_seq.pre_do(0)     (task)  if parent_sequence!=None
-#//|     parent_seq.mid_do(this)  (func)  if parent_sequence!=None
-#//|   sub_seq.body               (task)  YOUR STIMULUS CODE
-#//|     parent_seq.post_do(this) (func)  if parent_sequence!=None
-#//|   sub_seq.post_body()        (task)  if call_pre_post==1
-#//|   sub_seq.post_start()       (task)
-#//
-#//
-#// Executing sub-sequences via `uvm_do macros:
-#//
-#// A sequence can also be indirectly started as a child in the <body> of a
-#// parent sequence. The child sequence's <start> method is called indirectly
-#// by invoking any of the `uvm_do macros.
-#// In these cases, <start> is called with
-#// ~call_pre_post~ set to 0, preventing the started sequence's <pre_body> and
-#// <post_body> methods from being called. During execution of the
-#// child sequence, the parent's <pre_do>, <mid_do>, and <post_do> methods
-#// are called.
-#//
-#// The sub-sequence execution flow looks like
-#//
-#// User code
-#//
-#//|
-#//| `uvm_do_with_prior(seq_seq, { constraints }, priority)
-#//|
-#//
-#// The following methods are called, in order
-#//
-#//|
-#//|   sub_seq.pre_start()         (task)
-#//|   parent_seq.pre_do(0)        (task)
-#//|   parent_req.mid_do(sub_seq)  (func)
-#//|     sub_seq.body()            (task)
-#//|   parent_seq.post_do(sub_seq) (func)
-#//|   sub_seq.post_start()        (task)
-#//|
-#//
-#// Remember, it is the *parent* sequence's pre|mid|post_do that are called, not
-#// the sequence being executed.
-#//
-#//
-#// Executing sequence items via <start_item>/<finish_item> or `uvm_do macros:
-#//
-#// Items are started in the <body> of a parent sequence via calls to
-#// <start_item>/<finish_item> or invocations of any of the `uvm_do
-#// macros. The <pre_do>, <mid_do>, and <post_do> methods of the parent
-#// sequence will be called as the item is executed.
-#//
-#// The sequence-item execution flow looks like
-#//
-#// User code
-#//
-#//| parent_seq.start_item(item, priority)
-#//| item.randomize(...) [with {constraints}]
-#//| parent_seq.finish_item(item)
-#//|
-#//| or
-#//|
-#//| `uvm_do_with_prior(item, constraints, priority)
-#//|
-#//
-#// The following methods are called, in order
-#//
-#//|
-#//|   sequencer.wait_for_grant(prior) (task) \ start_item  \
-#//|   parent_seq.pre_do(1)            (task) /              \
-#//|                                                      `uvm_do* macros
-#//|   parent_seq.mid_do(item)         (func) \              /
-#//|   sequencer.send_request(item)    (func)  \finish_item /
-#//|   sequencer.wait_for_item_done()  (task)  /
-#//|   parent_seq.post_do(item)        (func) /
-#//
-#// Attempting to execute a sequence via <start_item>/<finish_item>
-#// will produce a run-time error.
-#//------------------------------------------------------------------------------
 
 
 class UVMSequenceBase(UVMSequenceItem):
+    """
+    CLASS: UVMSequenceBase
+    
+    The UVMSequenceBase class provides the interfaces needed to create streams
+    of sequence items and/or other sequences.
+    
+    A sequence is executed by calling its <start> method, either directly
+    or invocation of any of the `uvm_do_* macros.
+    
+    Executing sequences via <start>:
+    
+    A sequence's <start> method has a ~parent_sequence~ argument that controls
+    whether <pre_do>, <mid_do>, and <post_do> are called *in the parent*
+    sequence. It also has a ~call_pre_post~ argument that controls whether its
+    <pre_body> and <post_body> methods are called.
+    In all cases, its <pre_start> and <post_start> methods are always called.
+    
+    When <start> is called directly, you can provide the appropriate arguments
+    according to your application.
+    
+    The sequence execution flow looks like this
+    
+    User code::
+    
+     sub_seq.randomize(...); // optional
+     sub_seq.start(seqr, parent_seq, priority, call_pre_post)
+    
+    
+    The following methods are called, in order::
+    
+    
+       sub_seq.pre_start()        (async)
+       sub_seq.pre_body()         (async)  if call_pre_post==1
+         parent_seq.pre_do(0)     (async)  if parent_sequence!=None
+         parent_seq.mid_do(this)  (func)  if parent_sequence!=None
+       sub_seq.body               (async)  YOUR STIMULUS CODE
+         parent_seq.post_do(this) (func)  if parent_sequence!=None
+       sub_seq.post_body()        (async)  if call_pre_post==1
+       sub_seq.post_start()       (async)
+    
+    
+    Executing sub-sequences via `uvm_do macros:
+    
+    A sequence can also be indirectly started as a child in the <body> of a
+    parent sequence. The child sequence's <start> method is called indirectly
+    by invoking any of the uvm_do functions in `uvm_sequence_defines.py`.
+    In these cases, <start> is called with
+    ~call_pre_post~ set to 0, preventing the started sequence's <pre_body> and
+    <post_body> methods from being called. During execution of the
+    child sequence, the parent's <pre_do>, <mid_do>, and <post_do> methods
+    are called.
+    
+    The sub-sequence execution flow looks like::
+    
+        await uvm_do_with_prior(self, seq_seq, { constraints }, priority)
+    
+    
+    The following methods are called, in order::
+    
+       sub_seq.pre_start()         (async)
+       parent_seq.pre_do(0)        (async)
+       parent_req.mid_do(sub_seq)  (func)
+         sub_seq.body()            (async)
+       parent_seq.post_do(sub_seq) (func)
+       sub_seq.post_start()        (async)
+    
+    
+    Remember, it is the *parent* sequence's pre|mid|post_do that are called, not
+    the sequence being executed.
+    
+    
+    Executing sequence items via `start_item`/`finish_item` or uvm_do functions:
+    
+    Items are started in the `body` of a parent sequence via calls to
+    `start_item`/`finish_item` or invocations of any of the `uvm_do
+    macros. The <pre_do>, <mid_do>, and <post_do> methods of the parent
+    sequence will be called as the item is executed.
+    
+    The sequence-item execution flow looks like
+    
+    User code::
+    
+        await parent_seq.start_item(item, priority)
+        item.randomize[_with({constraints})]
+        await parent_seq.finish_item(item)
+    
+    or::
+    
+        await uvm_do_with_prior(self, item, constraints, priority)
+    
+    The following methods are called, in order::
+    
+    
+        sequencer.wait_for_grant(prior) (task) \ start_item  \
+        parent_seq.pre_do(1)            (task) /              \
+                                                           uvm_do* functions
+        parent_seq.mid_do(item)         (func) \              /
+        sequencer.send_request(item)    (func)  \finish_item /
+        sequencer.wait_for_item_done()  (task)  /
+        parent_seq.post_do(item)        (func) /
+    
+    Attempting to execute a sequence via `start_item`/`finish_item`
+    will produce a run-time error.
+    -----------------------------------------------------------------------------
+    """
 
     #  // Variable: do_not_randomize
     #  //
@@ -163,17 +158,14 @@ class UVMSequenceBase(UVMSequenceItem):
     #  bit do_not_randomize
 
 
-    #  static string type_name = "uvm_sequence_base"
     type_name = "uvm_sequence_base"
 
     def __init__(self, name="uvm_sequence"):
         """
-          Function: __init__
-
-          The constructor for uvm_sequence_base.
+        The constructor for UVMSequenceBase.
 
         Args:
-            name:
+            name (str): Name of the sequence
         """
         UVMSequenceItem.__init__(self, name)
         self.m_sequence_state = UVM_CREATED
@@ -201,6 +193,7 @@ class UVMSequenceBase(UVMSequenceItem):
         self.m_resp_queue_event.clear()
         self.m_events: Dict[int, Event] = {}
         self.m_events[UVM_FINISHED] = Event("UVM_FINISHED")
+        self.do_not_randomize = 0
 
     def is_item(self) -> bool:
         """
