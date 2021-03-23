@@ -70,7 +70,7 @@ class bus_trans(UVMSequenceItem):
         return (self.op == rhs_.op) and (self.addr == rhs_.addr) and (self.data == rhs_.data)
 
     def convert2string(self):
-        return sv.sformatf("op %s: addr=%03x, data=%02x",
+        return sv.sformatf("op %s: addr=%0h, data=%0h",
             str(self.op), self.addr, self.data)
 
 uvm_object_utils(bus_trans)
@@ -160,10 +160,11 @@ class SoCLevelSeq(UVMSequence):
         # await sys0_seq.start(None, self)
         await uvm_do_on_with(self, sys0_seq, None,
             lambda num_blk_seq: num_blk_seq == 10,
-            lambda blk_level_delay_ns: blk_level_delay_ns in [10, 20],
+            lambda blk_level_delay_ns: blk_level_delay_ns in [10, 20, 30],
         )
         await Timer(self.seq_delay_ns, "NS")
         sys2_seq = SubSysLevelSeq('sys2_seq')
+        # We don't randomize the 2nd sequence
         await sys2_seq.start(None, self)
 
 
