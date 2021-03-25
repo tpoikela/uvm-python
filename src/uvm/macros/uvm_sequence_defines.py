@@ -40,8 +40,6 @@ import cocotb
 from .uvm_message_defines import uvm_warning, uvm_fatal
 
 
-#`define uvm_create(SEQ_OR_ITEM) \
-#  `uvm_create_on(T, SEQ_OR_ITEM, m_sequencer)
 def uvm_create(seq_obj, SEQ_OR_ITEM, m_sequencer):
     """
     This action creates the item or sequence using the factory.  It intentionally
@@ -106,9 +104,6 @@ async def uvm_do(seq_obj, SEQ_OR_ITEM):
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, PRIORITY, {})
 
 
-#`define uvm_do_with(SEQ_OR_ITEM, CONSTRAINTS) \
-#  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, -1, CONSTRAINTS)
-
 async def uvm_do_with(seq_obj, SEQ_OR_ITEM, *CONSTRAINTS):
     """
     This is the same as `uvm_do except that the constraint block in the 2nd
@@ -119,16 +114,14 @@ async def uvm_do_with(seq_obj, SEQ_OR_ITEM, *CONSTRAINTS):
             *CONSTRAINTS)
 
 
-#// MACRO: `uvm_do_pri_with
-#//
-#//| `uvm_do_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS)
-#//
-#// This is the same as `uvm_do_pri except that the given constraint block is
-#// applied to the item or sequence in a randomize with statement before
-#// execution.
-#
-#`define uvm_do_pri_with(SEQ_OR_ITEM, PRIORITY, CONSTRAINTS) \
-#  `uvm_do_on_pri_with(SEQ_OR_ITEM, m_sequencer, PRIORITY, CONSTRAINTS)
+async def uvm_do_pri_with(seq_obj, SEQ_OR_ITEM, PRIORITY, *CONSTRAINTS):
+    """
+    This is the same as `uvm_do_pri except that the given constraint block is
+    applied to the item or sequence in a randomize with statement before
+    execution.
+    """
+    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer,
+            PRIORITY, *CONSTRAINTS)
 
 
 """
@@ -140,12 +133,6 @@ sequencer.
 """
 
 
-#`define uvm_create_on(SEQ_OR_ITEM, SEQR) \
-#  begin \
-#  uvm_object_wrapper w_; \
-#  w_ = SEQ_OR_ITEM.get_type(); \
-#  $cast(SEQ_OR_ITEM , create_item(w_, SEQR, `"SEQ_OR_ITEM`"));\
-#  end
 def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
     """
     This is the same as <`uvm_create> except that it also sets the parent sequence
@@ -161,8 +148,6 @@ def uvm_create_on(seq_obj, SEQ_OR_ITEM, SEQR):
         return seq_obj.create_item(w_, SEQR, "SEQ_OR_ITEM")
 
 
-#`define uvm_do_on(SEQ_OR_ITEM, SEQR) \
-#  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, -1, {})
 async def uvm_do_on(seq_obj, SEQ_OR_ITEM, SEQR):
     """
     This is the same as <`uvm_do> except that it also sets the parent sequence to
@@ -184,8 +169,6 @@ async def uvm_do_on(seq_obj, SEQ_OR_ITEM, SEQR):
 #  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, PRIORITY, {})
 
 
-#`define uvm_do_on_with(SEQ_OR_ITEM, SEQR, CONSTRAINTS) \
-#  `uvm_do_on_pri_with(SEQ_OR_ITEM, SEQR, -1, CONSTRAINTS)
 async def uvm_do_on_with(seq_obj, SEQ_OR_ITEM, SEQR, *CONSTRAINTS):
     """
     This is the same as `uvm_do_with` except that it also sets the parent
