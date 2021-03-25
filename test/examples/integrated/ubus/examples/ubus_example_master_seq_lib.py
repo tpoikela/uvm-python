@@ -45,10 +45,10 @@ from uvm.base import sv, UVM_MEDIUM
 #  rand bit [15:0] start_address;
 #  rand int unsigned incr_transmit_del = 0;
 #    constraint transmit_del_ct { (incr_transmit_del <= 10); }
-# 
+#
 #  virtual task body();
 #    `uvm_info(get_type_name(),
-#      $sformatf("%s starting with count = %0d", 
+#      $sformatf("%s starting with count = %0d",
 #      get_sequence_path(), count), UVM_MEDIUM);
 #    repeat(count) begin : repeat_block
 #      `uvm_do_with(read_byte_seq0,
@@ -57,7 +57,7 @@ from uvm.base import sv, UVM_MEDIUM
 #      start_address++;
 #    end : repeat_block
 #  endtask : body
-# 
+#
 #endclass : incr_read_byte_seq
 
 
@@ -74,7 +74,7 @@ from uvm.base import sv, UVM_MEDIUM
 #  endfunction : new
 #
 #  `uvm_object_utils(incr_write_byte_seq)
-#    
+#
 #  write_byte_seq write_byte_seq0;
 #
 #  rand int unsigned count;
@@ -152,7 +152,7 @@ from uvm.base import sv, UVM_MEDIUM
 #    `uvm_info(get_type_name(),
 #      $sformatf("%s starting...",
 #      get_sequence_path()), UVM_MEDIUM);
-#    `uvm_do_with(read_double_word_seq0, 
+#    `uvm_do_with(read_double_word_seq0,
 #      { read_double_word_seq0.start_addr == start_address;
 #        read_double_word_seq0.transmit_del == 2; } )
 #    `uvm_do_with(write_double_word_seq0,
@@ -187,26 +187,29 @@ class read_modify_write_seq(ubus_base_sequence):
         self.m_data0_check = 0
         self.test_pass = False
 
-    
+
     async def body(self):
         uvm_info(self.get_type_name(), sv.sformatf("%s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
         # READ A RANDOM LOCATION
         self.read_byte_seq0 = read_byte_seq("read_byte_seq")
-        await uvm_do_with(self, self.read_byte_seq0, {})
+        self.read_byte_seq0.do_not_randomize = 1
+        await uvm_do_with(self, self.read_byte_seq0)
+        # lambda start_addr: start_addr in range(0,1023))
         self.addr_check = self.read_byte_seq0.rsp.addr
         self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
-        
+
         # WRITE MODIFIED READ DATA
         self.write_byte_seq0 = write_byte_seq("write_byte_seq")
         self.write_byte_seq0.start_addr = self.addr_check
         self.write_byte_seq0.data0 = self.m_data0_check
-        await uvm_do_with(self, self.write_byte_seq0, {})
-        #      { write_byte_seq0.start_addr == addr_check;
-        #        write_byte_seq0.data0 == m_data0_check; } )
+        self.write_byte_seq0.do_not_randomize = 1
+        await uvm_do_with(self, self.write_byte_seq0)
+        # lambda start_addr: start_addr == self.addr_check,
+        # lambda data0: data0 == self.m_data0_check)
 
         self.m_data0_check = write_byte_seq.last_data
-    
+
         #    // READ MODIFIED WRITE DATA
         self.read_byte_seq0.start_addr = self.addr_check
         await uvm_do_with(self, self.read_byte_seq0,
@@ -215,7 +218,7 @@ class read_modify_write_seq(ubus_base_sequence):
         data0_got = int(self.read_byte_seq0.rsp.data[0])
         if self.m_data0_check != data0_got:
             uvm_error(self.get_type_name(),
-                sv.sformatf("%s Read Modify Write Read error!\n\tADDR: %h, EXP: %h, ACT: %h", 
+                sv.sformatf("%s Read Modify Write Read error!\n\tADDR: %h, EXP: %h, ACT: %h",
                     self.get_sequence_path(),
                     self.addr_check, self.m_data0_check, data0_got))
         else:

@@ -56,7 +56,7 @@ class read_byte_seq(ubus_base_sequence):
     def __init__(self, name="read_byte_seq"):
         ubus_base_sequence.__init__(self, name)
         self.start_addr = 0
-        self.rand('start_addr', range((1 << 32) - 1))
+        self.rand('start_addr', range((1 << 12) - 1))
         self.transmit_delay = 0
 
     #  constraint transmit_del_ct { (transmit_del <= 10); }
