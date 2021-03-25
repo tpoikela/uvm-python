@@ -17,9 +17,7 @@ test-interfaces:
 test-sequence:
 	make -C sequence/basic_read_write_sequence/
 	make -C sequence/uvm_dos
-ifneq ($(SIM), verilator)
 	make -C sequence/forking
-endif
 
 test-hello_world:
 	make -C hello_world/
@@ -37,9 +35,7 @@ test-tlm1:
 	make -C tlm1/hierarchy/
 	make -C tlm1/fifo/
 	make -C tlm1/bidir/
-ifneq ($(SIM), verilator)
 	make -C tlm1/master_slave/
-endif
 
 test-tlm2:
 	make -C tlm2/blocking_simple/
