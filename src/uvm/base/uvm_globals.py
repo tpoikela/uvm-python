@@ -26,7 +26,7 @@
 # ------------------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Timer, Edge, ReadWrite
+from cocotb.triggers import Timer, Edge, ReadWrite, NullTrigger
 from cocotb.utils import get_sim_time, simulator
 
 from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
@@ -454,14 +454,8 @@ def uvm_sim_time(units='NS'):
     return 0
 
 
-rw_event2 = ReadWrite()
-timer_zero = Timer(0, "NS")
-
 async def uvm_zero_delay():
-    if verilator is True:
-        await rw_event2
-    else:
-        await timer_zero
+    await NullTrigger()
 
 
 def uvm_check_output_args(arr):
