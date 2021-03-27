@@ -20,6 +20,7 @@ obj_dir
 
 # Code coverage
 .coverage
+.coverage.*
 htmlcov/
 .coveralls.yml
 test-cocotb.xml
