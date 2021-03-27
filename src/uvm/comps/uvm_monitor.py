@@ -33,12 +33,12 @@ class UVMMonitor(UVMComponent):
     automatically inherit features that may be added to uvm_monitor in the future.
     """
 
-    # Function: new
-    #
-    # Creates and initializes an instance of this class using the normal
-    # constructor arguments for <uvm_component>: ~name~ is the name of the
-    # instance, and ~parent~ is the handle to the hierarchical parent, if any.
     def __init__(self, name, parent):
+        """
+        Creates and initializes an instance of this class using the normal
+        constructor arguments for `UVMComponent`: ~name~ is the name of the
+        instance, and ~parent~ is the handle to the hierarchical parent, if any.
+        """
         UVMComponent.__init__(self, name, parent)
 
     type_name = "uvm_monitor"

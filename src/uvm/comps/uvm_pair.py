@@ -21,7 +21,7 @@
 #//   permissions and limitations under the License.
 #//-----------------------------------------------------------------------------
 """
-Title: uvm_pair classes
+Title: UVMPair classes
 
 This section defines container classes for handling value pairs.
 
@@ -33,9 +33,9 @@ from uvm.macros import uvm_object_utils, uvm_error
 
 
 
-class UVMClassPair(UVMObject):  # (type T1=int, T2=T1) extends uvm_object
+class UVMClassPair(UVMObject):
     """
-    Class: UVMClassPair #(T1,T2)
+    Class: UVMClassPair
 
     Container holding handles to two objects whose types are specified by the
     type parameters, T1 and T2.

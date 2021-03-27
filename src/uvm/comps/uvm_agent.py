@@ -42,19 +42,20 @@ class UVMAgent(UVMComponent):
     subtypes should contain only the monitor.
     """
 
-    # Function: new
-    #
-    # Creates and initializes an instance of this class using the normal
-    # constructor arguments for <uvm_component>: ~name~ is the name of the
-    # instance, and ~parent~ is the handle to the hierarchical parent, if any.
-    #
-    # The int configuration parameter is_active is used to identify whether this
-    # agent should be acting in active or passive mode. This parameter can
-    # be set by doing:
-    #
-    #| uvm_config_int::set(this, "<relative_path_to_agent>,
-    #|   "is_active", UVM_ACTIVE)
     def __init__(self, name, parent):
+        """
+        Creates and initializes an instance of this class using the normal
+        constructor arguments for `UVMComponent`: ~name~ is the name of the
+        instance, and ~parent~ is the handle to the hierarchical parent, if any.
+        
+        The int configuration parameter `is_active` is used to identify whether this
+        agent should be acting in active or passive mode. This parameter can
+        be set by doing::
+
+            UVMConfigDb.set(self, "<relative_path_to_agent>, "is_active", UVM_ACTIVE)
+            # Or inside top-env:
+            my_agent.is_active = UVM_ACTIVE
+        """
         UVMComponent.__init__(self, name, parent)
         self.is_active = UVM_ACTIVE
 
@@ -81,12 +82,12 @@ class UVMAgent(UVMComponent):
     def get_type_name(self):
         return UVMAgent.type_name
 
-    # Function: get_is_active
-    #
-    # Returns UVM_ACTIVE is the agent is acting as an active agent and
-    # UVM_PASSIVE if it is acting as a passive agent. The default implementation
-    # is to just return the is_active flag, but the component developer may
-    # override this behavior if a more complex algorithm is needed to determine
-    # the active/passive nature of the agent.
     def get_is_active(self):
+        """
+        Returns UVM_ACTIVE is the agent is acting as an active agent and
+        UVM_PASSIVE if it is acting as a passive agent. The default implementation
+        is to just return the is_active flag, but the component developer may
+        override this behavior if a more complex algorithm is needed to determine
+        the active/passive nature of the agent.
+        """
         return self.is_active

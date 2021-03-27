@@ -38,7 +38,7 @@ from .uvm_policies import (UVMBuiltInConverter, UVMBuiltInComp,
 
 class UVMInOrderComparator(UVMComponent):
     """
-    CLASS: UVMInOrderComparator #(T,comp_type,convert,pair_type)
+    CLASS: UVMInOrderComparator
 
     Compares two streams of data objects of the type parameter, T.
     These transactions may either be classes or built-in types. To be

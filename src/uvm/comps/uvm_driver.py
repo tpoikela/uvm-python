@@ -51,15 +51,12 @@ class UVMDriver(UVMComponent):
     """
 
 
-
-    #uvm_analysis_port #(RSP) rsp_port;
-
-    # Function: new
-    #
-    # Creates and initializes an instance of this class using the normal
-    # constructor arguments for <uvm_component>: ~name~ is the name of the
-    # instance, and ~parent~ is the handle to the hierarchical parent, if any.
     def __init__(self, name, parent):
+        """
+        Creates and initializes an instance of this class using the normal
+        constructor arguments for `UVMComponent`: ~name~ is the name of the
+        instance, and ~parent~ is the handle to the hierarchical parent, if any.
+        """
         UVMComponent.__init__(self, name, parent)
         self.seq_item_port    = UVMSeqItemPullPort("seq_item_port", self)
         self.rsp_port         = UVMAnalysisPort("rsp_port", self)
