@@ -95,7 +95,6 @@ class UVMBuiltInClone:  # (type T=int)
 class UVMClassComp:  # (type T=int)
     @classmethod
     def comp(self, a, b):
-        print("ASDA")
         return a.compare(b)
 
 
