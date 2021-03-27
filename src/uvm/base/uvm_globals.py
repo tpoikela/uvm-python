@@ -26,7 +26,7 @@
 # ------------------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Timer, Edge, ReadWrite, NullTrigger
+from cocotb.triggers import Edge, ReadWrite, NullTrigger
 from cocotb.utils import get_sim_time, simulator
 
 from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
@@ -35,14 +35,10 @@ from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERRO
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
 
-# from .uvm_scheduler import uvm_default_scheduler
-# Title: Globals
-
-# ------------------------------------------------------------------------------
-#
-# Group: Simulation Control
-#
-# ------------------------------------------------------------------------------
+"""
+Title: Globals
+Group: Simulation Control
+"""
 
 
 async def run_test(test_name="", dut=None):
@@ -66,16 +62,15 @@ async def run_test(test_name="", dut=None):
 
 #// Function: uvm_get_report_object
 #//
-#// Returns the nearest uvm_report_object when called.
-#// For the global version, it returns uvm_root.
-#//
-#function uvm_report_object uvm_get_report_object()
-#  uvm_root top
-#  uvm_coreservice_t cs
-#  cs = uvm_coreservice_t::get()
-#  top = cs.get_root()
-#  return top
-#endfunction
+def uvm_get_report_object():
+    """
+    Returns the nearest uvm_report_object when called.
+    For the global version, it returns `UVMRoot`.
+    """
+    from .uvm_coreservice import UVMCoreService
+    cs = UVMCoreService.get()
+    top = cs.get_root()
+    return top
 
 
 def uvm_report_enabled(verbosity, severity=UVM_INFO, id=""):
@@ -168,7 +163,7 @@ def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
     These methods, defined in package scope, are convenience functions that
     delegate to the corresponding component methods in ~uvm_top~. They can be
     used in module-based code to use the same reporting mechanism as class-based
-    components. See <uvm_report_object> for details on the reporting mechanism.
+    components. See `UVMReportObject for details on the reporting mechanism.
 
     *Note:* Verbosity is ignored for warnings, errors, and fatals to ensure users
     do not inadvertently filter them out. It remains in the methods for backward
@@ -188,22 +183,16 @@ def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
         top.uvm_report_fatal(id, message, verbosity, filename, line, context_name,
                 report_enabled_checked)
 
-#// Function: uvm_process_report_message
-#//
-#// This method, defined in package scope, is a convenience function that
-#// delegate to the corresponding component method in ~uvm_top~. It can be
-#// used in module-based code to use the same reporting mechanism as class-based
-#// components. See <uvm_report_object> for details on the reporting mechanism.
-#
-#function void uvm_process_report_message(uvm_report_message report_message)
-#  uvm_root top
-#  uvm_coreservice_t cs
-#  process p
-#  p = process::self()
-#  cs = uvm_coreservice_t::get()
-#  top = cs.get_root()
-#  top.uvm_process_report_message(report_message)
-#endfunction
+
+def uvm_process_report_message(report_message):
+    """
+    This method, defined in package scope, is a convenience function that
+    delegate to the corresponding component method in ~uvm_top~.
+    See `UVMReportObject for details on the reporting mechanism.
+    """
+    cs = UVMCoreService.get()
+    top = cs.get_root()
+    top.uvm_process_report_message(report_message)
 
 
 #// TODO merge with uvm_enum_wrapper#(uvm_severity)
@@ -251,15 +240,17 @@ def uvm_string_to_action(action_str, action):
 
 # Function: uvm_is_match
 #
-# Returns 1 if the two strings match, 0 otherwise.
-#
-# The first string, ~expr~, is a string that may contain '*' and '?'
-# characters. A * matches zero or more characters, and ? matches any single
-# character. The 2nd argument, ~str~, is the string begin matched against.
-# It must not contain any wildcards.
 #
 #----------------------------------------------------------------------------
 def uvm_is_match(expr, _str):
+    """
+    Returns 1 if the two strings match, 0 otherwise.
+
+    The first string, ~expr~, is a string that may contain '*' and '?'
+    characters. A * matches zero or more characters, and ? matches any single
+    character. The 2nd argument, ~str~, is the string begin matched against.
+    It must not contain any wildcards.
+    """
     s = uvm_glob_to_re(expr)
     return uvm_re_match(s, _str) == 0
 
@@ -300,20 +291,6 @@ def uvm_string_to_bits(string: str) -> int:
 #  $swrite(uvm_bits_to_string, "%0s", str)
 #endfunction
 
-#----------------------------------------------------------------------------
-#
-# Task: uvm_wait_for_nba_region
-#
-# Callers of this task will not return until the NBA region, thus allowing
-# other processes any number of delta cycles (#0) to settle out before
-# continuing. See `UVMSequencerBase.wait_for_sequences` for example usage.
-#
-# TODO: Requires some work for cocotb. Right now, high enough
-# UVM_POUND_ZERO_COUNT works, but it depends on number of components/processes.
-# Also, putting very high number (> 1000) decreases simulation performance a
-# lot (100 = runtime 5ns, 1500 = runtime 15ns).
-#
-#----------------------------------------------------------------------------
 
 #verilator = True
 verilator = False
@@ -321,7 +298,7 @@ verilator = False
 sim_product = ''
 if simulator.is_running():
     sim_product = simulator.get_simulator_product()
-    print("uvm-python: SIM_PRODUCT IS |" + sim_product + "|")
+    print("uvm-python: Used simulator is |" + sim_product + "|")
     if sim_product == "Verilator":
         verilator = True
 
@@ -329,10 +306,7 @@ def uvm_has_verilator():
     return verilator
 
 UVM_POUND_ZERO_COUNT = 1000
-#UVM_NO_WAIT_FOR_NBA = True
 UVM_NO_WAIT_FOR_NBA = False
-
-UVM_AFTER_NBA_WAIT = 10
 
 if hasattr(cocotb, 'SIM_NAME') and getattr(cocotb, 'SIM_NAME') == 'Verilator':
     UVM_POUND_ZERO_COUNT = 100
@@ -341,6 +315,14 @@ if hasattr(cocotb, 'SIM_NAME') and getattr(cocotb, 'SIM_NAME') == 'Verilator':
 rw_event = ReadWrite()
 
 async def uvm_wait_for_nba_region():
+    """
+    Task: uvm_wait_for_nba_region
+
+    Callers of this task will not return until the `ReadWrite` region,
+    thus allowing
+    other processes any number of `NullTrigger`s to settle out before
+    continuing. See `UVMSequencerBase.wait_for_sequences` for example usage.
+    """
     if verilator is True:
         await rw_event
     else:
@@ -348,7 +330,7 @@ async def uvm_wait_for_nba_region():
             await rw_event
         else:
             for _ in range(0, UVM_POUND_ZERO_COUNT):
-                await Timer(0)
+                await NullTrigger()
 
 
 # Returns UVM coreservice
@@ -426,11 +408,10 @@ def get_cs():
 #
 #endclass : uvm_enum_wrapper
 
-#----------------------------------------------------------------------------
-#
-# Group: uvm-python specific functions
-#
-#----------------------------------------------------------------------------
+
+"""
+Group: uvm-python specific functions
+"""
 
 def uvm_is_sim_active():
     """
