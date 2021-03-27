@@ -190,6 +190,7 @@ def uvm_process_report_message(report_message):
     delegate to the corresponding component method in ~uvm_top~.
     See `UVMReportObject for details on the reporting mechanism.
     """
+    from .uvm_coreservice import UVMCoreService
     cs = UVMCoreService.get()
     top = cs.get_root()
     top.uvm_process_report_message(report_message)
@@ -231,17 +232,10 @@ def uvm_string_to_action(action_str, action):
             action |= UVM_RM_RECORD
     return action
 
-#----------------------------------------------------------------------------
-#
-# Group: Miscellaneous
-#
-#----------------------------------------------------------------------------
+"""
+Group: Miscellaneous
+"""
 
-
-# Function: uvm_is_match
-#
-#
-#----------------------------------------------------------------------------
 def uvm_is_match(expr, _str):
     """
     Returns 1 if the two strings match, 0 otherwise.
