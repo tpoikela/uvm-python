@@ -20,19 +20,18 @@
 #//
 
 
-#typedef class vip_monitor
 #class vip_monitor_cbs(uvm_callback):
     #    def rxed(self,vip_monitor xactor, ref bit [7:0] chr):;endfunction
-    #endclass
+
 
 from cocotb.triggers import RisingEdge, FallingEdge
 
 from uvm import *
 
+
 class vip_monitor(UVMMonitor):
 
-    #   uvm_analysis_port#(vip_tr) ap
-    #
+
     #   `uvm_register_cb(vip_monitor, vip_monitor_cbs)
     #
     #   vip_rx_vif vif
@@ -72,19 +71,17 @@ class vip_monitor(UVMMonitor):
         if self.hier_objection:
             phase.drop_objection(self, "VIP monitor has been reset")
 
-
-    #
-    #   //
-    #   // Abruptly interrupt and suspend this monitor
-    #   //
     async def reset_and_suspend(self):
+        """
+        Abruptly interrupt and suspend this monitor
+        """
         self.m_suspend = 1
         if self.m_proc is not None:
-           self.m_proc.kill()
-           self.m_proc = None
-           #wait (m_suspended)
-           while self.m_suspended != 1:
-               await RisingEdge(self.vif.clk)
+            self.m_proc.kill()
+            self.m_proc = None
+            #wait (m_suspended)
+            while self.m_suspended != 1:
+                await RisingEdge(self.vif.clk)
 
     async def suspend(self):
         await self.reset_and_suspend()
@@ -93,7 +90,7 @@ class vip_monitor(UVMMonitor):
     async def resume(self):
         self.m_suspend = 0
         while self.m_suspended != 0:
-           await RisingEdge(self.vif.clk)
+            await RisingEdge(self.vif.clk)
 
 
     def set_in_sync(self, val):
@@ -161,7 +158,6 @@ class vip_monitor(UVMMonitor):
             while self.m_in_sync:
                 for _ in range(6):
                     for _ in range(8):
-                    # repeat (8):
                         await FallingEdge(self.vif.clk)
                         #symbol = {symbol[6:0], vif.Rx}
                         symbol = self.get_symbol(symbol)
@@ -178,13 +174,14 @@ class vip_monitor(UVMMonitor):
                         self.ap.write(tr)
 
                         escaped = 0
-                    elif (symbol == 0xE7):
+                    elif symbol == 0xE7:
                         escaped = 1
+                    else:
+                        print("vip_mon got symbol: {:x}".format(symbol))
 
                 # Check that we are still in SYNC
                 for _ in range(8):
                     await FallingEdge(self.vif.clk)
-                    #symbol = {symbol[6:0], vif.Rx}
                     symbol = self.get_symbol(symbol)
                 if symbol != 0xB2:
                     self.set_in_sync(0)

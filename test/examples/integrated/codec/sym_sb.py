@@ -49,7 +49,8 @@ class sym_sb(UVMComponent):
 
     def write_sym_sb_observed(self, tr):
         exp = 0x00
-        uvm_info("SB/OBS", sv.sformatf("Observed: 0x%h", tr.chr), UVM_MEDIUM)
+        uvm_info("SB/OBS", sv.sformatf("Observed: 0x%h (item: %d)",
+            tr.chr,self.m_n_obs), UVM_MEDIUM)
         exp = self.m_sb.pop(0)
         if tr.chr != exp:
             self.error = 1
