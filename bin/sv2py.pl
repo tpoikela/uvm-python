@@ -3,7 +3,7 @@
 #
 #         FILE: sv2py.pl
 #
-#        USAGE: ./sv2py.pl
+#        USAGE: ./sv2py.pl <options>
 #
 #  DESCRIPTION: Convert some SV structs into Python. Does not do full
 #               conversion. NOTE: This is regex/line-based tool, and does not
@@ -16,9 +16,10 @@
 #               local variable in a function the same as member variable in a
 #               class.
 #
-#      OPTIONS: -f <FILE>, -all, -d|debug, --author <NAME>, -p, -f
+#      OPTIONS: -f <FILE>, -all, -d|debug, --author <NAME>, -p, -f, see -man or
+#               -help for full options
 # REQUIREMENTS: ---
-#         BUGS: ---
+#         BUGS: Many
 #        NOTES: ---
 #       AUTHOR: Tuomas Poikela (tpoikela), tuomas.sakari.poikela@gmail.com
 # ORGANIZATION: ---
@@ -83,9 +84,13 @@ sub do_simple_subst {
     $$line =~ s/--(\w+)/$1 -= 1/g;
     $$line =~ s/int\s+unsigned\s+(\w+)/$1: int/g;
     $$line =~ s/virtual\s+interface//g;
+    $$line =~ s/\bif\s*\(\s*!\s*/if (not /g;
+
+    $$line =~ s/foreach\s*\((.*)\s*\[(\w+)\]\s*\)/for $2 in range(len($1)):/g;
 
     # We don't want to match ## here because it's different operator than #
-    $$line =~ s/(?<!#)#(\w+)\s*$/await Timer($1, "ns")  # ns added by script/g;
+    $$line =~ s/(?<!#)#(\w+)\s*$/await Timer($1, "ns")  # "ns" added by sv2py/g;
+    $$line =~ s/(?<!#)#(\w+)\s*;/await Timer($1, "ns")  # "ns" added by sv2py/g;
     $$line =~ s/(?<!#)#(\w+)(ms|us|ns|ps|fs)?/await Timer($1, $2)/g;
 
     $$line =~ s/([.a-zA-Z_0-9]+)\.size\(\)/len($1)/g;
@@ -97,6 +102,7 @@ sub do_list_subst {
     $$line =~ s/\.push_back\(/.append(/g;
     $$line =~ s/\.pop_back\(/.pop(/g;
     $$line =~ s/\.pop_front\(/.pop(0/g;
+    $$line =~ s/new\s*\[(.*)\]/$1 * [None]  # Removed: $&/g;
 }
 
 sub do_sv_uvm_subts {
@@ -120,7 +126,7 @@ sub do_sv_uvm_subts {
     $$line =~ s/`uvm_(info|warning|fatal|error)\(/uvm_$1(/g;
     $$line =~ s/`uvm_field_(int|string|object|)\s*\((\w+)/uvm_field_$1('$2'/g;
 
-    $$line =~ s/uvm_(driver|monitor|agent|env|object|)\b/'UVM' . uc($1)/eg; # Eval subst
+    $$line =~ s/uvm_(driver|monitor|agent|env|object|)\b/'UVM' . ucfirst($1)/eg; # Eval subst
     $$line =~ s/uvm_sequence_item/UVMSequenceItem/g;
     $$line =~ s/uvm_sequence/UVMSequence/g;
 }
@@ -210,18 +216,19 @@ my $DEBUG = 0;
 
 my %opt;
 GetOptions(
-    "file|f=s" => \$opt{f},
-    "all"      => \$opt{all},
-    "d|debug"  => \$DEBUG,
-    "author=s" => \$opt{author},
-    "p|print"  => \$opt{print},
-    "f|force"  => \$opt{force},
-    "h|help"   => \$opt{help},
+    "all"       => \$opt{all},
+    "author=s"  => \$opt{author},
+    "dangerous" => \$opt{dangerous},
+    "d|debug"   => \$DEBUG,
+    "file|f=s"  => \$opt{f},
+    "force"     => \$opt{force},
+    "h|help"    => \$opt{help},
+    "list"      => \$opt{list},
     "man"       => \$opt{man},
+    "p|print"   => \$opt{print},
+    "prefix=s"   => \$opt{prefix},
     "q|quiet"   => \$opt{quiet},
     "v|verbose" => \$opt{verbose},
-    "dangerous" => \$opt{dangerous},
-    "list" => \$opt{list},
 );
 
 pod2usage(1) if $opt{help};
@@ -235,7 +242,7 @@ my $AUTHOR = $opt{author} || "Tuomas Poikela (tpoikela)";
 
 my $re_qual = qr/(protected|local)/; # $1
 my $re_type = qr/(\w+(#\(\w+\))?)/;  # $2, $3, $4
-my $re_packed = qr/(\[.*\])?/;       # $5
+my $re_packed = qr/(\[[^\]]+\])?/;       # $5
 my $re_name = qr/(\w+)/;             # $6
 my $re_unpacked = qr/((\[.*\])+)/;   # $7, $8 (full)
 my $re_init_var = qr/(=[^;]+)/;      # $9
@@ -244,11 +251,12 @@ my $re_var_end = qr/(?<!\))\s*;\s*/;
 my $re_var = qr/(rand)?$re_qual?\s*$re_type\s*$re_packed\s*$re_name\s*$re_unpacked?$re_init_var?$re_var_end$/;
 my $re_new_call = qr/(\w+)\s*=\s*new\s*\(/;
 
-my $conf_db_re = qr/uvm_config_db#\(.*\)::(set|get)/;
-my $conf_db_re2 = qr/uvm_config_(int|string|object)::(set|get)/;
-my $res_db_re = qr/uvm_resource_db#\(.*\)::(set|get)/;
+my $conf_db_re = qr/uvm_config_db\s*#\s*\(.*\)\s*::\s*(set|get)/;
+my $conf_db_re2 = qr/uvm_config_(int|string|object)\s*::\s*(set|get)/;
+my $res_db_re = qr/uvm_resource_db\s*#\(.*\)\s*::\s*(set|get)/;
 my $edge_re = qr/^(\s*)\@\s*\((\w+\s+)?\s*(.*)\)/;
 
+# State vars for tracking where we are
 my $GLOBAL = 1 << 0;
 my $IN_CLASS = 1 << 1;
 my $IN_NEW = 1 << 2;
@@ -287,6 +295,8 @@ else {
     @files = @ARGV;
 }
 
+my @init_file = ();
+
 # Finally process the input files here
 for my $file (@files) {
     my $res = process_file($file);
@@ -294,7 +304,12 @@ for my $file (@files) {
 
     # Write only .svh files to output
     if ($is_sv) {
-        my $py_file = "$1.py";
+        my $py_file = "$1";
+        if (defined $opt{prefix}) {
+            $py_file = "$opt{prefix}$py_file";
+        }
+        push(@init_file, $py_file);
+        $py_file .= ".py";
         if (is_safe_to_write($py_file)) {
             open(my $OFILE, ">", $py_file) or die $!;
             print $OFILE $res;
@@ -311,6 +326,16 @@ for my $file (@files) {
     }
 }
 
+# TODO: Add option to ignore this
+if (int(@init_file) > 0) {
+    open(my $OFILE, ">", "__init__.py") or die $!;
+    for my $file (@init_file) {
+        print $OFILE "from .$file import *\n";
+    }
+    print "Created __init__.py importing all modules\n";
+    close $OFILE;
+}
+
 if ($DEBUG != 0) {
     print "Dumping found class information:\n";
     print Dumper($all_classes);
@@ -320,6 +345,7 @@ if ($DEBUG != 0) {
 #---------------------------------------------------------------------------
 # HELPERS
 #---------------------------------------------------------------------------
+
 
 sub process_file {
     my ($fname) = @_;
@@ -356,6 +382,10 @@ sub process_file {
 
     while (<$IFILE>) {
         my $line = $_;
+        $line =~ s/\r//g;
+        #chomp($line);
+        #$line .= "\n";
+
         my $ws = " " x (4 * $ind);
         ++$lineno;
         my $add_line = 1;  # If set to 0, skip adding this line to file
@@ -433,6 +463,7 @@ sub process_file {
             if ($line !~ m{^\s*//} && $line =~ $re_var) {
                 my $value = "None";
                 my $var_type = $3;
+                my $packed = $5;
                 my $var_name = $6;
                 my $unpacked = $8;
                 my $var_init = $9;
@@ -442,11 +473,18 @@ sub process_file {
                 if ($var_type =~ /\bint(eger)?\b/ ) {$value = 0;}
                 if ($var_type =~ /\bstring\b/ ) {$value = "";}
                 if ($var_type =~ /\bevent\b/ ) {$value = "Event('$var_name')";}
+                if ($var_type =~ /\bbit\b/ ) {$value = "0x0";}
+                if (defined $unpacked and $unpacked eq "[]") {$value = "[]";}
+
                 if (defined $var_init) {
                     $value = $var_init;
                     $value =~ s/=//;
                 }
-                my $self_var = "${ws}#    self.$var_name = $value  # type: $var_type\n";
+                my $pp = "";
+                $pp = $packed if defined $packed;
+                my $up = "";
+                $up = $unpacked if defined $unpacked;
+                my $self_var = "${ws}#    self.$var_name = $value  # type: $var_type $pp $up\n";
                 push(@{$found_vars->{$curr_class}}, $self_var);
             }
         }
@@ -740,11 +778,17 @@ __END__
 sv2py.pl [options]
 
   Options:
+    -all        Use all files in cwd as input.
+    -author=s   Author name for copyright.
+    -dangerous  Allow dangerous conversions.
     -d|debug    Turn on all debugging features.
-    -f          Input file.
+    -force      Overwrites existing files.
+    -f|file     Input file.
     -help       Print help message.
+    -list       Use list-related conversions.
     -man        Bring up man-pages of the script.
-    -o          Output file.
+    -p|print    Required with .py files only.
+    -prefix=s   Adds a prefix to all output files.
     -q|quiet    Run script in quiet mode (no std out).
     -v|verbose  Run script in verbose mode (more std out).
 
@@ -752,11 +796,23 @@ sv2py.pl [options]
 
 =over 8
 
+=item B<-all>
+
+Use all files from cwd as input files.
+
+=item B<-author> <name>
+
+Specify an author name to be added to the copyright message.
+
 =item B<-d|debug>
 
 Turns on all debugging features.
 
-=item B<-f> <filename>
+=item B<-force>
+
+Overwrites existing files.
+
+=item B<-f|file> <filename>
 
 Name of the input file.
 
@@ -768,9 +824,10 @@ Prints help message.
 
 Shows the man-pages.
 
-=item B<-o> <filename>
+=item B<-prefix> <prefix>
 
-Output file name.
+Adds a prefix to all output filenames. '-prefix axi_' changes
+output file for master_agent.sv to axi_master_agent.py.
 
 =item B<-q|quiet>
 
@@ -784,7 +841,7 @@ Runs script in verbose mode.
 
 =head1 DESCRIPTION
 
-Describe the script here.
+Script to convert some SystemVerilog into python/cocotb/uvm-python syntax.
 
 =head1 AUTHOR
 
