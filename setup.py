@@ -27,7 +27,7 @@ setup(
     version=version['__version__'],
     install_requires=[
         #"cocotb @ git+git://github.com/cocotb/cocotb@79792d1b#egg=cocotb",
-        "cocotb==1.5.0",
+        "cocotb==1.6.1",
         "cocotb-bus==0.1.1",
         "cocotb-coverage>=1.0.0",
         "regex>=2019.11.1"
