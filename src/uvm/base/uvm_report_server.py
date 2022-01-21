@@ -64,7 +64,8 @@ class UVMReportServer(UVMObject):
         self.show_verbosity = False
         self.show_terminator = False
 
-        self.m_message_db: UVMTrDatabase = UVMTextTrDatabase()  # uvm_tr_database
+        # User can override UVMTextTrDatabase with factory
+        self.m_message_db: UVMTrDatabase = UVMTextTrDatabase.type_id.create('tr_db')
         self.m_streams = {}
         self.reset_quit_count()
         self.reset_severity_counts()
@@ -76,7 +77,7 @@ class UVMReportServer(UVMObject):
         return "uvm_report_server"
 
     @classmethod
-    def set_server(cls, server):
+    def set_server(cls, server: 'UVMReportServer'):
         cs = get_cs()
         #server.copy(cs.get_report_server())
         cs.set_report_server(server)
@@ -362,7 +363,6 @@ class UVMReportServer(UVMObject):
         """
         if file == 0:
             self.logger(_str)
-            # print(_str)
         else:
             if not file.closed:
                 file.write(_str + "\n")

@@ -93,7 +93,7 @@ class UVMTrDatabase(UVMObject):
             self.m_is_opened = self.do_open_db()
         return self.m_is_opened
 
-    def close_db(self):
+    def close_db(self) -> bool:
         """
 
            Function: close_db
@@ -114,7 +114,7 @@ class UVMTrDatabase(UVMObject):
                 self.m_is_opened = 0
         return self.m_is_opened == 0
 
-    def is_open(self):
+    def is_open(self) -> bool:
         """
            Function: is_open
            Returns the open/closed status of the database.
@@ -330,14 +330,6 @@ class UVMTextTrDatabase(UVMTrDatabase):
     into a textual log file.
     """
 
-
-    #   // Variable- m_filename_dap
-    #   // Data Access Protected Filename
-    #   local uvm_simple_lock_dap#(string) m_filename_dap
-    #
-    #   // Variable- m_file
-    #   UVM_FILE m_file
-
     def __init__(self, name="unnamed-UVMTextTrDatabase"):
         """
            Function: new
@@ -390,9 +382,7 @@ class UVMTextTrDatabase(UVMTrDatabase):
         Returns:
         """
         if self.m_file != NO_FILE_OPEN:
-            #fork // Needed because $fclose is a task
-            sv.fclose(self.m_file)
-            #join_none
+            self.m_file.close()
             self.m_filename_dap.unlock()
         return 1
 
@@ -403,9 +393,6 @@ class UVMTextTrDatabase(UVMTrDatabase):
            database.
 
            Text-Backend implementation of <UVMTrDatabase::open_stream>
-          protected virtual function UVMTrStream do_open_stream(string name,
-                                                                  string scope,
-                                                                  string type_name)
         Args:
             name:
             scope:

@@ -6,7 +6,9 @@
 
 include ../MakefileCommon.mk
 
-# SIM_ARGS = ""
+#SIMARGS = "+UVM_VERBOSITY=UVM_NONE"
+PLUSARGS += +UVM_VERBOSITY=UVM_NONE
+PLUSARGS += +UVM_NO_RELNOTES
 TOPLEVEL := common_stub
 MODULE   ?= hello_world
 
