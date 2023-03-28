@@ -42,7 +42,7 @@ Mandatory copyrights::
 
     Synopsys, Inc., 690 E. Middlefield Rd, Mountain View, CA 94043
 
-    Copyright © 2019 - 2020 Tuomas Poikela. All rights reserved.
+    Copyright © 2019 - 2023 Tuomas Poikela. All rights reserved.
 
 This product is licensed under the Apache Software Foundation’s
 Apache License, Version 2.0, January 2004. The full license is
@@ -814,17 +814,15 @@ connections in a parent component are of the form::
 
 so connection E would be coded as::
 
-    class consumer(UVMComponent)
+    class consumer(UVMComponent):
+        put_export = uvm_put_export(trans)
+        fifo = uvm_tlm_fifo(trans)
 
-        uvm_put_export #(trans) put_export;
-        uvm_tlm_fifo #(trans) fifo;
-        ...
-        function void connect_phase(uvm_phase phase);
-            put_export.connect(fifo.put_export); // E
-            bfm.get_port.connect(fifo.get_export); // F
-        endfunction
-        ...
-    endclass
+        def connect_phase(self, phase):
+            super().connect_phase(phase)
+            self.put_export.connect(self.fifo.put_export)
+            self.bfm.get_port.connect(self.fifo.get_export)
+
 
 Conversely, port-to-port connections are of the form::
 
@@ -832,14 +830,14 @@ Conversely, port-to-port connections are of the form::
 
 so connection C would be coded as::
 
-    class producer (UVMComponent):
+    class producer(UVMComponent):
+        put_port = uvm_put_port()
+        c = conv()
 
-        uvm_put_port #(trans) put_port;
-        conv c;
-        ...
-        def connect_phase(self, phase):
-            c.put_port.connect(put_port);
-            ...
+    def connect_phase(self, phase):
+        super().connect_phase(phase)
+        self.c.put_port.connect(self.put_port)
+        # ...
 
 2.3.2.2 Connection Types
 ------------------------
@@ -2820,24 +2818,18 @@ defined in Section 3.10.1). You can choose to replace all processing of
 simple_item types with word_aligned_item types. This can be selected for
 all requests for simple_item types from the factory or for specific
 instances of simple_item. From within an UVM component, the user can
-execute any of the following:
+execute any of the following::
 
-// Affect all factory requests for type simple_item.
-
-set_type_override_by_type(simple_item::get_type(),
-
-word_aligned_item::get_type()); // Affect requests for type
-simple_item only on a given sequencer.
-set_inst_override_by_type("env0.agent0.sequencer.*",
-
-
-
-simple_item::get_type(), world_aligned_item::get_type()); //
-Alternatively, affect requests for type simple_item for all //
-sequencers of a specific env.
-set_inst_override_by_type("env0.*.sequencer.*",
-
-simple_item::get_type(), word_aligned_item::get_type());
+    // Affect all factory requests for type simple_item.
+    set_type_override_by_type(simple_item::get_type(),
+        word_aligned_item::get_type()); 
+    // Affect requests for type simple_item only on a given sequencer.
+    set_inst_override_by_type("env0.agent0.sequencer.*",
+        simple_item::get_type(), world_aligned_item::get_type()); 
+    // Alternatively, affect requests for type simple_item for all 
+    // sequencers of a specific env.
+    set_inst_override_by_type("env0.*.sequencer.*",
+        simple_item::get_type(), word_aligned_item::get_type());
 
 Allocate the item using the factory (i.e., with create(), see Section
 3.10.2); any existing override requests will take effect and a
@@ -2877,16 +2869,20 @@ class test extends ovm_test;
 task run_phase(uvm_phase phase);
 
 phase.raise_objection(this); seq.start(seqr);
-phase.drop_objection(this); endtask endclass b) Phase Aware Sequences
-(Explicit Objection)
+phase.drop_objection(this); endtask endclass 
+
+b) Phase Aware Sequences(Explicit Objection)
 
 1) The caller will pass the starting phase reference before starting the
-sequence. 2) The sequence will explicitly call raise/drop to control the
-objection. 3) Where exactly the raise/drop is called is up to the user
+sequence. 
+2) The sequence will explicitly call raise/drop to control the
+objection. 
+3) Where exactly the raise/drop is called is up to the user
 design. It might be called in pre/ post_body (extra care is needed in
 this case as pre/post_body are not always called), or pre/post_start, or
 even the body itself. It might also be raised and dropped multiple times
 within the sequence execution to guard a specific critical logic class
+
 test extends ovm_test;
 
 task run_phase (uvm_phase phase); seq.set_starting_phase(phase);
@@ -2900,17 +2896,18 @@ uvm_phase p = get_starting_phase(); if(p) p.raise_objection(this);
 
 
 
-//some critical logic If(p) p.drop_objection(this); endtask endclass c)
-Phase Aware Sequences (Implicit Objection)
+//some critical logic 
+If(p) p.drop_objection(this); 
+endtask endclass 
+
+c) Phase Aware Sequences (Implicit Objection)
 
 1) The caller will pass the starting phase reference before starting the
-sequence. 2) Within the sequence (mostly inside seq::new), the user will
-call set_automat-
-
-ic_phase_objection(1); 3) uvm_sequence_base will handle automatic phase
-raise/drop before/after pre/
-
-post_start.
+sequence. 
+2) Within the sequence (mostly inside seq::new), the user will
+call set_automatic_phase_objection(1); 
+3) uvm_sequence_base will handle automatic phase
+raise/drop before/after pre/post_start.
 
 class test extends ovm_test;
 
@@ -2924,8 +2921,8 @@ function new(string name = "seq");
 super.new(name); set_automatic_phase_objection(1); endfunction task
 body();
 
-// Sequence logic with no objection // as it is already handled in
-the base class endtask endclass
+// Sequence logic with no objection 
+// as it is already handled in the base class endtask endclass
 
 Note that if you are using UVM task-based phases’ default_sequence
 mechanism, the “caller” will be the UVM sequencer, in which case you
@@ -3011,31 +3008,25 @@ per the IEEE1800 LRM.
 
 The following is a simple example of an assertion check. This
 assertion verifies the size field of the transfer is 1, 2, 4, or 8.
-Otherwise, the assertion fails.
+Otherwise, the assertion fails::
 
-function void ubus_master_monitor::check_transfer_size();
+    function void ubus_master_monitor::check_transfer_size();
+        check_transfer_size : assert(trans_collected.size == 1 \|\|
+            trans_collected.size == 2 \|\| trans_collected.size == 4 \|\|
+            trans_collected.size == 8) else begin
 
-check_transfer_size : assert(trans_collected.size == 1 \|\|
-
-trans_collected.size == 2 \|\| trans_collected.size == 4 \|\|
-trans_collected.size == 8) else begin
-
-// Call DUT error: Invalid transfer size! end endfunction :
-check_transfer_size
+        // Call DUT error: Invalid transfer size! end 
+    endfunction : check_transfer_size
 
 The following is a simple example of a function check. This function
 verifies the size field value matches the size of the data dynamic
 array. While this example is not complex, it illustrates a
-procedural-code example of a check.
+procedural-code example of a check::
 
-
-
-function void ubus_master_monitor::check_transfer_data_size();
-
-if (trans_collected.size != trans_collected.data.size())
-
-// Call DUT error: Transfer size field / data size mismatch.
-endfunction : check_transfer_data_size
+    function void ubus_master_monitor::check_transfer_data_size();
+        if (trans_collected.size != trans_collected.data.size())
+            // Call DUT error: Transfer size field / data size mismatch.
+    endfunction : check_transfer_data_size
 
 The proper time to execute these checks depends on the
 implementation. You should determine when to make the call to the
@@ -3058,41 +3049,45 @@ The details of the covergroup (that is, what to make coverpoints,
 when to sample coverage, and what bins to create) should be planned
 and decided before implementation begins.
 
-The following is a simple example of a covergroup.
+The following is a simple example of a covergroup::
 
-// Transfer collected beat covergroup.
+    // Transfer collected beat covergroup.
 
-covergroup cov_trans_beat @cov_transaction_beat;
+    covergroup cov_trans_beat @cov_transaction_beat;
 
-option.per_instance = 1; beat_addr : coverpoint addr {
-option.auto_bin_max = 16; } beat_dir : coverpoint
-trans_collected.read_write; beat_data : coverpoint data {
-
-option.auto_bin_max = 8; } beat_wait : coverpoint wait_state {
-
-bins waits[] = { [0:9] }; bins others = { [10:$] }; } beat_addrXdir :
-cross beat_addr, beat_dir; beat_addrXdata : cross beat_addr,
-beat_data; endgroup : cov_trans_beat
+        option.per_instance = 1; beat_addr : 
+        coverpoint addr {
+            option.auto_bin_max = 16; 
+        } 
+        
+        beat_dir : coverpoint trans_collected.read_write; 
+        
+        beat_data : coverpoint data {
+            option.auto_bin_max = 8; 
+        } 
+        
+        beat_wait : coverpoint wait_state {
+            bins waits[] = { [0:9] }; 
+            bins others = { [10:$] }; 
+        } 
+        beat_addrXdir : cross beat_addr, beat_dir; 
+        beat_addrXdata : cross beat_addr, beat_data; 
+    endgroup : cov_trans_beat
 
 This embedded covergroup is defined inside a class derived from
 UVMMonitor and is sampled explicitly. For the above covergroup, you
 should assign the local variables that serve as coverpoints in a
 function, then sample the covergroup. This is done so that each
 transaction data beat of the transfer can be covered. This function
-is shown in the following example.
+is shown in the following example::
 
-// perform_transfer_coverage
-
-virtual protected function void perform_transfer_coverage();
-
-cov_trans.sample(); // another covergroup for (int unsigned i = 0; i <
-trans_collected.size; i++) begin
-
-addr = trans_collected.addr + i; data = trans_collected.data[i];
-wait_state = trans_collected.wait_state[i]; cov_trans_beat.sample();
-end endfunction : perform_transfer_coverage
-
-
+    def perform_transfer_coverage(self):
+        self.cov_trans.sample()  # another covergroup
+        for i in range(self.trans_collected.size):
+            self.addr = self.trans_collected.addr + i
+            self.data = self.trans_collected.data[i]
+            self.wait_state = self.trans_collected.wait_state[i]
+            self.cov_trans_beat.sample()
 
 This function covers several properties of the transfer and each
 element of the dynamic array data. SystemVerilog does not provide the
@@ -3124,22 +3119,18 @@ and the coverage is collected. You can use an UVM bit field for this
 purpose. The field can be controlled using the UVMConfigDb
 interface. Refer to UVMConfigDb in the UVM *1.2 Class Reference*
 for more information. The following is an example of using the
-checks_enable bit to control the checks.
+checks_enable bit to control the checks::
 
-if (checks_enable)
-
-perform_transfer_checks();
+    if (checks_enable) perform_transfer_checks();
 
 If checks_enable is set to 0, the function that performs the checks
 is not called, thus disabling the checks. The following example shows
-how to turn off the checks for the master0.monitor.
+how to turn off the checks for the master0.monitor::
 
-UVMConfigDb.set(this,"masters[0].monitor", "checks_enable",
-0);
+    UVMConfigDb.set(this,"masters[0].monitor", "checks_enable", 0);
 
 The same facilities exist for the coverage_enable field in the Ubus
 agent monitors and bus monitor.
-
 
 
 4. Using Verification Components
@@ -3581,27 +3572,24 @@ the run_test() task. A test name is provided to run_test() via a
 simulator command-line argument. Using the simulator command-line
 argument avoids having to hardcode the test name in the task which
 calls run_test(). In an initial block, call the run_test() as
-follows:
+follows::
 
-// DUT, interfaces, and all non-UVM code
-
-initial
-
-uvm_pkg::run_test();
+    @cocotb.test
+    async def run_the_test(dut):
+        await run_test(dut=dut)
 
 To select a test of type test_read_modify_write (described in Section
 4.5.2) using simulator command-line option, use the following
-command:
+command::
 
-
-
-% *simulator-command other-options*
-+UVM_TESTNAME=test_read_modify_write
+    % SIM=sim*simulator-command other-options* +UVM_TESTNAME=test_read_modify_write
+    # Or Makefile based approach
+    % SIM=sim make UVM_TEST=test_read_modify_write
 
 If the test name provided to run_test() does not exist, the
 simulation will exit immediately via a call to $fatal. If this
 occurs, it is likely the name was typed incorrectly or the
-\`uvm_component_utils macro was not used.
+uvm_component_utils macro was not used.
 
 By using this method and only changing the +UVM_TESTNAME argument,
 multiple tests can be run without having to recompile or re-elaborate
@@ -3635,44 +3623,51 @@ and add constraints to data items to control their generated values.
 
 To constrain data items:
 
-a) Identify the data item classes and their generated fields in the
-verification component. b) Create a derivation of the data item class
-that adds or overrides default constraints. c) In a test, adjust the
-environment (or a subset of it) to use the newly-defined data items. d)
-Run the simulation using a command-line option to specify the test name.
+a) Identify the data item classes and their generated fields in the verification component. 
+b) Create a derivation of the data item class that adds or overrides default constraints. 
+c) In a test, adjust the environment (or a subset of it) to use the newly-defined data items. 
+d) Run the simulation using a command-line option to specify the test name.
 
-*Data Item Example*
+Data Item Example::
 
-typedef enum bit {BAD_PARITY, GOOD_PARITY} parity_e; class uart_frame
-extends UVMSequenceItem; rand int unsigned transmit_delay; rand bit
-start_bit; rand bit [7:0] payload; rand bit [1:0] stop_bits; rand bit
-[3:0] error_bits; bit parity; // Control fields rand parity_e
-parity_type; function new(input string name);
+    from enum import Enum
+    import uvm
 
-super.new(name); endfunction // Optional field declarations and
-automation flags
+    class Parity(Enum):
+        BAD_PARITY = 0
+        GOOD_PARITY = 1
 
-\`uvm_object_utils_begin(uart_frame)
+    class UartFrame(uvm.UVMSequenceItem):
+        def __init__(self, name=""):
+            super().__init__(name)
+            self.transmit_delay = 0
+            self.start_bit = 0
+            self.payload = 0
+            self.stop_bits = 0
+            self.error_bits = 0
+            self.parity = 0
+            self.parity_type = Parity.GOOD_PARITY
 
-\`uvm_field_int(start_bit, UVM_ALL_ON) \`uvm_field_int(payload,
-UVM_ALL_ON)
+        def calc_parity(self):
+            # implementation
+            pass
 
+    uvm_object_utils_begin(UartFrame)
+    uvm_field_int('transmit_delay', UVM_ALL_ON)
+    uvm_field_int('start_bit', UVM_ALL_ON)
+    uvm_field_int('payload', UVM_ALL_ON)
+    uvm_field_int('stop_bits', UVM_ALL_ON)
+    uvm_field_int('error_bits', UVM_ALL_ON)
+    uvm_field_int('parity', UVM_ALL_ON)
+    uvm_field_enum('parity_type', Parity, UVM_ALL_ON + UVM_NOCOMPARE)
+    uvm_object_utils_end(UartFrame)
 
+    // different than zero. 
+    # constraint error_bits_c {error_bits != 4'h0;}
+    // Default distribution constraints
 
-\`uvm_field_int(parity, UVM_ALL_ON) \`uvm_field_enum(parity_e,
-parity_type, UVM_ALL_ON + UVM_NOCOMPARE) \`uvm_field_int(xmit_delay,
-UVM_ALL_ON + UVM_DEC + UVM_NOCOMPARE) \`uvm_object_utils_end //
-Specification section 1.2: the error bits value should be
-
-// different than zero. constraint error_bits_c {error_bits != 4'h0;}
-// Default distribution constraints
-
-constraint default_parity_type {parity_type dist {
-
-GOOD_PARITY:=90, BAD_PARITY:=10};} // Utility functions
-
-extern function bit calc_parity ( ); ... endfunction endclass:
-uart_frame
+    # constraint default_parity_type {parity_type dist {
+    # GOOD_PARITY:=90, BAD_PARITY:=10};} // Utility functions
 
 The uart_frame is created by the uart environment developer.
 

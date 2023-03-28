@@ -319,7 +319,7 @@ class UVMRoot(UVMComponent):
         # spawn the phase runner task
         #phase_runner_proc = process::self()
         uvm_debug(self, 'run_test', 'Forking now all phases using m_run_phases')
-        cocotb.fork(UVMPhase.m_run_phases())
+        cocotb.start_soon(UVMPhase.m_run_phases())
         uvm_debug(self, 'run_test', 'After phase-fork executing')
         #end
         #join_none

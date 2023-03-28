@@ -22,8 +22,8 @@
 #// -------------------------------------------------------------
 #//
 
-import cocotb
-from cocotb.triggers import *
+# import cocotb
+from cocotb.triggers import FallingEdge
 
 from uvm.reg.uvm_reg_sequence import *
 from uvm.reg.uvm_reg_model import *
@@ -33,24 +33,21 @@ from uvm.seq.uvm_sequence import *
 from reg_B import *
 
 
+@uvm_object_utils
 class dut_reset_seq(UVMSequence):
 
     def __init__(self, name="dut_reset_seq"):
         super().__init__(name)
         self.vif = None
 
-
-    
     async def body(self):
-        self.vif.rst <= 1
+        self.vif.rst.value = 1
         for i in range(5):
             await FallingEdge(self.vif.clk)
-        self.vif.rst <= 0
+        self.vif.rst.value = 0
 
 
-uvm_object_utils(dut_reset_seq)
-
-
+@uvm_object_utils
 class blk_R_test_seq(UVMRegSequence):
 
 
@@ -63,7 +60,6 @@ class blk_R_test_seq(UVMRegSequence):
         if status[0] != UVM_IS_OK:
             uvm_fatal(msg, "status not OK")
 
-    
     async def body(self):
         status = 0
         n = 0
@@ -114,7 +110,4 @@ class blk_R_test_seq(UVMRegSequence):
         status = []
         await self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR4 FAIL")
-        #   endtask
-    #
 
-uvm_object_utils(blk_R_test_seq)

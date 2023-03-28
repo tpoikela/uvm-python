@@ -296,7 +296,7 @@ class UVMRunPhase(UVMTaskPhase):
         uvm_debug(self, 'exec_task', comp.get_name() + ' yielding comp.run_phase()')
         # tpoikela, modification  of original to allow handle for proc
         #yield comp.run_phase(phase)
-        comp.m_run_process = cocotb.fork(comp.run_phase(phase))
+        comp.m_run_process = cocotb.start_soon(comp.run_phase(phase))
         await comp.m_run_process
 
         #parent = comp.get_parent()

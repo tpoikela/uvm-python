@@ -574,7 +574,7 @@ class UVMComponent(UVMReportObject):
         The run_phase task should never be called directly.
         """
         uvm_debug(self, 'run_phase', self.get_name() + ' yielding self.run()')
-        # self.m_run_process = cocotb.fork(self.run())
+        # self.m_run_process = cocotb.start_soon(self.run())
         # yield self.m_run_process
         await self.run()
 
@@ -2418,7 +2418,7 @@ class UVMComponent(UVMReportObject):
                             self.m_verbosity_settings.append(setting)
 
         if self == top:
-            cocotb.fork(self.m_fork_time_settings(top))
+            cocotb.start_soon(self.m_fork_time_settings(top))
         UVMComponent.first_m_set_cl_verb = 0
 
 
@@ -2433,7 +2433,7 @@ class UVMComponent(UVMReportObject):
             top.find_all(m_time_settings[i].comp, comps)
             duration = m_time_settings[i].offset - last_time
             last_time = m_time_settings[i].offset
-            cocotb.fork(self.m_set_comp_settings(i, comps.copy(), duration))
+            cocotb.start_soon(self.m_set_comp_settings(i, comps.copy(), duration))
         #end join_none // fork begin
 
 

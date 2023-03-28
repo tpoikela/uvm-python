@@ -45,7 +45,7 @@ async def initial_begin(dut):
     #root = simulator.get_root_handle()
     #print(str(dir(root)))
 
-    cocotb.fork(Clock(vif.clk, 10, "NS").start())
+    cocotb.start_soon(Clock(vif.clk, 10, "NS").start())
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
 

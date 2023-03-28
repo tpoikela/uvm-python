@@ -345,7 +345,7 @@ class UVMSequencerBase(UVMComponent):
             await uvm_zero_delay()
             return
 
-        cocotb.fork(self._seq_fork_proc(seq, phase))
+        cocotb.start_soon(self._seq_fork_proc(seq, phase))
         await uvm_zero_delay()
 
 
@@ -1124,7 +1124,7 @@ class UVMSequencerBase(UVMComponent):
             return
 
         #fork // isolate inner fork block for disabling
-        fork_first = cocotb.fork(self._fork_first_proc(is_relevant_entries))
+        fork_first = cocotb.start_soon(self._fork_first_proc(is_relevant_entries))
         await fork_first
         #join
 
@@ -1157,7 +1157,7 @@ class UVMSequencerBase(UVMComponent):
     async def _fork_first_proc(self, is_relevant_entries):
         started_forks = []
         #fork
-        forked_proc1 = cocotb.fork(self._fork_first_proc_sub_fork1(is_relevant_entries))
+        forked_proc1 = cocotb.start_soon(self._fork_first_proc_sub_fork1(is_relevant_entries))
         started_forks.append(forked_proc1)
         # The other path in the fork is for any queue entry to change
         forked_proc2 = self.m_wait_arb_not_equal()
@@ -1175,7 +1175,7 @@ class UVMSequencerBase(UVMComponent):
         self.set_value('m_is_relevant_completed', False)
         for i in range(len(is_relevant_entries)):
             #fork
-            forked_proc = cocotb.fork(self._rel_entry_fork_proc(i, is_relevant_entries))
+            forked_proc = cocotb.start_soon(self._rel_entry_fork_proc(i, is_relevant_entries))
             fork_procs_join_none.append(forked_proc)
             #join_none
         await wait(lambda: self.m_is_relevant_completed > 0,

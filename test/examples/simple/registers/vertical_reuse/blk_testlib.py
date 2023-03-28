@@ -23,7 +23,6 @@
 #
 from uvm.comps.uvm_test import UVMTest
 from uvm.macros import *
-import cocotb
 from blk_seqlib import *
 from uvm.base.sv import sv
 from uvm.base.uvm_root import uvm_top
@@ -33,15 +32,12 @@ from blk_seqlib import *
 
 class blk_R_test(UVMTest):
 
-    #
-    #   blk_env env
-    #
     def __init__(self, name="blk_R_test", parent=None):
         super().__init__(name, parent)
         self.env = None  # blk_env
 
     def build_phase(self, phase):
-        if (self.env is None):
+        if self.env is None:
             arr = []
             if (sv.cast(arr, uvm_top.find("env$"), blk_env)):
                 self.env = arr[0]
@@ -50,8 +46,6 @@ class blk_R_test(UVMTest):
 
     
     async def run_phase(self, phase):
-        reset_seq = None  # uvm_sequence_base
-        seq = None  # blk_R_test_seq
         phase.raise_objection(self)
 
         rst_seq = dut_reset_seq.type_id.create("rst_seq", self)

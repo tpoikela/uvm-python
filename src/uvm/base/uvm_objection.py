@@ -790,7 +790,7 @@ class UVMObjection(UVMReportObject):
                 # The fork will guard the m_forked_drain call, but
                 # a re-raise can kill self.m_forked_list contexts in the delta
                 # before the fork executes.
-                pproc = cocotb.fork(cls.m_execute_scheduled_forks_fork_join_none(c))
+                pproc = cocotb.start_soon(cls.m_execute_scheduled_forks_fork_join_none(c))
                 #else:
                 #    uvm_error("UVMObjection", "Null objection in objection context")
 
@@ -882,7 +882,7 @@ class UVMObjection(UVMReportObject):
     @classmethod
     async def m_init_objections(cls):
         #uvm_debug(cls, 'm_init_objections', "Forking m_execute_scheduled_forks")
-        pproc = cocotb.fork(cls.m_execute_scheduled_forks())
+        pproc = cocotb.start_soon(cls.m_execute_scheduled_forks())
         #await uvm_zero_delay()
 
     #  // Function: set_drain_time

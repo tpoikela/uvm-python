@@ -1,0 +1,20 @@
+{
+    "include": [
+      "src"
+    ],
+
+    "exclude": [
+        ".venv",
+        "**/__pycache__",
+        "examples",
+        "test/",
+        "bin/",
+        "devscripts/"
+    ],
+
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": false,
+
+    "pythonVersion": "3.11",
+    "pythonPlatform": "Linux"
+}

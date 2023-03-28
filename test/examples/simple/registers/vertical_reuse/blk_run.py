@@ -40,8 +40,9 @@ async def initial(dut):
     vif = apb_if(dut)
     UVMConfigDb.set(env, "apb", "vif", vif)
     c = Clock(dut.apb_pclk, 10, 'ns')
-    cocotb.fork(c.start())
-    cocotb.fork(run_test())
+    cocotb.start_soon(c.start())
+
+    await run_test()
     await Timer(1000, "NS")
 
     if env.all_ok is False:

@@ -6,25 +6,22 @@ UVM library for Python
 ======================
 
 This is a port of SystemVerilog (SV) Universal Verification Methodology (UVM)
-1.2 to Python and cocotb. Only Icarus Verilog (iverilog) has been used for
-testing the code so
-far, but the plan is to include verilator in the regressions as well.
+1.2 to Python and cocotb. Icarus Verilog (iverilog) and Verilator have been used for
+testing the code so far.
 
 See documentation for more details:
   - [uvm-python Documentation](https://uvm-python.readthedocs.io/).
   - [uvm-python User's Guide](https://uvm-python.readthedocs.io/en/latest/uvm_users_guide_1.2.html)
 
-Why bother?
------------
-
 SystemVerilog UVM is not currently supported by any open source/free tools. cocotb offers
 excellent solution to interact with any simulator (free/proprietary), so
 testbenches can be written in Python as well. `uvm-python` tries to offer
-an API similar to the original SV version. This means that many UVM verificaton
-skills are transferable from SV to Python very easily.
+an API similar to the original SV-UVM version. This means that many UVM verificaton
+skills and API knowledge are transferable from SV to Python very easily.
 
 If you want to port a larger bulk of SV code to use `uvm-python`, you can try the
-script `bin/sv2py.pl` as the first step.
+script `bin/sv2py.pl` as the first step. It's a regex-based solution, and code
+will still require lots of manual edits to work.
 
 Documentation
 -------------
@@ -44,7 +41,7 @@ Install from PyPi using pip:
 python -m pip install uvm-python
 ```
 
-or directly from source files (for latest development version):
+or directly from source files (for the latest development version):
 
 ```shell
 git clone https://github.com/tpoikela/uvm-python.git
@@ -118,14 +115,15 @@ import cocotb
 from cocotb.triggers import Timer
 from uvm import *
 
+@uvm_component_utils
 class NewTest(UVMTest):
 
-    async def run_phase(self, phase):
+    async def run_phase(self, phase: UVMPhase):
         phase.raise_objection(self)
         await Timer(100, "NS")
+        uvm_info("NEW_TEST", "Test passed, all OK", UVM_MEDIUM)
         phase.drop_objection(self)
 
-uvm_component_utils(NewTest)
 
 @cocotb.test()
 async def test_dut(dut):
@@ -134,9 +132,10 @@ async def test_dut(dut):
 
 Current status
 --------------
-Current status: Testbenches can already be written with all the typical UVM 
+
+Testbenches can already be written with all the typical UVM 
 components. UVM Phasing is in place, and working. Stimulus can be generated
-using hierarchical sequences. Register
+using (even hierarchical) sequences. Register
 layer supports already read/write to registers (via frontdoor), and to 
 memories (frontdoor and backdoor). TLM 1.0 is implemented,
 put/get/analysis interfaces are done, and master/slave interfaces work. Initial
@@ -146,31 +145,30 @@ status:
 | Feature    | Status                                                    |
 | ---------  | ------                                                    |
 | TLM1.0     | Done                                                      |
-| TLM2.0     | Started, 2/3 examples working                             |
+| TLM2.0     | Done                                                      |
 | Components | Done                                                      |
 | Phases     | Done                                                      |
 | Objections | Test and env-level objections work                        |
 | Sequences  | Partially done, hier sequences work                       |
 | Registers  | Reg/mem access working, built-in sequences partially done |
 
-NOTE: Despite many working examples, the project is under development, and still
-missing a lot of functionality. Please try it out, and let me know if
+Please try it out, and let me know if
 something you require should be added, or even better, add it yourself, test it
 and create a pull request!
-
 
 HDL Simulators
 --------------
 
-Tested with Icarus Verilog (iverilog v11.0) and verilator (v4.106).
+Tested with Icarus Verilog (iverilog v13.0 (devel)) and verilator (v5.008). The
+exact commit for iverilog can be found from `ci/install_iverilog.sh`.
 
 Icarus Verilog and verilator are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.
 Memory backdoor access has issues with packed multi-dimensional arrays in
 verilator. Also, some other examples are not working with verilator yet.
 
-Proprietary simulators that work with cocotb can be used with
-uvm-python as well.
+Proprietary simulators that work with cocotb should work with
+uvm-python as well, but haven't been tested.
 
 Related projects
 ----------------

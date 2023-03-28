@@ -346,7 +346,7 @@ class UVMSequenceBase(UVMSequenceItem):
         # the "if (!(m_sequence_state inside {...}" works
         self.m_sequence_state = UVM_PRE_START
 
-        self.m_sequence_process = cocotb.fork(self.start_process(parent_sequence, call_pre_post))
+        self.m_sequence_process = cocotb.start_soon(self.start_process(parent_sequence, call_pre_post))
         await self.m_sequence_process
 
         if self.m_sequencer is not None:

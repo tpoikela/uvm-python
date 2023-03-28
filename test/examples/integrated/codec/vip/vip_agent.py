@@ -67,9 +67,9 @@ class vip_agent(UVMAgent):
     async def reset_and_suspend(self):
         #fork
         await sv.fork_join([
-           cocotb.fork(self.drv.reset_and_suspend()),
-           cocotb.fork(self.tx_mon.reset_and_suspend()),
-           cocotb.fork(self.rx_mon.reset_and_suspend())
+           cocotb.start_soon(self.drv.reset_and_suspend()),
+           cocotb.start_soon(self.tx_mon.reset_and_suspend()),
+           cocotb.start_soon(self.rx_mon.reset_and_suspend())
         ])
         #join
         self.sqr.stop_sequences()
@@ -77,18 +77,18 @@ class vip_agent(UVMAgent):
     async def suspend(self):
         await sv.fork_join([
         # fork
-            cocotb.fork(self.drv.suspend()),
-            cocotb.fork(self.tx_mon.suspend()),
-            cocotb.fork(self.rx_mon.suspend()),
+            cocotb.start_soon(self.drv.suspend()),
+            cocotb.start_soon(self.tx_mon.suspend()),
+            cocotb.start_soon(self.rx_mon.suspend()),
         ])
         # join
 
     async def resume(self):
         #      fork
         await sv.fork_join([
-            cocotb.fork(self.drv.resume()),
-            cocotb.fork(self.tx_mon.resume()),
-            cocotb.fork(self.rx_mon.resume()),
+            cocotb.start_soon(self.drv.resume()),
+            cocotb.start_soon(self.tx_mon.resume()),
+            cocotb.start_soon(self.rx_mon.resume()),
         ])
         #      join
 

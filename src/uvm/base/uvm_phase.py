@@ -1241,7 +1241,7 @@ class UVMPhase(UVMObject):
             #fork
             uvm_debug(cls, 'm_run_phases', 'Calling execute phase with |' +
                     str(qphase[0].get_name()) + '|')
-            cocotb.fork(qphase[0].execute_phase())
+            cocotb.start_soon(qphase[0].execute_phase())
             #join_none
             await uvm_zero_delay()
             #0;  // let the process start running
@@ -1354,7 +1354,7 @@ class UVMPhase(UVMObject):
                 # EXECUTING: (task phases)
                 #-----------
                 uvm_debug(self, 'execute_phase', "Forking now task_phase for uvm_top")
-                task_proc = cocotb.fork(task_phase.traverse(top, self, UVM_PHASE_EXECUTING))
+                task_proc = cocotb.start_soon(task_phase.traverse(top, self, UVM_PHASE_EXECUTING))
                 #wait(0); // stay alive for later kill
                 #join_none
 

@@ -165,7 +165,7 @@ async def module_clkgen(clk):
 async def module_top(dut):
 
     pif = pin_if(dut) #  pin_if pif(clk)
-    ck_proc = cocotb.fork(module_clkgen(pif.clk))
+    ck_proc = cocotb.start_soon(module_clkgen(pif.clk))
     #ck = clkgen(pif.clk) #  clkgen ck(clk)
 
     #d = dut(pif.slave_mp)

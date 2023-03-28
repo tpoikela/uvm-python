@@ -98,7 +98,7 @@ async def initial_begin(dut):
     svr.set_max_quit_count(10)
     UVMConfigDb.set(None, "", "dut", dut)
 
-    cocotb.fork(c.start())
+    cocotb.start_soon(c.start())
 
     await run_test()
 

@@ -191,11 +191,11 @@ class read_modify_write_seq(ubus_base_sequence):
     async def body(self):
         uvm_info(self.get_type_name(), sv.sformatf("%s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
+
         # READ A RANDOM LOCATION
         self.read_byte_seq0 = read_byte_seq("read_byte_seq")
         self.read_byte_seq0.do_not_randomize = 1
         await uvm_do_with(self, self.read_byte_seq0)
-        # lambda start_addr: start_addr in range(0,1023))
         self.addr_check = self.read_byte_seq0.rsp.addr
         self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
 
@@ -205,8 +205,6 @@ class read_modify_write_seq(ubus_base_sequence):
         self.write_byte_seq0.data0 = self.m_data0_check
         self.write_byte_seq0.do_not_randomize = 1
         await uvm_do_with(self, self.write_byte_seq0)
-        # lambda start_addr: start_addr == self.addr_check,
-        # lambda data0: data0 == self.m_data0_check)
 
         self.m_data0_check = write_byte_seq.last_data
 

@@ -32,6 +32,7 @@ from cocotb.utils import get_sim_time, simulator
 from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
                                  UVM_FATAL, UVM_INFO, UVM_LOG, UVM_LOW, UVM_MEDIUM, UVM_NONE,
                                  UVM_NO_ACTION, UVM_RM_RECORD, UVM_STOP, UVM_WARNING)
+from .uvm_debug import UVMDebug, uvm_debug
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
 
@@ -64,7 +65,7 @@ async def run_test(test_name="", dut=None):
 #//
 def uvm_get_report_object():
     """
-    Returns the nearest uvm_report_object when called.
+    Returns the nearest `UVMReportObject` when called.
     For the global version, it returns `UVMRoot`.
     """
     from .uvm_coreservice import UVMCoreService
@@ -80,7 +81,7 @@ def uvm_report_enabled(verbosity, severity=UVM_INFO, id=""):
 
     See also `UVMReportObject.uvm_report_enabled`.
 
-    Static methods of an extension of `UVMReportObject`, e.g. uvm_component-based
+    Static methods of an extension of `UVMReportObject`, e.g. `UVMComponent`-based
     objects, cannot call `uvm_report_enabled` because the call will resolve to
     the `UVMReportObject.uvm_report_enabled`, which is non-static.
     Static methods cannot call non-static methods of the same class.
@@ -114,7 +115,7 @@ def uvm_report_info(id, message, verbosity=UVM_MEDIUM, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_INFO, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -130,7 +131,7 @@ def uvm_report_error(id, message, verbosity=UVM_LOW, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_ERROR, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -146,7 +147,7 @@ def uvm_report_warning(id, message, verbosity=UVM_LOW, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_WARNING, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -173,7 +174,7 @@ def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_FATAL, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -210,7 +211,6 @@ def uvm_string_to_severity(sev_str, sev):
 
 
 def uvm_string_to_action(action_str, action):
-    #  string actions[$]
     actions = action_str.split('|')  # uvm_split_string(action_str,"|",actions)
     action = 0x0
     for i in range(len(actions)):
@@ -258,8 +258,7 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #//
 #// Function: uvm_string_to_bits
 #//
-#// Converts an input string to its bit-vector equivalent. Max bit-vector
-#// length is approximately 14000 characters.
+#// Converts an input string to its bit-vector equivalent.
 #//----------------------------------------------------------------------------
 
 
@@ -285,19 +284,22 @@ def uvm_string_to_bits(string: str) -> int:
 #  $swrite(uvm_bits_to_string, "%0s", str)
 #endfunction
 
-
-#verilator = True
 verilator = False
 
 sim_product = ''
 if simulator.is_running():
     sim_product = simulator.get_simulator_product()
-    print("uvm-python: Used simulator is |" + sim_product + "|")
+    if UVMDebug.DEBUG is True:
+        uvm_debug({}, "uvm_globals.py",
+            f"uvm-python: Used simulator is |{sim_product}|")
     if sim_product == "Verilator":
         verilator = True
 
-def uvm_has_verilator():
+def uvm_has_verilator() -> bool:
     return verilator
+
+def uvm_has_icarus() -> bool:
+    return sim_product == "Icarus Verilog"
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = False

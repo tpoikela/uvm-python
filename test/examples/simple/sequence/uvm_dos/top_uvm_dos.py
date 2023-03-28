@@ -153,7 +153,7 @@ class SoCLevelSeq(UVMSequence):
     def __init__(self, name=""):
         UVMSequence.__init__(self, name)
         self.seq_delay_ns = 10
-        self.rand('seq_delay', range(10, 90))
+        self.rand('seq_delay_ns', range(10, 90))
 
     async def body(self):
         sys0_seq = SubSysLevelSeq('sys0_seq')

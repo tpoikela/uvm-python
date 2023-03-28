@@ -42,10 +42,10 @@ async def hello_world(dut):
     #    uvm_default_printer.knobs.reference=0;
 
     # Required by ghdl, otherwise sim ends in fatal error
-    cocotb.fork(Clock(dut.clk, 10, "NS").start())
+    cocotb.start_soon(Clock(dut.clk, 10, "NS").start())
     mytop = top("top", parent=None)
     #    uvm_default_table_printer.knobs.type_width=20;
-    await run_test()
+    # await run_test("top"
 
     if mytop.error:
         raise Exception("mytop had errors")

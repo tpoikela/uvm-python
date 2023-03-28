@@ -53,6 +53,7 @@ class UVMTime:
     #   //
     #   // By default, the default resolution is 1.0e-12 (ps)
     #   //
+
     @classmethod
     def set_time_resolution(cls, res):
         # // Actually, it does not *really* need to be a power of 10.
@@ -67,6 +68,7 @@ class UVMTime:
     #   // the default resolution,
     #   // as specified by <set_time_resolution()>,
     #   // is used.
+
     def __init__(self, name="UVMTLMTime", res=0):
         self.m_name = name
         self.m_res = res
@@ -74,8 +76,6 @@ class UVMTime:
         if res == 0:
             self.m_res = UVMTime.m_resolution
         self.reset()
-
-
 
     #   // Function -- NODOCS -- get_name
     #   // Return the name of this instance
@@ -128,7 +128,7 @@ class UVMTime:
     #   //
     def incr(self, t, scaled, secs=1.0e-9):
         if t < 0.0:
-            uvm_error("UVM/TLM/TIMENEG", "Cannot increment UVMTLMTime variable " 
+            uvm_error("UVM/TLM/TIMENEG", "Cannot increment UVMTLMTime variable "
                     + self.m_name + " by a negative value")
             return
 

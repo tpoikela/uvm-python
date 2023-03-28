@@ -191,7 +191,7 @@ class UVMTaskPhase(UVMPhase):
         #proc = process::self()
         #proc.srandom(uvm_create_random_seed(phase.get_type_name(), comp.get_full_name()))
         #phase.m_num_procs_not_yet_returned += 1
-        proc = cocotb.fork(self._execute_fork_join_none(comp,phase))
+        proc = cocotb.start_soon(self._execute_fork_join_none(comp,phase))
         #phase.m_num_procs_not_yet_returned -= 1
         await uvm_zero_delay()
         #join_none
