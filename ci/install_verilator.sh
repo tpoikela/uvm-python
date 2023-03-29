@@ -22,7 +22,7 @@ if [ $? -ne 0 ]; then
     echo "make"
     make -d -j `nproc`
     echo "make install"
-    make -d install
+    #make -d install
 else
     echo "Verilator already built, skipping compile/install steps"
     # make -d install
