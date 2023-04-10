@@ -61,7 +61,6 @@ class UVMObject(sv_obj):
     depth = 0
     m_inst_count = 0
 
-    m_inst_count = 0
     use_uvm_seeding = True
     uvm_global_copy_map = {}  # type: Dict['UVMObject', 'UVMObject']
     _m_uvm_status_container = UVMStatusContainer()
@@ -91,7 +90,7 @@ class UVMObject(sv_obj):
 
 
     """
-        Group: Identification
+    Group: Identification
     """
 
     def set_name(self, name: str):

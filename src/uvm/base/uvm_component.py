@@ -67,7 +67,6 @@ class VerbositySetting():
     The verbosity settings may have a specific phase to start at.
     We will do this work in the `UVMComponent.phase_started` callback.
 
-    Variables:
     :ivar UVMComponent comp: Component related to the settings
     :ivar UVMPhase phase: Phase in which settings apply.
     :ivar int id: ID for verbosity setting
@@ -147,10 +146,12 @@ class UVMComponent(UVMReportObject):
     :cvar bool print_config_matches: Setting this static variable causes
         `UVMConfigDb.get` to print info about
         matching configuration settings as they are being applied.
-
     :ivar UVMTrDatabase tr_database: Specifies the `UVMTrDatabase` object to use
         for `begin_tr` and other methods in the <Recording Interface>.
         Default is `UVMCoreService.get_default_tr_database`.
+    :ivar bool print_enabled: This bit determines if this component should automatically be printed as a
+        child of its parent object. By default, all children are printed. However, this bit allows a parent
+        component to disable the printing of specific children.
     """
 
     print_config_matches = False
@@ -177,13 +178,6 @@ class UVMComponent(UVMReportObject):
         super().__init__(name)
         self.m_children: Dict[str, 'UVMComponent'] = {}  # uvm_component[string]
 
-        #// Variable: print_enabled
-        #//
-        #// This bit determines if this component should automatically be printed as a
-        #// child of its parent object.
-        #//
-        #// By default, all children are printed. However, this bit allows a parent
-        #// component to disable the printing of specific children.
         self.print_enabled = True
         self.m_current_phase = None  # the most recently executed phase
         self.m_parent = None
