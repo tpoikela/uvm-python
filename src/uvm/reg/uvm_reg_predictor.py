@@ -150,9 +150,10 @@ class UVMRegPredictor(UVMComponent):
             UVM_MEDIUM)
         # In case they forget to set byte_en
         rw.byte_en = -1
-        rw = self.adapter.bus2reg(tr, rw)
-        if rw is None:
-            uvm_error("REG_PREDICT_BUS2REG_ERR", "Adapter returned None from bus2reg")
+        self.adapter.bus2reg(tr, rw)
+        ## rw = self.adapter.bus2reg(tr, rw)
+        ## if rw is None:
+        ##     uvm_error("REG_PREDICT_BUS2REG_ERR", "Adapter returned None from bus2reg")
         rg = self.map.get_reg_by_offset(rw.addr, (rw.kind == UVM_READ))
 
         # TODO: Add memory look-up and call <uvm_mem::XsampleX()>

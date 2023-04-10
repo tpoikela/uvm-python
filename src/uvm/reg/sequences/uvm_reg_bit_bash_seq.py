@@ -19,7 +19,7 @@
 #//    the License for the specific language governing
 #//    permissions and limitations under the License.
 #// -------------------------------------------------------------
-#//
+
 """
 Title: Bit Bashing Test Sequences
 
@@ -38,46 +38,38 @@ from ...macros import (uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH
 from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_zero_delay
 
 
-#//----------------------------------------------------------------------------
-#// Class: UVMRegSingleBitBashSeq
-#//
-#// Verify the implementation of a single register
-#// by attempting to write 1's and 0's to every bit in it,
-#// via every address map in which the register is mapped,
-#// making sure that the resulting value matches the mirrored value.
-#//
-#// If bit-type resource named
-#// "NO_REG_TESTS" or "NO_REG_BIT_BASH_TEST"
-#// in the "REG::" namespace
-#// matches the full name of the register,
-#// the register is not tested.
-#//
-#//| uvm_resource_db#(bit)::set({"REG::",regmodel.blk.r0.get_full_name()},
-#//|                            "NO_REG_TESTS", 1, this);
-#//
-#// Registers that contain fields with unknown access policies
-#// cannot be tested.
-#//
-#// The DUT should be idle and not modify any register during this test.
-#//
-#//----------------------------------------------------------------------------
+class UVMRegSingleBitBashSeq(UVMRegSequence):
+    """
+     Class: UVMRegSingleBitBashSeq
+    
+     Verify the implementation of a single register
+     by attempting to write 1's and 0's to every bit in it,
+     via every address map in which the register is mapped,
+     making sure that the resulting value matches the mirrored value.
+    
+    If bit-type resource named "NO_REG_TESTS" or "NO_REG_BIT_BASH_TEST" in the
+    "REG::" namespace matches the full name of the register, the register is
+    not tested::
+    
+    UVMResourceDb.set({"REG::",regmodel.blk.r0.get_full_name()},
+                       "NO_REG_TESTS", 1, self)
+    
+     Registers that contain fields with unknown access policies
+     cannot be tested.
+    
+    The DUT should be idle and not modify any register during this test.
 
-
-class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
-
-    #   // Variable: rg
-    #   // The register to be tested
-    #   uvm_reg rg
+    :ivar rg (UVMReg): The register to be tested
+    """
 
     def __init__(self, name="UVMRegSingleBitBashSeq"):
         super().__init__(name)
         self.rg = None
 
-
     async def body(self):
-        fields = []  # uvm_reg_field[$]
-        mode = [""] * UVM_REG_DATA_WIDTH  # string [`UVM_REG_DATA_WIDTH]
-        maps = []  # uvm_reg_map [$]
+        fields = []
+        mode = [""] * UVM_REG_DATA_WIDTH
+        maps = []
         dc_mask = [0] * UVM_REG_DATA_WIDTH
         reset_val = 0x0
         n_bits = 0
@@ -172,8 +164,6 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
             v   = val
             exp = val
             mask = 1 << k
-            #val[k] = ~val[k]
-            #val = (val & ~mask) | (~val & mask)
             val ^= mask
             bit_val = (val >> k) & 0x1
 
@@ -207,46 +197,37 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
 uvm_object_utils(UVMRegSingleBitBashSeq)
 
 
-#//------------------------------------------------------------------------------
-#// Class: UVMRegBitBashSeq
-#//
-#//
-#// Verify the implementation of all registers in a block
-#// by executing the <UVMRegSingleBitBashSeq> sequence on it.
-#//
-#// If bit-type resource named
-#// "NO_REG_TESTS" or "NO_REG_BIT_BASH_TEST"
-#// in the "REG::" namespace
-#// matches the full name of the block,
-#// the block is not tested.
-#//
-#//| uvm_resource_db#(bit)::set({"REG::",regmodel.blk.get_full_name(),".*"},
-#//|                            "NO_REG_TESTS", 1, this);
-#//
-#//------------------------------------------------------------------------------
 
-
-class UVMRegBitBashSeq(UVMRegSequence):  # (uvm_sequence #(uvm_reg_item))
+class UVMRegBitBashSeq(UVMRegSequence):
+    """
+    Class: UVMRegBitBashSeq
+    
+    Verify the implementation of all registers in a block
+    by executing the <UVMRegSingleBitBashSeq> sequence on it.
+    
+    If bit-type resource named "NO_REG_TESTS" or "NO_REG_BIT_BASH_TEST" in the
+    "REG::" namespace matches the full name of the block, the block is not
+    tested::
+    
+    UVMResourceDb.set({"REG::",regmodel.blk.get_full_name(),".*"},
+                       "NO_REG_TESTS", 1, self)
+    
+    :ivar reg_seq: The sequence used to test one register
+    :ivar model: The block to be tested. Declared in the base class.
+    """
 
     def __init__(self, name="UVMRegBitBashSeq"):
         super().__init__(name)
-        #   // Variable: reg_seq
-        #   //
-        #   // The sequence used to test one register
-        #   //
         self.reg_seq = None
-        #   // Variable: model
-        #   //
-        #   // The block to be tested. Declared in the base class.
-        #   //
         self.model = None
 
-    #   // Task: body
-    #   //
-    #   // Executes the Register Bit Bash sequence.
-    #   // Do not call directly. Use seq.start() instead.
-    #   //
     async def body(self):
+        """
+        Task: body
+        
+        Executes the Register Bit Bash sequence.
+        Do not call directly. Use seq.start() instead.
+        """
 
         if self.model is None:
             uvm_error("UVMRegBitBashSeq", "No register model specified to run sequence on")

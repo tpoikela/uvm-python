@@ -21,7 +21,7 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-from typing import List
+from typing import List, Any
 
 from .uvm_sequencer_param_base import UVMSequencerParamBase
 from ..tlm1.uvm_sqr_connections import UVMSeqItemPullImp
@@ -35,6 +35,7 @@ FATAL_MSG1 = ("Item_done() called with no outstanding requests." +
     + " get_next_item().")
 
 
+@uvm_component_utils
 class UVMSequencer(UVMSequencerParamBase):
     """
     Group: Sequencer Interface
@@ -43,10 +44,10 @@ class UVMSequencer(UVMSequencerParamBase):
     The interface is defined as::
 
       Requests:
-       async def get_next_item      (request: List)
+       async def get_next_item      (request: List) -> UVMSequenceItem
        async def try_next_item      (request: List)
-       async def get                (request: List)
-       async def peek               (request: List)
+       async def get                (request: List) -> UVMSequenceItem
+       async def peek               (request: List) -> UVMSequenceItem
       Responses:
        def item_done          (response=None)
        async def put          (response: UVMSequenceItem)
@@ -92,19 +93,17 @@ class UVMSequencer(UVMSequencerParamBase):
             while self.m_req_fifo.try_get(t):
                 t = []
 
-    #  extern virtual function string get_type_name()
 
 
-
-    async def get_next_item(self, t):
+    async def get_next_item(self, t=None) -> Any:
         """
         Retrieves the next available item from a sequence.
 
         Args:
             t (list): Empty list into which item is appended
         """
-        uvm_check_output_args([t])
-        # req_item = None
+        if t is not None:
+            uvm_check_output_args(t)
 
         # If a sequence_item has already been requested, then get_next_item()
         # should not be called again until item_done() has been called.
@@ -120,7 +119,7 @@ class UVMSequencer(UVMSequencerParamBase):
         # is called between requests
         self.sequence_item_requested = True
         self.get_next_item_called = True
-        await self.m_req_fifo.peek(t)
+        return await self.m_req_fifo.peek(t)
 
     async def try_next_item(self, t: List):
         """
@@ -144,7 +143,6 @@ class UVMSequencer(UVMSequencerParamBase):
 
         # return if none available
         if selected_sequence == -1:
-            # t = None
             return
 
         # now, allow chosen sequence to resume
@@ -165,7 +163,7 @@ class UVMSequencer(UVMSequencerParamBase):
                 "Sequences should not consume time between calls to start_item and finish_item. " +
                 "Returning null item."), UVM_NONE)
 
-    def item_done(self, item=None):
+    def item_done(self, item=None) -> None:
         """
         Indicates that the request is completed.
 
@@ -191,7 +189,7 @@ class UVMSequencer(UVMSequencerParamBase):
         self.grant_queued_locks()
 
 
-    async def put(self, t):
+    async def put(self, t) -> None:
         """
         Sends a response back to the sequence that issued the request.
 
@@ -202,7 +200,7 @@ class UVMSequencer(UVMSequencerParamBase):
         await uvm_zero_delay()
 
 
-    async def get(self, t: List):
+    async def get(self, t: List=None) -> Any:
         """
         Retrieves the next available item from a sequence into the given list.
 
@@ -212,11 +210,12 @@ class UVMSequencer(UVMSequencerParamBase):
         if self.sequence_item_requested == 0:
             await self.m_select_sequence()
         self.sequence_item_requested = 1
-        await self.m_req_fifo.peek(t)
+        res = await self.m_req_fifo.peek(t)
         self.item_done()
+        return res
 
 
-    async def peek(self, t: List):
+    async def peek(self, t: List=None) -> Any:
         """
         Gets the current request item if one is in the FIFO.
 
@@ -229,7 +228,7 @@ class UVMSequencer(UVMSequencerParamBase):
         # Set flag indicating that the item has been requested to ensure that item_done or get
         # is called between requests
         self.sequence_item_requested = 1
-        await self.m_req_fifo.peek(t)
+        return await self.m_req_fifo.peek(t)
 
 
     """
@@ -256,9 +255,6 @@ class UVMSequencer(UVMSequencerParamBase):
     #    return last_rsp(0)
     #  endfunction
     #  extern protected virtual function int m_find_number_driver_connections()
-
-
-uvm_component_utils(UVMSequencer)
 
 
 #//------------------------------------------------------------------------------

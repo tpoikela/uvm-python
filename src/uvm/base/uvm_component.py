@@ -1072,26 +1072,26 @@ class UVMComponent(UVMReportObject):
             for c in self.m_children:
                 self.m_children[c].set_phase_imp(phase,imp,hier)
 
+    async def suspend(self):
+        """
+        Suspend this component.
+        
+        This method must be implemented by the user to suspend the
+        component according to the protocol and functionality it implements.
+        A suspended component can be subsequently resumed using <resume()>.
+        """
+        uvm_warning("COMP/SPND/UNIMP", "suspend() not implemented")
 
-    #// Task: suspend
-    #//
-    #// Suspend this component.
-    #//
-    #// This method must be implemented by the user to suspend the
-    #// component according to the protocol and functionality it implements.
-    #// A suspended component can be subsequently resumed using <resume()>.
-    #extern virtual task suspend ()
-
-
-    #// Task: resume
-    #//
-    #// Resume this component.
-    #//
-    #// This method must be implemented by the user to resume a component
-    #// that was previously suspended using <suspend()>.
-    #// Some component may start in the suspended state and
-    #// may need to be explicitly resumed.
-    #extern virtual task resume ()
+    async def resume(self):
+        """
+        Resume this component.
+        
+        This method must be implemented by the user to resume a component
+        that was previously suspended using <suspend()>.
+        Some component may start in the suspended state and
+        may need to be explicitly resumed.
+        """
+        uvm_warning("COMP/RSUM/UNIMP", "resume() not implemented")
 
 
     def resolve_bindings(self) -> None:
@@ -1105,9 +1105,7 @@ class UVMComponent(UVMReportObject):
         """
         return
 
-    #extern function string massage_scope(string scope)
     def massage_scope(self, scope: str) -> str:
-        # uvm_top
         if scope == "":
             return "^$"
 
@@ -1115,11 +1113,11 @@ class UVMComponent(UVMReportObject):
             return self.get_full_name() + ".*"
 
         # absolute path to the top-level test
-        if(scope == "uvm_test_top"):
+        if scope == "uvm_test_top":
             return "uvm_test_top"
 
         # absolute path to uvm_root
-        if(scope[0] == "."):
+        if scope[0] == ".":
             return self.get_full_name() + scope
         return self.get_full_name() + "." + scope
 
@@ -1265,7 +1263,7 @@ class UVMComponent(UVMReportObject):
         T_cont.field_array.clear()
 
 
-    def print_config_settings(self, field="", comp=None, recurse=False):
+    def print_config_settings(self, field="", comp=None, recurse=False) -> None:
         """
         Function: print_config_settings
 
@@ -1324,7 +1322,7 @@ class UVMComponent(UVMReportObject):
                 c.print_config(recurse, audit)
 
 
-    def print_config_with_audit(self, recurse=0):
+    def print_config_with_audit(self, recurse=0) -> None:
         """
         Function: print_config_with_audit
 
@@ -1408,69 +1406,67 @@ class UVMComponent(UVMReportObject):
     #//
     #//----------------------------------------------------------------------------
 
-    #// Function: create_component
-    #//
-    #// A convenience function for <uvm_factory::create_component_by_name>,
-    #// this method calls upon the factory to create a new child component
-    #// whose type corresponds to the preregistered type name, `requested_type_name`,
-    #// and instance name, `name`. This method is equivalent to:
-    #//
-    #//|  factory.create_component_by_name(requested_type_name,
-    #//|                                   get_full_name(), name, this)
-    #//
-    #// If the factory determines that a type or instance override exists, the type
-    #// of the component created may be different than the requested type. See
-    #// <set_type_override> and <set_inst_override>. See also <uvm_factory> for
-    #// details on factory operation.
     def create_component(self, requested_type_name, name):
+        """
+        Function: create_component
+        
+        A convenience function for <uvm_factory::create_component_by_name>,
+        this method calls upon the factory to create a new child component
+        whose type corresponds to the preregistered type name, `requested_type_name`,
+        and instance name, `name`. This method is equivalent to::
+        
+        factory.create_component_by_name(requested_type_name,
+                                         get_full_name(), name, this)
+        
+        If the factory determines that a type or instance override exists, the type
+        of the component created may be different than the requested type. See
+        <set_type_override> and <set_inst_override>. See also <uvm_factory> for
+        details on factory operation.
+        """
         factory = _get_factory()
         return factory.create_component_by_name(requested_type_name,
             self.get_full_name(), name, self)
 
-    #// Function: create_object
-    #//
-    #// A convenience function for <uvm_factory::create_object_by_name>,
-    #// this method calls upon the factory to create a new object
-    #// whose type corresponds to the preregistered type name,
-    #// `requested_type_name`, and instance name, `name`. This method is
-    #// equivalent to:
-    #//
-    #//|  factory.create_object_by_name(requested_type_name,
-    #//|                                get_full_name(), name)
-    #//
-    #// If the factory determines that a type or instance override exists, the
-    #// type of the object created may be different than the requested type.  See
-    #// <uvm_factory> for details on factory operation.
     def create_object(self, requested_type_name, name=""):
+        """
+        A convenience function for `UVMFactory.create_object_by_name`,
+        this method calls upon the factory to create a new object
+        whose type corresponds to the preregistered type name,
+        `requested_type_name`, and instance name, `name`. This method is
+        equivalent to::
+        
+            factory.create_object_by_name(requested_type_name,
+                                          get_full_name(), name)
+        
+        If the factory determines that a type or instance override exists, the
+        type of the object created may be different than the requested type.  See
+        `UVMFactory` for details on factory operation.
+        """
         factory = _get_factory()
         return factory.create_object_by_name(requested_type_name,
             self.get_full_name(), name)
 
 
-    #// Function: set_type_override_by_type
-    #//
-    #// A convenience function for `UVMFactory.set_type_override_by_type`, this
-    #// method registers a factory override for components and objects created at
-    #// this level of hierarchy or below. This method is equivalent to:
-    #//
-    #//|  factory.set_type_override_by_type(original_type, override_type,replace)
-    #//
-    #// The `relative_inst_path` is relative to this component and may include
-    #// wildcards. The `original_type` represents the type that is being overridden.
-    #// In subsequent calls to `UVMFactory.create_object_by_type` or
-    #// `UVMFactory.create_component_by_type`, if the requested_type matches the
-    #// `original_type` and the instance paths match, the factory will produce
-    #// the `override_type`.
-    #//
-    #// The original and override type arguments are lightweight proxies to the
-    #// types they represent. See <set_inst_override_by_type> for information
-    #// on usage.
-    #extern static function void set_type_override_by_type
-    #                                           (uvm_object_wrapper original_type,
-    #                                            uvm_object_wrapper override_type,
-    #                                            bit replace=1)
     @classmethod
     def set_type_override_by_type(cls, original_type, override_type, replace=1):
+        """
+        A convenience function for `UVMFactory.set_type_override_by_type`, this
+        method registers a factory override for components and objects created at
+        this level of hierarchy or below. This method is equivalent to::
+        
+            factory.set_type_override_by_type(original_type, override_type,replace)
+        
+        The `relative_inst_path` is relative to this component and may include
+        wildcards. The `original_type` represents the type that is being overridden.
+        In subsequent calls to `UVMFactory.create_object_by_type` or
+        `UVMFactory.create_component_by_type`, if the requested_type matches the
+        `original_type` and the instance paths match, the factory will produce
+        the `override_type`.
+        
+        The original and override type arguments are lightweight proxies to the
+        types they represent. See <set_inst_override_by_type> for information
+        on usage.
+        """
         factory = _get_factory()
         factory.set_type_override_by_type(original_type, override_type, replace)
 
@@ -1545,24 +1541,26 @@ class UVMComponent(UVMReportObject):
     #endfunction
 
 
-    #// Function: set_type_override
-    #//
-    #// A convenience function for <uvm_factory::set_type_override_by_name>,
-    #// this method configures the factory to create an object of type
-    #// `override_type_name` whenever the factory is asked to produce a type
-    #// represented by `original_type_name`.  This method is equivalent to:
-    #//
-    #//|  factory.set_type_override_by_name(original_type_name,
-    #//|                                    override_type_name, replace)
-    #//
-    #// The `original_type_name` typically refers to a preregistered type in the
-    #// factory. It may, however, be any arbitrary string. Subsequent calls to
-    #// create_component or create_object with the same string and matching
-    #// instance path will produce the type represented by override_type_name.
-    #// The `override_type_name` must refer to a preregistered type in the factory.
     @classmethod
     def set_type_override(cls, original_type_name, override_type_name,
             replace=1):
+        """
+        Function: set_type_override
+        
+        A convenience function for `UVMFactory.set_type_override_by_name`,
+        this method configures the factory to create an object of type
+        `override_type_name` whenever the factory is asked to produce a type
+        represented by `original_type_name`.  This method is equivalent to::
+        
+            factory.set_type_override_by_name(original_type_name,
+                                              override_type_name, replace)
+        
+        The `original_type_name` typically refers to a preregistered type in the
+        factory. It may, however, be any arbitrary string. Subsequent calls to
+        create_component or create_object with the same string and matching
+        instance path will produce the type represented by override_type_name.
+        The `override_type_name` must refer to a preregistered type in the factory.
+        """
         factory = _get_factory()
         factory.set_type_override_by_name(original_type_name,override_type_name, replace)
 
@@ -1591,13 +1589,13 @@ class UVMComponent(UVMReportObject):
     #                                       string override_type_name)
 
 
-    #// Function: print_override_info
-    #//
-    #// This factory debug method performs the same lookup process as create_object
-    #// and create_component, but instead of creating an object, it prints
-    #// information about what type of object would be created given the
-    #// provided arguments.
     def print_override_info(self, requested_type_name, name=""):
+        """
+        This factory debug method performs the same lookup process as create_object
+        and create_component, but instead of creating an object, it prints
+        information about what type of object would be created given the
+        provided arguments.
+        """
         factory = _get_factory()
         factory.debug_create_by_name(requested_type_name, self.get_full_name(), name)
 
@@ -2638,8 +2636,6 @@ class UVMComponent(UVMReportObject):
 #//
 #//------------------------------------------------------------------------------
 
-#
-#
 #// set_inst_override
 #// -----------------
 #
@@ -2659,85 +2655,6 @@ class UVMComponent(UVMReportObject):
 #                            override_type_name,
 #                            full_inst_path)
 #endfunction
-#
-#
-#
-#
-#//------------------------------------------------------------------------------
-#//
-#// Phase interface
-#//
-#//------------------------------------------------------------------------------
-#
-#
-#// phase methods
-#//--------------
-#// these are prototypes for the methods to be implemented in user components
-#// build_phase() has a default implementation, the others have an empty default
-#
-#// these phase methods are common to all components in UVM. For backward
-#// compatibility, they call the old style name (without the _phse)
-#
-#function void uvm_component::connect_phase(uvm_phase phase)
-#  connect()
-#  return
-#endfunction
-#function void uvm_component::end_of_elaboration_phase(uvm_phase phase)
-#  end_of_elaboration()
-#  return
-#endfunction
-#function void uvm_component::extract_phase(uvm_phase phase)
-#  extract()
-#  return
-#endfunction
-#function void uvm_component::check_phase(uvm_phase phase)
-#  check()
-#  return
-#endfunction
-#function void uvm_component::report_phase(uvm_phase phase)
-#  report()
-#  return
-#endfunction
-#
-#
-#// These are the old style phase names. In order for runtime phase names
-#// to not conflict with user names, the _phase postfix was added.
-#
-#function void uvm_component::connect();             return; endfunction
-#function void uvm_component::end_of_elaboration();  return; endfunction
-#function void uvm_component::extract();             return; endfunction
-#function void uvm_component::check();               return; endfunction
-#function void uvm_component::report();              return; endfunction
-#function void uvm_component::final_phase(uvm_phase phase);         return; endfunction
-#
-#// these runtime phase methods are only called if a set_domain() is done
-#
-#//------------------------------
-#// phase / schedule / domain API
-#//------------------------------
-#// methods for VIP creators and integrators to use to set up schedule domains
-#// - a schedule is a named, organized group of phases for a component base type
-#// - a domain is a named instance of a schedule in the master phasing schedule
-#
-#
-#// suspend
-#// -------
-#
-#task uvm_component::suspend()
-#   `uvm_warning("COMP/SPND/UNIMP", "suspend() not implemented")
-#endtask
-#
-#
-#// resume
-#// ------
-#
-#task uvm_component::resume()
-#   `uvm_warning("COMP/RSUM/UNIMP", "resume() not implemented")
-#endtask
-#
-#
-#
-#
 #
 #
 #//------------------------------------------------------------------------------

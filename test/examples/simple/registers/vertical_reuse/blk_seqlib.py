@@ -22,7 +22,6 @@
 #// -------------------------------------------------------------
 #//
 
-# import cocotb
 from cocotb.triggers import FallingEdge
 
 from uvm.reg.uvm_reg_sequence import *
@@ -101,7 +100,7 @@ class blk_R_test_seq(UVMRegSequence):
         status = []
         await self.model.R.mirror(status, UVM_CHECK, parent=self)
         self.check_status(status, "MIRROR3 FAIL")
-        #
+
         # Reset the register and check
         status = []
         await self.model.CTL.write(status, reg_fld_B_CTL_CTL.CLR, parent=self)

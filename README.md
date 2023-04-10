@@ -5,23 +5,28 @@
 UVM library for Python
 ======================
 
-This is a port of SystemVerilog (SV) Universal Verification Methodology (UVM)
-1.2 to Python and cocotb. Icarus Verilog (iverilog) and Verilator have been used for
-testing the code so far.
+uvm-python is a Python and cocotb-based port of the SystemVerilog Universal
+Verification Methodology (UVM) 1.2. The code has been extensively tested using
+Icarus Verilog (iverilog) and Verilator.
 
-See documentation for more details:
+Currently, there are no open source/free tools available for working with
+SystemVerilog UVM. However, with the use of cocotb, testbenches can be written
+in Python, making it possible to work with both free and proprietary simulators.
+The uvm-python package offers an API that is similar to the original SV-UVM
+version, making it easy for users to transfer their UVM verification skills and
+API knowledge from SV to Python.
+
+For those looking to port a larger amount of SystemVerilog code to use
+uvm-python, the package includes a regex-based script, `bin/sv2py.pl`, that can be
+used as a starting point. However, note that significant manual edits may still
+be required to ensure the code works correctly.
+
+For more information, please refer to the `uvm-python` documentation and user's
+guide.
+
+Documentation:
   - [uvm-python Documentation](https://uvm-python.readthedocs.io/).
   - [uvm-python User's Guide](https://uvm-python.readthedocs.io/en/latest/uvm_users_guide_1.2.html)
-
-SystemVerilog UVM is not currently supported by any open source/free tools. cocotb offers
-excellent solution to interact with any simulator (free/proprietary), so
-testbenches can be written in Python as well. `uvm-python` tries to offer
-an API similar to the original SV-UVM version. This means that many UVM verificaton
-skills and API knowledge are transferable from SV to Python very easily.
-
-If you want to port a larger bulk of SV code to use `uvm-python`, you can try the
-script `bin/sv2py.pl` as the first step. It's a regex-based solution, and code
-will still require lots of manual edits to work.
 
 Documentation
 -------------

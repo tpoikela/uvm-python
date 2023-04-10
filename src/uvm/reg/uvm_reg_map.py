@@ -34,6 +34,7 @@ from .uvm_reg_model import (UVMRegMapAddrRange, UVM_BIG_ENDIAN, UVM_BIG_FIFO, UV
 from .uvm_reg_item import UVMRegBusOp
 from ..seq import UVMSequenceBase
 from .uvm_reg_cbs import UVMRegReadOnlyCbs, UVMRegWriteOnlyCbs
+from typing import List
 
 UVM_VERB_MEM_MAP = UVM_LOW
 
@@ -43,7 +44,7 @@ class UVMRegMapInfo:
         self.offset = 0
         self.rights = ""
         self.unmapped = False
-        self.addr = []  # uvm_reg_addr_t[]
+        self.addr = []
         self.frontdoor = None  # uvm_reg_frontdoor
         self.mem_range = UVMRegMapAddrRange()
 
@@ -76,27 +77,21 @@ class UVMRegTransactionOrderPolicy(UVMObject):
             q:
         Raises:
         """
-        raise Exception("UVMRegTransactionOrderPolicy::order pure virtual function")
-
-
-#------------------------------------------------------------------------------
-#
-# Class: uvm_reg_map
-#
-# :Address map abstraction class
-#
-# This class represents an address map.
-# An address map is a collection of registers and memories
-# accessible via a specific physical interface.
-# Address maps can be composed into higher-level address maps.
-#
-# Address maps are created using the <uvm_reg_block::create_map()>
-# method.
-#------------------------------------------------------------------------------
+        raise NotImplementedError("UVMRegTransactionOrderPolicy.order")
 
 
 class UVMRegMap(UVMObject):
-
+    """
+    Class: UVMRegMap
+    
+    Address map abstraction class
+    
+    This class represents an address map. An address map is a collection of
+    registers and memories accessible via a specific physical interface. Address
+    maps can be composed into higher-level address maps.
+    
+    Address maps are created using the `UVMRegBlock.create_map()` method.
+    """
 
     def Xinit_address_mapX(self):
         bus_width = 0
@@ -249,12 +244,11 @@ class UVMRegMap(UVMObject):
 
     def __init__(self, name="uvm_reg_map"):
         """
-           Function: new
-
-           Create a new instance
+        Create a new instance. Note, in generate you should call 
+        `UVMRegBlock.create_map` unless you have explicit reason to call this.
 
         Args:
-            name:
+            name (str): Name of the address map.
         """
         n = "default_map"
         if name != "":
@@ -1078,7 +1072,7 @@ class UVMRegMap(UVMObject):
     #   extern virtual function int unsigned get_size()
 
 
-    def get_physical_addresses(self, base_addr, mem_offset, n_bytes, addr):
+    def get_physical_addresses(self, base_addr, mem_offset, n_bytes, addr: List):
         """
 
            Function: get_physical_addresses
@@ -1115,9 +1109,8 @@ class UVMRegMap(UVMObject):
         multiplier = 1
         if self.m_byte_addressing:
             multiplier = bus_width
-        #addr = new [0]
 
-        if (n_bytes <= 0):
+        if n_bytes <= 0:
            uvm_fatal("RegModel", sv.sformatf(
                "Cannot access %0d bytes. Must be greater than 0", n_bytes))
            return 0
@@ -1186,14 +1179,10 @@ class UVMRegMap(UVMObject):
                 bus_width = w
 
         return bus_width
-        #
-        #endfunction: get_physical_addresses
 
 
-    def get_reg_by_offset(self, offset, read=True):
+    def get_reg_by_offset(self, offset: int, read=True):
         """
-
-
            Function: get_reg_by_offset
 
            Get register mapped at offset
@@ -1444,15 +1433,17 @@ class UVMRegMap(UVMObject):
                     op = None  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
                     await rw.parent.get_base_response(bus_rsp)
-                    rw_access = adapter.bus2reg(bus_rsp, rw_access)
+                    #rw_access = adapter.bus2reg(bus_rsp, rw_access)
+                    adapter.bus2reg(bus_rsp, rw_access)
                 else:
-                    rw_access = adapter.bus2reg(bus_req, rw_access)
-                    if rw_access is None:
-                        uvm_error("ADAPTER_BUS2REG_NONE", sv.sformatf("Adapter %s"
-                            + " returned None for RW item %s",
-                            adapter.get_name(),
-                            bus_req.convert2string())
-                        )
+                    #rw_access = adapter.bus2reg(bus_req, rw_access)
+                    adapter.bus2reg(bus_req, rw_access)
+                    #if rw_access is None:
+                    #    uvm_error("ADAPTER_BUS2REG_NONE", sv.sformatf("Adapter %s"
+                    #        + " returned None for RW item %s",
+                    #        adapter.get_name(),
+                    #        bus_req.convert2string())
+                    #    )
 
                 if (rw.parent is not None and i == len(addrs)-1):
                     rw.parent.post_do(rw)

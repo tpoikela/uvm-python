@@ -34,20 +34,16 @@ from blk_seqlib import *
 
 
 class dut_reset_seq(UVMSequence):
-    #
+
     def __init__(self, name="dut_reset_seq"):
         super().__init__(name)
         self.vif = None
-
-    #
     
     async def body(self):
         self.vif.rst <= 1
         for i in range(5):
             await FallingEdge(self.vif.clk)
         self.vif.rst <= 0
-
-    #endclass
 
 uvm_object_utils(dut_reset_seq)
 
@@ -57,8 +53,6 @@ class sys_R_test_seq(UVMRegSequence):
     def __init__(self, name="sys_R_test_seq"):
         super().__init__(name)
         self.model = None  # reg_sys_S
-
-
     
     async def body(self):
         if self.model is None:
@@ -66,8 +60,6 @@ class sys_R_test_seq(UVMRegSequence):
             return
         for i in range(2):
             await self.start_blk_seq(i)
-
-
     
     async def start_blk_seq(self, i):
         # fork
@@ -75,9 +67,5 @@ class sys_R_test_seq(UVMRegSequence):
                 None, self.get_full_name())
         seq.model = self.model.B[i]
         await seq.start(None, self)
-        #end join_none
-
-
-    #endclass
 
 uvm_object_utils(sys_R_test_seq)

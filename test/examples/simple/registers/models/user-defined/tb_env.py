@@ -35,23 +35,18 @@ from uvm.reg.uvm_reg_predictor import UVMRegPredictor
 class dut_rw():
 
     @classmethod
-    
     async def rw(rw, dut):
-        if (rw.addr == 0x0000):
+        if rw.addr == 0x0000:
             #'h0000: // acp (MSB)
             if (rw.read):
                 rw.data = dut.acp[15:8]
-        elif (rw.addr == 0x0001):  # 'h0001: // acp (LSB)
-            if (rw.read):
+        elif rw.addr == 0x0001:  # 'h0001: // acp (LSB)
+            if rw.read:
                 rw.data = dut.acp[7:0]
             else:
                 dut.acp += 1
-        #1;
         await Timer(1, "NS")
-        # $write("%s\n", rw.convert2string());
-#endclass
 
-#class tb_env extends uvm_env;
 class tb_env(UVMEnv):
     #
     def __init__(self, name="tb_env", parent=None):

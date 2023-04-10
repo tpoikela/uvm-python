@@ -55,8 +55,6 @@ NON_STD_VERB = "Non-standard verbosity value, using provided '%0d'."
 
 LINE = "----------------------------------------------------------------"
 
-UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR = 0
-
 MSG_MULTTIMOUT = ("Multiple (%0d) +UVM_TIMEOUT arguments provided on the command line. "
     + "'%s' will be used.  Provided list: %s.")
 
@@ -74,7 +72,7 @@ class UVMRoot(UVMComponent):
     automatically creates a single instance of `UVMRoot` that users can
     access via the global (uvm-scope) variable, `uvm_top`.
 
-    The `uvm_top` instance of ~uvm_root~ plays several key roles in the UVM.
+    The `uvm_top` instance of `UVMRoot` plays several key roles in the UVM.
 
     Implicit top-level - The `uvm_top` serves as an implicit top-level component.
     Any component whose parent is specified as `None` becomes a child of `uvm_top`.
@@ -92,7 +90,7 @@ class UVMRoot(UVMComponent):
 
     Global reporter - Because `uvm_top` is globally accessible (in uvm
     scope), UVM's reporting mechanism is accessible from anywhere
-    outside ~uvm_component~, such as in modules and sequences.
+    outside `UVMComponent`, such as in modules and sequences.
     See `uvm_report_error`, `uvm_report_warning`, and other global
     methods.
 
@@ -188,11 +186,6 @@ class UVMRoot(UVMComponent):
             UVMRoot.m_inst.m_domain = UVMDomain.get_uvm_domain()
             cls.m_called_get_common_domain = False
         return UVMRoot.m_inst
-
-
-    #@cocotb.coroutine
-    #def run_phase(self):
-    # TODO at checks that sim_time == 0
 
     def get_type_name(self):
         return "uvm_root"
@@ -860,7 +853,6 @@ class UVMRoot(UVMComponent):
 
     def report_header(self, _file=0) -> None:
         """
-         extern virtual function void report_header(UVM_FILE file = 0)
         Args:
             _file:
         """
@@ -883,12 +875,11 @@ class UVMRoot(UVMComponent):
         q.append(uvm_tpoikela_copyright + "\n")
         q.append(LINE + "\n")
 
-        if UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR == 0:
-            if UVMRoot.m_relnotes_done is False:
-                q.append("\n  ***********       IMPORTANT RELEASE NOTES         ************\n")
+        if UVMRoot.m_relnotes_done is False:
+            q.append("\n  ***********       IMPORTANT RELEASE NOTES         ************\n")
             q.append("\n  You are using a Python version of the UVM library which \n")
             q.append("  requires cocotb and an HDL simulator.\n")
-            UVMRoot.m_relnotes_done = True
+        UVMRoot.m_relnotes_done = True
 
         if UVMRoot.m_relnotes_done is True:
             q.append("\n      (Specify +UVM_NO_RELNOTES to turn off this notice)\n")
@@ -896,8 +887,24 @@ class UVMRoot(UVMComponent):
         self.uvm_report_info("UVM/RELNOTES", UVM_STRING_QUEUE_STREAMING_PACK(q), UVM_LOW)
 
 
-    #  // For error checking
-    #  extern virtual task run_phase (uvm_phase phase)
+    #// It is required that the run phase start at simulation time 0
+    #// TBD this looks wrong - taking advantage of uvm_root not doing anything else?
+    #// TBD move to phase_started callback?
+    async def run_phase(self, phase):
+        # Check that the command line arguments are in effect
+        for action in UVMComponent.m_uvm_applied_cl_action:
+            if not action.used:
+                uvm_warning("INVLCMDARGS", f"\"+uvm_set_action={action.arg}\" never took effect due to a mismatching component pattern")
+
+        for sev in UVMComponent.m_uvm_applied_cl_sev:
+            if not sev.used:
+                uvm_warning("INVLCMDARGS", f"\"+uvm_set_severity={sev.arg}\" never took effect due to a mismatching component pattern")
+
+        if sv.time() > 0:
+            uvm_fatal("RUNPHSTIME", ("The run phase must start at time 0, current time is " +
+                f'{sv.realtime()}' + ". No non-zero delays are allowed before " +
+                "run_test(), and pre-run user defined phases may not consume " +
+                "simulation time before the start of the run phase."))
 
     def phase_started(self, phase) -> None:
         """
@@ -940,7 +947,7 @@ def get_report_server() -> 'UVMReportServer':
 :cvar uvm_top
 
 This is the top-level that governs phase execution and provides component
-search interface. See <uvm_root> for more information.
+search interface. See `UVMRoot` for more information.
 """
 uvm_top: UVMRoot = UVMRoot.get()
 
@@ -1019,25 +1026,3 @@ uvm_top: UVMRoot = UVMRoot.get()
 #
 #endfunction : m_process_default_sequence
 
-
-
-#// It is required that the run phase start at simulation time 0
-#// TBD this looks wrong - taking advantage of uvm_root not doing anything else?
-#// TBD move to phase_started callback?
-#task uvm_root::run_phase (uvm_phase phase)
-#  // check that the commandline are took effect
-#  foreach(m_uvm_applied_cl_action[idx])
-#	  if(m_uvm_applied_cl_action[idx].used==0):
-#		    `uvm_warning("INVLCMDARGS",$sformatf("\"+uvm_set_action=%s\" never took effect due to a mismatching component pattern",m_uvm_applied_cl_action[idx].arg))
-#	  end
-#  foreach(m_uvm_applied_cl_sev[idx])
-#	  if(m_uvm_applied_cl_sev[idx].used==0):
-#		    `uvm_warning("INVLCMDARGS",$sformatf("\"+uvm_set_severity=%s\" never took effect due to a mismatching component pattern",m_uvm_applied_cl_sev[idx].arg))
-#	  end
-#
-#  if($time > 0)
-#    `uvm_fatal("RUNPHSTIME", {"The run phase must start at time 0, current time is ",
-#       $sformatf("%0t", $realtime), ". No non-zero delays are allowed before ",
-#       "run_test(), and pre-run user defined phases may not consume ",
-#       "simulation time before the start of the run phase."})
-#endtask

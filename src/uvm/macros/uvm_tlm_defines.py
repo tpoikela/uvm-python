@@ -25,6 +25,7 @@ import cocotb
 from ..base.uvm_globals import uvm_check_output_args
 from ..tlm1.uvm_tlm_imps import add_base_class, UVM_IMP_COMMON
 from ..base.uvm_port_base import UVMPortBase
+from typing import Any
 
 
 def uvm_check_ref_arg(func_name, req_arg):
@@ -577,9 +578,10 @@ def UVM_SEQ_ITEM_PULL_IMP(T, imp):
     setattr(T, 'is_auto_item_recording_enabled', is_auto_item_recording_enabled)
 
     
-    async def get_next_item(self, req_arg):
-        uvm_check_ref_arg('get_next_item', req_arg)
-        await getattr(self, imp).get_next_item(req_arg)
+    async def get_next_item(self, req_arg=None) -> Any:
+        if req_arg is not None:
+            uvm_check_ref_arg('get_next_item', req_arg)
+        return await getattr(self, imp).get_next_item(req_arg)
     setattr(T, 'get_next_item', get_next_item)
 
     

@@ -46,7 +46,7 @@ class UVMMailbox():
         self.debug_enabled = False
 
 
-    async def put(self, item: Any):
+    async def put(self, item: Any) -> None:
         _uvm_debug(self, 'put', 'Starting to check can_put()')
         can_put = self.can_put()
         while can_put is False:
@@ -61,7 +61,7 @@ class UVMMailbox():
         _uvm_debug(self, 'put', 'Finished')
 
 
-    async def get(self, itemq: OutputItem):
+    async def get(self, itemq: OutputItem=None) -> Any:
         can_get = self.can_get()
         while can_get is False:
             _uvm_debug(self, 'get', 'waiting write event to get item')
@@ -78,10 +78,12 @@ class UVMMailbox():
         item = self.m_queue.pop_front()
         self.m_read_event.set()
         _uvm_debug(self, 'get', 'getting an item from mailbox now')
-        itemq.append(item)
+        if itemq is not None:
+            itemq.append(item)
+        return item
 
 
-    async def peek(self, itemq: OutputItem):
+    async def peek(self, itemq: OutputItem=None) -> Any:
         """ Peeks (with blocking) next item from mailbox without removing it """
         if not self.can_get():
             _uvm_debug(self, 'get', 'waiting write event to get item')
@@ -90,7 +92,9 @@ class UVMMailbox():
             self.m_write_event.clear()
             _uvm_debug(self, 'get', 'event cleared, can_get ' + str(self.can_get()))
         item = self.m_queue.front()
-        itemq.append(item)
+        if itemq is not None:
+            itemq.append(item)
+        return item
 
     def try_put(self, item: Any) -> bool:
         _uvm_debug(self, 'try_put', 'Starting function')

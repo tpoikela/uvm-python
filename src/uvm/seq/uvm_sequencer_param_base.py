@@ -82,7 +82,6 @@ class UVMSequencerParamBase(UVMSequencerBase):
 
         # TODO Adding self as 2nd arg makes the sim fail, it does not advance
         # properly. This is uvm_phase issue most likely
-        #self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo", None)
         self.m_req_fifo = UVMTLMFIFO(name + "__" + "m_req_fifo", self)  # uvm_tlm_fifo
         self.m_req_fifo.print_enabled = False
         self.rsp_export = UVMAnalysisExport("rsp_export", self)

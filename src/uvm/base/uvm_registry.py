@@ -21,34 +21,27 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
-#------------------------------------------------------------------------------
-# Title: Factory Component and Object Wrappers
-#
-# Topic: Intro
-#
-# This section defines the proxy component and object classes used by the
-# factory. To avoid the overhead of creating an instance of every component
-# and object that get registered, the factory holds lightweight wrappers,
-# or proxies. When a request for a new object is made, the factory calls upon
-# the proxy to create the object it represents.
-#------------------------------------------------------------------------------
+"""
+Factory Component and Object Wrappers
+=====================================
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_component_registry #(T,Tname)
-#
-# The uvm_component_registry serves as a lightweight proxy for a component of
-# type ~T~ and type name ~Tname~, a string. The proxy enables efficient
-# registration with the <uvm_factory>. Without it, registration would
-# require an instance of the component itself.
-#
-# See <Usage> section below for information on using uvm_component_registry.
-#
-#------------------------------------------------------------------------------
+Topic: Intro
+------------
+
+This section defines the proxy component and object classes used by the
+factory. To avoid the overhead of creating an instance of every component
+and object that get registered, the factory holds lightweight wrappers,
+or proxies. When a request for a new object is made, the factory calls upon
+the proxy to create the object it represents.
+"""
+
 
 from .uvm_factory import UVMObjectWrapper
 from .uvm_globals import uvm_report_warning, uvm_report_fatal
 from .uvm_object_globals import UVM_NONE
+# from .uvm_component import UVMComponent
+from .uvm_object import UVMObject
+from typing import Dict
 
 
 def get_factory():
@@ -58,14 +51,26 @@ def get_factory():
 
 
 class UVMComponentRegistry(UVMObjectWrapper):
+    """
+    CLASS: UVMComponentRegistry #(T,Tname)
+
+    The UVMComponentRegistry serves as a lightweight proxy for a component of
+    type ~T~ and type name ~Tname~, a string. The proxy enables efficient
+    registration with the <uvm_factory>. Without it, registration would
+    require an instance of the component itself.
+
+    See <Usage> section below for information on using UVMComponentRegistry.
+    """
 
     # dict of UVMComponentRegistry
-    registry_db = {}  # tname -> UVMComponentRegistry
-    registered = {}  # tname -> bool
+    registry_db: Dict[str, 'UVMComponentRegistry'] = {}
+    registered: Dict[str, bool] = {}
     # Stores the actual constructors
-    comps = {}
+    comps: Dict[str, type] = {}
 
-    def __init__(self, Constr, tname):
+    def __init__(self, Constr: type, tname: str):
+        if type(Constr) is not type:
+            raise TypeError("Constr must be a type")
         self.Constr = Constr
         self.tname = tname
         self.type_name = tname
@@ -77,18 +82,18 @@ class UVMComponentRegistry(UVMObjectWrapper):
         UVMComponentRegistry.registry_db[tname] = self.get()
 
     @classmethod
-    def reset(cls):
+    def reset(cls) -> None:
         """Resets the state of the component registry. Used for unit testing"""
         UVMComponentRegistry.registry_db.clear()
         UVMComponentRegistry.registered.clear()
         UVMComponentRegistry.comps.clear()
 
-    def create_component(self, name, parent):
+    def create_component(self, name: str, parent):
         """
         Function: create_component
 
         Creates a component of type T having the provided `name` and `parent`.
-        This is an override of the method in `uvm_object_wrapper`. It is
+        This is an override of the method in `UVMObjectWrapper`. It is
         called by the factory after determining the type of object to create.
         You should not call this method directly. Call `create` instead.
         Args:
@@ -98,12 +103,12 @@ class UVMComponentRegistry(UVMObjectWrapper):
         """
         return UVMComponentRegistry.comps[self.tname](name, parent)
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         """
         Function: get_type_name
 
         Returns the value given by the string parameter, `Tname`. This method
-        overrides the method in `uvm_object_wrapper`.
+        overrides the method in `UVMObjectWrapper`.
         Returns:
         """
         return self.tname
@@ -122,7 +127,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
             UVMComponentRegistry.registered[self.tname] = True
         return self
 
-    def create(self, name, parent, contxt=""):
+    def create(self, name: str, parent, contxt=""):
         """
         Function: create
 
@@ -136,7 +141,9 @@ class UVMComponentRegistry(UVMObjectWrapper):
             parent:
             contxt:
         Returns:
+            UVMComponent: The created component
         Raises:
+            AttributeError: If get_type_name is not defined in the object.
         """
         factory = get_factory()
 
@@ -146,7 +153,9 @@ class UVMComponentRegistry(UVMObjectWrapper):
         if obj is not None:
             return obj
 
-        # cast check removed, TSP
+        # Rest of the code is for error reporting. Normally, we should've
+        # returned already
+        # tpoikela: cast check removed
         msg = ("Factory did not return a component of type '" + self.type_name
           + "'. A component of type '")
         if obj is None:
@@ -157,7 +166,8 @@ class UVMComponentRegistry(UVMObjectWrapper):
                 msg += obj.get_type_name()
             else:
                 klass_name = obj.__class__
-                raise Exception('No get_type_name in {}. Did you use uvm_componen_utils({})'.format(
+                raise AttributeError(
+                    'No get_type_name in {}. Did you use uvm_componen_utils({})'.format(
                     klass_name, klass_name))
 
         msg += "' was returned instead. Name=" + name + " Parent="
@@ -168,7 +178,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
         msg += " contxt=" + contxt
         uvm_report_fatal("FCTTYP", msg, UVM_NONE)
 
-    def set_type_override(self, override_type, replace=True):
+    def set_type_override(self, override_type, replace=True) -> None:
         """
         Function: set_type_override
 
@@ -183,7 +193,7 @@ class UVMComponentRegistry(UVMObjectWrapper):
         factory = get_factory()
         factory.set_type_override_by_type(self.get(),override_type,replace)
 
-    def set_inst_override(self, override_type, inst_path, parent=None):
+    def set_inst_override(self, override_type, inst_path, parent=None) -> None:
         """
         Function: set_inst_override
 
@@ -217,15 +227,18 @@ class UVMComponentRegistry(UVMObjectWrapper):
 class UVMObjectRegistry(UVMObjectWrapper):
 
     # dict of UVMObjectRegistry
-    registry_db = {}  # tname -> UVMObjectRegistry
-    registered = {}  # tname -> bool
+    registry_db: [str, 'UVMObjectRegistry'] = {}
+    registered: [str, bool] = {}
     # Stores the actual constructors
-    objs = {}
+    objs: [str, type] = {}
 
-    def __init__(self, Constr, tname):
+    def __init__(self, Constr: type, tname: str):
+        if type(Constr) is not type:
+            raise TypeError("Constr must be a type")
         self.Constr = Constr
         self.tname = tname
         self.type_name = tname
+
         if tname in UVMObjectRegistry.registry_db:
             uvm_report_warning("COMP_REGD", (tname + ' has already been'
                 + ' added into the UVMObjectRegistry'))
@@ -234,28 +247,30 @@ class UVMObjectRegistry(UVMObjectWrapper):
         UVMObjectRegistry.registry_db[tname] = self.get()
 
     @staticmethod
-    def reset():
+    def reset() -> None:
         """Resets the state of the object registry. Used for unit testing"""
         UVMObjectRegistry.registry_db.clear()
         UVMObjectRegistry.registered.clear()
         UVMObjectRegistry.objs.clear()
 
-    # Function: create_object
-    #
-    # Creates an object of type ~T~ and returns it as a handle to a
-    # <uvm_object>. This is an override of the method in <uvm_object_wrapper>.
-    # It is called by the factory after determining the type of object to create.
-    # You should not call this method directly. Call <create> instead.
 
-    def create_object(self, name=""):
+    def create_object(self, name="") -> UVMObject:
+        """
+        Function: create_object
+
+        Creates an object of type ~T~ and returns it as a handle to a
+        `UVMObject`. This is an override of the method in `UVMObjectWrapper`.
+        It is called by the factory after determining the type of object to create.
+        You should not call this method directly. Call <create> instead.
+        """
         return UVMObjectRegistry.objs[self.tname](name)
 
-    def get_type_name(self):
+    def get_type_name(self) -> str:
         """
         Function: get_type_name
 
         Returns the value given by the string parameter, `Tname`. This method
-        overrides the method in `uvm_object_wrapper`.
+        overrides the method in `UVMObjectWrapper`.
         Returns:
         """
         return self.type_name
@@ -307,7 +322,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         #    uvm_report_fatal("FCTTYP", msg, UVM_NONE)
         return create
 
-    def set_type_override(self, override_type, replace=True):
+    def set_type_override(self, override_type, replace=True) -> None:
         """
         Function: set_type_override
 
@@ -322,7 +337,7 @@ class UVMObjectRegistry(UVMObjectWrapper):
         factory = get_factory()
         factory.set_type_override_by_type(self.get(), override_type, replace)
 
-    def set_inst_override(self, override_type, inst_path, parent=None):
+    def set_inst_override(self, override_type, inst_path: str, parent=None):
         """
         Function: set_inst_override
 

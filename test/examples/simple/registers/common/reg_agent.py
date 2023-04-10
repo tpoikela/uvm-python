@@ -177,7 +177,7 @@ class reg2rw_adapter(UVMRegAdapter):
         UVMRegAdapter.__init__(self, name)
         self.supports_byte_enable = True
 
-    def reg2bus(self, rw):
+    def reg2bus(self, rw) -> reg_rw:
         bus = reg_rw.type_id.create("rw")
         bus.read    = (rw.kind == UVM_READ)
         bus.addr    = rw.addr
@@ -185,7 +185,7 @@ class reg2rw_adapter(UVMRegAdapter):
         bus.byte_en = rw.byte_en
         return bus
 
-    def bus2reg(self, bus_item, rw):
+    def bus2reg(self, bus_item, rw) -> None:
         bus = bus_item
         rw.kind    = UVM_WRITE
 
@@ -195,7 +195,6 @@ class reg2rw_adapter(UVMRegAdapter):
         rw.data    = bus.data
         rw.byte_en = bus.byte_en
         rw.status  = UVM_IS_OK
-        return rw
 
 
 uvm_object_utils(reg2rw_adapter)
