@@ -66,12 +66,15 @@ INV_WARN6 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s
 class VerbositySetting:
     """
     The verbosity settings may have a specific phase to start at.
-    We will do this work in the phase_started callback.
-        :ivar UVMComponent comp: Component related to the settings
-        :ivar UVMPhase phase: Phase in which settings apply.
-        :ivar int id: ID for verbosity setting
-        :ivar int offset: Time offset for verbosity setting
-        :ivar int verbosity: Verbosity level of the setting.
+    We will do this work in the `UVMComponent.phase_started` callback.
+
+    Variables:
+    :ivar UVMComponent comp: Component related to the settings
+    :ivar UVMPhase phase: Phase in which settings apply.
+    :ivar int id: ID for verbosity setting
+    :ivar int offset: Time offset for verbosity setting
+    :ivar int verbosity: Verbosity level of the setting.
+
     """
     def __init__(self):
         self.comp = ""
@@ -107,49 +110,49 @@ class uvm_cmdline_parsed_arg_t:
 
 
 class UVMComponent(UVMReportObject):
-    """
-    Base class for defining UVM components
-    The uvm_component class is the root base class for UVM components. In
-    addition to the features inherited from `UVMObject` and `UVMReportObject`,
-    uvm_component provides the following interfaces:
+    #"""
+    #Base class for defining UVM components
+    #The uvm_component class is the root base class for UVM components. In
+    #addition to the features inherited from `UVMObject` and `UVMReportObject`,
+    #uvm_component provides the following interfaces:
 
-    Hierarchy:
-      provides methods for searching and traversing the component hierarchy.
+    #Hierarchy:
+    #  provides methods for searching and traversing the component hierarchy.
 
-    Phasing
-      defines a phased test flow that all components follow, with a
-      group of standard phase methods and an API for custom phases and
-      multiple independent phasing domains to mirror DUT behavior e.g. power
+    #Phasing
+    #  defines a phased test flow that all components follow, with a
+    #  group of standard phase methods and an API for custom phases and
+    #  multiple independent phasing domains to mirror DUT behavior e.g. power
 
-    Reporting
-      provides a convenience interface to the `UVMReportHandler`. All
-      messages, warnings, and errors are processed through this interface.
+    #Reporting
+    #  provides a convenience interface to the `UVMReportHandler`. All
+    #  messages, warnings, and errors are processed through this interface.
 
-    Transaction recording
-        provides methods for recording the transactions
-        produced or consumed by the component to a transaction database (vendor
-        specific).
+    #Transaction recording
+    #    provides methods for recording the transactions
+    #    produced or consumed by the component to a transaction database (vendor
+    #    specific).
 
-    Factory
-        provides a convenience interface to the `UVMFactory`. The factory
-        is used to create new components and other objects based on type-wide and
-        instance-specific configuration.
+    #Factory
+    #    provides a convenience interface to the `UVMFactory`. The factory
+    #    is used to create new components and other objects based on type-wide and
+    #    instance-specific configuration.
 
-    The `UVMComponent` is automatically seeded during construction using UVM
-    seeding, if enabled. All other objects must be manually reseeded, if
-    appropriate. See `UVMObject.reseed` for more information.
+    #The `UVMComponent` is automatically seeded during construction using UVM
+    #seeding, if enabled. All other objects must be manually reseeded, if
+    #appropriate. See `UVMObject.reseed` for more information.
 
-    Most local methods within the class are prefixed with m_, indicating they are
-    not user-level methods.
+    #Most local methods within the class are prefixed with m_, indicating they are
+    #not user-level methods.
 
-    :cvar bool print_config_matches: Setting this static variable causes
-        `UVMConfigDb.get` to print info about
-        matching configuration settings as they are being applied.
+    #:cvar bool print_config_matches: Setting this static variable causes
+    #    `UVMConfigDb.get` to print info about
+    #    matching configuration settings as they are being applied.
 
-    :ivar UVMTrDatabase tr_database: Specifies the `UVMTrDatabase` object to use
-        for `begin_tr` and other methods in the <Recording Interface>.
-        Default is `UVMCoreService.get_default_tr_database`.
-    """
+    #:ivar UVMTrDatabase tr_database: Specifies the `UVMTrDatabase` object to use
+    #    for `begin_tr` and other methods in the <Recording Interface>.
+    #    Default is `UVMCoreService.get_default_tr_database`.
+    #"""
 
     print_config_matches = False
     m_time_settings: List[VerbositySetting] = []
@@ -167,6 +170,7 @@ class UVMComponent(UVMReportObject):
         implicit top-level component, `uvm_top`.
 
         All classes derived from uvm_component must call super.new(name,parent).
+
         Args:
             name (str): Name of the component.
             parent (UVMComponent): Parent component.
@@ -286,6 +290,7 @@ class UVMComponent(UVMReportObject):
 
     """
     Group: Hierarchy Interface
+    --------------------------
 
     These methods provide user access to information about the component
     hierarchy, i.e., topology.
@@ -956,7 +961,8 @@ class UVMComponent(UVMReportObject):
         may raise the phase's objection.
 
         .. code-block:: python
-            phase.raise_objection(self, "Reason")
+
+          phase.raise_objection(self, "Reason")
 
         It is the responsibility of this component to drop the objection
         once it is ready for this phase to end (and processes killed).
@@ -1308,6 +1314,7 @@ class UVMComponent(UVMReportObject):
 
         if `audit` is set then the audit trail for each resource is printed
         along with the resource name and value
+
         Args:
             recurse (bool): If true, recurse to child components
             audit (bool): If true, print audit trail for each resource.
@@ -1740,8 +1747,8 @@ class UVMComponent(UVMReportObject):
 
         .. code-block:: python
 
-            def pre_abort(self):
-               self.report()
+          def pre_abort(self):
+            self.report()
 
         The pre_abort() callback hooks are called in a bottom-up fashion.
         """
@@ -1771,13 +1778,13 @@ class UVMComponent(UVMReportObject):
         component. Specifically, it performs the following actions:
 
         - Calls the `tr`'s <uvm_transaction::accept_tr> method, passing to it the
-          `accept_time` argument.
+        `accept_time` argument.
 
         - Calls this component's <do_accept_tr> method to allow for any post-begin
-          action in derived classes.
+        action in derived classes.
 
         - Triggers the component's internal accept_tr event. Any processes waiting
-          on this event will resume in the next delta cycle.
+        on this event will resume in the next delta cycle.
         Args:
             tr:
             accept_time:
@@ -1796,7 +1803,6 @@ class UVMComponent(UVMReportObject):
         post-accept action. Implementations should call super.do_accept_tr to
         ensure correct operation.
 
-        #extern virtual protected function void do_accept_tr (uvm_transaction tr)
         Args:
             tr:
         """

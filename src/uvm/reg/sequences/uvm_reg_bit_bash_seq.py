@@ -41,22 +41,22 @@ from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_zero_delay
 class UVMRegSingleBitBashSeq(UVMRegSequence):
     """
      Class: UVMRegSingleBitBashSeq
-    
+
      Verify the implementation of a single register
      by attempting to write 1's and 0's to every bit in it,
      via every address map in which the register is mapped,
      making sure that the resulting value matches the mirrored value.
-    
+
     If bit-type resource named "NO_REG_TESTS" or "NO_REG_BIT_BASH_TEST" in the
     "REG::" namespace matches the full name of the register, the register is
     not tested::
-    
+
     UVMResourceDb.set({"REG::",regmodel.blk.r0.get_full_name()},
                        "NO_REG_TESTS", 1, self)
-    
+
      Registers that contain fields with unknown access policies
      cannot be tested.
-    
+
     The DUT should be idle and not modify any register during this test.
 
     :ivar rg (UVMReg): The register to be tested
@@ -201,17 +201,17 @@ uvm_object_utils(UVMRegSingleBitBashSeq)
 class UVMRegBitBashSeq(UVMRegSequence):
     """
     Class: UVMRegBitBashSeq
-    
+
     Verify the implementation of all registers in a block
     by executing the <UVMRegSingleBitBashSeq> sequence on it.
-    
+
     If bit-type resource named "NO_REG_TESTS" or "NO_REG_BIT_BASH_TEST" in the
     "REG::" namespace matches the full name of the block, the block is not
     tested::
-    
+
     UVMResourceDb.set({"REG::",regmodel.blk.get_full_name(),".*"},
                        "NO_REG_TESTS", 1, self)
-    
+
     :ivar reg_seq: The sequence used to test one register
     :ivar model: The block to be tested. Declared in the base class.
     """
@@ -221,12 +221,12 @@ class UVMRegBitBashSeq(UVMRegSequence):
         self.reg_seq = None
         self.model = None
 
-    async def body(self):
+    async def body(self) -> None:
         """
         Task: body
-        
+
         Executes the Register Bit Bash sequence.
-        Do not call directly. Use seq.start() instead.
+        Do not call directly. Use await seq.start() instead.
         """
 
         if self.model is None:

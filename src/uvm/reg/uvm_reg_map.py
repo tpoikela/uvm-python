@@ -28,9 +28,11 @@ from ..base.uvm_globals import UVM_LOW, UVM_MEDIUM
 from ..macros.uvm_message_defines import (uvm_fatal, uvm_error, uvm_warning,
     uvm_info)
 from ..macros.uvm_object_defines import uvm_object_utils
-from .uvm_reg_model import (UVMRegMapAddrRange, UVM_BIG_ENDIAN, UVM_BIG_FIFO, UVM_FIELD, UVM_HIER,
-                            UVM_LITTLE_ENDIAN, UVM_LITTLE_FIFO, UVM_MEM, UVM_NOT_OK, UVM_NO_HIER,
-                            UVM_REG)
+from .uvm_reg_model import (
+    UVMRegMapAddrRange, UVM_BIG_ENDIAN, UVM_BIG_FIFO, UVM_FIELD, UVM_HIER,
+    UVM_LITTLE_ENDIAN, UVM_LITTLE_FIFO, UVM_MEM, UVM_NOT_OK, UVM_NO_HIER,
+    UVM_REG)
+from .uvm_reg_item import UVMRegItem
 from .uvm_reg_item import UVMRegBusOp
 from ..seq import UVMSequenceBase
 from .uvm_reg_cbs import UVMRegReadOnlyCbs, UVMRegWriteOnlyCbs
@@ -83,13 +85,13 @@ class UVMRegTransactionOrderPolicy(UVMObject):
 class UVMRegMap(UVMObject):
     """
     Class: UVMRegMap
-    
+
     Address map abstraction class
-    
+
     This class represents an address map. An address map is a collection of
     registers and memories accessible via a specific physical interface. Address
     maps can be composed into higher-level address maps.
-    
+
     Address maps are created using the `UVMRegBlock.create_map()` method.
     """
 
@@ -244,7 +246,7 @@ class UVMRegMap(UVMObject):
 
     def __init__(self, name="uvm_reg_map"):
         """
-        Create a new instance. Note, in generate you should call 
+        Create a new instance. Note, in generate you should call
         `UVMRegBlock.create_map` unless you have explicit reason to call this.
 
         Args:
@@ -1264,7 +1266,7 @@ class UVMRegMap(UVMObject):
         """
         self.m_auto_predict = on
 
-    def get_auto_predict(self):
+    def get_auto_predict(self) -> bool:
         """
         Gets the auto-predict mode setting for this map.
 
@@ -1274,7 +1276,7 @@ class UVMRegMap(UVMObject):
         return self.m_auto_predict
 
 
-    def set_check_on_read(self, on=1):
+    def set_check_on_read(self, on=1) -> None:
         """
         Sets the check-on-read mode for his map
         and all of its submaps.
@@ -1302,7 +1304,7 @@ class UVMRegMap(UVMObject):
             submap.set_check_on_read(on)
 
 
-    def get_check_on_read(self):
+    def get_check_on_read(self) -> bool:
         """
         Gets the check-on-read mode setting for this map.
 
@@ -1312,7 +1314,7 @@ class UVMRegMap(UVMObject):
         return self.m_check_on_read
 
 
-    async def do_bus_write(self, rw, sequencer, adapter):
+    async def do_bus_write(self, rw: UVMRegItem, sequencer, adapter) -> None:
         """
         Perform a bus write operation.
 
@@ -1336,7 +1338,6 @@ class UVMRegMap(UVMObject):
         accesses = []
 
         [map_info, n_bits_init, lsb, skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
-        #addrs = map_info.addr
         addrs = map_info.addr.copy()
 
         # if a memory, adjust addresses based on offset
@@ -1403,11 +1404,10 @@ class UVMRegMap(UVMObject):
                 n_bits -= bus_width * 8
 
             # if set utilizy the order policy
-            if (self.policy is not None):
+            if self.policy is not None:
                 self.policy.order(accesses)
 
             # perform accesses
-            # foreach(accesses[i]):
             for i in range(len(accesses)):
                 rw_access = accesses[i]  # uvm_reg_bus_op
                 bus_req = None  # uvm_sequence_item
@@ -1460,13 +1460,8 @@ class UVMRegMap(UVMObject):
             for i in range(len(addrs)):
                 addrs[i] = addrs[i] + map_info.mem_range.stride
 
-        #end: foreach_value
-        #
-        #endtask: do_bus_write
 
-
-
-    async def do_bus_read(self, rw, sequencer, adapter):
+    async def do_bus_read(self, rw: UVMRegItem, sequencer, adapter) -> None:
         """
         Perform a bus read operation.
 
@@ -1623,7 +1618,7 @@ class UVMRegMap(UVMObject):
         #endtask: do_bus_read
 
 
-    async def do_write(self, rw):
+    async def do_write(self, rw: UVMRegItem) -> None:
         """
         Perform a write operation.
 
@@ -1667,7 +1662,7 @@ class UVMRegMap(UVMObject):
         #endtask
 
 
-    async def do_read(self, rw):
+    async def do_read(self, rw: UVMRegItem) -> None:
         """
         Perform a read operation.
 
@@ -1706,7 +1701,8 @@ class UVMRegMap(UVMObject):
 
 
 
-    def Xget_bus_infoX(self, rw, map_info, size, lsb, addr_skip):
+    def Xget_bus_infoX(self, rw, map_info, size, lsb, addr_skip
+                       ) -> [UVMRegMapInfo, int, int, int]:
         """
         Returns bus info based on given register item.
 
@@ -1717,6 +1713,7 @@ class UVMRegMap(UVMObject):
             lsb (int):
             addr_skip (int):
         Returns:
+            [UVMRegMapInfo, int, int, int]
         Raises:
         """
         if rw.element_kind == UVM_MEM:

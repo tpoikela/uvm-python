@@ -850,7 +850,7 @@ class UVMReg(UVMObject):
             f.set_reset(value >> f.get_lsb_pos(), kind)
 
     async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
-            extension=None, fname="", lineno=0):
+                    extension=None, fname="", lineno=0) -> int:
         """
            Task: write
 
@@ -912,6 +912,7 @@ class UVMReg(UVMObject):
         await self.do_write(rw)
         status.append(rw.status)
         await self.XatomicX(0)
+        return rw.status
 
 
     async def read(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
@@ -961,7 +962,7 @@ class UVMReg(UVMObject):
         await self.XatomicX(1, rw)
         await self.XreadX(status, value, path, _map, parent, prior, extension, fname, lineno)
         await self.XatomicX(0)
-        #endtask: read
+        return status[0]
 
 
     #   // Task: poke

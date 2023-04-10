@@ -238,6 +238,7 @@ class UVMObject(sv_obj):
         A typical implementation is as follows:
 
         .. code-block:: python
+
           class mytype (UVMObject):
             ...
             type_name = "mytype"
@@ -245,10 +246,10 @@ class UVMObject(sv_obj):
             def get_type_name(self):
               return my_type.type_name
 
+        We define the `type_name` static variable to enable access to the type name
+        without need of an object of the class, i.e., to enable access via the
+        scope operator, ~mytype::type_name~.
 
-          We define the `type_name` static variable to enable access to the type name
-          without need of an object of the class, i.e., to enable access via the
-          scope operator, ~mytype::type_name~.
         Returns:
             str: Type name of the object.
         """

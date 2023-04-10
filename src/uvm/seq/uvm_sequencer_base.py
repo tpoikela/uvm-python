@@ -71,10 +71,6 @@ class uvm_sequence_process_wrapper:
     """
 
     def __init__(self):
-        """
-        process pid
-        uvm_sequence_base seq
-        """
         self.pid = 0  # type: int
         self.seq = None  # type: UVMSequenceBase
 
@@ -210,7 +206,7 @@ class UVMSequencerBase(UVMComponent):
 
 
     async def start_phase_sequence(self, phase):
-        """
+        r"""
         Start the default sequence for this phase, if any.
         The default sequence is configured via resources using
         either a sequence instance or sequence type (object wrapper).
@@ -678,14 +674,10 @@ class UVMSequencerBase(UVMComponent):
         self.m_max_zero_time_wait_relevant_count = new_val
 
 
-    #  //----------------------------------------------------------------------------
-    #  // INTERNAL METHODS - DO NOT CALL DIRECTLY, ONLY OVERLOAD IF VIRTUAL
-    #  //----------------------------------------------------------------------------
+    # INTERNAL METHODS - DO NOT CALL DIRECTLY, ONLY OVERLOAD IF VIRTUAL
 
     def grant_queued_locks(self):
         """
-         extern protected function void grant_queued_locks()
-        ------------------
         Any lock or grab requests that are at the front of the queue will be
         granted at the earliest possible time.  This function grants any queues
         at the front that are not locked out
@@ -1202,9 +1194,7 @@ class UVMSequencerBase(UVMComponent):
     def is_auto_item_recording_enabled(self):
         return self.m_auto_item_recording
 
-#//------------------------------------------------------------------------------
 #// IMPLEMENTATION
-#//------------------------------------------------------------------------------
 #
 #// do_print
 #// --------

@@ -20,17 +20,17 @@
 #   permissions and limitations under the License.
 #----------------------------------------------------------------------
 """
-Title: UVM Common Phases
+UVM Common Phases
+=================
 
 The common phases are the set of function and task phases that all
-`UVMComponent`s execute together.
-All `UVMComponent`s are always synchronized
+`UVMComponent`s execute together. All `UVMComponent`s are always synchronized
 with respect to the common phases.
 
 The names of the UVM phases (which will be returned by get_name() for a
-phase instance) match the class names specified below with the "uvm_"
+phase instance) match the class names specified below with the UVM
 and "_phase" removed.  For example, the build phase corresponds to the
-uvm_build_phase class below and has the name "build", which means that
+`UVMBuildPhase` class below and has the name `build`, which means that
 the following can be used to call foo() at the end of the build phase
 (after all lower levels have finished build)::
 
@@ -47,8 +47,6 @@ from .uvm_topdown_phase import UVMTopdownPhase
 from .uvm_bottomup_phase import UVMBottomupPhase
 from .uvm_debug import uvm_debug
 from .uvm_task_phase import UVMTaskPhase
-#from .uvm_common_phases import *
-
 
 
 class UVMBuildPhase(UVMTopdownPhase):
@@ -112,7 +110,7 @@ class UVMConnectPhase(UVMBottomupPhase):
     Upon Entry:
     - All components have been instantiated.
     - Current simulation time is still equal to 0
-      but some "delta cycles" may have occurred.
+    but some "delta cycles" may have occurred.
 
     Typical Uses:
     - Connect TLM ports and exports.
@@ -159,7 +157,7 @@ class UVMEndOfElaborationPhase(UVMBottomupPhase):
     Upon Entry:
     - The verification environment has been completely assembled.
     - Current simulation time is still equal to 0
-      but some "delta cycles" may have occurred.
+    but some "delta cycles" may have occurred.
 
     Typical Uses:
     - Display environment topology.
@@ -257,13 +255,13 @@ class UVMRunPhase(UVMTaskPhase):
     Upon Entry:
     - Indicates that power has been applied.
     - There should not have been any active clock edges before entry
-      into this phase (e.g. x->1 transitions via initial blocks).
+    into this phase (e.g. x->1 transitions via initial blocks).
     - Current simulation time is still equal to 0
-      but some "delta cycles" may have occurred.
+    but some "delta cycles" may have occurred.
 
     Typical Uses:
     - Components implement behavior that is exhibited for the entire
-      run-time, across the various run-time phases.
+    run-time, across the various run-time phases.
     - Backward compatibility with OVM.
 
     Exit Criteria:
@@ -342,9 +340,9 @@ class UVMExtractPhase(UVMBottomupPhase):
 
     Typical Uses:
     - Extract any remaining data and final state information
-      from scoreboard and testbench components
+    from scoreboard and testbench components
     - Probe the DUT (via zero-time hierarchical references
-      and/or backdoor accesses) for final state information.
+    and/or backdoor accesses) for final state information.
     - Compute statistics and summaries.
     - Display final state information
     - Close files.

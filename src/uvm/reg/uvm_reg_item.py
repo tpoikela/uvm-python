@@ -44,89 +44,89 @@ _T0 = TypeVar('_T0')
 
 class UVMRegItem(UVMSequenceItem):
     """
-    CLASS: uvm_reg_item
+    CLASS: UVMRegItem
 
     Defines an abstract register transaction item. No bus-specific information
-    is present, although a handle to a <uvm_reg_map> is provided in case a user
+    is present, although a handle to a `UVMRegMap` is provided in case a user
     wishes to implement a custom address translation algorithm.
     """
 
-    #  // Variable: element_kind
-    #  //
-    #  // Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
-    #  //
-    #  uvm_elem_kind_e element_kind
+    # constraint max_values { value.size() > 0 && value.size() < 1000; }
 
+    """
+    Variable: element_kind
+    
+    Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
+    
+    uvm_elem_kind_e element_kind
 
-    #  // TODO: parameterize
-    #  constraint max_values { value.size() > 0 && value.size() < 1000; }
-    #
-    #  // Variable: offset
-    #  //
-    #  // For memory accesses, the offset address. For bursts,
-    #  // the ~starting~ offset address.
-    #  //
-    #  rand uvm_reg_addr_t offset
+    Variable: offset
+    
+    For memory accesses, the offset address. For bursts,
+    the ~starting~ offset address.
+    
+    rand uvm_reg_addr_t offset
 
-    #  // Variable: status
-    #  //
-    #  // The result of the transaction: IS_OK, HAS_X, or ERROR.
-    #  // See <uvm_status_e>.
-    #  //
-    #  uvm_status_e status
+    Variable: status
+    
+    The result of the transaction: IS_OK, HAS_X, or ERROR.
+    See <uvm_status_e>.
+    
+    uvm_status_e status
 
-    #  // Variable: local_map
-    #  //
-    #  // The local map used to obtain addresses. Users may customize
-    #  // address-translation using this map. Access to the sequencer
-    #  // and bus adapter can be obtained by getting this map's root map,
-    #  // then calling <uvm_reg_map::get_sequencer> and
-    #  // <uvm_reg_map::get_adapter>.
-    #  //
-    #  uvm_reg_map local_map
+    Variable: local_map
+    
+    The local map used to obtain addresses. Users may customize
+    address-translation using this map. Access to the sequencer
+    and bus adapter can be obtained by getting this map's root map,
+    then calling <uvm_reg_map::get_sequencer> and
+    <uvm_reg_map::get_adapter>.
+    
+    uvm_reg_map local_map
 
+    Variable: parent
+    
+    The sequence from which the operation originated.
+    
+    rand uvm_sequence_base parent
 
+    Variable: prior
+    
+    The priority requested of this transfer, as defined by
+    <uvm_sequence_base::start_item>.
+    
+    int prior = -1
 
-    #  // Variable: parent
-    #  //
-    #  // The sequence from which the operation originated.
-    #  //
-    #  rand uvm_sequence_base parent
+    Variable: extension
+    
+    Handle to optional user data, as conveyed in the call to
+    write(), read(), mirror(), or update() used to trigger the operation.
+    
+    rand uvm_object extension
 
-    #  // Variable: prior
-    #  //
-    #  // The priority requested of this transfer, as defined by
-    #  // <uvm_sequence_base::start_item>.
-    #  //
-    #  int prior = -1
+    Variable: bd_kind
+    
+    If path is UVM_BACKDOOR, this member specifies the abstraction
+    kind for the backdoor access, e.g. "RTL" or "GATES".
+    
+    string bd_kind
 
-    #  // Variable: extension
-    #  //
-    #  // Handle to optional user data, as conveyed in the call to
-    #  // write(), read(), mirror(), or update() used to trigger the operation.
-    #  //
-    #  rand uvm_object extension
+    Variable: fname
+    -------------------
+    
+    The file name from where this transaction originated, if provided
+    at the call site.
+    
+    string fname
 
-    #  // Variable: bd_kind
-    #  //
-    #  // If path is UVM_BACKDOOR, this member specifies the abstraction
-    #  // kind for the backdoor access, e.g. "RTL" or "GATES".
-    #  //
-    #  string bd_kind
-
-    #  // Variable: fname
-    #  //
-    #  // The file name from where this transaction originated, if provided
-    #  // at the call site.
-    #  //
-    #  string fname
-
-    #  // Variable: lineno
-    #  //
-    #  // The file name from where this transaction originated, if provided
-    #  // at the call site.
-    #  //
-    #  int lineno
+    Variable: lineno
+    --------------------
+    
+    The file name from where this transaction originated, if provided
+    at the call site.
+    
+    int lineno
+    """
 
     def __init__(self, name="") -> None:
         """

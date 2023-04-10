@@ -35,6 +35,7 @@ from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERRO
 from .uvm_debug import UVMDebug, uvm_debug
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
+from typing import List, Any
 
 """
 Title: Globals
@@ -42,7 +43,7 @@ Group: Simulation Control
 """
 
 
-async def run_test(test_name="", dut=None):
+async def run_test(test_name="", dut=None) -> None:
     """
     Convenience function for uvm_top.run_test(). See `UVMRoot` for more
     information.
@@ -55,14 +56,11 @@ async def run_test(test_name="", dut=None):
     top = cs.get_root()
     await top.run_test(test_name, dut)
 
-#//----------------------------------------------------------------------------
-#//
-#// Group: Reporting
-#//
-#//----------------------------------------------------------------------------
+"""
+Group: Reporting
+================
+"""
 
-#// Function: uvm_get_report_object
-#//
 def uvm_get_report_object():
     """
     Returns the nearest `UVMReportObject` when called.
@@ -234,9 +232,10 @@ def uvm_string_to_action(action_str, action):
 
 """
 Group: Miscellaneous
+====================
 """
 
-def uvm_is_match(expr, _str):
+def uvm_is_match(expr: str, _str: str) -> int:
     """
     Returns 1 if the two strings match, 0 otherwise.
 
@@ -258,11 +257,13 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #//
 #// Function: uvm_string_to_bits
 #//
-#// Converts an input string to its bit-vector equivalent.
 #//----------------------------------------------------------------------------
 
 
 def uvm_string_to_bits(string: str) -> int:
+    """
+    Converts an input string to its bit-vector equivalent.
+    """
     bytearr = string.encode()
     result = 0
     shift = 0
@@ -310,7 +311,7 @@ if hasattr(cocotb, 'SIM_NAME') and getattr(cocotb, 'SIM_NAME') == 'Verilator':
 
 rw_event = ReadWrite()
 
-async def uvm_wait_for_nba_region():
+async def uvm_wait_for_nba_region() -> None:
     """
     Task: uvm_wait_for_nba_region
 
@@ -407,9 +408,10 @@ def get_cs():
 
 """
 Group: uvm-python specific functions
+====================================
 """
 
-def uvm_is_sim_active():
+def uvm_is_sim_active() -> bool:
     """
     Returns true if a simulator is active/attached. Returns False for example
     when running unit tests without cocotb Makefiles.
@@ -417,7 +419,7 @@ def uvm_is_sim_active():
     return simulator.is_running()
 
 
-def uvm_sim_time(units='NS'):
+def uvm_sim_time(units='NS') -> int:
     """
     Returns current simtime in the given units (default: NS)
 
@@ -435,16 +437,18 @@ async def uvm_zero_delay():
     await NullTrigger()
 
 
-def uvm_check_output_args(arr):
+def uvm_check_output_args(arr: List[Any]) -> None:
     """
     Check that all args in the arr are lists to emulate the SV inout/output/ref args
 
     Raises:
+        TypeError: If any of the args is not a list
+        ValueError: If any of the args is not empty list
     """
     for item in arr:
         if not isinstance(item, list):
-            raise Exception('All output args must be given as empty arrays. Got: '
+            raise TypeError('All output args must be given as empty arrays. Got: '
                     + str(item))
         elif len(item) != 0:
-            raise Exception('All output args must be given as empty arrays. Got: '
+            raise ValueError('All output args must be given as empty arrays. Got: '
                     + str(item) + ' len: ' + str(len(item)))

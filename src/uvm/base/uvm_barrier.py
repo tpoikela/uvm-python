@@ -32,7 +32,7 @@ from .uvm_globals import uvm_zero_delay
 
 class UVMBarrier(UVMObject):
     """
-    The UVMBarrier class provides a multiprocess synchronization mechanism. Note
+    The `UVMBarrier` class provides a multiprocess synchronization mechanism. Note
     that this is only for cocotb-based simulation, not real multiprocessing.
     It enables a set of processes to block until the desired number of processes
     get to the synchronization point, at which time all of the processes are
