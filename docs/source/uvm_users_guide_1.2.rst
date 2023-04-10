@@ -1225,7 +1225,7 @@ higher performance characteristics as a lot of copying is avoided.
 Another result is any object that has a handle to a transaction may
 modify it. However, to adhere to the semantics of the TLM-2.0
 interfaces, these modifications must be made within certain rules and
-in concert with notifications made via the return enum in the nb_\*
+in concert with notifications made via the return enum in the 'nb_*'
 interfaces and the phase argument.
 
 2.4.3 Blocking Transport
@@ -1277,7 +1277,7 @@ state machine in the initiator changes state and nb_transport_bw is
 called by the target whenever the protocol state machine in the
 target changes state.
 
-The nb_\* interfaces each return an enum uvm_tlm_sync_e. The possible
+The 'nb_*' interfaces each return an enum uvm_tlm_sync_e. The possible
 enum values and their meanings are shown in Table 2.
 
 **Table 2—uvm_tlm_sync_e enum Description**
@@ -2401,7 +2401,7 @@ existing behavior using extends::
     22 endclass : simple_agent
 
 NOTE—Invoking super.build_phase() (see Line 8) enables the automatic
-configuration for UVM fields declared via the uvm_field_\* macros
+configuration for UVM fields declared via the 'uvm_field_*' macros
 during the build phase.
 
 Line 9 The monitor is created using create().

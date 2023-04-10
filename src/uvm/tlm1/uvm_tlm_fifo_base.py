@@ -72,6 +72,7 @@ class UVMTLMFIFOBase(UVMComponent):
     interface methods:
 
     .. code-block:: python
+
         task get (output T t)
         function bit can_get ()
         function bit try_get (output T t)
@@ -90,6 +91,7 @@ class UVMTLMFIFOBase(UVMComponent):
     <put_export>) are sent out this port via its `write` method.
 
     .. code-block:: python
+
         def write (T t)
 
     All connected analysis exports and imps will receive put transactions.
@@ -103,6 +105,7 @@ class UVMTLMFIFOBase(UVMComponent):
     `write` method.
 
     .. code-block:: python
+
         def write (T t)
 
     All connected analysis exports and imps will receive get transactions.

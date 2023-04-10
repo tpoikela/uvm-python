@@ -1,5 +1,4 @@
-#//
-#//------------------------------------------------------------------------------
+#// -----------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
@@ -63,7 +62,7 @@ INV_WARN6 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s
     + "Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>")
 
 
-class VerbositySetting:
+class VerbositySetting():
     """
     The verbosity settings may have a specific phase to start at.
     We will do this work in the `UVMComponent.phase_started` callback.
@@ -110,49 +109,49 @@ class uvm_cmdline_parsed_arg_t:
 
 
 class UVMComponent(UVMReportObject):
-    #"""
-    #Base class for defining UVM components
-    #The uvm_component class is the root base class for UVM components. In
-    #addition to the features inherited from `UVMObject` and `UVMReportObject`,
-    #uvm_component provides the following interfaces:
+    """
+    Base class for defining UVM components
+    The uvm_component class is the root base class for UVM components. In
+    addition to the features inherited from `UVMObject` and `UVMReportObject`,
+    uvm_component provides the following interfaces:
 
-    #Hierarchy:
-    #  provides methods for searching and traversing the component hierarchy.
+    Hierarchy:
+    provides methods for searching and traversing the component hierarchy.
 
-    #Phasing
-    #  defines a phased test flow that all components follow, with a
-    #  group of standard phase methods and an API for custom phases and
-    #  multiple independent phasing domains to mirror DUT behavior e.g. power
+    Phasing
+    defines a phased test flow that all components follow, with a
+    group of standard phase methods and an API for custom phases and
+    multiple independent phasing domains to mirror DUT behavior e.g. power
 
-    #Reporting
-    #  provides a convenience interface to the `UVMReportHandler`. All
-    #  messages, warnings, and errors are processed through this interface.
+    Reporting
+    provides a convenience interface to the `UVMReportHandler`. All
+    messages, warnings, and errors are processed through this interface.
 
-    #Transaction recording
-    #    provides methods for recording the transactions
-    #    produced or consumed by the component to a transaction database (vendor
-    #    specific).
+    Transaction recording
+    provides methods for recording the transactions
+    produced or consumed by the component to a transaction database (vendor
+    specific).
 
-    #Factory
-    #    provides a convenience interface to the `UVMFactory`. The factory
-    #    is used to create new components and other objects based on type-wide and
-    #    instance-specific configuration.
+    Factory
+    provides a convenience interface to the `UVMFactory`. The factory
+    is used to create new components and other objects based on type-wide and
+    instance-specific configuration.
 
-    #The `UVMComponent` is automatically seeded during construction using UVM
-    #seeding, if enabled. All other objects must be manually reseeded, if
-    #appropriate. See `UVMObject.reseed` for more information.
+    The `UVMComponent` is automatically seeded during construction using UVM
+    seeding, if enabled. All other objects must be manually reseeded, if
+    appropriate. See `UVMObject.reseed` for more information.
 
-    #Most local methods within the class are prefixed with m_, indicating they are
-    #not user-level methods.
+    Most local methods within the class are prefixed with m_, indicating they are
+    not user-level methods.
 
-    #:cvar bool print_config_matches: Setting this static variable causes
-    #    `UVMConfigDb.get` to print info about
-    #    matching configuration settings as they are being applied.
+    :cvar bool print_config_matches: Setting this static variable causes
+        `UVMConfigDb.get` to print info about
+        matching configuration settings as they are being applied.
 
-    #:ivar UVMTrDatabase tr_database: Specifies the `UVMTrDatabase` object to use
-    #    for `begin_tr` and other methods in the <Recording Interface>.
-    #    Default is `UVMCoreService.get_default_tr_database`.
-    #"""
+    :ivar UVMTrDatabase tr_database: Specifies the `UVMTrDatabase` object to use
+        for `begin_tr` and other methods in the <Recording Interface>.
+        Default is `UVMCoreService.get_default_tr_database`.
+    """
 
     print_config_matches = False
     m_time_settings: List[VerbositySetting] = []
@@ -290,7 +289,6 @@ class UVMComponent(UVMReportObject):
 
     """
     Group: Hierarchy Interface
-    --------------------------
 
     These methods provide user access to information about the component
     hierarchy, i.e., topology.
@@ -468,9 +466,7 @@ class UVMComponent(UVMReportObject):
         return get_depth
 
 
-    #----------------------------------------------------------------------------
     # Group: Phasing Interface
-    #----------------------------------------------------------------------------
     #
     # These methods implement an interface which allows all components to step
     # through a standard schedule of phases, or a customized schedule, and
@@ -482,7 +478,6 @@ class UVMComponent(UVMReportObject):
     #
     # All processes associated with a task-based phase are killed when the phase
     # ends. See <uvm_task_phase> for more details.
-    #----------------------------------------------------------------------------
 
     def build_phase(self, phase):
         """
@@ -976,9 +971,7 @@ class UVMComponent(UVMReportObject):
         """
         pass
 
-    #//--------------------------------------------------------------------
     #// phase / schedule / domain API
-    #//--------------------------------------------------------------------
 
     def set_domain(self, domain, hier=True):
         """
@@ -1127,9 +1120,7 @@ class UVMComponent(UVMReportObject):
             return self.get_full_name() + scope
         return self.get_full_name() + "." + scope
 
-    #//----------------------------------------------------------------------------
     #// Group: Configuration Interface
-    #//----------------------------------------------------------------------------
     #//
     #// Components can be designed to be user-configurable in terms of its
     #// topology (the type and number of children it has), mode of operation, and
@@ -1138,7 +1129,6 @@ class UVMComponent(UVMReportObject):
     #// without having to derive new classes or new class hierarchies for
     #// every configuration scenario.
     #//
-    #//----------------------------------------------------------------------------
 
     def check_config_usage(self, recurse=1) -> None:
         """
@@ -1400,9 +1390,7 @@ class UVMComponent(UVMReportObject):
         """
         pass
 
-    #//----------------------------------------------------------------------------
     #// Group: Factory Interface
-    #//----------------------------------------------------------------------------
     #//
     #// The factory interface provides convenient access to a portion of UVM's
     #// <uvm_factory> interface. For creating new objects and components, the
@@ -1411,7 +1399,6 @@ class UVMComponent(UVMReportObject):
     #// <uvm_object_registry #(T,Tname)>). The wrapper also provides functions
     #// for setting type and instance overrides.
     #//
-    #//----------------------------------------------------------------------------
 
     def create_component(self, requested_type_name, name):
         """
@@ -1607,9 +1594,7 @@ class UVMComponent(UVMReportObject):
         factory.debug_create_by_name(requested_type_name, self.get_full_name(), name)
 
 
-    #//----------------------------------------------------------------------------
     #// Group: Hierarchical Reporting Interface
-    #//----------------------------------------------------------------------------
     #//
     #// This interface provides versions of the set_report_* methods in the
     #// <uvm_report_object> base class that are applied recursively to this
@@ -1617,7 +1602,6 @@ class UVMComponent(UVMReportObject):
     #//
     #// When a report is issued and its associated action has the LOG bit set, the
     #// report will be sent to its associated FILE descriptor.
-    #//----------------------------------------------------------------------------
 
     #// Function: set_report_id_verbosity_hier
     def set_report_id_verbosity_hier(self, id, verbosity):
@@ -1760,16 +1744,13 @@ class UVMComponent(UVMReportObject):
             self.m_children[child].m_do_pre_abort()
         self.pre_abort()
 
-    #//----------------------------------------------------------------------------
     #// Group: Recording Interface
-    #//----------------------------------------------------------------------------
     #// These methods comprise the component-based transaction recording
     #// interface. The methods can be used to record the transactions that
     #// this component "sees", i.e. produces or consumes.
     #//
     #// The API and implementation are subject to change once a vendor-independent
     #// use-model is determined.
-    #//----------------------------------------------------------------------------
 
 
     def accept_tr(self, tr, accept_time=0):
@@ -2164,7 +2145,6 @@ class UVMComponent(UVMReportObject):
     def m_set_full_name(self):
         """
         m_set_full_name
-        ---------------
         """
         #if self.m_parent is None:
         #    uvm_fatal("Should not be called with uvm_root")
@@ -2186,7 +2166,6 @@ class UVMComponent(UVMReportObject):
     def do_resolve_bindings(self):
         """
         do_resolve_bindings
-        -------------------
         """
         for s in self.m_children:
             self.m_children[s].do_resolve_bindings()
@@ -2636,14 +2615,10 @@ class UVMComponent(UVMReportObject):
                 print("No kill() available")
 
 
-#//------------------------------------------------------------------------------
 #//
 #// Factory Methods
-#//
-#//------------------------------------------------------------------------------
 
 #// set_inst_override
-#// -----------------
 #
 #function void  uvm_component::set_inst_override (string relative_inst_path,
 #                                                 string original_type_name,
@@ -2663,11 +2638,9 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#//------------------------------------------------------------------------------
 #//
 #// Configuration interface
 #//
-#//------------------------------------------------------------------------------
 #
 #
 

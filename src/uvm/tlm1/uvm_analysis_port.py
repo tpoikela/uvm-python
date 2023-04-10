@@ -38,6 +38,7 @@ class UVMAnalysisPort(UVMPortBase):
     Broadcasts a value to all subscribers implementing a `UVMAnalysisImp`.
 
     .. code-block:: python
+
         class mon(UVMComponent):
 
             def __init__(self, name="sb", parent=None):
@@ -49,6 +50,7 @@ class UVMAnalysisPort(UVMPortBase):
                 ...
                 self.ap.write(t)
                 ...
+
     """
 
     def __init__(self, name, parent):
@@ -86,6 +88,7 @@ class UVMAnalysisImp:
     the value passed to it.
 
     .. code-block:: python
+
       class sb(UVMComponent):
         uvm_analysis_imp#(trans, sb) ap
 

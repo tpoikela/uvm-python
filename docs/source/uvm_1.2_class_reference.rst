@@ -77,7 +77,6 @@ Synchronization
 
    overviews/synchro
    base/uvm_event
-   base/uvm_event_callback
    base/uvm_barrier
    base/uvm_objection
    base/uvm_heartbeat
