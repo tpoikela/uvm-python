@@ -1721,8 +1721,7 @@ class UVMReg(UVMObject):
                 status = rw.status  # do_predict will override rw.status, so we save it here
                 self.do_predict(rw, UVM_PREDICT_READ)
                 rw.status = status
-            #   endcase
-        #
+
         value = rw.value[0]  # preserve
 
         # POST-READ CBS - REG
@@ -1756,7 +1755,6 @@ class UVMReg(UVMObject):
             map_info = arr_map_info[0]
         self._report_op_with(rw, map_info)
         self.m_read_in_progress = False
-        #endtask: do_read
 
 
     def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):

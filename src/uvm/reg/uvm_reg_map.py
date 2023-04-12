@@ -1407,7 +1407,7 @@ class UVMRegMap(UVMObject):
             if self.policy is not None:
                 self.policy.order(accesses)
 
-            # perform accesses
+            # perform write accesses
             for i in range(len(accesses)):
                 rw_access = accesses[i]  # uvm_reg_bus_op
                 bus_req = None  # uvm_sequence_item
@@ -1485,13 +1485,12 @@ class UVMRegMap(UVMObject):
         n_bits_init = 0
         accesses = []  # uvm_reg_bus_op[$]
 
-        # print("do_bus_read Given rw was " + rw.convert2string())
         [map_info, n_bits_init, lsb, skip] = self.Xget_bus_infoX(rw, map_info, n_bits_init, lsb, skip)
         # Need a copy as this will be modified later
         addrs = map_info.addr.copy()
 
         # if a memory, adjust addresses based on offset
-        if (rw.element_kind == UVM_MEM):
+        if rw.element_kind == UVM_MEM:
             for i in range(len(addrs)):
                 addrs[i] = addrs[i] + map_info.mem_range.stride * rw.offset
 
@@ -1522,7 +1521,7 @@ class UVMRegMap(UVMObject):
                     addrs.pop_front()
                 while addrs.size() > (int(n_bits_init/(bus_width*8)) + 1):
                     addrs.pop_back()
-            #end
+
             curr_byte = 0
             n_bits = n_bits_init
 
@@ -1534,8 +1533,7 @@ class UVMRegMap(UVMObject):
                    sv.sformatf("Reading address 'h%0h via map \"%s\"...",
                              addrs[i], self.get_full_name()), UVM_VERB_MEM_MAP)
 
-                if (rw.element_kind == UVM_FIELD):
-                    #for (int z=0;z<bus_width;z++)
+                if rw.element_kind == UVM_FIELD:
                     for z in range(bus_width):
                         # rw_access.byte_en[z] = byte_en[curr_byte+z]
                         bit_val = sv.get_bit(byte_en, curr_byte + z)
@@ -1555,15 +1553,12 @@ class UVMRegMap(UVMObject):
                 n_bits -= bus_width * 8
 
             # if set utilize the order policy
-            if(self.policy is not None):
+            if self.policy is not None:
                 self.policy.order(accesses)
 
-            # perform accesses
+            # perform read accesses
             for i in range(len(accesses)):
                 rw_access = accesses[i]  # uvm_reg_bus_op
-                bus_req = None  # uvm_sequence_item
-                data = 0  # uvm_reg_data_logic_t
-                curr_byte_ = 0
 
                 curr_byte_ = rw_access.data
                 rw_access.data = 0
@@ -1587,8 +1582,9 @@ class UVMRegMap(UVMObject):
                     op = 0  # uvm_access_e
                     # TODO: need to test for right trans type, if not put back in q
                     await rw.parent.get_base_response(bus_rsp)
-                    rw_access = adapter.bus2reg(bus_rsp,rw_access)
+                    adapter.bus2reg(bus_rsp, rw_access)
                 else:
+                    breakpoint()
                     adapter.bus2reg(bus_req,rw_access)
 
                 data = rw_access.data & ((1 << bus_width*8)-1)  # mask the upper bits
@@ -1601,7 +1597,7 @@ class UVMRegMap(UVMObject):
                    sv.sformatf("Read 0x%h at 0x%h via map %s: %s...", data,
                        addrs[i], self.get_full_name(), str(rw.status)), UVM_VERB_MEM_MAP)
 
-                if (rw.status == UVM_NOT_OK):
+                if rw.status == UVM_NOT_OK:
                     break
 
                 rw.value[val_idx] |= data << curr_byte_*8
@@ -1609,13 +1605,11 @@ class UVMRegMap(UVMObject):
                 if (rw.parent is not None and i == len(addrs)-1):
                     rw.parent.post_do(rw)
 
-            #foreach (addrs[i])
             for i in range(len(addrs)):
                 addrs[i] = addrs[i] + map_info.mem_range.stride
 
-            if (rw.element_kind == UVM_FIELD):
+            if rw.element_kind == UVM_FIELD:
                 rw.value[val_idx] = (rw.value[val_idx] >> (n_access_extra)) & ((1<<size)-1)
-        #endtask: do_bus_read
 
 
     async def do_write(self, rw: UVMRegItem) -> None:

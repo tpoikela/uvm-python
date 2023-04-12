@@ -54,95 +54,62 @@ class UVMRegItem(UVMSequenceItem):
     # constraint max_values { value.size() > 0 && value.size() < 1000; }
 
     """
-    Variable: element_kind
-    
+    :cvar uvm_elem_kind_e element_kind:
     Kind of element being accessed: REG, MEM, or FIELD. See <uvm_elem_kind_e>.
-    
-    uvm_elem_kind_e element_kind
 
-    Variable: offset
-    
+    :cvar rand uvm_reg_addr_t offset:
     For memory accesses, the offset address. For bursts,
     the ~starting~ offset address.
-    
-    rand uvm_reg_addr_t offset
 
-    Variable: status
-    
+    :cvar uvm_status_e status:
     The result of the transaction: IS_OK, HAS_X, or ERROR.
     See <uvm_status_e>.
-    
-    uvm_status_e status
 
-    Variable: local_map
-    
+    :cvar uvm_reg_map local_map:
     The local map used to obtain addresses. Users may customize
     address-translation using this map. Access to the sequencer
     and bus adapter can be obtained by getting this map's root map,
-    then calling <uvm_reg_map::get_sequencer> and
-    <uvm_reg_map::get_adapter>.
-    
-    uvm_reg_map local_map
+    then calling `UVMRegMap.get_sequencer` and
+    `UVMRegMap.get_adapter`.
 
-    Variable: parent
-    
+
+    :cvar rand uvm_sequence_base parent:
     The sequence from which the operation originated.
-    
-    rand uvm_sequence_base parent
 
-    Variable: prior
-    
+    :cvar int prior = -1:
     The priority requested of this transfer, as defined by
-    <uvm_sequence_base::start_item>.
-    
-    int prior = -1
+    `UVMSequenceBase.start_item`.
 
-    Variable: extension
-    
+    :cvar rand uvm_object extension:
     Handle to optional user data, as conveyed in the call to
-    write(), read(), mirror(), or update() used to trigger the operation.
-    
-    rand uvm_object extension
+    `UVMReg.write()`, `UVMReg.read()`, `UVMReg.mirror()`, or `UVMReg.update()`
+    used to trigger the operation.
 
-    Variable: bd_kind
-    
+    :cvar str bd_kind:
     If path is UVM_BACKDOOR, this member specifies the abstraction
     kind for the backdoor access, e.g. "RTL" or "GATES".
-    
-    string bd_kind
 
-    Variable: fname
-    -------------------
-    
+    :cvar str fname:
     The file name from where this transaction originated, if provided
     at the call site.
-    
-    string fname
 
-    Variable: lineno
-    --------------------
-    
+    :cvar int lineno:
     The file name from where this transaction originated, if provided
     at the call site.
-    
-    int lineno
+
+    :cvar List[int] value:
+    The value to write to, or after completion, the value read from the DUT.
+    Burst operations use the <values> property.
     """
 
     def __init__(self, name="") -> None:
         """
-          Function: new
-
-          Create a new instance of this type, giving it the optional `name`.
+        Create a new instance of this type, giving it the optional `name`.
 
         Args:
-            name:
+            name (str): Name of the instance
         """
         UVMSequenceItem.__init__(self, name)
-        #  // Variable: value
-        #  //
-        #  // The value to write to, or after completion, the value read from the DUT.
-        #  // Burst operations use the <values> property.
-        #  //
         self.value: List[int] = [0]  # rand uvm_reg_data_t value[]
 
         #  // Variable: path
@@ -216,7 +183,7 @@ class UVMRegItem(UVMSequenceItem):
         else:
             value_s = sv.sformatf("%0h", self.value[0])
         s = s + " value=" + value_s
-        
+
         if self.element_kind == UVM_MEM:
             s = s + sv.sformatf(" offset=%0h", self.offset)
 
