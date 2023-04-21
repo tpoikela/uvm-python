@@ -10,6 +10,7 @@ RET_VAL=`grep -l failure results_${SIM}.log`
 echo "RET_VAL is |$RET_VAL|"
 if [[ -n $RET_VAL ]]
 then
+    echo "Test failures found for SIM=${SIM}:"
     exit 1
 fi
 

@@ -1584,7 +1584,6 @@ class UVMRegMap(UVMObject):
                     await rw.parent.get_base_response(bus_rsp)
                     adapter.bus2reg(bus_rsp, rw_access)
                 else:
-                    breakpoint()
                     adapter.bus2reg(bus_req,rw_access)
 
                 data = rw_access.data & ((1 << bus_width*8)-1)  # mask the upper bits
