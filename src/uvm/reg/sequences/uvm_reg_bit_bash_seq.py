@@ -32,7 +32,7 @@ from cocotb.triggers import Timer
 
 from ..uvm_reg_sequence import UVMRegSequence
 from ..uvm_reg_model import (UVM_NO_HIER, UVM_NO_CHECK,
-        UVM_FRONTDOOR, UVM_IS_OK)
+        UVM_FRONTDOOR, UVM_IS_OK, uvm_status_e)
 from ...macros import (uvm_object_utils, uvm_error, uvm_info, UVM_REG_DATA_WIDTH,
     uvm_warning)
 from ...base import UVMResourceDb, sv, UVM_LOW, UVM_HIGH, uvm_zero_delay
@@ -173,7 +173,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):
             if status != UVM_IS_OK:
                 uvm_error("UVMRegBitBashSeq",
                         sv.sformatf("Status was %s when writing to register \"%s\" through map \"%s\".",
-                            status.name(), rg.get_full_name(), _map.get_full_name()))
+                            uvm_status_e(status), rg.get_full_name(), _map.get_full_name()))
 
             exp = rg.get() & ~dc_mask
             status = []
@@ -184,7 +184,7 @@ class UVMRegSingleBitBashSeq(UVMRegSequence):
             if status != UVM_IS_OK:
                uvm_error("UVMRegBitBashSeq",
                        sv.sformatf("Status was %s when reading register \"%s\" through map \"%s\".",
-                           status.name(), rg.get_full_name(), _map.get_full_name()))
+                           uvm_status_e(status), rg.get_full_name(), _map.get_full_name()))
 
             val &= ~dc_mask
             if val != exp:
