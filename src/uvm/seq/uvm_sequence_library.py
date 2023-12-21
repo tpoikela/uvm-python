@@ -95,7 +95,7 @@
 #   // settings are being done from within a component, the first
 #   // argument must be ~this~ and the second argument a path
 #   // relative to that component.
-#   // 
+#   //
 #   //
 #   //| uvm_config_db #(uvm_object_wrapper)::set(null,
 #   //|                                    "env.agent.sequencer.main_phase",
@@ -109,7 +109,7 @@
 #   //
 #   // Alternatively, you may create an instance of the sequence library
 #   // a priori, initialize all its parameters, randomize it, then set it
-#   // to run as-is on the sequencer. 
+#   // to run as-is on the sequencer.
 #   //
 #   //| main_seq_lib my_seq_lib;
 #   //| my_seq_lib = new("my_seq_lib");
@@ -233,7 +233,7 @@
 #
 #   // Function: select_sequence
 #   //
-#   // Generates an index used to select the next sequence to execute. 
+#   // Generates an index used to select the next sequence to execute.
 #   // Overrides must return a value between 0 and ~max~, inclusive.
 #   // Used only for <UVM_SEQ_LIB_USER> selection mode. The
 #   // default implementation returns 0, incrementing on successive calls,
@@ -294,7 +294,7 @@
 #
 #   // Function: get_sequences
 #   //
-#   // 
+#   //
 #   // Append to the provided ~seq_types~ array the list of registered ~sequences~.
 #   //
 #   extern virtual function void get_sequences(ref uvm_object_wrapper seq_types[$]);
@@ -532,13 +532,13 @@
 #  uvm_object obj;
 #  uvm_sequence_base seq;
 #  uvm_root top;
-#  uvm_coreservice_t cs;   
+#  uvm_coreservice_t cs;
 #  string name;
 #  string typ;
 #  obj = seq_type.create_object();
 #  name = (lib == null) ? type_name : lib.get_full_name();
 #  typ = (lib == null) ? type_name : lib.get_type_name();
-#  cs = uvm_coreservice_t::get();   
+#  cs = uvm_coreservice_t::get();
 #  top = cs.get_root();
 #
 #  if (!$cast(seq, obj)) begin
@@ -568,30 +568,30 @@
 #  uvm_sequence_library_cfg cfg;
 #  string phase_name;
 #  uvm_phase starting_phase = get_starting_phase();
-#   
+#
 #  if (starting_phase != null) begin
 #    phase_name = {starting_phase.get_name(),"_phase"};
 #  end
-#  if (uvm_config_db #(uvm_sequence_library_cfg)::get(m_sequencer, 
+#  if (uvm_config_db #(uvm_sequence_library_cfg)::get(m_sequencer,
 #                                        phase_name,
 #                                        "default_sequence.config",
 #                                        cfg) ) begin
-#    selection_mode = cfg.selection_mode; 
-#    min_random_count = cfg.min_random_count; 
-#    max_random_count = cfg.max_random_count; 
+#    selection_mode = cfg.selection_mode;
+#    min_random_count = cfg.min_random_count;
+#    max_random_count = cfg.max_random_count;
 #  end
 #  else begin
-#    void'(uvm_config_db #(int unsigned)::get(m_sequencer, 
+#    void'(uvm_config_db #(int unsigned)::get(m_sequencer,
 #                                        phase_name,
 #                                        "default_sequence.min_random_count",
 #                                        min_random_count) );
 #
-#    void'(uvm_config_db #(int unsigned)::get(m_sequencer, 
+#    void'(uvm_config_db #(int unsigned)::get(m_sequencer,
 #                                        phase_name,
 #                                        "default_sequence.max_random_count",
 #                                        max_random_count) );
 #
-#    void'(uvm_config_db #(uvm_sequence_lib_mode)::get(m_sequencer, 
+#    void'(uvm_config_db #(uvm_sequence_lib_mode)::get(m_sequencer,
 #                                        phase_name,
 #                                        "default_sequence.selection_mode",
 #                                        selection_mode) );
@@ -638,7 +638,7 @@
 #
 #  uvm_object_wrapper wrap;
 #  uvm_phase starting_phase = get_starting_phase();
-#   
+#
 #  if (m_sequencer == null) begin
 #    `uvm_fatal("SEQLIB/VIRT_SEQ", {"Sequence library 'm_sequencer' handle is null; ",
 #      " no current support for running as a virtual sequence."})
@@ -727,14 +727,14 @@
 #      end
 #
 #      default: begin
-#        `uvm_fatal("SEQLIB/RAND_MODE", 
+#        `uvm_fatal("SEQLIB/RAND_MODE",
 #           $sformatf("Unknown random sequence selection mode: %0d",selection_mode))
 #      end
 #     endcase
 #
 #  `uvm_info("SEQLIB/END",{"Ending sequence library in phase ",
 #            (starting_phase != null ? starting_phase.get_name() : "unknown")},UVM_LOW)
-# 
+#
 #  `uvm_info("SEQLIB/DSTRB",$sformatf("%p",seqs_distrib),UVM_HIGH)
 #
 #  m_safe_drop_starting_phase({"starting sequence library ",get_full_name()," (", get_type_name(),")"});
@@ -751,8 +751,8 @@
 #  uvm_sequence_item seq_or_item;
 #  uvm_sequence_base seq_base;
 #  REQ req_item;
-#  
-#  uvm_coreservice_t cs = uvm_coreservice_t::get();                                                     
+#
+#  uvm_coreservice_t cs = uvm_coreservice_t::get();
 #  uvm_factory factory=cs.get_factory();
 #
 #  obj = factory.create_object_by_type(wrap,get_full_name(),
@@ -767,9 +767,9 @@
 #         return;
 #     end
 #  end
-#   
-#  void'($cast(seq_or_item,obj)); // already qualified, 
-#   
+#
+#  void'($cast(seq_or_item,obj)); // already qualified,
+#
 #  `uvm_info("SEQLIB/EXEC",{"Executing ",(seq_or_item.is_item() ? "item " : "sequence "),seq_or_item.get_name(),
 #                           " (",seq_or_item.get_type_name(),")"},UVM_FULL)
 #  seq_or_item.print_sequence_info = 1;
@@ -779,7 +779,7 @@
 #  sequences_executed++;
 #
 #endtask
-#  
+#
 #
 #
 #// do_print

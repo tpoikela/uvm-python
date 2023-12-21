@@ -42,7 +42,7 @@
 #// interfaces so bound pass data as whole transactions (e.g. objects).
 #// The set of primitive and combination TLM interfaces afford many choices for
 #// designing components that communicate at the transaction level.
-#// 
+#//
 #//-----------------------------------------------------------------------------
 #
 #virtual class uvm_tlm_if_base #(type T1=int, type T2=int);
@@ -51,7 +51,7 @@
 #
 #  // Task: put
 #  //
-#  // Sends a user-defined transaction of type T. 
+#  // Sends a user-defined transaction of type T.
 #  //
 #  // Components implementing the put method will block the calling thread if
 #  // it cannot immediately accept delivery of the transaction.
@@ -64,11 +64,11 @@
 #
 #  // Task: get
 #  //
-#  // Provides a new transaction of type T. 
+#  // Provides a new transaction of type T.
 #  //
 #  // The calling thread is blocked if the requested transaction cannot be
 #  // provided immediately. The new transaction is returned in the provided
-#  // output argument. 
+#  // output argument.
 #  //
 #  // The implementation of get must regard the transaction as consumed.
 #  // Subsequent calls to get must return a different transaction instance.
@@ -82,11 +82,11 @@
 #
 #  // Task: peek
 #  //
-#  // Obtain a new transaction without consuming it. 
+#  // Obtain a new transaction without consuming it.
 #  //
 #  // If a transaction is available, then it is written to the provided output
 #  // argument. If a transaction is not available, then the calling thread is
-#  // blocked until one is available. 
+#  // blocked until one is available.
 #  //
 #  // The returned transaction is not consumed. A subsequent peek or get will
 #  // return the same transaction.
@@ -100,7 +100,7 @@
 #
 #  // Function: try_put
 #  //
-#  // Sends a transaction of type T, if possible. 
+#  // Sends a transaction of type T, if possible.
 #  //
 #  // If the component is ready to accept the transaction argument, then it does
 #  // so and returns 1, otherwise it returns 0.
@@ -152,7 +152,7 @@
 #
 #  // Function: try_peek
 #  //
-#  // Provides a new transaction without consuming it. 
+#  // Provides a new transaction without consuming it.
 #  //
 #  // If available, a transaction is written to the output argument and 1 is
 #  // returned. A subsequent peek or get will return the same transaction. If a
@@ -208,7 +208,7 @@
 #  // Function: write
 #  //
 #  // Broadcasts a user-defined transaction of type T to any number of listeners.
-#  // The operation must complete without blocking. 
+#  // The operation must complete without blocking.
 #
 #  virtual function void write( input T1 t );
 #    uvm_report_error("write", `UVM_FUNCTION_ERROR, UVM_NONE);
