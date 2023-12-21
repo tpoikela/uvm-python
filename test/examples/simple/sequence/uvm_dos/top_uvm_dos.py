@@ -198,6 +198,7 @@ class BlockLevelSeq(UVMSequence):
         bs = bus_trans('bus_trans')
         #await self.start_item(bs, sequencer=seqr)
         self.m_sequencer = seqr
+        await uvm_do(self, bs)
         await uvm_do_with(self, bs)
         #    lambda addr: addr in [0],
         #    lambda data: 0xFFFFFFFF
