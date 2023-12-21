@@ -41,8 +41,8 @@ from .uvm_objection import UVMObjection
 from .uvm_report_server import UVMReportServer
 from .uvm_domain import end_of_elaboration_ph
 from .uvm_common_phases import UVMEndOfElaborationPhase
-from ..macros import uvm_info, uvm_fatal, UVM_DEFAULT_TIMEOUT
-from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK, uvm_warning
+from ..macros import uvm_info, uvm_fatal, uvm_warning, UVM_DEFAULT_TIMEOUT
+from ..uvm_macros import UVM_STRING_QUEUE_STREAMING_PACK
 from .uvm_config_db import UVMConfigDb
 
 MULTI_TESTS = ("Multiple ({}) +UVM_TESTNAME arguments provided on the command"
