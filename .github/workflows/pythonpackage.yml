@@ -1,4 +1,4 @@
-name: Build
+name: uvm-python Build
 
 on: [push]
 
@@ -6,10 +6,16 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
-      max-parallel: 4
+      fail-fast: true
+      max-parallel: 3
       matrix:
-        python-version: [3.8, 3.9, 3.11]
+        python-version: [3.9, 3.11]
+        experimental: [false]
+        include:
+          - python-version: 3.8
+          - experimental: true
 
     steps:
     - uses: actions/checkout@v1
