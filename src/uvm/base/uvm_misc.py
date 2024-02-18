@@ -4,6 +4,7 @@
 #   Copyright 2007-2011 Cadence Design Systems, Inc.
 #   Copyright 2010 Synopsys, Inc.
 #   Copyright 2014 NVIDIA Corporation
+#   Copyright 2023 tpoikela
 #   All Rights Reserved Worldwide
 #
 #   Licensed under the Apache License, Version 2.0 (the
@@ -21,31 +22,16 @@
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
 
-
-"""
-The :class:`UVMVoid` class is the base class for all UVM classes. It is an abstract
-class with no data members or functions. It allows for generic containers of
-objects to be created, similar to a void pointer in the C programming
-language. User classes derived directly from :class:`UVMVoid` inherit none of the
-UVM functionality, but such classes may be placed in :class:`UVMVoid`-typed
-containers along with other UVM objects.
-"""
-
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 
 import re
 from ..macros.uvm_message_defines import uvm_error, uvm_warning
-from .uvm_object_globals import (UVM_BIN, UVM_COMPARE, UVM_COPY, UVM_DEC, UVM_FLAGS, UVM_NONE,
+from .uvm_object_globals import (UVM_BIN, UVM_COMPARE, UVM_COPY, UVM_DEC, UVM_FLAGS,
                                  UVM_NORADIX, UVM_OCT, UVM_PACK, UVM_PRINT, UVM_RECORD, UVM_SETINT,
                                  UVM_SETOBJ, UVM_SETSTR, UVM_STRING, UVM_TIME, UVM_UNPACK,
                                  UVM_UNSIGNED, UVM_HEX)
 from .uvm_scope_stack import UVMScopeStack
 from .sv import sv
-
-
-class UVMVoid(object):
-    pass
-
 
 UVM_APPEND = 0
 UVM_PREPEND = 1
@@ -67,7 +53,7 @@ def uvm_get_array_index_string(arg: str, is_wildcard: int) -> str:
     res = ""
     is_wildcard = 1
     i = len(arg) - 1
-    if(arg[i] == "]"):
+    if arg[i] == "]":
         while (i > 0 and (arg[i] != "[")):
             if ((arg[i] == "*") or (arg[i] == "?")):
                 i = 0
@@ -329,11 +315,9 @@ class UVMStatusContainer:
     #  // it is a only a cycle if the previous __m_uvm_field_automation call scope
     #  // is not identical with the current scope AND the scope is already present in the
     #  // object stack
-    #  uvm_object m_uvm_cycle_scopes[$];
 
     def m_do_cycle_check(self, scope):
         ll = None
-        #if m_uvm_cycle_scopes.size() == 0 ? null : m_uvm_cycle_scopes[$];
         if len(self.m_uvm_cycle_scopes) > 0:
             ll = self.m_uvm_cycle_scopes
 
@@ -357,7 +341,7 @@ class UVMStatusContainer:
                 return 0
 
 
-def m_uvm_string_queue_join(i):
+def m_uvm_string_queue_join(i: int) -> str:
     res = ""
     for idx in range(len(i)):
         res = res + i[idx]

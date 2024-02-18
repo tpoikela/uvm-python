@@ -148,7 +148,7 @@ async def test_reg_fifo(dut):
     UVMConfigDb.set(test, "apb", "vif", vif)
     UVMConfigDb.set(None, "DUT_REF", "dut", dut)
 
-    cocotb.fork(Clock(vif.clk, 10, "NS").start())
+    cocotb.start_soon(Clock(vif.clk, 10, "NS").start())
     await run_test(dut=dut)
 
     #await Timer(1, "NS")  # Required for verilator

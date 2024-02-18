@@ -68,7 +68,7 @@ class device(UVMComponent):
 
                 # Could complete transfer early here
                 #fork: out_ack
-                cocotb.fork(self.fork_proc(xf, dl))
+                cocotb.start_soon(self.fork_proc(xf, dl))
                 #join_none
                 return uvm_tlm_sync_e.UVM_TLM_ACCEPTED
 
@@ -78,7 +78,7 @@ class device(UVMComponent):
                 #fork: in_data
                 xf = xfer
                 dl = delay
-                cocotb.fork(self.fork_proc2(xf, dl))
+                cocotb.start_soon(self.fork_proc2(xf, dl))
                 #join_none
                 return uvm_tlm_sync_e.UVM_TLM_ACCEPTED
             elif ph == USB_TLM_HANDSHAKE:

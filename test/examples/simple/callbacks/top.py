@@ -42,7 +42,7 @@
 #//------------------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Timer
+from cocotb.triggers import Timer, NullTrigger
 
 from uvm.base.uvm_transaction import UVMTransaction
 from uvm.base.uvm_callback import (UVMCallback, UVMCallbacks)
@@ -93,9 +93,8 @@ class bus_driver_cb(UVMCallback):
     def trans_received(self, driver, tr):
         return 0
 
-    #@cocotb.coroutine TODO fix this
     async def trans_executed(self, driver, tr):
-        await Timer(0, "NS")
+        await NullTrigger()
 
     def __init__(self, name="bus_driver_cb_inst"):
         super().__init__(name)
@@ -145,7 +144,7 @@ class bus_driver(UVMComponent):
 
     
     async def trans_executed(self, tr):
-        await Timer(0, "NS")
+        await NullTrigger()
         return uvm_do_callbacks(self, bus_driver_cb, 'trans_executed', self, tr)
 
     

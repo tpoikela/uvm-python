@@ -10,11 +10,10 @@
 
 | Prerequisite                                | Version    |
 | ------------------------------------------- | -------    |
-| Python                                      | `~ ^3`     |
+| Python                                      | `~ >=3.8`     |
 | iverilog                                    | `~ ^11`    |
-| cocotb                                      | `~ ^1.2`   |
+| cocotb                                      | `~ ^1.7.2`   |
 | cocotb-coverage                             | `~ ^1.0.0` |
-
 
 See also `.gitlab-ci.yml` for tips for installation.
 

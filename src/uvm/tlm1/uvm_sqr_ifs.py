@@ -59,7 +59,7 @@
 #  virtual task get_next_item(output T1 t);
 #    uvm_report_error("get_next_item", `UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
 #  endtask
-# 
+#
 #
 #  // Task: try_next_item
 #  //
@@ -87,7 +87,7 @@
 #
 #  // Function: item_done
 #  //
-#  // Indicates that the request is completed to the sequencer.  Any 
+#  // Indicates that the request is completed to the sequencer.  Any
 #  // <uvm_sequence_base::wait_for_item_done>
 #  // calls made by a sequence for this item will return.
 #  //
@@ -107,7 +107,7 @@
 #    uvm_report_error("item_done", `UVM_SEQ_ITEM_FUNCTION_ERROR, UVM_NONE);
 #  endfunction
 #
-#  
+#
 #  // Task: wait_for_sequences
 #  //
 #  // Waits for a sequence to have a new item available. The default
@@ -125,7 +125,7 @@
 #  // Function: has_do_available
 #  //
 #  // Indicates whether a sequence item is available for immediate processing.
-#  // Implementations should return 1 if an item is available, 0 otherwise. 
+#  // Implementations should return 1 if an item is available, 0 otherwise.
 #
 #  virtual function bit has_do_available();
 #    uvm_report_error("has_do_available", `UVM_SEQ_ITEM_FUNCTION_ERROR, UVM_NONE);
@@ -200,7 +200,7 @@
 #  // sequence response queue or it will be sent to the
 #  // sequence response handler.
 #  //
-#   
+#
 #
 #  virtual task put(input T2 t);
 #    uvm_report_error("put", `UVM_SEQ_ITEM_TASK_ERROR, UVM_NONE);
@@ -240,7 +240,7 @@
 #  virtual function void disable_auto_item_recording();
 #    uvm_report_error("disable_auto_item_recording", `UVM_SEQ_ITEM_FUNCTION_ERROR, UVM_NONE);
 #  endfunction
-#  
+#
 #  // Function: is_auto_item_recording_enabled
 #  //
 #  // Return TRUE if automatic item recording is enabled for this port instance.

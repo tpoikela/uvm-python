@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import Timer, RisingEdge
+from cocotb.triggers import RisingEdge, NullTrigger
 
 from uvm.comps import UVMMonitor
 from ubus_transfer import *
@@ -128,7 +128,7 @@ class ubus_master_monitor(UVMMonitor):
         self.uvm_report_info(self.get_full_name() + " MASTER ID", sv.sformatf(" = %0d",
             self.master_id), UVM_MEDIUM)
         #    fork
-        forked_proc = cocotb.fork(self.collect_transactions())
+        forked_proc = cocotb.start_soon(self.collect_transactions())
         #    join
         await forked_proc
         #  endtask : run_phase
@@ -136,7 +136,7 @@ class ubus_master_monitor(UVMMonitor):
     #  // collect_transactions
     
     async def collect_transactions(self):
-        await Timer(0, "NS")
+        await NullTrigger()
         while True:
             await RisingEdge(self.vif.sig_clock)
             if (self.m_parent is not None):

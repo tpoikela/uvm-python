@@ -106,7 +106,7 @@ class vip_monitor(UVMMonitor):
             while self.m_suspend != 0:
                 await RisingEdge(self.vif.clk)
             self.m_suspended = 0
-            self.m_proc = cocotb.fork(self.run_phase_fork(phase))
+            self.m_proc = cocotb.start_soon(self.run_phase_fork(phase))
             await sv.fork_join([self.m_proc])
 
 

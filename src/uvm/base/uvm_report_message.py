@@ -164,24 +164,20 @@ class UVMReportMessageElementContainer(UVMObject):
             self.elements.append(urme_container.elements[i].clone())
 
 
-#------------------------------------------------------------------------------
-#
-# CLASS: uvm_report_message
-#
-# The uvm_report_message is the basic UVM object message class.  It provides
-# the fields that are common to all messages.  It also has a message element
-# container and provides the APIs necessary to add integral types, strings and
-# uvm_objects to the container. The report message object can be initialized
-# with the common fields, and passes through the whole reporting system (i.e.
-# report object, report handler, report server, report catcher, etc) as an
-# object. The additional elements can be added/deleted to/from the message
-# object anywhere in the reporting system, and can be printed or recorded
-# along with the common fields.
-#
-#------------------------------------------------------------------------------
 
 
 class UVMReportMessage(UVMObject):
+    """
+    The `UVMReportMessage` is the basic UVM object message class.  It provides
+    the fields that are common to all messages.  It also has a message element
+    container and provides the APIs necessary to add integral types, strings and
+    uvm_objects to the container. The report message object can be initialized
+    with the common fields, and passes through the whole reporting system (i.e.
+    report object, report handler, report server, report catcher, etc) as an
+    object. The additional elements can be added/deleted to/from the message
+    object anywhere in the reporting system, and can be printed or recorded
+    along with the common fields.
+    """
 
     def __init__(self, name=""):
         UVMObject.__init__(self, name)
@@ -546,13 +542,12 @@ class UVMReportMessage(UVMObject):
     #----------------------------------------------------------------------------
     # TODO
 
-    def add(self, name, value, action=UVM_LOG | UVM_RM_RECORD):
+    def add(self, name, value, action=UVM_LOG | UVM_RM_RECORD) -> None:
         """
-        #----------------------------------------------------------------------------
         Group:  Message Element APIs
-        #----------------------------------------------------------------------------
+
         Args:
-            name:
+            name (str): Name of the element
             value:
             action:
         """

@@ -18,8 +18,8 @@ async def proc2(args):
 @cocotb.test()
 async def test_fork_join_any(dut):
     state = {'ok1': False, 'ok2': False}
-    fork1 = cocotb.fork(proc1(state))
-    fork2 = cocotb.fork(proc2(state))
+    fork1 = cocotb.start_soon(proc1(state))
+    fork2 = cocotb.start_soon(proc2(state))
     await sv.fork_join_any([fork1, fork2])
     if state['ok1'] is False:
         raise Exception('ok1 must be True')
@@ -33,8 +33,8 @@ async def test_fork_join_any(dut):
 @cocotb.test()
 async def test_fork_join(dut):
     state = {'ok1': False, 'ok2': False}
-    fork1 = cocotb.fork(proc1(state))
-    fork2 = cocotb.fork(proc2(state))
+    fork1 = cocotb.start_soon(proc1(state))
+    fork2 = cocotb.start_soon(proc2(state))
     await sv.fork_join([fork1, fork2])
     if state['ok1'] is False:
         raise Exception('ok1 must be True')
@@ -43,16 +43,16 @@ async def test_fork_join(dut):
 
 #@cocotb.test()
 #async def test_fork_join_none(dut):
-#    fork1 = cocotb.fork(proc1(state))
-#    fork2 = cocotb.fork(proc2(state))
+#    fork1 = cocotb.start_soon(proc1(state))
+#    fork2 = cocotb.start_soon(proc2(state))
 #    forks = sv.fork_join_none([proc1(state), proc2(state)])
 
 
 @cocotb.test()
 async def test_forks_kill(dut):
     state = {'ok1': False, 'ok2': False}
-    fork1 = cocotb.fork(proc1(state))
-    fork2 = cocotb.fork(proc2(state))
+    fork1 = cocotb.start_soon(proc1(state))
+    fork2 = cocotb.start_soon(proc2(state))
     await sv.fork_join_any([fork1, fork2])
     fork2.kill()
     await Timer(20, "NS")

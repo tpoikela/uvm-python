@@ -1,5 +1,4 @@
-#//
-#//------------------------------------------------------------------------------
+#// -----------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
 #//   Copyright 2007-2011 Cadence Design Systems, Inc.
 #//   Copyright 2010-2011 Synopsys, Inc.
@@ -63,15 +62,17 @@ INV_WARN6 = ("Bad severity argument \"%s\" given to command +uvm_set_severity=%s
     + "Usage: +uvm_set_severity=<comp>,<id>,<orig_severity>,<new_severity>")
 
 
-class VerbositySetting:
+class VerbositySetting():
     """
     The verbosity settings may have a specific phase to start at.
-    We will do this work in the phase_started callback.
-        :ivar UVMComponent comp: Component related to the settings
-        :ivar UVMPhase phase: Phase in which settings apply.
-        :ivar int id: ID for verbosity setting
-        :ivar int offset: Time offset for verbosity setting
-        :ivar int verbosity: Verbosity level of the setting.
+    We will do this work in the `UVMComponent.phase_started` callback.
+
+    :ivar UVMComponent comp: Component related to the settings
+    :ivar UVMPhase phase: Phase in which settings apply.
+    :ivar int id: ID for verbosity setting
+    :ivar int offset: Time offset for verbosity setting
+    :ivar int verbosity: Verbosity level of the setting.
+
     """
     def __init__(self):
         self.comp = ""
@@ -114,26 +115,26 @@ class UVMComponent(UVMReportObject):
     uvm_component provides the following interfaces:
 
     Hierarchy:
-      provides methods for searching and traversing the component hierarchy.
+    provides methods for searching and traversing the component hierarchy.
 
     Phasing
-      defines a phased test flow that all components follow, with a
-      group of standard phase methods and an API for custom phases and
-      multiple independent phasing domains to mirror DUT behavior e.g. power
+    defines a phased test flow that all components follow, with a
+    group of standard phase methods and an API for custom phases and
+    multiple independent phasing domains to mirror DUT behavior e.g. power
 
     Reporting
-      provides a convenience interface to the `UVMReportHandler`. All
-      messages, warnings, and errors are processed through this interface.
+    provides a convenience interface to the `UVMReportHandler`. All
+    messages, warnings, and errors are processed through this interface.
 
     Transaction recording
-        provides methods for recording the transactions
-        produced or consumed by the component to a transaction database (vendor
-        specific).
+    provides methods for recording the transactions
+    produced or consumed by the component to a transaction database (vendor
+    specific).
 
     Factory
-        provides a convenience interface to the `UVMFactory`. The factory
-        is used to create new components and other objects based on type-wide and
-        instance-specific configuration.
+    provides a convenience interface to the `UVMFactory`. The factory
+    is used to create new components and other objects based on type-wide and
+    instance-specific configuration.
 
     The `UVMComponent` is automatically seeded during construction using UVM
     seeding, if enabled. All other objects must be manually reseeded, if
@@ -145,10 +146,12 @@ class UVMComponent(UVMReportObject):
     :cvar bool print_config_matches: Setting this static variable causes
         `UVMConfigDb.get` to print info about
         matching configuration settings as they are being applied.
-
     :ivar UVMTrDatabase tr_database: Specifies the `UVMTrDatabase` object to use
         for `begin_tr` and other methods in the <Recording Interface>.
         Default is `UVMCoreService.get_default_tr_database`.
+    :ivar bool print_enabled: This bit determines if this component should automatically be printed as a
+        child of its parent object. By default, all children are printed. However, this bit allows a parent
+        component to disable the printing of specific children.
     """
 
     print_config_matches = False
@@ -167,6 +170,7 @@ class UVMComponent(UVMReportObject):
         implicit top-level component, `uvm_top`.
 
         All classes derived from uvm_component must call super.new(name,parent).
+
         Args:
             name (str): Name of the component.
             parent (UVMComponent): Parent component.
@@ -174,13 +178,6 @@ class UVMComponent(UVMReportObject):
         super().__init__(name)
         self.m_children: Dict[str, 'UVMComponent'] = {}  # uvm_component[string]
 
-        #// Variable: print_enabled
-        #//
-        #// This bit determines if this component should automatically be printed as a
-        #// child of its parent object.
-        #//
-        #// By default, all children are printed. However, this bit allows a parent
-        #// component to disable the printing of specific children.
         self.print_enabled = True
         self.m_current_phase = None  # the most recently executed phase
         self.m_parent = None
@@ -463,9 +460,7 @@ class UVMComponent(UVMReportObject):
         return get_depth
 
 
-    #----------------------------------------------------------------------------
     # Group: Phasing Interface
-    #----------------------------------------------------------------------------
     #
     # These methods implement an interface which allows all components to step
     # through a standard schedule of phases, or a customized schedule, and
@@ -477,7 +472,6 @@ class UVMComponent(UVMReportObject):
     #
     # All processes associated with a task-based phase are killed when the phase
     # ends. See <uvm_task_phase> for more details.
-    #----------------------------------------------------------------------------
 
     def build_phase(self, phase):
         """
@@ -574,7 +568,7 @@ class UVMComponent(UVMReportObject):
         The run_phase task should never be called directly.
         """
         uvm_debug(self, 'run_phase', self.get_name() + ' yielding self.run()')
-        # self.m_run_process = cocotb.fork(self.run())
+        # self.m_run_process = cocotb.start_soon(self.run())
         # yield self.m_run_process
         await self.run()
 
@@ -956,7 +950,8 @@ class UVMComponent(UVMReportObject):
         may raise the phase's objection.
 
         .. code-block:: python
-            phase.raise_objection(self, "Reason")
+
+          phase.raise_objection(self, "Reason")
 
         It is the responsibility of this component to drop the objection
         once it is ready for this phase to end (and processes killed).
@@ -970,9 +965,7 @@ class UVMComponent(UVMReportObject):
         """
         pass
 
-    #//--------------------------------------------------------------------
     #// phase / schedule / domain API
-    #//--------------------------------------------------------------------
 
     def set_domain(self, domain, hier=True):
         """
@@ -1072,26 +1065,26 @@ class UVMComponent(UVMReportObject):
             for c in self.m_children:
                 self.m_children[c].set_phase_imp(phase,imp,hier)
 
+    async def suspend(self):
+        """
+        Suspend this component.
+        
+        This method must be implemented by the user to suspend the
+        component according to the protocol and functionality it implements.
+        A suspended component can be subsequently resumed using <resume()>.
+        """
+        uvm_warning("COMP/SPND/UNIMP", "suspend() not implemented")
 
-    #// Task: suspend
-    #//
-    #// Suspend this component.
-    #//
-    #// This method must be implemented by the user to suspend the
-    #// component according to the protocol and functionality it implements.
-    #// A suspended component can be subsequently resumed using <resume()>.
-    #extern virtual task suspend ()
-
-
-    #// Task: resume
-    #//
-    #// Resume this component.
-    #//
-    #// This method must be implemented by the user to resume a component
-    #// that was previously suspended using <suspend()>.
-    #// Some component may start in the suspended state and
-    #// may need to be explicitly resumed.
-    #extern virtual task resume ()
+    async def resume(self):
+        """
+        Resume this component.
+        
+        This method must be implemented by the user to resume a component
+        that was previously suspended using <suspend()>.
+        Some component may start in the suspended state and
+        may need to be explicitly resumed.
+        """
+        uvm_warning("COMP/RSUM/UNIMP", "resume() not implemented")
 
 
     def resolve_bindings(self) -> None:
@@ -1105,9 +1098,7 @@ class UVMComponent(UVMReportObject):
         """
         return
 
-    #extern function string massage_scope(string scope)
     def massage_scope(self, scope: str) -> str:
-        # uvm_top
         if scope == "":
             return "^$"
 
@@ -1115,17 +1106,15 @@ class UVMComponent(UVMReportObject):
             return self.get_full_name() + ".*"
 
         # absolute path to the top-level test
-        if(scope == "uvm_test_top"):
+        if scope == "uvm_test_top":
             return "uvm_test_top"
 
         # absolute path to uvm_root
-        if(scope[0] == "."):
+        if scope[0] == ".":
             return self.get_full_name() + scope
         return self.get_full_name() + "." + scope
 
-    #//----------------------------------------------------------------------------
     #// Group: Configuration Interface
-    #//----------------------------------------------------------------------------
     #//
     #// Components can be designed to be user-configurable in terms of its
     #// topology (the type and number of children it has), mode of operation, and
@@ -1134,7 +1123,6 @@ class UVMComponent(UVMReportObject):
     #// without having to derive new classes or new class hierarchies for
     #// every configuration scenario.
     #//
-    #//----------------------------------------------------------------------------
 
     def check_config_usage(self, recurse=1) -> None:
         """
@@ -1265,7 +1253,7 @@ class UVMComponent(UVMReportObject):
         T_cont.field_array.clear()
 
 
-    def print_config_settings(self, field="", comp=None, recurse=False):
+    def print_config_settings(self, field="", comp=None, recurse=False) -> None:
         """
         Function: print_config_settings
 
@@ -1310,6 +1298,7 @@ class UVMComponent(UVMReportObject):
 
         if `audit` is set then the audit trail for each resource is printed
         along with the resource name and value
+
         Args:
             recurse (bool): If true, recurse to child components
             audit (bool): If true, print audit trail for each resource.
@@ -1324,7 +1313,7 @@ class UVMComponent(UVMReportObject):
                 c.print_config(recurse, audit)
 
 
-    def print_config_with_audit(self, recurse=0):
+    def print_config_with_audit(self, recurse=0) -> None:
         """
         Function: print_config_with_audit
 
@@ -1395,9 +1384,7 @@ class UVMComponent(UVMReportObject):
         """
         pass
 
-    #//----------------------------------------------------------------------------
     #// Group: Factory Interface
-    #//----------------------------------------------------------------------------
     #//
     #// The factory interface provides convenient access to a portion of UVM's
     #// <uvm_factory> interface. For creating new objects and components, the
@@ -1406,71 +1393,68 @@ class UVMComponent(UVMReportObject):
     #// <uvm_object_registry #(T,Tname)>). The wrapper also provides functions
     #// for setting type and instance overrides.
     #//
-    #//----------------------------------------------------------------------------
 
-    #// Function: create_component
-    #//
-    #// A convenience function for <uvm_factory::create_component_by_name>,
-    #// this method calls upon the factory to create a new child component
-    #// whose type corresponds to the preregistered type name, `requested_type_name`,
-    #// and instance name, `name`. This method is equivalent to:
-    #//
-    #//|  factory.create_component_by_name(requested_type_name,
-    #//|                                   get_full_name(), name, this)
-    #//
-    #// If the factory determines that a type or instance override exists, the type
-    #// of the component created may be different than the requested type. See
-    #// <set_type_override> and <set_inst_override>. See also <uvm_factory> for
-    #// details on factory operation.
     def create_component(self, requested_type_name, name):
+        """
+        Function: create_component
+        
+        A convenience function for <uvm_factory::create_component_by_name>,
+        this method calls upon the factory to create a new child component
+        whose type corresponds to the preregistered type name, `requested_type_name`,
+        and instance name, `name`. This method is equivalent to::
+        
+        factory.create_component_by_name(requested_type_name,
+                                         get_full_name(), name, this)
+        
+        If the factory determines that a type or instance override exists, the type
+        of the component created may be different than the requested type. See
+        <set_type_override> and <set_inst_override>. See also <uvm_factory> for
+        details on factory operation.
+        """
         factory = _get_factory()
         return factory.create_component_by_name(requested_type_name,
             self.get_full_name(), name, self)
 
-    #// Function: create_object
-    #//
-    #// A convenience function for <uvm_factory::create_object_by_name>,
-    #// this method calls upon the factory to create a new object
-    #// whose type corresponds to the preregistered type name,
-    #// `requested_type_name`, and instance name, `name`. This method is
-    #// equivalent to:
-    #//
-    #//|  factory.create_object_by_name(requested_type_name,
-    #//|                                get_full_name(), name)
-    #//
-    #// If the factory determines that a type or instance override exists, the
-    #// type of the object created may be different than the requested type.  See
-    #// <uvm_factory> for details on factory operation.
     def create_object(self, requested_type_name, name=""):
+        """
+        A convenience function for `UVMFactory.create_object_by_name`,
+        this method calls upon the factory to create a new object
+        whose type corresponds to the preregistered type name,
+        `requested_type_name`, and instance name, `name`. This method is
+        equivalent to::
+        
+            factory.create_object_by_name(requested_type_name,
+                                          get_full_name(), name)
+        
+        If the factory determines that a type or instance override exists, the
+        type of the object created may be different than the requested type.  See
+        `UVMFactory` for details on factory operation.
+        """
         factory = _get_factory()
         return factory.create_object_by_name(requested_type_name,
             self.get_full_name(), name)
 
 
-    #// Function: set_type_override_by_type
-    #//
-    #// A convenience function for `UVMFactory.set_type_override_by_type`, this
-    #// method registers a factory override for components and objects created at
-    #// this level of hierarchy or below. This method is equivalent to:
-    #//
-    #//|  factory.set_type_override_by_type(original_type, override_type,replace)
-    #//
-    #// The `relative_inst_path` is relative to this component and may include
-    #// wildcards. The `original_type` represents the type that is being overridden.
-    #// In subsequent calls to `UVMFactory.create_object_by_type` or
-    #// `UVMFactory.create_component_by_type`, if the requested_type matches the
-    #// `original_type` and the instance paths match, the factory will produce
-    #// the `override_type`.
-    #//
-    #// The original and override type arguments are lightweight proxies to the
-    #// types they represent. See <set_inst_override_by_type> for information
-    #// on usage.
-    #extern static function void set_type_override_by_type
-    #                                           (uvm_object_wrapper original_type,
-    #                                            uvm_object_wrapper override_type,
-    #                                            bit replace=1)
     @classmethod
     def set_type_override_by_type(cls, original_type, override_type, replace=1):
+        """
+        A convenience function for `UVMFactory.set_type_override_by_type`, this
+        method registers a factory override for components and objects created at
+        this level of hierarchy or below. This method is equivalent to::
+        
+            factory.set_type_override_by_type(original_type, override_type,replace)
+        
+        The `relative_inst_path` is relative to this component and may include
+        wildcards. The `original_type` represents the type that is being overridden.
+        In subsequent calls to `UVMFactory.create_object_by_type` or
+        `UVMFactory.create_component_by_type`, if the requested_type matches the
+        `original_type` and the instance paths match, the factory will produce
+        the `override_type`.
+        
+        The original and override type arguments are lightweight proxies to the
+        types they represent. See <set_inst_override_by_type> for information
+        on usage.
+        """
         factory = _get_factory()
         factory.set_type_override_by_type(original_type, override_type, replace)
 
@@ -1545,24 +1529,26 @@ class UVMComponent(UVMReportObject):
     #endfunction
 
 
-    #// Function: set_type_override
-    #//
-    #// A convenience function for <uvm_factory::set_type_override_by_name>,
-    #// this method configures the factory to create an object of type
-    #// `override_type_name` whenever the factory is asked to produce a type
-    #// represented by `original_type_name`.  This method is equivalent to:
-    #//
-    #//|  factory.set_type_override_by_name(original_type_name,
-    #//|                                    override_type_name, replace)
-    #//
-    #// The `original_type_name` typically refers to a preregistered type in the
-    #// factory. It may, however, be any arbitrary string. Subsequent calls to
-    #// create_component or create_object with the same string and matching
-    #// instance path will produce the type represented by override_type_name.
-    #// The `override_type_name` must refer to a preregistered type in the factory.
     @classmethod
     def set_type_override(cls, original_type_name, override_type_name,
             replace=1):
+        """
+        Function: set_type_override
+        
+        A convenience function for `UVMFactory.set_type_override_by_name`,
+        this method configures the factory to create an object of type
+        `override_type_name` whenever the factory is asked to produce a type
+        represented by `original_type_name`.  This method is equivalent to::
+        
+            factory.set_type_override_by_name(original_type_name,
+                                              override_type_name, replace)
+        
+        The `original_type_name` typically refers to a preregistered type in the
+        factory. It may, however, be any arbitrary string. Subsequent calls to
+        create_component or create_object with the same string and matching
+        instance path will produce the type represented by override_type_name.
+        The `override_type_name` must refer to a preregistered type in the factory.
+        """
         factory = _get_factory()
         factory.set_type_override_by_name(original_type_name,override_type_name, replace)
 
@@ -1591,20 +1577,18 @@ class UVMComponent(UVMReportObject):
     #                                       string override_type_name)
 
 
-    #// Function: print_override_info
-    #//
-    #// This factory debug method performs the same lookup process as create_object
-    #// and create_component, but instead of creating an object, it prints
-    #// information about what type of object would be created given the
-    #// provided arguments.
     def print_override_info(self, requested_type_name, name=""):
+        """
+        This factory debug method performs the same lookup process as create_object
+        and create_component, but instead of creating an object, it prints
+        information about what type of object would be created given the
+        provided arguments.
+        """
         factory = _get_factory()
         factory.debug_create_by_name(requested_type_name, self.get_full_name(), name)
 
 
-    #//----------------------------------------------------------------------------
     #// Group: Hierarchical Reporting Interface
-    #//----------------------------------------------------------------------------
     #//
     #// This interface provides versions of the set_report_* methods in the
     #// <uvm_report_object> base class that are applied recursively to this
@@ -1612,7 +1596,6 @@ class UVMComponent(UVMReportObject):
     #//
     #// When a report is issued and its associated action has the LOG bit set, the
     #// report will be sent to its associated FILE descriptor.
-    #//----------------------------------------------------------------------------
 
     #// Function: set_report_id_verbosity_hier
     def set_report_id_verbosity_hier(self, id, verbosity):
@@ -1742,8 +1725,8 @@ class UVMComponent(UVMReportObject):
 
         .. code-block:: python
 
-            def pre_abort(self):
-               self.report()
+          def pre_abort(self):
+            self.report()
 
         The pre_abort() callback hooks are called in a bottom-up fashion.
         """
@@ -1755,16 +1738,13 @@ class UVMComponent(UVMReportObject):
             self.m_children[child].m_do_pre_abort()
         self.pre_abort()
 
-    #//----------------------------------------------------------------------------
     #// Group: Recording Interface
-    #//----------------------------------------------------------------------------
     #// These methods comprise the component-based transaction recording
     #// interface. The methods can be used to record the transactions that
     #// this component "sees", i.e. produces or consumes.
     #//
     #// The API and implementation are subject to change once a vendor-independent
     #// use-model is determined.
-    #//----------------------------------------------------------------------------
 
 
     def accept_tr(self, tr, accept_time=0):
@@ -1773,13 +1753,13 @@ class UVMComponent(UVMReportObject):
         component. Specifically, it performs the following actions:
 
         - Calls the `tr`'s <uvm_transaction::accept_tr> method, passing to it the
-          `accept_time` argument.
+        `accept_time` argument.
 
         - Calls this component's <do_accept_tr> method to allow for any post-begin
-          action in derived classes.
+        action in derived classes.
 
         - Triggers the component's internal accept_tr event. Any processes waiting
-          on this event will resume in the next delta cycle.
+        on this event will resume in the next delta cycle.
         Args:
             tr:
             accept_time:
@@ -1798,7 +1778,6 @@ class UVMComponent(UVMReportObject):
         post-accept action. Implementations should call super.do_accept_tr to
         ensure correct operation.
 
-        #extern virtual protected function void do_accept_tr (uvm_transaction tr)
         Args:
             tr:
         """
@@ -2160,7 +2139,6 @@ class UVMComponent(UVMReportObject):
     def m_set_full_name(self):
         """
         m_set_full_name
-        ---------------
         """
         #if self.m_parent is None:
         #    uvm_fatal("Should not be called with uvm_root")
@@ -2182,7 +2160,6 @@ class UVMComponent(UVMReportObject):
     def do_resolve_bindings(self):
         """
         do_resolve_bindings
-        -------------------
         """
         for s in self.m_children:
             self.m_children[s].do_resolve_bindings()
@@ -2418,7 +2395,7 @@ class UVMComponent(UVMReportObject):
                             self.m_verbosity_settings.append(setting)
 
         if self == top:
-            cocotb.fork(self.m_fork_time_settings(top))
+            cocotb.start_soon(self.m_fork_time_settings(top))
         UVMComponent.first_m_set_cl_verb = 0
 
 
@@ -2433,7 +2410,7 @@ class UVMComponent(UVMReportObject):
             top.find_all(m_time_settings[i].comp, comps)
             duration = m_time_settings[i].offset - last_time
             last_time = m_time_settings[i].offset
-            cocotb.fork(self.m_set_comp_settings(i, comps.copy(), duration))
+            cocotb.start_soon(self.m_set_comp_settings(i, comps.copy(), duration))
         #end join_none // fork begin
 
 
@@ -2632,16 +2609,10 @@ class UVMComponent(UVMReportObject):
                 print("No kill() available")
 
 
-#//------------------------------------------------------------------------------
 #//
 #// Factory Methods
-#//
-#//------------------------------------------------------------------------------
 
-#
-#
 #// set_inst_override
-#// -----------------
 #
 #function void  uvm_component::set_inst_override (string relative_inst_path,
 #                                                 string original_type_name,
@@ -2661,90 +2632,9 @@ class UVMComponent(UVMReportObject):
 #endfunction
 #
 #
-#
-#
-#//------------------------------------------------------------------------------
-#//
-#// Phase interface
-#//
-#//------------------------------------------------------------------------------
-#
-#
-#// phase methods
-#//--------------
-#// these are prototypes for the methods to be implemented in user components
-#// build_phase() has a default implementation, the others have an empty default
-#
-#// these phase methods are common to all components in UVM. For backward
-#// compatibility, they call the old style name (without the _phse)
-#
-#function void uvm_component::connect_phase(uvm_phase phase)
-#  connect()
-#  return
-#endfunction
-#function void uvm_component::end_of_elaboration_phase(uvm_phase phase)
-#  end_of_elaboration()
-#  return
-#endfunction
-#function void uvm_component::extract_phase(uvm_phase phase)
-#  extract()
-#  return
-#endfunction
-#function void uvm_component::check_phase(uvm_phase phase)
-#  check()
-#  return
-#endfunction
-#function void uvm_component::report_phase(uvm_phase phase)
-#  report()
-#  return
-#endfunction
-#
-#
-#// These are the old style phase names. In order for runtime phase names
-#// to not conflict with user names, the _phase postfix was added.
-#
-#function void uvm_component::connect();             return; endfunction
-#function void uvm_component::end_of_elaboration();  return; endfunction
-#function void uvm_component::extract();             return; endfunction
-#function void uvm_component::check();               return; endfunction
-#function void uvm_component::report();              return; endfunction
-#function void uvm_component::final_phase(uvm_phase phase);         return; endfunction
-#
-#// these runtime phase methods are only called if a set_domain() is done
-#
-#//------------------------------
-#// phase / schedule / domain API
-#//------------------------------
-#// methods for VIP creators and integrators to use to set up schedule domains
-#// - a schedule is a named, organized group of phases for a component base type
-#// - a domain is a named instance of a schedule in the master phasing schedule
-#
-#
-#// suspend
-#// -------
-#
-#task uvm_component::suspend()
-#   `uvm_warning("COMP/SPND/UNIMP", "suspend() not implemented")
-#endtask
-#
-#
-#// resume
-#// ------
-#
-#task uvm_component::resume()
-#   `uvm_warning("COMP/RSUM/UNIMP", "resume() not implemented")
-#endtask
-#
-#
-#
-#
-#
-#
-#//------------------------------------------------------------------------------
 #//
 #// Configuration interface
 #//
-#//------------------------------------------------------------------------------
 #
 #
 

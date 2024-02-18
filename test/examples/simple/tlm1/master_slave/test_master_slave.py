@@ -10,6 +10,7 @@ test_dur = 1200  # NS
 
 #UVMDebug.full_debug()
 
+@uvm_component_utils
 class master_slave_test(UVMTest):
 
     def __init__(self, name, parent):
@@ -30,7 +31,7 @@ class master_slave_test(UVMTest):
             uvm_fatal("ENV_NOT_OK", "There were errors in the env")
 
 
-uvm_component_utils(master_slave_test)
+#uvm_component_utils(master_slave_test)
 
 
 @cocotb.test()

@@ -37,22 +37,16 @@
 # 5. Top_env does some checks at the end to ensure some transactions have been
 #    completed.
 
-import cocotb
-from cocotb.triggers import Timer
+from cocotb.triggers import Timer, NullTrigger
 
 from uvm import *
 from enum import Enum
 
+n = 1
 # These can be changed to vary the topology
-NUM_MASTERS = 5  # 6 fatals out
-NUM_SLAVES = 34  # 35 gets stuck, >= 36 fatals out
-NUM_MEMS = 10 # 11 gets stuck
-
-#ratio = 3
-#NUM_MASTERS = 2 * ratio
-#NUM_SLAVES = 4 * ratio
-#NUM_MEMS = 4 * ratio
-
+NUM_MASTERS = 32 * n
+NUM_SLAVES = 64 * n
+NUM_MEMS = 32 * n
 
 class Cmd(Enum):
     READ = 0
@@ -90,7 +84,7 @@ def get_mem_addr(i):
 # class transaction
 #----------------------------------------------------------------------
 
-
+@uvm_object_utils
 class transaction(UVMTransaction):
 
 
@@ -126,13 +120,14 @@ class transaction(UVMTransaction):
         return s
 
 
-uvm_object_utils(transaction)
+# uvm_object_utils(transaction)
 
 
 #----------------------------------------------------------------------
 # component master
 #----------------------------------------------------------------------
 
+@uvm_component_utils
 class master(UVMComponent):
 
     def __init__(self, name, parent):
@@ -161,6 +156,7 @@ class master(UVMComponent):
 
 # Base class for slave components
 
+@uvm_component_utils
 class slave_base(UVMComponent):
 
     def __init__(self, name, parent):
@@ -187,17 +183,18 @@ class slave_base(UVMComponent):
 
     
     async def get(self, t):
-        await Timer(0)
+        await NullTrigger()
 
     
     async def put(self, t):
-        await Timer(0)
+        await NullTrigger()
 
     
     async def peek(self, t):
-        await Timer(0)
+        await NullTrigger()
 
 
+@uvm_component_utils
 class bus(slave_base):
     def __init__(self, name, parent):
         super().__init__(name, parent)
@@ -396,6 +393,7 @@ class env_top(UVMEnv):
         self.slaves = []
         self.mems = []
         self.bus = None
+        self.cooldown_time = 1000
 
     def build_phase(self, phase):
         self.bus = bus("bus", self)
@@ -424,19 +422,16 @@ class env_top(UVMEnv):
             self.mems.append(mem_inst)
             self.bus.add_comp(get_mem_addr(i), mem_inst)
 
-
-    def connect_phase(self, phase):
-        pass
-
     
     async def run_phase(self, phase):
         phase.raise_objection(self)
         uvm_info("ENV_TOP", "run_phase started", UVM_MEDIUM)
         await Timer(NUM_ITEMS * 110, "NS")
+        await Timer(self.cooldown_time, "NS")
         phase.drop_objection(self)
 
 
-    def all_ok(self):
+    def all_ok(self) -> bool:
         num_master_cmds = NUM_MASTERS * NUM_ITEMS
         num_slave_cmds = 0
         num_mem_cmds = 0

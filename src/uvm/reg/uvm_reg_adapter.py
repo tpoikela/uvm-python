@@ -42,7 +42,7 @@ for the APB bus protocol::
             apb.data = rw.data
             return apb
 
-        def bus2reg(self, bus_item, rw):
+        def bus2reg(self, bus_item, rw) -> None:
             arr_apb = []
             if not sv.cast(arr_apb, bus_item, apb_item)) begin
               uvm_fatal("CONVERT_APB2REG","Bus item is not of type apb_item")
@@ -61,53 +61,40 @@ from ..base.uvm_object import UVMObject
 from ..macros.uvm_message_defines import *
 
 
-
-#//------------------------------------------------------------------------------
-#//
-#// Class: uvm_reg_adapter
-#//
-#// This class defines an interface for converting between <uvm_reg_bus_op>
-#// and a specific bus transaction.
-#//------------------------------------------------------------------------------
-
-
 class UVMRegAdapter(UVMObject):
+    """
+    Class: UVMRegAdapter
+
+    This class defines an interface for converting between <uvm_reg_bus_op>
+    and a specific bus transaction.
+
+    :cvar bool supports_byte_enable:
+    Set this bit in extensions of this class if the bus protocol supports
+    byte enables. Default is False.
+
+    :cvar bool provides_responses:
+    Set this bit in extensions of this class if the bus driver provides
+    separate response items. Default is False.
+
+    :cvar UVMSequenceBase parent_sequence:
+    Set this member in extensions of this class if the bus driver requires
+    bus items be executed via a particular sequence base type. The sequence
+    assigned to this member must implement `UVMObject.do_clone()`.
+    """
 
     def __init__(self, name=""):
         """
-          Function: new
+        Create a new instance of this type, giving it the optional `name`.
 
-          Create a new instance of this type, giving it the optional `name`.
         Args:
-            name:
+            name (str): Name of the instance
         """
         UVMObject.__init__(self, name)
         self.supports_byte_enable = False
         self.provides_responses = False
         self.parent_sequence = None
-        self.m_item = None  # uvm_reg_item m_item
+        self.m_item = None
 
-    #  // Variable: supports_byte_enable
-    #  //
-    #  // Set this bit in extensions of this class if the bus protocol supports
-    #  // byte enables.
-    #
-    #  bit supports_byte_enable
-
-    #  // Variable: provides_responses
-    #  //
-    #  // Set this bit in extensions of this class if the bus driver provides
-    #  // separate response items.
-    #
-    #  bit provides_responses
-
-    #  // Variable: parent_sequence
-    #  //
-    #  // Set this member in extensions of this class if the bus driver requires
-    #  // bus items be executed via a particular sequence base type. The sequence
-    #  // assigned to this member must implement do_clone().
-    #
-    #  uvm_sequence_base parent_sequence
 
     def reg2bus(self, rw):
         """
@@ -122,7 +109,6 @@ class UVMRegAdapter(UVMObject):
           the corresponding members from the given generic `rw` bus operation, then
           return it.
 
-         pure virtual function uvm_sequence_item reg2bus(const ref uvm_reg_bus_op rw)
         Args:
             rw:
         Raises:

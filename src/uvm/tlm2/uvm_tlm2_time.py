@@ -33,7 +33,7 @@ from uvm.base.sv import cat
 class UVMTLMTime():
 #
 #   static local real m_resolution = 1.0e-12; // ps by default
-    m_resolution = 1.0e-12 
+    m_resolution = 1.0e-12
 #   local real m_res;
 #   local time m_time;  // Number of 'm_res' time units,
 #   local string m_name;
@@ -95,7 +95,7 @@ class UVMTLMTime():
 #   //| #(delay.get_realtime(1ns));
 #   //| #(delay.get_realtime(1fs, 1.0e-15));
 #   //
-    def get_realtime(self, scaled, secs = 1.0e-9):
+    def get_realtime(self, scaled, secs=1.0e-9):
         return self.m_time*scaled * (self.m_res/secs)
 
 #   // Function: incr
@@ -111,7 +111,7 @@ class UVMTLMTime():
 #   //| delay.incr(1.5ns, 1ns);
 #   //| delay.incr(1.5ns, 1ps, 1.0e-12);
 #   //
-    def incr(self, t, scaled, secs = 1.0e-9):
+    def incr(self, t, scaled, secs=1.0e-9):
         if (t < 0.0):
             uvm_error("UVM/TLM/TIMENEG", cat("Cannot increment uvm_tlm_time variable ", self.m_name, " by a negative value"))
             return
@@ -123,7 +123,7 @@ class UVMTLMTime():
 
 #   // Function: decr
 #   // Decrement the time value by the specified number of scaled time unit
-#   //  
+#   //
 #   // ~t~ is a time value expressed in the scale and precision
 #   // of the caller.
 #   // ~scaled~ must be a time literal value that corresponds
@@ -140,7 +140,7 @@ class UVMTLMTime():
         if (scaled == 0):
             uvm_fatal("UVM/TLM/BADSCALE",
                  "uvm_tlm_time::decr() called with a scaled time literal that is smaller than the current timescale")
-      
+
         self.m_time -= self._to_m_res(t, scaled, secs);
 
         if (self.m_time < 0.0):
@@ -188,11 +188,11 @@ class UVMTLMTime():
 #// they are not scaled back and forth to the underlying precision.
 #//
 #//| `timescale 1ns/1ps
-#//| 
+#//|
 #//| module m();
-#//| 
+#//|
 #//| time t;
-#//| 
+#//|
 #//| initial
 #//| begin
 #//|    #1.5;
@@ -227,38 +227,38 @@ class UVMTLMTime():
 #//
 #// For example
 #//
-#//| `timescale 1ns/1ps 
-#//| 
-#//| package a_pkg; 
-#//| 
-#//| class a; 
-#//|    function void f(inout time t); 
-#//|       t += 10ns; 
+#//| `timescale 1ns/1ps
+#//|
+#//| package a_pkg;
+#//|
+#//| class a;
+#//|    function void f(inout time t);
+#//|       t += 10ns;
 #//|    endfunction
-#//| endclass 
-#//| 
-#//| endpackage 
-#//| 
-#//| 
-#//| `timescale 1ps/1ps 
-#//| 
-#//| program p; 
-#//| 
+#//| endclass
+#//|
+#//| endpackage
+#//|
+#//|
+#//| `timescale 1ps/1ps
+#//|
+#//| program p;
+#//|
 #//| import a_pkg::*;
 #//|
 #//| time t;
-#//| 
+#//|
 #//| initial
-#//| begin 
-#//|    a A = new; 
-#//|    A.f(t); 
-#//|    #t; 
+#//| begin
+#//|    a A = new;
+#//|    A.f(t);
+#//|    #t;
 #//|    $write("T=%0d ps (10,000)\n", $realtime());
 #//| end
 #//| endprogram
-#//  
+#//
 #// yields
-#//  
+#//
 #//| T=10 ps (10,000)
 #//
 #// Scaling is needed every time you make a procedural call
@@ -267,29 +267,29 @@ class UVMTLMTime():
 #// Using the uvm_tlm_time type
 #//
 #//| `timescale 1ns/1ps
-#//| 
+#//|
 #//|    package a_pkg;
-#//| 
+#//|
 #//| import uvm_pkg::*;
-#//| 
+#//|
 #//| class a;
 #//|    function void f(uvm_tlm_time t);
 #//|       t.incr(10ns, 1ns);
 #//|    endfunction
 #//| endclass
-#//| 
+#//|
 #//| endpackage
-#//| 
-#//| 
+#//|
+#//|
 #//| `timescale 1ps/1ps
-#//| 
+#//|
 #//| program p;
-#//| 
+#//|
 #//| import uvm_pkg::*;
 #//| import a_pkg::*;
-#//| 
+#//|
 #//| uvm_tlm_time t = new;
-#//| 
+#//|
 #//| initial
 #//|    begin
 #//|       a A = new;
@@ -306,6 +306,6 @@ class UVMTLMTime():
 #// A similar procedure is required when crossing any simulator
 #// or language boundary,
 #// such as interfacing between SystemVerilog and SystemC.
-#      
-# 
-# 
+#
+#
+#

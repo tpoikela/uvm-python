@@ -44,18 +44,12 @@ class apb_master_cbs(UVMCallback):
 
 class apb_master(UVMDriver):  #(apb_rw)
 
-
-    #   event trig
-    #   apb_vif sigs
-    #   apb_config cfg
-    #
     def __init__(self, name, parent=None):
         super().__init__(name,parent)
         self.trig = Event("trans_exec")  # event
         self.sigs = None  # apb_vif
         self.cfg = None  # apb_config
         self.tag = "APB_MASTER"
-
 
     def build_phase(self, phase):
         super().build_phase(phase)
@@ -74,8 +68,8 @@ class apb_master(UVMDriver):  #(apb_rw)
     async def run_phase(self, phase):
         uvm_info("APB_MASTER", "apb_master run_phase started", UVM_MEDIUM)
 
-        self.sigs.psel    <= 0
-        self.sigs.penable <= 0
+        self.sigs.psel.value    = 0
+        self.sigs.penable.value = 0
 
         while True:
             await self.drive_delay()
@@ -106,42 +100,32 @@ class apb_master(UVMDriver):  #(apb_rw)
 
             self.seq_item_port.item_done()
             self.trig.set()
-            #->trig
-        #   endtask: run_phase
-
-
     
     async def read(self, addr, data):
         uvm_info(self.tag, "Doing APB read to addr " + str(addr), UVM_MEDIUM)
 
-        self.sigs.paddr   <= addr
-        self.sigs.pwrite  <= 0
-        self.sigs.psel    <= 1
+        self.sigs.paddr.value = addr
+        self.sigs.pwrite.value = 0
+        self.sigs.psel.value = 1
         await self.drive_delay()
-        self.sigs.penable <= 1
+        self.sigs.penable.value = 1
         await self.drive_delay()
         data.append(int(self.sigs.prdata))
-        self.sigs.psel    <= 0
-        self.sigs.penable <= 0
-        #   endtask: read
-
-
+        self.sigs.psel.value = 0
+        self.sigs.penable.value = 0
     
     async def write(self, addr, data):
         uvm_info(self.tag, "Doing APB write to addr " + str(addr), UVM_MEDIUM)
-        self.sigs.paddr   <= addr
-        self.sigs.pwdata  <= data
-        self.sigs.pwrite  <= 1
-        self.sigs.psel    <= 1
+        self.sigs.paddr.value = addr
+        self.sigs.pwdata.value = data
+        self.sigs.pwrite.value = 1
+        self.sigs.psel.value = 1
         await self.drive_delay()
-        self.sigs.penable <= 1
+        self.sigs.penable.value = 1
         await self.drive_delay()
-        self.sigs.psel    <= 0
-        self.sigs.penable <= 0
+        self.sigs.psel.value = 0
+        self.sigs.penable.value = 0
         uvm_info(self.tag, "Finished APB write to addr " + str(addr), UVM_MEDIUM)
-        #   endtask: write
-
-
     
     async def drive_delay(self):
         await RisingEdge(self.sigs.clk)

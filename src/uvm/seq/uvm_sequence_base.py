@@ -45,35 +45,35 @@ SeqItemQueue = UVMQueue[UVMSequenceItem]
 class UVMSequenceBase(UVMSequenceItem):
     """
     CLASS: UVMSequenceBase
-    
+
     The UVMSequenceBase class provides the interfaces needed to create streams
     of sequence items and/or other sequences.
-    
+
     A sequence is executed by calling its <start> method, either directly
     or invocation of any of the `uvm_do_* macros.
-    
+
     Executing sequences via <start>:
-    
+
     A sequence's <start> method has a ~parent_sequence~ argument that controls
     whether <pre_do>, <mid_do>, and <post_do> are called *in the parent*
     sequence. It also has a ~call_pre_post~ argument that controls whether its
     <pre_body> and <post_body> methods are called.
     In all cases, its <pre_start> and <post_start> methods are always called.
-    
+
     When <start> is called directly, you can provide the appropriate arguments
     according to your application.
-    
+
     The sequence execution flow looks like this
-    
+
     User code::
-    
+
      sub_seq.randomize(...)  # optional
      await sub_seq.start(seqr, parent_seq, priority, call_pre_post)
-    
-    
+
+
     The following methods are called, in order::
-    
-    
+
+
        sub_seq.pre_start()        (async)
        sub_seq.pre_body()         (async)  if call_pre_post==1
          parent_seq.pre_do(0)     (async)  if parent_sequence!=None
@@ -82,10 +82,10 @@ class UVMSequenceBase(UVMSequenceItem):
          parent_seq.post_do(this) (func)  if parent_sequence!=None
        sub_seq.post_body()        (async)  if call_pre_post==1
        sub_seq.post_start()       (async)
-    
-    
+
+
     Executing sub-sequences via `uvm_do macros:
-    
+
     A sequence can also be indirectly started as a child in the <body> of a
     parent sequence. The child sequence's <start> method is called indirectly
     by invoking any of the uvm_do functions in `uvm_sequence_defines.py`.
@@ -94,47 +94,47 @@ class UVMSequenceBase(UVMSequenceItem):
     <post_body> methods from being called. During execution of the
     child sequence, the parent's <pre_do>, <mid_do>, and <post_do> methods
     are called.
-    
+
     The sub-sequence execution flow looks like::
-    
+
         await uvm_do_with_prior(self, seq_seq, { constraints }, priority)
-    
-    
+
+
     The following methods are called, in order::
-    
+
        sub_seq.pre_start()         (async)
        parent_seq.pre_do(0)        (async)
        parent_req.mid_do(sub_seq)  (func)
          sub_seq.body()            (async)
        parent_seq.post_do(sub_seq) (func)
        sub_seq.post_start()        (async)
-    
-    
+
+
     Remember, it is the *parent* sequence's pre|mid|post_do that are called, not
     the sequence being executed.
-    
+
     Executing sequence items via `start_item`/`finish_item` or uvm_do functions:
-    
+
     Items are started in the `body` of a parent sequence via calls to
     `start_item`/`finish_item` or invocations of any of the `uvm_do
     macros. The <pre_do>, <mid_do>, and <post_do> methods of the parent
     sequence will be called as the item is executed.
-    
+
     The sequence-item execution flow looks like
-    
+
     User code::
-    
+
         await parent_seq.start_item(item, priority)
         item.randomize[_with({constraints})]
         await parent_seq.finish_item(item)
-    
+
     or::
-    
+
         await uvm_do_with_prior(self, item, constraints, priority)
-    
+
     The following methods are called, in order::
-    
-    
+
+
         sequencer.wait_for_grant(prior) (task) \ start_item  \
         parent_seq.pre_do(1)            (task) /              \
                                                            uvm_do* functions
@@ -142,7 +142,7 @@ class UVMSequenceBase(UVMSequenceItem):
         sequencer.send_request(item)    (func)  \finish_item /
         sequencer.wait_for_item_done()  (task)  /
         parent_seq.post_do(item)        (func) /
-    
+
     Attempting to execute a sequence via `start_item`/`finish_item`
     will produce a run-time error.
     """
@@ -254,9 +254,8 @@ class UVMSequenceBase(UVMSequenceItem):
             return 0
 
     """
-    --------------------------
     Group: Sequence Execution
-    --------------------------
+    -------------------------
     """
 
     async def start(self, sequencer, parent_sequence=None, this_priority=-1,
@@ -346,7 +345,7 @@ class UVMSequenceBase(UVMSequenceItem):
         # the "if (!(m_sequence_state inside {...}" works
         self.m_sequence_state = UVM_PRE_START
 
-        self.m_sequence_process = cocotb.fork(self.start_process(parent_sequence, call_pre_post))
+        self.m_sequence_process = cocotb.start_soon(self.start_process(parent_sequence, call_pre_post))
         await self.m_sequence_process
 
         if self.m_sequencer is not None:
@@ -699,11 +698,13 @@ class UVMSequenceBase(UVMSequenceItem):
             starting_phase.drop_objection(self, description, count)
         #  endfunction : m_safe_drop_starting_phase
 
+    """
+    Group: Sequence Control
+    -----------------------
+    """
+
     def set_priority(self, value):
         """
-         ------------------------
-          Group: Sequence Control
-         ------------------------
 
           Function: set_priority
 
@@ -947,9 +948,10 @@ class UVMSequenceBase(UVMSequenceItem):
     #  endfunction
 
 
-    #  //-------------------------------
-    #  // Group: Sequence Item Execution
-    #  //-------------------------------
+    """
+    Group: Sequence Item Execution
+    ------------------------------
+    """
 
 
     def create_item(self, type_var, l_sequencer, name):
@@ -1115,11 +1117,13 @@ class UVMSequenceBase(UVMSequenceItem):
     #  endtask
 
 
+    """
+    Group: Response API
+    -------------------
+    """
 
     def use_response_handler(self, enable):
         """
-          Group: Response API
-         --------------------
 
           Function: use_response_handler
 
@@ -1280,14 +1284,10 @@ class UVMSequenceBase(UVMSequenceItem):
                        self.m_resp_queue_event)
 
 
-    #  //----------------------
-    #  // Misc Internal methods
-    #  //----------------------
-
     def m_get_sqr_sequence_id(self, sequencer_id, update_sequence_id):
         """
           m_get_sqr_sequence_id
-          ---------------------
+
          function int m_get_sqr_sequence_id(int sequencer_id, bit update_sequence_id)
         Args:
             sequencer_id:
@@ -1307,7 +1307,7 @@ class UVMSequenceBase(UVMSequenceItem):
     def m_set_sqr_sequence_id(self, sequencer_id, sequence_id):
         """
           m_set_sqr_sequence_id
-          ---------------------
+
          function void m_set_sqr_sequence_id(int sequencer_id, int sequence_id)
         Args:
             sequencer_id:

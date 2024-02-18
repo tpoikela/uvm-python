@@ -73,14 +73,14 @@ async def test_test(dut):
     uvm_default_table_printer.knobs.reference = 0
     ep.print_obj()
 
-    trig_proc = cocotb.fork(trig_event(e))
-    cocotb.fork(trig_data_event(e_data))
+    trig_proc = cocotb.start_soon(trig_event(e))
+    cocotb.start_soon(trig_data_event(e_data))
     await e_data.wait_trigger()
     await e.wait_on()
     e.reset()
     await Timer(1, "NS")
-    trig_proc = cocotb.fork(trig_event(e))
-    evt_proc = cocotb.fork(wait_on_evt(e))
+    trig_proc = cocotb.start_soon(trig_event(e))
+    evt_proc = cocotb.start_soon(wait_on_evt(e))
     await sv.fork_join([trig_proc, evt_proc])
 
     svr = None  # uvm_report_server

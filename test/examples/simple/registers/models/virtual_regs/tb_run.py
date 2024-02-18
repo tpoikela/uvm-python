@@ -48,7 +48,7 @@ class MyClock():
     
     async def start(self, n):
         c = Clock(self.dut.clk, self.period, self.unit)
-        clk_fork = cocotb.fork(c.start())
+        clk_fork = cocotb.start_soon(c.start())
         await Timer(n, "NS")
         clk_fork.kill()
 
@@ -77,7 +77,7 @@ class tb_test(UVMTest):
         await self.reset_dut()
         #env.regmodel.reset()
 
-        clk_fork = cocotb.fork(MyClock(self.dut).start(2000))
+        clk_fork = cocotb.start_soon(MyClock(self.dut).start(2000))
 
         #uvm_reg_sequence seq;
         seq = UVMRegHWResetSeq.type_id.create("reg_hw_rst_seq")

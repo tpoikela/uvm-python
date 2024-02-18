@@ -64,25 +64,18 @@ class UVMRegBlock(UVMObject):
     m_roots: Dict['UVMRegBlock', int] = {}
     id = 0
 
-
-    #   //----------------------
-    #   // Group: Initialization
-    #   //----------------------
-
-    #   // Function: new
-    #   //
-    #   // Create a new instance and type-specific configuration
-    #   //
-    #   // Creates an instance of a block abstraction class with the specified
-    #   // name.
-    #   //
-    #   // ~has_coverage~ specifies which functional coverage models are present in
-    #   // the extension of the block abstraction class.
-    #   // Multiple functional coverage models may be specified by adding their
-    #   // symbolic names, as defined by the <uvm_coverage_model_e> type.
-    #   //
-    #   function new(string name="", int has_coverage=UVM_NO_COVERAGE)
     def __init__(self, name="", has_coverage=UVM_NO_COVERAGE):
+        """
+        Create a new instance and type-specific configuration
+
+        Creates an instance of a block abstraction class with the specified
+        name.
+
+        ~has_coverage~ specifies which functional coverage models are present in
+        the extension of the block abstraction class.
+        Multiple functional coverage models may be specified by adding their
+        symbolic names, as defined by the <uvm_coverage_model_e> type.
+        """
         super().__init__(name)
         self.hdl_paths_pool = UVMObjectStringPool("hdl_paths", UVMQueue)
         self.has_cover = has_coverage
@@ -106,20 +99,19 @@ class UVMRegBlock(UVMObject):
         self.lineno = 0
 
 
-    #   // Function: configure
-    #   //
-    #   // Instance-specific configuration
-    #   //
-    #   // Specify the parent block of this block.
-    #   // A block without parent is a root block.
-    #   //
-    #   // If the block file corresponds to a hierarchical RTL structure,
-    #   // its contribution to the HDL path is specified as the ~hdl_path~.
-    #   // Otherwise, the block does not correspond to a hierarchical RTL
-    #   // structure (e.g. it is physically flattened) and does not contribute
-    #   // to the hierarchical HDL path of any contained registers or memories.
-    #   //
-    def configure(self, parent=None, hdl_path=""):
+    def configure(self, parent=None, hdl_path="") -> None:
+        """
+        Instance-specific configuration
+
+        Specify the parent block of this block.
+        A block without parent is a root block.
+
+        If the block file corresponds to a hierarchical RTL structure,
+        its contribution to the HDL path is specified as the ~hdl_path~.
+        Otherwise, the block does not correspond to a hierarchical RTL
+        structure (e.g. it is physically flattened) and does not contribute
+        to the hierarchical HDL path of any contained registers or memories.
+        """
         self.parent = parent
         if parent is not None:
             self.parent.add_block(self)
@@ -128,41 +120,36 @@ class UVMRegBlock(UVMObject):
         UVMResourceDb.set("uvm_reg::*", self.get_full_name(), self)
 
 
-    #   // Function: create_map
-    #   //
-    #   // Create an address map in this block
-    #   //
-    #   // Create an address map with the specified ~name~, then
-    #   // configures it with the following properties.
-    #   //
-    #   // base_addr - the base address for the map. All registers, memories,
-    #   //             and sub-blocks within the map will be at offsets to this
-    #   //             address
-    #   //
-    #   // n_bytes   - the byte-width of the bus on which this map is used
-    #   //
-    #   // endian    - the endian format. See <uvm_endianness_e> for possible
-    #   //             values
-    #   //
-    #   // byte_addressing - specifies whether consecutive addresses refer are 1 byte
-    #   //             apart (TRUE) or ~n_bytes~ apart (FALSE). Default is TRUE.
-    #   //
-    #   //| APB = create_map("APB", 0, 1, UVM_LITTLE_ENDIAN, 1)
-    #   //
-    #   extern virtual function UVMRegMap create_map(string name,
-    #                                                  uvm_reg_addr_t base_addr,
-    #                                                  int unsigned n_bytes,
-    #                                                  uvm_endianness_e endian,
-    #                                                  bit byte_addressing = 1)
     def create_map(self, name: str, base_addr: int, n_bytes: int, endian: int,
             byte_addressing=True) -> Optional[UVMRegMap]:
-        #   UVMRegMap  map
+        """
+         Function: create_map
+
+         Create an address map in this block
+
+         Create an address map with the specified ~name~, then
+         configures it with the following properties.
+
+         base_addr - the base address for the map. All registers, memories,
+                     and sub-blocks within the map will be at offsets to this
+                     address
+
+         n_bytes   - the byte-width of the bus on which this map is used
+
+         endian    - the endian format. See <uvm_endianness_e> for possible
+                     values
+
+         byte_addressing - specifies whether consecutive addresses refer are 1 byte
+                     apart (TRUE) or ~n_bytes~ apart (FALSE). Default is TRUE::
+
+        APB = create_map("APB", 0, 1, UVM_LITTLE_ENDIAN, 1)
+        """
         if self.locked is True:
             uvm_error("RegModel", "Cannot add map to locked model")
             return None
 
         _map = UVMRegMap.type_id.create(name, None, self.get_full_name())
-        _map.configure(self,base_addr,n_bytes,endian,byte_addressing)
+        _map.configure(self, base_addr, n_bytes, endian, byte_addressing)
 
         self.maps[_map] = True
         if self.maps.num() == 1:
@@ -193,15 +180,13 @@ class UVMRegBlock(UVMObject):
         return 0
 
 
-    #   // Function: set_default_map
-    #   //
-    #   // Defines the default address map
-    #   //
-    #   // Set the specified address map as the <default_map> for this
-    #   // block. The address map must be a map of this address block.
-    #   //
-    #   extern function void set_default_map (UVMRegMap map)
-    def set_default_map(self, _map: UVMRegMap):
+    def set_default_map(self, _map: UVMRegMap) -> None:
+        """
+        Defines the default address map
+
+        Set the specified address map as the <default_map> for this
+        block. The address map must be a map of this address block.
+        """
         if _map not in self.maps:
             uvm_warning("RegModel", "Map '" + _map.get_full_name() + "' does not exist in block")
         self.default_map = _map
@@ -220,9 +205,6 @@ class UVMRegBlock(UVMObject):
     #   //
     #   UVMRegMap default_map
 
-    #
-    #   extern function UVMRegMap get_default_map ()
-    #
     def get_default_map(self) -> UVMRegMap:
         return self.default_map
 
@@ -284,7 +266,7 @@ class UVMRegBlock(UVMObject):
         if self.is_locked():
             uvm_error("RegModel", "Cannot add virtual register to locked block model")
             return
-        
+
         if self.vregs.exists(vreg):
             uvm_error("RegModel", ("Virtual register '" + vreg.get_name() +
                 "' has already been registered with block '" + self.get_name() + "'"))
@@ -308,22 +290,21 @@ class UVMRegBlock(UVMObject):
         UVMRegBlock.id += 1
 
 
-    #   // Function: lock_model
-    #   //
-    #   // Lock a model and build the address map.
-    #   //
-    #   // Recursively lock an entire register model
-    #   // and build the address maps to enable the
-    #   // <UVMRegMap::get_reg_by_offset()> and
-    #   // <UVMRegMap::get_mem_by_offset()> methods.
-    #   //
-    #   // Once locked, no further structural changes,
-    #   // such as adding registers or memories,
-    #   // can be made.
-    #   //
-    #   // It is not possible to unlock a model.
-    #   //
     def lock_model(self):
+        """
+        Function: lock_model
+
+        Lock a model and build the address map.
+
+        Recursively lock an entire register model and build the address maps to
+        enable the `UVMRegMap.get_reg_by_offset()` and
+        `UVMRegMap.get_mem_by_offset()` methods.
+
+        Once locked, no further structural changes, such as adding registers or
+        memories, can be made.
+
+        It is not possible to unlock a model.
+        """
         if self.is_locked():
             return
         self.locked = 1
@@ -394,8 +375,6 @@ class UVMRegBlock(UVMObject):
     #   //
     #   // Return the hierarchal name of this block.
     #   // The base of the hierarchical name is the root block.
-    #   //
-    #   extern virtual function string get_full_name()
     def get_full_name(self) -> str:
         if self.parent is None:
             return self.get_name()
@@ -408,8 +387,6 @@ class UVMRegBlock(UVMObject):
     #   // Get the parent block
     #   //
     #   // If this a top-level block, returns ~None~.
-    #   //
-    #   extern virtual function uvm_reg_block get_parent()
     def get_parent(self) -> Optional['UVMRegBlock']:
         return self.parent
 
@@ -466,7 +443,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function void get_blocks (ref uvm_reg_block  blks[$],
     #                                            input uvm_hier_e hier=UVM_HIER)
-    def get_blocks(self, blks, hier=UVM_HIER):
+    def get_blocks(self, blks: List, hier=UVM_HIER) -> None:
         for blk_ in self.blks.key_list():
             blk = blk_
             blks.append(blk)
@@ -481,28 +458,23 @@ class UVMRegBlock(UVMObject):
     #   // Get the address maps instantiated in this block.
     #   //
     #   extern virtual function void get_maps (ref UVMRegMap maps[$])
-    def get_maps(self, maps):
+    def get_maps(self, maps: List) -> None:
         for key in self.maps.key_list():
             maps.append(key)
 
 
-    #   // Function: get_registers
-    #   //
-    #   // Get the registers
-    #   //
-    #   // Get the registers instantiated in this block.
-    #   // If ~hier~ is TRUE, recursively includes the registers
-    #   // in the sub-blocks.
-    #   //
-    #   // Note that registers may be located in different and/or multiple
-    #   // address maps. To get the registers in a specific address map,
-    #   // use the <UVMRegMap::get_registers()> method.
-    #   //
-    #   extern virtual function void get_registers (ref uvm_reg regs[$],
-    #                                               input uvm_hier_e hier=UVM_HIER)
-    #
-    #
-    def get_registers(self, regs, hier=UVM_HIER):
+    def get_registers(self, regs: List, hier=UVM_HIER) -> None:
+        """
+        Get the registers
+
+        Get the registers instantiated in this block.
+        If ~hier~ is TRUE, recursively includes the registers
+        in the sub-blocks.
+
+        Note that registers may be located in different and/or multiple
+        address maps. To get the registers in a specific address map,
+        use the `UVMRegMap.get_registers()` method.
+        """
         for rg in self.regs.key_list():
             regs.append(rg)
 
@@ -524,22 +496,20 @@ class UVMRegBlock(UVMObject):
     #                                            input uvm_hier_e hier=UVM_HIER)
 
 
-    #   // Function: get_memories
-    #   //
-    #   // Get the memories
-    #   //
-    #   // Get the memories instantiated in this block.
-    #   // If ~hier~ is TRUE, recursively includes the memories
-    #   // in the sub-blocks.
-    #   //
-    #   // Note that memories may be located in different and/or multiple
-    #   // address maps. To get the memories in a specific address map,
-    #   // use the <UVMRegMap::get_memories()> method.
-    #   //
-    #   extern virtual function void get_memories (ref uvm_mem mems[$],
-    #                                              input uvm_hier_e hier=UVM_HIER)
-    def get_memories(self, mems, hier=UVM_HIER):
-        #   foreach (self.mems[mem_]):
+    def get_memories(self, mems: List, hier=UVM_HIER) -> None:
+        """
+        Function: get_memories
+
+        Get the memories
+
+        Get the memories instantiated in this block.
+        If ~hier~ is TRUE, recursively includes the memories
+        in the sub-blocks.
+
+        Note that memories may be located in different and/or multiple
+        address maps. To get the memories in a specific address map,
+        use the `UVMRegMap.get_memories()` method.
+        """
         for mem_ in self.mems.key_list():
             mem = mem_
             mems.append(mem)
@@ -548,7 +518,6 @@ class UVMRegBlock(UVMObject):
             for blk_ in self.blks.key_list():
                 blk = blk_
                 blk.get_memories(mems)
-
 
 
     #   // Function: get_virtual_registers
@@ -589,22 +558,21 @@ class UVMRegBlock(UVMObject):
     #   //
     #   extern virtual function uvm_reg_block get_block_by_name (string name)
 
-    #
-    #
-    #   // Function: get_map_by_name
-    #   //
-    #   // Finds an address map with the specified simple name.
-    #   //
-    #   // The name is the simple name of the address map, not a hierarchical name.
-    #   // relative to this block.
-    #   // If no map with that name is found in this block, the sub-blocks
-    #   // are searched for a map of that name and the first one to be found
-    #   // is returned.
-    #   //
-    #   // If no address maps are found, returns ~None~.
-    #   //
-    #   extern virtual function UVMRegMap get_map_by_name (string name)
+
     def get_map_by_name(self, name) -> Optional[UVMRegMap]:
+        """
+        Function: get_map_by_name
+
+        Finds an address map with the specified simple name.
+
+        The name is the simple name of the address map, not a hierarchical name.
+        relative to this block.
+        If no map with that name is found in this block, the sub-blocks
+        are searched for a map of that name and the first one to be found
+        is returned.
+
+        If no address maps are found, returns ~None~.
+        """
         maps: List[UVMRegMap] = []
         self.get_maps(maps)
 
@@ -624,22 +592,20 @@ class UVMRegBlock(UVMObject):
         return None
 
 
+    def get_reg_by_name(self, name: str) -> Optional[UVMReg]:
+        """
+        Function: get_reg_by_name
 
-    #   // Function: get_reg_by_name
-    #   //
-    #   // Finds a register with the specified simple name.
-    #   //
-    #   // The name is the simple name of the register, not a hierarchical name.
-    #   // relative to this block.
-    #   // If no register with that name is found in this block, the sub-blocks
-    #   // are searched for a register of that name and the first one to be found
-    #   // is returned.
-    #   //
-    #   // If no registers are found, returns ~None~.
-    #   //
-    #   extern virtual function uvm_reg get_reg_by_name (string name)
-    def get_reg_by_name(self, name) -> Optional[UVMReg]:
+        Finds a register with the specified simple name.
 
+        The name is the simple name of the register, not a hierarchical name.
+        relative to this block.
+        If no register with that name is found in this block, the sub-blocks
+        are searched for a register of that name and the first one to be found
+        is returned.
+
+        If no registers are found, returns ~None~.
+        """
         for rg in self.regs.key_list():
             if rg.get_name() == name:
                 return rg
@@ -656,7 +622,6 @@ class UVMRegBlock(UVMObject):
         uvm_warning("RegModel", "Unable to locate register '" + name +
                         "' in block '" + self.get_full_name() + "'")
         return None
-        #endfunction: get_reg_by_name
 
 
     #   // Function: get_field_by_name
@@ -672,8 +637,7 @@ class UVMRegBlock(UVMObject):
     #   // If no fields are found, returns ~None~.
     #   //
     #   extern virtual function uvm_reg_field get_field_by_name (string name)
-    #
-    #
+
     #   // Function: get_mem_by_name
     #   //
     #   // Finds a memory with the specified simple name.
@@ -687,8 +651,7 @@ class UVMRegBlock(UVMObject):
     #   // If no memories are found, returns ~None~.
     #   //
     #   extern virtual function uvm_mem get_mem_by_name (string name)
-    #
-    #
+
     #   // Function: get_vreg_by_name
     #   //
     #   // Finds a virtual register with the specified simple name.
@@ -703,8 +666,7 @@ class UVMRegBlock(UVMObject):
     #   // If no virtual registers are found, returns ~None~.
     #   //
     #   extern virtual function uvm_vreg get_vreg_by_name (string name)
-    #
-    #
+
     #   // Function: get_vfield_by_name
     #   //
     #   // Finds a virtual field with the specified simple name.
@@ -719,28 +681,27 @@ class UVMRegBlock(UVMObject):
     #   // If no virtual fields are found, returns ~None~.
     #   //
     #   extern virtual function uvm_vreg_field get_vfield_by_name (string name)
-    #
 
-    #   //----------------
-    #   // Group: Coverage
-    #   //----------------
+    """
+    Group: Coverage
+    ===================
+    """
 
-
-    #   // Function: build_coverage
-    #   //
-    #   // Check if all of the specified coverage model must be built.
-    #   //
-    #   // Check which of the specified coverage model must be built
-    #   // in this instance of the block abstraction class,
-    #   // as specified by calls to <uvm_reg::include_coverage()>.
-    #   //
-    #   // Models are specified by adding the symbolic value of individual
-    #   // coverage model as defined in <uvm_coverage_model_e>.
-    #   // Returns the sum of all coverage models to be built in the
-    #   // block model.
-    #   //
-    #   extern protected function uvm_reg_cvr_t build_coverage(uvm_reg_cvr_t models)
     def build_coverage(self, models):
+        """
+        Function: build_coverage
+
+        Check if all of the specified coverage model must be built.
+
+        Check which of the specified coverage model must be built in this
+        instance of the block abstraction class, as specified by calls to
+        `UVMReg.include_coverage()`.
+
+        Models are specified by adding the symbolic value of individual coverage
+        model as defined in <uvm_coverage_model_e>. Returns the sum of all
+        coverage models to be built in the block model.
+
+        """
         build_coverage = UVM_NO_COVERAGE
         cov_arr = []
         uvm_reg_cvr_rsrc_db.read_by_name("uvm_reg::" + self.get_full_name(),
@@ -750,60 +711,57 @@ class UVMRegBlock(UVMObject):
         return build_coverage & models
 
 
-    #   // Function: add_coverage
-    #   //
-    #   // Specify that additional coverage models are available.
-    #   //
-    #   // Add the specified coverage model to the coverage models
-    #   // available in this class.
-    #   // Models are specified by adding the symbolic value of individual
-    #   // coverage model as defined in <uvm_coverage_model_e>.
-    #   //
-    #   // This method shall be called only in the constructor of
-    #   // subsequently derived classes.
-    #   //
-    #   extern virtual protected function void add_coverage(uvm_reg_cvr_t models)
     def add_coverage(self, models):
+        """
+        Function: add_coverage
+
+        Specify that additional coverage models are available.
+
+        Add the specified coverage model to the coverage models
+        available in this class.
+        Models are specified by adding the symbolic value of individual
+        coverage model as defined in <uvm_coverage_model_e>.
+
+        This method shall be called only in the constructor of
+        subsequently derived classes.
+        """
         self.has_cover |= models
 
 
-    #   // Function: has_coverage
-    #   //
-    #   // Check if block has coverage model(s)
-    #   //
-    #   // Returns TRUE if the block abstraction class contains a coverage model
-    #   // for all of the models specified.
-    #   // Models are specified by adding the symbolic value of individual
-    #   // coverage model as defined in <uvm_coverage_model_e>.
-    #   //
-    #   extern virtual function bit has_coverage(uvm_reg_cvr_t models)
     def has_coverage(self, models):
+        """
+        Function: has_coverage
+
+        Check if block has coverage model(s)
+
+        Returns TRUE if the block abstraction class contains a coverage model
+        for all of the models specified.
+        Models are specified by adding the symbolic value of individual
+        coverage model as defined in <uvm_coverage_model_e>.
+        """
         return ((self.has_cover & models) == models)
 
 
-    #   // Function: set_coverage
-    #   //
-    #   // Turns on coverage measurement.
-    #   //
-    #   // Turns the collection of functional coverage measurements on or off
-    #   // for this block and all blocks, registers, fields and memories within it.
-    #   // The functional coverage measurement is turned on for every
-    #   // coverage model specified using <uvm_coverage_model_e> symbolic
-    #   // identifiers.
-    #   // Multiple functional coverage models can be specified by adding
-    #   // the functional coverage model identifiers.
-    #   // All other functional coverage models are turned off.
-    #   // Returns the sum of all functional
-    #   // coverage models whose measurements were previously on.
-    #   //
-    #   // This method can only control the measurement of functional
-    #   // coverage models that are present in the various abstraction classes,
-    #   // then enabled during construction.
-    #   // See the <uvm_reg_block::has_coverage()> method to identify
-    #   // the available functional coverage models.
-    #   //
-    #   extern virtual function uvm_reg_cvr_t set_coverage(uvm_reg_cvr_t is_on)
     def set_coverage(self, is_on):
+        """
+        Function: set_coverage
+
+        Turns on coverage measurement.
+
+        Turns the collection of functional coverage measurements on or off for
+        this block and all blocks, registers, fields and memories within it. The
+        functional coverage measurement is turned on for every coverage model
+        specified using <uvm_coverage_model_e> symbolic identifiers. Multiple
+        functional coverage models can be specified by adding the functional
+        coverage model identifiers. All other functional coverage models are
+        turned off. Returns the sum of all functional coverage models whose
+        measurements were previously on.
+
+        This method can only control the measurement of functional coverage
+        models that are present in the various abstraction classes, then enabled
+        during construction. See the `UVMRegBlock.has_coverage()` method to
+        identify the available functional coverage models.
+        """
         self.cover_on = self.has_cover & is_on
 
         for rg_ in self.regs.key_list():
@@ -830,9 +788,7 @@ class UVMRegBlock(UVMObject):
     #   // functional coverage model identifiers.
     #   //
     #   // See <uvm_reg_block::set_coverage()> for more details.
-    #   //
-    #   extern virtual function bit get_coverage(uvm_reg_cvr_t is_on = UVM_CVR_ALL)
-    def get_coverage(self, is_on=UVM_CVR_ALL):
+    def get_coverage(self, is_on=UVM_CVR_ALL) -> bool:
         if self.has_coverage(is_on) == 0:
             return 0
         return ((self.cover_on & is_on) == is_on)
@@ -1468,13 +1424,6 @@ class UVMRegBlock(UVMObject):
 #     end
 #endfunction: get_virtual_registers
 #
-#
-#
-#
-#
-#
-#
-#
 # find_blocks
 #
 #function int uvm_reg_block::find_blocks(input string        name,
@@ -1820,9 +1769,6 @@ class UVMRegBlock(UVMObject):
 #endfunction
 #
 #
-#
-#
-#
 # get_hdl_path
 #
 #function void uvm_reg_block::get_hdl_path(ref string paths[$], input string kind = "")
@@ -1843,17 +1789,6 @@ class UVMRegBlock(UVMObject):
 #    paths.push_back(hdl_paths.get(i))
 #
 #endfunction
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 #
 #----------------------------------
 # Group- Basic Object Operations

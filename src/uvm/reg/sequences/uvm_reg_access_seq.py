@@ -42,52 +42,41 @@ from ...base import UVMResourceDb, UVM_LOW, uvm_zero_delay
 from ...base.uvm_globals import uvm_report_info
 
 
-#//------------------------------------------------------------------------------
-#//
-#// Class: UVMRegSingleAccessSeq
-#//
-#// Verify the accessibility of a register
-#// by writing through its default address map
-#// then reading it via the backdoor, then reversing the process,
-#// making sure that the resulting value matches the mirrored value.
-#//
-#// If bit-type resource named
-#// "NO_REG_TESTS" or "NO_REG_ACCESS_TEST"
-#// in the "REG::" namespace
-#// matches the full name of the register,
-#// the register is not tested.
-#//
-#//| uvm_resource_db#(bit)::set({"REG::",regmodel.blk.r0.get_full_name()},
-#//|                            "NO_REG_TESTS", 1, this);
-#//
-#// Registers without an available backdoor or
-#// that contain read-only fields only,
-#// or fields with unknown access policies
-#// cannot be tested.
-#//
-#// The DUT should be idle and not modify any register during this test.
-#//
-#//------------------------------------------------------------------------------
 
 
 class UVMRegSingleAccessSeq(UVMRegSequence):
-
+    """
+    Class: UVMRegSingleAccessSeq
+    
+    Verify the accessibility of a register by writing through its default
+    address map then reading it via the backdoor, then reversing the process,
+    making sure that the resulting value matches the mirrored value.
+    
+    If bit-type resource named "NO_REG_TESTS" or "NO_REG_ACCESS_TEST" in the
+    "REG::" namespace matches the full name of the register, the register is not
+    tested::
+    
+    UVMResourceDb.set({"REG::",regmodel.blk.r0.get_full_name()},
+                       "NO_REG_TESTS", 1, self)
+    
+    Registers without an available backdoor or that contain read-only fields
+    only, or fields with unknown access policies cannot be tested.
+    
+    The DUT should be idle and not modify any register during this test.
+    """
     def __init__(self, name="UVMRegSingleAccessSeq"):
         super().__init__(name)
         #   // Variable: rg
         #   // The register to be tested
-        self.reg = None
-
-
+        self.rg = None
 
     async def body(self):
-        maps = []  # uvm_reg_map[$]
+        maps = []
         rg = self.rg
 
         if rg is None:
             uvm_error("UVMRegAccessSeq", "No register specified to run sequence on")
             return
-
 
         # Registers with some attributes are not to be tested
         if (UVMResourceDb.get_by_name("REG::" + rg.get_full_name(),

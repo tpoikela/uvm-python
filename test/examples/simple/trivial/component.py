@@ -63,7 +63,7 @@ async def simple_trivial_component_test(dut):
     print(cc.get_full_name())
 
     # tpoikela: Required by ghdl
-    cocotb.fork(Clock(dut.clk, 1, "NS").start())
+    cocotb.start_soon(Clock(dut.clk, 1, "NS").start())
     await run_test()
     sim_time = get_sim_time()
     await Timer(501, 'ns')

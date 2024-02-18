@@ -28,17 +28,18 @@ from ..tlm1.uvm_analysis_port import UVMAnalysisPort
 class UVMDriver(UVMComponent):
     """
     The base class for drivers that initiate requests for new transactions via
-    a uvm_seq_item_pull_port. The ports are typically connected to the exports of
+    a `UVMSeqItemPullPort`. The ports are typically connected to the exports of
     an appropriate sequencer component.
 
     This driver operates in pull mode. Its ports are typically connected to the
     corresponding exports in a pull sequencer as follows:
 
     .. code-block:: python
+
         driver.seq_item_port.connect(sequencer.seq_item_export);
         driver.rsp_port.connect(sequencer.rsp_export);
 
-    The ~rsp_port~ needs connecting only if the driver will use it to write
+    The `UVMDriver.rsp_port` needs connecting only if the driver will use it to write
     responses to the analysis export in the sequencer.
 
     :ivar UVMSeqItemPullPort seq_item_port: Derived driver classes should use

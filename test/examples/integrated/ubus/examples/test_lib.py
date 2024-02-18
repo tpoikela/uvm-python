@@ -107,10 +107,8 @@ class test_read_modify_write(ubus_example_base_test):
                 "default_sequence", read_modify_write_seq.type_id.get())
         UVMConfigDb.set(self, "ubus_example_tb0.ubus0.slaves[0].sequencer.run_phase",
                 "default_sequence", slave_memory_seq.type_id.get())
-        #    // Create the tb
         super().build_phase(phase)
 
-    
     async def run_phase(self, phase):
         phase.raise_objection(self, "test_read_modify_write OBJECTED")
         master_sqr = self.ubus_example_tb0.ubus0.masters[0].sequencer
@@ -118,11 +116,10 @@ class test_read_modify_write(ubus_example_base_test):
 
         uvm_info("TEST_TOP", "Forking master_proc now", UVM_LOW)
         master_seq = read_modify_write_seq("r_mod_w_seq")
-        master_proc = cocotb.fork(master_seq.start(master_sqr))
+        master_proc = cocotb.start_soon(master_seq.start(master_sqr))
 
         slave_seq = slave_memory_seq("mem_seq")
-        slave_proc = cocotb.fork(slave_seq.start(slave_sqr))
-        #await [slave_proc, master_proc.join()]
+        slave_proc = cocotb.start_soon(slave_seq.start(slave_sqr))
         await sv.fork_join_any([slave_proc, master_proc])
         phase.drop_objection(self, "test_read_modify_write drop objection")
         if not master_seq.test_pass:
@@ -172,13 +169,13 @@ class seq_2m_4s(UVMSequence):
         i = 0
         for sqr in self.master_sqr:
             master_seq = read_modify_write_seq("r_mod_w_seq_" + str(i))
-            master_proc = cocotb.fork(master_seq.start(sqr))
+            master_proc = cocotb.start_soon(master_seq.start(sqr))
             i += 1
             # code...
         i = 0
         for sqr in self.slave_sqr:
             slave_seq = slave_memory_seq("mem_seq_" + str(i))
-            slave_proc = cocotb.fork(slave_seq.start(sqr))
+            slave_proc = cocotb.start_soon(slave_seq.start(sqr))
             i += 1
         await Timer(0, "NS")
 

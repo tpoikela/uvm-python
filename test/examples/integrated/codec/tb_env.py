@@ -147,7 +147,7 @@ class tb_env(UVMEnv):
                 self.pull_from_RxFIFO_thread = None
 
         elif name == "main":
-            self.pull_from_RxFIFO_thread = cocotb.fork(self.pull_from_RxFIFO(phase))
+            self.pull_from_RxFIFO_thread = cocotb.start_soon(self.pull_from_RxFIFO(phase))
 
         elif name == "shutdown":
             self.m_in_shutdown = 1
@@ -235,7 +235,7 @@ class tb_env(UVMEnv):
         phase.raise_objection(self, "Waiting for VIPs and DUT to acquire SYNC")
         uvm_info("TB/TRACE", "Synchronizing interfaces...", UVM_NONE)
 
-        timeout = cocotb.fork(self.pre_main_phase_timeout())
+        timeout = cocotb.start_soon(self.pre_main_phase_timeout())
 
         # Wait until the VIP has acquired symbol syncs
         while not self.vip.rx_mon.is_in_sync():
@@ -311,8 +311,8 @@ class tb_env(UVMEnv):
 
     async def main_phase(self, phase):
         uvm_info("TB/TRACE", "Applying primary stimulus...", UVM_NONE)
-        timeout_proc = cocotb.fork(self.timeout_and_finish(phase))
-        main_proc = cocotb.fork(self.run_main_proc(phase))
+        timeout_proc = cocotb.start_soon(self.timeout_and_finish(phase))
+        main_proc = cocotb.start_soon(self.run_main_proc(phase))
         await sv.fork_join([timeout_proc, main_proc])
 
     async def timeout_and_finish(self, phase):

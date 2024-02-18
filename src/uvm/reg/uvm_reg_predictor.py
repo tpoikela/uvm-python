@@ -140,19 +140,20 @@ class UVMRegPredictor(UVMComponent):
     #  // not a user-level method. Do not call directly. See documentation
     #  // for the ~bus_in~ member.
     #  //
-    def write(self, tr):
-        rg = None
+    def write(self, tr) -> None:
         rw = UVMRegBusOp()
         if self.adapter is None:
             uvm_fatal("REG/WRITE/None","write: adapter handle is None")
 
         uvm_info("REG_PREDICTOR", "write(): Received " + tr.convert2string(),
             UVM_MEDIUM)
+
         # In case they forget to set byte_en
         rw.byte_en = -1
-        rw = self.adapter.bus2reg(tr, rw)
-        if rw is None:
-            uvm_error("REG_PREDICT_BUS2REG_ERR", "Adapter returned None from bus2reg")
+        self.adapter.bus2reg(tr, rw)
+        ## rw = self.adapter.bus2reg(tr, rw)
+        ## if rw is None:
+        ##     uvm_error("REG_PREDICT_BUS2REG_ERR", "Adapter returned None from bus2reg")
         rg = self.map.get_reg_by_offset(rw.addr, (rw.kind == UVM_READ))
 
         # TODO: Add memory look-up and call <uvm_mem::XsampleX()>
@@ -231,6 +232,7 @@ class UVMRegPredictor(UVMComponent):
                             uvm_info("REG_PREDICT", "Observed READ transaction to register "
                                      + ir.get_full_name() + ": value='h" +
                                      sv.sformatf("%0h", reg_item.value[0]),UVM_HIGH)
+
                         self.reg_ap.write(reg_item)
                         self.m_pending.delete(rg)
 

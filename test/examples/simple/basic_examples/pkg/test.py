@@ -240,9 +240,9 @@ async def test_module_top(dut):
     mu.print_obj()
 
     # tpoikela: Clock required by ghdl, otherwise scheduler throws error
-    cocotb.fork(Clock(dut.clk, 10, "NS").start())
+    cocotb.start_soon(Clock(dut.clk, 10, "NS").start())
 
     # Fork 2 initial tasks
-    task1 = cocotb.fork(initial1())
-    task2 = cocotb.fork(initial2(mu))
+    task1 = cocotb.start_soon(initial1())
+    task2 = cocotb.start_soon(initial2(mu))
     await sv.fork_join([task1, task2])

@@ -21,16 +21,6 @@
 #//   permissions and limitations under the License.
 #//----------------------------------------------------------------------
 
-
-#from uvm.base.uvm_tlm_b_initiator_socket_base import *
-#from uvm.base.uvm_tlm_b_target_socket_base import *
-#from uvm.base.uvm_tlm_nb_initiator_socket_base import *
-#from uvm.base.uvm_tlm_nb_target_socket_base import *
-#from uvm.base.uvm_tlm_b_passthrough_initiator_socket_base import *
-#from uvm.base.uvm_tlm_b_passthrough_target_socket_base import *
-#from uvm.base.uvm_tlm_nb_passthrough_initiator_socket_base import *
-#from uvm.base.uvm_tlm_nb_passthrough_target_socket_base import *
-
 from ..macros.uvm_message_defines import (uvm_error_context, uvm_error,
     uvm_fatal)
 from .uvm_tlm2_sockets_base import (UVMTLMBInitiatorSocketBase,
@@ -72,7 +62,6 @@ from uvm.tlm2.uvm_tlm2_sockets_base import UVMTLMBPassthroughInitiatorSocketBase
     UVMTLMNbPassthroughInitiatorSocketBase, UVMTLMNbPassthroughTargetSocketBase,\
     UVMTLMNbTargetSocketBase
 from uvm.base.sv import cat
-from uvm.macros.uvm_message_defines import uvm_error
 from uvm.tlm2.uvm_tlm2_imps import UVM_TLM_NB_TRANSPORT_FW_IMP,\
     UVM_TLM_B_TRANSPORT_IMP, UVMTLMNbTransportBwImp
 from uvm.tlm2.uvm_tlm2_ports import UVMTLMNbTransportBwPort
@@ -124,12 +113,12 @@ class UVMTLMBTargetSocket(UVMTLMBTargetSocketBase):
     #// ~imp~ is a reference to the class implementing the
     #// b_transport() method.
     #// If not specified, it is assume to be the same as ~parent~.
-    def __init__(self, name, parent, imp = None):
+    def __init__(self, name, parent, imp=None):
         super().__init__(name, parent)
-        self.m_imp = parent if imp == None else imp
-        if (self.m_imp == None):
+        self.m_imp = parent if imp is None else imp
+        if self.m_imp is None:
             uvm_error("UVM/TLM2/NOIMP", cat("b_target socket ", name,
-                                     " has no implementation"));
+                                     " has no implementation"))
 
     #// Function: Connect
     #//
@@ -137,7 +126,7 @@ class UVMTLMBTargetSocket(UVMTLMBTargetSocketBase):
     def connect(self, provider):
         super().connect(provider)
 
-        c = self.get_comp();
+        c = self.get_comp()
         # TODO:
 #         uvm_error_context(get_type_name(),
 #             "You cannot call connect() on a target termination socket", c)
@@ -170,7 +159,7 @@ class UVMTLMNbInitiatorSocket(UVMTLMNbInitiatorSocketBase):
             imp = parent
         else:
             uvm_error("UVM/TLM2/NOIMP", cat("nb_initiator socket ", name,
-                                     " has no implementation"));
+                                     " has no implementation"))
         self.bw_imp = UVMTLMNbTransportBwImp("bw_imp", imp)
 
     #// Function: Connect
@@ -204,7 +193,7 @@ class UVMTLMNbInitiatorSocket(UVMTLMNbInitiatorSocketBase):
             return
         uvm_fatal("UVMTLMNbInitiatorSocket",
             "UVM Internal error. Should not go here")
-        
+
 
 #//----------------------------------------------------------------------
 #// Class -- NODOCS -- uvm_tlm_nb_target_socket

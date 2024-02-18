@@ -286,7 +286,7 @@ class env(UVMEnv):
         fork_procs = []
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
-            fork_procs.append(cocotb.fork(the_sequence.start(self.sqr, None)))
+            fork_procs.append(cocotb.start_soon(the_sequence.start(self.sqr, None)))
         join_list = list(map(lambda t: t.join(), fork_procs))
         await Combine(*join_list)
         phase.drop_objection(self)

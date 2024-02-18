@@ -40,6 +40,7 @@ assign reg_b_enable = addr_in[15:12] == 4'h1;
 assign mem_enable = addr_in[15:12] == 4'h2;
 
 always_comb begin
+    data_out = {DATA_WIDTH{1'b0}};
     if (mem_enable)
         data_out = {8'h00, mem[mem_addr]};
     else if (reg_a_enable)

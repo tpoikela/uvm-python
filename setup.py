@@ -23,13 +23,13 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     setup_requires=["setuptools_scm",],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     version=version['__version__'],
     install_requires=[
-        #"cocotb @ git+git://github.com/cocotb/cocotb@79792d1b#egg=cocotb",
-        "cocotb==1.5.0",
-        "cocotb-bus==0.1.1",
-        "cocotb-coverage>=1.0.0",
+        #"cocotb @ git+https://github.com/cocotb/cocotb@88bca3c9a9515c9ed399ca6dcf569696fded23f7#egg=cocotb",
+        "cocotb>=1.7.2",
+        "cocotb-bus>=0.1.1",
+        "cocotb-coverage>=1.1.0",
         "regex>=2019.11.1"
     ],
     platforms="any",

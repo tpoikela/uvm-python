@@ -1,3 +1,5 @@
+NPROCS = $(shell grep -c 'processor' /proc/cpuinfo)
+MAKEFLAGS += -j$(NPROCS)
 
 ifeq ($(TEST), )
     UNIT_ARGS = unit/*.py
@@ -6,7 +8,7 @@ else
 endif
 
 test: test-unit test-minimal test-simple test-integrated test-sim-integration
-	find test/examples -name results*.xml -exec cat {} \; > results.log
+	find test/examples -name results*.xml -exec cat {} \; > results_$(SIM).log
 	bash ci/check_errors.sh
 
 test-minimal:

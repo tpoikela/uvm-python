@@ -80,9 +80,10 @@ class UVMReg(UVMObject):
         symbolic names, as defined by the `uvm_coverage_model_e` type.
 
         Args:
-            name:
-            n_bits:
-            has_coverage:
+            name (str): Name of the register.
+            n_bits (int): Total number of bits in the register. This value is usually a multiple of 8.
+            has_coverage (UVM_NO_COVERAGE, optional): Specifies the functional coverage models.
+                Default is `UVM_NO_COVERAGE`.
         """
         super().__init__(name)
         self.m_fields = []   # Fields in LSB to MSB order
@@ -133,9 +134,9 @@ class UVMReg(UVMObject):
         `add_hdl_path_slice` method.
 
         Args:
-            blk_parent (UVMRegBlock):
-            regfile_parent (UVMRegFile):
-            hdl_path (str):
+            blk_parent (UVMRegBlock): The parent block of this register
+            regfile_parent (UVMRegFile, optional): The parent register file for this register
+            hdl_path (str, optional): The HDL path of the register
         """
         if blk_parent is None:
             uvm_report_error("UVM/REG/CFG/NOBLK", (
@@ -163,11 +164,12 @@ class UVMReg(UVMObject):
         diverge from the specification that was used to create it.
 
         Args:
-            reg_map:
-            offset:
-            unmapped:
+            reg_map (UVMRegMap): The register map in which the offset should be modified.
+            offset (int): The new offset of the specified register.
+            unmapped (int, optional): The number of unmapped address locations between
+                the register and the next mapped register. Defaults to 0.
         """
-        orig_map = reg_map
+        #rm orig_map = reg_map
         if self.m_maps.num() > 1 and reg_map is None:
             uvm_report_error("RegModel", ("set_offset requires a non-None reg_map when register '"
                        + self.get_full_name() + "' belongs to more than one reg_map."))
@@ -192,7 +194,7 @@ class UVMReg(UVMObject):
         self.m_parent = blk_parent
         self.m_regfile_parent = regfile_parent
 
-    def add_field(self, field):
+    def add_field(self, field: UVMRegField) -> None:
         """
         Add a field into this register.
         Args:
@@ -244,17 +246,15 @@ class UVMReg(UVMObject):
                     field.get_name(), self.m_fields[idx+1].get_name(), self.get_name()))
 
 
-    def add_map(self, reg_map):
+    def add_map(self, reg_map) -> None:
         """
         Args:
             reg_map (UVMRegMap): Add a register map for this register.
         """
         self.m_maps.add(reg_map, 1)
 
-    def Xlock_modelX(self):
-        """
-          /*local*/ extern function void   Xlock_modelX
-        """
+    def Xlock_modelX(self) -> None:
+        """ Lock the modelX instance so that it cannot be used. """
         if self.m_locked is True:
             return
         self.m_locked = True
@@ -289,7 +289,7 @@ class UVMReg(UVMObject):
 
     def get_parent(self):
         """
-        Get the parent block
+        Get the parent block of this register.
 
         Returns:
             UVMRegBlock: Parent block of this register.
@@ -298,6 +298,7 @@ class UVMReg(UVMObject):
 
     def get_block(self):
         """
+        Get the parent block of this register.
         Returns:
             UVMRegBlock: Parent block of this register.
         """
@@ -314,7 +315,7 @@ class UVMReg(UVMObject):
         return self.m_regfile_parent
 
 
-    def get_n_maps(self):
+    def get_n_maps(self) -> int:
         """
         Returns the number of address maps this register is mapped in
 
@@ -323,13 +324,14 @@ class UVMReg(UVMObject):
         """
         return self.m_maps.num()
 
-    def is_in_map(self, _map):
+    def is_in_map(self, _map) -> bool:
         """
         Returns 1 if this register is in the specified address `map`
 
         Args:
             _map (UVMRegMap):
         Returns:
+            bool: True if the register is in the given address map, False otherwise
         """
         if _map in self.m_maps:
             return True
@@ -359,18 +361,21 @@ class UVMReg(UVMObject):
 
     def get_local_map(self, reg_map, caller=""):
         """
-        get_local_map
+        Gets the local register map that contains the given register map.
+
         Args:
-            reg_map:
-            caller:
+            reg_map (UVMRegMap):
+            caller (str, optional): The caller name, by default ""
         Returns:
+            The local register map instance containing the given register map,
+            or None if not found.
         """
         if reg_map is None:
             return self.get_default_map()
         if reg_map in self.m_maps:
             return reg_map
-        for l in self.m_maps.keys():
-            local_map = l
+        for loc_map in self.m_maps.keys():
+            local_map = loc_map
             parent_map = local_map.get_parent_map()
 
             while parent_map is not None:
@@ -385,10 +390,16 @@ class UVMReg(UVMObject):
 
     def get_default_map(self, caller=""):
         """
-        get_default_map
+        Get the default map associated with a register.
+
+        This function searches all parent blocks associated with this register for
+        a default map associated with it. If none is found, the first map associated
+        with this register is returned.
+
         Args:
-            caller (str):
+            caller (str): The name of the calling object.
         Returns:
+            UVMRegMap: The default map associated with this register.
         """
         # if reg is not associated with any map, return ~None~
         if self.m_maps.num() == 0:
@@ -401,8 +412,8 @@ class UVMReg(UVMObject):
             return self.m_maps.first()
 
         # try to choose one based on default_map in parent blocks.
-        for l in self.m_maps.keys():
-            reg_map = l
+        for loc_map in self.m_maps.keys():
+            reg_map = loc_map
             blk = reg_map.get_parent()
             default_map = blk.get_default_map()
             if default_map is not None:
@@ -413,7 +424,7 @@ class UVMReg(UVMObject):
         # if that fails, choose the first in this reg's maps
         return self.m_maps.first()
 
-    def _get_cname(self, caller):
+    def _get_cname(self, caller: str) -> str:
         cname = ""
         if caller != "":
             cname = " (called from " + caller + ")"
@@ -450,9 +461,10 @@ class UVMReg(UVMObject):
 
     def get_n_bits(self):
         """
-        Returns the width, in bits, of this register.
+        Get the width, in bits, of the given register.
 
         Returns:
+        int: The width of the register, in bits.
         """
         return self.m_n_bits
 
@@ -471,6 +483,7 @@ class UVMReg(UVMObject):
         Returns the maximum width, in bits, of all registers.
 
         Returns:
+            int: The width of this register in bytes.
         """
         return UVMReg.m_max_size
 
@@ -534,7 +547,7 @@ class UVMReg(UVMObject):
             if (is_R and is_W):
                 return "RW"
 
-        if is_R is False and is_W is True:  #2'b01:
+        if is_R is False and is_W is True:  # 2'b01:
             return "WO"
         elif is_R is True and is_W is False:  # 2'b10:
             return "RO"
@@ -825,22 +838,19 @@ class UVMReg(UVMObject):
     #   extern virtual function bit has_reset(string kind = "HARD",
     #                                         bit    delete = 0)
     #
-    #
-    #   // Function: set_reset
-    #   //
-    #   // Specify or modify the reset value for this register
-    #   //
-    #   // Specify or modify the reset value for all the fields in the register
-    #   // corresponding to the cause specified by ~kind~.
-    #   //
-    #   extern virtual function void
-    #                       set_reset(uvm_reg_data_t value,
-    #                                 string         kind = "HARD")
-    #
-    #
+
+    def set_reset(self, value, kind="HARD") -> None:
+        """
+        Specify or modify the reset value for this register
+
+        Specify or modify the reset value for all the fields in the register
+        corresponding to the cause specified by ~kind~.
+        """
+        for f in self.m_fields:
+            f.set_reset(value >> f.get_lsb_pos(), kind)
 
     async def write(self, status, value, path=UVM_DEFAULT_PATH, _map=None, parent=None, prior=-1,
-            extension=None, fname="", lineno=0):
+                    extension=None, fname="", lineno=0) -> int:
         """
            Task: write
 
@@ -902,6 +912,7 @@ class UVMReg(UVMObject):
         await self.do_write(rw)
         status.append(rw.status)
         await self.XatomicX(0)
+        return rw.status
 
 
     async def read(self, status, value, path=UVM_DEFAULT_PATH, _map=None,
@@ -951,7 +962,7 @@ class UVMReg(UVMObject):
         await self.XatomicX(1, rw)
         await self.XreadX(status, value, path, _map, parent, prior, extension, fname, lineno)
         await self.XatomicX(0)
-        #endtask: read
+        return status[0]
 
 
     #   // Task: poke
@@ -1710,8 +1721,7 @@ class UVMReg(UVMObject):
                 status = rw.status  # do_predict will override rw.status, so we save it here
                 self.do_predict(rw, UVM_PREDICT_READ)
                 rw.status = status
-            #   endcase
-        #
+
         value = rw.value[0]  # preserve
 
         # POST-READ CBS - REG
@@ -1745,7 +1755,6 @@ class UVMReg(UVMObject):
             map_info = arr_map_info[0]
         self._report_op_with(rw, map_info)
         self.m_read_in_progress = False
-        #endtask: do_read
 
 
     def do_predict(self, rw, kind=UVM_PREDICT_DIRECT, be=-1):
@@ -2712,16 +2721,6 @@ class UVMReg(UVMObject):
 #        return True
 #   end
 #endfunction: has_reset
-#
-#
-#// set_reset
-#
-#function void uvm_reg::set_reset(uvm_reg_data_t value,
-#                                 string         kind = "HARD")
-#   foreach (self.m_fields[i]):
-#      self.m_fields[i].set_reset(value >> self.m_fields[i].get_lsb_pos(), kind)
-#   end
-#endfunction: set_reset
 #
 #
 #

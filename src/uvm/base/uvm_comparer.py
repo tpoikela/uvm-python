@@ -28,7 +28,6 @@ from .uvm_pool import UVMPool
 from .sv import sv
 
 
-
 class UVMComparer:
     """
     The UVMComparer class provides a policy object for doing comparisons. The
@@ -166,6 +165,7 @@ class UVMComparer:
             size:
             radix:
         Returns:
+
         """
         mask = 0
         msg = ""
@@ -393,10 +393,10 @@ class UVMComparer:
         """
         Internal methods - do not call directly
 
-          print_rollup
-          ------------
+        print_rollup
 
-         Need this function because sformat doesn't support objects
+        Need this function because sformat doesn't support objects
+
         Args:
             rhs:
             lhs:

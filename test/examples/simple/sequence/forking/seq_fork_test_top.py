@@ -67,7 +67,7 @@ class my_driver(UVMDriver):
             await self.seq_item_port.get_next_item(qreq)
             async def fork_task():
                 await Timer(100, "NS")
-            cocotb.fork(fork_task())
+            cocotb.start_soon(fork_task())
             self.nitems += 1
             self.seq_item_port.item_done()
             #self.end_tr(req)
@@ -126,7 +126,7 @@ class env(UVMEnv):
         for i in range(NUM_SEQS):
             the_sequence = sequenceA("sequence_" + str(i))
             the_sequence.id = i
-            fork_procs.append(cocotb.fork(the_sequence.start(self.sqr, None)))
+            fork_procs.append(cocotb.start_soon(the_sequence.start(self.sqr, None)))
         await sv.fork_join(fork_procs)
         await Timer(100, "NS")
         phase.drop_objection(self)

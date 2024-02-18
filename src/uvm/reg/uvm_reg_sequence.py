@@ -63,7 +63,6 @@ UPSTREAM = 1
 #//
 #// Note- The convenience API not yet implemented.
 #//------------------------------------------------------------------------------
-#class UVMRegSequence #(type BASE=uvm_sequence #(uvm_reg_item)) extends BASE;
 
 
 class UVMRegSequence(UVMSequence):
@@ -191,7 +190,7 @@ class UVMRegSequence(UVMSequence):
             uvm_fatal("REG/DO_ITEM/NULL","do_reg_item: adapter handle is null")
 
         uvm_info("DO_RW_ACCESS","Doing transaction: " + rws, UVM_HIGH)
-        #
+
         if (self.parent_select == LOCAL):
             self.upstream_parent = rw.parent
             rw.parent = self

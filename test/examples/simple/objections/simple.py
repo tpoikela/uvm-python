@@ -64,11 +64,11 @@ class simple_test(UVMTest):
 
         # Run a bunch of processes in parallel
         #fork
-        p0 = cocotb.fork(self.doit(35, phase, 0))
-        p1 = cocotb.fork(self.doit(25, phase, 1))
-        p2 = cocotb.fork(self.doit(self.largest_delay, phase, 2))
-        p3 = cocotb.fork(self.doit(15, phase, 3))
-        p4 = cocotb.fork(self.do_without_object(self.largest_delay + 5, 4))
+        p0 = cocotb.start_soon(self.doit(35, phase, 0))
+        p1 = cocotb.start_soon(self.doit(25, phase, 1))
+        p2 = cocotb.start_soon(self.doit(self.largest_delay, phase, 2))
+        p3 = cocotb.start_soon(self.doit(15, phase, 3))
+        p4 = cocotb.start_soon(self.do_without_object(self.largest_delay + 5, 4))
 
         uvm_info("all_procs_forked", "Proceeding to await proc4", UVM_NONE)
 

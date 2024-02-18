@@ -41,7 +41,8 @@ from .uvm_globals import (uvm_report_warning, uvm_report_error,
 ALL_TYPES = None
 
 """
-Title: Callbacks Classes
+Callbacks Classes
+=================
 
 This section defines the classes used for callback registration, management,
 and user-defined callbacks.
@@ -530,7 +531,7 @@ class UVMTypedCallbacks(UVMCallbacksBase):  # (type T=uvm_object) extends uvm_ca
 
 class UVMCallbacks(UVMTypedCallbacks):
     """
-    The ~uvm_callbacks~ class provides a base class for implementing callbacks,
+    The `UVMCallbacks` class provides a base class for implementing callbacks,
     which are typically used to modify or augment component behavior without
     changing the component class. To work effectively, the developer of the
     component class defines a set of "hook" methods that enable users to
@@ -581,12 +582,12 @@ class UVMCallbacks(UVMTypedCallbacks):
 
 
     @classmethod
-    def get(cls):
+    def get(cls) -> 'UVMCallbacks':
         """
-         get
-         ---
+        Get the singleton instance of the class
 
         Returns:
+            UVMCallbacks: The singleton instance of the class
         """
 
         if cls.m_inst is None:
@@ -619,14 +620,13 @@ class UVMCallbacks(UVMTypedCallbacks):
     @classmethod
     def m_register_pair(cls, tname="", cbname="", T=ALL_TYPES):
         """
-         m_register_pair
-         -------------
-         Register valid callback type
+        m_register_pair
+
+        Register valid callback type
 
         Args:
-            cls:
-            tname:
-            cbname:
+            tname (str):
+            cbname (str):
             T:
             ALL_TYPES:
         Returns:

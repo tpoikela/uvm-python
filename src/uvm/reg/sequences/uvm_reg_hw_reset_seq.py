@@ -29,7 +29,7 @@ from ...base.uvm_resource_db import UVMResourceDb
 from ...base.sv import sv
 from ...base import UVM_LOW, UVM_HIGH
 from ...base.uvm_globals import uvm_zero_delay
-from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK
+from ..uvm_reg_model import UVM_CHECK, UVM_FRONTDOOR, UVM_IS_OK, uvm_status_e
 
 
 class UVMRegHWResetSeq(UVMRegSequence):
@@ -141,7 +141,7 @@ class UVMRegHWResetSeq(UVMRegSequence):
                 if status != UVM_IS_OK:
                     uvm_error(self.get_type_name(),
                           sv.sformatf("Status was %s when reading reset value of register \"%s\" through map \"%s\".",
-                          status.name(), regs[i].get_full_name(), maps[d].get_full_name()))
+                          uvm_status_e(status), regs[i].get_full_name(), maps[d].get_full_name()))
 
             blks = []  # uvm_reg_block blks[$]
             blk.get_blocks(blks)

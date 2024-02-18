@@ -61,7 +61,6 @@ class UVMObject(sv_obj):
     depth = 0
     m_inst_count = 0
 
-    m_inst_count = 0
     use_uvm_seeding = True
     uvm_global_copy_map = {}  # type: Dict['UVMObject', 'UVMObject']
     _m_uvm_status_container = UVMStatusContainer()
@@ -91,7 +90,7 @@ class UVMObject(sv_obj):
 
 
     """
-        Group: Identification
+    Group: Identification
     """
 
     def set_name(self, name: str):
@@ -238,6 +237,7 @@ class UVMObject(sv_obj):
         A typical implementation is as follows:
 
         .. code-block:: python
+
           class mytype (UVMObject):
             ...
             type_name = "mytype"
@@ -245,10 +245,10 @@ class UVMObject(sv_obj):
             def get_type_name(self):
               return my_type.type_name
 
+        We define the `type_name` static variable to enable access to the type name
+        without need of an object of the class, i.e., to enable access via the
+        scope operator, ~mytype::type_name~.
 
-          We define the `type_name` static variable to enable access to the type name
-          without need of an object of the class, i.e., to enable access via the
-          scope operator, ~mytype::type_name~.
         Returns:
             str: Type name of the object.
         """

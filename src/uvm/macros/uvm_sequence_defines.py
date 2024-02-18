@@ -90,7 +90,8 @@ async def uvm_do(seq_obj, SEQ_OR_ITEM):
        sub_seq.post_start()        (task)
    """
     
-    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1, [])
+    await uvm_do_on_pri_with(seq_obj, SEQ_OR_ITEM, seq_obj.m_sequencer, -1,
+                             lambda: True)
 
 
 #// MACRO: `uvm_do_pri

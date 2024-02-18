@@ -35,6 +35,7 @@ ifneq ($(UVM_TEST),)
     ifeq ($(TOPLEVEL_LANG),vhdl)
 	    SIMARGS += -- +UVM_TESTNAME=$(UVM_TEST)
     else
-	    SIMARGS += +UVM_TESTNAME=$(UVM_TEST)
+		PLUSARGS += +UVM_TESTNAME=$(UVM_TEST)
 	endif
 endif
+

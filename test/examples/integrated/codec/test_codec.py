@@ -73,8 +73,8 @@ async def do_reset_and_start_clocks(dut):
     dut.clk <= 0
     dut.sclk <= 0
     await Timer(500, "NS")
-    cocotb.fork(Clock(dut.clk, 50, "NS").start())
-    cocotb.fork(Clock(dut.sclk, 250, "NS").start())
+    cocotb.start_soon(Clock(dut.clk, 50, "NS").start())
+    cocotb.start_soon(Clock(dut.sclk, 250, "NS").start())
 
 
 @cocotb.test()
@@ -104,6 +104,6 @@ async def test_codec(dut):
     UVMConfigDb.set(None, "env.apb", "vif", apb_vif)
     UVMConfigDb.set(None, "env.vip", "vif", vip0)
 
-    cocotb.fork(do_reset_and_start_clocks(dut))
+    cocotb.start_soon(do_reset_and_start_clocks(dut))
 
     await run_test()

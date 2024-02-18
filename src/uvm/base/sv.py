@@ -62,7 +62,6 @@ def uvm_glob_to_re(_str: str) -> str:
         return ""
     if _str[0] == "/" and _str[-1] == "/":
         return _str
-    # TODO replace * with .*
     res = _str.replace('.', '\\.')
     res = res.replace('*', '.*')
     res = res.replace('[', '\\[')
@@ -257,7 +256,7 @@ class sv:
         return random.randint(0, SV_MAX_INT_VALUE)
 
     @classmethod
-    def urandom_range(cls, start, stop):
+    def urandom_range(cls, start: int, stop: int) -> int:
         return random.randint(start, stop)
 
     @classmethod
@@ -289,25 +288,56 @@ class sv:
                     return plusarg_dict[name]
 
     @classmethod
-    async def fork_join(cls, forks):
+    async def fork_join(cls, forks: List):
+        """Wait for all forked coroutines to complete
+
+        Args:
+            forks (List): A list of cocotb coroutine objects that support the `join()` method
+        """
         join_list = list(map(lambda t: t.join(), forks))
         await Combine(*join_list)
 
     @classmethod
-    async def fork_join_any(cls, forks):
+    async def fork_join_any(cls, forks: List):
+        """Wait for any of the started coroutines/tasks to complete
+
+        Args:
+            forks (List): A list of cocotb objects that support the `join()` method
+        """
         join_list = list(map(lambda t: t.join(), forks))
         await First(*join_list)
 
     @classmethod
-    async def fork_join_none(cls, procs):
+    async def fork_join_none(cls, procs: List):
+        """Start a list of cocotb coroutines and return their task handles
+
+        Args:
+            procs (List): A list of cocotb coroutine objects
+
+        Returns:
+            List: A list of task handles of the coroutines started
+        """
         res = []
         for proc in procs:
-            res.append(cocotb.fork(proc))
+            res.append(cocotb.start_soon(proc))
         return res
 
 
     @classmethod
     def set_bit(cls, int_val: int, idx: int, bit_val=1) -> int:
+        """Set a bit in an integer value
+
+        Args:
+            int_val (int): The integer value in which the bit needs to be set
+            idx (int): The index of the bit to be set
+            bit_val (int, optional): The value to which the bit should be set. Defaults to 1.
+
+        Raises:
+            ValueError: If `bit_val` is not 0 or 1
+
+        Returns:
+            int: The updated integer value with the bit set
+        """
         if bit_val == 1:
             return int_val | (1 << idx)
         if bit_val == 0:
@@ -316,6 +346,15 @@ class sv:
 
     @classmethod
     def get_bit(cls, int_val: int, idx: int) -> int:
+        """Get the value of a bit in an integer value
+
+        Args:
+            int_val (int): The integer value from which to retrieve the bit
+            idx (int): The index of the bit to be retrieved
+
+        Returns:
+            int: The value of the bit (0 or 1)
+        """
         return (int_val >> idx) & 0x1
 
     @classmethod
@@ -547,7 +586,7 @@ RE_FORMATS = {
     "d": [re.compile(r'^(-?[0-9_]+)$'), lambda s: int(s, 10), '-'],
     "h": [re.compile(r'^(0x[0-9a-fA-F_]+)$'), lambda s: int(s, 16), '0x'],
     "b": [re.compile(r'^([01_]+)$'), lambda s: int(s, 2), ''],
-    "o": [re.compile(r'^(o[01_]+)$'), lambda s: int(s, 8), 'o'],
+    "o": [re.compile(r'^([0-7_]+)$'), lambda s: int(s, 8), 'o'],
     "f": [re.compile(r'^(-?[0-9]*\.?[0-9]*)$'), float, '-'],
     "s": [re.compile(r'^(\w+)$'), lambda s: s, '']
 }

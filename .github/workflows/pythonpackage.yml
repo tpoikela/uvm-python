@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.8, 3.9, 3.11]
 
     steps:
     - uses: actions/checkout@v1
@@ -35,10 +35,9 @@ jobs:
       run: |
         python -m pip install -r ci/requirements.txt
         sudo apt-get install -y -qq flex bison gperf libreadline-dev libc6-dev
-        sudo apt install -y --no-install-recommends make g++ perl python3 autoconf libfl2 libfl-dev zlibc zlib1g zlib1g-dev
-        sudo bash ci/install_iverilog.sh
+        sudo apt install -y --no-install-recommends make g++ perl python3 autoconf libfl2 libfl-dev 
+        sudo apt install -y zlib1g zlib1g-dev
         #sudo bash ci/install_ghdl.sh
-        sudo bash ci/install_verilator.sh
     - name: Install uvm-python package
       run: |
         python -m pip install --user .
@@ -51,12 +50,16 @@ jobs:
         flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with make test and Icarus
       run: |
+        sudo bash ci/install_iverilog.sh
         export SIM=icarus
         export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
         make test
     - name: Test with make test and Verilator
       run: |
+        export VERILATOR_ROOT="$PWD/verilator"
+        export PATH="$VERILATOR_ROOT/bin:$PATH"
+        sudo bash ci/install_verilator.sh
         export SIM=verilator
         export PYTHONPATH=`pwd`
         ln -s src/uvm uvm

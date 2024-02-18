@@ -1,7 +1,7 @@
 #//
 #//----------------------------------------------------------------------
 #//   Copyright 2007-2011 Mentor Graphics Corporation
-#//   Copyright 2007-2010 Cadence Design Systems, Inc. 
+#//   Copyright 2007-2010 Cadence Design Systems, Inc.
 #//   Copyright 2010 Synopsys, Inc.
 #//   Copyright 2010 Paradigm-works, Inc.
 #//   All Rights Reserved Worldwide
@@ -35,7 +35,7 @@
 #//
 #// This sequence randomly selects and executes a sequence from the sequencer's
 #// sequence library, excluding uvm_random_sequence itself, and
-#// uvm_exhaustive_sequence. 
+#// uvm_exhaustive_sequence.
 #//
 #// The uvm_random_sequence class is a built-in sequence that is preloaded into
 #// every sequencer's sequence library with the name "uvm_random_sequence".
@@ -94,14 +94,14 @@
 #  max_kind = m_sequencer.sequences.size();
 #  l_exhaustive_seq_kind = m_sequencer.get_seq_kind("uvm_exhaustive_sequence");
 #  repeat (l_count) begin
-#    if (!randomize(l_kind) with { l_kind > l_exhaustive_seq_kind && 
+#    if (!randomize(l_kind) with { l_kind > l_exhaustive_seq_kind &&
 #      l_kind < max_kind; })
 #      uvm_report_fatal("RANDSEQ", "Randomization for l_kind failed in random sequence body", UVM_NONE);
 #    do_sequence_kind(l_kind);
 #  end
 #  m_sequencer.m_random_count++;
 #  pick_sequence.constraint_mode(1);
-#endtask 
+#endtask
 #
 #
 #//Implement data functions
@@ -117,7 +117,7 @@
 #  do_compare = 1;
 #  if(rhs==null) return 0;
 #  if(!$cast(seq, rhs)) return 0;
-#  do_compare &= comparer.compare_field_int("l_count", l_count, seq.l_count, 
+#  do_compare &= comparer.compare_field_int("l_count", l_count, seq.l_count,
 #    $bits(l_count));
 #endfunction
 #
@@ -151,7 +151,7 @@
 #// This sequence randomly selects and executes each sequence from the
 #// sequencer's sequence library once, excluding itself and uvm_random_sequence.
 #//
-#// The uvm_exhaustive_sequence class is a built-in sequence that is preloaded 
+#// The uvm_exhaustive_sequence class is a built-in sequence that is preloaded
 #// into every sequencer's sequence library with the name
 #// "uvm_exaustive_sequence".
 #//
@@ -178,7 +178,7 @@
 #
 #task body();
 #    int i;
-#    
+#
 #  pick_sequence.constraint_mode(0);
 #    //$display("In exhaustive sequence body, num_sequences: %0d", m_sequencer.num_sequences());
 #
@@ -187,13 +187,13 @@
 #    //  $display("seq: %0d: %s", i, m_sequencer.sequences[i]);
 #    //  $display("get_seq_kind[%s]: %0d", m_sequencer.sequences[i], get_seq_kind(m_sequencer.sequences[i]));
 #    //end
-#    
-#    
+#
+#
 #  l_count = m_sequencer.sequences.size() - 2;
 #  max_kind = m_sequencer.sequences.size();
 #  l_exhaustive_seq_kind = m_sequencer.get_seq_kind("uvm_exhaustive_sequence");
 #  repeat (l_count) begin
-#    if (!randomize(l_kind) with { l_kind > l_exhaustive_seq_kind; 
+#    if (!randomize(l_kind) with { l_kind > l_exhaustive_seq_kind;
 #      l_kind < max_kind; }) // l_kind is randc
 #      uvm_report_fatal("RANDSEQ", "Randomization for l_kind failed in exhaustive sequence body", UVM_NONE);
 #
@@ -202,7 +202,7 @@
 #  end
 #  m_sequencer.m_exhaustive_count++;
 #  pick_sequence.constraint_mode(1);
-#endtask 
+#endtask
 #
 #
 #//Implement data functions
@@ -218,7 +218,7 @@
 #  do_compare = 1;
 #  if(rhs==null) return 0;
 #  if(!$cast(seq, rhs)) return 0;
-#  do_compare &= comparer.compare_field_int("l_count", l_count, seq.l_count, 
+#  do_compare &= comparer.compare_field_int("l_count", l_count, seq.l_count,
 #    $bits(l_count));
 #endfunction
 #
@@ -249,13 +249,13 @@
 #//
 #// CLASS- uvm_simple_sequence
 #//
-#// This sequence simply executes a single sequence item. 
+#// This sequence simply executes a single sequence item.
 #//
 #// The item parameterization of the sequencer on which the uvm_simple_sequence
 #// is executed defines the actual type of the item executed.
 #//
 #// The uvm_simple_sequence class is a built-in sequence that is preloaded into
-#// every sequencer's sequence library with the name "uvm_simple_sequence". 
+#// every sequencer's sequence library with the name "uvm_simple_sequence".
 #//
 #// See <uvm_sequencer #(REQ,RSP)> for more information on running sequences.
 #//
@@ -269,7 +269,7 @@
 #  // ---
 #  function new (string name="uvm_simple_sequence");
 #    super.new(name);
-#    // Initialized to avoid potential warnings if this class instance 
+#    // Initialized to avoid potential warnings if this class instance
 #    // is randomized without calling its body()
 #    item = new;
 #  endfunction

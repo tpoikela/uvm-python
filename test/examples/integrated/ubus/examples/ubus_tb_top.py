@@ -46,23 +46,23 @@ async def initial_run_test(dut, vif):
 
 async def initial_reset(vif):
     await Timer(5, "NS")
-    vif.ubus_reset <= 1
-    vif.ubus_clock <= 1
-    vif.ubus_wait <= 0
+    vif.ubus_reset.value = 1
+    vif.ubus_clock.value = 1
+    vif.ubus_wait.value = 0
     await Timer(51, "NS")
-    vif.ubus_reset <= 0
+    vif.ubus_reset.value = 0
 
 
 
 async def always_clk(dut, ncycles):
-    dut.ubus_clock <= 0
+    dut.ubus_clock.value = 0
     n = 0
     print("EEE starting always_clk")
     while n < 2*ncycles:
         n += 1
         await Timer(5, "NS")
         next_val = not dut.ubus_clock.value
-        dut.ubus_clock <= int(next_val)
+        dut.ubus_clock.value = int(next_val)
 
 #module ubus_tb_top;
 @cocotb.test()
@@ -70,11 +70,10 @@ async def module_ubus_tb(dut):
 
     vif = ubus_if(dut)
 
-    proc_run_test = cocotb.fork(initial_run_test(dut, vif))
-    proc_reset = cocotb.fork(initial_reset(dut))
-    proc_clk = cocotb.fork(always_clk(dut, 100))
-    proc_vif = cocotb.fork(vif.start())
+    proc_run_test = cocotb.start_soon(initial_run_test(dut, vif))
+    proc_reset = cocotb.start_soon(initial_reset(dut))
+    proc_clk = cocotb.start_soon(always_clk(dut, 100))
+    proc_vif = cocotb.start_soon(vif.start())
 
     await Timer(999, "NS")
-    #await [proc_run_test, proc_clk.join()]
     await sv.fork_join([proc_run_test, proc_clk])

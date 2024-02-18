@@ -71,10 +71,6 @@ class uvm_sequence_process_wrapper:
     """
 
     def __init__(self):
-        """
-        process pid
-        uvm_sequence_base seq
-        """
         self.pid = 0  # type: int
         self.seq = None  # type: UVMSequenceBase
 
@@ -210,7 +206,7 @@ class UVMSequencerBase(UVMComponent):
 
 
     async def start_phase_sequence(self, phase):
-        """
+        r"""
         Start the default sequence for this phase, if any.
         The default sequence is configured via resources using
         either a sequence instance or sequence type (object wrapper).
@@ -345,7 +341,7 @@ class UVMSequencerBase(UVMComponent):
             await uvm_zero_delay()
             return
 
-        cocotb.fork(self._seq_fork_proc(seq, phase))
+        cocotb.start_soon(self._seq_fork_proc(seq, phase))
         await uvm_zero_delay()
 
 
@@ -678,14 +674,10 @@ class UVMSequencerBase(UVMComponent):
         self.m_max_zero_time_wait_relevant_count = new_val
 
 
-    #  //----------------------------------------------------------------------------
-    #  // INTERNAL METHODS - DO NOT CALL DIRECTLY, ONLY OVERLOAD IF VIRTUAL
-    #  //----------------------------------------------------------------------------
+    # INTERNAL METHODS - DO NOT CALL DIRECTLY, ONLY OVERLOAD IF VIRTUAL
 
     def grant_queued_locks(self):
         """
-         extern protected function void grant_queued_locks()
-        ------------------
         Any lock or grab requests that are at the front of the queue will be
         granted at the earliest possible time.  This function grants any queues
         at the front that are not locked out
@@ -1124,7 +1116,7 @@ class UVMSequencerBase(UVMComponent):
             return
 
         #fork // isolate inner fork block for disabling
-        fork_first = cocotb.fork(self._fork_first_proc(is_relevant_entries))
+        fork_first = cocotb.start_soon(self._fork_first_proc(is_relevant_entries))
         await fork_first
         #join
 
@@ -1157,7 +1149,7 @@ class UVMSequencerBase(UVMComponent):
     async def _fork_first_proc(self, is_relevant_entries):
         started_forks = []
         #fork
-        forked_proc1 = cocotb.fork(self._fork_first_proc_sub_fork1(is_relevant_entries))
+        forked_proc1 = cocotb.start_soon(self._fork_first_proc_sub_fork1(is_relevant_entries))
         started_forks.append(forked_proc1)
         # The other path in the fork is for any queue entry to change
         forked_proc2 = self.m_wait_arb_not_equal()
@@ -1175,7 +1167,7 @@ class UVMSequencerBase(UVMComponent):
         self.set_value('m_is_relevant_completed', False)
         for i in range(len(is_relevant_entries)):
             #fork
-            forked_proc = cocotb.fork(self._rel_entry_fork_proc(i, is_relevant_entries))
+            forked_proc = cocotb.start_soon(self._rel_entry_fork_proc(i, is_relevant_entries))
             fork_procs_join_none.append(forked_proc)
             #join_none
         await wait(lambda: self.m_is_relevant_completed > 0,
@@ -1202,9 +1194,7 @@ class UVMSequencerBase(UVMComponent):
     def is_auto_item_recording_enabled(self):
         return self.m_auto_item_recording
 
-#//------------------------------------------------------------------------------
 #// IMPLEMENTATION
-#//------------------------------------------------------------------------------
 #
 #// do_print
 #// --------

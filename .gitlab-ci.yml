@@ -2,7 +2,7 @@
 # Official language image. Look for the different tagged releases at:
 # https://hub.docker.com/r/library/python/tags/
 #image: python:3.7.6
-image: python:3.8
+image: python:3.11.2
 #image: gcc:10.2.0
 
 # Change pip's cache directory to be inside the project directory since we can
@@ -16,6 +16,7 @@ variables:
 # If you want to also cache the installed packages, you have to install
 # them in a virtualenv and cache it as well.
 cache:
+  when: always
   paths:
     - .cache/pip
     - venv/
@@ -23,6 +24,8 @@ cache:
     - iverilog/*.o
     - .pytype/
     - verilator/
+    - verilator/bin/*
+    - verilator/src/obj_dbg/*.o
 
 before_script:
   - uname -a
@@ -35,17 +38,24 @@ before_script:
   - python -m pip install -r ci/requirements.txt
   - apt-get update -qq
   - apt-cache madison gcc
-  - apt-get install -y -qq flex bison gperf
-  - bash ci/install_iverilog.sh
+  - apt-get install -y -qq flex bison gperf help2man
   # - bash ci/install_ghdl.sh
-  - bash ci/install_verilator.sh
   - ln -s src/uvm ./uvm
   - ls -la
+  - export VERILATOR_ROOT="$PWD/verilator"
+  - export PATH="$VERILATOR_ROOT/bin:$PATH"
 
-pytype:
-  script:
-    - pip install pytype
-    - make pytype
+# No pytype support for python 3.11 yet
+#pytype:
+#  script:
+#    - pip install pytype
+#    - make pytype
+
+# Commented out, until errors fixed locally first
+#pyright:
+#  script:
+#    - pip install pyright
+#    - pyright
 
 lint:
   script:
@@ -54,28 +64,29 @@ lint:
 
 test_icarus:
   script:
+    - bash ci/install_iverilog.sh
     - SIM=icarus make test || exit 1
+  artifacts:
+    paths:
+      - results_icarus.log
 
 test_verilator:
   script:
+    - bash ci/install_verilator.sh
     - SIM=verilator make test || exit 1
+  artifacts:
+    paths:
+      - results_verilator.log
 
 #test_ghdl:
 #  script:
 #    - SIM=ghdl make test TOPLEVEL_LANG=vhdl || exit 1
-
-#test_verilator:
-#  script:
-#    - SIM=verilator make test || exit 1
 
 #coverage:
 #  script:
 #    - pip install coverage coveralls
 #    - make cov-all
 #    - coveralls
-#  artifacts:
-#    paths:
-#      - htmlcov/
 
 #docs:
 #  script:

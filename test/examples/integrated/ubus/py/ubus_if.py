@@ -60,18 +60,17 @@ class ubus_if(sv_if):
 
     
     async def start(self):
-        a = cocotb.fork(self.drive_data())
-        b = cocotb.fork(self.always())
-        c = cocotb.fork(self.always_assertions())
+        a = cocotb.start_soon(self.drive_slave_data())
+        b = cocotb.start_soon(self.always())
+        c = cocotb.start_soon(self.always_assertions())
         await sv.fork_join([a, b, c])
-        # await [a, b, c]
 
     
-    async def drive_data(self):
+    async def drive_slave_data(self):
         while True:
             await Combine(Edge(self.sig_data_out), Edge(self.sig_data))
             if self.slave_en == 1:
-                self.sig_data <= self.sig_data_out.value
+                self.sig_data.value = self.sig_data_out.value
 
     
     async def always(self):

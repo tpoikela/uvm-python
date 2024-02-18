@@ -20,6 +20,7 @@
 #   the License for the specific language governing
 #   permissions and limitations under the License.
 #------------------------------------------------------------------------------
+
 """
 Group: Command Line Debug
 
@@ -28,7 +29,7 @@ that when used with `cocotb`, arguments are usually passed with SIM_ARGS="...".
 `cocotb` also supports PLUSARGS="...", so that can be used instead.
 For example::
 
-    SIM=icarus make SIM_ARGS="+UVM_TESTNAME=reg_test"
+  SIM=icarus make SIM_ARGS="+UVM_TESTNAME=reg_test"
 
 Variable: +UVM_DUMP_CMDLINE_ARGS
 
@@ -108,7 +109,6 @@ warning message will be generated. For example::
 
   <sim command> +UVM_TIMEOUT=200000,NO
 
-
 The implementation of this is in uvm_root.
 
 Variable: +UVM_MAX_QUIT_COUNT
@@ -120,10 +120,12 @@ warning message will be generated. For example::
 
   <sim command> +UVM_MAX_QUIT_COUNT=5,NO
 
+"""
 
+"""
 Variable: +UVM_PHASE_TRACE
 
-~+UVM_PHASE_TRACE~ turns on tracing of phase executions.  Users simply need to put the
+~+UVM_PHASE_TRACE~ turns on tracing of phase executions. Users simply need to put the
 argument on the command line.
 
 Variable: +UVM_OBJECTION_TRACE
@@ -155,7 +157,6 @@ type overrides for the type should be replaced.  For example::
 
   <sim command> +uvm_set_type_override=eth_packet,short_eth_packet
 
-
 The implementation of this is in uvm_root.
 
 Variable: +uvm_set_config_int
@@ -176,7 +177,6 @@ value conversions.  For example::
 No equivalent of set_config_object() exists since no way exists to pass a
 `UVMObject` into the simulation via the command line.
 
-
 The implementation of this is in uvm_root.
 
 Variable: +uvm_set_default_sequence
@@ -191,12 +191,14 @@ This is functionally equivalent to calling the following in your
 test:
 
 .. code-block:: python
+
   cs = UVMCoreService.get()
   f = cs.get_factory()
   UVMConfigDb.set(self, "path.to.sequencer.main_phase", "default_sequence",
                                           f.find_wrapper_by_name("seq_type"))
 
 The implementation of this is in `UVMRoot`.
+
 """
 
 

@@ -154,7 +154,7 @@ class ubus_slave_monitor(UVMMonitor):
     
     async def run_phase(self, phase):
         #    fork
-        forked_proc = cocotb.fork(self.collect_transactions())
+        forked_proc = cocotb.start_soon(self.collect_transactions())
         #    join
         await forked_proc
     #  endtask : run_phase

@@ -31,6 +31,7 @@ from .uvm_tlm_fifo_base import UVMTLMFIFOBase
 from ..base.uvm_mailbox import UVMMailbox
 from ..macros.uvm_message_defines import uvm_error
 from .uvm_analysis_port import UVMAnalysisImp
+from typing import List, Any
 
 
 class UVMTLMFIFO(UVMTLMFIFOBase):
@@ -106,46 +107,51 @@ class UVMTLMFIFO(UVMTLMFIFOBase):
         return (self.m_size != 0) and (self.m.num() == self.m_size)
 
 
-    async def put(self, t):
+    async def put(self, t) -> None:
         await self.m.put(t)
         self.put_ap.write(t)
 
 
-    async def get(self, t):
+    async def get(self, t=None) -> Any:
         self.m_pending_blocked_gets += 1
-        await self.m.get(t)
+        res = await self.m.get()
         self.m_pending_blocked_gets -= 1
-        self.get_ap.write(t)
+        self.get_ap.write(res)
+        if t is not None:
+            t.append(res)
+        return res
 
+    async def peek(self, t=None) -> Any:
+        res = await self.m.peek(t)
+        if t is not None:
+            t.append(res)
+        return res
 
-    async def peek(self, t):
-        await self.m.peek(t)
-
-    def try_get(self, t):
+    def try_get(self, t) -> bool:
         if not self.m.try_get(t):
             return False
         self.get_ap.write(t[0])
         return True
 
-    def try_peek(self, t):
+    def try_peek(self, t) -> bool:
         return self.m.try_peek(t)
 
-    def try_put(self, t):
+    def try_put(self, t) -> bool:
         if not self.m.try_put(t):
             return False
         self.put_ap.write(t)
         return True
 
-    def can_put(self):
+    def can_put(self) -> bool:
         return self.m_size == 0 or self.m.num() < self.m_size
 
-    def can_get(self):
+    def can_get(self) -> bool:
         return self.m.num() > 0 and self.m_pending_blocked_gets == 0
 
-    def can_peek(self):
+    def can_peek(self) -> bool:
         return self.m.num() > 0
 
-    def flush(self):
+    def flush(self) -> None:
         """
         Removes all entries from the FIFO, after which `used` returns 0
         and `is_empty` returns 1.
@@ -201,5 +207,5 @@ class UVMTLMAnalysisFIFO(UVMTLMFIFO):
     def get_type_name(self):
         return UVMTLMAnalysisFIFO.type_name
 
-    def write(self, t):
+    def write(self, t) -> None:
         self.try_put(t)  # unbounded => must succeed

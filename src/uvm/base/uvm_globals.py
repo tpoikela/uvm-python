@@ -32,8 +32,10 @@ from cocotb.utils import get_sim_time, simulator
 from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
                                  UVM_FATAL, UVM_INFO, UVM_LOG, UVM_LOW, UVM_MEDIUM, UVM_NONE,
                                  UVM_NO_ACTION, UVM_RM_RECORD, UVM_STOP, UVM_WARNING)
+from .uvm_debug import UVMDebug, uvm_debug
 from .sv import uvm_glob_to_re, uvm_re_match
 from inspect import getframeinfo, stack
+from typing import List, Any
 
 """
 Title: Globals
@@ -41,7 +43,7 @@ Group: Simulation Control
 """
 
 
-async def run_test(test_name="", dut=None):
+async def run_test(test_name="", dut=None) -> None:
     """
     Convenience function for uvm_top.run_test(). See `UVMRoot` for more
     information.
@@ -54,17 +56,14 @@ async def run_test(test_name="", dut=None):
     top = cs.get_root()
     await top.run_test(test_name, dut)
 
-#//----------------------------------------------------------------------------
-#//
-#// Group: Reporting
-#//
-#//----------------------------------------------------------------------------
+"""
+Group: Reporting
+================
+"""
 
-#// Function: uvm_get_report_object
-#//
 def uvm_get_report_object():
     """
-    Returns the nearest uvm_report_object when called.
+    Returns the nearest `UVMReportObject` when called.
     For the global version, it returns `UVMRoot`.
     """
     from .uvm_coreservice import UVMCoreService
@@ -80,7 +79,7 @@ def uvm_report_enabled(verbosity, severity=UVM_INFO, id=""):
 
     See also `UVMReportObject.uvm_report_enabled`.
 
-    Static methods of an extension of `UVMReportObject`, e.g. uvm_component-based
+    Static methods of an extension of `UVMReportObject`, e.g. `UVMComponent`-based
     objects, cannot call `uvm_report_enabled` because the call will resolve to
     the `UVMReportObject.uvm_report_enabled`, which is non-static.
     Static methods cannot call non-static methods of the same class.
@@ -114,7 +113,7 @@ def uvm_report_info(id, message, verbosity=UVM_MEDIUM, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_INFO, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -130,7 +129,7 @@ def uvm_report_error(id, message, verbosity=UVM_LOW, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_ERROR, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -146,7 +145,7 @@ def uvm_report_warning(id, message, verbosity=UVM_LOW, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_WARNING, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -173,7 +172,7 @@ def uvm_report_fatal(id, message, verbosity=UVM_NONE, filename="", line=0,
     if uvm_report_enabled(verbosity, UVM_FATAL, id):
         cs = get_cs()
         top = cs.get_root()
-        # tpoikela: Do not refactor
+        # tpoikela: Do not refactor into function
         if filename == "":
             caller = getframeinfo(stack()[1][0])
             filename = caller.filename
@@ -210,7 +209,6 @@ def uvm_string_to_severity(sev_str, sev):
 
 
 def uvm_string_to_action(action_str, action):
-    #  string actions[$]
     actions = action_str.split('|')  # uvm_split_string(action_str,"|",actions)
     action = 0x0
     for i in range(len(actions)):
@@ -234,9 +232,10 @@ def uvm_string_to_action(action_str, action):
 
 """
 Group: Miscellaneous
+====================
 """
 
-def uvm_is_match(expr, _str):
+def uvm_is_match(expr: str, _str: str) -> int:
     """
     Returns 1 if the two strings match, 0 otherwise.
 
@@ -258,12 +257,13 @@ UVM_LARGE_STRING = UVM_LINE_WIDTH*UVM_NUM_LINES*8-1
 #//
 #// Function: uvm_string_to_bits
 #//
-#// Converts an input string to its bit-vector equivalent. Max bit-vector
-#// length is approximately 14000 characters.
 #//----------------------------------------------------------------------------
 
 
 def uvm_string_to_bits(string: str) -> int:
+    """
+    Converts an input string to its bit-vector equivalent.
+    """
     bytearr = string.encode()
     result = 0
     shift = 0
@@ -285,19 +285,22 @@ def uvm_string_to_bits(string: str) -> int:
 #  $swrite(uvm_bits_to_string, "%0s", str)
 #endfunction
 
-
-#verilator = True
 verilator = False
 
 sim_product = ''
 if simulator.is_running():
     sim_product = simulator.get_simulator_product()
-    print("uvm-python: Used simulator is |" + sim_product + "|")
+    if UVMDebug.DEBUG is True:
+        uvm_debug({}, "uvm_globals.py",
+            f"uvm-python: Used simulator is |{sim_product}|")
     if sim_product == "Verilator":
         verilator = True
 
-def uvm_has_verilator():
+def uvm_has_verilator() -> bool:
     return verilator
+
+def uvm_has_icarus() -> bool:
+    return sim_product == "Icarus Verilog"
 
 UVM_POUND_ZERO_COUNT = 1000
 UVM_NO_WAIT_FOR_NBA = False
@@ -308,7 +311,7 @@ if hasattr(cocotb, 'SIM_NAME') and getattr(cocotb, 'SIM_NAME') == 'Verilator':
 
 rw_event = ReadWrite()
 
-async def uvm_wait_for_nba_region():
+async def uvm_wait_for_nba_region() -> None:
     """
     Task: uvm_wait_for_nba_region
 
@@ -405,9 +408,10 @@ def get_cs():
 
 """
 Group: uvm-python specific functions
+====================================
 """
 
-def uvm_is_sim_active():
+def uvm_is_sim_active() -> bool:
     """
     Returns true if a simulator is active/attached. Returns False for example
     when running unit tests without cocotb Makefiles.
@@ -415,7 +419,7 @@ def uvm_is_sim_active():
     return simulator.is_running()
 
 
-def uvm_sim_time(units='NS'):
+def uvm_sim_time(units='NS') -> int:
     """
     Returns current simtime in the given units (default: NS)
 
@@ -433,16 +437,18 @@ async def uvm_zero_delay():
     await NullTrigger()
 
 
-def uvm_check_output_args(arr):
+def uvm_check_output_args(arr: List[Any]) -> None:
     """
     Check that all args in the arr are lists to emulate the SV inout/output/ref args
 
     Raises:
+        TypeError: If any of the args is not a list
+        ValueError: If any of the args is not empty list
     """
     for item in arr:
         if not isinstance(item, list):
-            raise Exception('All output args must be given as empty arrays. Got: '
+            raise TypeError('All output args must be given as empty arrays. Got: '
                     + str(item))
         elif len(item) != 0:
-            raise Exception('All output args must be given as empty arrays. Got: '
+            raise ValueError('All output args must be given as empty arrays. Got: '
                     + str(item) + ' len: ' + str(len(item)))

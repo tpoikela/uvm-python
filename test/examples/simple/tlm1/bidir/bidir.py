@@ -53,8 +53,8 @@ class master(UVMComponent):
 
     
     async def run_phase(self, phase):
-        req_proc = cocotb.fork(self.request_process())
-        rsp_proc = cocotb.fork(self.response_process())
+        req_proc = cocotb.start_soon(self.request_process())
+        rsp_proc = cocotb.start_soon(self.response_process())
         await sv.fork_join([req_proc, rsp_proc])
         #    fork
         #      request_process

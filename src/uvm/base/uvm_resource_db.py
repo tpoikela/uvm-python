@@ -36,48 +36,45 @@
 #//----------------------------------------------------------------------
 
 
-#//----------------------------------------------------------------------
-#// class: uvm_resource_db
-#//
-#// All of the functions in uvm_resource_db#(T) are static, so they
-#// must be called using the :: operator.  For example:
-#//
-#//|  uvm_resource_db#(int)::set("A", "*", 17, this)
-#//
-#// The parameter value "int" identifies the resource type as
-#// uvm_resource#(int).  Thus, the type of the object in the resource
-#// container is int. This maintains the type-safety characteristics of
-#// resource operations.
-#//
-#//----------------------------------------------------------------------
-#class uvm_resource_db #(type T=uvm_object)
 
 from .sv import sv
 from .uvm_globals import uvm_check_output_args
 from ..uvm_macros import uvm_typename
 from ..macros.uvm_message_defines import uvm_info
-from .uvm_object_globals import UVM_LOW
+from .uvm_object_globals import UVM_DEBUG
 from .uvm_resource import UVMResource, UVMResourcePool
 
 
 class UVMResourceDb:
+    """
+    class: UVMResourceDb
+    
+    All of the functions in uvm_resource_db#(T) are static, so they
+    must be called using the :: operator.  For example::
+    
+      UVMResourceDb.set("A", "*", 17, self)
+    
+    The parameter value "int" identifies the resource type as
+    UVMResource.  Thus, the type of the object in the resource
+    container is int. This maintains the type-safety characteristics of
+    resource operations.
+    """
 
     rsrc_t = UVMResource
-
-    #  typedef uvm_resource #(T) rsrc_t
 
     def __init__(self, T=None):
         self.T = T
 
-    #  // function: get_by_type
-    #  //
-    #  // Get a resource by type.  The type is specified in the db
-    #  // class parameter so the only argument to this function is the
-    #  // ~scope~.
     @classmethod
     def get_by_type(cls, scope):
+        """
+        function: get_by_type
+        
+        Get a resource by type.  The type is specified in the db
+        class parameter so the only argument to this function is the
+        `scope`.
+        """
         return cls.rsrc_t.get_by_type(scope, cls.rsrc_t.get_type())
-    #  endfunction
 
     #  // function: get_by_name
     #  //
@@ -139,7 +136,7 @@ class UVMResourceDb:
 
         msg = sv.sformatf("%s '%s%s' (type %s) %s by %s = %s",
             rtype, scope, _name, msg, action, acc_name, rsrc_str)
-        uvm_info(id, msg, UVM_LOW)
+        uvm_info(id, msg, UVM_DEBUG)
 
 
     #  // function: set
@@ -157,7 +154,6 @@ class UVMResourceDb:
 
         if UVMResourceDbOptions.is_tracing():
             cls.m_show_msg("RSRCDB/SET", "Resource","set", scope, name, accessor, rsrc)
-        #  endfunction
 
     #  // function: set_anonymous
     #  //
