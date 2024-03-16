@@ -21,7 +21,7 @@
 #//   permissions and limitations under the License.
 #//------------------------------------------------------------------------------
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import cocotb
 from cocotb.triggers import Timer
@@ -180,7 +180,7 @@ class UVMComponent(UVMReportObject):
 
         self.print_enabled = True
         self.m_current_phase = None  # the most recently executed phase
-        self.m_parent = None
+        self.m_parent: Optional['UVMComponent'] = None
         self.m_children_by_handle: Dict['UVMComponent', 'UVMComponent'] = {}
         self.m_children_ordered: List['UVMComponent'] = []
 
@@ -288,7 +288,7 @@ class UVMComponent(UVMReportObject):
     hierarchy, i.e., topology.
     """
 
-    def get_parent(self):
+    def get_parent(self) -> Optional['UVMComponent']:
         """
         Function: get_parent
 
