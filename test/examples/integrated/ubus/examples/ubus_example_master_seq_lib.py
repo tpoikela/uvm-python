@@ -175,8 +175,8 @@ from uvm.base import sv, UVM_MEDIUM
 #// SEQUENCE: read_modify_write_seq
 #//
 #//------------------------------------------------------------------------------
-#class read_modify_write_seq extends ubus_base_sequence;
 
+@uvm_object_utils
 class read_modify_write_seq(ubus_base_sequence):
 
     def __init__(self, name="read_modify_write_seq"):
@@ -186,10 +186,11 @@ class read_modify_write_seq(ubus_base_sequence):
         self.addr_check = 0
         self.m_data0_check = 0
         self.test_pass = False
+        self.tag = "READ_MODIFY_WRITE"
 
 
     async def body(self):
-        uvm_info(self.get_type_name(), sv.sformatf("%s starting...",
+        uvm_info(self.tag, sv.sformatf("%s starting...",
             self.get_sequence_path()), UVM_MEDIUM)
 
         # READ A RANDOM LOCATION
@@ -197,19 +198,23 @@ class read_modify_write_seq(ubus_base_sequence):
         self.read_byte_seq0.do_not_randomize = 1
         await uvm_do_with(self, self.read_byte_seq0)
         self.addr_check = self.read_byte_seq0.rsp.addr
-        self.m_data0_check = self.read_byte_seq0.rsp.data[0] + 1
+        rsp_data0 = self.read_byte_seq0.rsp.data[0]
+        print(f"rsp_data0: {rsp_data0}, rsp_addr: {self.addr_check}")
+        self.m_data0_check = rsp_data0 + 1
 
         # WRITE MODIFIED READ DATA
         self.write_byte_seq0 = write_byte_seq("write_byte_seq")
         self.write_byte_seq0.start_addr = self.addr_check
         self.write_byte_seq0.data0 = self.m_data0_check
+        print(f"Writing addr[{self.addr_check}] with data: {self.m_data0_check}")
         self.write_byte_seq0.do_not_randomize = 1
         await uvm_do_with(self, self.write_byte_seq0)
 
         self.m_data0_check = write_byte_seq.last_data
 
-        #    // READ MODIFIED WRITE DATA
+        # READ MODIFIED WRITE DATA
         self.read_byte_seq0.start_addr = self.addr_check
+        uvm_info('READ_MODIFY_WRITE', f"Reading addr[{self.addr_check}]", UVM_MEDIUM)
         await uvm_do_with(self, self.read_byte_seq0,
             lambda start_addr: start_addr == self.addr_check)
 
@@ -221,9 +226,6 @@ class read_modify_write_seq(ubus_base_sequence):
                     self.addr_check, self.m_data0_check, data0_got))
         else:
             self.test_pass = True
-
-
-uvm_object_utils(read_modify_write_seq)
 
 #//------------------------------------------------------------------------------
 #//

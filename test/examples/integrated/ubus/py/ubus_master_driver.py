@@ -37,6 +37,7 @@ from ubus_transfer import *
 def _print(msg):
     uvm_info("EEE_ubus_master_drv", msg, UVM_LOW)
 
+@uvm_component_utils
 class ubus_master_driver(UVMDriver):
 
     def __init__(self, name, parent):
@@ -45,6 +46,7 @@ class ubus_master_driver(UVMDriver):
         self.vif = None
         self.master_id = 0
         self.mask = 0xFF
+        self.tag = f"PPP ubus_master_driver_{self.master_id}"
 
 
     def build_phase(self, phase):
@@ -60,7 +62,6 @@ class ubus_master_driver(UVMDriver):
             self.master_id = arr[0]
 
 
-    
     async def run_phase(self, phase):
         fork_get = cocotb.start_soon(self.get_and_drive())
         fork_reset = cocotb.start_soon(self.reset_signals())
@@ -151,7 +152,6 @@ class ubus_master_driver(UVMDriver):
         self.vif.sig_size.value = 0
         self.vif.sig_read.value = 0
         self.vif.sig_write.value = 0
-        #  endtask : drive_address_phase
 
     #
     #  // drive_data_phase
@@ -209,11 +209,10 @@ class ubus_master_driver(UVMDriver):
             self.vif.sig_read.value = 0
             self.vif.sig_write.value = 0
         elif rw == READ:
+            uvm_info(self.tag, "Driving read=1", UVM_LOW)
             self.vif.sig_read.value = 1
             self.vif.sig_write.value = 0
         elif rw == WRITE:
+            uvm_info(self.tag, "Driving write=1", UVM_LOW)
             self.vif.sig_read.value = 0
             self.vif.sig_write.value = 1
-
-
-uvm_component_utils(ubus_master_driver)
