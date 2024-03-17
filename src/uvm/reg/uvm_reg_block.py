@@ -97,6 +97,7 @@ class UVMRegBlock(UVMObject):
         self.default_path = UVM_DEFAULT_PATH
         self.fname = ""
         self.lineno = 0
+        self.default_map: Optional[UVMRegMap] = None
 
 
     def configure(self, parent=None, hdl_path="") -> None:
@@ -113,7 +114,7 @@ class UVMRegBlock(UVMObject):
         to the hierarchical HDL path of any contained registers or memories.
         """
         self.parent = parent
-        if parent is not None:
+        if self.parent is not None:
             self.parent.add_block(self)
         self.add_hdl_path(hdl_path)
 
@@ -205,17 +206,17 @@ class UVMRegBlock(UVMObject):
     #   //
     #   UVMRegMap default_map
 
-    def get_default_map(self) -> UVMRegMap:
+    def get_default_map(self) -> Optional[UVMRegMap]:
         return self.default_map
 
     #   extern virtual function void set_parent(uvm_reg_block parent)
-    def set_parent(self, parent: 'UVMRegBlock'):
+    def set_parent(self, parent: 'UVMRegBlock') -> None:
         if self != parent:
             self.parent = parent
 
 
     # function void add_block (uvm_reg_block blk)
-    def add_block(self, blk: 'UVMRegBlock'):
+    def add_block(self, blk: 'UVMRegBlock') -> None:
         if self.is_locked():
             uvm_error("RegModel", "Cannot add subblock to locked block model")
             return
@@ -232,8 +233,8 @@ class UVMRegBlock(UVMObject):
 
 
     #   /*local*/ extern function void add_map   (UVMRegMap map)
-    def add_map(self, _map: UVMRegMap):
-        if (self.locked):
+    def add_map(self, _map: UVMRegMap) -> None:
+        if self.locked:
             uvm_error("RegModel", "Cannot add map to locked model")
             return
 
@@ -247,7 +248,7 @@ class UVMRegBlock(UVMObject):
 
 
     # add_reg
-    def add_reg(self, rg: UVMReg):
+    def add_reg(self, rg: UVMReg) -> None:
         if self.is_locked():
             uvm_error("RegModel", "Cannot add register to locked block model")
             return
@@ -262,7 +263,7 @@ class UVMRegBlock(UVMObject):
         UVMRegBlock.id += 1
 
     #   /*local*/ extern function void add_vreg  (uvm_vreg vreg)
-    def add_vreg(self, vreg):
+    def add_vreg(self, vreg) -> None:
         if self.is_locked():
             uvm_error("RegModel", "Cannot add virtual register to locked block model")
             return
@@ -275,7 +276,7 @@ class UVMRegBlock(UVMObject):
         UVMRegBlock.id += 1
 
     #   /*local*/ extern function void add_mem   (uvm_mem  mem)
-    def add_mem(self, mem: UVMMem):
+    def add_mem(self, mem: UVMMem) -> None:
         if self.is_locked():
             uvm_error("RegModel", "Cannot add memory to locked block model")
             return
@@ -307,7 +308,7 @@ class UVMRegBlock(UVMObject):
         """
         if self.is_locked():
             return
-        self.locked = 1
+        self.locked = True
 
         for rr in self.regs.key_list():
             rr.Xlock_modelX()
@@ -319,15 +320,15 @@ class UVMRegBlock(UVMObject):
             blk.lock_model()
 
         # TODO finish this
-        if (self.parent is None):
+        if self.parent is None:
             max_size = UVMReg.get_max_size()
-            if (UVMRegField.get_max_size() > max_size):
+            if UVMRegField.get_max_size() > max_size:
                 max_size = UVMRegField.get_max_size()
 
-            if (UVMMem.get_max_size() > max_size):
+            if UVMMem.get_max_size() > max_size:
                 max_size = UVMMem.get_max_size()
 
-            if (max_size > UVM_REG_DATA_WIDTH):
+            if max_size > UVM_REG_DATA_WIDTH:
                 uvm_fatal("RegModel", sv.sformatf(ERR_MSG3, max_size, UVM_REG_DATA_WIDTH))
 
             self.Xinit_address_mapsX()
@@ -352,7 +353,7 @@ class UVMRegBlock(UVMObject):
     #   //
     #   // Return TRUE if the model is locked.
     #   //
-    def is_locked(self):
+    def is_locked(self) -> bool:
         return self.locked
 
     #   //---------------------
