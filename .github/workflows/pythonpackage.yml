@@ -50,6 +50,8 @@ jobs:
         flake8 ./src --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 ./src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # Icarus Verilog testing
     - name: Test with make test and Icarus
       run: |
         sudo bash ci/install_iverilog.sh
@@ -57,6 +59,13 @@ jobs:
         export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
         make test
+    - name: Upload Icarus test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: Icarus Test results in XML
+        path: results_icarus.log
+
+    # Verilator testing
     - name: Test with make test and Verilator
       run: |
         export VERILATOR_ROOT="$PWD/verilator"
@@ -66,8 +75,14 @@ jobs:
         export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
         #SIM=verilator make test
-        make test-unit
-        make test-simple
+        make test-unit > results_verilator.log
+        make test-simple >> results_verilator.log
+    - name: Upload Verilator test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: Verilator Test results in XML
+        path: results_verilator.log
+
     #- name: Test with make test and ghdl
     #  run: |
     #    export SIM=ghdl
