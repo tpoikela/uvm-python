@@ -61,9 +61,11 @@ jobs:
         make test
     - name: Upload Icarus test results
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: Icarus Test results in XML
         path: results_icarus.log
+        retention-days: 2
 
     # Verilator testing
     - name: Test with make test and Verilator
@@ -79,9 +81,11 @@ jobs:
         make test-simple >> results_verilator.log
     - name: Upload Verilator test results
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: Verilator Test results in XML
         path: results_verilator.log
+        retention-days: 2
 
     #- name: Test with make test and ghdl
     #  run: |
