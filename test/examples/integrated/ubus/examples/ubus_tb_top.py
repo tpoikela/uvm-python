@@ -36,7 +36,7 @@ UBUS_ADDR_WIDTH = 16
 
 
 
-async def initial_run_test(dut, vif):
+async def initial_run_test(dut, vif: ubus_if):
     from uvm.base import UVMCoreService
     cs_ = UVMCoreService.get()
     UVMConfigDb.set(None, "*", "vif", vif)
@@ -44,7 +44,7 @@ async def initial_run_test(dut, vif):
 
 
 
-async def initial_reset(vif):
+async def initial_reset(vif: ubus_if):
     await Timer(5, "NS")
     vif.ubus_reset.value = 1
     vif.ubus_clock.value = 1
@@ -54,17 +54,15 @@ async def initial_reset(vif):
 
 
 
-async def always_clk(dut, ncycles):
+async def always_clk(dut, ncycles: int) -> None:
     dut.ubus_clock.value = 0
     n = 0
-    print("EEE starting always_clk")
     while n < 2*ncycles:
         n += 1
         await Timer(5, "NS")
         next_val = not dut.ubus_clock.value
         dut.ubus_clock.value = int(next_val)
 
-#module ubus_tb_top;
 @cocotb.test()
 async def module_ubus_tb(dut):
 

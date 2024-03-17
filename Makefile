@@ -1,3 +1,5 @@
+# Makefile for UVM-Python. Mainly used for running tests,
+# coverage and linting.
 NPROCS = $(shell grep -c 'processor' /proc/cpuinfo)
 MAKEFLAGS += -j$(NPROCS)
 
@@ -61,3 +63,5 @@ typecheck:
 
 pytype:
 	pytype --config=./pytype.cfg
+
+.PHONY: test test-minimal test-simple test-integrated test-unit test-sim-integration lint cov cov-all clean stubgen typecheck pytype

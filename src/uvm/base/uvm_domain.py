@@ -59,7 +59,7 @@ class UVMDomain(UVMPhase):
     """
 
     m_common_domain = None
-    m_uvm_domain = None
+    m_uvm_domain: 'UVMDomain' = None
     m_domains: Dict[str, 'UVMDomain'] = {}
     m_uvm_schedule = None  # type: UVMPhase
 
@@ -92,7 +92,7 @@ class UVMDomain(UVMPhase):
         return cls.m_uvm_schedule
 
     @classmethod
-    def get_common_domain(cls):
+    def get_common_domain(cls) -> 'UVMDomain':
         """
         Function: get_common_domain
 
@@ -100,7 +100,9 @@ class UVMDomain(UVMPhase):
         all components execute in sync with each other. Phases in the "common"
         domain are build, connect, end_of_elaboration, start_of_simulation, run,
         extract, check, report, and final.
+
         Returns:
+            UVMDomain: Returns the common domain
         """
         domain = None
         schedule = None
@@ -152,7 +154,7 @@ class UVMDomain(UVMPhase):
         return UVMDomain.m_common_domain
 
     @classmethod
-    def add_uvm_phases(cls, schedule):
+    def add_uvm_phases(cls, schedule: UVMPhase) -> None:
         """
         Appends to the given `schedule` the built-in UVM phases.
 
@@ -173,7 +175,7 @@ class UVMDomain(UVMPhase):
         schedule.add(UVMPostShutdownPhase.get())
 
     @classmethod
-    def get_uvm_domain(cls):
+    def get_uvm_domain(cls) -> 'UVMDomain':
         """
         Get a handle to the singleton `uvm` domain
 

@@ -21,7 +21,7 @@
 #//----------------------------------------------------------------------
 
 import cocotb
-from cocotb.triggers import RisingEdge, FallingEdge, Timer
+from cocotb.triggers import RisingEdge, FallingEdge, Timer, NullTrigger
 
 from uvm.base import UVMObject, sv, UVMConfigDb, UVM_HIGH
 from uvm.macros import uvm_component_utils, uvm_object_utils
@@ -249,9 +249,9 @@ class ubus_bus_monitor(UVMMonitor):
             await self.collect_data_phase()
             uvm_info("UBUS_MON", sv.sformatf("Transfer collected :\n%s",
                 self.trans_collected.sprint()), UVM_HIGH)
-            if (self.checks_enable):
+            if self.checks_enable:
                 self.perform_transfer_checks()
-            if (self.coverage_enable):
+            if self.coverage_enable:
                 self.perform_transfer_coverage()
             self.item_collected_port.write(self.trans_collected)
         #  endtask : collect_transactions
@@ -312,7 +312,7 @@ class ubus_bus_monitor(UVMMonitor):
         elif vec == 3:
             self.status.bus_state = ADDR_PH_ERROR
             self.state_port.write(self.status)
-            if (self.checks_enable):
+            if self.checks_enable:
                 uvm_error(self.get_type_name(),
                 "Read and Write true at the same time")
         #  endtask : collect_address_phase
@@ -334,9 +334,8 @@ class ubus_bus_monitor(UVMMonitor):
             self.num_transactions += 1
             self.end_tr(self.trans_collected)
         else:
-            await Timer(0)
-        #  endtask : collect_data_phase
-        #
+            # await Timer(0)
+            await NullTrigger()
 
     #  // check_which_slave
     def check_which_slave(self):
@@ -363,7 +362,6 @@ class ubus_bus_monitor(UVMMonitor):
     def perform_transfer_checks(self):
         self.check_transfer_size()
         self.check_transfer_data_size()
-        #  endfunction : perform_transfer_checks
 
     #  // check_transfer_size
     def check_transfer_size(self):
@@ -402,7 +400,6 @@ class ubus_bus_monitor(UVMMonitor):
         #    end
         #  endfunction : perform_transfer_coverage
 
-    #endclass : ubus_bus_monitor
 uvm_component_utils(ubus_bus_monitor)
 
 #  // Provide implementations of virtual methods such as get_type_name and create

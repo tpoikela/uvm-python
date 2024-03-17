@@ -164,8 +164,8 @@ and create a pull request!
 HDL Simulators
 --------------
 
-Tested with Icarus Verilog (iverilog v13.0 (devel)) and verilator (v5.008). The
-exact commit for iverilog can be found from `ci/install_iverilog.sh`.
+Tested with Icarus Verilog (iverilog v13.0 (s20221226-498-g52d049b51)) and 
+verilator (v5.020-176-g953249aa4). 
 
 Icarus Verilog and verilator are free simulators, which can
 be used with cocotb. uvm-python uses cocotb to interface with these simulators.

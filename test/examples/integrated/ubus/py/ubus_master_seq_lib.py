@@ -69,9 +69,9 @@ class read_byte_seq(ubus_base_sequence):
         self.req.size = 1
         self.req.error_pos = 1000
         self.req.transmit_delay = self.transmit_delay
-        await uvm_do_with(self, self.req, lambda addr: addr == self.start_addr)
-        #      { req.addr == start_addr
-        #        req.read_write == READ
+        await uvm_do_with(self, self.req, lambda addr: addr == self.start_addr,
+                          lambda read_write: read_write == READ,
+                          lambda size: size == 1)
         #        req.size == 1
         #        req.error_pos == 1000
         #        req.transmit_delay == transmit_del; } )
@@ -225,7 +225,8 @@ class write_byte_seq(ubus_base_sequence):
         req.transmit_delay = self.transmit_delay
         await uvm_do_with(self, req, lambda addr: addr == self.start_addr,
             lambda read_write: read_write == WRITE,
-            lambda data: data[0] == self.data0)
+            lambda data: data[0] == self.data0,
+            lambda size: size == 1)
         #      { req.addr == start_addr
         #        req.read_write == WRITE
         #        req.size == 1
