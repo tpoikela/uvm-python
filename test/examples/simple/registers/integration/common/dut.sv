@@ -27,7 +27,7 @@
 `define DMA_ADDR_BITS 8:2
 //11:2
 
-module slave#(
+module apb_slave#(
     parameter int MEM_SIZE = 128,
     parameter int NSOCKETS = 64,
     parameter int ID_REGISTER = {2'b00, 4'h0, 10'h176, 8'h5A, 8'h03},
@@ -96,8 +96,8 @@ end
 `ifdef VCD
 `ifndef VERILATOR
 initial begin
- $dumpfile ("slave_dut.vcd");
- $dumpvars (0, slave);
+ $dumpfile ("apb_slave_dut.vcd");
+ $dumpvars (0, apb_slave);
  // Dump only first 16 vars of memories
  for (int i = 0; i < 16; i++) $dumpvars(0, DMA[i]);
  for (int i = 0; i < 16; i++) $dumpvars(0, SOCKET[i]);
@@ -106,5 +106,5 @@ end
 `endif
 `endif
 
-endmodule: slave
+endmodule: apb_slave
 

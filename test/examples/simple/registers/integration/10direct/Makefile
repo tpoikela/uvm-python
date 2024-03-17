@@ -40,20 +40,31 @@ include ../../../MakefileCommon.mk
 PYTHONPATH := $(WPWD)/../../../../integrated:$(PYTHONPATH)
 PYTHONPATH := $(WPWD)/../common:$(PYTHONPATH)
 
+# Var to choos if clock generated on Python or SV side
+SV_CLOCK_GEN ?= 0
+export SV_CLOCK_GEN
+
 VERILOG_SOURCES := $(WPWD)/../common/dut.sv
+ifeq ($(SV_CLOCK_GEN), 1)
+	VERILOG_SOURCES := $(WPWD)/../common/dut_with_clkgen.sv \
+					   $(WPWD)/../common/dut.sv
+endif
 
 ifeq ($(VCD), 1)
 	COMPILE_ARGS += -DVCD=1
 endif
 
 UVM_SEQUENCE ?= UVMRegMemBuiltInSeq
-PLUSARGS += +UVM_VERBOSITY=UVM_LOW
+PLUSARGS += +UVM_VERBOSITY=UVM_NONE
 #PLUSARGS += +UVM_CONFIG_DB_TRACE=1 +UVM_DUMP_CMDLINE_ARGS
 PLUSARGS += +UVM_SEQUENCE=$(UVM_SEQUENCE)
 ifneq ($(UVM_TEST),)
     PLUSARGS += +UVM_TESTNAME=$(UVM_TEST) +UVM_RESOURCE_DB_TRACE
 endif
-TOPLEVEL := slave
+TOPLEVEL := apb_slave
+ifeq ($(SV_CLOCK_GEN), 1)
+	TOPLEVEL := apb_slave_with_clkgen
+endif
 MODULE   ?= test_top
 
 include $(shell cocotb-config --makefiles)/Makefile.sim

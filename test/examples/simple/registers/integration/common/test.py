@@ -22,6 +22,8 @@
 #// -------------------------------------------------------------
 #//
 
+import os
+
 import cocotb
 from cocotb.utils import simulator
 from cocotb.clock import Clock
@@ -37,6 +39,12 @@ async def initial_begin(dut):
     cs_ = UVMCoreService.get()
     env = tb_env("env")
 
+    # Check env var SV_CLOCK_GEN
+    sv_clock_gen = False
+    if "SV_CLOCK_GEN" in os.environ:
+        if os.environ["SV_CLOCK_GEN"] == "1":
+            sv_clock_gen = True
+
     print(str(dir(simulator)))
     print(str(dir(dut)))
     vif = apb_if(dut)
@@ -45,7 +53,8 @@ async def initial_begin(dut):
     #root = simulator.get_root_handle()
     #print(str(dir(root)))
 
-    cocotb.start_soon(Clock(vif.clk, 10, "NS").start())
+    if sv_clock_gen is False:
+        cocotb.start_soon(Clock(vif.clk, 10, "NS").start())
     svr = cs_.get_report_server()
     svr.set_max_quit_count(10)
 

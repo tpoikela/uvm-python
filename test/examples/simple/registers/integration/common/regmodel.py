@@ -140,7 +140,10 @@ class dut_regmodel(UVMRegBlock):
         self.RAM.configure(self, "DMA")
 
         # define default map/add register to map
-        self.default_map = self.create_map("default_map", 0x0, 4, UVM_LITTLE_ENDIAN, 1)
+        self.default_map = self.create_map("default_map", 0x0, 4,
+                                           UVM_LITTLE_ENDIAN, True)
+        if self.default_map is None:
+            raise Exception("Failed to create default map")
         self.default_map.add_reg(self.ID, 0x0, "RW")
         self.default_map.add_reg(self.DATA, 0x24, "RW")
         for i in range(len(self.SOCKET)):

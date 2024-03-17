@@ -100,10 +100,10 @@ class tb_env(UVMComponent):
 
         # begin : do_reset
         uvm_info("RESET","Performing reset of 5 cycles", UVM_LOW)
-        self.vif.rst <= 1
+        self.vif.rst.value = 1
         for _ in range(5):
             await RisingEdge(self.vif.clk)
-        self.vif.rst <= 0
+        self.vif.rst.value = 0
 
         await Timer(100, "NS")
 
