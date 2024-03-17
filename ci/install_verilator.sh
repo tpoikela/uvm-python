@@ -14,7 +14,7 @@ find -name '*.o' | grep -q .
 
 # If .o files don't exist, do autoconf and do make
 if [ $? -ne 0 ]; then
-    git checkout v5.008
+    git checkout v5.022
     echo "autoconf"
     autoconf
     echo "configure"
@@ -22,8 +22,6 @@ if [ $? -ne 0 ]; then
     echo "make"
     make -d -j `nproc`
     echo "make install"
-    #make -d install
 else
     echo "Verilator already built, skipping compile/install steps"
-    # make -d install
 fi
