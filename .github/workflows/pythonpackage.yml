@@ -16,21 +16,22 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Cache iverilog
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       env:
         cache-name: cache-iverilog-new
       with:
         path: ./iverilog
         key: ${{ runner.os }}-iverilog-v1${{ env.cache-name }}
     - name: Cache verilator
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       env:
         cache-name: cache-verilator-new
       with:
         path: ./verilator
         key: ${{ runner.os }}-verilator-v2${{ env.cache-name }}
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/checkout@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -65,7 +66,9 @@ jobs:
         export SIM=verilator
         export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
-        make test
+        #SIM=verilator make test
+        make test-unit
+        make test-simple
     #- name: Test with make test and ghdl
     #  run: |
     #    export SIM=ghdl
