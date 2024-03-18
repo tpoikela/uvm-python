@@ -56,7 +56,6 @@ jobs:
       run: |
         sudo bash ci/install_iverilog.sh
         export SIM=icarus
-        export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
         make test
     - name: Upload Icarus test results
@@ -74,7 +73,6 @@ jobs:
         export PATH="$VERILATOR_ROOT/bin:$PATH"
         sudo bash ci/install_verilator.sh
         export SIM=verilator
-        export PYTHONPATH=`pwd`
         ln -s src/uvm uvm
         #SIM=verilator make test
         make test-unit > results_verilator.log
@@ -90,6 +88,5 @@ jobs:
     #- name: Test with make test and ghdl
     #  run: |
     #    export SIM=ghdl
-    #    export PYTHONPATH=`pwd`
     #    ln -s src/uvm uvm
     #    make test TOPLEVEL_LANG=vhdl
