@@ -399,7 +399,7 @@ class UVMReportCatcher(UVMCallback):
     #// interface methods can be used to access information about the
     #// current message being processed.
     def catch(self):
-        raise Exception("catch() must be implemented in user-class")
+        raise NotImplementedError("catch() must be implemented in user-class")
 
 
     #// Group: Reporting

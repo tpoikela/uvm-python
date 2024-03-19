@@ -25,8 +25,11 @@
 #   preserved where possible.
 # ------------------------------------------------------------------------------
 
+from typing import List, Any
+from inspect import getframeinfo, stack
+
 import cocotb
-from cocotb.triggers import Edge, ReadWrite, NullTrigger
+from cocotb.triggers import ReadWrite, NullTrigger
 from cocotb.utils import get_sim_time, simulator
 
 from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERROR, UVM_EXIT,
@@ -34,8 +37,7 @@ from .uvm_object_globals import (UVM_CALL_HOOK, UVM_COUNT, UVM_DISPLAY, UVM_ERRO
                                  UVM_NO_ACTION, UVM_RM_RECORD, UVM_STOP, UVM_WARNING)
 from .uvm_debug import UVMDebug, uvm_debug
 from .sv import uvm_glob_to_re, uvm_re_match
-from inspect import getframeinfo, stack
-from typing import List, Any
+from .uvm_exceptions import UVMFinishError
 
 """
 Title: Globals

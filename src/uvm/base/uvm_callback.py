@@ -130,7 +130,7 @@ class UVMCallbacksBase(UVMObject):
         return None
 
     def m_add_tw_cbs(self, cb, ordering):
-        raise Exception('m_add_tw_cbs is pure virtual function!')
+        raise NotImplementedError('m_add_tw_cbs is pure virtual function!')
 
     def m_delete_tw_cbs(self, cb):
         return 0

@@ -24,6 +24,8 @@ from ..base.uvm_globals import (UVM_ERROR, UVM_FATAL, UVM_INFO, UVM_NONE, UVM_WA
                                 uvm_report_enabled, uvm_report_error, uvm_report_fatal,
                                 uvm_report_info, uvm_report_warning)
 
+from ..base.uvm_exceptions import UVMFinishError
+
 import inspect
 from inspect import getframeinfo, stack
 
@@ -198,19 +200,17 @@ def uvm_fatal(ID, MSG):
             if hasattr(parent_self, 'uvm_report_fatal'):
                 parent_self.uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
             else:
-                uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+                uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", True)
         else:
-            uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", 1)
+            uvm_report_fatal(ID, MSG, UVM_NONE, fname, lineno, "", True)
 
-#// MACRO: `uvm_info_context
-#//
-#//| `uvm_info_context(ID, MSG, VERBOSITY, RO)
-#//
-#// Operates identically to `uvm_info but requires that the
-#// context, or <uvm_report_object>, in which the message is printed be
-#// explicitly supplied as a macro argument.
 
 def uvm_info_context(ID, MSG, VERBOSITY, RO):
+    """
+    Operates identically to uvm_info but requires that the
+    context, or <UVMReportObject>, in which the message is printed be
+    explicitly supplied as a macro argument.
+    """
     if RO.uvm_report_enabled(VERBOSITY, UVM_INFO, ID):
         caller = getframeinfo(stack()[1][0])
         fname = caller.filename
@@ -223,7 +223,7 @@ def uvm_info_context(ID, MSG, VERBOSITY, RO):
 #//| `uvm_warning_context(ID, MSG, RO)
 #//
 #// Operates identically to `uvm_warning but requires that the
-#// context, or <uvm_report_object>, in which the message is printed be
+#// context, or <UVMReportObject>, in which the message is printed be
 #// explicitly supplied as a macro argument.
 #
 #`define uvm_warning_context(ID, MSG, RO) \
@@ -238,7 +238,7 @@ def uvm_info_context(ID, MSG, VERBOSITY, RO):
 #//| `uvm_error_context(ID, MSG, RO)
 #//
 #// Operates identically to `uvm_error but requires that the
-#// context, or <uvm_report_object> in which the message is printed be
+#// context, or <UVMReportObject> in which the message is printed be
 #// explicitly supplied as a macro argument.
 #
 #`define uvm_error_context(ID, MSG, RO) \
@@ -259,7 +259,7 @@ def uvm_error_context(ID, MSG, RO):
 #//| `uvm_fatal_context(ID, MSG, RO)
 #//
 #// Operates identically to `uvm_fatal but requires that the
-#// context, or <uvm_report_object>, in which the message is printed be
+#// context, or <UVMReportObject>, in which the message is printed be
 #// explicitly supplied as a macro argument.
 #
 #`define uvm_fatal_context(ID, MSG, RO) \
@@ -305,7 +305,7 @@ def uvm_error_context(ID, MSG, RO):
 
 #`define uvm_message_context_begin(SEVERITY, ID, MSG, VERBOSITY, FILE, LINE, RO, RM) \
 #   begin \
-#     uvm_report_object __report_object; \
+#     UVMReportObject __report_object; \
 #     __report_object = RO; \
 #     if (__report_object.uvm_report_enabled(VERBOSITY,SEVERITY,ID)) begin \
 #       uvm_report_message __uvm_msg; \
@@ -441,7 +441,7 @@ def uvm_error_context(ID, MSG, RO):
 #// |`uvm_info_context_end
 #//
 #// This macro pair operates identically to <`uvm_info_begin>/<`uvm_info_end>, but
-#// requires that the context, or <uvm_report_object> in which the message is printed
+#// requires that the context, or <UVMReportObject> in which the message is printed
 #// be explicitly supplied as a macro argument.
 #//
 #
@@ -462,7 +462,7 @@ def uvm_error_context(ID, MSG, RO):
 #// |`uvm_warning_context_end
 #//
 #// This macro pair operates identically to <`uvm_warning_begin>/<`uvm_warning_end>, but
-#// requires that the context, or <uvm_report_object> in which the message is printed
+#// requires that the context, or <UVMReportObject> in which the message is printed
 #// be explicitly supplied as a macro argument.
 #//
 #
@@ -484,7 +484,7 @@ def uvm_error_context(ID, MSG, RO):
 #// |`uvm_error_context_end
 #//
 #// This macro pair operates identically to <`uvm_error_begin>/<`uvm_error_end>, but
-#// requires that the context, or <uvm_report_object> in which the message is printed
+#// requires that the context, or <UVMReportObject> in which the message is printed
 #// be explicitly supplied as a macro argument.
 #//
 #
@@ -506,7 +506,7 @@ def uvm_error_context(ID, MSG, RO):
 #// |`uvm_fatal_context_end
 #//
 #// This macro pair operates identically to <`uvm_fatal_begin>/<`uvm_fatal_end>, but
-#// requires that the context, or <uvm_report_object> in which the message is printed
+#// requires that the context, or <UVMReportObject> in which the message is printed
 #// be explicitly supplied as a macro argument.
 #//
 #

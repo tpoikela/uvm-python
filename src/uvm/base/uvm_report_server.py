@@ -28,7 +28,7 @@ def ename(sever) -> str:
         Exception
     """
     if isinstance(sever, str):
-        raise Exception("str was given to ename(). Expected int. Got: " + sever)
+        raise ValueError("str was given to ename(). Expected int. Got: " + sever)
     if sever == UVM_INFO:
         return "UVM_INFO"
     if sever == UVM_ERROR:
