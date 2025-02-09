@@ -8,7 +8,8 @@ from master_slave_pkg import env_top
 
 test_dur = 1200  # NS
 
-#UVMDebug.full_debug()
+if False:
+    UVMDebug.full_debug()
 
 @uvm_component_utils
 class master_slave_test(UVMTest):
@@ -29,9 +30,6 @@ class master_slave_test(UVMTest):
     def check_phase(self, phase):
         if not self.env.all_ok():
             uvm_fatal("ENV_NOT_OK", "There were errors in the env")
-
-
-#uvm_component_utils(master_slave_test)
 
 
 @cocotb.test()

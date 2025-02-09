@@ -393,7 +393,7 @@ class env_top(UVMEnv):
         self.slaves = []
         self.mems = []
         self.bus = None
-        self.cooldown_time = 1000
+        self.cooldown_time = 10000
 
     def build_phase(self, phase):
         self.bus = bus("bus", self)
@@ -430,6 +430,18 @@ class env_top(UVMEnv):
         await Timer(self.cooldown_time, "NS")
         phase.drop_objection(self)
 
+    def report_phase(self, phase):
+        uvm_info("ENV_TOP", "Report phase started", UVM_MEDIUM)
+        for i in range(NUM_MASTERS):
+            uvm_info("ENV_TOP", "Master {} num_items: {}".format(i,
+                self.masters[i].num_items), UVM_MEDIUM)
+        for i in range(NUM_SLAVES):
+            uvm_info("ENV_TOP", "Slave {} num_cmds: {}".format(i,
+                self.slaves[i].num_cmds()), UVM_MEDIUM)
+        for i in range(NUM_MEMS):
+            uvm_info("ENV_TOP", "Mem {} num_cmds: {}".format(i,
+                self.mems[i].num_cmds()), UVM_MEDIUM)
+
 
     def all_ok(self) -> bool:
         num_master_cmds = NUM_MASTERS * NUM_ITEMS
@@ -447,4 +459,3 @@ class env_top(UVMEnv):
             return False
         else:
             return True
-# uvm_component_utils(env_top)
