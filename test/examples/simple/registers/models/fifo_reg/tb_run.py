@@ -3,7 +3,7 @@
 #//    Copyright 2004-2011 Synopsys, Inc.
 #//    Copyright 2010 Mentor Graphics Corporation
 #//    Copyright 2010-2011 Cadence Design Systems, Inc.
-#//    Copyright 2019-2020 Tuomas Poikela (tpoikela)
+#//    Copyright 2019-2025 Tuomas Poikela (tpoikela)
 #//    All Rights Reserved Worldwide
 #//
 #//    Licensed under the Apache License, Version 2.0 (the
@@ -25,10 +25,10 @@
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import FallingEdge, Timer
+from cocotb.triggers import FallingEdge
 
 from uvm import (UVMConfigDb, run_test, UVMCoreService, sv,
-    uvm_fatal, UVMUtils, uvm_hdl)
+    uvm_fatal)
 from uvm.seq.uvm_sequence import UVMSequence
 from uvm.macros import *
 from uvm.base.uvm_config_db import *
@@ -46,10 +46,10 @@ class dut_reset_seq(UVMSequence):
 
 
     async def body(self):
-        self.dut_top.rst = 1
+        self.dut_top.rst.value = 1
         for _ in range(5):
             await FallingEdge(self.dut_top.apb_pclk)
-        self.dut_top.rst = 0
+        self.dut_top.rst.value = 0
 
 
 uvm_object_utils(dut_reset_seq)

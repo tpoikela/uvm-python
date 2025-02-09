@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-02-09
+- Bug fixes in uvm_objection (missing casts)
+- Tested on verilator 5.032, iverilog version 13.0 (devel) (s20221226-498-g52d049b51)
+- Tested on cocotb 1.9.2
+
 ## [0.3.0]
 - updated to support verilator 5.006+ (required by cocotb)
 - old verilator v4.016 no longer works
